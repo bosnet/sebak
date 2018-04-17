@@ -1,3 +1,3 @@
-# SIBAK
+# SEBAK
 
-Sibak is the core node for crypto-currency blockchain.
+Sebak is the core node for crypto-currency blockchain.
