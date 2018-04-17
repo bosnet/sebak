@@ -1,0 +1,58 @@
+# Copy this page and paste in https://mscgen.js.org
+msc {
+    arcgradient="10",
+    hscale="1.6",
+    wordwraparcs=true;
+    
+    txh [label="Transaction History", textbgcolor="gray", textcolor="white", linecolor="gray"],
+    rs [label="Reserved Slot", linecolor="gray"],
+    ws [label="Waiting Slot", linecolor="gray"],
+    vs [label="Voting Slot", linecolor="gray"],
+    txb [label="Transaction Block", textbgcolor="black", textcolor="white"];
+    
+    ws box ws   [label="receive `Txm` from client"];
+    ws => txh [label="`Txm` added"];
+    ws box ws [label="validate `Txm` for `INIT`"];
+    
+    ws :> txh [label="if not passed, update `reason`", linecolor="red"];
+    
+    --- [label="[INIT]"];
+    
+    ws box ws [label="broadcast `Txm`"];
+    ws box ws [label="wait `Ba` for `Txm`\nfrom other validators"];
+    
+    ws box ws [label="check threshold\n(90 or 100% of connected)"];
+    
+    ws :> rs [label="if expired"];
+    rs box rs [label="`Ba` added"];
+    
+    ws :> vs [label="if passed"];
+    --- [label="all validators got `Txm`"];
+    vs box vs [label="`Ba` added"];
+    
+    --- [label="[SIGN]"];
+    
+    vs box vs [label="validate `Txm` for `SIGN`"];
+    vs box vs [label="vote `Ba`"];
+    vs box vs [label="broadcast `Ba`"];
+    
+    vs box vs [label="check threshold\n(>=66% of validators)"];
+    
+    vs rbox vs [label="if not passed, remove from slot"];
+    vs :> txh [label="if not passed, update `reason`", linecolor="red"];
+    vs rbox vs [label="if passed, set to `ACCEPT`"];
+    
+    --- [label="[ACCEPT]"];
+    
+    vs box vs [label="broadcast `Ba`"];
+    vs box vs [label="check threshold\n(>=66% of validators)"];
+
+    vs rbox vs [label="if not passed, remove from slot"];
+    vs :> txh [label="if not passed, update `reason`", linecolor="red"];
+
+    vs rbox vs [label="if passed, set to `ALL-CONFIRM`"];
+    
+    --- [label="[ALL-CONFIRM]"];
+    
+    vs => txb [label="store `Txm`"];
+}
