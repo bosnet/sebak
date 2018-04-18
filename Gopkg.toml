@@ -1,0 +1,23 @@
+[prune]
+  go-tests = true
+  unused-packages = true
+
+[[constraint]]
+  branch = "master"
+  name = "golang.org/x/crypto"
+
+[[constraint]]
+  name = "github.com/ethereum/go-ethereum"
+  version = "1.8.3"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/stellar/go"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/btcsuite/btcutil"
+
+[[constraint]]
+  name = "github.com/google/uuid"
+  version = "0.2.0"
