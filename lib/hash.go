@@ -21,3 +21,8 @@ func GetObjectHash(i interface{}) (b []byte, err error) {
 
 	return
 }
+
+func MustGetObjectHash(i interface{}) (b []byte) {
+	b, _ = GetObjectHash(i)
+	return
+}

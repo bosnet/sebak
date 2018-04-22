@@ -2,8 +2,8 @@ package sebak
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
-	"strconv"
 
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/stellar/go/keypair"
@@ -20,8 +20,8 @@ type TransactionFromJSON struct {
 }
 
 type TransactionBodyFromJSON struct {
-	Sender     string              `json:"sender"`
-	Fee        string              `json:"fee"`
+	Source     string              `json:"source"`
+	Fee        Amount              `json:"fee"`
 	Checkpoint string              `json:"checkpoint"`
 	Operations []OperationFromJSON `json:"operations"`
 }
@@ -43,7 +43,7 @@ func NewTransactionFromJSON(b []byte) (tx Transaction, err error) {
 
 	tx.H = txt.H
 	tx.B = TransactionBody{
-		Sender:     txt.B.Sender,
+		Source:     txt.B.Source,
 		Fee:        txt.B.Fee,
 		Checkpoint: txt.B.Checkpoint,
 		Operations: operations,
@@ -53,30 +53,31 @@ func NewTransactionFromJSON(b []byte) (tx Transaction, err error) {
 }
 
 func (o Transaction) IsWellFormed() (err error) {
-	if _, err = keypair.Parse(o.B.Sender); err != nil {
-		err = fmt.Errorf("invalid `Sender`: %v", err)
+	// TODO check `Version` format with SemVer
+
+	if _, err = keypair.Parse(o.B.Source); err != nil {
+		err = fmt.Errorf("invalid `Source`: %v", err)
 		return
 	}
 
-	var fee int64
-	if fee, err = strconv.ParseInt(o.B.Fee, 10, 64); err != nil {
-		err = fmt.Errorf("invalid `fee`, '%s'", o.B.Fee)
-		return
-	}
-
-	if fee < BaseFee {
-		err = fmt.Errorf("`fee` must be greater than %d", BaseFee)
+	if int64(o.B.Fee) < BaseFee {
+		err = errors.New("`fee` must be greater than `BaseFee`")
 		return
 	}
 
 	for _, op := range o.B.Operations {
-		if ta := op.B.GetTargetAddress(); o.B.Sender == ta {
-			err = fmt.Errorf("`Operation.TargetAddress` must be equal to `Sender`")
+		if ta := op.B.GetTargetAddress(); o.B.Source == ta {
+			err = fmt.Errorf("`Operation.TargetAddress` must not be equal to `Source`")
+			return
+		}
+		if err = op.IsWellFormed(); err != nil {
 			return
 		}
 	}
 
-	err = keypair.MustParse(o.B.Sender).Verify(
+	// TODO check duplication Operations
+
+	err = keypair.MustParse(o.B.Source).Verify(
 		base58.Decode(o.H.Hash),
 		base58.Decode(o.H.Signature),
 	)
@@ -88,14 +89,6 @@ func (o Transaction) IsWellFormed() (err error) {
 }
 
 func (o Transaction) Validate() (err error) {
-	var totalAmount int64
-	for _, op := range o.B.Operations {
-		if err = op.Validate(); err != nil {
-			return
-		}
-		totalAmount += op.B.GetAmount()
-	}
-
 	if o.H.Hash != o.B.GetHashString() {
 		err = fmt.Errorf("`Hash` mismatch")
 		return
@@ -103,13 +96,26 @@ func (o Transaction) Validate() (err error) {
 
 	// TODO check whether `Checkpoint` is in `Block Transaction` and is latest
 	// `Checkpoint`
-	// TODO check whether `Sender` is in `Block Account`
-	// TODO check whether the balance of `Sender` is greater than `totalAmount`
+	// TODO check whether `Source` is in `Block Account`
+	// TODO check whether the balance of `Source` is greater than `totalAmount`
 	/*
-		totalAmount += len(o.B.Operations) * o.B.Fee
+		totalAmount := o.GetTotalAmount(true)
 	*/
 
 	return
+}
+
+func (o Transaction) GetTotalAmount(withFee bool) Amount {
+	var amount int64
+	for _, op := range o.B.Operations {
+		amount += int64(op.B.GetAmount())
+	}
+
+	if withFee {
+		amount += int64(len(o.B.Operations)) * int64(o.B.Fee)
+	}
+
+	return Amount(amount)
 }
 
 func (o Transaction) Serialize() (encoded []byte, err error) {
@@ -131,21 +137,21 @@ func (o *Transaction) Sign(kp keypair.KP) {
 }
 
 type TransactionHeader struct {
+	Version   string `json:"version"`
 	Created   string `json:"created"`
 	Hash      string `json:"hash"`
 	Signature string `json:"signature"`
 }
 
 type TransactionBody struct {
-	Sender     string      `json:"sender"`
-	Fee        string      `json:"fee"`
+	Source     string      `json:"source"`
+	Fee        Amount      `json:"fee"`
 	Checkpoint string      `json:"checkpoint"`
 	Operations []Operation `json:"operations"`
 }
 
 func (tb TransactionBody) GetHash() []byte {
-	encoded, _ := GetObjectHash(tb)
-	return encoded
+	return MustGetObjectHash(tb)
 }
 
 func (tb TransactionBody) GetHashString() string {

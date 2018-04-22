@@ -3,7 +3,6 @@ package sebak
 import (
 	"encoding/json"
 	"fmt"
-	"strconv"
 
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/stellar/go/keypair"
@@ -82,9 +81,14 @@ func NewOperationFromInterface(oj OperationFromJSON) (op Operation, err error) {
 	case OperationCreateAccount:
 		//
 	case OperationPayment:
+		var amount Amount
+		amount, err = AmountFromString(fmt.Sprintf("%v", body["amount"]))
+		if err != nil {
+			return
+		}
 		op.B = OperationBodyPayment{
-			Receiver: body["receiver"].(string),
-			Amount:   body["amount"].(string),
+			Target: body["target"].(string),
+			Amount: amount,
 		}
 		if err != nil {
 			return
@@ -95,7 +99,7 @@ func NewOperationFromInterface(oj OperationFromJSON) (op Operation, err error) {
 }
 
 type OperationHeader struct {
-	Hash string        `json:"hash"`
+	Hash string        `json:"hash"` // TODO useless!
 	Type OperationType `json:"type"`
 }
 
@@ -105,24 +109,26 @@ type OperationBody interface {
 	Validate() error
 	IsWellFormed() error
 	GetTargetAddress() string
-	GetAmount() int64
+	GetAmount() Amount
 }
 
 type OperationBodyPayment struct {
-	Receiver string `json:"receiver"`
-	Amount   string `json:"amount"`
+	Target string `json:"target"`
+	Amount Amount `json:"amount"`
+}
+
+func (o OperationBodyPayment) Serialize() (encoded []byte, err error) {
+	encoded, err = json.Marshal(o)
+	return
 }
 
 func (ob OperationBodyPayment) IsWellFormed() (err error) {
-	if _, err = keypair.Parse(ob.Receiver); err != nil {
+	if _, err = keypair.Parse(ob.Target); err != nil {
 		return
 	}
 
-	var i int64
-	if i, err = strconv.ParseInt(ob.Amount, 10, 64); err != nil {
-		return
-	} else if i < 1 {
-		err = fmt.Errorf("invalid `Amount`: %d < 1", i)
+	if int64(ob.Amount) < 1 {
+		err = fmt.Errorf("invalid `Amount`")
 		return
 	}
 
@@ -130,8 +136,7 @@ func (ob OperationBodyPayment) IsWellFormed() (err error) {
 }
 
 func (ob OperationBodyPayment) GetHash() []byte {
-	encoded, _ := GetObjectHash(ob)
-	return encoded
+	return MustGetObjectHash(ob)
 }
 
 func (ob OperationBodyPayment) GetHashString() string {
@@ -139,16 +144,55 @@ func (ob OperationBodyPayment) GetHashString() string {
 }
 
 func (ob OperationBodyPayment) Validate() (err error) {
-	// TODO check whether `Receiver` is in `Block Account`
+	// TODO check whether `Target` is in `Block Account`
 
 	return
 }
 
 func (ob OperationBodyPayment) GetTargetAddress() string {
-	return ob.Receiver
+	return ob.Target
 }
 
-func (ob OperationBodyPayment) GetAmount() (a int64) {
-	a, _ = strconv.ParseInt(ob.Amount, 10, 64)
+func (ob OperationBodyPayment) GetAmount() Amount {
+	return ob.Amount
+}
+
+type OperationBodyCreateAccount struct {
+	Target string `json:"target"`
+	Amount Amount `json:"amount"`
+}
+
+func (ob OperationBodyCreateAccount) IsWellFormed() (err error) {
+	if _, err = keypair.Parse(ob.Target); err != nil {
+		return
+	}
+
+	if int64(ob.Amount) < 1 {
+		err = fmt.Errorf("invalid `Amount`: lower than 1")
+		return
+	} // TODO check over minimum balance
+
 	return
+}
+
+func (ob OperationBodyCreateAccount) GetHash() []byte {
+	return MustGetObjectHash(ob)
+}
+
+func (ob OperationBodyCreateAccount) GetHashString() string {
+	return base58.Encode(ob.GetHash())
+}
+
+func (ob OperationBodyCreateAccount) Validate() (err error) {
+	// TODO check whether `Target` is not in `Block Account`
+
+	return
+}
+
+func (ob OperationBodyCreateAccount) GetTargetAddress() string {
+	return ob.Target
+}
+
+func (ob OperationBodyCreateAccount) GetAmount() Amount {
+	return ob.Amount
 }

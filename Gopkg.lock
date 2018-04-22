@@ -23,6 +23,12 @@
   version = "v1.8.3"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/golang/snappy"
+  packages = ["."]
+  revision = "553a641470496b2327abcac10b36396bd98e45c9"
+
+[[projects]]
   name = "github.com/google/uuid"
   packages = ["."]
   revision = "064e2069ce9c359c118179501254f67d7d37ba24"
@@ -65,6 +71,25 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/syndtr/goleveldb"
+  packages = [
+    "leveldb",
+    "leveldb/cache",
+    "leveldb/comparer",
+    "leveldb/errors",
+    "leveldb/filter",
+    "leveldb/iterator",
+    "leveldb/journal",
+    "leveldb/memdb",
+    "leveldb/opt",
+    "leveldb/storage",
+    "leveldb/table",
+    "leveldb/util"
+  ]
+  revision = "714f901b98fdb3aa954b4193d8cbd64a28d80cad"
+
+[[projects]]
+  branch = "master"
   name = "golang.org/x/crypto"
   packages = [
     "argon2",
@@ -75,6 +100,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "de88dd2f8f04d5989619aa73ad82bb5b30974187b016e13ae4c89adfb2c75612"
+  inputs-digest = "0d3049a4c7c8cd2697a8eea279c25f6d3ea36281b7944a83921b347dc90b6153"
   solver-name = "gps-cdcl"
   solver-version = 1
