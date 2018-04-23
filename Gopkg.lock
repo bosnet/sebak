@@ -19,8 +19,8 @@
 [[projects]]
   name = "github.com/ethereum/go-ethereum"
   packages = ["rlp"]
-  revision = "329ac18ef617d0238f71637bffe78f028b0f13f7"
-  version = "v1.8.3"
+  revision = "2423ae01e0d2f853512eb2b46954b5ad0754a897"
+  version = "v1.8.4"
 
 [[projects]]
   branch = "master"
@@ -56,6 +56,12 @@
   version = "v0.8.0"
 
 [[projects]]
+  name = "github.com/satori/go.uuid"
+  packages = ["."]
+  revision = "f58768cc1a7a7e77a3bd49e98cdd21419399b6a3"
+  version = "v1.2.0"
+
+[[projects]]
   branch = "master"
   name = "github.com/stellar/go"
   packages = [
@@ -67,7 +73,7 @@
     "support/errors",
     "xdr"
   ]
-  revision = "4c8cfd0b3791e7cca7fedb398d9d3a30d09e9347"
+  revision = "9eb9682656c21d73a8fef16813872398ae6a6b6c"
 
 [[projects]]
   branch = "master"
@@ -95,11 +101,11 @@
     "argon2",
     "blake2b"
   ]
-  revision = "d6449816ce06963d9d136eee5a56fca5b0616e7e"
+  revision = "e73bf333ef8920dbb52ad18d4bd38ad9d9bc76d7"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "0d3049a4c7c8cd2697a8eea279c25f6d3ea36281b7944a83921b347dc90b6153"
+  inputs-digest = "c351dc3e1810c3bd5cfcfc523a5e36b01434ec4dcbb4d6e5f90e04e2e4fd715f"
   solver-name = "gps-cdcl"
   solver-version = 1

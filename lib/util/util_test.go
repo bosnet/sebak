@@ -10,7 +10,7 @@ import (
 func TestSequentialUUIDWithsatori(t *testing.T) {
 	var ids []string
 	for i := 0; i < 500000; i++ {
-		ids = append(ids, uuid.Must(uuid.NewV1()).String())
+		ids = append(ids, uuid.Must(uuid.NewV1(), nil).String())
 	}
 
 	sortedIds := make([]string, len(ids))

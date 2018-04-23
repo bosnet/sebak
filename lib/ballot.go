@@ -18,11 +18,6 @@ func (ballot Ballot) String() string {
 	return string(encoded)
 }
 
-// TODO must be implemented
-func (ballot Ballot) GetTransaction() (tx Transaction, err error) {
-	return
-}
-
 func NewBallotFromJSON(b []byte) (ballot Ballot, err error) {
 	if err = json.Unmarshal(b, &ballot); err != nil {
 		return

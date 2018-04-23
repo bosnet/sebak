@@ -14,7 +14,7 @@ func makeBlockAccount() *BlockAccount {
 	kp, _ := keypair.Random()
 	address := kp.Address()
 	balance := 2000
-	hashed := MustGetObjectHash("")
+	hashed := util.MustGetObjectHash("")
 	checkpoint := base58.Encode(hashed)
 
 	return NewBlockAccount(address, fmt.Sprintf("%d", balance), checkpoint)

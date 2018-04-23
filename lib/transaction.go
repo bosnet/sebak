@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/btcsuite/btcutil/base58"
+	"github.com/spikeekips/sebak/lib/util"
 	"github.com/stellar/go/keypair"
 )
 
@@ -151,7 +152,7 @@ type TransactionBody struct {
 }
 
 func (tb TransactionBody) GetHash() []byte {
-	return MustGetObjectHash(tb)
+	return util.MustGetObjectHash(tb)
 }
 
 func (tb TransactionBody) GetHashString() string {

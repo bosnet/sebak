@@ -1,4 +1,4 @@
-package sebak
+package util
 
 import (
 	"github.com/ethereum/go-ethereum/rlp"
@@ -17,7 +17,7 @@ func GetObjectHash(i interface{}) (b []byte, err error) {
 		return
 	}
 
-	b = argon2.Key(e, HashSalt, 3, 32*1024, 4, 32)
+	b = GetHash(e)
 
 	return
 }

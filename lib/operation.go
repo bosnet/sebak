@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/btcsuite/btcutil/base58"
+	"github.com/spikeekips/sebak/lib/util"
 	"github.com/stellar/go/keypair"
 )
 
@@ -136,7 +137,7 @@ func (ob OperationBodyPayment) IsWellFormed() (err error) {
 }
 
 func (ob OperationBodyPayment) GetHash() []byte {
-	return MustGetObjectHash(ob)
+	return util.MustGetObjectHash(ob)
 }
 
 func (ob OperationBodyPayment) GetHashString() string {
@@ -176,7 +177,7 @@ func (ob OperationBodyCreateAccount) IsWellFormed() (err error) {
 }
 
 func (ob OperationBodyCreateAccount) GetHash() []byte {
-	return MustGetObjectHash(ob)
+	return util.MustGetObjectHash(ob)
 }
 
 func (ob OperationBodyCreateAccount) GetHashString() string {

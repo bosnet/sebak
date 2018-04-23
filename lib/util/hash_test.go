@@ -1,4 +1,4 @@
-package sebak
+package util
 
 import (
 	"testing"
@@ -12,7 +12,7 @@ type intSideType struct {
 	i int64
 }
 
-func TestInt64Hashable(t *testing.T) {
+func TestInt64HashableLRP(t *testing.T) {
 	i := intType(10)
 	_, err := rlp.EncodeToBytes(i)
 	if err != nil {
@@ -20,7 +20,8 @@ func TestInt64Hashable(t *testing.T) {
 		return
 	}
 }
-func TestInt64StructHashable(t *testing.T) {
+
+func TestInt64StructHashableLRP(t *testing.T) {
 	i := intSideType{i: 64}
 	_, err := rlp.EncodeToBytes(i)
 	if err != nil {

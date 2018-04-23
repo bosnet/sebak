@@ -2,6 +2,8 @@ package sebak
 
 import (
 	"testing"
+
+	"github.com/spikeekips/sebak/lib/util"
 )
 
 func TestHashingBallot(t *testing.T) {
@@ -9,7 +11,7 @@ func TestHashingBallot(t *testing.T) {
 		Hash: "this-is-hash",
 		Vote: true,
 	}
-	if _, err := GetObjectHash(ballot); err != nil {
+	if _, err := util.GetObjectHash(ballot); err != nil {
 		t.Errorf("`Ballot` must be hashable: %v", err)
 	}
 }

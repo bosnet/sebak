@@ -11,7 +11,7 @@ func NowISO8601() string {
 }
 
 func GetUniqueIDFromUUID() string {
-	return uuid.Must(uuid.NewV1()).String()
+	return uuid.Must(uuid.NewV1(), nil).String()
 }
 
 func GetUniqueIDFromDate() string {
