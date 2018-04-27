@@ -2,10 +2,9 @@ package sebak
 
 import (
 	"encoding/json"
-	"errors"
-	"fmt"
 
 	"github.com/btcsuite/btcutil/base58"
+	"github.com/spikeekips/sebak/lib/storage"
 	"github.com/spikeekips/sebak/lib/util"
 	"github.com/stellar/go/keypair"
 )
@@ -53,48 +52,24 @@ func NewTransactionFromJSON(b []byte) (tx Transaction, err error) {
 	return
 }
 
+var TransactionWellFormedCheckerFuncs = []util.CheckerFunc{
+	checkTransactionSource,
+	checkTransactionBaseFee,
+	checkTransactionOperationIsWellFormed,
+	checkTransactionVerifySignature,
+}
+
 func (o Transaction) IsWellFormed() (err error) {
+	if err = util.Checker(TransactionWellFormedCheckerFuncs...)(o); err != nil {
+		return
+	}
+
 	// TODO check `Version` format with SemVer
-
-	if _, err = keypair.Parse(o.B.Source); err != nil {
-		err = fmt.Errorf("invalid `Source`: %v", err)
-		return
-	}
-
-	if int64(o.B.Fee) < BaseFee {
-		err = errors.New("`fee` must be greater than `BaseFee`")
-		return
-	}
-
-	for _, op := range o.B.Operations {
-		if ta := op.B.GetTargetAddress(); o.B.Source == ta {
-			err = fmt.Errorf("`Operation.TargetAddress` must not be equal to `Source`")
-			return
-		}
-		if err = op.IsWellFormed(); err != nil {
-			return
-		}
-	}
-
 	// TODO check duplication Operations
-
-	err = keypair.MustParse(o.B.Source).Verify(
-		base58.Decode(o.H.Hash),
-		base58.Decode(o.H.Signature),
-	)
-	if err != nil {
-		return
-	}
-
 	return
 }
 
-func (o Transaction) Validate() (err error) {
-	if o.H.Hash != o.B.GetHashString() {
-		err = fmt.Errorf("`Hash` mismatch")
-		return
-	}
-
+func (o Transaction) Validate(st *storage.LevelDBBackend) (err error) {
 	// TODO check whether `Checkpoint` is in `Block Transaction` and is latest
 	// `Checkpoint`
 	// TODO check whether `Source` is in `Block Account`
@@ -104,6 +79,10 @@ func (o Transaction) Validate() (err error) {
 	*/
 
 	return
+}
+
+func (o Transaction) GetHash() string {
+	return o.H.Hash
 }
 
 func (o Transaction) GetTotalAmount(withFee bool) Amount {
@@ -130,7 +109,7 @@ func (o Transaction) String() string {
 }
 
 func (o *Transaction) Sign(kp keypair.KP) {
-	signature, _ := kp.Sign(o.B.GetHash())
+	signature, _ := kp.Sign([]byte(o.H.Hash))
 
 	o.H.Signature = base58.Encode(signature)
 
@@ -151,10 +130,10 @@ type TransactionBody struct {
 	Operations []Operation `json:"operations"`
 }
 
-func (tb TransactionBody) GetHash() []byte {
-	return util.MustGetObjectHash(tb)
+func (tb TransactionBody) MakeHash() []byte {
+	return util.MustMakeObjectHash(tb)
 }
 
-func (tb TransactionBody) GetHashString() string {
-	return base58.Encode(tb.GetHash())
+func (tb TransactionBody) MakeHashString() string {
+	return base58.Encode(tb.MakeHash())
 }

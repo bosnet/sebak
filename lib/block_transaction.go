@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/spikeekips/sebak/lib/error"
 	"github.com/spikeekips/sebak/lib/storage"
 	"github.com/spikeekips/sebak/lib/util"
 )
@@ -91,7 +92,7 @@ func (bt BlockTransaction) Save(st *storage.LevelDBBackend) (err error) {
 	if err != nil {
 		return
 	} else if exists {
-		return ErrorBlockAlreayExists
+		return sebak_error.ErrorBlockAlreadyExists
 	}
 
 	bt.Confirmed = util.NowISO8601()

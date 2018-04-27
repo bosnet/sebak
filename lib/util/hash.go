@@ -7,22 +7,22 @@ import (
 
 var HashSalt = []byte("sebak")
 
-func GetHash(b []byte) []byte {
+func MakeHash(b []byte) []byte {
 	return argon2.Key(b, HashSalt, 3, 32*1024, 4, 32)
 }
 
-func GetObjectHash(i interface{}) (b []byte, err error) {
+func MakeObjectHash(i interface{}) (b []byte, err error) {
 	var e []byte
 	if e, err = rlp.EncodeToBytes(i); err != nil {
 		return
 	}
 
-	b = GetHash(e)
+	b = MakeHash(e)
 
 	return
 }
 
-func MustGetObjectHash(i interface{}) (b []byte) {
-	b, _ = GetObjectHash(i)
+func MustMakeObjectHash(i interface{}) (b []byte) {
+	b, _ = MakeObjectHash(i)
 	return
 }

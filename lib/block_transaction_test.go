@@ -4,11 +4,12 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/spikeekips/sebak/lib/error"
 	"github.com/spikeekips/sebak/lib/storage"
 )
 
 func TestNewBlockTransaction(t *testing.T) {
-	tx := makeTransaction(1)
+	tx := MakeTransaction(1)
 	a, _ := tx.Serialize()
 	bt := NewBlockTransactionFromTransaction(tx, a)
 
@@ -125,7 +126,7 @@ func TestBlockTransactionSaveExisting(t *testing.T) {
 	if err := bt.Save(st); err == nil {
 		t.Error("`ErrorBlockAlreayExists` Errors must be occurred")
 		return
-	} else if err != ErrorBlockAlreayExists {
+	} else if err != sebak_error.ErrorBlockAlreadyExists {
 		t.Error("`ErrorBlockAlreayExists` Errors must be occurred")
 		return
 	}

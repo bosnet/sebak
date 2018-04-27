@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/btcsuite/btcutil/base58"
+	"github.com/spikeekips/sebak/lib/storage"
 	"github.com/spikeekips/sebak/lib/util"
 	"github.com/stellar/go/keypair"
 )
@@ -34,8 +35,8 @@ func (o Operation) IsWellFormed() (err error) {
 	return
 }
 
-func (o Operation) Validate() (err error) {
-	if o.B.GetHashString() != o.H.Hash {
+func (o Operation) Validate(st storage.LevelDBBackend) (err error) {
+	if o.B.MakeHashString() != o.H.Hash {
 		return fmt.Errorf("`Hash` mismatch")
 	}
 
@@ -105,8 +106,8 @@ type OperationHeader struct {
 }
 
 type OperationBody interface {
-	GetHash() []byte
-	GetHashString() string
+	MakeHash() []byte
+	MakeHashString() string
 	Validate() error
 	IsWellFormed() error
 	GetTargetAddress() string
@@ -136,12 +137,12 @@ func (ob OperationBodyPayment) IsWellFormed() (err error) {
 	return
 }
 
-func (ob OperationBodyPayment) GetHash() []byte {
-	return util.MustGetObjectHash(ob)
+func (ob OperationBodyPayment) MakeHash() []byte {
+	return util.MustMakeObjectHash(ob)
 }
 
-func (ob OperationBodyPayment) GetHashString() string {
-	return base58.Encode(ob.GetHash())
+func (ob OperationBodyPayment) MakeHashString() string {
+	return base58.Encode(ob.MakeHash())
 }
 
 func (ob OperationBodyPayment) Validate() (err error) {
@@ -176,12 +177,12 @@ func (ob OperationBodyCreateAccount) IsWellFormed() (err error) {
 	return
 }
 
-func (ob OperationBodyCreateAccount) GetHash() []byte {
-	return util.MustGetObjectHash(ob)
+func (ob OperationBodyCreateAccount) MakeHash() []byte {
+	return util.MustMakeObjectHash(ob)
 }
 
-func (ob OperationBodyCreateAccount) GetHashString() string {
-	return base58.Encode(ob.GetHash())
+func (ob OperationBodyCreateAccount) MakeHashString() string {
+	return base58.Encode(ob.MakeHash())
 }
 
 func (ob OperationBodyCreateAccount) Validate() (err error) {

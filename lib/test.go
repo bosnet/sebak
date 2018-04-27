@@ -14,14 +14,14 @@ func makeBlockAccount() *BlockAccount {
 	kp, _ := keypair.Random()
 	address := kp.Address()
 	balance := 2000
-	hashed := util.MustGetObjectHash("")
+	hashed := util.MustMakeObjectHash("")
 	checkpoint := base58.Encode(hashed)
 
 	return NewBlockAccount(address, fmt.Sprintf("%d", balance), checkpoint)
 }
 
 func makeNewBlockOperation(n int) (bos []BlockOperation) {
-	tx := makeTransaction(n)
+	tx := MakeTransaction(n)
 
 	for _, op := range tx.B.Operations {
 		bos = append(bos, NewBlockOperationFromOperation(op, tx))
@@ -31,7 +31,7 @@ func makeNewBlockOperation(n int) (bos []BlockOperation) {
 }
 
 func makeNewBlockTransaction(n int) BlockTransaction {
-	tx := makeTransaction(n)
+	tx := MakeTransaction(n)
 
 	a, _ := tx.Serialize()
 	return NewBlockTransactionFromTransaction(tx, a)
@@ -56,7 +56,7 @@ func makeOperation() Operation {
 
 	op := Operation{
 		H: OperationHeader{
-			Hash: opb.GetHashString(),
+			Hash: opb.MakeHashString(),
 			Type: OperationPayment,
 		},
 		B: opb,
@@ -65,7 +65,7 @@ func makeOperation() Operation {
 	return op
 }
 
-func makeTransaction(n int) (tx Transaction) {
+func MakeTransaction(n int) (tx Transaction) {
 	kpSource, _ := keypair.Random()
 
 	var ops []Operation
@@ -83,7 +83,7 @@ func makeTransaction(n int) (tx Transaction) {
 	tx = Transaction{
 		H: TransactionHeader{
 			Created: util.NowISO8601(),
-			Hash:    txBody.GetHashString(),
+			Hash:    txBody.MakeHashString(),
 		},
 		B: txBody,
 	}

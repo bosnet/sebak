@@ -1,4 +1,4 @@
-package sebak
+package sebak_error
 
 import "encoding/json"
 
@@ -17,5 +17,6 @@ func (o Error) Error() string {
 	return string(b)
 }
 
-// pre-defined `Errors`
-var ErrorBlockAlreayExists = Error{Code: 100, Message: "already exists in block"}
+func NewError(code uint, message string) Error {
+	return Error{Code: code, Message: message}
+}

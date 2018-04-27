@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/spikeekips/sebak/lib/error"
 	"github.com/spikeekips/sebak/lib/storage"
 	"github.com/spikeekips/sebak/lib/util"
 )
@@ -56,7 +57,7 @@ func (bo BlockOperation) Save(st *storage.LevelDBBackend) (err error) {
 	if exists, err = st.Has(key); err != nil {
 		return
 	} else if exists {
-		return ErrorBlockAlreayExists
+		return sebak_error.ErrorBlockAlreadyExists
 	}
 
 	if err = st.New(GetBlockOperationKey(bo.Hash), bo); err != nil {

@@ -6,14 +6,14 @@ import (
 	"github.com/stellar/go/keypair"
 )
 
-func TestGetHashOfOperationBodyPayment(t *testing.T) {
+func TestMakeHashOfOperationBodyPayment(t *testing.T) {
 	kp := keypair.Master("find me")
 
 	opb := OperationBodyPayment{
 		Target: kp.Address(),
 		Amount: Amount(100),
 	}
-	hashed := opb.GetHashString()
+	hashed := opb.MakeHashString()
 
 	expected := "CWLnH1pNLTehPpoid13j81vX7rSV6FhDXqqhqKHZhLoH"
 	if hashed != expected {

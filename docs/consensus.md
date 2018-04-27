@@ -4,7 +4,7 @@
 
 There are 4 state, `INIT` → `SIGN` → `ACCEPT` → `ALL-CONFIRM`
 
-* if ***Txm*** and ***Ba*** is expired in 2 minute in 'waiting slot' and 'voting slot', it will be moved to 'reserved slot'
+* if ***Txm*** and ***Ba*** is expired in 2 minute in 'waiting box'(or 'waiting ballot box') and 'voting box', it will be moved to 'reserved box'
 
 
 ## State Transition
@@ -19,25 +19,41 @@ In this state, broadcast ***Txm*** to the entire network.
     * key points
         * ***Txm*** has valid format and can be unserializable
         * is already in block?
-        * is already in 'waiting slot', 'voting slot' or 'reserved slot'
+        * is already in 'waiting box', 'voting box' or 'reserved box'
 
     * if validated,
         * store ***Txm*** in ***Txh***
     * if not,
         * abondon it
 
+* if validated
+    1. check in the `voting box` or `reserved box`
+    	- if exists in the `voting box`,
+    		1. ignore it
+    	- if exists in the `reserved box`,
+    		- if state is `init`
+    			1. the ballot in the `reserved box` moves to `waiting box`
+    		- if not,
+    			1. ignore it
+    1. check in the `waiting box`
+    	- if not,
+    		1. add it and node also add with current node
+    	- if exists,
+    		1. add to `waiting box`
+
+
 * broadcast ***Txm*** to the validators of node
     * Each node receive ***Txm*** and make ***Ba*** and then, broadcast it
 
 * The node will wait ***Ba***, to check 100% threshold to receive from all the **connected** validators
     * If passed,
-        - ***hash** of ***Txm*** will be added to 'voting slot'
-        - remove from 'waiting slot'
-    * If expired in 2 minute, it will be moved to 'reserved slot'
+        - ***hash** of ***Txm*** will be added to 'voting box'
+        - remove from 'waiting box'
+    * If expired in 2 minute, it will be moved to 'reserved box'
 
-* when adding 'voting slot', the new ***Ba*** will be checked,
+* when adding 'voting box', the new ***Ba*** will be checked,
     - is already in block?
-    - is already in 'voting slot', 'reserved slot' or 'reserved slot'
+    - is already in 'voting box', 'reserved box' or 'reserved box'
 
 
 ### `SIGN` → `ACCEPT`
@@ -95,4 +111,4 @@ In this state, check all the network is reached to `ACCEPT` and ready to store i
 In this state, confirmed ***Txm*** will be stored in ***Txb*** and the consensus process will be ended.
 
 * store ***Txm*** in ***Txb***
-* remove from slot
+* remove from box
