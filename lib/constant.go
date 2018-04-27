@@ -4,8 +4,13 @@ import (
 	"regexp"
 )
 
-var Version = "0.1+proto"                      // `Version` must follow the SemVer(https://semver.org)
-var totalBalance = "1,000,000,000,000.0000000" // 1 trillon with 7 decimal digit
+// Top-level of version. It must follow the SemVer(https://semver.org)
+var Version = "0.1+proto"
+
+// totalBalance is the maximum currency limit, you can not make the currency
+// over `totalBalance'. The default is 1 trillon with 7 decimal digit.
+var totalBalance = "1,000,000,000,000.0000000"
+
 var TotalBalance string
 var TotalBalanceLength int
 
