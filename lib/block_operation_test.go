@@ -42,7 +42,7 @@ func TestNewBlockOperationFromOperation(t *testing.T) {
 func TestBlockOperationSaveAndGet(t *testing.T) {
 	st, _ := storage.NewTestMemoryLevelDBBackend()
 
-	bos := makeNewBlockOperation(1)
+	bos := MakeNewBlockOperation(1)
 	if err := bos[0].Save(st); err != nil {
 		t.Error(err)
 		return
@@ -84,7 +84,7 @@ func TestBlockOperationSaveAndGet(t *testing.T) {
 func TestBlockOperationSaveExisting(t *testing.T) {
 	st, _ := storage.NewTestMemoryLevelDBBackend()
 
-	bos := makeNewBlockOperation(1)
+	bos := MakeNewBlockOperation(1)
 	bo := bos[0]
 	bo.Save(st)
 
@@ -112,7 +112,7 @@ func TestGetSortedBlockOperationsByTxHash(t *testing.T) {
 	var txHashes []string
 	createdOrder := map[string][]string{}
 	for _, _ = range [3]int{0, 0, 0} {
-		bos := makeNewBlockOperation(10)
+		bos := MakeNewBlockOperation(10)
 		txHashes = append(txHashes, bos[0].TxHash)
 
 		for _, bo := range bos {

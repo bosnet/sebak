@@ -20,7 +20,7 @@ func makeBlockAccount() *BlockAccount {
 	return NewBlockAccount(address, fmt.Sprintf("%d", balance), checkpoint)
 }
 
-func makeNewBlockOperation(n int) (bos []BlockOperation) {
+func MakeNewBlockOperation(n int) (bos []BlockOperation) {
 	tx := MakeTransaction(n)
 
 	for _, op := range tx.B.Operations {
@@ -30,14 +30,14 @@ func makeNewBlockOperation(n int) (bos []BlockOperation) {
 	return
 }
 
-func makeNewBlockTransaction(n int) BlockTransaction {
+func MakeNewBlockTransaction(n int) BlockTransaction {
 	tx := MakeTransaction(n)
 
 	a, _ := tx.Serialize()
 	return NewBlockTransactionFromTransaction(tx, a)
 }
 
-func makeOperationBodyPayment() OperationBodyPayment {
+func MakeOperationBodyPayment() OperationBodyPayment {
 	kp, _ := keypair.Random()
 
 	var amount int
@@ -51,8 +51,8 @@ func makeOperationBodyPayment() OperationBodyPayment {
 	}
 }
 
-func makeOperation() Operation {
-	opb := makeOperationBodyPayment()
+func MakeOperation() Operation {
+	opb := MakeOperationBodyPayment()
 
 	op := Operation{
 		H: OperationHeader{
@@ -70,7 +70,7 @@ func MakeTransaction(n int) (tx Transaction) {
 
 	var ops []Operation
 	for i := 0; i < n; i++ {
-		ops = append(ops, makeOperation())
+		ops = append(ops, MakeOperation())
 	}
 
 	txBody := TransactionBody{

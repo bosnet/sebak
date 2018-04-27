@@ -59,7 +59,7 @@ func TestNewBlockTransaction(t *testing.T) {
 func TestBlockTransactionSaveAndGet(t *testing.T) {
 	st, _ := storage.NewTestMemoryLevelDBBackend()
 
-	bt := makeNewBlockTransaction(1)
+	bt := MakeNewBlockTransaction(1)
 	if err := bt.Save(st); err != nil {
 		t.Error(err)
 		return
@@ -112,7 +112,7 @@ func TestBlockTransactionSaveAndGet(t *testing.T) {
 func TestBlockTransactionSaveExisting(t *testing.T) {
 	st, _ := storage.NewTestMemoryLevelDBBackend()
 
-	bt := makeNewBlockTransaction(1)
+	bt := MakeNewBlockTransaction(1)
 	bt.Save(st)
 
 	if exists, err := ExistBlockTransaction(st, bt.Hash); err != nil {
@@ -140,7 +140,7 @@ func TestGetSortedBlockTransactionsByCheckpoint(t *testing.T) {
 
 	checkpoint := uuid.New().String()
 	for i := 0; i < 10; i++ {
-		bt := makeNewBlockTransaction(1)
+		bt := MakeNewBlockTransaction(1)
 		bt.Checkpoint = checkpoint
 		createdOrder = append(createdOrder, bt.Hash)
 	}

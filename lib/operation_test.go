@@ -22,14 +22,14 @@ func TestMakeHashOfOperationBodyPayment(t *testing.T) {
 }
 
 func TestIsWellFormedOperation(t *testing.T) {
-	op := makeOperation()
+	op := MakeOperation()
 	if err := op.IsWellFormed(); err != nil {
 		t.Errorf("failed to check `Operation.IsWellFormed`: %v", err)
 	}
 }
 
 func TestIsWellFormedOperationLowerAmount(t *testing.T) {
-	obp := makeOperationBodyPayment()
+	obp := MakeOperationBodyPayment()
 	obp.Amount = 0
 	if err := obp.IsWellFormed(); err == nil {
 		t.Errorf("failed to `Operation.IsWellFormed`: `Amount` must occur error")
@@ -37,7 +37,7 @@ func TestIsWellFormedOperationLowerAmount(t *testing.T) {
 }
 
 func TestSerializeOperation(t *testing.T) {
-	op := makeOperation()
+	op := MakeOperation()
 	var b []byte
 	var err error
 	if b, err = op.Serialize(); err != nil {
