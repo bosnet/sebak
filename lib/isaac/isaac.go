@@ -1,8 +1,6 @@
 package consensus
 
 import (
-	"sort"
-
 	"github.com/spikeekips/sebak/lib/error"
 	"github.com/spikeekips/sebak/lib/storage"
 	"github.com/spikeekips/sebak/lib/transport"
@@ -84,19 +82,8 @@ func (is *ISAAC) ReceiveBallot(ballot Ballot) (vr *VotingResult, err error) {
 		vr, err = is.receiveBallotVotingStates(ballot)
 	}
 
-	if vr == nil || err != nil {
+	if err != nil {
 		return
-	}
-
-	return
-}
-
-func (is *ISAAC) CloseBallot(ballot Ballot, state BallotState) (err error) {
-	vr := is.Boxes.GetVotingResult(ballot)
-
-	if vr.State == BallotStateSIGN {
-		is.Boxes.WaitingBox.RemoveVotingResult(vr) // TODO detect error
-		is.Boxes.VotingBox.AddVotingResult(vr)     // TODO detect error
 	}
 
 	return
@@ -110,22 +97,23 @@ func (is *ISAAC) receiveBallotStateINIT(ballot Ballot) (vr *VotingResult, err er
 	}
 
 	if !isNew {
-		// check `VotingResult.CanGetResult()`; if possible, `VotingResult.GetResult()`
 		vr = is.Boxes.GetVotingResult(ballot)
 		if vr.IsClosed() || !vr.CanGetResult(is.VotingThresholdPolicy) {
 			return
 		}
 
-		state, ended := vr.GetResult(is.VotingThresholdPolicy)
+		_, ended := vr.GetResult(is.VotingThresholdPolicy)
 		if ended {
-			err = is.CloseBallot(ballot, state)
+			is.Boxes.WaitingBox.RemoveVotingResult(vr) // TODO detect error
+			is.Boxes.VotingBox.AddVotingResult(vr)     // TODO detect error
 		}
 
 		return
 	}
 
 	var newBallot Ballot
-	if newBallot, err = NewBallotFromMessage(is.Node.GetKeypair().Address(), ballot.GetMessage()); err != nil {
+	newBallot, err = NewBallotFromMessage(is.Node.GetKeypair().Address(), ballot.GetMessage())
+	if err != nil {
 		return
 	}
 
@@ -151,201 +139,21 @@ func (is *ISAAC) receiveBallotStateINIT(ballot Ballot) (vr *VotingResult, err er
 }
 
 func (is *ISAAC) receiveBallotVotingStates(ballot Ballot) (vr *VotingResult, err error) {
-	// FIXME if ballot indicates the unknown messsage, ignore it
-	if !is.Boxes.HasMessage(ballot.GetMessage()) {
-		return
-	}
-
-	vr = is.Boxes.GetVotingResult(ballot)
-
 	if _, err = is.Boxes.AddBallot(ballot); err != nil {
 		return
 	}
 
-	if vr.IsClosed() {
+	vr = is.Boxes.GetVotingResult(ballot)
+	if vr.IsClosed() || !vr.CanGetResult(is.VotingThresholdPolicy) {
 		return
 	}
 
-	// TODO if ballot is in `WaitingBox`, move to `VotingBox`
-	if !is.Boxes.VotingBox.HasMessage(ballot.GetMessage()) {
-		return
-	}
-
-	if !vr.CanGetResult(is.VotingThresholdPolicy) {
-		return
-	}
-
-	state, ended := vr.GetResult(is.VotingThresholdPolicy)
+	_, ended := vr.GetResult(is.VotingThresholdPolicy)
 	if ended {
-		err = is.CloseBallot(ballot, state)
+		return
 	}
 
 	// TODO if state reaches `BallotStateALLCONFIRM`, externalize it.
-
-	return
-}
-
-type BallotBoxes struct {
-	util.SafeLock
-
-	Results map[ /* `Message.GetHash()`*/ string]*VotingResult
-
-	WaitingBox  *BallotBox
-	VotingBox   *BallotBox
-	ReservedBox *BallotBox
-}
-
-func NewBallotBoxes() *BallotBoxes {
-	return &BallotBoxes{
-		Results:     map[string]*VotingResult{},
-		WaitingBox:  NewBallotBox(),
-		VotingBox:   NewBallotBox(),
-		ReservedBox: NewBallotBox(),
-	}
-}
-
-func (b *BallotBoxes) Len() int {
-	return len(b.Results)
-}
-
-func (b *BallotBoxes) HasMessage(m util.Message) bool {
-	return b.HasMessageByString(m.GetHash())
-}
-
-func (b *BallotBoxes) HasMessageByString(hash string) bool {
-	_, ok := b.Results[hash]
-	return ok
-}
-
-func (b *BallotBoxes) GetVotingResult(ballot Ballot) *VotingResult {
-	if !b.HasMessage(ballot.GetMessage()) {
-		return nil
-	}
-
-	return b.Results[ballot.GetMessage().GetHash()]
-}
-
-func (b *BallotBoxes) IsVoted(ballot Ballot) bool {
-	vr := b.GetVotingResult(ballot)
-	if vr == nil {
-		return false
-	}
-
-	return vr.IsVoted(ballot)
-}
-
-func (b *BallotBoxes) AddVotingResult(vr *VotingResult, bb *BallotBox) (err error) {
-	b.Lock()
-	defer b.Unlock()
-
-	b.Results[vr.MessageHash] = vr
-	bb.AddVotingResult(vr) // TODO detect error
-
-	return
-}
-
-func (b *BallotBoxes) RemoveVotingResult(vr *VotingResult, bb *BallotBox) (err error) {
-	if !b.HasMessageByString(vr.MessageHash) {
-		err = sebak_error.ErrorVotingResultNotFound
-		return
-	}
-
-	b.Lock()
-	defer b.Unlock()
-
-	delete(b.Results, vr.MessageHash)
-
-	bb.RemoveVotingResult(vr) // TODO detect error
-
-	return
-}
-
-func (b *BallotBoxes) AddBallot(ballot Ballot) (isNew bool, err error) {
-	b.Lock()
-	defer b.Unlock()
-
-	var vr *VotingResult
-
-	isNew = !b.HasMessage(ballot.GetMessage())
-	if !isNew {
-		vr = b.GetVotingResult(ballot)
-		if err = vr.Add(ballot); err != nil {
-			return
-		}
-
-		if b.ReservedBox.HasMessage(ballot.GetMessage()) {
-			b.ReservedBox.RemoveVotingResult(vr) // TODO detect error
-			b.VotingBox.AddVotingResult(vr)      // TODO detect error
-		}
-		return
-	}
-
-	vr, err = NewVotingResult(ballot)
-	if err != nil {
-		return
-	}
-
-	// unknown ballot will be in `WaitingBox`
-	err = b.AddVotingResult(vr, b.WaitingBox)
-
-	return
-}
-
-type BallotBox struct {
-	util.SafeLock
-
-	Hashes sort.StringSlice // `Message.Hash`es
-}
-
-func NewBallotBox() *BallotBox {
-	return &BallotBox{}
-}
-
-func (b *BallotBox) Len() int {
-	return len(b.Hashes)
-}
-
-func (b *BallotBox) HasMessage(m util.Message) bool {
-	return b.HasMessageByString(m.GetHash())
-}
-
-func (b *BallotBox) HasMessageByString(hash string) bool {
-	l := len(b.Hashes)
-	if l < 1 {
-		return false
-	}
-	i := sort.SearchStrings(b.Hashes, hash)
-
-	return i != l && b.Hashes[i] == hash
-}
-
-func (b *BallotBox) AddVotingResult(vr *VotingResult) (err error) {
-	if b.HasMessageByString(vr.MessageHash) {
-		err = sebak_error.ErrorVotingResultAlreadyExists
-		return
-	}
-
-	b.Lock()
-	defer b.Unlock()
-
-	b.Hashes = append(b.Hashes, vr.MessageHash)
-	sort.Strings(b.Hashes)
-
-	return
-}
-
-func (b *BallotBox) RemoveVotingResult(vr *VotingResult) (err error) {
-	if !b.HasMessageByString(vr.MessageHash) {
-		err = sebak_error.ErrorVotingResultNotFound
-		return
-	}
-
-	b.Lock()
-	defer b.Unlock()
-
-	i := sort.SearchStrings(b.Hashes, vr.MessageHash)
-	b.Hashes = append(b.Hashes[:i], b.Hashes[i+1:]...)
-	sort.Strings(b.Hashes)
 
 	return
 }

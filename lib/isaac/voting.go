@@ -81,12 +81,12 @@ func NewVotingResult(ballot Ballot) (vr *VotingResult, err error) {
 		BallotStateALLCONFIRM: VotingResultBallots{},
 	}
 
-	ballots[ballot.B.State][ballot.B.NodeKey] = NewVotingResultBallotFromBallot(ballot)
+	ballots[ballot.GetState()][ballot.B.NodeKey] = NewVotingResultBallotFromBallot(ballot)
 
 	vr = &VotingResult{
 		ID:          util.GetUniqueIDFromUUID(),
 		MessageHash: ballot.GetMessage().GetHash(),
-		State:       BallotStateNONE,
+		State:       ballot.GetState(),
 		Ballots:     ballots,
 	}
 
@@ -152,8 +152,6 @@ func (vr *VotingResult) Add(ballot Ballot) (err error) {
 		return
 	}
 	vr.Ballots[ballot.GetState()][ballot.B.NodeKey] = NewVotingResultBallotFromBallot(ballot)
-
-	// TODO call `CanGetResult()`
 
 	return
 }
