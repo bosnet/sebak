@@ -73,10 +73,10 @@ func NewBallotFromMessage(nodeKey string, m util.Message) (ballot Ballot, err er
 		Message: m,
 	}
 	body := BallotBody{
-		NodeKey: nodeKey,
-		State:   InitialState,
-		Voting:  VotingNOTYET,
-		Message: message,
+		NodeKey:    nodeKey,
+		State:      InitialState,
+		VotingHole: VotingNOTYET,
+		Message:    message,
 	}
 	ballot = Ballot{
 		H: BallotHeader{
@@ -174,8 +174,8 @@ func (b *Ballot) UpdateHash() {
 	return
 }
 
-func (b *Ballot) Vote(v Voting) {
-	b.B.Voting = v
+func (b *Ballot) Vote(v VotingHole) {
+	b.B.VotingHole = v
 
 	return
 }
@@ -186,10 +186,10 @@ type BallotHeader struct {
 }
 
 type BallotBody struct {
-	NodeKey string      `json:"node_key"` // validator's public address
-	State   BallotState `json:state`
-	Voting  Voting      `json:"voting"`
-	Reason  string      `json:"reason"`
+	NodeKey    string      `json:"node_key"` // validator's public address
+	State      BallotState `json:state`
+	VotingHole VotingHole  `json:"voting_hole"`
+	Reason     string      `json:"reason"`
 
 	Message BallotMessage `json:"message"`
 }

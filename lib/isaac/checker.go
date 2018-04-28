@@ -29,7 +29,7 @@ func checkBallotVerifySignature(target interface{}, args ...interface{}) error {
 }
 
 func checkBallotNoVoting(target interface{}, args ...interface{}) error {
-	if target.(Ballot).B.Voting == VotingNOTYET {
+	if target.(Ballot).B.VotingHole == VotingNOTYET {
 		return sebak_error.ErrorBallotNoVoting
 	}
 	return nil

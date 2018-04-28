@@ -84,8 +84,19 @@ func (is *ISAAC) ReceiveBallot(ballot Ballot) (vr *VotingResult, err error) {
 		vr, err = is.receiveBallotVotingStates(ballot)
 	}
 
-	if err != nil {
+	if vr == nil || err != nil {
 		return
+	}
+
+	return
+}
+
+func (is *ISAAC) CloseBallot(ballot Ballot, state BallotState) (err error) {
+	vr := is.Boxes.GetVotingResult(ballot)
+
+	if vr.State == BallotStateSIGN {
+		is.Boxes.WaitingBox.RemoveVotingResult(vr) // TODO detect error
+		is.Boxes.VotingBox.AddVotingResult(vr)     // TODO detect error
 	}
 
 	return
@@ -100,25 +111,15 @@ func (is *ISAAC) receiveBallotStateINIT(ballot Ballot) (vr *VotingResult, err er
 
 	if !isNew {
 		// check `VotingResult.CanGetResult()`; if possible, `VotingResult.GetResult()`
-		vrt := is.Boxes.GetVotingResult(ballot)
-		if !vrt.CanGetResult(is.VotingThresholdPolicy) {
+		vr = is.Boxes.GetVotingResult(ballot)
+		if vr.IsClosed() || !vr.CanGetResult(is.VotingThresholdPolicy) {
 			return
 		}
 
-		state, passed := vrt.GetResult(is.VotingThresholdPolicy)
-		if !passed || state.Next() < vrt.State {
-			return
+		state, ended := vr.GetResult(is.VotingThresholdPolicy)
+		if ended {
+			err = is.CloseBallot(ballot, state)
 		}
-
-		// TODO move to next state, so broadcast new ballot
-		if !vrt.SetState(state.Next()) {
-			err = sebak_error.ErrorVotingResultFailedToSetState
-			return
-		}
-		is.Boxes.WaitingBox.RemoveVotingResult(vrt) // TODO detect error
-		is.Boxes.VotingBox.AddVotingResult(vrt)     // TODO detect error
-
-		vr = vrt
 
 		return
 	}
@@ -144,6 +145,8 @@ func (is *ISAAC) receiveBallotStateINIT(ballot Ballot) (vr *VotingResult, err er
 
 	// TODO this ballot should be broadcasted
 
+	vr = is.Boxes.GetVotingResult(ballot)
+
 	return
 }
 
@@ -153,33 +156,31 @@ func (is *ISAAC) receiveBallotVotingStates(ballot Ballot) (vr *VotingResult, err
 		return
 	}
 
+	vr = is.Boxes.GetVotingResult(ballot)
+
 	if _, err = is.Boxes.AddBallot(ballot); err != nil {
 		return
 	}
 
+	if vr.IsClosed() {
+		return
+	}
+
+	// TODO if ballot is in `WaitingBox`, move to `VotingBox`
 	if !is.Boxes.VotingBox.HasMessage(ballot.GetMessage()) {
 		return
 	}
 
-	vrt := is.Boxes.GetVotingResult(ballot)
-	if !vrt.CanGetResult(is.VotingThresholdPolicy) {
+	if !vr.CanGetResult(is.VotingThresholdPolicy) {
 		return
 	}
 
-	state, passed := vrt.GetResult(is.VotingThresholdPolicy)
-	if !passed || state.Next() < vrt.State {
-		return
-	}
-
-	// TODO move to next state, so broadcast new ballot
-	if !vrt.SetState(state.Next()) {
-		err = sebak_error.ErrorVotingResultFailedToSetState
-		return
+	state, ended := vr.GetResult(is.VotingThresholdPolicy)
+	if ended {
+		err = is.CloseBallot(ballot, state)
 	}
 
 	// TODO if state reaches `BallotStateALLCONFIRM`, externalize it.
-
-	vr = vrt
 
 	return
 }

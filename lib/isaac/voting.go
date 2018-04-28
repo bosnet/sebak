@@ -9,31 +9,58 @@ import (
 	"github.com/spikeekips/sebak/lib/util"
 )
 
-type Voting string
+type VotingHole string
 
 const (
-	VotingNOTYET Voting = "NOT-YET"
-	VotingYES    Voting = "YES"
-	VotingNO     Voting = "NO"
+	VotingNOTYET VotingHole = "NOT-YET"
+	VotingYES    VotingHole = "YES"
+	VotingNO     VotingHole = "NO"
 )
 
 type VotingResultBallot struct {
-	Hash   string // `Ballot.GetHash()`
-	State  BallotState
-	Voting Voting
-	Reason string
+	Hash       string // `Ballot.GetHash()`
+	State      BallotState
+	VotingHole VotingHole
+	Reason     string
 }
 
 func NewVotingResultBallotFromBallot(ballot Ballot) VotingResultBallot {
 	return VotingResultBallot{
-		Hash:   ballot.GetHash(),
-		State:  ballot.B.State,
-		Voting: ballot.B.Voting,
-		Reason: ballot.B.Reason,
+		Hash:       ballot.GetHash(),
+		State:      ballot.B.State,
+		VotingHole: ballot.B.VotingHole,
+		Reason:     ballot.B.Reason,
 	}
 }
 
 type VotingResultBallots map[ /* NodeKey */ string]VotingResultBallot
+
+type VotingStateStaging struct {
+	State BallotState
+
+	VotingHole VotingHole // voting is closed and it's last `VotingHole`
+	Reason     error      // if `VotingNO` is concluded, the reason
+
+	Ballots map[ /* NodeKey */ string]VotingResultBallot
+}
+
+func (vs VotingStateStaging) IsValid() bool {
+	return len(vs.Ballots) > 0
+}
+
+func (vs VotingStateStaging) IsClosed() bool {
+	if !vs.IsValid() {
+		return false
+	}
+	if vs.VotingHole == VotingNO {
+		return true
+	}
+	if vs.State == BallotStateALLCONFIRM {
+		return true
+	}
+
+	return false
+}
 
 type VotingResult struct {
 	sync.Mutex
@@ -42,6 +69,7 @@ type VotingResult struct {
 	MessageHash string      // MessageHash is `Message.Hash`
 	State       BallotState // Latest `BallotState`
 	Ballots     map[BallotState]VotingResultBallots
+	Staging     []VotingStateStaging // state changing histories
 }
 
 func NewVotingResult(ballot Ballot) (vr *VotingResult, err error) {
@@ -65,10 +93,17 @@ func NewVotingResult(ballot Ballot) (vr *VotingResult, err error) {
 	return
 }
 
+func (vr *VotingResult) IsClosed() bool {
+	return vr.GetStaging().IsClosed()
+}
+
 func (vr *VotingResult) SetState(state BallotState) bool {
 	if vr.State >= state {
 		return false
 	}
+
+	vr.Lock()
+	defer vr.Unlock()
 
 	vr.State = state
 
@@ -118,6 +153,8 @@ func (vr *VotingResult) Add(ballot Ballot) (err error) {
 	}
 	vr.Ballots[ballot.GetState()][ballot.B.NodeKey] = NewVotingResultBallotFromBallot(ballot)
 
+	// TODO call `CanGetResult()`
+
 	return
 }
 
@@ -135,24 +172,33 @@ func (vr *VotingResult) CanCheckThreshold(state BallotState, threshold uint32) b
 	return true
 }
 
-func (vr *VotingResult) CheckThreshold(state BallotState, threshold uint32) bool {
+func (vr *VotingResult) CheckThreshold(state BallotState, threshold uint32) (VotingHole, bool) {
 	if threshold < 1 {
-		return false
+		return VotingNOTYET, false
 	}
 	if state == BallotStateNONE {
-		return false
+		return VotingNOTYET, false
 	}
 	if vr.GetVotedCount(state) < int(threshold) {
-		return false
+		return VotingNOTYET, false
 	}
 
 	var yes int
+	var no int
 	for _, vrb := range vr.GetVotedBallotsByState(state) {
-		if vrb.Voting == VotingYES {
+		if vrb.VotingHole == VotingYES {
 			yes += 1
+		} else if vrb.VotingHole == VotingNO {
+			no += 1
 		}
 	}
-	return yes >= int(threshold)
+	if yes >= int(threshold) {
+		return VotingYES, true
+	} else if no >= int(threshold) {
+		return VotingNO, true
+	}
+
+	return VotingNOTYET, false
 }
 
 var CheckVotingThresholdSequence = []BallotState{
@@ -175,12 +221,45 @@ func (vr *VotingResult) GetResult(policy VotingThresholdPolicy) (BallotState, bo
 		if t < 1 {
 			continue
 		}
-		if vr.CheckThreshold(state, t) {
+		votingHole, ended := vr.CheckThreshold(state, t)
+		if ended {
+			if err := vr.ChangeState(votingHole, state); err != nil {
+				return vr.State, false
+			}
 			return state, true
 		}
 	}
 
 	return vr.State, false
+}
+
+func (vr *VotingResult) ChangeState(votingHole VotingHole, state BallotState) (err error) {
+	if !vr.SetState(state.Next()) {
+		err = sebak_error.ErrorVotingResultFailedToSetState
+		return
+	}
+
+	vr.Lock()
+	defer vr.Unlock()
+
+	// TODO set `VotingResult.Reason`
+	vr.Staging = append(
+		vr.Staging,
+		VotingStateStaging{
+			State:      state,
+			VotingHole: votingHole,
+			Ballots:    vr.GetVotedBallotsByState(state),
+		},
+	)
+
+	return
+}
+
+func (vr *VotingResult) GetStaging() VotingStateStaging {
+	if len(vr.Staging) < 1 {
+		return VotingStateStaging{}
+	}
+	return vr.Staging[len(vr.Staging)-1]
 }
 
 func (vr *VotingResult) CanGetResult(policy VotingThresholdPolicy) bool {

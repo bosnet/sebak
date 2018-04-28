@@ -65,19 +65,19 @@ func TestVotingResultCheckThreshold(t *testing.T) {
 		vr.Add(ballot)
 	}
 
-	if vr.CheckThreshold(BallotStateNONE, numberOfBallots) {
+	if _, ended := vr.CheckThreshold(BallotStateNONE, numberOfBallots); ended {
 		t.Error("`BallotStateNONE` must be `false`")
 		return
 	}
-	if !vr.CheckThreshold(BallotStateINIT, numberOfBallots) {
+	if _, ended := vr.CheckThreshold(BallotStateINIT, numberOfBallots); !ended {
 		t.Error("`BallotStateINIT` must be `true`")
 		return
 	}
-	if vr.CheckThreshold(BallotStateINIT, 0) {
+	if _, ended := vr.CheckThreshold(BallotStateINIT, 0); ended {
 		t.Error("`BallotStateINIT` must be `false`")
 		return
 	}
-	if !vr.CheckThreshold(BallotStateINIT, numberOfBallots-1) {
+	if _, ended := vr.CheckThreshold(BallotStateINIT, numberOfBallots-1); !ended {
 		t.Error("`BallotStateINIT` must be `false`")
 		return
 	}
@@ -96,13 +96,13 @@ func TestVotingResultGetResult(t *testing.T) {
 		policy, _ := NewDefaultVotingThresholdPolicy(100, 30, 30)
 		policy.SetValidators(uint64(numberOfBallots))
 
-		state, passed := vr.GetResult(policy)
+		state, ended := vr.GetResult(policy)
 		if state != BallotStateINIT {
 			t.Errorf("state must be `BallotStateINIT`: %v", state)
 			return
 		}
-		if !passed {
-			t.Error("must be passed")
+		if !ended {
+			t.Error("must be ended")
 			return
 		}
 	}
@@ -112,13 +112,13 @@ func TestVotingResultGetResult(t *testing.T) {
 		policy, _ := NewDefaultVotingThresholdPolicy(100, 50, 50)
 		policy.SetValidators(uint64(numberOfBallots) + 100)
 
-		state, passed := vr.GetResult(policy)
-		if state != BallotStateNONE {
-			t.Errorf("state must be `BallotStateNONE`: %v", state)
+		state, ended := vr.GetResult(policy)
+		if state != BallotStateSIGN {
+			t.Errorf("state must be `BallotStateSIGN`: %v", state)
 			return
 		}
-		if passed {
-			t.Error("must not be passed")
+		if ended {
+			t.Error("must not be ended")
 			return
 		}
 	}
@@ -146,13 +146,13 @@ func TestVotingResultGetResultHigherStateMustBePicked(t *testing.T) {
 		policy, _ := NewDefaultVotingThresholdPolicy(100, 50, 50)
 		policy.SetValidators(uint64(numberOfBallots))
 
-		state, passed := vr.GetResult(policy)
+		state, ended := vr.GetResult(policy)
 		if state != BallotStateACCEPT {
 			t.Error("state must be `BallotStateACCEPT`")
 			return
 		}
-		if !passed {
-			t.Error("must be passed")
+		if !ended {
+			t.Error("must be ended")
 			return
 		}
 	}

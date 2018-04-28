@@ -311,7 +311,7 @@ func TestISAACReceiveBallotStateINITAndVotingBox(t *testing.T) {
 			t.Error(err)
 			return
 		}
-		if vr != nil {
+		if vr.IsClosed() {
 			break
 		}
 		if !is.Boxes.IsVoted(ballot) {
@@ -331,17 +331,13 @@ func TestISAACReceiveBallotStateINITAndVotingBox(t *testing.T) {
 }
 
 func voteISAACReceiveBallot(is *ISAAC, ballots []Ballot, kps []*keypair.Full, state BallotState) (vr *VotingResult, err error) {
-	var vrt *VotingResult
 	for i, ballot := range ballots {
 		ballot.SetState(state)
 		ballot.UpdateHash()
 		ballot.Sign(kps[i])
 
-		if vrt, err = is.ReceiveBallot(ballot); err != nil {
+		if vr, err = is.ReceiveBallot(ballot); err != nil {
 			break
-		}
-		if vrt != nil {
-			vr = vrt
 		}
 		if !is.Boxes.IsVoted(ballot) {
 			return
@@ -494,13 +490,9 @@ func TestISAACReceiveSameBallotStates(t *testing.T) {
 
 	vrFirst := is.Boxes.GetVotingResult(ballots[0])
 	{
-		vr, err := voteISAACReceiveBallot(is, ballots, kps, BallotStateINIT)
+		_, err := voteISAACReceiveBallot(is, ballots, kps, BallotStateINIT)
 		if err != nil {
 			t.Error(err)
-			return
-		}
-		if vr != nil {
-			t.Error("already state was changed to `BallotStateSIGN`")
 			return
 		}
 	}

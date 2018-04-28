@@ -8,7 +8,7 @@ import (
 	"github.com/stellar/go/keypair"
 )
 
-func makeNewBallot(state BallotState, vote Voting) (*keypair.Full, sebak.Transaction, Ballot) {
+func makeNewBallot(state BallotState, vote VotingHole) (*keypair.Full, sebak.Transaction, Ballot) {
 	kpNode, _ := keypair.Random()
 	tx := sebak.MakeTransaction(1)
 	ballot, _ := NewBallotFromMessage(kpNode.Address(), tx)
@@ -50,8 +50,8 @@ func TestNewBallot(t *testing.T) {
 		t.Error("`Ballot.B.State` is not `InitialState`")
 		return
 	}
-	if ballot.B.Voting != VotingNOTYET {
-		t.Error("initial `Ballot.B.Voting` must be `VotingNOTYET`")
+	if ballot.B.VotingHole != VotingNOTYET {
+		t.Error("initial `Ballot.B.VotingHole` must be `VotingNOTYET`")
 		return
 	}
 }
