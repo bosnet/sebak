@@ -43,7 +43,7 @@ type BlockTransaction struct {
 func NewBlockTransactionFromTransaction(tx Transaction, message []byte) BlockTransaction {
 	var opHashes []string
 	for _, op := range tx.B.Operations {
-		opHashes = append(opHashes, op.H.Hash)
+		opHashes = append(opHashes, op.MakeHashString())
 	}
 
 	return BlockTransaction{

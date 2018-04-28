@@ -56,7 +56,6 @@ func MakeOperation() Operation {
 
 	op := Operation{
 		H: OperationHeader{
-			Hash: opb.MakeHashString(),
 			Type: OperationPayment,
 		},
 		B: opb,

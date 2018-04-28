@@ -13,9 +13,13 @@ func TestMakeHashOfOperationBodyPayment(t *testing.T) {
 		Target: kp.Address(),
 		Amount: Amount(100),
 	}
-	hashed := opb.MakeHashString()
+	op := Operation{
+		H: OperationHeader{Type: OperationPayment},
+		B: opb,
+	}
+	hashed := op.MakeHashString()
 
-	expected := "CWLnH1pNLTehPpoid13j81vX7rSV6FhDXqqhqKHZhLoH"
+	expected := "8AALKhfgCu2w3ZtbESXHG5ko93Jb1L1yCmFopoJubQh9"
 	if hashed != expected {
 		t.Errorf("hased != <expected>: '%s' != '%s'", hashed, expected)
 	}

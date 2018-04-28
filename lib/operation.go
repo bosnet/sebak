@@ -22,12 +22,15 @@ type Operation struct {
 	B OperationBody
 }
 
-func (o Operation) IsWellFormed() (err error) {
-	if len(o.H.Hash) < 1 {
-		err = fmt.Errorf("empty `H.Hash`")
-		return
-	}
+func (o Operation) MakeHash() []byte {
+	return util.MustMakeObjectHash(o)
+}
 
+func (o Operation) MakeHashString() string {
+	return base58.Encode(o.MakeHash())
+}
+
+func (o Operation) IsWellFormed() (err error) {
 	if err = o.B.IsWellFormed(); err != nil {
 		return
 	}
@@ -36,10 +39,6 @@ func (o Operation) IsWellFormed() (err error) {
 }
 
 func (o Operation) Validate(st storage.LevelDBBackend) (err error) {
-	if o.B.MakeHashString() != o.H.Hash {
-		return fmt.Errorf("`Hash` mismatch")
-	}
-
 	if err = o.B.Validate(); err != nil {
 		return
 	}
@@ -101,13 +100,10 @@ func NewOperationFromInterface(oj OperationFromJSON) (op Operation, err error) {
 }
 
 type OperationHeader struct {
-	Hash string        `json:"hash"` // TODO useless!
 	Type OperationType `json:"type"`
 }
 
 type OperationBody interface {
-	MakeHash() []byte
-	MakeHashString() string
 	Validate() error
 	IsWellFormed() error
 	GetTargetAddress() string
@@ -135,14 +131,6 @@ func (ob OperationBodyPayment) IsWellFormed() (err error) {
 	}
 
 	return
-}
-
-func (ob OperationBodyPayment) MakeHash() []byte {
-	return util.MustMakeObjectHash(ob)
-}
-
-func (ob OperationBodyPayment) MakeHashString() string {
-	return base58.Encode(ob.MakeHash())
 }
 
 func (ob OperationBodyPayment) Validate() (err error) {
@@ -175,14 +163,6 @@ func (ob OperationBodyCreateAccount) IsWellFormed() (err error) {
 	} // TODO check over minimum balance
 
 	return
-}
-
-func (ob OperationBodyCreateAccount) MakeHash() []byte {
-	return util.MustMakeObjectHash(ob)
-}
-
-func (ob OperationBodyCreateAccount) MakeHashString() string {
-	return base58.Encode(ob.MakeHash())
 }
 
 func (ob OperationBodyCreateAccount) Validate() (err error) {

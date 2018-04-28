@@ -40,7 +40,7 @@ type BlockOperation struct {
 
 func NewBlockOperationFromOperation(op Operation, tx Transaction) BlockOperation {
 	return BlockOperation{
-		Hash:   op.H.Hash,
+		Hash:   op.MakeHashString(),
 		TxHash: tx.H.Hash,
 
 		Type:   op.H.Type,

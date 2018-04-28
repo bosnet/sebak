@@ -13,10 +13,6 @@ func TestNewBlockOperationFromOperation(t *testing.T) {
 	op := tx.B.Operations[0]
 	bo := NewBlockOperationFromOperation(op, tx)
 
-	if bo.Hash != op.H.Hash {
-		t.Error("mismatch `Hash`")
-		return
-	}
 	if bo.Type != op.H.Type {
 		t.Error("mismatch `Type`")
 		return
