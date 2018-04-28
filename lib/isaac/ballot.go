@@ -1,4 +1,4 @@
-package isaac
+package consensus
 
 import (
 	"encoding/json"

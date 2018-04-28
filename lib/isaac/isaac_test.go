@@ -1,7 +1,8 @@
-package isaac
+package consensus
 
 import (
 	"encoding/json"
+	"errors"
 	"net"
 	"testing"
 
@@ -80,12 +81,12 @@ func (m DummyMessage) String() string {
 	return string(s)
 }
 
-func makeISAAC(validators int) *ISAAC {
+func makeISAAC(minimumValidators int) *ISAAC {
 	st, _ := storage.NewTestMemoryLevelDBBackend()
 	tp := &DummyTransport{}
 
 	policy, _ := NewDefaultVotingThresholdPolicy(100, 30, 30)
-	policy.SetValidators(uint64(validators))
+	policy.SetValidators(uint64(minimumValidators))
 
 	is, _ := NewISAAC(NewRandomNode(), policy, st, tp)
 
@@ -329,121 +330,197 @@ func TestISAACReceiveBallotStateINITAndVotingBox(t *testing.T) {
 	}
 }
 
+func voteISAACReceiveBallot(is *ISAAC, ballots []Ballot, kps []*keypair.Full, state BallotState) (vr *VotingResult, err error) {
+	var vrt *VotingResult
+	for i, ballot := range ballots {
+		ballot.SetState(state)
+		ballot.UpdateHash()
+		ballot.Sign(kps[i])
+
+		if vrt, err = is.ReceiveBallot(ballot); err != nil {
+			break
+		}
+		if vrt != nil {
+			vr = vrt
+		}
+		if !is.Boxes.IsVoted(ballot) {
+			return
+		}
+	}
+	if err != nil {
+		return
+	}
+
+	return
+}
+
 func TestISAACReceiveBallotStateTransition(t *testing.T) {
 	var numberOfBallots uint64 = 5
-	var validators int = 3
+	var minimumValidators int = 3 // must be passed
 
-	is := makeISAAC(validators)
+	is := makeISAAC(minimumValidators)
 
 	m := NewDummyMessage(util.GenerateUUID())
 
 	var ballots []Ballot
 	var kps []*keypair.Full
 
+	for i := 0; i < int(numberOfBallots); i++ {
+		kp, _ := keypair.Random()
+		kps = append(kps, kp)
+
+		ballots = append(ballots, makeBallot(kp, m, BallotStateINIT))
+	}
+
 	// INIT -> SIGN
 	{
-		var err error
-		var vr *VotingResult
-		for i := 0; i < int(numberOfBallots); i++ {
-			kp, _ := keypair.Random()
-			kps = append(kps, kp)
-
-			ballot := makeBallot(kp, m, BallotStateINIT)
-			ballots = append(ballots, ballot)
-
-			var vrt *VotingResult
-			if vrt, err = is.ReceiveBallot(ballot); err != nil {
-				t.Error(err)
-				return
-			}
-			if vr == nil && vrt != nil {
-				vr = vrt
-			}
-			if !is.Boxes.IsVoted(ballot) {
-				t.Error("failed to vote")
-				return
-			}
-		}
-
-		if vr == nil {
-			t.Error("failed to get result")
-			return
-		}
-		if vr.State != BallotStateSIGN {
-			t.Error("`VotingResult.State` must be `BallotStateSIGN`")
+		vr, err := voteISAACReceiveBallot(is, ballots, kps, BallotStateINIT)
+		if err != nil {
+			t.Error(err)
 			return
 		}
 
 		if is.Boxes.WaitingBox.HasMessage(ballots[0].GetMessage()) {
 			t.Error("after `INIT`, the ballot must move to `VotingBox`")
 		}
+
+		if vr == nil {
+			err = errors.New("failed to get result")
+			return
+		}
+		if vr.State != BallotStateSIGN {
+			err = errors.New("`VotingResult.State` must be `BallotStateSIGN`")
+			return
+		}
+
 		if !is.Boxes.VotingBox.HasMessage(ballots[0].GetMessage()) {
-			t.Error("after `INIT`, the ballot must move to `VotingBox`")
+			err = errors.New("after `INIT`, the ballot must move to `VotingBox`")
+			return
 		}
 	}
 
 	// SIGN -> ACCEPT
 	{
-		var err error
-		var vr *VotingResult
-		for i, ballot := range ballots {
-			ballot.SetState(ballot.GetState().Next())
-			ballot.UpdateHash()
-			ballot.Sign(kps[i])
-
-			if vr, err = is.ReceiveBallot(ballot); err != nil {
-				t.Error(err)
-				return
-			}
-			if vr != nil {
-				break
-			}
-			if !is.Boxes.IsVoted(ballot) {
-				t.Error("failed to vote")
-				return
-			}
+		vr, err := voteISAACReceiveBallot(is, ballots, kps, BallotStateSIGN)
+		if err != nil {
+			t.Error(err)
+			return
 		}
 
 		if vr == nil {
-			t.Error("failed to get result")
+			err = errors.New("failed to get result")
 			return
 		}
 		if vr.State != BallotStateACCEPT {
-			t.Error("`VotingResult.State` must be `BallotStateACCEPT`")
+			err = errors.New("`VotingResult.State` must be `BallotStateACCEPT`")
+			return
+		}
+
+		if !is.Boxes.VotingBox.HasMessage(ballots[0].GetMessage()) {
+			err = errors.New("after `INIT`, the ballot must move to `VotingBox`")
 			return
 		}
 	}
 
+	// ACCEPT -> ALL-CONFIRM
 	{
-		var err error
-		var vr *VotingResult
-
-		for i, ballot := range ballots {
-			ballot.SetState(ballot.GetState().Next().Next())
-			ballot.UpdateHash()
-			ballot.Sign(kps[i])
-
-			if vr, err = is.ReceiveBallot(ballot); err != nil {
-				t.Error(err)
-				return
-			}
-			if vr != nil {
-				break
-			}
-			if !is.Boxes.IsVoted(ballot) {
-				t.Error("failed to vote")
-				return
-			}
+		vr, err := voteISAACReceiveBallot(is, ballots, kps, BallotStateACCEPT)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if vr == nil {
+			err = errors.New("failed to get result")
+			return
+		}
+		if vr.State != BallotStateALLCONFIRM {
+			err = errors.New("`VotingResult.State` must be `BallotStateALLCONFIRM`")
+			return
 		}
 
+		if !is.Boxes.VotingBox.HasMessage(ballots[0].GetMessage()) {
+			err = errors.New("after `INIT`, the ballot must move to `VotingBox`")
+			return
+		}
+	}
+}
+
+func TestISAACReceiveSameBallotStates(t *testing.T) {
+	var numberOfBallots uint64 = 5
+	var minimumValidators int = 3
+
+	is := makeISAAC(minimumValidators)
+
+	m := NewDummyMessage(util.GenerateUUID())
+
+	var ballots []Ballot
+	var kps []*keypair.Full
+
+	for i := 0; i < int(numberOfBallots); i++ {
+		kp, _ := keypair.Random()
+		kps = append(kps, kp)
+
+		ballots = append(ballots, makeBallot(kp, m, BallotStateINIT))
+	}
+
+	{
+		vr, err := voteISAACReceiveBallot(is, ballots, kps, BallotStateINIT)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		if is.Boxes.WaitingBox.HasMessage(ballots[0].GetMessage()) {
+			t.Error("after `INIT`, the ballot must move to `VotingBox`")
+		}
 		if vr == nil {
 			t.Error("failed to get result")
 			return
 		}
+		if vr.State != BallotStateSIGN {
+			err = errors.New("`VotingResult.State` must be `BallotStateSIGN`")
+		}
 
-		if vr.State != BallotStateALLCONFIRM {
-			t.Error("`VotingResult.State` must be `BallotStateALLCONFIRM`")
+		if vr.GetVotedCount(BallotStateINIT) != int(numberOfBallots)+1 {
+			t.Error("some ballot was not voted")
 			return
+		}
+
+		if vr.GetVotedCount(BallotStateSIGN) != 0 || vr.GetVotedCount(BallotStateACCEPT) != 0 || vr.GetVotedCount(BallotStateALLCONFIRM) != 0 {
+			t.Error("unexpected ballots found")
+			return
+		}
+	}
+
+	vrFirst := is.Boxes.GetVotingResult(ballots[0])
+	{
+		vr, err := voteISAACReceiveBallot(is, ballots, kps, BallotStateINIT)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		if vr != nil {
+			t.Error("already state was changed to `BallotStateSIGN`")
+			return
+		}
+	}
+	vrSecond := is.Boxes.GetVotingResult(ballots[0])
+	if vrSecond.GetVotedCount(BallotStateINIT) != int(numberOfBallots)+1 {
+		t.Error("some ballot was not voted")
+		return
+	}
+
+	if vrSecond.GetVotedCount(BallotStateSIGN) != 0 || vrSecond.GetVotedCount(BallotStateACCEPT) != 0 || vrSecond.GetVotedCount(BallotStateALLCONFIRM) != 0 {
+		t.Error("unexpected ballots found")
+		return
+	}
+
+	for k, v := range vrFirst.Ballots {
+		for k0, v0 := range v {
+			if v0.Hash != vrSecond.Ballots[k][k0].Hash {
+				t.Error("not matched")
+				break
+			}
 		}
 	}
 }

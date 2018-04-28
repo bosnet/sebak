@@ -1,4 +1,4 @@
-package isaac
+package consensus
 
 import (
 	"encoding/json"
@@ -18,7 +18,7 @@ const (
 )
 
 type VotingResultBallot struct {
-	Hash   string
+	Hash   string // `Ballot.GetHash()`
 	State  BallotState
 	Voting Voting
 	Reason string
@@ -97,6 +97,14 @@ func (vr *VotingResult) IsVoted(ballot Ballot) bool {
 	return true
 }
 
+func (vr *VotingResult) GetVotedBallotsByState(state BallotState) VotingResultBallots {
+	return vr.Ballots[state]
+}
+
+func (vr *VotingResult) GetVotedCount(state BallotState) int {
+	return len(vr.GetVotedBallotsByState(state))
+}
+
 var VotingResultCheckerFuns = []util.CheckerFunc{
 	checkBallotResultValidHash,
 }
@@ -120,7 +128,7 @@ func (vr *VotingResult) CanCheckThreshold(state BallotState, threshold uint32) b
 	if state == BallotStateNONE {
 		return false
 	}
-	if len(vr.Ballots[state]) < int(threshold) {
+	if vr.GetVotedCount(state) < int(threshold) {
 		return false
 	}
 
@@ -134,12 +142,12 @@ func (vr *VotingResult) CheckThreshold(state BallotState, threshold uint32) bool
 	if state == BallotStateNONE {
 		return false
 	}
-	if len(vr.Ballots[state]) < int(threshold) {
+	if vr.GetVotedCount(state) < int(threshold) {
 		return false
 	}
 
 	var yes int
-	for _, vrb := range vr.Ballots[state] {
+	for _, vrb := range vr.GetVotedBallotsByState(state) {
 		if vrb.Voting == VotingYES {
 			yes += 1
 		}
