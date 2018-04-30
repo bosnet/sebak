@@ -106,7 +106,7 @@ type OperationHeader struct {
 type OperationBody interface {
 	Validate() error
 	IsWellFormed() error
-	GetTargetAddress() string
+	TargetAddress() string
 	GetAmount() Amount
 }
 
@@ -139,7 +139,7 @@ func (ob OperationBodyPayment) Validate() (err error) {
 	return
 }
 
-func (ob OperationBodyPayment) GetTargetAddress() string {
+func (ob OperationBodyPayment) TargetAddress() string {
 	return ob.Target
 }
 
@@ -171,7 +171,7 @@ func (ob OperationBodyCreateAccount) Validate() (err error) {
 	return
 }
 
-func (ob OperationBodyCreateAccount) GetTargetAddress() string {
+func (ob OperationBodyCreateAccount) TargetAddress() string {
 	return ob.Target
 }
 

@@ -46,7 +46,7 @@ func TestNewBlockTransaction(t *testing.T) {
 			t.Error("`BlockTransaction.Operations mismatch`")
 		}
 	}
-	if bt.Amount != tx.GetTotalAmount(true) {
+	if bt.Amount != tx.TotalAmount(true) {
 		t.Error("`BlockTransaction.Amount mismatch`")
 		return
 	}

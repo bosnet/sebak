@@ -37,11 +37,10 @@ func MakeNewBlockTransaction(n int) BlockTransaction {
 	return NewBlockTransactionFromTransaction(tx, a)
 }
 
-func MakeOperationBodyPayment() OperationBodyPayment {
+func MakeOperationBodyPayment(amount int) OperationBodyPayment {
 	kp, _ := keypair.Random()
 
-	var amount int
-	for amount < 1 {
+	for amount < 0 {
 		amount = rand.Intn(5000)
 	}
 
@@ -51,8 +50,8 @@ func MakeOperationBodyPayment() OperationBodyPayment {
 	}
 }
 
-func MakeOperation() Operation {
-	opb := MakeOperationBodyPayment()
+func MakeOperation(amount int) Operation {
+	opb := MakeOperationBodyPayment(amount)
 
 	op := Operation{
 		H: OperationHeader{
@@ -69,7 +68,7 @@ func MakeTransaction(n int) (tx Transaction) {
 
 	var ops []Operation
 	for i := 0; i < n; i++ {
-		ops = append(ops, MakeOperation())
+		ops = append(ops, MakeOperation(-1))
 	}
 
 	txBody := TransactionBody{

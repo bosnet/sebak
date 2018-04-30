@@ -53,7 +53,7 @@ func NewBlockTransactionFromTransaction(tx Transaction, message []byte) BlockTra
 		Source:     tx.B.Source,
 		Fee:        tx.B.Fee,
 		Operations: opHashes,
-		Amount:     tx.GetTotalAmount(true),
+		Amount:     tx.TotalAmount(true),
 
 		Created: tx.H.Created,
 		Message: message,

@@ -25,7 +25,7 @@ func TestNewBlockOperationFromOperation(t *testing.T) {
 		t.Error("mismatch `Source`")
 		return
 	}
-	if bo.Target != op.B.GetTargetAddress() {
+	if bo.Target != op.B.TargetAddress() {
 		t.Error("mismatch `Target`")
 		return
 	}

@@ -46,7 +46,7 @@ func (is *ISAAC) ReceiveMessage(m util.Message) (ballot Ballot, err error) {
 		return
 	}
 
-	if ballot, err = NewBallotFromMessage(is.Node.GetKeypair().Address(), m); err != nil {
+	if ballot, err = NewBallotFromMessage(is.Node.Keypair().Address(), m); err != nil {
 		return
 	}
 
@@ -54,7 +54,7 @@ func (is *ISAAC) ReceiveMessage(m util.Message) (ballot Ballot, err error) {
 	ballot.SetState(BallotStateINIT)
 	ballot.Vote(VotingYES) // TODO YES or NO
 	ballot.UpdateHash()
-	ballot.Sign(is.Node.GetKeypair())
+	ballot.Sign(is.Node.Keypair())
 
 	if err = ballot.IsWellFormed(); err != nil {
 		return
@@ -67,19 +67,27 @@ func (is *ISAAC) ReceiveMessage(m util.Message) (ballot Ballot, err error) {
 	return
 }
 
-func (is *ISAAC) ReceiveBallot(ballot Ballot) (vr *VotingResult, err error) {
+type BallotStateChange string
+
+const (
+	BallotStateNone       BallotStateChange = "none"
+	BallotStateChanged    BallotStateChange = "changed"
+	BallotStateNotChanged BallotStateChange = "nnnnnnnnnnnnnnnn-changed"
+)
+
+func (is *ISAAC) ReceiveBallot(ballot Ballot) (vs VotingStateStaging, err error) {
 	/*
 		TODO Previously the new incoming Ballot must be checked `IsWellFormed()`
 	*/
 
-	switch ballot.GetState() {
+	switch ballot.State() {
 	case BallotStateINIT:
-		vr, err = is.receiveBallotStateINIT(ballot)
+		vs, err = is.receiveBallotStateINIT(ballot)
 	case BallotStateALLCONFIRM:
 		err = sebak_error.ErrorBallotHasInvalidState
 		return
 	default:
-		vr, err = is.receiveBallotVotingStates(ballot)
+		vs, err = is.receiveBallotVotingStates(ballot)
 	}
 
 	if err != nil {
@@ -89,7 +97,7 @@ func (is *ISAAC) ReceiveBallot(ballot Ballot) (vr *VotingResult, err error) {
 	return
 }
 
-func (is *ISAAC) receiveBallotStateINIT(ballot Ballot) (vr *VotingResult, err error) {
+func (is *ISAAC) receiveBallotStateINIT(ballot Ballot) (vs VotingStateStaging, err error) {
 	var isNew bool
 
 	if isNew, err = is.Boxes.AddBallot(ballot); err != nil {
@@ -97,13 +105,17 @@ func (is *ISAAC) receiveBallotStateINIT(ballot Ballot) (vr *VotingResult, err er
 	}
 
 	if !isNew {
-		vr = is.Boxes.GetVotingResult(ballot)
+		vr := is.Boxes.VotingResult(ballot)
 		if vr.IsClosed() || !vr.CanGetResult(is.VotingThresholdPolicy) {
 			return
 		}
 
-		_, ended := vr.GetResult(is.VotingThresholdPolicy)
+		votingHole, state, ended := vr.MakeResult(is.VotingThresholdPolicy)
 		if ended {
+			if vs, err = vr.ChangeState(votingHole, state); err != nil {
+				return
+			}
+
 			is.Boxes.WaitingBox.RemoveVotingResult(vr) // TODO detect error
 			is.Boxes.VotingBox.AddVotingResult(vr)     // TODO detect error
 		}
@@ -112,7 +124,7 @@ func (is *ISAAC) receiveBallotStateINIT(ballot Ballot) (vr *VotingResult, err er
 	}
 
 	var newBallot Ballot
-	newBallot, err = NewBallotFromMessage(is.Node.GetKeypair().Address(), ballot.GetMessage())
+	newBallot, err = NewBallotFromMessage(is.Node.Keypair().Address(), ballot.Message())
 	if err != nil {
 		return
 	}
@@ -121,7 +133,7 @@ func (is *ISAAC) receiveBallotStateINIT(ballot Ballot) (vr *VotingResult, err er
 	newBallot.SetState(BallotStateINIT)
 	newBallot.Vote(VotingYES) // TODO YES or NO
 	newBallot.UpdateHash()
-	newBallot.Sign(is.Node.GetKeypair())
+	newBallot.Sign(is.Node.Keypair())
 
 	if err = newBallot.IsWellFormed(); err != nil {
 		return
@@ -133,23 +145,25 @@ func (is *ISAAC) receiveBallotStateINIT(ballot Ballot) (vr *VotingResult, err er
 
 	// TODO this ballot should be broadcasted
 
-	vr = is.Boxes.GetVotingResult(ballot)
-
 	return
 }
 
-func (is *ISAAC) receiveBallotVotingStates(ballot Ballot) (vr *VotingResult, err error) {
+func (is *ISAAC) receiveBallotVotingStates(ballot Ballot) (vs VotingStateStaging, err error) {
 	if _, err = is.Boxes.AddBallot(ballot); err != nil {
 		return
 	}
 
-	vr = is.Boxes.GetVotingResult(ballot)
+	vr := is.Boxes.VotingResult(ballot)
 	if vr.IsClosed() || !vr.CanGetResult(is.VotingThresholdPolicy) {
 		return
 	}
 
-	_, ended := vr.GetResult(is.VotingThresholdPolicy)
+	votingHole, state, ended := vr.MakeResult(is.VotingThresholdPolicy)
 	if ended {
+		if vs, err = vr.ChangeState(votingHole, state); err != nil {
+			return
+		}
+
 		return
 	}
 

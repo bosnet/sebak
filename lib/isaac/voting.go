@@ -35,21 +35,34 @@ func NewVotingResultBallotFromBallot(ballot Ballot) VotingResultBallot {
 
 type VotingResultBallots map[ /* NodeKey */ string]VotingResultBallot
 
+// `VotingStateStaging` will keep the snapshot at changing state.
 type VotingStateStaging struct {
-	State BallotState
+	State         BallotState
+	PreviousState BallotState
 
-	VotingHole VotingHole // voting is closed and it's last `VotingHole`
-	Reason     error      // if `VotingNO` is concluded, the reason
+	ID          string     // ID is unique and sequenital
+	MessageHash string     // MessageHash is `Message.Hash`
+	VotingHole  VotingHole // voting is closed and it's last `VotingHole`
+	Reason      error      // if `VotingNO` is concluded, the reason
 
 	Ballots map[ /* NodeKey */ string]VotingResultBallot
 }
 
-func (vs VotingStateStaging) IsValid() bool {
-	return len(vs.Ballots) > 0
+func (vs VotingStateStaging) String() string {
+	encoded, _ := json.MarshalIndent(vs, "", "  ")
+	return string(encoded)
+}
+
+func (vs VotingStateStaging) IsChanged() bool {
+	return vs.State > vs.PreviousState
+}
+
+func (vs VotingStateStaging) IsEmpty() bool {
+	return len(vs.Ballots) < 1
 }
 
 func (vs VotingStateStaging) IsClosed() bool {
-	if !vs.IsValid() {
+	if !vs.IsEmpty() {
 		return false
 	}
 	if vs.VotingHole == VotingNO {
@@ -81,12 +94,12 @@ func NewVotingResult(ballot Ballot) (vr *VotingResult, err error) {
 		BallotStateALLCONFIRM: VotingResultBallots{},
 	}
 
-	ballots[ballot.GetState()][ballot.B.NodeKey] = NewVotingResultBallotFromBallot(ballot)
+	ballots[ballot.State()][ballot.B.NodeKey] = NewVotingResultBallotFromBallot(ballot)
 
 	vr = &VotingResult{
 		ID:          util.GetUniqueIDFromUUID(),
-		MessageHash: ballot.GetMessage().GetHash(),
-		State:       ballot.GetState(),
+		MessageHash: ballot.Message().GetHash(),
+		State:       ballot.State(),
 		Ballots:     ballots,
 	}
 
@@ -94,7 +107,7 @@ func NewVotingResult(ballot Ballot) (vr *VotingResult, err error) {
 }
 
 func (vr *VotingResult) IsClosed() bool {
-	return vr.GetStaging().IsClosed()
+	return vr.LatestStaging().IsClosed()
 }
 
 func (vr *VotingResult) SetState(state BallotState) bool {
@@ -121,7 +134,7 @@ func (vr *VotingResult) String() string {
 }
 
 func (vr *VotingResult) IsVoted(ballot Ballot) bool {
-	ballots, ok := vr.Ballots[ballot.GetState()]
+	ballots, ok := vr.Ballots[ballot.State()]
 	if !ok {
 		return false
 	}
@@ -132,12 +145,12 @@ func (vr *VotingResult) IsVoted(ballot Ballot) bool {
 	return true
 }
 
-func (vr *VotingResult) GetVotedBallotsByState(state BallotState) VotingResultBallots {
+func (vr *VotingResult) VotedBallotsByState(state BallotState) VotingResultBallots {
 	return vr.Ballots[state]
 }
 
-func (vr *VotingResult) GetVotedCount(state BallotState) int {
-	return len(vr.GetVotedBallotsByState(state))
+func (vr *VotingResult) VotedCount(state BallotState) int {
+	return len(vr.VotedBallotsByState(state))
 }
 
 var VotingResultCheckerFuns = []util.CheckerFunc{
@@ -151,7 +164,7 @@ func (vr *VotingResult) Add(ballot Ballot) (err error) {
 	if err = util.Checker(VotingResultCheckerFuns...)(vr, ballot); err != nil {
 		return
 	}
-	vr.Ballots[ballot.GetState()][ballot.B.NodeKey] = NewVotingResultBallotFromBallot(ballot)
+	vr.Ballots[ballot.State()][ballot.B.NodeKey] = NewVotingResultBallotFromBallot(ballot)
 
 	return
 }
@@ -163,7 +176,7 @@ func (vr *VotingResult) CanCheckThreshold(state BallotState, threshold uint32) b
 	if state == BallotStateNONE {
 		return false
 	}
-	if vr.GetVotedCount(state) < int(threshold) {
+	if vr.VotedCount(state) < int(threshold) {
 		return false
 	}
 
@@ -177,13 +190,13 @@ func (vr *VotingResult) CheckThreshold(state BallotState, threshold uint32) (Vot
 	if state == BallotStateNONE {
 		return VotingNOTYET, false
 	}
-	if vr.GetVotedCount(state) < int(threshold) {
+	if vr.VotedCount(state) < int(threshold) {
 		return VotingNOTYET, false
 	}
 
 	var yes int
 	var no int
-	for _, vrb := range vr.GetVotedBallotsByState(state) {
+	for _, vrb := range vr.VotedBallotsByState(state) {
 		if vrb.VotingHole == VotingYES {
 			yes += 1
 		} else if vrb.VotingHole == VotingNO {
@@ -205,9 +218,9 @@ var CheckVotingThresholdSequence = []BallotState{
 	BallotStateINIT,
 }
 
-func (vr *VotingResult) GetResult(policy VotingThresholdPolicy) (BallotState, bool) {
+func (vr *VotingResult) MakeResult(policy VotingThresholdPolicy) (VotingHole, BallotState, bool) {
 	if vr.State == BallotStateALLCONFIRM {
-		return BallotStateALLCONFIRM, false
+		return VotingNOTYET, BallotStateALLCONFIRM, false
 	}
 
 	for _, state := range CheckVotingThresholdSequence {
@@ -215,23 +228,21 @@ func (vr *VotingResult) GetResult(policy VotingThresholdPolicy) (BallotState, bo
 			break
 		}
 
-		t := policy.GetThreshold(state)
+		t := policy.Threshold(state)
 		if t < 1 {
 			continue
 		}
 		votingHole, ended := vr.CheckThreshold(state, t)
 		if ended {
-			if err := vr.ChangeState(votingHole, state); err != nil {
-				return vr.State, false
-			}
-			return state, true
+			return votingHole, state, true
 		}
 	}
 
-	return vr.State, false
+	return VotingNOTYET, vr.State, false
 }
 
-func (vr *VotingResult) ChangeState(votingHole VotingHole, state BallotState) (err error) {
+func (vr *VotingResult) ChangeState(votingHole VotingHole, state BallotState) (vs VotingStateStaging, err error) {
+	previousState := vr.State
 	if !vr.SetState(state.Next()) {
 		err = sebak_error.ErrorVotingResultFailedToSetState
 		return
@@ -240,20 +251,25 @@ func (vr *VotingResult) ChangeState(votingHole VotingHole, state BallotState) (e
 	vr.Lock()
 	defer vr.Unlock()
 
-	// TODO set `VotingResult.Reason`
-	vr.Staging = append(
-		vr.Staging,
-		VotingStateStaging{
-			State:      state,
-			VotingHole: votingHole,
-			Ballots:    vr.GetVotedBallotsByState(state),
-		},
-	)
+	vs = vr.MakeStaging(votingHole, previousState, vr.State, state)
+	vr.Staging = append(vr.Staging, vs)
 
 	return
 }
 
-func (vr *VotingResult) GetStaging() VotingStateStaging {
+func (vr *VotingResult) MakeStaging(votingHole VotingHole, previousState, nextState, votingState BallotState) VotingStateStaging {
+	// TODO set `VotingResult.Reason`
+	return VotingStateStaging{
+		ID:            vr.ID,
+		MessageHash:   vr.MessageHash,
+		State:         nextState,
+		PreviousState: previousState,
+		VotingHole:    votingHole,
+		Ballots:       vr.VotedBallotsByState(votingState),
+	}
+}
+
+func (vr *VotingResult) LatestStaging() VotingStateStaging {
 	if len(vr.Staging) < 1 {
 		return VotingStateStaging{}
 	}
@@ -266,7 +282,7 @@ func (vr *VotingResult) CanGetResult(policy VotingThresholdPolicy) bool {
 	}
 
 	for _, state := range CheckVotingThresholdSequence {
-		t := policy.GetThreshold(state)
+		t := policy.Threshold(state)
 		if t < 1 {
 			continue
 		}
@@ -279,7 +295,7 @@ func (vr *VotingResult) CanGetResult(policy VotingThresholdPolicy) bool {
 }
 
 type VotingThresholdPolicy interface {
-	GetThreshold(BallotState) uint32
+	Threshold(BallotState) uint32
 	SetValidators(uint64) error
 }
 
@@ -291,7 +307,7 @@ type DefaultVotingThresholdPolicy struct {
 	validators uint64
 }
 
-func (vt *DefaultVotingThresholdPolicy) GetValidators() uint64 {
+func (vt *DefaultVotingThresholdPolicy) Validators() uint64 {
 	return vt.validators
 }
 
@@ -305,7 +321,7 @@ func (vt *DefaultVotingThresholdPolicy) SetValidators(v uint64) error {
 	return nil
 }
 
-func (vt *DefaultVotingThresholdPolicy) GetThreshold(state BallotState) uint32 {
+func (vt *DefaultVotingThresholdPolicy) Threshold(state BallotState) uint32 {
 	var t uint32
 	switch state {
 	case BallotStateINIT:

@@ -18,11 +18,11 @@ type DummyNode struct {
 	alias   string
 }
 
-func (n DummyNode) GetKeypair() *keypair.Full {
+func (n DummyNode) Keypair() *keypair.Full {
 	return n.keypair
 }
 
-func (n DummyNode) GetAlias() string {
+func (n DummyNode) Alias() string {
 	return n.alias
 }
 
@@ -263,19 +263,17 @@ func TestISAACReceiveBallotStateINITAndMoveNextState(t *testing.T) {
 	// make ballots
 	var err error
 	var ballots []Ballot
-	var vr *VotingResult
+	var vs VotingStateStaging
+
 	for i := 0; i < int(numberOfBallots); i++ {
 		kp, _ := keypair.Random()
 
 		ballot := makeBallot(kp, m, BallotStateINIT)
 		ballots = append(ballots, ballot)
 
-		if vr, err = is.ReceiveBallot(ballot); err != nil {
+		if vs, err = is.ReceiveBallot(ballot); err != nil {
 			t.Error(err)
 			return
-		}
-		if vr != nil {
-			break
 		}
 
 		if !is.Boxes.IsVoted(ballot) {
@@ -284,8 +282,17 @@ func TestISAACReceiveBallotStateINITAndMoveNextState(t *testing.T) {
 		}
 	}
 
-	if vr == nil {
-		t.Error("failed to get result")
+	if vs.IsClosed() {
+		t.Error("just state changed, not `VotingResult` closed")
+	}
+
+	vs = is.Boxes.VotingResult(ballots[0]).LatestStaging()
+	if vs.IsEmpty() {
+		t.Error("failed to get valid `VotingStateStaging`")
+		return
+	}
+	if !vs.IsChanged() {
+		t.Error("failed to change state")
 		return
 	}
 }
@@ -299,7 +306,7 @@ func TestISAACReceiveBallotStateINITAndVotingBox(t *testing.T) {
 
 	// make ballots
 	var err error
-	var vr *VotingResult
+	var vs VotingStateStaging
 	var ballots []Ballot
 	for i := 0; i < int(numberOfBallots); i++ {
 		kp, _ := keypair.Random()
@@ -307,12 +314,9 @@ func TestISAACReceiveBallotStateINITAndVotingBox(t *testing.T) {
 		ballot := makeBallot(kp, m, BallotStateINIT)
 		ballots = append(ballots, ballot)
 
-		if vr, err = is.ReceiveBallot(ballot); err != nil {
+		if vs, err = is.ReceiveBallot(ballot); err != nil {
 			t.Error(err)
 			return
-		}
-		if vr.IsClosed() {
-			break
 		}
 		if !is.Boxes.IsVoted(ballot) {
 			t.Error("failed to vote")
@@ -320,23 +324,24 @@ func TestISAACReceiveBallotStateINITAndVotingBox(t *testing.T) {
 		}
 	}
 
-	if vr == nil {
+	vs = is.Boxes.VotingResult(ballots[0]).LatestStaging()
+	if !vs.IsChanged() {
 		t.Error("failed to get result")
 		return
 	}
 
-	if is.Boxes.WaitingBox.HasMessage(ballots[0].GetMessage()) {
+	if is.Boxes.WaitingBox.HasMessage(ballots[0].Message()) {
 		t.Error("after `INIT`, the ballot must move to `VotingBox`")
 	}
 }
 
-func voteISAACReceiveBallot(is *ISAAC, ballots []Ballot, kps []*keypair.Full, state BallotState) (vr *VotingResult, err error) {
+func voteISAACReceiveBallot(is *ISAAC, ballots []Ballot, kps []*keypair.Full, state BallotState) (vs VotingStateStaging, err error) {
 	for i, ballot := range ballots {
 		ballot.SetState(state)
 		ballot.UpdateHash()
 		ballot.Sign(kps[i])
 
-		if vr, err = is.ReceiveBallot(ballot); err != nil {
+		if vs, err = is.ReceiveBallot(ballot); err != nil {
 			break
 		}
 		if !is.Boxes.IsVoted(ballot) {
@@ -346,6 +351,8 @@ func voteISAACReceiveBallot(is *ISAAC, ballots []Ballot, kps []*keypair.Full, st
 	if err != nil {
 		return
 	}
+
+	vs = is.Boxes.VotingResult(ballots[0]).LatestStaging()
 
 	return
 }
@@ -370,26 +377,26 @@ func TestISAACReceiveBallotStateTransition(t *testing.T) {
 
 	// INIT -> SIGN
 	{
-		vr, err := voteISAACReceiveBallot(is, ballots, kps, BallotStateINIT)
+		vs, err := voteISAACReceiveBallot(is, ballots, kps, BallotStateINIT)
 		if err != nil {
 			t.Error(err)
 			return
 		}
 
-		if is.Boxes.WaitingBox.HasMessage(ballots[0].GetMessage()) {
+		if is.Boxes.WaitingBox.HasMessage(ballots[0].Message()) {
 			t.Error("after `INIT`, the ballot must move to `VotingBox`")
 		}
 
-		if vr == nil {
+		if vs.IsEmpty() {
 			err = errors.New("failed to get result")
 			return
 		}
-		if vr.State != BallotStateSIGN {
+		if vs.State != BallotStateSIGN {
 			err = errors.New("`VotingResult.State` must be `BallotStateSIGN`")
 			return
 		}
 
-		if !is.Boxes.VotingBox.HasMessage(ballots[0].GetMessage()) {
+		if !is.Boxes.VotingBox.HasMessage(ballots[0].Message()) {
 			err = errors.New("after `INIT`, the ballot must move to `VotingBox`")
 			return
 		}
@@ -397,22 +404,22 @@ func TestISAACReceiveBallotStateTransition(t *testing.T) {
 
 	// SIGN -> ACCEPT
 	{
-		vr, err := voteISAACReceiveBallot(is, ballots, kps, BallotStateSIGN)
+		vs, err := voteISAACReceiveBallot(is, ballots, kps, BallotStateSIGN)
 		if err != nil {
 			t.Error(err)
 			return
 		}
 
-		if vr == nil {
+		if vs.IsEmpty() {
 			err = errors.New("failed to get result")
 			return
 		}
-		if vr.State != BallotStateACCEPT {
+		if vs.State != BallotStateACCEPT {
 			err = errors.New("`VotingResult.State` must be `BallotStateACCEPT`")
 			return
 		}
 
-		if !is.Boxes.VotingBox.HasMessage(ballots[0].GetMessage()) {
+		if !is.Boxes.VotingBox.HasMessage(ballots[0].Message()) {
 			err = errors.New("after `INIT`, the ballot must move to `VotingBox`")
 			return
 		}
@@ -420,21 +427,21 @@ func TestISAACReceiveBallotStateTransition(t *testing.T) {
 
 	// ACCEPT -> ALL-CONFIRM
 	{
-		vr, err := voteISAACReceiveBallot(is, ballots, kps, BallotStateACCEPT)
+		vs, err := voteISAACReceiveBallot(is, ballots, kps, BallotStateACCEPT)
 		if err != nil {
 			t.Error(err)
 			return
 		}
-		if vr == nil {
+		if vs.IsEmpty() {
 			err = errors.New("failed to get result")
 			return
 		}
-		if vr.State != BallotStateALLCONFIRM {
+		if vs.State != BallotStateALLCONFIRM {
 			err = errors.New("`VotingResult.State` must be `BallotStateALLCONFIRM`")
 			return
 		}
 
-		if !is.Boxes.VotingBox.HasMessage(ballots[0].GetMessage()) {
+		if !is.Boxes.VotingBox.HasMessage(ballots[0].Message()) {
 			err = errors.New("after `INIT`, the ballot must move to `VotingBox`")
 			return
 		}
@@ -460,35 +467,36 @@ func TestISAACReceiveSameBallotStates(t *testing.T) {
 	}
 
 	{
-		vr, err := voteISAACReceiveBallot(is, ballots, kps, BallotStateINIT)
+		vs, err := voteISAACReceiveBallot(is, ballots, kps, BallotStateINIT)
 		if err != nil {
 			t.Error(err)
 			return
 		}
 
-		if is.Boxes.WaitingBox.HasMessage(ballots[0].GetMessage()) {
+		if is.Boxes.WaitingBox.HasMessage(ballots[0].Message()) {
 			t.Error("after `INIT`, the ballot must move to `VotingBox`")
 		}
-		if vr == nil {
+		if vs.IsEmpty() {
 			t.Error("failed to get result")
 			return
 		}
-		if vr.State != BallotStateSIGN {
+		if vs.State != BallotStateSIGN {
 			err = errors.New("`VotingResult.State` must be `BallotStateSIGN`")
 		}
 
-		if vr.GetVotedCount(BallotStateINIT) != int(numberOfBallots)+1 {
+		vr := is.Boxes.VotingResult(ballots[0])
+		if vr.VotedCount(BallotStateINIT) != int(numberOfBallots)+1 {
 			t.Error("some ballot was not voted")
 			return
 		}
 
-		if vr.GetVotedCount(BallotStateSIGN) != 0 || vr.GetVotedCount(BallotStateACCEPT) != 0 || vr.GetVotedCount(BallotStateALLCONFIRM) != 0 {
+		if vr.VotedCount(BallotStateSIGN) != 0 || vr.VotedCount(BallotStateACCEPT) != 0 || vr.VotedCount(BallotStateALLCONFIRM) != 0 {
 			t.Error("unexpected ballots found")
 			return
 		}
 	}
 
-	vrFirst := is.Boxes.GetVotingResult(ballots[0])
+	vrFirst := is.Boxes.VotingResult(ballots[0])
 	{
 		_, err := voteISAACReceiveBallot(is, ballots, kps, BallotStateINIT)
 		if err != nil {
@@ -496,13 +504,13 @@ func TestISAACReceiveSameBallotStates(t *testing.T) {
 			return
 		}
 	}
-	vrSecond := is.Boxes.GetVotingResult(ballots[0])
-	if vrSecond.GetVotedCount(BallotStateINIT) != int(numberOfBallots)+1 {
+	vrSecond := is.Boxes.VotingResult(ballots[0])
+	if vrSecond.VotedCount(BallotStateINIT) != int(numberOfBallots)+1 {
 		t.Error("some ballot was not voted")
 		return
 	}
 
-	if vrSecond.GetVotedCount(BallotStateSIGN) != 0 || vrSecond.GetVotedCount(BallotStateACCEPT) != 0 || vrSecond.GetVotedCount(BallotStateALLCONFIRM) != 0 {
+	if vrSecond.VotedCount(BallotStateSIGN) != 0 || vrSecond.VotedCount(BallotStateACCEPT) != 0 || vrSecond.VotedCount(BallotStateALLCONFIRM) != 0 {
 		t.Error("unexpected ballots found")
 		return
 	}

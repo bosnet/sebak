@@ -49,7 +49,7 @@ type Ballot struct {
 }
 
 func (b Ballot) Serialize() (encoded []byte, err error) {
-	if b.GetState() == BallotStateINIT {
+	if b.State() == BallotStateINIT {
 		encoded, err = json.Marshal(b)
 		return
 	}
@@ -116,7 +116,7 @@ func (b Ballot) IsWellFormed() (err error) {
 		return
 	}
 
-	if err = b.GetMessage().IsWellFormed(); err != nil {
+	if err = b.Message().IsWellFormed(); err != nil {
 		return
 	}
 
@@ -143,11 +143,11 @@ func (b Ballot) GetHash() string {
 	return b.H.Hash
 }
 
-func (b Ballot) GetMessage() BallotMessage {
+func (b Ballot) Message() BallotMessage {
 	return b.B.Message
 }
 
-func (b Ballot) GetState() BallotState {
+func (b Ballot) State() BallotState {
 	return b.B.State
 }
 
@@ -231,16 +231,16 @@ func (b *BallotBoxes) HasMessageByString(hash string) bool {
 	return ok
 }
 
-func (b *BallotBoxes) GetVotingResult(ballot Ballot) *VotingResult {
-	if !b.HasMessage(ballot.GetMessage()) {
+func (b *BallotBoxes) VotingResult(ballot Ballot) *VotingResult {
+	if !b.HasMessage(ballot.Message()) {
 		return nil
 	}
 
-	return b.Results[ballot.GetMessage().GetHash()]
+	return b.Results[ballot.Message().GetHash()]
 }
 
 func (b *BallotBoxes) IsVoted(ballot Ballot) bool {
-	vr := b.GetVotingResult(ballot)
+	vr := b.VotingResult(ballot)
 	if vr == nil {
 		return false
 	}
@@ -280,15 +280,15 @@ func (b *BallotBoxes) AddBallot(ballot Ballot) (isNew bool, err error) {
 
 	var vr *VotingResult
 
-	isNew = !b.HasMessage(ballot.GetMessage())
+	isNew = !b.HasMessage(ballot.Message())
 
 	if !isNew {
-		vr = b.GetVotingResult(ballot)
+		vr = b.VotingResult(ballot)
 		if err = vr.Add(ballot); err != nil {
 			return
 		}
 
-		if b.ReservedBox.HasMessage(ballot.GetMessage()) {
+		if b.ReservedBox.HasMessage(ballot.Message()) {
 			b.ReservedBox.RemoveVotingResult(vr) // TODO detect error
 			b.VotingBox.AddVotingResult(vr)      // TODO detect error
 		}
@@ -302,7 +302,7 @@ func (b *BallotBoxes) AddBallot(ballot Ballot) (isNew bool, err error) {
 	}
 
 	// unknown ballot will be in `WaitingBox`
-	if ballot.GetState() == BallotStateINIT {
+	if ballot.State() == BallotStateINIT {
 		err = b.AddVotingResult(vr, b.WaitingBox)
 	} else {
 		err = b.AddVotingResult(vr, b.VotingBox)

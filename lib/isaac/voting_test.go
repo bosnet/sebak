@@ -13,7 +13,7 @@ func makeBallotsWithSameMessageHash(n uint32) (kps []*keypair.Full, ballots []Ba
 
 	for i := 0; i < int(n)-1; i++ {
 		kpNode, _, ballot := makeNewBallot(BallotStateINIT, VotingYES)
-		ballot.B.Message.Hash = baseBallot.GetMessage().GetHash()
+		ballot.B.Message.Hash = baseBallot.Message().GetHash()
 		ballot.UpdateHash()
 		ballot.Sign(kpNode)
 
@@ -47,7 +47,7 @@ func TestAddVotingResult(t *testing.T) {
 		t.Error("`VotingResult.Add` must occurr the `ErrorHashDoesNotMatch`")
 	}
 
-	ballot1.B.Message.Hash = ballot0.GetMessage().GetHash()
+	ballot1.B.Message.Hash = ballot0.Message().GetHash()
 	ballot1.UpdateHash()
 	ballot1.Sign(kpNode1)
 	if err := vr.Add(ballot1); err != nil {
@@ -96,7 +96,11 @@ func TestVotingResultGetResult(t *testing.T) {
 		policy, _ := NewDefaultVotingThresholdPolicy(100, 30, 30)
 		policy.SetValidators(uint64(numberOfBallots))
 
-		state, ended := vr.GetResult(policy)
+		_, state, ended := vr.MakeResult(policy)
+		if !ended {
+			t.Error("failed to make agreement")
+			return
+		}
 		if state != BallotStateINIT {
 			t.Errorf("state must be `BallotStateINIT`: %v", state)
 			return
@@ -112,9 +116,13 @@ func TestVotingResultGetResult(t *testing.T) {
 		policy, _ := NewDefaultVotingThresholdPolicy(100, 50, 50)
 		policy.SetValidators(uint64(numberOfBallots) + 100)
 
-		state, ended := vr.GetResult(policy)
-		if state != BallotStateSIGN {
-			t.Errorf("state must be `BallotStateSIGN`: %v", state)
+		_, state, ended := vr.MakeResult(policy)
+		if ended {
+			t.Error("agreement must be failed")
+			return
+		}
+		if state != BallotStateINIT {
+			t.Errorf("state must be `BallotStateINIT`: %v", state)
 			return
 		}
 		if ended {
@@ -146,7 +154,7 @@ func TestVotingResultGetResultHigherStateMustBePicked(t *testing.T) {
 		policy, _ := NewDefaultVotingThresholdPolicy(100, 50, 50)
 		policy.SetValidators(uint64(numberOfBallots))
 
-		state, ended := vr.GetResult(policy)
+		_, state, ended := vr.MakeResult(policy)
 		if state != BallotStateACCEPT {
 			t.Error("state must be `BallotStateACCEPT`")
 			return

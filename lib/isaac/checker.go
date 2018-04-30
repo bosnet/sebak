@@ -36,7 +36,7 @@ func checkBallotNoVoting(target interface{}, args ...interface{}) error {
 }
 
 func checkBallotValidState(target interface{}, args ...interface{}) error {
-	if target.(Ballot).GetState() == BallotStateNONE {
+	if target.(Ballot).State() == BallotStateNONE {
 		return sebak_error.ErrorInvalidState
 	}
 	return nil
@@ -44,7 +44,7 @@ func checkBallotValidState(target interface{}, args ...interface{}) error {
 
 func checkBallotHasMessage(target interface{}, args ...interface{}) error {
 	ballot := target.(Ballot)
-	if ballot.GetState() != BallotStateINIT {
+	if ballot.State() != BallotStateINIT {
 		if ballot.B.Message.Message == nil {
 			return sebak_error.ErrorBallotHasMessage
 		}
@@ -60,7 +60,7 @@ func checkBallotHasMessage(target interface{}, args ...interface{}) error {
 func checkBallotResultValidHash(target interface{}, args ...interface{}) error {
 	votingResult := target.(*VotingResult)
 	ballot := args[0].(Ballot)
-	if ballot.GetMessage().GetHash() != votingResult.MessageHash {
+	if ballot.Message().GetHash() != votingResult.MessageHash {
 		return sebak_error.ErrorHashDoesNotMatch
 	}
 	return nil

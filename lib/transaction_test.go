@@ -71,7 +71,7 @@ func TestIsWellFormedTransactionWithTargetAddressIsSameWithSourceAddress(t *test
 	var err error
 
 	tx := MakeTransaction(1)
-	tx.B.Source = tx.B.Operations[0].B.GetTargetAddress()
+	tx.B.Source = tx.B.Operations[0].B.TargetAddress()
 	if err = tx.IsWellFormed(); err == nil {
 		t.Errorf("transaction must be failed for same source: '%s'", tx.B.Source)
 	}

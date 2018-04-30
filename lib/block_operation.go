@@ -45,7 +45,7 @@ func NewBlockOperationFromOperation(op Operation, tx Transaction) BlockOperation
 
 		Type:   op.H.Type,
 		Source: tx.B.Source,
-		Target: op.B.GetTargetAddress(),
+		Target: op.B.TargetAddress(),
 		Amount: op.B.GetAmount(),
 	}
 }

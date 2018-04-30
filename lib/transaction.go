@@ -85,7 +85,7 @@ func (o Transaction) GetHash() string {
 	return o.H.Hash
 }
 
-func (o Transaction) GetTotalAmount(withFee bool) Amount {
+func (o Transaction) TotalAmount(withFee bool) Amount {
 	var amount int64
 	for _, op := range o.B.Operations {
 		amount += int64(op.B.GetAmount())

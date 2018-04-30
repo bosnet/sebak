@@ -25,7 +25,7 @@ func checkTransactionBaseFee(target interface{}, args ...interface{}) error {
 func checkTransactionOperationIsWellFormed(target interface{}, args ...interface{}) error {
 	tx := target.(Transaction)
 	for _, op := range tx.B.Operations {
-		if ta := op.B.GetTargetAddress(); tx.B.Source == ta {
+		if ta := op.B.TargetAddress(); tx.B.Source == ta {
 			return sebak_error.ErrorInvalidOperation
 		}
 		if err := op.IsWellFormed(); err != nil {
