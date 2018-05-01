@@ -32,6 +32,10 @@ func NewISAAC(node Node, votingThresholdPolicy VotingThresholdPolicy, st *storag
 	return
 }
 
+func (is *ISAAC) GetNode() Node {
+	return is.Node
+}
+
 func (is *ISAAC) ReceiveMessage(m util.Message) (ballot Ballot, err error) {
 	/*
 		Previously the new incoming Message must be checked,
