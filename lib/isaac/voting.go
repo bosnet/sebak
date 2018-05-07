@@ -198,9 +198,9 @@ func (vr *VotingResult) CheckThreshold(state BallotState, threshold uint32) (Vot
 	var no int
 	for _, vrb := range vr.VotedBallotsByState(state) {
 		if vrb.VotingHole == VotingYES {
-			yes += 1
+			yes++
 		} else if vrb.VotingHole == VotingNO {
-			no += 1
+			no++
 		}
 	}
 	if yes >= int(threshold) {
@@ -244,7 +244,7 @@ func (vr *VotingResult) MakeResult(policy VotingThresholdPolicy) (VotingHole, Ba
 func (vr *VotingResult) ChangeState(votingHole VotingHole, state BallotState) (vs VotingStateStaging, err error) {
 	previousState := vr.State
 	if !vr.SetState(state.Next()) {
-		err = sebak_error.ErrorVotingResultFailedToSetState
+		err = sebakerror.ErrorVotingResultFailedToSetState
 		return
 	}
 
@@ -313,7 +313,7 @@ func (vt *DefaultVotingThresholdPolicy) Validators() uint64 {
 
 func (vt *DefaultVotingThresholdPolicy) SetValidators(v uint64) error {
 	if v < 1 {
-		return sebak_error.ErrorVotingThresholdInvalidValidators
+		return sebakerror.ErrorVotingThresholdInvalidValidators
 	}
 
 	vt.validators = v
@@ -338,11 +338,11 @@ func (vt *DefaultVotingThresholdPolicy) Threshold(state BallotState) uint32 {
 
 func NewDefaultVotingThresholdPolicy(init, sign, accept uint32) (vt *DefaultVotingThresholdPolicy, err error) {
 	if init <= 0 || sign <= 0 || accept <= 0 {
-		err = sebak_error.ErrorInvalidVotingThresholdPolicy
+		err = sebakerror.ErrorInvalidVotingThresholdPolicy
 		return
 	}
 	if init > 100 || sign > 100 || accept > 100 {
-		err = sebak_error.ErrorInvalidVotingThresholdPolicy
+		err = sebakerror.ErrorInvalidVotingThresholdPolicy
 		return
 	}
 

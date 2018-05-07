@@ -3,49 +3,19 @@ package consensus
 import (
 	"encoding/json"
 	"errors"
-	"net"
 	"testing"
 
 	"github.com/btcsuite/btcutil/base58"
-	"github.com/spikeekips/sebak/lib/error"
-	"github.com/spikeekips/sebak/lib/storage"
-	"github.com/spikeekips/sebak/lib/util"
 	"github.com/stellar/go/keypair"
+
+	sebak "github.com/spikeekips/sebak/lib"
+	"github.com/spikeekips/sebak/lib/error"
+	"github.com/spikeekips/sebak/lib/util"
 )
 
-type DummyNode struct {
-	keypair *keypair.Full
-	alias   string
-}
-
-func (n DummyNode) Keypair() *keypair.Full {
-	return n.keypair
-}
-
-func (n DummyNode) Alias() string {
-	return n.alias
-}
-
-func NewNode(kp *keypair.Full, alias string) DummyNode {
-	return DummyNode{
-		keypair: kp,
-		alias:   alias,
-	}
-}
-
-func NewRandomNode() DummyNode {
+func NewRandomNode() *sebak.MainNode {
 	kp, _ := keypair.Random()
-	return NewNode(kp, util.GenerateUUID())
-}
-
-type DummyTransport struct{}
-
-func (t DummyTransport) Send(addr net.TCPAddr, b []byte) error {
-	return nil
-}
-
-func (t DummyTransport) Receive() ([]byte, error) {
-	return []byte{}, nil
+	return sebak.NewMainNode(kp, nil)
 }
 
 type DummyMessage struct {
@@ -82,13 +52,10 @@ func (m DummyMessage) String() string {
 }
 
 func makeISAAC(minimumValidators int) *ISAAC {
-	st, _ := storage.NewTestMemoryLevelDBBackend()
-	tp := &DummyTransport{}
-
 	policy, _ := NewDefaultVotingThresholdPolicy(100, 30, 30)
 	policy.SetValidators(uint64(minimumValidators))
 
-	is, _ := NewISAAC(NewRandomNode(), policy, st, tp)
+	is, _ := NewISAAC(NewRandomNode(), policy)
 
 	return is
 }
@@ -104,13 +71,10 @@ func makeBallot(kp *keypair.Full, m util.Message, state BallotState) Ballot {
 }
 
 func TestNewISAAC(t *testing.T) {
-	st, _ := storage.NewTestMemoryLevelDBBackend()
-	tp := &DummyTransport{}
-
 	policy, _ := NewDefaultVotingThresholdPolicy(100, 30, 30)
 	policy.SetValidators(uint64(1))
 
-	is, err := NewISAAC(NewRandomNode(), policy, st, tp)
+	is, err := NewISAAC(NewRandomNode(), policy)
 	if err != nil {
 		t.Errorf("`NewISAAC` must not be failed: %v", err)
 		return
@@ -155,7 +119,7 @@ func TestISAACNewIncomingMessage(t *testing.T) {
 	// receive same message
 	{
 		var err error
-		if _, err = is.ReceiveMessage(m); err != sebak_error.ErrorNewButKnownMessage {
+		if _, err = is.ReceiveMessage(m); err != sebakerror.ErrorNewButKnownMessage {
 			t.Error("incoming known message must occurr `ErrorNewButKnownMessage`")
 			return
 		}
@@ -359,7 +323,7 @@ func voteISAACReceiveBallot(is *ISAAC, ballots []Ballot, kps []*keypair.Full, st
 
 func TestISAACReceiveBallotStateTransition(t *testing.T) {
 	var numberOfBallots uint64 = 5
-	var minimumValidators int = 3 // must be passed
+	var minimumValidators = 3 // must be passed
 
 	is := makeISAAC(minimumValidators)
 
@@ -450,7 +414,7 @@ func TestISAACReceiveBallotStateTransition(t *testing.T) {
 
 func TestISAACReceiveSameBallotStates(t *testing.T) {
 	var numberOfBallots uint64 = 5
-	var minimumValidators int = 3
+	var minimumValidators = 3
 
 	is := makeISAAC(minimumValidators)
 

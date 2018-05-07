@@ -8,7 +8,7 @@ import (
 )
 
 func TestNewBlockOperationFromOperation(t *testing.T) {
-	tx := MakeTransaction(1)
+	_, tx := MakeTransaction(1)
 
 	op := tx.B.Operations[0]
 	bo := NewBlockOperationFromOperation(op, tx)
@@ -95,7 +95,7 @@ func TestBlockOperationSaveExisting(t *testing.T) {
 	if err := bo.Save(st); err == nil {
 		t.Error("`ErrorBlockAlreayExists` Errors must be occurred")
 		return
-	} else if err != sebak_error.ErrorBlockAlreadyExists {
+	} else if err != sebakerror.ErrorBlockAlreadyExists {
 		t.Error("`ErrorBlockAlreayExists` Errors must be occurred")
 		return
 	}
@@ -107,7 +107,7 @@ func TestGetSortedBlockOperationsByTxHash(t *testing.T) {
 	// create 30 `BlockOperation`
 	var txHashes []string
 	createdOrder := map[string][]string{}
-	for _, _ = range [3]int{0, 0, 0} {
+	for _ = range [3]int{0, 0, 0} {
 		bos := MakeNewBlockOperation(10)
 		txHashes = append(txHashes, bos[0].TxHash)
 

@@ -9,7 +9,7 @@ import (
 )
 
 func TestNewBlockTransaction(t *testing.T) {
-	tx := MakeTransaction(1)
+	_, tx := MakeTransaction(1)
 	a, _ := tx.Serialize()
 	bt := NewBlockTransactionFromTransaction(tx, a)
 
@@ -126,7 +126,7 @@ func TestBlockTransactionSaveExisting(t *testing.T) {
 	if err := bt.Save(st); err == nil {
 		t.Error("`ErrorBlockAlreayExists` Errors must be occurred")
 		return
-	} else if err != sebak_error.ErrorBlockAlreadyExists {
+	} else if err != sebakerror.ErrorBlockAlreadyExists {
 		t.Error("`ErrorBlockAlreayExists` Errors must be occurred")
 		return
 	}

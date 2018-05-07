@@ -21,7 +21,7 @@ func makeBlockAccount() *BlockAccount {
 }
 
 func MakeNewBlockOperation(n int) (bos []BlockOperation) {
-	tx := MakeTransaction(n)
+	_, tx := MakeTransaction(n)
 
 	for _, op := range tx.B.Operations {
 		bos = append(bos, NewBlockOperationFromOperation(op, tx))
@@ -31,7 +31,7 @@ func MakeNewBlockOperation(n int) (bos []BlockOperation) {
 }
 
 func MakeNewBlockTransaction(n int) BlockTransaction {
-	tx := MakeTransaction(n)
+	_, tx := MakeTransaction(n)
 
 	a, _ := tx.Serialize()
 	return NewBlockTransactionFromTransaction(tx, a)
@@ -63,8 +63,8 @@ func MakeOperation(amount int) Operation {
 	return op
 }
 
-func MakeTransaction(n int) (tx Transaction) {
-	kpSource, _ := keypair.Random()
+func MakeTransaction(n int) (kp *keypair.Full, tx Transaction) {
+	kp, _ = keypair.Random()
 
 	var ops []Operation
 	for i := 0; i < n; i++ {
@@ -72,7 +72,7 @@ func MakeTransaction(n int) (tx Transaction) {
 	}
 
 	txBody := TransactionBody{
-		Source:     kpSource.Address(),
+		Source:     kp.Address(),
 		Fee:        Amount(BaseFee),
 		Checkpoint: uuid.New().String(),
 		Operations: ops,
@@ -85,7 +85,7 @@ func MakeTransaction(n int) (tx Transaction) {
 		},
 		B: txBody,
 	}
-	tx.Sign(kpSource)
+	tx.Sign(kp)
 
 	return
 }

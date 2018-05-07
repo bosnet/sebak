@@ -15,7 +15,7 @@ type LevelDBBackend struct {
 	DB *leveldb.DB
 }
 
-func (st *LevelDBBackend) Init(config StorageConfig) (err error) {
+func (st *LevelDBBackend) Init(config Config) (err error) {
 	var sto leveldbStorage.Storage
 	if path, ok := config["path"]; !ok {
 		err = fmt.Errorf("`path` is not missing")
@@ -211,7 +211,7 @@ func (st *LevelDBBackend) GetIterator(prefix string, reverse bool) (func() (Iter
 		hasUnsent = false
 	}
 
-	var n int64 = 0
+	var n int64
 	return (func() (IterItem, bool) {
 			if hasUnsent {
 				hasUnsent = false
@@ -223,7 +223,7 @@ func (st *LevelDBBackend) GetIterator(prefix string, reverse bool) (func() (Iter
 				return IterItem{}, false
 			}
 
-			n += 1
+			n++
 			return IterItem{N: n, Key: iter.Key(), Value: iter.Value()}, true
 		}),
 		(func() {

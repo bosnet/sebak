@@ -1,38 +1,34 @@
 package consensus
 
 import (
+	"github.com/spikeekips/sebak/lib"
 	"github.com/spikeekips/sebak/lib/error"
 	"github.com/spikeekips/sebak/lib/storage"
-	"github.com/spikeekips/sebak/lib/transport"
 	"github.com/spikeekips/sebak/lib/util"
 )
 
 type ISAAC struct {
 	util.SafeLock
 
-	Node                  Node
+	Node                  *sebak.MainNode
 	VotingThresholdPolicy VotingThresholdPolicy
 
 	Boxes *BallotBoxes
 
-	Storage   *storage.LevelDBBackend
-	Transport transport.Transport
+	Storage *storage.LevelDBBackend
 }
 
-func NewISAAC(node Node, votingThresholdPolicy VotingThresholdPolicy, st *storage.LevelDBBackend, tp transport.Transport) (is *ISAAC, err error) {
+func NewISAAC(node *sebak.MainNode, votingThresholdPolicy VotingThresholdPolicy) (is *ISAAC, err error) {
 	is = &ISAAC{
 		Node: node,
 		VotingThresholdPolicy: votingThresholdPolicy,
 		Boxes: NewBallotBoxes(),
-
-		Storage:   st,
-		Transport: tp,
 	}
 
 	return
 }
 
-func (is *ISAAC) GetNode() Node {
+func (is *ISAAC) GetNode() sebak.Node {
 	return is.Node
 }
 
@@ -46,11 +42,11 @@ func (is *ISAAC) ReceiveMessage(m util.Message) (ballot Ballot, err error) {
 	*/
 
 	if is.Boxes.HasMessage(m) {
-		err = sebak_error.ErrorNewButKnownMessage
+		err = sebakerror.ErrorNewButKnownMessage
 		return
 	}
 
-	if ballot, err = NewBallotFromMessage(is.Node.Keypair().Address(), m); err != nil {
+	if ballot, err = NewBallotFromMessage(is.Node.Address(), m); err != nil {
 		return
 	}
 
@@ -88,7 +84,7 @@ func (is *ISAAC) ReceiveBallot(ballot Ballot) (vs VotingStateStaging, err error)
 	case BallotStateINIT:
 		vs, err = is.receiveBallotStateINIT(ballot)
 	case BallotStateALLCONFIRM:
-		err = sebak_error.ErrorBallotHasInvalidState
+		err = sebakerror.ErrorBallotHasInvalidState
 		return
 	default:
 		vs, err = is.receiveBallotVotingStates(ballot)

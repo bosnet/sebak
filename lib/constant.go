@@ -4,7 +4,7 @@ import (
 	"regexp"
 )
 
-// Top-level of version. It must follow the SemVer(https://semver.org)
+// Version is Top-level of version. It must follow the SemVer(https://semver.org)
 var Version = "0.1+proto"
 
 // totalBalance is the maximum currency limit, you can not make the currency

@@ -1,9 +1,12 @@
 package consensus
 
-import "github.com/spikeekips/sebak/lib/util"
+import (
+	"github.com/spikeekips/sebak/lib"
+	"github.com/spikeekips/sebak/lib/util"
+)
 
 type Consensus interface {
-	GetNode() Node
+	GetNode() sebak.Node
 	ReceiveMessage(util.Message) (Ballot, error)
 	ReceiveBallot(Ballot) (*VotingResult, error)
 }

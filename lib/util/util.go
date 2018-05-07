@@ -1,6 +1,7 @@
 package util
 
 import (
+	"os"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -56,6 +57,15 @@ func (l *SafeLock) Unlock() {
 	atomic.AddInt64(&l.locks, -1)
 	if l.locks < 1 {
 		l.lock.Unlock()
+	}
+
+	return
+}
+
+func GetENVValue(key, defaultValue string) (v string) {
+	var found bool
+	if v, found = os.LookupEnv(key); !found {
+		return defaultValue
 	}
 
 	return

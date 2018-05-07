@@ -1,4 +1,4 @@
-package sebak_error
+package sebakerror
 
 var ErrorBlockAlreadyExists = NewError(100, "already exists in block")
 var ErrorHashDoesNotMatch = NewError(101, "`Hash` does not match")

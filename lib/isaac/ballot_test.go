@@ -3,14 +3,14 @@ package consensus
 import (
 	"testing"
 
+	"github.com/stellar/go/keypair"
+
 	"github.com/spikeekips/sebak/lib"
 	"github.com/spikeekips/sebak/lib/error"
-	"github.com/stellar/go/keypair"
 )
 
 func makeNewBallot(state BallotState, vote VotingHole) (*keypair.Full, sebak.Transaction, Ballot) {
-	kpNode, _ := keypair.Random()
-	tx := sebak.MakeTransaction(1)
+	kpNode, tx := sebak.MakeTransaction(1)
 	ballot, _ := NewBallotFromMessage(kpNode.Address(), tx)
 
 	ballot.SetState(state)
@@ -22,8 +22,7 @@ func makeNewBallot(state BallotState, vote VotingHole) (*keypair.Full, sebak.Tra
 }
 
 func TestNewBallot(t *testing.T) {
-	kpNode, _ := keypair.Random()
-	tx := sebak.MakeTransaction(1)
+	kpNode, tx := sebak.MakeTransaction(1)
 	ballot, _ := NewBallotFromMessage(kpNode.Address(), tx)
 
 	if len(ballot.H.Hash) < 1 {
@@ -78,7 +77,7 @@ func TestBallotVote(t *testing.T) {
 
 	/*
 			err = ballot.IsWellFormed()
-			if err.(sebak_error.Error).Code != sebak_error.ErrorSignatureVerificationFailed.Code {
+			if err.(sebakerror.Error).Code != sebakerror.ErrorSignatureVerificationFailed.Code {
 				t.Errorf("error must be `ErrorSignatureVerificationFailed`: %v", err)
 				return
 			}
@@ -87,15 +86,15 @@ func TestBallotVote(t *testing.T) {
 	*/
 
 	err = ballot.IsWellFormed()
-	if err.(sebak_error.Error).Code != sebak_error.ErrorBallotNoVoting.Code {
-		t.Errorf("error must be %v", sebak_error.ErrorBallotNoVoting)
+	if err.(sebakerror.Error).Code != sebakerror.ErrorBallotNoVoting.Code {
+		t.Errorf("error must be %v", sebakerror.ErrorBallotNoVoting)
 		return
 	}
 
 	ballot.Vote(VotingYES)
 	err = ballot.IsWellFormed()
-	if err.(sebak_error.Error).Code != sebak_error.ErrorHashDoesNotMatch.Code {
-		t.Errorf("error must be %v", sebak_error.ErrorHashDoesNotMatch)
+	if err.(sebakerror.Error).Code != sebakerror.ErrorHashDoesNotMatch.Code {
+		t.Errorf("error must be %v", sebakerror.ErrorHashDoesNotMatch)
 		return
 	}
 

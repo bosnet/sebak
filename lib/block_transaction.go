@@ -92,7 +92,7 @@ func (bt BlockTransaction) Save(st *storage.LevelDBBackend) (err error) {
 	if err != nil {
 		return
 	} else if exists {
-		return sebak_error.ErrorBlockAlreadyExists
+		return sebakerror.ErrorBlockAlreadyExists
 	}
 
 	bt.Confirmed = util.NowISO8601()

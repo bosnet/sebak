@@ -70,7 +70,7 @@ func TestLevelDBBackendNews(t *testing.T) {
 	defer st.Close()
 
 	input := map[string]int{}
-	for i := 0; i < 10000; i++ {
+	for i := 0; i < 100; i++ {
 		input[fmt.Sprintf("%d", i)] = i
 	}
 	var args []Item

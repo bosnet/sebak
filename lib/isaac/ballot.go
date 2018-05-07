@@ -18,7 +18,7 @@ type BallotMessage struct {
 
 func (bm BallotMessage) IsWellFormed() (err error) {
 	if len(bm.Hash) < 1 {
-		err = sebak_error.ErrorInvalidHash
+		err = sebakerror.ErrorInvalidHash
 		return
 	}
 	if bm.Message != nil {
@@ -129,7 +129,7 @@ func (b Ballot) VerifySignature() (err error) {
 		base58.Decode(b.H.Signature),
 	)
 	if err != nil {
-		return sebak_error.ErrorSignatureVerificationFailed
+		return sebakerror.ErrorSignatureVerificationFailed
 	}
 
 	return
@@ -188,7 +188,7 @@ type BallotHeader struct {
 
 type BallotBody struct {
 	NodeKey    string      `json:"node_key"` // validator's public address
-	State      BallotState `json:state`
+	State      BallotState `json:"statee"`
 	VotingHole VotingHole  `json:"voting_hole"`
 	Reason     string      `json:"reason"`
 
@@ -260,7 +260,7 @@ func (b *BallotBoxes) AddVotingResult(vr *VotingResult, bb *BallotBox) (err erro
 
 func (b *BallotBoxes) RemoveVotingResult(vr *VotingResult, bb *BallotBox) (err error) {
 	if !b.HasMessageByString(vr.MessageHash) {
-		err = sebak_error.ErrorVotingResultNotFound
+		err = sebakerror.ErrorVotingResultNotFound
 		return
 	}
 
@@ -341,7 +341,7 @@ func (b *BallotBox) HasMessageByString(hash string) bool {
 
 func (b *BallotBox) AddVotingResult(vr *VotingResult) (err error) {
 	if b.HasMessageByString(vr.MessageHash) {
-		err = sebak_error.ErrorVotingResultAlreadyExists
+		err = sebakerror.ErrorVotingResultAlreadyExists
 		return
 	}
 
@@ -356,7 +356,7 @@ func (b *BallotBox) AddVotingResult(vr *VotingResult) (err error) {
 
 func (b *BallotBox) RemoveVotingResult(vr *VotingResult) (err error) {
 	if !b.HasMessageByString(vr.MessageHash) {
-		err = sebak_error.ErrorVotingResultNotFound
+		err = sebakerror.ErrorVotingResultNotFound
 		return
 	}
 

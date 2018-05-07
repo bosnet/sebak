@@ -120,12 +120,12 @@ func (o OperationBodyPayment) Serialize() (encoded []byte, err error) {
 	return
 }
 
-func (ob OperationBodyPayment) IsWellFormed() (err error) {
-	if _, err = keypair.Parse(ob.Target); err != nil {
+func (o OperationBodyPayment) IsWellFormed() (err error) {
+	if _, err = keypair.Parse(o.Target); err != nil {
 		return
 	}
 
-	if int64(ob.Amount) < 1 {
+	if int64(o.Amount) < 1 {
 		err = fmt.Errorf("invalid `Amount`")
 		return
 	}
@@ -133,18 +133,18 @@ func (ob OperationBodyPayment) IsWellFormed() (err error) {
 	return
 }
 
-func (ob OperationBodyPayment) Validate() (err error) {
+func (o OperationBodyPayment) Validate() (err error) {
 	// TODO check whether `Target` is in `Block Account`
 
 	return
 }
 
-func (ob OperationBodyPayment) TargetAddress() string {
-	return ob.Target
+func (o OperationBodyPayment) TargetAddress() string {
+	return o.Target
 }
 
-func (ob OperationBodyPayment) GetAmount() Amount {
-	return ob.Amount
+func (o OperationBodyPayment) GetAmount() Amount {
+	return o.Amount
 }
 
 type OperationBodyCreateAccount struct {
@@ -152,12 +152,12 @@ type OperationBodyCreateAccount struct {
 	Amount Amount `json:"amount"`
 }
 
-func (ob OperationBodyCreateAccount) IsWellFormed() (err error) {
-	if _, err = keypair.Parse(ob.Target); err != nil {
+func (o OperationBodyCreateAccount) IsWellFormed() (err error) {
+	if _, err = keypair.Parse(o.Target); err != nil {
 		return
 	}
 
-	if int64(ob.Amount) < 1 {
+	if int64(o.Amount) < 1 {
 		err = fmt.Errorf("invalid `Amount`: lower than 1")
 		return
 	} // TODO check over minimum balance
@@ -165,16 +165,16 @@ func (ob OperationBodyCreateAccount) IsWellFormed() (err error) {
 	return
 }
 
-func (ob OperationBodyCreateAccount) Validate() (err error) {
+func (o OperationBodyCreateAccount) Validate() (err error) {
 	// TODO check whether `Target` is not in `Block Account`
 
 	return
 }
 
-func (ob OperationBodyCreateAccount) TargetAddress() string {
-	return ob.Target
+func (o OperationBodyCreateAccount) TargetAddress() string {
+	return o.Target
 }
 
-func (ob OperationBodyCreateAccount) GetAmount() Amount {
-	return ob.Amount
+func (o OperationBodyCreateAccount) GetAmount() Amount {
+	return o.Amount
 }

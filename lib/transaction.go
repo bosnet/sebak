@@ -57,6 +57,7 @@ var TransactionWellFormedCheckerFuncs = []util.CheckerFunc{
 	checkTransactionBaseFee,
 	checkTransactionOperationIsWellFormed,
 	checkTransactionVerifySignature,
+	checkTransactionHashMatch,
 }
 
 func (o Transaction) IsWellFormed() (err error) {

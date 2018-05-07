@@ -25,3 +25,11 @@
 [[constraint]]
   branch = "master"
   name = "github.com/syndtr/goleveldb"
+
+[[constraint]]
+  branch = "master"
+  name = "golang.org/x/net"
+
+[[constraint]]
+  name = "github.com/inconshreveable/log15"
+  version = "2.13.0"

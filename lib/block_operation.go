@@ -57,7 +57,7 @@ func (bo BlockOperation) Save(st *storage.LevelDBBackend) (err error) {
 	if exists, err = st.Has(key); err != nil {
 		return
 	} else if exists {
-		return sebak_error.ErrorBlockAlreadyExists
+		return sebakerror.ErrorBlockAlreadyExists
 	}
 
 	if err = st.New(GetBlockOperationKey(bo.Hash), bo); err != nil {

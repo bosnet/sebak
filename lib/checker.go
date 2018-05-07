@@ -8,7 +8,7 @@ import (
 
 func checkTransactionSource(target interface{}, args ...interface{}) error {
 	if _, err := keypair.Parse(target.(Transaction).B.Source); err != nil {
-		return sebak_error.ErrorBadPublicAddress
+		return sebakerror.ErrorBadPublicAddress
 	}
 
 	return nil
@@ -16,7 +16,7 @@ func checkTransactionSource(target interface{}, args ...interface{}) error {
 
 func checkTransactionBaseFee(target interface{}, args ...interface{}) error {
 	if int64(target.(Transaction).B.Fee) < BaseFee {
-		return sebak_error.ErrorInvalidFee
+		return sebakerror.ErrorInvalidFee
 	}
 
 	return nil
@@ -26,7 +26,7 @@ func checkTransactionOperationIsWellFormed(target interface{}, args ...interface
 	tx := target.(Transaction)
 	for _, op := range tx.B.Operations {
 		if ta := op.B.TargetAddress(); tx.B.Source == ta {
-			return sebak_error.ErrorInvalidOperation
+			return sebakerror.ErrorInvalidOperation
 		}
 		if err := op.IsWellFormed(); err != nil {
 			return err
@@ -48,7 +48,7 @@ func checkTransactionVerifySignature(target interface{}, args ...interface{}) er
 func checkTransactionHashMatch(target interface{}, args ...interface{}) error {
 	tx := target.(Transaction)
 	if tx.H.Hash != tx.B.MakeHashString() {
-		return sebak_error.ErrorHashDoesNotMatch
+		return sebakerror.ErrorHashDoesNotMatch
 	}
 
 	return nil

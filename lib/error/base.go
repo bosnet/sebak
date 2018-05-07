@@ -1,4 +1,4 @@
-package sebak_error
+package sebakerror
 
 import "encoding/json"
 

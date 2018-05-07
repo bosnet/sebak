@@ -19,8 +19,14 @@
 [[projects]]
   name = "github.com/ethereum/go-ethereum"
   packages = ["rlp"]
-  revision = "2423ae01e0d2f853512eb2b46954b5ad0754a897"
-  version = "v1.8.4"
+  revision = "12683feca7483f0b0bf425c3c520e2724f69f2aa"
+  version = "v1.8.6"
+
+[[projects]]
+  name = "github.com/go-stack/stack"
+  packages = ["."]
+  revision = "259ab82a6cad3992b4e21ff5cac294ccb06474bc"
+  version = "v1.7.0"
 
 [[projects]]
   branch = "master"
@@ -35,6 +41,12 @@
   version = "0.2"
 
 [[projects]]
+  name = "github.com/inconshreveable/log15"
+  packages = ["."]
+  revision = "0decfc6c20d9ca0ad143b0e89dcaa20f810b4fb3"
+  version = "v2.13"
+
+[[projects]]
   branch = "master"
   name = "github.com/lib/pq"
   packages = [
@@ -42,6 +54,18 @@
     "oid"
   ]
   revision = "d34b9ff171c21ad295489235aec8b6626023cd04"
+
+[[projects]]
+  name = "github.com/mattn/go-colorable"
+  packages = ["."]
+  revision = "167de6bfdfba052fa6b2d3664c8f5272e23c9072"
+  version = "v0.0.9"
+
+[[projects]]
+  name = "github.com/mattn/go-isatty"
+  packages = ["."]
+  revision = "0360b2af4f38e8d38c7fce2a9f4e702702d73a39"
+  version = "v0.0.3"
 
 [[projects]]
   branch = "master"
@@ -73,7 +97,7 @@
     "support/errors",
     "xdr"
   ]
-  revision = "9eb9682656c21d73a8fef16813872398ae6a6b6c"
+  revision = "87a45bf9f03de7e521afc77d6695917ec174d3d7"
 
 [[projects]]
   branch = "master"
@@ -101,11 +125,53 @@
     "argon2",
     "blake2b"
   ]
-  revision = "e73bf333ef8920dbb52ad18d4bd38ad9d9bc76d7"
+  revision = "613d6eafa307c6881a737a3c35c0e312e8d3a8c5"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/net"
+  packages = [
+    "http/httpguts",
+    "http2",
+    "http2/hpack",
+    "idna",
+    "lex/httplex"
+  ]
+  revision = "5f9ae10d9af5b1c89ae6904293b14b064d4ada23"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/sys"
+  packages = [
+    "cpu",
+    "unix"
+  ]
+  revision = "78d5f264b493f125018180c204871ecf58a2dce1"
+
+[[projects]]
+  name = "golang.org/x/text"
+  packages = [
+    "collate",
+    "collate/build",
+    "internal/colltab",
+    "internal/gen",
+    "internal/tag",
+    "internal/triegen",
+    "internal/ucd",
+    "language",
+    "secure/bidirule",
+    "transform",
+    "unicode/bidi",
+    "unicode/cldr",
+    "unicode/norm",
+    "unicode/rangetable"
+  ]
+  revision = "f21a4dfb5e38f5895301dc265a8def02365cc3d0"
+  version = "v0.3.0"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "c351dc3e1810c3bd5cfcfc523a5e36b01434ec4dcbb4d6e5f90e04e2e4fd715f"
+  inputs-digest = "a8ab5c64833e9aea77ce7de67d357ca350c32e3ac42635d3a71e7144522615f4"
   solver-name = "gps-cdcl"
   solver-version = 1

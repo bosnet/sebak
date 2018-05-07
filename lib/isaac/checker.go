@@ -8,7 +8,7 @@ import (
 func checkBallotEmptyNodeKey(target interface{}, args ...interface{}) error {
 	ballot := target.(Ballot)
 	if len(ballot.B.NodeKey) < 1 {
-		return sebak_error.ErrorBallotNoNodeKey
+		return sebakerror.ErrorBallotNoNodeKey
 	}
 	return nil
 }
@@ -16,7 +16,7 @@ func checkBallotEmptyNodeKey(target interface{}, args ...interface{}) error {
 func checkBallotEmptyHashMatch(target interface{}, args ...interface{}) error {
 	ballot := target.(Ballot)
 	if base58.Encode(ballot.B.MakeHash()) != ballot.GetHash() {
-		return sebak_error.ErrorHashDoesNotMatch
+		return sebakerror.ErrorHashDoesNotMatch
 	}
 	return nil
 }
@@ -30,14 +30,14 @@ func checkBallotVerifySignature(target interface{}, args ...interface{}) error {
 
 func checkBallotNoVoting(target interface{}, args ...interface{}) error {
 	if target.(Ballot).B.VotingHole == VotingNOTYET {
-		return sebak_error.ErrorBallotNoVoting
+		return sebakerror.ErrorBallotNoVoting
 	}
 	return nil
 }
 
 func checkBallotValidState(target interface{}, args ...interface{}) error {
 	if target.(Ballot).State() == BallotStateNONE {
-		return sebak_error.ErrorInvalidState
+		return sebakerror.ErrorInvalidState
 	}
 	return nil
 }
@@ -46,13 +46,13 @@ func checkBallotHasMessage(target interface{}, args ...interface{}) error {
 	ballot := target.(Ballot)
 	if ballot.State() != BallotStateINIT {
 		if ballot.B.Message.Message == nil {
-			return sebak_error.ErrorBallotHasMessage
+			return sebakerror.ErrorBallotHasMessage
 		}
 		return nil
 	}
 
 	if ballot.B.Message.Message == nil {
-		return sebak_error.ErrorBallotEmptyMessage
+		return sebakerror.ErrorBallotEmptyMessage
 	}
 	return nil
 }
@@ -61,7 +61,7 @@ func checkBallotResultValidHash(target interface{}, args ...interface{}) error {
 	votingResult := target.(*VotingResult)
 	ballot := args[0].(Ballot)
 	if ballot.Message().GetHash() != votingResult.MessageHash {
-		return sebak_error.ErrorHashDoesNotMatch
+		return sebakerror.ErrorHashDoesNotMatch
 	}
 	return nil
 }

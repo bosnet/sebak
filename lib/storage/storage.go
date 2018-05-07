@@ -1,6 +1,6 @@
 package storage
 
-type StorageConfig map[string]string
+type Config map[string]string
 
 type Serializable interface {
 	Serialize() ([]byte, error)
