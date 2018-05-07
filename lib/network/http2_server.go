@@ -39,8 +39,8 @@ type HTTP2TransportConfig struct {
 	WriteTimeout,
 	IdleTimeout time.Duration
 
-	TlsCertFile,
-	TlsKeyFile string
+	TLSCertFile,
+	TLSKeyFile string
 }
 
 type HandlerFunc func(w http.ResponseWriter, r *http.Request)
@@ -67,8 +67,8 @@ func NewHTTP2Transport(config HTTP2TransportConfig) (transport *HTTP2Transport) 
 
 	transport = &HTTP2Transport{
 		server:         server,
-		tlsCertFile:    config.TlsCertFile,
-		tlsKeyFile:     config.TlsKeyFile,
+		tlsCertFile:    config.TLSCertFile,
+		tlsKeyFile:     config.TLSKeyFile,
 		receiveChannel: make(chan TransportMessage),
 		receiveQueue:   &util.Queue{},
 	}
@@ -130,7 +130,7 @@ func (t *HTTP2Transport) Start() (err error) {
 	return t.server.ListenAndServeTLS(t.tlsCertFile, t.tlsKeyFile)
 }
 
-func (t *HTTP2Transport) Receive() chan TransportMessage {
+func (t *HTTP2Transport) ReceiveMessage() chan TransportMessage {
 	return t.receiveChannel
 }
 

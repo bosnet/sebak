@@ -35,7 +35,7 @@ func NewVotingResultBallotFromBallot(ballot Ballot) VotingResultBallot {
 
 type VotingResultBallots map[ /* NodeKey */ string]VotingResultBallot
 
-// `VotingStateStaging` will keep the snapshot at changing state.
+// VotingStateStaging will keep the snapshot at changing state.
 type VotingStateStaging struct {
 	State         BallotState
 	PreviousState BallotState

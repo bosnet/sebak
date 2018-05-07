@@ -118,8 +118,8 @@ func main() {
 		ReadHeaderTimeout: 0,
 		WriteTimeout:      0,
 		IdleTimeout:       5 * time.Second,
-		TlsCertFile:       flagTLSCertFile,
-		TlsKeyFile:        flagTLSKeyFile,
+		TLSCertFile:       flagTLSCertFile,
+		TLSKeyFile:        flagTLSKeyFile,
 	}
 	transport := network.NewHTTP2Transport(config)
 
@@ -139,7 +139,7 @@ func main() {
 
 	transport.Ready()
 
-	for i := range transport.Receive() {
+	for i := range transport.ReceiveMessage() {
 		fmt.Println("KKKKKKKK", i.Type, string(i.Data))
 	}
 	select {}

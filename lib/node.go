@@ -6,7 +6,6 @@ import (
 	"github.com/stellar/go/keypair"
 )
 
-// Node
 type Node interface {
 	Address() string
 	Alias() string
