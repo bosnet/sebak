@@ -79,6 +79,7 @@ func MakeTransaction(n int) (kp *keypair.Full, tx Transaction) {
 	}
 
 	tx = Transaction{
+		T: "transaction",
 		H: TransactionHeader{
 			Created: util.NowISO8601(),
 			Hash:    txBody.MakeHashString(),

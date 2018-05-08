@@ -15,16 +15,18 @@ import (
 
 func NewRandomNode() *sebak.MainNode {
 	kp, _ := keypair.Random()
-	return sebak.NewMainNode(kp, nil)
+	a, _ := sebak.NewMainNode(kp, nil)
+	return a
 }
 
 type DummyMessage struct {
+	T    string
 	Hash string
 	Data string
 }
 
 func NewDummyMessage(data string) DummyMessage {
-	d := DummyMessage{Data: data}
+	d := DummyMessage{T: "dummy-message", Data: data}
 	d.UpdateHash()
 
 	return d
@@ -32,6 +34,10 @@ func NewDummyMessage(data string) DummyMessage {
 
 func (m DummyMessage) IsWellFormed() error {
 	return nil
+}
+
+func (m DummyMessage) GetType() string {
+	return m.T
 }
 
 func (m DummyMessage) GetHash() string {

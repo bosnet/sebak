@@ -1,6 +1,7 @@
 package util
 
 import (
+	"errors"
 	"os"
 	"sync"
 	"sync/atomic"
@@ -69,4 +70,19 @@ func GetENVValue(key, defaultValue string) (v string) {
 	}
 
 	return
+}
+
+type SliceFlags []interface{}
+
+func (s *SliceFlags) String() string {
+	return "slice flags"
+}
+
+func (s *SliceFlags) Set(v string) error {
+	if len(v) < 1 {
+		return errors.New("empty string found")
+	}
+
+	*s = append(*s, v)
+	return nil
 }

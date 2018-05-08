@@ -106,3 +106,25 @@ func TestBallotVote(t *testing.T) {
 		return
 	}
 }
+
+func TestBallotNewBallotFromMessageWithTransaction(t *testing.T) {
+	kp, _, ballot := makeNewBallot(BallotStateINIT, VotingYES)
+	ballot.Sign(kp)
+
+	jsoned, err := ballot.Serialize()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	newBallot, err := NewBallotFromJSON(jsoned)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	if err := newBallot.IsWellFormed(); err != nil {
+		t.Error(err)
+		return
+	}
+}

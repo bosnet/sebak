@@ -1,35 +1,96 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"time"
 
+	"golang.org/x/net/http2"
+
 	logging "github.com/inconshreveable/log15"
+	sebak "github.com/spikeekips/sebak/lib"
+	"github.com/spikeekips/sebak/lib/isaac"
 	"github.com/spikeekips/sebak/lib/network"
 	"github.com/spikeekips/sebak/lib/util"
+	"github.com/stellar/go/keypair"
 )
 
 // TODO "github.com/cockroachdb/cmux", split request streams
 // TODO "github.com/spf13/cobra", cli commands and options
 
+const defaultNetwork string = "https"
 const defaultPort int = 12345
-const defaultHost string = "localhost"
+const defaultHost string = "0.0.0.0"
 const defaultLogLevel logging.Lvl = logging.LvlInfo
+
+type FlagValidators []*sebak.Validator
+
+func (f *FlagValidators) String() string {
+	return ""
+}
+
+func (f *FlagValidators) Set(v string) error {
+	if strings.Count(v, ",") > 2 {
+		return errors.New("multiple comma, ',' found")
+	}
+
+	parsed := strings.SplitN(v, ",", 3)
+	if len(parsed) < 2 {
+		return errors.New("at least '<public address>,<endpoint url>' must be given")
+	}
+	if len(parsed) < 3 {
+		parsed = append(parsed, "")
+	}
+
+	endpoint, err := sebak.ParseNodeEndpoint(parsed[1])
+	if err != nil {
+		return err
+	}
+	node, err := sebak.NewValidator(
+		parsed[0],
+		endpoint,
+		parsed[2],
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create validator: %v", err)
+	}
+
+	// check duplication
+	for _, n := range *f {
+		if node.Address() == n.Address() {
+			return fmt.Errorf("duplicated public address found")
+		}
+		if node.Endpoint() == n.Endpoint() {
+			return fmt.Errorf("duplicated endpoint found")
+		}
+	}
+
+	*f = append(*f, node)
+
+	return nil
+}
 
 var (
 	flags *flag.FlagSet
 
-	flagKPSecretSeed    string = util.GetENVValue("SEBAK_secret_seed", "")
-	flagKPPublicAddress string = util.GetENVValue("SEBAK_secret_seed", "")
-	flagLogLevel        string = util.GetENVValue("SEBAK_LOG_LEVEL", defaultLogLevel.String())
-	flagLogOutput       string = util.GetENVValue("SEBAK_LOG_OUTPUT", "")
-	flagBind            string = util.GetENVValue("SEBAK_BIND", fmt.Sprintf("%s:%d", defaultHost, defaultPort))
-	flagTLSCertFile     string = util.GetENVValue("SEBAK_TLS_CERT", "sebak.crt")
-	flagTLSKeyFile      string = util.GetENVValue("SEBAK_TLS_KEY", "sebak.key")
+	kp                 *keypair.Full
+	flagKPSecretSeed   string = util.GetENVValue("SEBAK_SECRET_SEED", "")
+	flagLogLevel       string = util.GetENVValue("SEBAK_LOG_LEVEL", defaultLogLevel.String())
+	flagLogOutput      string = util.GetENVValue("SEBAK_LOG_OUTPUT", "")
+	Endpoint           *url.URL
+	flagEndpointString string = util.GetENVValue(
+		"SEBAK_ENDPOINT",
+		fmt.Sprintf("%s://%s:%d", defaultNetwork, defaultHost, defaultPort),
+	)
+	flagTLSCertFile string = util.GetENVValue("SEBAK_TLS_CERT", "sebak.crt")
+	flagTLSKeyFile  string = util.GetENVValue("SEBAK_TLS_KEY", "sebak.key")
+	flagValidators  FlagValidators
 
 	logLevel logging.Lvl
 	log      logging.Logger
@@ -58,19 +119,47 @@ func init() {
 	}
 
 	// flags
+	flags.StringVar(&flagKPSecretSeed, "secret-seed", flagKPSecretSeed, "secret seed of this node")
 	flags.StringVar(&flagLogLevel, "log-level", flagLogLevel, "log level, {crit, error, warn, info, debug}")
 	flags.StringVar(&flagLogOutput, "log-output", flagLogOutput, "set log output file")
-	flags.StringVar(&flagBind, "bind", flagBind, "address to listen on ('host:port' or ':port')")
+	flags.StringVar(&flagEndpointString, "endpoint", flagEndpointString, "endpoint uri to listen on ('https://0.0.0.0:12345')")
 	flags.StringVar(&flagTLSCertFile, "tls-cert", flagTLSCertFile, "tls certificate file")
 	flags.StringVar(&flagTLSKeyFile, "tls-Key", flagTLSKeyFile, "tls Keyificate file")
+	flags.Var(&flagValidators, "validator", "set validator: '<public address>,<endpoint url>,<alias>' or <public address>,<endpoint url>")
 
 	flags.Parse(os.Args[1:])
 
-	if _, err := os.Stat(flagTLSCertFile); os.IsNotExist(err) {
+	if _, err = os.Stat(flagTLSCertFile); os.IsNotExist(err) {
 		printFlagsError("-tls-cert", err)
 	}
-	if _, err := os.Stat(flagTLSKeyFile); os.IsNotExist(err) {
+	if _, err = os.Stat(flagTLSKeyFile); os.IsNotExist(err) {
 		printFlagsError("-tls-key", err)
+	}
+
+	var parsedKP keypair.KP
+	parsedKP, err = keypair.Parse(flagKPSecretSeed)
+	if err != nil {
+		printFlagsError("-secret-seed", err)
+	} else {
+		kp = parsedKP.(*keypair.Full)
+	}
+
+	if p, err := sebak.ParseNodeEndpoint(flagEndpointString); err != nil {
+		printFlagsError("-endpoint", err)
+	} else {
+		Endpoint = p
+		flagEndpointString = Endpoint.String()
+	}
+
+	for _, n := range flagValidators {
+		if n.Address() == kp.Address() {
+			printFlagsError("-validator", fmt.Errorf("duplicated public address found"))
+			break
+		}
+		if n.Endpoint() == Endpoint {
+			printFlagsError("-validator", fmt.Errorf("duplicated endpoint found"))
+			break
+		}
 	}
 
 	if logLevel, err = logging.LvlFromString(flagLogLevel); err != nil {
@@ -92,28 +181,48 @@ func init() {
 
 	// print flags
 	parsedFlags := []interface{}{}
-	parsedFlags = append(parsedFlags, "log-level", flagLogLevel)
-	parsedFlags = append(parsedFlags, "log-output", flagLogOutput)
-	parsedFlags = append(parsedFlags, "bind", flagBind)
-	parsedFlags = append(parsedFlags, "tls-cert", flagTLSCertFile)
-	parsedFlags = append(parsedFlags, "tls-key", flagTLSKeyFile)
+	parsedFlags = append(parsedFlags, "\n\tlog-level", flagLogLevel)
+	parsedFlags = append(parsedFlags, "\n\tlog-output", flagLogOutput)
+	parsedFlags = append(parsedFlags, "\n\tendpoint", flagEndpointString)
+	parsedFlags = append(parsedFlags, "\n\ttls-cert", flagTLSCertFile)
+	parsedFlags = append(parsedFlags, "\n\ttls-key", flagTLSKeyFile)
+
+	var vl []interface{}
+	for i, v := range flagValidators {
+		vl = append(vl, fmt.Sprintf("\n\tvalidator#%d", i))
+		vl = append(
+			vl,
+			fmt.Sprintf("alias=%s address=%s endpoint=%s", v.Alias(), v.Address(), v.Endpoint()),
+		)
+	}
+	parsedFlags = append(parsedFlags, vl...)
 
 	log.Debug("parsed flags:", parsedFlags...)
 
 	// NOTE instead of set `http2.VerboseLogs`, just use
 	// `GODEBUG="http2debug=2"`.
-	/*
-		if logLevel == logging.LvlDebug {
-			http2.VerboseLogs = true
-		}
-	*/
+	if logLevel == logging.LvlDebug {
+		http2.VerboseLogs = true
+	}
 }
 
 func main() {
+	defer func() {
+		os.Exit(1)
+	}()
+
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
+	// TODO from configuration or cmd options
+	node, err := sebak.NewMainNode(kp, Endpoint)
+	if err != nil {
+		log.Error("failed to launch main node", "error", err)
+		return
+	}
+	node.SetValidators(flagValidators...)
+
 	config := network.HTTP2TransportConfig{
-		Addr:              flagBind,
+		Addr:              node.Endpoint().Host,
 		ReadTimeout:       0,
 		ReadHeaderTimeout: 0,
 		WriteTimeout:      0,
@@ -122,6 +231,7 @@ func main() {
 		TLSKeyFile:        flagTLSKeyFile,
 	}
 	transport := network.NewHTTP2Transport(config)
+	node.SetTransport(transport)
 
 	go func() {
 		log.Debug("transport started", "transport", transport, "endpoint", transport.Endpoint())
@@ -133,15 +243,93 @@ func main() {
 		}
 	}()
 
-	transport.AddHandler("/", TestFindme)
-	transport.AddHandler("/event", TestEvent)
-	transport.AddHandler("/message", TestMessage)
+	transport.AddHandler("/", Index)
+	transport.AddHandler("/message", MessageHandler)
+	transport.AddHandler("/ballot", BallotHandler)
 
 	transport.Ready()
 
-	for i := range transport.ReceiveMessage() {
-		fmt.Println("KKKKKKKK", i.Type, string(i.Data))
+	policy, _ := consensus.NewDefaultVotingThresholdPolicy(100, 30, 30)
+	policy.SetValidators(uint64(node.CountValidators()))
+
+	is, err := consensus.NewISAAC(node, policy)
+	if err != nil {
+		log.Error("failed to launch consensus", "error", err)
+		return
 	}
+
+	for message := range transport.ReceiveMessage() {
+		log.Debug("got message", "message", message)
+
+		switch message.Type {
+		case "message":
+			var tx sebak.Transaction
+			if tx, err = sebak.NewTransactionFromJSON(message.Data); err != nil {
+				log.Error("found invalid transaction message", "error", err)
+
+				// TODO if failed, save in `BlockTransactionHistory`????
+				continue
+			}
+			if err = tx.IsWellFormed(); err != nil {
+				log.Error("found invalid transaction message", "error", err)
+				// TODO if failed, save in `BlockTransactionHistory`
+				continue
+			}
+
+			/*
+				- TODO `Message` must be saved in `BlockTransactionHistory`
+				- TODO check already `IsWellFormed()`
+				- TODO check already in BlockTransaction
+				- TODO check already in BlockTransactionHistory
+			*/
+
+			var ballot consensus.Ballot
+			if ballot, err = is.ReceiveMessage(tx); err != nil {
+				log.Error("failed to receive new message", "error", err)
+				continue
+			}
+
+			// TODO initially shutup and broadcast
+			fmt.Println(ballot)
+		case "ballot":
+			/*
+				- TODO check already `IsWellFormed()`
+				- TODO check already in BlockTransaction
+				- TODO check already in BlockTransactionHistory
+			*/
+
+			var ballot consensus.Ballot
+			if ballot, err = consensus.NewBallotFromJSON(message.Data); err != nil {
+				log.Error("found invalid ballot message", "error", err)
+				continue
+			}
+			var vt consensus.VotingStateStaging
+			if vt, err = is.ReceiveBallot(ballot); err != nil {
+				log.Error("failed to receive ballot", "error", err)
+				continue
+			}
+
+			if vt.IsEmpty() {
+				continue
+			}
+
+			if vt.IsClosed() {
+				if !vt.IsStorable() {
+					continue
+				}
+				// store in BlockTransaction
+			}
+
+			if !vt.IsChanged() {
+				continue
+			}
+
+			// TODO state is changed, so broadcast
+
+			fmt.Println(vt)
+		}
+	}
+
 	select {}
 
 	os.Exit(0)

@@ -5,6 +5,7 @@ import (
 	"sort"
 
 	"github.com/btcsuite/btcutil/base58"
+	"github.com/spikeekips/sebak/lib"
 	"github.com/spikeekips/sebak/lib/error"
 	"github.com/spikeekips/sebak/lib/storage"
 	"github.com/spikeekips/sebak/lib/util"
@@ -30,6 +31,10 @@ func (bm BallotMessage) IsWellFormed() (err error) {
 	return nil
 }
 
+func (bm BallotMessage) GetType() string {
+	return ""
+}
+
 func (bm BallotMessage) GetHash() string {
 	return bm.Hash
 }
@@ -44,6 +49,7 @@ func (bm BallotMessage) String() string {
 }
 
 type Ballot struct {
+	T string
 	H BallotHeader
 	B BallotBody
 }
@@ -66,6 +72,14 @@ func (b Ballot) String() string {
 	return string(encoded)
 }
 
+func (b Ballot) GetMessage() BallotMessage {
+	return b.B.Message
+}
+
+func (b *Ballot) SetMessage(m util.Message) {
+	b.B.Message.Message = m
+}
+
 // NewBallotFromMessage creates `Ballot` from `Message`. It needs to be
 // `Ballot.IsWellFormed()` and `Ballot.Validate()`.
 func NewBallotFromMessage(nodeKey string, m util.Message) (ballot Ballot, err error) {
@@ -80,6 +94,7 @@ func NewBallotFromMessage(nodeKey string, m util.Message) (ballot Ballot, err er
 		Message:    message,
 	}
 	ballot = Ballot{
+		T: "ballot",
 		H: BallotHeader{
 			Hash:      base58.Encode(body.MakeHash()),
 			Signature: "",
@@ -95,8 +110,14 @@ func NewBallotFromJSON(b []byte) (ballot Ballot, err error) {
 		return
 	}
 
-	if err = ballot.IsWellFormed(); err != nil {
-		return
+	if ballot.GetMessage().Message != nil {
+		a, _ := json.Marshal(ballot.GetMessage().Message)
+		// TODO BallotMessage should load message by it's `GetType()`
+		b, _ := sebak.NewTransactionFromJSON(a)
+		ballot.SetMessage(b)
+		if err = ballot.IsWellFormed(); err != nil {
+			return
+		}
 	}
 
 	return
@@ -137,6 +158,10 @@ func (b Ballot) VerifySignature() (err error) {
 
 func (b Ballot) Validate(st *storage.LevelDBBackend) (err error) {
 	return
+}
+
+func (b Ballot) GetType() string {
+	return b.T
 }
 
 func (b Ballot) GetHash() string {
@@ -188,7 +213,7 @@ type BallotHeader struct {
 
 type BallotBody struct {
 	NodeKey    string      `json:"node_key"` // validator's public address
-	State      BallotState `json:"statee"`
+	State      BallotState `json:"state"`
 	VotingHole VotingHole  `json:"voting_hole"`
 	Reason     string      `json:"reason"`
 

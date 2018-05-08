@@ -10,11 +10,13 @@ import (
 )
 
 type Transaction struct {
+	T string
 	H TransactionHeader
 	B TransactionBody
 }
 
 type TransactionFromJSON struct {
+	T string
 	H TransactionHeader
 	B TransactionBodyFromJSON
 }
@@ -41,6 +43,7 @@ func NewTransactionFromJSON(b []byte) (tx Transaction, err error) {
 		operations = append(operations, op)
 	}
 
+	tx.T = txt.T
 	tx.H = txt.H
 	tx.B = TransactionBody{
 		Source:     txt.B.Source,
@@ -80,6 +83,10 @@ func (o Transaction) Validate(st *storage.LevelDBBackend) (err error) {
 	*/
 
 	return
+}
+
+func (o Transaction) GetType() string {
+	return o.T
 }
 
 func (o Transaction) GetHash() string {

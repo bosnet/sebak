@@ -75,6 +75,20 @@ func (vs VotingStateStaging) IsClosed() bool {
 	return false
 }
 
+func (vs VotingStateStaging) IsStorable() bool {
+	if !vs.IsClosed() {
+		return false
+	}
+	if vs.State != BallotStateALLCONFIRM {
+		return false
+	}
+	if vs.VotingHole == VotingNO {
+		return false
+	}
+
+	return true
+}
+
 type VotingResult struct {
 	sync.Mutex
 
