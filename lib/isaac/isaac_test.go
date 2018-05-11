@@ -3,6 +3,7 @@ package consensus
 import (
 	"encoding/json"
 	"errors"
+	"net/url"
 	"testing"
 
 	"github.com/btcsuite/btcutil/base58"
@@ -13,9 +14,10 @@ import (
 	"github.com/spikeekips/sebak/lib/util"
 )
 
-func NewRandomNode() *sebak.MainNode {
+func NewRandomNode() sebak.Node {
 	kp, _ := keypair.Random()
-	a, _ := sebak.NewMainNode(kp, nil)
+	a, _ := sebak.NewValidator(kp.Address(), &url.URL{}, "")
+	a.SetKeypair(kp)
 	return a
 }
 

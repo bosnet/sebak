@@ -1,7 +1,9 @@
 package util
 
 import (
+	"bytes"
 	"errors"
+	"net/url"
 	"os"
 	"sync"
 	"sync/atomic"
@@ -85,4 +87,25 @@ func (s *SliceFlags) Set(v string) error {
 
 	*s = append(*s, v)
 	return nil
+}
+
+func StripZero(b []byte) []byte {
+	var n int
+	if n = bytes.Index(b, []byte("\x00")); n != -1 {
+		b = b[:n]
+	}
+	if n = bytes.LastIndex(b, []byte("\x00")); n != -1 {
+		b = b[n+1:]
+	}
+
+	return b
+}
+
+func GetUrlQuery(query url.Values, key, defaultValue string) string {
+	v := query.Get(key)
+	if len(v) > 0 {
+		return v
+	}
+
+	return defaultValue
 }

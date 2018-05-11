@@ -71,7 +71,7 @@ func (st *LevelDBBackend) Get(k string, i interface{}) (err error) {
 
 func (st *LevelDBBackend) New(k string, v interface{}) (err error) {
 	var encoded []byte
-	serializable, ok := v.(Serializable)
+	serializable, ok := v.(util.Serializable)
 	if ok {
 		encoded, err = serializable.Serialize()
 	} else {

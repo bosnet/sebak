@@ -1,25 +1,18 @@
 package network
 
 import (
-	"encoding/json"
+	"context"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
 	"net/url"
 	"time"
 
+	"github.com/spikeekips/sebak/lib/util"
+
 	"golang.org/x/net/http2"
 )
-
-type TransportMessage struct {
-	Type string
-	Data []byte
-}
-
-func (t TransportMessage) String() string {
-	o, _ := json.MarshalIndent(t, "", "  ")
-	return string(o)
-}
 
 type HTTP2TransportConfig struct {
 	Addr string
@@ -31,6 +24,74 @@ type HTTP2TransportConfig struct {
 
 	TLSCertFile,
 	TLSKeyFile string
+}
+
+func NewHTTP2TransportConfigFromEndpoint(endpoint *url.URL) (config HTTP2TransportConfig, err error) {
+	query := endpoint.Query()
+
+	var ReadTimeout time.Duration = 0
+	var ReadHeaderTimeout time.Duration = 0
+	var WriteTimeout time.Duration = 0
+	var IdleTimeout time.Duration = 5
+	var TLSCertFile, TLSKeyFile string
+
+	if ReadTimeout, err = time.ParseDuration(util.GetUrlQuery(query, "ReadTimeout", "0s")); err != nil {
+		return
+	}
+	if ReadTimeout < 0*time.Second {
+		err = errors.New("invalid 'ReadTimeout'")
+		return
+	}
+
+	if ReadHeaderTimeout, err = time.ParseDuration(util.GetUrlQuery(query, "ReadHeaderTimeout", "0s")); err != nil {
+		return
+	}
+	if ReadHeaderTimeout < 0*time.Second {
+		err = errors.New("invalid 'ReadHeaderTimeout'")
+		return
+	}
+
+	if WriteTimeout, err = time.ParseDuration(util.GetUrlQuery(query, "WriteTimeout", "0s")); err != nil {
+		return
+	}
+	if WriteTimeout < 0*time.Second {
+		err = errors.New("invalid 'WriteTimeout'")
+		return
+	}
+
+	if IdleTimeout, err = time.ParseDuration(util.GetUrlQuery(query, "IdleTimeout", "0s")); err != nil {
+		return
+	}
+	if IdleTimeout < 0*time.Second {
+		err = errors.New("invalid 'IdleTimeout'")
+		return
+	}
+
+	if v := query.Get("TLSCertFile"); len(v) < 1 {
+		err = errors.New("'TLSCertFile' is missing")
+		return
+	} else {
+		TLSCertFile = v
+	}
+
+	if v := query.Get("TLSKeyFile"); len(v) < 1 {
+		err = errors.New("'TLSKeyFile' is missing")
+		return
+	} else {
+		TLSKeyFile = v
+	}
+
+	config = HTTP2TransportConfig{
+		Addr:              endpoint.Host,
+		ReadTimeout:       ReadTimeout,
+		ReadHeaderTimeout: ReadHeaderTimeout,
+		WriteTimeout:      WriteTimeout,
+		IdleTimeout:       IdleTimeout,
+		TLSCertFile:       TLSCertFile,
+		TLSKeyFile:        TLSKeyFile,
+	}
+
+	return
 }
 
 type HTTP2Transport struct {
@@ -81,6 +142,10 @@ func NewHTTP2Transport(config HTTP2TransportConfig) (transport *HTTP2Transport) 
 	transport.setNotReadyHandler()
 	transport.server.ConnState = transport.ConnState
 
+	ctx := context.Background()
+	transport.AddHandler(ctx, "/message", MessageHandler)
+	transport.AddHandler(ctx, "/ballot", BallotHandler)
+
 	return transport
 }
 
@@ -111,8 +176,8 @@ func (t *HTTP2Transport) setNotReadyHandler() {
 	t.server.Handler = handler
 }
 
-func (t *HTTP2Transport) AddHandler(pattern string, handler func(*HTTP2Transport) HandlerFunc) (err error) {
-	t.handlers[pattern] = handler(t)
+func (t *HTTP2Transport) AddHandler(ctx context.Context, pattern string, handler func(context.Context, *HTTP2Transport) HandlerFunc) (err error) {
+	t.handlers[pattern] = handler(ctx, t)
 	return nil
 }
 
@@ -144,6 +209,7 @@ func (t *HTTP2Transport) ReceiveMessage() <-chan TransportMessage {
 	return t.receiveChannel
 }
 
-func (t *HTTP2Transport) Send(b []byte) (err error) {
+func (t *HTTP2Transport) Send(mt TransportMessageType, b []byte) (err error) {
+	t.receiveChannel <- NewTransportMessage(mt, b)
 	return nil
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"flag"
 	"fmt"
@@ -14,7 +15,7 @@ import (
 	"golang.org/x/net/http2"
 
 	logging "github.com/inconshreveable/log15"
-	sebak "github.com/spikeekips/sebak/lib"
+	"github.com/spikeekips/sebak/lib"
 	"github.com/spikeekips/sebak/lib/isaac"
 	"github.com/spikeekips/sebak/lib/network"
 	"github.com/spikeekips/sebak/lib/util"
@@ -52,11 +53,7 @@ func (f *FlagValidators) Set(v string) error {
 	if err != nil {
 		return err
 	}
-	node, err := sebak.NewValidator(
-		parsed[0],
-		endpoint,
-		parsed[2],
-	)
+	node, err := sebak.NewValidator(parsed[0], endpoint, parsed[2])
 	if err != nil {
 		return fmt.Errorf("failed to create validator: %v", err)
 	}
@@ -83,6 +80,7 @@ var (
 	flagKPSecretSeed   string = util.GetENVValue("SEBAK_SECRET_SEED", "")
 	flagLogLevel       string = util.GetENVValue("SEBAK_LOG_LEVEL", defaultLogLevel.String())
 	flagLogOutput      string = util.GetENVValue("SEBAK_LOG_OUTPUT", "")
+	flagVerbose        bool   = false
 	Endpoint           *url.URL
 	flagEndpointString string = util.GetENVValue(
 		"SEBAK_ENDPOINT",
@@ -107,6 +105,8 @@ func printFlagsError(flagName string, err error) {
 }
 
 func init() {
+	runtime.GOMAXPROCS(runtime.NumCPU())
+
 	var err error
 
 	flags = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
@@ -118,10 +118,13 @@ func init() {
 		fmt.Fprintf(os.Stderr, "\n")
 	}
 
+	flagVerbose = util.GetENVValue("SEBAK_VERBOSE", "0") == "1"
+
 	// flags
 	flags.StringVar(&flagKPSecretSeed, "secret-seed", flagKPSecretSeed, "secret seed of this node")
 	flags.StringVar(&flagLogLevel, "log-level", flagLogLevel, "log level, {crit, error, warn, info, debug}")
 	flags.StringVar(&flagLogOutput, "log-output", flagLogOutput, "set log output file")
+	flags.BoolVar(&flagVerbose, "verbose", flagVerbose, "verbose")
 	flags.StringVar(&flagEndpointString, "endpoint", flagEndpointString, "endpoint uri to listen on ('https://0.0.0.0:12345')")
 	flags.StringVar(&flagTLSCertFile, "tls-cert", flagTLSCertFile, "tls certificate file")
 	flags.StringVar(&flagTLSKeyFile, "tls-Key", flagTLSKeyFile, "tls Keyificate file")
@@ -150,6 +153,12 @@ func init() {
 		Endpoint = p
 		flagEndpointString = Endpoint.String()
 	}
+
+	queries := url.Values{}
+	queries.Add("TLSCertFile", flagTLSCertFile)
+	queries.Add("TLSKeyFile", flagTLSKeyFile)
+	queries.Add("IdleTimeout", "3s")
+	Endpoint.RawQuery = queries.Encode()
 
 	for _, n := range flagValidators {
 		if n.Address() == kp.Address() {
@@ -201,25 +210,31 @@ func init() {
 
 	// NOTE instead of set `http2.VerboseLogs`, just use
 	// `GODEBUG="http2debug=2"`.
-	if logLevel == logging.LvlDebug {
+	if flagVerbose {
 		http2.VerboseLogs = true
 	}
 }
 
 func main() {
-	defer func() {
+	nt, err := network.NewNetwork(Endpoint)
+	if err != nil {
+		log.Crit("transport error", "error", err)
+
 		os.Exit(1)
+	}
+
+	go func() {
+		nt.Start()
 	}()
 
-	runtime.GOMAXPROCS(runtime.NumCPU())
-
 	// TODO from configuration or cmd options
-	node, err := sebak.NewMainNode(kp, Endpoint)
+	node, err := sebak.NewValidator(kp.Address(), Endpoint, "self")
 	if err != nil {
 		log.Error("failed to launch main node", "error", err)
 		return
 	}
-	node.SetValidators(flagValidators...)
+	node.SetKeypair(kp)
+	node.AddValidators(flagValidators...)
 
 	config := network.HTTP2TransportConfig{
 		Addr:              node.Endpoint().Host,
@@ -243,14 +258,13 @@ func main() {
 		}
 	}()
 
-	transport.AddHandler("/", Index)
-	transport.AddHandler("/message", MessageHandler)
-	transport.AddHandler("/ballot", BallotHandler)
+	ctx := context.WithValue(context.Background(), "node", node)
+	transport.AddHandler(ctx, "/", network.Index)
 
 	transport.Ready()
 
 	policy, _ := consensus.NewDefaultVotingThresholdPolicy(100, 30, 30)
-	policy.SetValidators(uint64(node.CountValidators()))
+	policy.SetValidators(uint64(len(node.GetValidators())) + 1) // including 'self'
 
 	is, err := consensus.NewISAAC(node, policy)
 	if err != nil {

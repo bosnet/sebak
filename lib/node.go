@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/spikeekips/sebak/lib/network"
 	"github.com/stellar/go/keypair"
@@ -16,78 +17,23 @@ var DefaultNodePort int = 12345
 
 type Node interface {
 	Address() string
-	Alias() string
-	Endpoint() *url.URL
-}
-
-type ValidatorNode interface {
-	Address() string
+	Keypair() *keypair.Full
+	SetKeypair(*keypair.Full)
 	Alias() string
 	Endpoint() *url.URL
 	Transport() network.Transport
 	SetTransport(network.Transport) error
 	GetValidators() map[string]*Validator
-	SetValidators(validators ...[]*Validator) error
+	AddValidators(validators ...*Validator) error
+	RemoveValidators(validators ...*Validator) error
+	Serialize() ([]byte, error)
 }
 
-// MainNode is the current node.
-type MainNode struct {
-	keypair   *keypair.Full
-	endpoint  *url.URL
-	transport network.Transport
-
-	validators map[ /* Validator.Address() */ string]*Validator
-}
-
-func (n *MainNode) Keypair() *keypair.Full {
-	return n.keypair
-}
-
-func (n *MainNode) Address() string {
-	return n.keypair.Address()
-}
-
-func (n *MainNode) Alias() string {
-	return "self"
-}
-
-func (n *MainNode) Endpoint() *url.URL {
-	return n.endpoint
-}
-
-func (n *MainNode) SetTransport(t network.Transport) error {
-	n.transport = t
-	return nil
-}
-
-func (n *MainNode) CountValidators() int {
-	return len(n.validators)
-}
-
-func (n *MainNode) GetValidators() map[string]*Validator {
-	return n.validators
-}
-
-func (n *MainNode) SetValidators(validators ...*Validator) error {
-	for _, v := range validators {
-		n.validators[v.Address()] = v
-	}
-
-	return nil
-}
-
-func NewMainNode(kp *keypair.Full, endpoint *url.URL) (m *MainNode, err error) {
-	m = &MainNode{
-		keypair:    kp,
-		endpoint:   endpoint,
-		validators: map[string]*Validator{},
-	}
-
-	return
-}
-
-// Validator is the validator node for `MainNode`
 type Validator struct {
+	sync.Mutex
+
+	keypair *keypair.Full
+
 	alias     string
 	address   string
 	endpoint  *url.URL
@@ -105,6 +51,15 @@ func (v *Validator) String() string {
 	return string(o)
 }
 
+func (v *Validator) Keypair() *keypair.Full {
+	return v.keypair
+}
+
+func (v *Validator) SetKeypair(kp *keypair.Full) {
+	v.address = kp.Address()
+	v.keypair = kp
+}
+
 func (v *Validator) Address() string {
 	return v.address
 }
@@ -117,6 +72,10 @@ func (v *Validator) Endpoint() *url.URL {
 	return v.endpoint
 }
 
+func (v *Validator) Transport() network.Transport {
+	return v.transport
+}
+
 func (v *Validator) SetTransport(t network.Transport) error {
 	v.transport = t
 	return nil
@@ -126,12 +85,42 @@ func (v *Validator) GetValidators() map[string]*Validator {
 	return v.validators
 }
 
-func (v *Validator) SetValidators(validators ...*Validator) error {
+func (v *Validator) AddValidators(validators ...*Validator) error {
+	v.Lock()
+	defer v.Unlock()
+
 	for _, va := range validators {
 		v.validators[v.Address()] = va
 	}
 
 	return nil
+}
+
+func (v *Validator) RemoveValidators(validators ...*Validator) error {
+	v.Lock()
+	defer v.Unlock()
+
+	for _, va := range validators {
+		if _, ok := v.validators[va.Address()]; !ok {
+			continue
+		}
+		delete(v.validators, va.Address())
+	}
+
+	return nil
+}
+
+func (v *Validator) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]interface{}{
+		"address":    v.Address(),
+		"alias":      v.Alias(),
+		"endpoint":   v.Endpoint().String(),
+		"validators": v.validators,
+	})
+}
+
+func (v *Validator) Serialize() ([]byte, error) {
+	return json.Marshal(v)
 }
 
 func NewValidator(address string, endpoint *url.URL, alias string) (v *Validator, err error) {

@@ -9,3 +9,7 @@ func EncodeJSONValue(v interface{}) (b []byte, err error) {
 
 	return
 }
+
+type Serializable interface {
+	Serialize() ([]byte, error)
+}

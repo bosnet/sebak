@@ -10,7 +10,7 @@ import (
 type ISAAC struct {
 	util.SafeLock
 
-	Node                  *sebak.MainNode
+	Node                  sebak.Node
 	VotingThresholdPolicy VotingThresholdPolicy
 
 	Boxes *BallotBoxes
@@ -18,7 +18,7 @@ type ISAAC struct {
 	Storage *storage.LevelDBBackend
 }
 
-func NewISAAC(node *sebak.MainNode, votingThresholdPolicy VotingThresholdPolicy) (is *ISAAC, err error) {
+func NewISAAC(node sebak.Node, votingThresholdPolicy VotingThresholdPolicy) (is *ISAAC, err error) {
 	is = &ISAAC{
 		Node: node,
 		VotingThresholdPolicy: votingThresholdPolicy,
