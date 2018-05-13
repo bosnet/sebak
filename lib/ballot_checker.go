@@ -1,4 +1,4 @@
-package consensus
+package sebak
 
 import (
 	"github.com/btcsuite/btcutil/base58"

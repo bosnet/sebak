@@ -1,4 +1,4 @@
-package consensus
+package sebak
 
 import (
 	"encoding/json"
@@ -9,14 +9,13 @@ import (
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/stellar/go/keypair"
 
-	sebak "github.com/spikeekips/sebak/lib"
 	"github.com/spikeekips/sebak/lib/error"
 	"github.com/spikeekips/sebak/lib/util"
 )
 
-func NewRandomNode() sebak.Node {
+func NewRandomNode() Node {
 	kp, _ := keypair.Random()
-	a, _ := sebak.NewValidator(kp.Address(), &url.URL{}, "")
+	a, _ := NewValidator(kp.Address(), &url.URL{}, "")
 	a.SetKeypair(kp)
 	return a
 }

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"net/url"
 	"time"
 
 	"github.com/spikeekips/sebak/lib/util"
@@ -26,7 +25,7 @@ type HTTP2TransportConfig struct {
 	TLSKeyFile string
 }
 
-func NewHTTP2TransportConfigFromEndpoint(endpoint *url.URL) (config HTTP2TransportConfig, err error) {
+func NewHTTP2TransportConfigFromEndpoint(endpoint *util.Endpoint) (config HTTP2TransportConfig, err error) {
 	query := endpoint.Query()
 
 	var ReadTimeout time.Duration = 0
@@ -95,12 +94,13 @@ func NewHTTP2TransportConfigFromEndpoint(endpoint *url.URL) (config HTTP2Transpo
 }
 
 type HTTP2Transport struct {
+	ctx         context.Context
 	tlsCertFile string
 	tlsKeyFile  string
 
 	server *http.Server
 
-	receiveChannel chan TransportMessage
+	receiveChannel chan Message
 
 	ready bool
 
@@ -134,7 +134,7 @@ func NewHTTP2Transport(config HTTP2TransportConfig) (transport *HTTP2Transport) 
 		server:         server,
 		tlsCertFile:    config.TLSCertFile,
 		tlsKeyFile:     config.TLSKeyFile,
-		receiveChannel: make(chan TransportMessage),
+		receiveChannel: make(chan Message),
 	}
 
 	transport.handlers = map[string]func(http.ResponseWriter, *http.Request){}
@@ -142,16 +142,20 @@ func NewHTTP2Transport(config HTTP2TransportConfig) (transport *HTTP2Transport) 
 	transport.setNotReadyHandler()
 	transport.server.ConnState = transport.ConnState
 
-	ctx := context.Background()
-	transport.AddHandler(ctx, "/message", MessageHandler)
-	transport.AddHandler(ctx, "/ballot", BallotHandler)
-
 	return transport
 }
 
-func (t *HTTP2Transport) Endpoint() *url.URL {
+func (t *HTTP2Transport) Context() context.Context {
+	return t.ctx
+}
+
+func (t *HTTP2Transport) SetContext(ctx context.Context) {
+	t.ctx = ctx
+}
+
+func (t *HTTP2Transport) Endpoint() *util.Endpoint {
 	host, port, _ := net.SplitHostPort(t.server.Addr)
-	return &url.URL{Scheme: "https", Host: fmt.Sprintf("%s:%s", host, port)}
+	return &util.Endpoint{Scheme: "https", Host: fmt.Sprintf("%s:%s", host, port)}
 }
 
 func (t *HTTP2Transport) AddWatcher(f func(*HTTP2Transport, net.Conn, http.ConnState)) {
@@ -182,6 +186,10 @@ func (t *HTTP2Transport) AddHandler(ctx context.Context, pattern string, handler
 }
 
 func (t *HTTP2Transport) Ready() error {
+	t.AddHandler(t.Context(), "/", Index)
+	t.AddHandler(t.Context(), "/message", MessageHandler)
+	t.AddHandler(t.Context(), "/ballot", BallotHandler)
+
 	handler := new(http.ServeMux)
 	for pattern, handlerFunc := range t.handlers {
 		handler.HandleFunc(pattern, handlerFunc)
@@ -201,15 +209,10 @@ func (t *HTTP2Transport) Start() (err error) {
 	return t.server.ListenAndServeTLS(t.tlsCertFile, t.tlsKeyFile)
 }
 
-func (t *HTTP2Transport) ReceiveChannel() chan TransportMessage {
+func (t *HTTP2Transport) ReceiveChannel() chan Message {
 	return t.receiveChannel
 }
 
-func (t *HTTP2Transport) ReceiveMessage() <-chan TransportMessage {
+func (t *HTTP2Transport) ReceiveMessage() <-chan Message {
 	return t.receiveChannel
-}
-
-func (t *HTTP2Transport) Send(mt TransportMessageType, b []byte) (err error) {
-	t.receiveChannel <- NewTransportMessage(mt, b)
-	return nil
 }

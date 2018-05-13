@@ -3,6 +3,7 @@ package util
 import (
 	"errors"
 	"net"
+	"net/url"
 	"strconv"
 )
 
@@ -25,4 +26,22 @@ func CheckBindString(b string) error {
 	}
 
 	return nil
+}
+
+type Endpoint url.URL
+
+func NewEndpointFromURL(u *url.URL) *Endpoint {
+	return (*Endpoint)(u)
+}
+
+func (e *Endpoint) String() string {
+	return (&url.URL{
+		Scheme: e.Scheme,
+		Host:   e.Host,
+		Path:   e.Path,
+	}).String()
+}
+
+func (e *Endpoint) Query() url.Values {
+	return (*url.URL)(e).Query()
 }

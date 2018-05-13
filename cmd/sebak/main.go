@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"errors"
 	"flag"
 	"fmt"
@@ -10,13 +9,11 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"time"
 
 	"golang.org/x/net/http2"
 
 	logging "github.com/inconshreveable/log15"
 	"github.com/spikeekips/sebak/lib"
-	"github.com/spikeekips/sebak/lib/isaac"
 	"github.com/spikeekips/sebak/lib/network"
 	"github.com/spikeekips/sebak/lib/util"
 	"github.com/stellar/go/keypair"
@@ -30,7 +27,7 @@ const defaultPort int = 12345
 const defaultHost string = "0.0.0.0"
 const defaultLogLevel logging.Lvl = logging.LvlInfo
 
-type FlagValidators []*sebak.Validator
+type FlagValidators []*util.Validator
 
 func (f *FlagValidators) String() string {
 	return ""
@@ -49,11 +46,11 @@ func (f *FlagValidators) Set(v string) error {
 		parsed = append(parsed, "")
 	}
 
-	endpoint, err := sebak.ParseNodeEndpoint(parsed[1])
+	endpoint, err := util.ParseNodeEndpoint(parsed[1])
 	if err != nil {
 		return err
 	}
-	node, err := sebak.NewValidator(parsed[0], endpoint, parsed[2])
+	node, err := util.NewValidator(parsed[0], endpoint, parsed[2])
 	if err != nil {
 		return fmt.Errorf("failed to create validator: %v", err)
 	}
@@ -81,7 +78,7 @@ var (
 	flagLogLevel       string = util.GetENVValue("SEBAK_LOG_LEVEL", defaultLogLevel.String())
 	flagLogOutput      string = util.GetENVValue("SEBAK_LOG_OUTPUT", "")
 	flagVerbose        bool   = false
-	Endpoint           *url.URL
+	nodeEndpoint       *util.Endpoint
 	flagEndpointString string = util.GetENVValue(
 		"SEBAK_ENDPOINT",
 		fmt.Sprintf("%s://%s:%d", defaultNetwork, defaultHost, defaultPort),
@@ -147,25 +144,25 @@ func init() {
 		kp = parsedKP.(*keypair.Full)
 	}
 
-	if p, err := sebak.ParseNodeEndpoint(flagEndpointString); err != nil {
+	if p, err := util.ParseNodeEndpoint(flagEndpointString); err != nil {
 		printFlagsError("-endpoint", err)
 	} else {
-		Endpoint = p
-		flagEndpointString = Endpoint.String()
+		nodeEndpoint = p
+		flagEndpointString = nodeEndpoint.String()
 	}
 
 	queries := url.Values{}
 	queries.Add("TLSCertFile", flagTLSCertFile)
 	queries.Add("TLSKeyFile", flagTLSKeyFile)
 	queries.Add("IdleTimeout", "3s")
-	Endpoint.RawQuery = queries.Encode()
+	nodeEndpoint.RawQuery = queries.Encode()
 
 	for _, n := range flagValidators {
 		if n.Address() == kp.Address() {
 			printFlagsError("-validator", fmt.Errorf("duplicated public address found"))
 			break
 		}
-		if n.Endpoint() == Endpoint {
+		if n.Endpoint() == nodeEndpoint {
 			printFlagsError("-validator", fmt.Errorf("duplicated endpoint found"))
 			break
 		}
@@ -185,6 +182,7 @@ func init() {
 
 	log = logging.New("module", "main")
 	log.SetHandler(logging.LvlFilterHandler(logLevel, logHandler))
+	sebak.SetLogging(logLevel, logHandler)
 
 	log.Info("Starting Sebak")
 
@@ -216,7 +214,56 @@ func init() {
 }
 
 func main() {
-	nt, err := network.NewNetwork(Endpoint)
+	// create current Node
+	currentNode, err := util.NewValidator(kp.Address(), nodeEndpoint, "self")
+	if err != nil {
+		log.Error("failed to launch main node", "error", err)
+		return
+	}
+	currentNode.SetKeypair(kp)
+	currentNode.AddValidators(flagValidators...)
+
+	// create network
+	nt, err := network.NewTransportServer(nodeEndpoint)
+	if err != nil {
+		log.Crit("transport error", "error", err)
+
+		os.Exit(1)
+	}
+
+	// TODO policy threshold can be set in cmd options
+	policy, _ := sebak.NewDefaultVotingThresholdPolicy(100, 30, 30)
+	policy.SetValidators(uint64(len(currentNode.GetValidators())) + 1) // including 'self'
+
+	isaac, err := sebak.NewISAAC(currentNode, policy)
+	if err != nil {
+		log.Error("failed to launch consensus", "error", err)
+		return
+	}
+
+	nr := sebak.NewNodeRunner(currentNode, policy, nt, isaac)
+	nr.Ready()
+
+	if err := nr.Start(); err != nil {
+		log.Crit("failed to start node", "error", err)
+
+		os.Exit(1)
+	}
+}
+
+func main0() {
+	// create current Node
+	currentNode, err := util.NewValidator(kp.Address(), nodeEndpoint, "self")
+	if err != nil {
+		log.Error("failed to launch main node", "error", err)
+		return
+	}
+	currentNode.SetKeypair(kp)
+	currentNode.AddValidators(flagValidators...)
+
+	// create network
+	//ctx := context.WithValue(context.Background(), "currentNode", currentNode)
+	nt, err := network.NewTransportServer(nodeEndpoint)
 	if err != nil {
 		log.Crit("transport error", "error", err)
 
@@ -227,52 +274,19 @@ func main() {
 		nt.Start()
 	}()
 
-	// TODO from configuration or cmd options
-	node, err := sebak.NewValidator(kp.Address(), Endpoint, "self")
-	if err != nil {
-		log.Error("failed to launch main node", "error", err)
-		return
-	}
-	node.SetKeypair(kp)
-	node.AddValidators(flagValidators...)
+	nt.Ready()
 
-	config := network.HTTP2TransportConfig{
-		Addr:              node.Endpoint().Host,
-		ReadTimeout:       0,
-		ReadHeaderTimeout: 0,
-		WriteTimeout:      0,
-		IdleTimeout:       5 * time.Second,
-		TLSCertFile:       flagTLSCertFile,
-		TLSKeyFile:        flagTLSKeyFile,
-	}
-	transport := network.NewHTTP2Transport(config)
-	node.SetTransport(transport)
+	// TODO policy threshold can be set in cmd options
+	policy, _ := sebak.NewDefaultVotingThresholdPolicy(100, 30, 30)
+	policy.SetValidators(uint64(len(currentNode.GetValidators())) + 1) // including 'self'
 
-	go func() {
-		log.Debug("transport started", "transport", transport, "endpoint", transport.Endpoint())
-
-		if err := transport.Start(); err != nil {
-			log.Crit("transport error", "error", err)
-
-			os.Exit(1)
-		}
-	}()
-
-	ctx := context.WithValue(context.Background(), "node", node)
-	transport.AddHandler(ctx, "/", network.Index)
-
-	transport.Ready()
-
-	policy, _ := consensus.NewDefaultVotingThresholdPolicy(100, 30, 30)
-	policy.SetValidators(uint64(len(node.GetValidators())) + 1) // including 'self'
-
-	is, err := consensus.NewISAAC(node, policy)
+	is, err := sebak.NewISAAC(currentNode, policy)
 	if err != nil {
 		log.Error("failed to launch consensus", "error", err)
 		return
 	}
 
-	for message := range transport.ReceiveMessage() {
+	for message := range nt.ReceiveMessage() {
 		log.Debug("got message", "message", message)
 
 		switch message.Type {
@@ -297,7 +311,7 @@ func main() {
 				- TODO check already in BlockTransactionHistory
 			*/
 
-			var ballot consensus.Ballot
+			var ballot sebak.Ballot
 			if ballot, err = is.ReceiveMessage(tx); err != nil {
 				log.Error("failed to receive new message", "error", err)
 				continue
@@ -312,12 +326,12 @@ func main() {
 				- TODO check already in BlockTransactionHistory
 			*/
 
-			var ballot consensus.Ballot
-			if ballot, err = consensus.NewBallotFromJSON(message.Data); err != nil {
+			var ballot sebak.Ballot
+			if ballot, err = sebak.NewBallotFromJSON(message.Data); err != nil {
 				log.Error("found invalid ballot message", "error", err)
 				continue
 			}
-			var vt consensus.VotingStateStaging
+			var vt sebak.VotingStateStaging
 			if vt, err = is.ReceiveBallot(ballot); err != nil {
 				log.Error("failed to receive ballot", "error", err)
 				continue

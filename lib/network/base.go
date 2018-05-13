@@ -1,57 +1,69 @@
 package network
 
 import (
+	"context"
 	"encoding/json"
-	"net/url"
+	"time"
+
+	"github.com/spikeekips/sebak/lib/util"
 )
 
-type Transport interface {
+type TransportServer interface {
+	Endpoint() *util.Endpoint
+	Context() context.Context
+	SetContext(context.Context)
+
 	Start() error
 	Ready() error
-	Send(TransportMessageType, []byte) error
 
-	ReceiveChannel() chan TransportMessage
-	ReceiveMessage() <-chan TransportMessage
-
-	Endpoint() *url.URL
+	ReceiveChannel() chan Message
+	ReceiveMessage() <-chan Message
 }
 
-type TransportMessageType string
+type TransportClient interface {
+	Endpoint() *util.Endpoint
+	Timeout() time.Duration
 
-func (t TransportMessageType) String() string {
+	GetNodeInfo() ([]byte, error)
+	SendMessage(util.Serializable) error
+	SendBallot(util.Serializable) error
+}
+
+type MessageType string
+
+func (t MessageType) String() string {
 	return string(t)
 }
 
 const (
-	MessageTransportMessage     TransportMessageType = "message"
-	BallotTransportMessage                           = "ballot"
-	GetNodeInfoTransportMessage                      = "get-node-info"
+	MessageFromClient  MessageType = "message"
+	BallotMessage                  = "ballot"
+	GetNodeInfoMessage             = "get-node-info"
 )
 
-type TransportMessage struct {
-	Type       TransportMessageType
+type Message struct {
+	Type       MessageType
 	Data       []byte
 	DataString string // optional
 }
 
-func (t TransportMessage) String() string {
+func (t Message) String() string {
 	o, _ := json.MarshalIndent(t, "", "  ")
 	return string(o)
 }
 
-func NewTransportMessage(mt TransportMessageType, data []byte) TransportMessage {
-	return TransportMessage{
+func NewMessage(mt MessageType, data []byte) Message {
+	return Message{
 		Type:       mt,
 		Data:       data,
 		DataString: string(data),
 	}
 }
 
-// TODO rename `network.Transport` to `network.Network`
-func NewNetwork(endpoint *url.URL) (transport Transport, err error) {
+func NewTransportServer(endpoint *util.Endpoint) (transport TransportServer, err error) {
 	switch endpoint.Scheme {
 	case "memory":
-		transport = NewMemNetwork()
+		transport = NewMemoryTransport()
 	case "https":
 		var config HTTP2TransportConfig
 		config, err = NewHTTP2TransportConfigFromEndpoint(endpoint)

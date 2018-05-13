@@ -1,178 +1,127 @@
 package sebak
 
 import (
-	"encoding/json"
-	"errors"
+	"context"
 	"fmt"
-	"net/url"
-	"strconv"
-	"strings"
-	"sync"
 
 	"github.com/spikeekips/sebak/lib/network"
-	"github.com/stellar/go/keypair"
+	"github.com/spikeekips/sebak/lib/util"
 )
 
-var DefaultNodePort int = 12345
+type NodeRunner struct {
+	currentNode       util.Node
+	policy            VotingThresholdPolicy
+	transportServer   network.TransportServer
+	consensusProtocol Consensus
 
-type Node interface {
-	Address() string
-	Keypair() *keypair.Full
-	SetKeypair(*keypair.Full)
-	Alias() string
-	Endpoint() *url.URL
-	Transport() network.Transport
-	SetTransport(network.Transport) error
-	GetValidators() map[string]*Validator
-	AddValidators(validators ...*Validator) error
-	RemoveValidators(validators ...*Validator) error
-	Serialize() ([]byte, error)
+	ctx context.Context
 }
 
-type Validator struct {
-	sync.Mutex
+func NewNodeRunner(
+	currentNode util.Node,
+	policy VotingThresholdPolicy,
+	transportServer network.TransportServer,
+	consensusProtocol Consensus,
+) *NodeRunner {
+	nr := &NodeRunner{
+		currentNode:       currentNode,
+		policy:            policy,
+		transportServer:   transportServer,
+		consensusProtocol: consensusProtocol,
+	}
+	ctx := context.WithValue(context.Background(), "currentNode", currentNode)
+	nr.ctx = ctx
 
-	keypair *keypair.Full
+	return nr
 
-	alias     string
-	address   string
-	endpoint  *url.URL
-	transport network.Transport
-
-	validators map[ /* Node.Address() */ string]*Validator
 }
 
-func (v *Validator) String() string {
-	o, _ := json.Marshal(map[string]string{
-		"alias":    v.alias,
-		"address":  v.address,
-		"endpoint": v.endpoint.String(),
-	})
-	return string(o)
+func (nr *NodeRunner) Ready() {
+	nr.transportServer.SetContext(nr.ctx)
+	nr.transportServer.Ready()
 }
 
-func (v *Validator) Keypair() *keypair.Full {
-	return v.keypair
-}
+func (nr *NodeRunner) Start() (err error) {
+	go nr.handleMessage()
 
-func (v *Validator) SetKeypair(kp *keypair.Full) {
-	v.address = kp.Address()
-	v.keypair = kp
-}
-
-func (v *Validator) Address() string {
-	return v.address
-}
-
-func (v *Validator) Alias() string {
-	return v.alias
-}
-
-func (v *Validator) Endpoint() *url.URL {
-	return v.endpoint
-}
-
-func (v *Validator) Transport() network.Transport {
-	return v.transport
-}
-
-func (v *Validator) SetTransport(t network.Transport) error {
-	v.transport = t
-	return nil
-}
-
-func (v *Validator) GetValidators() map[string]*Validator {
-	return v.validators
-}
-
-func (v *Validator) AddValidators(validators ...*Validator) error {
-	v.Lock()
-	defer v.Unlock()
-
-	for _, va := range validators {
-		v.validators[v.Address()] = va
+	if err = nr.transportServer.Start(); err != nil {
+		return
 	}
 
-	return nil
+	return
 }
 
-func (v *Validator) RemoveValidators(validators ...*Validator) error {
-	v.Lock()
-	defer v.Unlock()
+func (nr *NodeRunner) handleMessage() {
+	var err error
+	for message := range nr.transportServer.ReceiveMessage() {
+		log.Debug("got message", "message", message)
 
-	for _, va := range validators {
-		if _, ok := v.validators[va.Address()]; !ok {
-			continue
+		switch message.Type {
+		case "message":
+			var tx Transaction
+			if tx, err = NewTransactionFromJSON(message.Data); err != nil {
+				log.Error("found invalid transaction message", "error", err)
+
+				// TODO if failed, save in `BlockTransactionHistory`????
+				continue
+			}
+			if err = tx.IsWellFormed(); err != nil {
+				log.Error("found invalid transaction message", "error", err)
+				// TODO if failed, save in `BlockTransactionHistory`
+				continue
+			}
+
+			/*
+				- TODO `Message` must be saved in `BlockTransactionHistory`
+				- TODO check already `IsWellFormed()`
+				- TODO check already in BlockTransaction
+				- TODO check already in BlockTransactionHistory
+			*/
+
+			var ballot Ballot
+			if ballot, err = nr.consensusProtocol.ReceiveMessage(tx); err != nil {
+				log.Error("failed to receive new message", "error", err)
+				continue
+			}
+
+			// TODO initially shutup and broadcast
+			fmt.Println(ballot)
+		case "ballot":
+			/*
+				- TODO check already `IsWellFormed()`
+				- TODO check already in BlockTransaction
+				- TODO check already in BlockTransactionHistory
+			*/
+
+			var ballot Ballot
+			if ballot, err = NewBallotFromJSON(message.Data); err != nil {
+				log.Error("found invalid ballot message", "error", err)
+				continue
+			}
+			var vt VotingStateStaging
+			if vt, err = nr.consensusProtocol.ReceiveBallot(ballot); err != nil {
+				log.Error("failed to receive ballot", "error", err)
+				continue
+			}
+
+			if vt.IsEmpty() {
+				continue
+			}
+
+			if vt.IsClosed() {
+				if !vt.IsStorable() {
+					continue
+				}
+				// store in BlockTransaction
+			}
+
+			if !vt.IsChanged() {
+				continue
+			}
+
+			// TODO state is changed, so broadcast
+
+			fmt.Println(vt)
 		}
-		delete(v.validators, va.Address())
 	}
-
-	return nil
-}
-
-func (v *Validator) MarshalJSON() ([]byte, error) {
-	return json.Marshal(map[string]interface{}{
-		"address":    v.Address(),
-		"alias":      v.Alias(),
-		"endpoint":   v.Endpoint().String(),
-		"validators": v.validators,
-	})
-}
-
-func (v *Validator) Serialize() ([]byte, error) {
-	return json.Marshal(v)
-}
-
-func NewValidator(address string, endpoint *url.URL, alias string) (v *Validator, err error) {
-	if len(alias) < 1 {
-		l := len(address)
-		alias = fmt.Sprintf("%s.%s", address[:4], address[l-8:l-4])
-	}
-
-	if _, err = keypair.Parse(address); err != nil {
-		return
-	}
-
-	v = &Validator{
-		alias:      alias,
-		address:    address,
-		endpoint:   endpoint,
-		validators: map[string]*Validator{},
-	}
-
-	return
-}
-
-func ParseNodeEndpoint(endpoint string) (u *url.URL, err error) {
-	u, err = url.Parse(endpoint)
-	if err != nil {
-		return
-	}
-	if len(u.Scheme) < 1 {
-		err = errors.New("missing scheme")
-		return
-	}
-
-	if len(u.Port()) < 1 {
-		u.Host = fmt.Sprintf("localhost:%d", DefaultNodePort)
-	}
-
-	var port string
-	port = u.Port()
-
-	var portInt int64
-	if portInt, err = strconv.ParseInt(port, 10, 64); err != nil {
-		return
-	} else if portInt < 1 {
-		err = errors.New("invalid port")
-		return
-	}
-
-	if len(u.Host) < 1 || strings.HasPrefix(u.Host, "127.0.") {
-		u.Host = fmt.Sprintf("localhost:%s", u.Port())
-	}
-
-	u.Host = strings.ToLower(u.Host)
-
-	return
 }

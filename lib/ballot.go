@@ -1,11 +1,10 @@
-package consensus
+package sebak
 
 import (
 	"encoding/json"
 	"sort"
 
 	"github.com/btcsuite/btcutil/base58"
-	"github.com/spikeekips/sebak/lib"
 	"github.com/spikeekips/sebak/lib/error"
 	"github.com/spikeekips/sebak/lib/storage"
 	"github.com/spikeekips/sebak/lib/util"
@@ -113,7 +112,7 @@ func NewBallotFromJSON(b []byte) (ballot Ballot, err error) {
 	if ballot.GetMessage().Message != nil {
 		a, _ := json.Marshal(ballot.GetMessage().Message)
 		// TODO BallotMessage should load message by it's `GetType()`
-		b, _ := sebak.NewTransactionFromJSON(a)
+		b, _ := NewTransactionFromJSON(a)
 		ballot.SetMessage(b)
 		if err = ballot.IsWellFormed(); err != nil {
 			return

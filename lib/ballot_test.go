@@ -1,16 +1,15 @@
-package consensus
+package sebak
 
 import (
 	"testing"
 
 	"github.com/stellar/go/keypair"
 
-	"github.com/spikeekips/sebak/lib"
 	"github.com/spikeekips/sebak/lib/error"
 )
 
-func makeNewBallot(state BallotState, vote VotingHole) (*keypair.Full, sebak.Transaction, Ballot) {
-	kpNode, tx := sebak.MakeTransaction(1)
+func makeNewBallot(state BallotState, vote VotingHole) (*keypair.Full, Transaction, Ballot) {
+	kpNode, tx := MakeTransaction(1)
 	ballot, _ := NewBallotFromMessage(kpNode.Address(), tx)
 
 	ballot.SetState(state)
@@ -22,7 +21,7 @@ func makeNewBallot(state BallotState, vote VotingHole) (*keypair.Full, sebak.Tra
 }
 
 func TestNewBallot(t *testing.T) {
-	kpNode, tx := sebak.MakeTransaction(1)
+	kpNode, tx := MakeTransaction(1)
 	ballot, _ := NewBallotFromMessage(kpNode.Address(), tx)
 
 	if len(ballot.H.Hash) < 1 {

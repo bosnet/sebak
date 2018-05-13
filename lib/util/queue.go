@@ -2,8 +2,6 @@ package util
 
 // derived from https://gist.github.com/moraes/2141121#gistcomment-1361598
 
-type Node interface{}
-
 type Queue []*Node
 
 func (q *Queue) Push(n *Node) {

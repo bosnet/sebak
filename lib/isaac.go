@@ -1,7 +1,6 @@
-package consensus
+package sebak
 
 import (
-	"github.com/spikeekips/sebak/lib"
 	"github.com/spikeekips/sebak/lib/error"
 	"github.com/spikeekips/sebak/lib/storage"
 	"github.com/spikeekips/sebak/lib/util"
@@ -10,7 +9,7 @@ import (
 type ISAAC struct {
 	util.SafeLock
 
-	Node                  sebak.Node
+	Node                  util.Node
 	VotingThresholdPolicy VotingThresholdPolicy
 
 	Boxes *BallotBoxes
@@ -18,7 +17,7 @@ type ISAAC struct {
 	Storage *storage.LevelDBBackend
 }
 
-func NewISAAC(node sebak.Node, votingThresholdPolicy VotingThresholdPolicy) (is *ISAAC, err error) {
+func NewISAAC(node util.Node, votingThresholdPolicy VotingThresholdPolicy) (is *ISAAC, err error) {
 	is = &ISAAC{
 		Node: node,
 		VotingThresholdPolicy: votingThresholdPolicy,
@@ -28,7 +27,7 @@ func NewISAAC(node sebak.Node, votingThresholdPolicy VotingThresholdPolicy) (is 
 	return
 }
 
-func (is *ISAAC) GetNode() sebak.Node {
+func (is *ISAAC) GetNode() util.Node {
 	return is.Node
 }
 

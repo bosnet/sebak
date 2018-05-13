@@ -11,10 +11,14 @@ import (
 )
 
 func Index(ctx context.Context, t *HTTP2Transport) HandlerFunc {
-	node := ctx.Value("node").(util.Serializable)
+	var currentNode util.Serializable
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		o, _ := node.Serialize()
+		if currentNode == nil {
+			currentNode = ctx.Value("currentNode").(util.Serializable)
+		}
+
+		o, _ := currentNode.Serialize()
 		fmt.Fprintf(w, string(o))
 	}
 }
@@ -38,7 +42,7 @@ func MessageHandler(ctx context.Context, t *HTTP2Transport) HandlerFunc {
 			http.Error(w, "Error reading request body", http.StatusInternalServerError)
 		}
 
-		t.ReceiveChannel() <- TransportMessage{Type: MessageTransportMessage, Data: body}
+		t.ReceiveChannel() <- Message{Type: MessageFromClient, Data: body}
 
 		// TODO return with the link to check the status of message
 		return
@@ -61,7 +65,7 @@ func BallotHandler(ctx context.Context, t *HTTP2Transport) HandlerFunc {
 			http.Error(w, "Error reading request body", http.StatusInternalServerError)
 		}
 
-		t.ReceiveChannel() <- TransportMessage{Type: BallotTransportMessage, Data: body}
+		t.ReceiveChannel() <- Message{Type: BallotMessage, Data: body}
 		return
 	}
 }

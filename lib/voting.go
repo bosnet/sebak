@@ -1,4 +1,4 @@
-package consensus
+package sebak
 
 import (
 	"encoding/json"
