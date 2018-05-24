@@ -43,7 +43,12 @@ func checkTransactionOperationIsWellFormed(ctx context.Context, target interface
 
 func checkTransactionVerifySignature(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
 	tx := target.(Transaction)
-	err := keypair.MustParse(tx.B.Source).Verify([]byte(tx.H.Hash), base58.Decode(tx.H.Signature))
+
+	kp, err := keypair.Parse(tx.B.Source)
+	if err != nil {
+		return ctx, err
+	}
+	err = kp.Verify([]byte(tx.H.Hash), base58.Decode(tx.H.Signature))
 	if err != nil {
 		return ctx, err
 	}

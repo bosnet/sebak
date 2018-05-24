@@ -85,14 +85,14 @@ func TestBallotVote(t *testing.T) {
 	*/
 
 	err = ballot.IsWellFormed()
-	if err.(sebakerror.Error).Code != sebakerror.ErrorBallotNoVoting.Code {
+	if err.(*sebakerror.Error).Code != sebakerror.ErrorBallotNoVoting.Code {
 		t.Errorf("error must be %v", sebakerror.ErrorBallotNoVoting)
 		return
 	}
 
 	ballot.Vote(VotingYES)
 	err = ballot.IsWellFormed()
-	if err.(sebakerror.Error).Code != sebakerror.ErrorHashDoesNotMatch.Code {
+	if err.(*sebakerror.Error).Code != sebakerror.ErrorHashDoesNotMatch.Code {
 		t.Errorf("error must be %v", sebakerror.ErrorHashDoesNotMatch)
 		return
 	}

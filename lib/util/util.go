@@ -37,16 +37,26 @@ func (c CheckerErrorStop) Error() string {
 }
 
 type CheckerFunc func(context.Context, interface{}, ...interface{}) (context.Context, error)
+type DeferFunc func(CheckerFunc, context.Context, error)
 
 func Checker(ctx context.Context, checkFuncs ...CheckerFunc) func(interface{}, ...interface{}) (context.Context, error) {
+	deferFunc := func(CheckerFunc, context.Context, error) {}
+
+	if ctx != nil {
+		if deferFuncValue := ctx.Value("deferFunc"); deferFuncValue != nil {
+			deferFunc = deferFuncValue.(DeferFunc)
+		}
+	}
+
 	return func(target interface{}, args ...interface{}) (context.Context, error) {
 		for _, f := range checkFuncs {
 			var err error
 			if ctx, err = f(ctx, target, args...); err != nil {
+				deferFunc(f, ctx, err)
 				return ctx, err
 			}
+			deferFunc(f, ctx, err)
 		}
-
 		return ctx, nil
 	}
 }

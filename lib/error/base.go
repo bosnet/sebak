@@ -7,16 +7,16 @@ type Error struct {
 	Message string `json:"message"`
 }
 
-func (o Error) Serialize() (b []byte, err error) {
+func (o *Error) Serialize() (b []byte, err error) {
 	b, err = json.Marshal(o)
 	return
 }
 
-func (o Error) Error() string {
+func (o *Error) Error() string {
 	b, _ := o.Serialize()
 	return string(b)
 }
 
-func NewError(code uint, message string) Error {
-	return Error{Code: code, Message: message}
+func NewError(code uint, message string) *Error {
+	return &Error{Code: code, Message: message}
 }

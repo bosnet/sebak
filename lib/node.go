@@ -19,6 +19,9 @@ type NodeRunner struct {
 	handleBallotCheckerFuncs            []util.CheckerFunc
 	handleMessageFromClientCheckerFuncs []util.CheckerFunc
 
+	handleBallotCheckerFuncsContext            context.Context
+	handleMessageFromClientCheckerFuncsContext context.Context
+
 	ctx context.Context
 	log logging.Logger
 }
@@ -81,6 +84,10 @@ func (nr *NodeRunner) TransportServer() network.TransportServer {
 	return nr.transportServer
 }
 
+func (nr *NodeRunner) Consensus() Consensus {
+	return nr.consensusProtocol
+}
+
 func (nr *NodeRunner) ConnectionManager() *network.ConnectionManager {
 	return nr.connectionManager
 }
@@ -119,12 +126,24 @@ var DefaulthandleBallotCheckerFuncs = []util.CheckerFunc{
 	checkNodeRunnerHandleBallotStore,
 }
 
-func (nr *NodeRunner) SetHandleMessageFromClientCheckerFuncs(f ...util.CheckerFunc) {
+func (nr *NodeRunner) SetHandleMessageFromClientCheckerFuncs(ctx context.Context, f ...util.CheckerFunc) {
 	nr.handleMessageFromClientCheckerFuncs = f
+
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	ctx = context.WithValue(ctx, "currentNode", nr.currentNode)
+	nr.handleMessageFromClientCheckerFuncsContext = ctx
 }
 
-func (nr *NodeRunner) SetHandleBallotCheckerFuncs(f ...util.CheckerFunc) {
+func (nr *NodeRunner) SetHandleBallotCheckerFuncs(ctx context.Context, f ...util.CheckerFunc) {
 	nr.handleBallotCheckerFuncs = f
+
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	ctx = context.WithValue(ctx, "currentNode", nr.currentNode)
+	nr.handleBallotCheckerFuncsContext = ctx
 }
 
 func (nr *NodeRunner) handleMessage() {
@@ -147,8 +166,7 @@ func (nr *NodeRunner) handleMessage() {
 				- TODO check already in BlockTransactionHistory
 			*/
 
-			ctx := context.WithValue(context.Background(), "currentNode", nr.currentNode)
-			if ctx, err = util.Checker(ctx, nr.handleMessageFromClientCheckerFuncs...)(nr, message); err != nil {
+			if _, err = util.Checker(nr.handleMessageFromClientCheckerFuncsContext, nr.handleMessageFromClientCheckerFuncs...)(nr, message); err != nil {
 				if _, ok := err.(util.CheckerErrorStop); ok {
 					continue
 				}
@@ -163,8 +181,7 @@ func (nr *NodeRunner) handleMessage() {
 				- TODO check already in BlockTransactionHistory
 			*/
 
-			ctx := context.WithValue(context.Background(), "currentNode", nr.currentNode)
-			if ctx, err = util.Checker(ctx, nr.handleBallotCheckerFuncs...)(nr, message); err != nil {
+			if _, err = util.Checker(nr.handleBallotCheckerFuncsContext, nr.handleBallotCheckerFuncs...)(nr, message); err != nil {
 				if _, ok := err.(util.CheckerErrorStop); ok {
 					continue
 				}

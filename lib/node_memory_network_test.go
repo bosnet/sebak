@@ -3,10 +3,13 @@ package sebak
 import (
 	"context"
 	"errors"
+	"reflect"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/spikeekips/sebak/lib/error"
 	"github.com/spikeekips/sebak/lib/network"
 	"github.com/spikeekips/sebak/lib/util"
 	"github.com/stellar/go/keypair"
@@ -123,7 +126,6 @@ func TestMemoryNetworkHandleMessageFromClient(t *testing.T) {
 		checkNodeRunnerHandleMessageTransactionUnmarshal,
 		checkNodeRunnerHandleMessageISAACReceiveMessage,
 		checkNodeRunnerHandleMessageSignBallot,
-		//checkNodeRunnerHandleMessageBroadcast, // disable broadcast
 		func(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
 			nr := target.(*NodeRunner)
 			ballot := ctx.Value("ballot").(Ballot)
@@ -134,7 +136,8 @@ func TestMemoryNetworkHandleMessageFromClient(t *testing.T) {
 			return ctx, nil
 		},
 	}
-	nodeRunners[0].SetHandleMessageFromClientCheckerFuncs(handleMessageFromClientCheckerFuncs...)
+
+	nodeRunners[0].SetHandleMessageFromClientCheckerFuncs(nil, handleMessageFromClientCheckerFuncs...)
 
 	tx := makeTransaction(nodeRunners[0].Node().Keypair())
 	c0.SendMessage(tx)
@@ -231,10 +234,10 @@ func TestMemoryNetworkHandleMessageFromClientBroadcast(t *testing.T) {
 		},
 		checkNodeRunnerHandleMessageBroadcast,
 	}
-	nodeRunners[0].SetHandleMessageFromClientCheckerFuncs(handleMessageFromClientCheckerFuncs...)
+	nodeRunners[0].SetHandleMessageFromClientCheckerFuncs(nil, handleMessageFromClientCheckerFuncs...)
 
 	for _, nr := range nodeRunners {
-		nr.SetHandleBallotCheckerFuncs(handleBallotCheckerFuncs...)
+		nr.SetHandleBallotCheckerFuncs(nil, handleBallotCheckerFuncs...)
 	}
 
 	tx := makeTransaction(nodeRunners[0].Node().Keypair())
@@ -243,7 +246,6 @@ func TestMemoryNetworkHandleMessageFromClientBroadcast(t *testing.T) {
 	var sentBallot Ballot
 	select {
 	case sentBallot = <-chanGotMessageFromClient:
-		//
 	}
 
 	received := []Ballot{}
@@ -273,5 +275,134 @@ L:
 			t.Errorf("got unknown message; '%s' != '%s'", sentBallot.Message(), b.Message())
 			return
 		}
+	}
+}
+
+// TestMemoryNetworkHandleBallotCheckIsNew checks, the already received message from
+// client must be ignored.
+func TestMemoryNetworkHandleMessageCheckHasMessage(t *testing.T) {
+	nr := createNodeRunners(1)[0]
+	go nr.Start()
+	defer nr.Stop()
+
+	c0 := nr.TransportServer().GetClient(nr.Node().Endpoint())
+
+	var wg sync.WaitGroup
+
+	// we will send 3 tx
+	wg.Add(3)
+
+	var addedBallot []Ballot
+	var foundErrors []error
+	var handleMessageFromClientCheckerFuncs = []util.CheckerFunc{
+		checkNodeRunnerHandleMessageTransactionUnmarshal,
+		checkNodeRunnerHandleMessageISAACReceiveMessage,
+		func(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
+			ballot := ctx.Value("ballot").(Ballot)
+
+			addedBallot = append(addedBallot, ballot)
+
+			return ctx, nil
+		},
+	}
+
+	var deferFunc util.DeferFunc = func(f util.CheckerFunc, ctx context.Context, err error) {
+		if reflect.ValueOf(f).Pointer() == reflect.ValueOf(checkNodeRunnerHandleMessageISAACReceiveMessage).Pointer() {
+			defer wg.Done()
+		}
+
+		if err == nil {
+			return
+		}
+		foundErrors = append(foundErrors, err)
+	}
+	ctx := context.WithValue(context.Background(), "deferFunc", deferFunc)
+
+	nr.SetHandleMessageFromClientCheckerFuncs(ctx, handleMessageFromClientCheckerFuncs...)
+
+	tx := makeTransaction(nr.Node().Keypair())
+	c0.SendMessage(tx)
+	c0.SendMessage(tx)
+	c0.SendMessage(tx)
+
+	wg.Wait()
+
+	if len(addedBallot) != 1 {
+		t.Error("only 1st tx must be added")
+		return
+	}
+
+	// check error
+	if len(foundErrors) != 2 {
+		t.Error("2 `sebakerror.ErrorNewButKnownMessage` must be occurred")
+		return
+	}
+	for _, err := range foundErrors {
+		if err != sebakerror.ErrorNewButKnownMessage {
+			t.Error("must raise error, `sebakerror.ErrorNewButKnownMessage`")
+			return
+		}
+	}
+}
+
+// TestMemoryNetworkHandleMessageAddBallot checks, the each messages from
+// client will be added.
+func TestMemoryNetworkHandleMessageAddBallot(t *testing.T) {
+	nodeRunners := createNodeRunners(2)
+	nr0 := nodeRunners[0]
+	nr1 := nodeRunners[1]
+	go nr0.Start()
+	defer nr0.Stop()
+
+	c0 := nr0.TransportServer().GetClient(nr0.Node().Endpoint())
+
+	var wg sync.WaitGroup
+
+	// we will send 3 tx
+	wg.Add(3)
+
+	var addedBallot []Ballot
+	var foundErrors []error
+	var handleMessageFromClientCheckerFuncs = []util.CheckerFunc{
+		checkNodeRunnerHandleMessageTransactionUnmarshal,
+		checkNodeRunnerHandleMessageISAACReceiveMessage,
+		func(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
+			ballot := ctx.Value("ballot").(Ballot)
+
+			addedBallot = append(addedBallot, ballot)
+
+			return ctx, nil
+		},
+	}
+
+	var deferFunc util.DeferFunc = func(f util.CheckerFunc, ctx context.Context, err error) {
+		if reflect.ValueOf(f).Pointer() == reflect.ValueOf(checkNodeRunnerHandleMessageISAACReceiveMessage).Pointer() {
+			defer wg.Done()
+		}
+
+		if err == nil {
+			return
+		}
+		foundErrors = append(foundErrors, err)
+	}
+	ctx := context.WithValue(context.Background(), "deferFunc", deferFunc)
+
+	nr0.SetHandleMessageFromClientCheckerFuncs(ctx, handleMessageFromClientCheckerFuncs...)
+
+	c0.SendMessage(makeTransaction(nr0.Node().Keypair()))
+	c0.SendMessage(makeTransaction(nr1.Node().Keypair()))
+	c0.SendMessage(makeTransaction(nr1.Node().Keypair()))
+
+	wg.Wait()
+
+	if len(addedBallot) != 3 {
+		t.Error("all tx must be added")
+		return
+	}
+
+	// check error
+	if len(foundErrors) != 0 {
+		t.Error("error occurred", foundErrors)
+		return
 	}
 }
