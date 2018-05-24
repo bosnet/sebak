@@ -31,6 +31,10 @@ func (is *ISAAC) GetNode() util.Node {
 	return is.Node
 }
 
+func (is *ISAAC) HasMessage(message util.Message) bool {
+	return is.Boxes.HasMessage(message)
+}
+
 func (is *ISAAC) ReceiveMessage(m util.Message) (ballot Ballot, err error) {
 	/*
 		Previously the new incoming Message must be checked,

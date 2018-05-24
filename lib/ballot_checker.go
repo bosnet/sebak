@@ -1,67 +1,69 @@
 package sebak
 
 import (
+	"context"
+
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/spikeekips/sebak/lib/error"
 )
 
-func checkBallotEmptyNodeKey(target interface{}, args ...interface{}) error {
+func checkBallotEmptyNodeKey(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
 	ballot := target.(Ballot)
 	if len(ballot.B.NodeKey) < 1 {
-		return sebakerror.ErrorBallotNoNodeKey
+		return ctx, sebakerror.ErrorBallotNoNodeKey
 	}
-	return nil
+	return ctx, nil
 }
 
-func checkBallotEmptyHashMatch(target interface{}, args ...interface{}) error {
+func checkBallotEmptyHashMatch(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
 	ballot := target.(Ballot)
 	if base58.Encode(ballot.B.MakeHash()) != ballot.GetHash() {
-		return sebakerror.ErrorHashDoesNotMatch
+		return ctx, sebakerror.ErrorHashDoesNotMatch
 	}
-	return nil
+	return ctx, nil
 }
 
-func checkBallotVerifySignature(target interface{}, args ...interface{}) error {
+func checkBallotVerifySignature(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
 	if err := target.(Ballot).VerifySignature(); err != nil {
-		return err
+		return ctx, err
 	}
-	return nil
+	return ctx, nil
 }
 
-func checkBallotNoVoting(target interface{}, args ...interface{}) error {
+func checkBallotNoVoting(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
 	if target.(Ballot).B.VotingHole == VotingNOTYET {
-		return sebakerror.ErrorBallotNoVoting
+		return ctx, sebakerror.ErrorBallotNoVoting
 	}
-	return nil
+	return ctx, nil
 }
 
-func checkBallotValidState(target interface{}, args ...interface{}) error {
+func checkBallotValidState(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
 	if target.(Ballot).State() == BallotStateNONE {
-		return sebakerror.ErrorInvalidState
+		return ctx, sebakerror.ErrorInvalidState
 	}
-	return nil
+	return ctx, nil
 }
 
-func checkBallotHasMessage(target interface{}, args ...interface{}) error {
+func checkBallotHasMessage(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
 	ballot := target.(Ballot)
 	if ballot.State() != BallotStateINIT {
 		if ballot.B.Message.Message == nil {
-			return sebakerror.ErrorBallotHasMessage
+			return ctx, sebakerror.ErrorBallotHasMessage
 		}
-		return nil
+		return ctx, nil
 	}
 
 	if ballot.B.Message.Message == nil {
-		return sebakerror.ErrorBallotEmptyMessage
+		return ctx, sebakerror.ErrorBallotEmptyMessage
 	}
-	return nil
+	return ctx, nil
 }
 
-func checkBallotResultValidHash(target interface{}, args ...interface{}) error {
+func checkBallotResultValidHash(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
 	votingResult := target.(*VotingResult)
 	ballot := args[0].(Ballot)
 	if ballot.Message().GetHash() != votingResult.MessageHash {
-		return sebakerror.ErrorHashDoesNotMatch
+		return ctx, sebakerror.ErrorHashDoesNotMatch
 	}
-	return nil
+	return ctx, nil
 }

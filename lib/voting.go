@@ -1,6 +1,7 @@
 package sebak
 
 import (
+	"context"
 	"encoding/json"
 	"math"
 	"sync"
@@ -175,7 +176,7 @@ func (vr *VotingResult) Add(ballot Ballot) (err error) {
 	vr.Lock()
 	defer vr.Unlock()
 
-	if err = util.Checker(VotingResultCheckerFuns...)(vr, ballot); err != nil {
+	if _, err = util.Checker(context.Background(), VotingResultCheckerFuns...)(vr, ballot); err != nil {
 		return
 	}
 	vr.Ballots[ballot.State()][ballot.B.NodeKey] = NewVotingResultBallotFromBallot(ballot)

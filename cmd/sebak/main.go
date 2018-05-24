@@ -4,7 +4,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"net/url"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -13,6 +12,7 @@ import (
 	"golang.org/x/net/http2"
 
 	logging "github.com/inconshreveable/log15"
+	"github.com/mattn/go-isatty"
 	"github.com/spikeekips/sebak/lib"
 	"github.com/spikeekips/sebak/lib/network"
 	"github.com/spikeekips/sebak/lib/util"
@@ -151,10 +151,11 @@ func init() {
 		flagEndpointString = nodeEndpoint.String()
 	}
 
-	queries := url.Values{}
+	queries := nodeEndpoint.Query()
 	queries.Add("TLSCertFile", flagTLSCertFile)
 	queries.Add("TLSKeyFile", flagTLSKeyFile)
 	queries.Add("IdleTimeout", "3s")
+	queries.Add("NodeName", util.MakeAlias(kp.Address()))
 	nodeEndpoint.RawQuery = queries.Encode()
 
 	for _, n := range flagValidators {
@@ -173,7 +174,15 @@ func init() {
 	}
 
 	var logHandler logging.Handler
-	logHandler = logging.StreamHandler(os.Stdout, logging.TerminalFormat())
+
+	var formatter logging.Format
+	if isatty.IsTerminal(os.Stdout.Fd()) {
+		formatter = logging.TerminalFormat()
+	} else {
+		formatter = logging.JsonFormatEx(false, true)
+	}
+	logHandler = logging.StreamHandler(os.Stdout, formatter)
+
 	if len(flagLogOutput) > 0 {
 		if logHandler, err = logging.FileHandler(flagLogOutput, logging.JsonFormat()); err != nil {
 			printFlagsError("-log-output", err)
@@ -183,6 +192,7 @@ func init() {
 	log = logging.New("module", "main")
 	log.SetHandler(logging.LvlFilterHandler(logLevel, logHandler))
 	sebak.SetLogging(logLevel, logHandler)
+	network.SetLogging(logLevel, logHandler)
 
 	log.Info("Starting Sebak")
 
@@ -206,8 +216,6 @@ func init() {
 
 	log.Debug("parsed flags:", parsedFlags...)
 
-	// NOTE instead of set `http2.VerboseLogs`, just use
-	// `GODEBUG="http2debug=2"`.
 	if flagVerbose {
 		http2.VerboseLogs = true
 	}
@@ -215,7 +223,7 @@ func init() {
 
 func main() {
 	// create current Node
-	currentNode, err := util.NewValidator(kp.Address(), nodeEndpoint, "self")
+	currentNode, err := util.NewValidator(kp.Address(), nodeEndpoint, "")
 	if err != nil {
 		log.Error("failed to launch main node", "error", err)
 		return
@@ -242,123 +250,9 @@ func main() {
 	}
 
 	nr := sebak.NewNodeRunner(currentNode, policy, nt, isaac)
-	nr.Ready()
-
 	if err := nr.Start(); err != nil {
 		log.Crit("failed to start node", "error", err)
 
 		os.Exit(1)
 	}
-}
-
-func main0() {
-	// create current Node
-	currentNode, err := util.NewValidator(kp.Address(), nodeEndpoint, "self")
-	if err != nil {
-		log.Error("failed to launch main node", "error", err)
-		return
-	}
-	currentNode.SetKeypair(kp)
-	currentNode.AddValidators(flagValidators...)
-
-	// create network
-	//ctx := context.WithValue(context.Background(), "currentNode", currentNode)
-	nt, err := network.NewTransportServer(nodeEndpoint)
-	if err != nil {
-		log.Crit("transport error", "error", err)
-
-		os.Exit(1)
-	}
-
-	go func() {
-		nt.Start()
-	}()
-
-	nt.Ready()
-
-	// TODO policy threshold can be set in cmd options
-	policy, _ := sebak.NewDefaultVotingThresholdPolicy(100, 30, 30)
-	policy.SetValidators(uint64(len(currentNode.GetValidators())) + 1) // including 'self'
-
-	is, err := sebak.NewISAAC(currentNode, policy)
-	if err != nil {
-		log.Error("failed to launch consensus", "error", err)
-		return
-	}
-
-	for message := range nt.ReceiveMessage() {
-		log.Debug("got message", "message", message)
-
-		switch message.Type {
-		case "message":
-			var tx sebak.Transaction
-			if tx, err = sebak.NewTransactionFromJSON(message.Data); err != nil {
-				log.Error("found invalid transaction message", "error", err)
-
-				// TODO if failed, save in `BlockTransactionHistory`????
-				continue
-			}
-			if err = tx.IsWellFormed(); err != nil {
-				log.Error("found invalid transaction message", "error", err)
-				// TODO if failed, save in `BlockTransactionHistory`
-				continue
-			}
-
-			/*
-				- TODO `Message` must be saved in `BlockTransactionHistory`
-				- TODO check already `IsWellFormed()`
-				- TODO check already in BlockTransaction
-				- TODO check already in BlockTransactionHistory
-			*/
-
-			var ballot sebak.Ballot
-			if ballot, err = is.ReceiveMessage(tx); err != nil {
-				log.Error("failed to receive new message", "error", err)
-				continue
-			}
-
-			// TODO initially shutup and broadcast
-			fmt.Println(ballot)
-		case "ballot":
-			/*
-				- TODO check already `IsWellFormed()`
-				- TODO check already in BlockTransaction
-				- TODO check already in BlockTransactionHistory
-			*/
-
-			var ballot sebak.Ballot
-			if ballot, err = sebak.NewBallotFromJSON(message.Data); err != nil {
-				log.Error("found invalid ballot message", "error", err)
-				continue
-			}
-			var vt sebak.VotingStateStaging
-			if vt, err = is.ReceiveBallot(ballot); err != nil {
-				log.Error("failed to receive ballot", "error", err)
-				continue
-			}
-
-			if vt.IsEmpty() {
-				continue
-			}
-
-			if vt.IsClosed() {
-				if !vt.IsStorable() {
-					continue
-				}
-				// store in BlockTransaction
-			}
-
-			if !vt.IsChanged() {
-				continue
-			}
-
-			// TODO state is changed, so broadcast
-
-			fmt.Println(vt)
-		}
-	}
-
-	select {}
-
-	os.Exit(0)
 }

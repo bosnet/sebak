@@ -9,7 +9,7 @@ import (
 )
 
 func TestNewBlockTransaction(t *testing.T) {
-	_, tx := MakeTransaction(1)
+	_, tx := MakeTransactions(1)
 	a, _ := tx.Serialize()
 	bt := NewBlockTransactionFromTransaction(tx, a)
 

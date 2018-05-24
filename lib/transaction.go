@@ -1,6 +1,7 @@
 package sebak
 
 import (
+	"context"
 	"encoding/json"
 
 	"github.com/btcsuite/btcutil/base58"
@@ -64,7 +65,7 @@ var TransactionWellFormedCheckerFuncs = []util.CheckerFunc{
 }
 
 func (o Transaction) IsWellFormed() (err error) {
-	if err = util.Checker(TransactionWellFormedCheckerFuncs...)(o); err != nil {
+	if _, err = util.Checker(context.Background(), TransactionWellFormedCheckerFuncs...)(o); err != nil {
 		return
 	}
 
@@ -87,6 +88,10 @@ func (o Transaction) Validate(st *storage.LevelDBBackend) (err error) {
 
 func (o Transaction) GetType() string {
 	return o.T
+}
+
+func (o Transaction) Equal(m util.Message) bool {
+	return o.H.Hash == m.GetHash()
 }
 
 func (o Transaction) GetHash() string {

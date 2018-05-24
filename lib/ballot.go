@@ -1,6 +1,7 @@
 package sebak
 
 import (
+	"context"
 	"encoding/json"
 	"sort"
 
@@ -32,6 +33,10 @@ func (bm BallotMessage) IsWellFormed() (err error) {
 
 func (bm BallotMessage) GetType() string {
 	return ""
+}
+
+func (bm BallotMessage) Equal(m util.Message) bool {
+	return bm.Hash == m.GetHash()
 }
 
 func (bm BallotMessage) GetHash() string {
@@ -132,7 +137,7 @@ var BallotWellFormedCheckerFuncs = []util.CheckerFunc{
 }
 
 func (b Ballot) IsWellFormed() (err error) {
-	if err = util.Checker(BallotWellFormedCheckerFuncs...)(b); err != nil {
+	if _, err = util.Checker(context.Background(), BallotWellFormedCheckerFuncs...)(b); err != nil {
 		return
 	}
 
@@ -161,6 +166,10 @@ func (b Ballot) Validate(st *storage.LevelDBBackend) (err error) {
 
 func (b Ballot) GetType() string {
 	return b.T
+}
+
+func (b Ballot) Equal(m util.Message) bool {
+	return b.H.Hash == m.GetHash()
 }
 
 func (b Ballot) GetHash() string {

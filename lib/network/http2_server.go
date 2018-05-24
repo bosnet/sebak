@@ -4,17 +4,21 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
+	"os"
 	"time"
 
+	"github.com/gorilla/handlers"
 	"github.com/spikeekips/sebak/lib/util"
 
 	"golang.org/x/net/http2"
 )
 
 type HTTP2TransportConfig struct {
-	Addr string
+	NodeName string
+	Addr     string
 
 	ReadTimeout,
 	ReadHeaderTimeout,
@@ -23,16 +27,20 @@ type HTTP2TransportConfig struct {
 
 	TLSCertFile,
 	TLSKeyFile string
+
+	HTTP2LogOutput io.Writer
 }
 
 func NewHTTP2TransportConfigFromEndpoint(endpoint *util.Endpoint) (config HTTP2TransportConfig, err error) {
 	query := endpoint.Query()
 
+	var NodeName string
 	var ReadTimeout time.Duration = 0
 	var ReadHeaderTimeout time.Duration = 0
 	var WriteTimeout time.Duration = 0
 	var IdleTimeout time.Duration = 5
 	var TLSCertFile, TLSKeyFile string
+	var HTTP2LogOutput io.Writer
 
 	if ReadTimeout, err = time.ParseDuration(util.GetUrlQuery(query, "ReadTimeout", "0s")); err != nil {
 		return
@@ -80,7 +88,24 @@ func NewHTTP2TransportConfigFromEndpoint(endpoint *util.Endpoint) (config HTTP2T
 		TLSKeyFile = v
 	}
 
+	if v := query.Get("NodeName"); len(v) < 1 {
+		err = errors.New("`NodeName` must be given")
+		return
+	} else {
+		NodeName = v
+	}
+
+	if v := query.Get("HTTP2LogOutput"); len(v) < 1 {
+		HTTP2LogOutput = os.Stdout
+	} else {
+		HTTP2LogOutput, err = os.OpenFile(v, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+		if err != nil {
+			return
+		}
+	}
+
 	config = HTTP2TransportConfig{
+		NodeName:          NodeName,
 		Addr:              endpoint.Host,
 		ReadTimeout:       ReadTimeout,
 		ReadHeaderTimeout: ReadHeaderTimeout,
@@ -88,6 +113,7 @@ func NewHTTP2TransportConfigFromEndpoint(endpoint *util.Endpoint) (config HTTP2T
 		IdleTimeout:       IdleTimeout,
 		TLSCertFile:       TLSCertFile,
 		TLSKeyFile:        TLSKeyFile,
+		HTTP2LogOutput:    HTTP2LogOutput,
 	}
 
 	return
@@ -105,7 +131,9 @@ type HTTP2Transport struct {
 	ready bool
 
 	handlers map[string]func(http.ResponseWriter, *http.Request)
-	watchers []func(*HTTP2Transport, net.Conn, http.ConnState)
+	watchers []func(TransportServer, net.Conn, http.ConnState)
+
+	config HTTP2TransportConfig
 }
 
 type HandlerFunc func(w http.ResponseWriter, r *http.Request)
@@ -137,6 +165,7 @@ func NewHTTP2Transport(config HTTP2TransportConfig) (transport *HTTP2Transport) 
 		receiveChannel: make(chan Message),
 	}
 
+	transport.config = config
 	transport.handlers = map[string]func(http.ResponseWriter, *http.Request){}
 
 	transport.setNotReadyHandler()
@@ -153,18 +182,31 @@ func (t *HTTP2Transport) SetContext(ctx context.Context) {
 	t.ctx = ctx
 }
 
+// GetClient creates new keep-alive HTTP2 client
+func (t *HTTP2Transport) GetClient(endpoint *util.Endpoint) TransportClient {
+	rawClient, _ := util.NewHTTP2Client(defaultTimeout, 0, true)
+
+	client := NewHTTP2TransportClient(endpoint, rawClient)
+
+	headers := http.Header{}
+	headers.Set("User-Agent", fmt.Sprintf("v-%s", t.config.NodeName))
+	client.SetDefaultHeaders(headers)
+
+	return client
+}
+
 func (t *HTTP2Transport) Endpoint() *util.Endpoint {
 	host, port, _ := net.SplitHostPort(t.server.Addr)
 	return &util.Endpoint{Scheme: "https", Host: fmt.Sprintf("%s:%s", host, port)}
 }
 
-func (t *HTTP2Transport) AddWatcher(f func(*HTTP2Transport, net.Conn, http.ConnState)) {
+func (t *HTTP2Transport) AddWatcher(f func(TransportServer, net.Conn, http.ConnState)) {
 	t.watchers = append(t.watchers, f)
 }
 
 func (t *HTTP2Transport) ConnState(c net.Conn, state http.ConnState) {
 	for _, f := range t.watchers {
-		f(t, c, state)
+		go f(t, c, state)
 	}
 }
 
@@ -177,7 +219,7 @@ func (t *HTTP2Transport) setNotReadyHandler() {
 		}
 	})
 
-	t.server.Handler = handler
+	t.server.Handler = handlers.CombinedLoggingHandler(t.config.HTTP2LogOutput, handler)
 }
 
 func (t *HTTP2Transport) AddHandler(ctx context.Context, pattern string, handler func(context.Context, *HTTP2Transport) HandlerFunc) (err error) {
@@ -187,6 +229,7 @@ func (t *HTTP2Transport) AddHandler(ctx context.Context, pattern string, handler
 
 func (t *HTTP2Transport) Ready() error {
 	t.AddHandler(t.Context(), "/", Index)
+	t.AddHandler(t.Context(), "/connect", ConnectHandler)
 	t.AddHandler(t.Context(), "/message", MessageHandler)
 	t.AddHandler(t.Context(), "/ballot", BallotHandler)
 
@@ -194,11 +237,27 @@ func (t *HTTP2Transport) Ready() error {
 	for pattern, handlerFunc := range t.handlers {
 		handler.HandleFunc(pattern, handlerFunc)
 	}
-	t.server.Handler = handler
+
+	t.server.Handler = handlers.CombinedLoggingHandler(t.config.HTTP2LogOutput, handler)
 
 	t.ready = true
 
 	return nil
+}
+
+func (t *HTTP2Transport) IsReady() bool {
+	client, err := util.NewHTTP2Client(50*time.Millisecond, 50*time.Millisecond, false)
+	if err != nil {
+		return false
+	}
+	defer client.Close()
+
+	transport := NewHTTP2TransportClient(t.Endpoint(), client)
+	if _, err := transport.GetNodeInfo(); err != nil {
+		return false
+	}
+
+	return true
 }
 
 func (t *HTTP2Transport) Start() (err error) {
@@ -207,6 +266,10 @@ func (t *HTTP2Transport) Start() (err error) {
 	}()
 
 	return t.server.ListenAndServeTLS(t.tlsCertFile, t.tlsKeyFile)
+}
+
+func (t *HTTP2Transport) Stop() {
+	t.server.Close()
 }
 
 func (t *HTTP2Transport) ReceiveChannel() chan Message {

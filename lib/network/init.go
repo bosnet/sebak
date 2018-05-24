@@ -1,4 +1,4 @@
-package sebak
+package network
 
 import (
 	"os"
@@ -7,7 +7,7 @@ import (
 	"github.com/spikeekips/sebak/lib/util"
 )
 
-var log logging.Logger = logging.New("module", "sebak")
+var log logging.Logger = logging.New("module", "network")
 
 func SetLogging(level logging.Lvl, handler logging.Handler) {
 	log.SetHandler(logging.LvlFilterHandler(level, handler))

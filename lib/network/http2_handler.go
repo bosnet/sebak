@@ -23,6 +23,33 @@ func Index(ctx context.Context, t *HTTP2Transport) HandlerFunc {
 	}
 }
 
+func ConnectHandler(ctx context.Context, t *HTTP2Transport) HandlerFunc {
+	var currentNode util.Serializable
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		if currentNode == nil {
+			currentNode = ctx.Value("currentNode").(util.Serializable)
+		}
+
+		if r.Method != "POST" {
+			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+			return
+		}
+
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, "Error reading request body", http.StatusInternalServerError)
+		}
+
+		// and then connect to remote
+		t.ReceiveChannel() <- Message{Type: ConnectMessage, Data: body}
+
+		// send current node info
+		o, _ := currentNode.Serialize()
+		fmt.Fprintf(w, string(o))
+	}
+}
+
 func MessageHandler(ctx context.Context, t *HTTP2Transport) HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()

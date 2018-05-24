@@ -8,7 +8,7 @@ import (
 )
 
 func TestNewBlockOperationFromOperation(t *testing.T) {
-	_, tx := MakeTransaction(1)
+	_, tx := MakeTransactions(1)
 
 	op := tx.B.Operations[0]
 	bo := NewBlockOperationFromOperation(op, tx)

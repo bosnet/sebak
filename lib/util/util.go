@@ -2,7 +2,9 @@ package util
 
 import (
 	"bytes"
+	"context"
 	"errors"
+	"flag"
 	"net/url"
 	"os"
 	"sync"
@@ -28,17 +30,24 @@ func GetUniqueIDFromDate() string {
 	return NowISO8601()
 }
 
-type CheckerFunc func(target interface{}, args ...interface{}) error
+type CheckerErrorStop struct{}
 
-func Checker(checkFuncs ...CheckerFunc) func(interface{}, ...interface{}) error {
-	return func(target interface{}, args ...interface{}) (err error) {
+func (c CheckerErrorStop) Error() string {
+	return "stop checker and return"
+}
+
+type CheckerFunc func(context.Context, interface{}, ...interface{}) (context.Context, error)
+
+func Checker(ctx context.Context, checkFuncs ...CheckerFunc) func(interface{}, ...interface{}) (context.Context, error) {
+	return func(target interface{}, args ...interface{}) (context.Context, error) {
 		for _, f := range checkFuncs {
-			if err := f(target, args...); err != nil {
-				return err
+			var err error
+			if ctx, err = f(ctx, target, args...); err != nil {
+				return ctx, err
 			}
 		}
 
-		return
+		return ctx, nil
 	}
 }
 
@@ -108,4 +117,22 @@ func GetUrlQuery(query url.Values, key, defaultValue string) string {
 	}
 
 	return defaultValue
+}
+
+func InTestVerbose() bool {
+	flag.Parse()
+	if v := flag.Lookup("test.v"); v == nil || v.Value.String() != "true" {
+		return false
+	}
+
+	return true
+}
+
+func InTest() bool {
+	flag.Parse()
+	if v := flag.Lookup("test.v"); v == nil {
+		return false
+	}
+
+	return true
 }

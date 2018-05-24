@@ -3,7 +3,6 @@ package sebak
 import (
 	"encoding/json"
 	"errors"
-	"net/url"
 	"testing"
 
 	"github.com/btcsuite/btcutil/base58"
@@ -13,9 +12,9 @@ import (
 	"github.com/spikeekips/sebak/lib/util"
 )
 
-func NewRandomNode() Node {
+func NewRandomNode() util.Node {
 	kp, _ := keypair.Random()
-	a, _ := NewValidator(kp.Address(), &url.URL{}, "")
+	a, _ := util.NewValidator(kp.Address(), &util.Endpoint{}, "")
 	a.SetKeypair(kp)
 	return a
 }
@@ -39,6 +38,10 @@ func (m DummyMessage) IsWellFormed() error {
 
 func (m DummyMessage) GetType() string {
 	return m.T
+}
+
+func (m DummyMessage) Equal(n util.Message) bool {
+	return m.Hash == n.GetHash()
 }
 
 func (m DummyMessage) GetHash() string {

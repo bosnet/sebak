@@ -34,6 +34,15 @@ func NewEndpointFromURL(u *url.URL) *Endpoint {
 	return (*Endpoint)(u)
 }
 
+func NewEndpointFromString(s string) (e *Endpoint, err error) {
+	var u *url.URL
+	if u, err = url.Parse(s); err != nil {
+		return
+	}
+	e = NewEndpointFromURL(u)
+	return
+}
+
 func (e *Endpoint) String() string {
 	return (&url.URL{
 		Scheme: e.Scheme,
@@ -42,6 +51,21 @@ func (e *Endpoint) String() string {
 	}).String()
 }
 
+func (e *Endpoint) IsRemote() bool {
+	return e.Scheme != "memory"
+}
+
 func (e *Endpoint) Query() url.Values {
 	return (*url.URL)(e).Query()
+}
+
+func (e *Endpoint) UnmarshalJSON(b []byte) error {
+	p, err := ParseNodeEndpoint(string(b)[1 : len(string(b))-1])
+	if err != nil {
+		return err
+	}
+
+	*e = *p
+
+	return nil
 }

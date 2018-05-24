@@ -3,7 +3,8 @@ package network
 import (
 	"context"
 	"encoding/json"
-	"time"
+	"net"
+	"net/http"
 
 	"github.com/spikeekips/sebak/lib/util"
 )
@@ -12,9 +13,13 @@ type TransportServer interface {
 	Endpoint() *util.Endpoint
 	Context() context.Context
 	SetContext(context.Context)
+	GetClient(endpoint *util.Endpoint) TransportClient
+	AddWatcher(func(TransportServer, net.Conn, http.ConnState))
 
 	Start() error
+	Stop()
 	Ready() error
+	IsReady() bool
 
 	ReceiveChannel() chan Message
 	ReceiveMessage() <-chan Message
@@ -22,8 +27,8 @@ type TransportServer interface {
 
 type TransportClient interface {
 	Endpoint() *util.Endpoint
-	Timeout() time.Duration
 
+	Connect(node util.Node) ([]byte, error)
 	GetNodeInfo() ([]byte, error)
 	SendMessage(util.Serializable) error
 	SendBallot(util.Serializable) error
@@ -37,26 +42,27 @@ func (t MessageType) String() string {
 
 const (
 	MessageFromClient  MessageType = "message"
+	ConnectMessage                 = "connect"
 	BallotMessage                  = "ballot"
 	GetNodeInfoMessage             = "get-node-info"
 )
 
 type Message struct {
-	Type       MessageType
-	Data       []byte
-	DataString string // optional
+	Type MessageType
+	Data []byte
+	//DataString string // optional
 }
 
 func (t Message) String() string {
-	o, _ := json.MarshalIndent(t, "", "  ")
+	o, _ := json.Marshal(t)
 	return string(o)
 }
 
 func NewMessage(mt MessageType, data []byte) Message {
 	return Message{
-		Type:       mt,
-		Data:       data,
-		DataString: string(data),
+		Type: mt,
+		Data: data,
+		//DataString: string(data),
 	}
 }
 

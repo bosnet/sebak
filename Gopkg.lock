@@ -41,6 +41,12 @@
   version = "0.2"
 
 [[projects]]
+  name = "github.com/gorilla/handlers"
+  packages = ["."]
+  revision = "90663712d74cb411cbef281bc1e08c19d1a76145"
+  version = "v1.3.0"
+
+[[projects]]
   name = "github.com/inconshreveable/log15"
   packages = ["."]
   revision = "0decfc6c20d9ca0ad143b0e89dcaa20f810b4fb3"
@@ -172,6 +178,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a8ab5c64833e9aea77ce7de67d357ca350c32e3ac42635d3a71e7144522615f4"
+  inputs-digest = "01ab780f208427c23abc2eb7643aa246d7aa7c048248949f37a11a60ece2d577"
   solver-name = "gps-cdcl"
   solver-version = 1

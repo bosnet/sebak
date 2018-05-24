@@ -33,3 +33,11 @@
 [[constraint]]
   name = "github.com/inconshreveable/log15"
   version = "2.13.0"
+
+[[constraint]]
+  name = "github.com/gorilla/handlers"
+  version = "1.3.0"
+
+[[constraint]]
+  name = "github.com/mattn/go-isatty"
+  version = "0.0.3"

@@ -6,6 +6,7 @@ import (
 
 type Consensus interface {
 	GetNode() util.Node
+	HasMessage(util.Message) bool
 	ReceiveMessage(util.Message) (Ballot, error)
 	ReceiveBallot(Ballot) (VotingStateStaging, error)
 }

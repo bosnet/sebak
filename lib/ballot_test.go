@@ -9,7 +9,7 @@ import (
 )
 
 func makeNewBallot(state BallotState, vote VotingHole) (*keypair.Full, Transaction, Ballot) {
-	kpNode, tx := MakeTransaction(1)
+	kpNode, tx := MakeTransactions(1)
 	ballot, _ := NewBallotFromMessage(kpNode.Address(), tx)
 
 	ballot.SetState(state)
@@ -21,7 +21,7 @@ func makeNewBallot(state BallotState, vote VotingHole) (*keypair.Full, Transacti
 }
 
 func TestNewBallot(t *testing.T) {
-	kpNode, tx := MakeTransaction(1)
+	kpNode, tx := MakeTransactions(1)
 	ballot, _ := NewBallotFromMessage(kpNode.Address(), tx)
 
 	if len(ballot.H.Hash) < 1 {
@@ -40,7 +40,7 @@ func TestNewBallot(t *testing.T) {
 		t.Error("`Ballot.H.Reason` is not empty")
 		return
 	}
-	if ballot.B.Message.GetHash() != tx.GetHash() {
+	if !ballot.B.Message.Equal(tx) {
 		t.Error("`Ballot.B.Hash` mismatch")
 		return
 	}

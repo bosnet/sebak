@@ -6,5 +6,6 @@ type Message interface {
 	Serialize() ([]byte, error)
 	String() string
 	IsWellFormed() error
+	Equal(Message) bool
 	// Validate(storage.LevelDBBackend) error
 }

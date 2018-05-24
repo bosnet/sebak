@@ -2,8 +2,9 @@ package sebak
 
 import (
 	"context"
-	"fmt"
+	"time"
 
+	logging "github.com/inconshreveable/log15"
 	"github.com/spikeekips/sebak/lib/network"
 	"github.com/spikeekips/sebak/lib/util"
 )
@@ -13,8 +14,13 @@ type NodeRunner struct {
 	policy            VotingThresholdPolicy
 	transportServer   network.TransportServer
 	consensusProtocol Consensus
+	connectionManager *network.ConnectionManager
+
+	handleBallotCheckerFuncs            []util.CheckerFunc
+	handleMessageFromClientCheckerFuncs []util.CheckerFunc
 
 	ctx context.Context
+	log logging.Logger
 }
 
 func NewNodeRunner(
@@ -28,12 +34,21 @@ func NewNodeRunner(
 		policy:            policy,
 		transportServer:   transportServer,
 		consensusProtocol: consensusProtocol,
+		log:               log.New(logging.Ctx{"node": currentNode.Alias()}),
+
+		handleMessageFromClientCheckerFuncs: DefaultHandleMessageFromClientCheckerFuncs,
+		handleBallotCheckerFuncs:            DefaulthandleBallotCheckerFuncs,
 	}
-	ctx := context.WithValue(context.Background(), "currentNode", currentNode)
-	nr.ctx = ctx
+	nr.ctx = context.WithValue(context.Background(), "currentNode", currentNode)
+
+	nr.connectionManager = network.NewConnectionManager(
+		nr.currentNode,
+		nr.transportServer,
+		nr.currentNode.GetValidators(),
+	)
+	nr.transportServer.AddWatcher(nr.connectionManager.ConnectionWatcher)
 
 	return nr
-
 }
 
 func (nr *NodeRunner) Ready() {
@@ -42,7 +57,10 @@ func (nr *NodeRunner) Ready() {
 }
 
 func (nr *NodeRunner) Start() (err error) {
+	nr.Ready()
+
 	go nr.handleMessage()
+	go nr.ConnectValidators()
 
 	if err = nr.transportServer.Start(); err != nil {
 		return
@@ -51,25 +69,76 @@ func (nr *NodeRunner) Start() (err error) {
 	return
 }
 
+func (nr *NodeRunner) Stop() {
+	nr.transportServer.Stop()
+}
+
+func (nr *NodeRunner) Node() util.Node {
+	return nr.currentNode
+}
+
+func (nr *NodeRunner) TransportServer() network.TransportServer {
+	return nr.transportServer
+}
+
+func (nr *NodeRunner) ConnectionManager() *network.ConnectionManager {
+	return nr.connectionManager
+}
+
+func (nr *NodeRunner) ConnectValidators() {
+	ticker := time.NewTicker(time.Millisecond * 5)
+	for t := range ticker.C {
+		if !nr.transportServer.IsReady() {
+			nr.log.Debug("current server is not ready: %v", t)
+			continue
+		}
+
+		ticker.Stop()
+		break
+	}
+	nr.log.Debug("current server is ready")
+	nr.log.Debug("trying to connect to the validators", "validators", nr.currentNode.GetValidators())
+
+	nr.log.Debug("initializing connectionManager for validators")
+	nr.connectionManager.Start()
+}
+
+var DefaultHandleMessageFromClientCheckerFuncs = []util.CheckerFunc{
+	checkNodeRunnerHandleMessageTransactionUnmarshal,
+	checkNodeRunnerHandleMessageISAACReceiveMessage,
+	checkNodeRunnerHandleMessageSignBallot,
+	checkNodeRunnerHandleMessageBroadcast,
+}
+
+var DefaulthandleBallotCheckerFuncs = []util.CheckerFunc{
+	checkNodeRunnerHandleBallotIsWellformed,
+	checkNodeRunnerHandleBallotCheckIsNew,
+	checkNodeRunnerHandleBallotReceiveBallot,
+	checkNodeRunnerHandleBallotIsClosed,
+	checkNodeRunnerHandleBallotBroadcast,
+	checkNodeRunnerHandleBallotStore,
+}
+
+func (nr *NodeRunner) SetHandleMessageFromClientCheckerFuncs(f ...util.CheckerFunc) {
+	nr.handleMessageFromClientCheckerFuncs = f
+}
+
+func (nr *NodeRunner) SetHandleBallotCheckerFuncs(f ...util.CheckerFunc) {
+	nr.handleBallotCheckerFuncs = f
+}
+
 func (nr *NodeRunner) handleMessage() {
 	var err error
 	for message := range nr.transportServer.ReceiveMessage() {
-		log.Debug("got message", "message", message)
-
 		switch message.Type {
-		case "message":
-			var tx Transaction
-			if tx, err = NewTransactionFromJSON(message.Data); err != nil {
-				log.Error("found invalid transaction message", "error", err)
-
-				// TODO if failed, save in `BlockTransactionHistory`????
+		case network.ConnectMessage:
+			nr.log.Debug("got `ConnectMessage`", "message", message)
+			if _, err := util.NewValidatorFromString(message.Data); err != nil {
+				nr.log.Error("invalid validator data was received", "data", message.Data)
 				continue
 			}
-			if err = tx.IsWellFormed(); err != nil {
-				log.Error("found invalid transaction message", "error", err)
-				// TODO if failed, save in `BlockTransactionHistory`
-				continue
-			}
+		case network.MessageFromClient:
+			nr.log.Debug("got `MessageFromClient`", "message", message)
 
 			/*
 				- TODO `Message` must be saved in `BlockTransactionHistory`
@@ -78,50 +147,30 @@ func (nr *NodeRunner) handleMessage() {
 				- TODO check already in BlockTransactionHistory
 			*/
 
-			var ballot Ballot
-			if ballot, err = nr.consensusProtocol.ReceiveMessage(tx); err != nil {
-				log.Error("failed to receive new message", "error", err)
+			ctx := context.WithValue(context.Background(), "currentNode", nr.currentNode)
+			if ctx, err = util.Checker(ctx, nr.handleMessageFromClientCheckerFuncs...)(nr, message); err != nil {
+				if _, ok := err.(util.CheckerErrorStop); ok {
+					continue
+				}
+				nr.log.Error("failed to handle message from client", "error", err)
 				continue
 			}
-
-			// TODO initially shutup and broadcast
-			fmt.Println(ballot)
-		case "ballot":
+		case network.BallotMessage:
+			nr.log.Debug("got `Ballot`", "message", message)
 			/*
 				- TODO check already `IsWellFormed()`
 				- TODO check already in BlockTransaction
 				- TODO check already in BlockTransactionHistory
 			*/
 
-			var ballot Ballot
-			if ballot, err = NewBallotFromJSON(message.Data); err != nil {
-				log.Error("found invalid ballot message", "error", err)
-				continue
-			}
-			var vt VotingStateStaging
-			if vt, err = nr.consensusProtocol.ReceiveBallot(ballot); err != nil {
-				log.Error("failed to receive ballot", "error", err)
-				continue
-			}
-
-			if vt.IsEmpty() {
-				continue
-			}
-
-			if vt.IsClosed() {
-				if !vt.IsStorable() {
+			ctx := context.WithValue(context.Background(), "currentNode", nr.currentNode)
+			if ctx, err = util.Checker(ctx, nr.handleBallotCheckerFuncs...)(nr, message); err != nil {
+				if _, ok := err.(util.CheckerErrorStop); ok {
 					continue
 				}
-				// store in BlockTransaction
-			}
-
-			if !vt.IsChanged() {
+				nr.log.Error("failed to handle ballot", "error", err)
 				continue
 			}
-
-			// TODO state is changed, so broadcast
-
-			fmt.Println(vt)
 		}
 	}
 }
