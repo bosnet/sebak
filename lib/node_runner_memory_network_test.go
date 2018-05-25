@@ -82,6 +82,45 @@ func createNodeRunners(n int) []*NodeRunner {
 	return nodeRunners
 }
 
+func createNodeRunnersWithReady(n int) []*NodeRunner {
+	nodeRunners := createNodeRunners(n)
+
+	for _, nr := range nodeRunners {
+		go nr.Start()
+		defer nr.Stop()
+	}
+
+	T := time.NewTicker(100 * time.Millisecond)
+	stopTimer := make(chan bool)
+
+	go func() {
+		time.Sleep(5 * time.Second)
+		stopTimer <- true
+	}()
+
+	go func() {
+		for _ = range T.C {
+			var notyet bool
+			for _, nr := range nodeRunners {
+				if nr.ConnectionManager().CountConnected() != n-1 {
+					notyet = true
+					break
+				}
+			}
+			if notyet {
+				continue
+			}
+			stopTimer <- true
+		}
+	}()
+	select {
+	case <-stopTimer:
+		T.Stop()
+	}
+
+	return nodeRunners
+}
+
 // TestMemoryNetworkCreate checks, `NodeRunner` is correctly started and
 // `GetNodeInfo` returns the validator information correctly.
 func TestMemoryNetworkCreate(t *testing.T) {
@@ -123,14 +162,14 @@ func TestMemoryNetworkHandleMessageFromClient(t *testing.T) {
 
 	chanGotMessageFromClient := make(chan Ballot)
 	var handleMessageFromClientCheckerFuncs = []util.CheckerFunc{
-		checkNodeRunnerHandleMessageTransactionUnmarshal,
-		checkNodeRunnerHandleMessageISAACReceiveMessage,
-		checkNodeRunnerHandleMessageSignBallot,
+		CheckNodeRunnerHandleMessageTransactionUnmarshal,
+		CheckNodeRunnerHandleMessageISAACReceiveMessage,
+		CheckNodeRunnerHandleMessageSignBallot,
 		func(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
 			nr := target.(*NodeRunner)
 			ballot := ctx.Value("ballot").(Ballot)
 
-			nr.log.Debug("ballot from client will be broadcasted", "ballot", ballot.Message().GetHash())
+			nr.log.Debug("ballot from client will be broadcasted", "ballot", ballot.MessageHash())
 			chanGotMessageFromClient <- ballot
 
 			return ctx, nil
@@ -144,7 +183,7 @@ func TestMemoryNetworkHandleMessageFromClient(t *testing.T) {
 
 	select {
 	case b := <-chanGotMessageFromClient:
-		if !b.Message().Equal(tx) {
+		if b.MessageHash() != tx.GetHash() {
 			t.Error("ballot does not match with transaction")
 			return
 		}
@@ -158,39 +197,7 @@ func TestMemoryNetworkHandleMessageFromClient(t *testing.T) {
 // client is broadcasted and the other validators can receive it's ballot
 // correctly.
 func TestMemoryNetworkHandleMessageFromClientBroadcast(t *testing.T) {
-	nodeRunners := createNodeRunners(4)
-	for _, nr := range nodeRunners {
-		go nr.Start()
-		defer nr.Stop()
-	}
-
-	T := time.NewTicker(100 * time.Millisecond)
-	stopTimer := make(chan bool)
-
-	go func() {
-		time.Sleep(5 * time.Second)
-		stopTimer <- true
-	}()
-
-	go func() {
-		for _ = range T.C {
-			var notyet bool
-			for _, nr := range nodeRunners {
-				if nr.ConnectionManager().CountConnected() != 3 {
-					notyet = true
-					break
-				}
-			}
-			if notyet {
-				continue
-			}
-			stopTimer <- true
-		}
-	}()
-	select {
-	case <-stopTimer:
-		T.Stop()
-	}
+	nodeRunners := createNodeRunnersWithReady(4)
 
 	c0 := nodeRunners[0].TransportServer().GetClient(nodeRunners[0].Node().Endpoint())
 
@@ -220,19 +227,19 @@ func TestMemoryNetworkHandleMessageFromClientBroadcast(t *testing.T) {
 
 	chanGotMessageFromClient := make(chan Ballot)
 	var handleMessageFromClientCheckerFuncs = []util.CheckerFunc{
-		checkNodeRunnerHandleMessageTransactionUnmarshal,
-		checkNodeRunnerHandleMessageISAACReceiveMessage,
-		checkNodeRunnerHandleMessageSignBallot,
+		CheckNodeRunnerHandleMessageTransactionUnmarshal,
+		CheckNodeRunnerHandleMessageISAACReceiveMessage,
+		CheckNodeRunnerHandleMessageSignBallot,
 		func(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
 			ballot := ctx.Value("ballot").(Ballot)
 
 			nr := target.(*NodeRunner)
-			nr.log.Debug("ballot from client will be broadcasted", "ballot", ballot.Message().GetHash())
+			nr.log.Debug("ballot from client will be broadcasted", "ballot", ballot.MessageHash())
 			chanGotMessageFromClient <- ballot
 
 			return ctx, nil
 		},
-		checkNodeRunnerHandleMessageBroadcast,
+		CheckNodeRunnerHandleMessageBroadcast,
 	}
 	nodeRunners[0].SetHandleMessageFromClientCheckerFuncs(nil, handleMessageFromClientCheckerFuncs...)
 
@@ -271,8 +278,8 @@ L:
 			t.Errorf("got unknown ballot; '%s' != '%s'", sentBallot.GetHash(), b.GetHash())
 			return
 		}
-		if !sentBallot.Message().Equal(b.Message()) {
-			t.Errorf("got unknown message; '%s' != '%s'", sentBallot.Message(), b.Message())
+		if sentBallot.MessageHash() != b.MessageHash() {
+			t.Errorf("got unknown message; '%s' != '%s'", sentBallot.MessageHash(), b.MessageHash())
 			return
 		}
 	}
@@ -295,8 +302,8 @@ func TestMemoryNetworkHandleMessageCheckHasMessage(t *testing.T) {
 	var addedBallot []Ballot
 	var foundErrors []error
 	var handleMessageFromClientCheckerFuncs = []util.CheckerFunc{
-		checkNodeRunnerHandleMessageTransactionUnmarshal,
-		checkNodeRunnerHandleMessageISAACReceiveMessage,
+		CheckNodeRunnerHandleMessageTransactionUnmarshal,
+		CheckNodeRunnerHandleMessageISAACReceiveMessage,
 		func(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
 			ballot := ctx.Value("ballot").(Ballot)
 
@@ -306,8 +313,8 @@ func TestMemoryNetworkHandleMessageCheckHasMessage(t *testing.T) {
 		},
 	}
 
-	var deferFunc util.DeferFunc = func(f util.CheckerFunc, ctx context.Context, err error) {
-		if reflect.ValueOf(f).Pointer() == reflect.ValueOf(checkNodeRunnerHandleMessageISAACReceiveMessage).Pointer() {
+	var deferFunc util.DeferFunc = func(n int, f util.CheckerFunc, ctx context.Context, err error) {
+		if reflect.ValueOf(f).Pointer() == reflect.ValueOf(CheckNodeRunnerHandleMessageISAACReceiveMessage).Pointer() {
 			defer wg.Done()
 		}
 
@@ -364,8 +371,8 @@ func TestMemoryNetworkHandleMessageAddBallot(t *testing.T) {
 	var addedBallot []Ballot
 	var foundErrors []error
 	var handleMessageFromClientCheckerFuncs = []util.CheckerFunc{
-		checkNodeRunnerHandleMessageTransactionUnmarshal,
-		checkNodeRunnerHandleMessageISAACReceiveMessage,
+		CheckNodeRunnerHandleMessageTransactionUnmarshal,
+		CheckNodeRunnerHandleMessageISAACReceiveMessage,
 		func(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
 			ballot := ctx.Value("ballot").(Ballot)
 
@@ -375,8 +382,8 @@ func TestMemoryNetworkHandleMessageAddBallot(t *testing.T) {
 		},
 	}
 
-	var deferFunc util.DeferFunc = func(f util.CheckerFunc, ctx context.Context, err error) {
-		if reflect.ValueOf(f).Pointer() == reflect.ValueOf(checkNodeRunnerHandleMessageISAACReceiveMessage).Pointer() {
+	var deferFunc util.DeferFunc = func(n int, f util.CheckerFunc, ctx context.Context, err error) {
+		if reflect.ValueOf(f).Pointer() == reflect.ValueOf(CheckNodeRunnerHandleMessageISAACReceiveMessage).Pointer() {
 			defer wg.Done()
 		}
 

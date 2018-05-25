@@ -74,7 +74,6 @@ func makeBallot(kp *keypair.Full, m util.Message, state BallotState) Ballot {
 	ballot, _ := NewBallotFromMessage(kp.Address(), m)
 	ballot.SetState(state)
 	ballot.Vote(VotingYES)
-	ballot.UpdateHash()
 	ballot.Sign(kp)
 
 	return ballot
@@ -258,6 +257,7 @@ func TestISAACReceiveBallotStateINITAndMoveNextState(t *testing.T) {
 
 	if vs.IsClosed() {
 		t.Error("just state changed, not `VotingResult` closed")
+		return
 	}
 
 	vs = is.Boxes.VotingResult(ballots[0]).LatestStaging()
@@ -304,7 +304,7 @@ func TestISAACReceiveBallotStateINITAndVotingBox(t *testing.T) {
 		return
 	}
 
-	if is.Boxes.WaitingBox.HasMessage(ballots[0].Message()) {
+	if is.Boxes.WaitingBox.HasMessageByString(ballots[0].MessageHash()) {
 		t.Error("after `INIT`, the ballot must move to `VotingBox`")
 	}
 }
@@ -312,7 +312,6 @@ func TestISAACReceiveBallotStateINITAndVotingBox(t *testing.T) {
 func voteISAACReceiveBallot(is *ISAAC, ballots []Ballot, kps []*keypair.Full, state BallotState) (vs VotingStateStaging, err error) {
 	for i, ballot := range ballots {
 		ballot.SetState(state)
-		ballot.UpdateHash()
 		ballot.Sign(kps[i])
 
 		if vs, err = is.ReceiveBallot(ballot); err != nil {
@@ -357,7 +356,7 @@ func TestISAACReceiveBallotStateTransition(t *testing.T) {
 			return
 		}
 
-		if is.Boxes.WaitingBox.HasMessage(ballots[0].Message()) {
+		if is.Boxes.WaitingBox.HasMessageByString(ballots[0].MessageHash()) {
 			t.Error("after `INIT`, the ballot must move to `VotingBox`")
 		}
 
@@ -370,7 +369,7 @@ func TestISAACReceiveBallotStateTransition(t *testing.T) {
 			return
 		}
 
-		if !is.Boxes.VotingBox.HasMessage(ballots[0].Message()) {
+		if !is.Boxes.VotingBox.HasMessageByString(ballots[0].MessageHash()) {
 			err = errors.New("after `INIT`, the ballot must move to `VotingBox`")
 			return
 		}
@@ -393,7 +392,7 @@ func TestISAACReceiveBallotStateTransition(t *testing.T) {
 			return
 		}
 
-		if !is.Boxes.VotingBox.HasMessage(ballots[0].Message()) {
+		if !is.Boxes.VotingBox.HasMessageByString(ballots[0].MessageHash()) {
 			err = errors.New("after `INIT`, the ballot must move to `VotingBox`")
 			return
 		}
@@ -415,7 +414,7 @@ func TestISAACReceiveBallotStateTransition(t *testing.T) {
 			return
 		}
 
-		if !is.Boxes.VotingBox.HasMessage(ballots[0].Message()) {
+		if !is.Boxes.VotingBox.HasMessageByString(ballots[0].MessageHash()) {
 			err = errors.New("after `INIT`, the ballot must move to `VotingBox`")
 			return
 		}
@@ -447,7 +446,7 @@ func TestISAACReceiveSameBallotStates(t *testing.T) {
 			return
 		}
 
-		if is.Boxes.WaitingBox.HasMessage(ballots[0].Message()) {
+		if is.Boxes.WaitingBox.HasMessageByString(ballots[0].MessageHash()) {
 			t.Error("after `INIT`, the ballot must move to `VotingBox`")
 		}
 		if vs.IsEmpty() {

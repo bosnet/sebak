@@ -35,6 +35,10 @@ func (is *ISAAC) HasMessage(message util.Message) bool {
 	return is.Boxes.HasMessage(message)
 }
 
+func (is *ISAAC) HasMessageByString(h string) bool {
+	return is.Boxes.HasMessageByString(h)
+}
+
 func (is *ISAAC) ReceiveMessage(m util.Message) (ballot Ballot, err error) {
 	/*
 		Previously the new incoming Message must be checked,
@@ -107,46 +111,70 @@ func (is *ISAAC) receiveBallotStateINIT(ballot Ballot) (vs VotingStateStaging, e
 		return
 	}
 
-	if !isNew {
-		vr := is.Boxes.VotingResult(ballot)
-		if vr.IsClosed() || !vr.CanGetResult(is.VotingThresholdPolicy) {
+	if isNew {
+		var newBallot Ballot
+		newBallot, err = NewBallotFromMessage(is.Node.Keypair().Address(), ballot.Data().Message())
+		if err != nil {
 			return
 		}
 
-		votingHole, state, ended := vr.MakeResult(is.VotingThresholdPolicy)
-		if ended {
-			if vs, err = vr.ChangeState(votingHole, state); err != nil {
-				return
-			}
+		// self-sign
+		newBallot.SetState(BallotStateINIT)
+		newBallot.Vote(VotingYES) // TODO YES or NO
+		newBallot.UpdateHash()
+		newBallot.Sign(is.Node.Keypair())
 
-			is.Boxes.WaitingBox.RemoveVotingResult(vr) // TODO detect error
-			is.Boxes.VotingBox.AddVotingResult(vr)     // TODO detect error
+		if err = newBallot.IsWellFormed(); err != nil {
+			return
 		}
 
+		if _, err = is.Boxes.AddBallot(newBallot); err != nil {
+			return
+		}
+	}
+
+	vr := is.Boxes.VotingResult(ballot)
+	if vr.IsClosed() || !vr.CanGetResult(is.VotingThresholdPolicy) {
 		return
 	}
 
-	var newBallot Ballot
-	newBallot, err = NewBallotFromMessage(is.Node.Keypair().Address(), ballot.Message())
-	if err != nil {
-		return
-	}
+	votingHole, state, ended := vr.MakeResult(is.VotingThresholdPolicy)
+	if ended {
+		if vs, err = vr.ChangeState(votingHole, state); err != nil {
+			return
+		}
 
-	// self-sign
-	newBallot.SetState(BallotStateINIT)
-	newBallot.Vote(VotingYES) // TODO YES or NO
-	newBallot.UpdateHash()
-	newBallot.Sign(is.Node.Keypair())
-
-	if err = newBallot.IsWellFormed(); err != nil {
-		return
-	}
-
-	if _, err = is.Boxes.AddBallot(newBallot); err != nil {
-		return
+		is.Boxes.WaitingBox.RemoveVotingResult(vr) // TODO detect error
+		is.Boxes.VotingBox.AddVotingResult(vr)     // TODO detect error
 	}
 
 	// TODO this ballot should be broadcasted
+
+	return
+}
+
+// AddBallot
+//
+// NOTE(ISSAC.AddBallot): `ISSAC.AddBallot()` only for self-signed Ballot
+func (is *ISAAC) AddBallot(ballot Ballot) (err error) {
+	vr := is.Boxes.VotingResult(ballot)
+	if vr.IsVoted(ballot) {
+		return nil
+	}
+	_, err = is.Boxes.AddBallot(ballot)
+	return
+}
+
+func (is *ISAAC) CloseConsensus(ballot Ballot) (err error) {
+	if !is.HasMessage(ballot) {
+		return sebakerror.ErrorVotingResultNotInBox
+	}
+
+	vr := is.Boxes.VotingResult(ballot)
+
+	is.Boxes.WaitingBox.RemoveVotingResult(vr)  // TODO detect error
+	is.Boxes.VotingBox.RemoveVotingResult(vr)   // TODO detect error
+	is.Boxes.ReservedBox.RemoveVotingResult(vr) // TODO detect error
 
 	return
 }
@@ -162,11 +190,11 @@ func (is *ISAAC) receiveBallotVotingStates(ballot Ballot) (vs VotingStateStaging
 	}
 
 	votingHole, state, ended := vr.MakeResult(is.VotingThresholdPolicy)
-	if ended {
-		if vs, err = vr.ChangeState(votingHole, state); err != nil {
-			return
-		}
+	if !ended {
+		return
+	}
 
+	if vs, err = vr.ChangeState(votingHole, state); err != nil {
 		return
 	}
 

@@ -12,43 +12,35 @@ import (
 	"github.com/stellar/go/keypair"
 )
 
-type BallotMessage struct {
-	Hash    string      `json:"hash"`
-	Message interface{} `json:"message"` // if `BallotStateINIT` must have the original `Message`
+type BallotData struct {
+	//Hash    string      `json:"hash"`
+	Data interface{} `json:"message"` // if `BallotStateINIT` must have the original `Message`
 }
 
-func (bm BallotMessage) IsWellFormed() (err error) {
-	if len(bm.Hash) < 1 {
-		err = sebakerror.ErrorInvalidHash
-		return
-	}
-	if bm.Message != nil {
-		if err = bm.Message.(util.Message).IsWellFormed(); err != nil {
-			return
-		}
+func (bd BallotData) IsEmpty() bool {
+	return bd.Data == nil
+}
+
+func (bd BallotData) Message() util.Message {
+	if bd.IsEmpty() {
+		return nil
 	}
 
-	return nil
+	return bd.Data.(util.Message)
 }
 
-func (bm BallotMessage) GetType() string {
-	return ""
+func (bd BallotData) Serialize() ([]byte, error) {
+	if bd.Data == nil {
+		return []byte{}, nil
+	}
+	return json.Marshal(bd)
 }
 
-func (bm BallotMessage) Equal(m util.Message) bool {
-	return bm.Hash == m.GetHash()
-}
-
-func (bm BallotMessage) GetHash() string {
-	return bm.Hash
-}
-
-func (bm BallotMessage) Serialize() ([]byte, error) {
-	return json.Marshal(bm)
-}
-
-func (bm BallotMessage) String() string {
-	encoded, _ := json.MarshalIndent(bm, "", "  ")
+func (bd BallotData) String() string {
+	if bd.Data == nil {
+		return ""
+	}
+	encoded, _ := json.MarshalIndent(bd, "", "  ")
 	return string(encoded)
 }
 
@@ -56,6 +48,25 @@ type Ballot struct {
 	T string
 	H BallotHeader
 	B BallotBody
+	D BallotData
+}
+
+func (b Ballot) Clone() Ballot {
+	body := BallotBody{
+		Hash:       b.B.Hash,
+		NodeKey:    b.B.NodeKey,
+		State:      b.B.State,
+		VotingHole: b.B.VotingHole,
+	}
+	return Ballot{
+		T: b.T,
+		H: BallotHeader{
+			Hash:      b.H.Hash,
+			Signature: b.H.Signature,
+		},
+		B: body,
+		D: b.D,
+	}
 }
 
 func (b Ballot) Serialize() (encoded []byte, err error) {
@@ -65,7 +76,7 @@ func (b Ballot) Serialize() (encoded []byte, err error) {
 	}
 
 	newBallot := b
-	newBallot.B.Message.Message = nil
+	newBallot.D.Data = nil
 	encoded, err = json.Marshal(newBallot)
 
 	return
@@ -76,26 +87,17 @@ func (b Ballot) String() string {
 	return string(encoded)
 }
 
-func (b Ballot) GetMessage() BallotMessage {
-	return b.B.Message
-}
-
-func (b *Ballot) SetMessage(m util.Message) {
-	b.B.Message.Message = m
-}
-
 // NewBallotFromMessage creates `Ballot` from `Message`. It needs to be
 // `Ballot.IsWellFormed()` and `Ballot.Validate()`.
 func NewBallotFromMessage(nodeKey string, m util.Message) (ballot Ballot, err error) {
-	message := BallotMessage{
-		Hash:    m.GetHash(),
-		Message: m,
-	}
 	body := BallotBody{
+		Hash:       m.GetHash(),
 		NodeKey:    nodeKey,
 		State:      InitialState,
 		VotingHole: VotingNOTYET,
-		Message:    message,
+	}
+	data := BallotData{
+		Data: m,
 	}
 	ballot = Ballot{
 		T: "ballot",
@@ -104,6 +106,7 @@ func NewBallotFromMessage(nodeKey string, m util.Message) (ballot Ballot, err er
 			Signature: "",
 		},
 		B: body,
+		D: data,
 	}
 
 	return
@@ -114,15 +117,18 @@ func NewBallotFromJSON(b []byte) (ballot Ballot, err error) {
 		return
 	}
 
-	if ballot.GetMessage().Message != nil {
-		a, _ := json.Marshal(ballot.GetMessage().Message)
-		// TODO BallotMessage should load message by it's `GetType()`
-		b, _ := NewTransactionFromJSON(a)
-		ballot.SetMessage(b)
-		if err = ballot.IsWellFormed(); err != nil {
-			return
-		}
+	if ballot.Data().IsEmpty() {
+		return
 	}
+
+	a, _ := ballot.Data().Serialize()
+
+	// TODO BallotMessage should load message by it's `GetType()`
+	tx, _ := NewTransactionFromJSON(a)
+	ballot.SetMessage(tx)
+	//if err = ballot.IsWellFormed(); err != nil {
+	//	return
+	//}
 
 	return
 }
@@ -141,9 +147,9 @@ func (b Ballot) IsWellFormed() (err error) {
 		return
 	}
 
-	if err = b.Message().IsWellFormed(); err != nil {
-		return
-	}
+	//if err = b.Message().IsWellFormed(); err != nil {
+	//	return
+	//}
 
 	return
 }
@@ -176,8 +182,16 @@ func (b Ballot) GetHash() string {
 	return b.H.Hash
 }
 
-func (b Ballot) Message() BallotMessage {
-	return b.B.Message
+func (b Ballot) MessageHash() string {
+	return b.B.Hash
+}
+
+func (b Ballot) Data() BallotData {
+	return b.D
+}
+
+func (b *Ballot) SetMessage(m util.Message) {
+	b.D.Data = m
 }
 
 func (b Ballot) State() BallotState {
@@ -193,9 +207,9 @@ func (b *Ballot) SetState(state BallotState) {
 func (b *Ballot) Sign(kp *keypair.Full) {
 	if kp.Address() != b.B.NodeKey {
 		b.B.NodeKey = kp.Address()
-		b.UpdateHash()
 	}
 
+	b.UpdateHash()
 	signature, _ := kp.Sign([]byte(b.GetHash()))
 
 	b.H.Signature = base58.Encode(signature)
@@ -220,12 +234,11 @@ type BallotHeader struct {
 }
 
 type BallotBody struct {
+	Hash       string      `json:"hash"`
 	NodeKey    string      `json:"node_key"` // validator's public address
 	State      BallotState `json:"state"`
 	VotingHole VotingHole  `json:"voting_hole"`
 	Reason     string      `json:"reason"`
-
-	Message BallotMessage `json:"message"`
 }
 
 func (bb BallotBody) MakeHash() []byte {
@@ -259,17 +272,18 @@ func (b *BallotBoxes) HasMessage(m util.Message) bool {
 	return b.HasMessageByString(m.GetHash())
 }
 
+// TODO rename to `HasMessageByHash`
 func (b *BallotBoxes) HasMessageByString(hash string) bool {
 	_, ok := b.Results[hash]
 	return ok
 }
 
 func (b *BallotBoxes) VotingResult(ballot Ballot) *VotingResult {
-	if !b.HasMessage(ballot.Message()) {
+	if !b.HasMessageByString(ballot.MessageHash()) {
 		return nil
 	}
 
-	return b.Results[ballot.Message().GetHash()]
+	return b.Results[ballot.MessageHash()]
 }
 
 func (b *BallotBoxes) IsVoted(ballot Ballot) bool {
@@ -291,29 +305,13 @@ func (b *BallotBoxes) AddVotingResult(vr *VotingResult, bb *BallotBox) (err erro
 	return
 }
 
-func (b *BallotBoxes) RemoveVotingResult(vr *VotingResult, bb *BallotBox) (err error) {
-	if !b.HasMessageByString(vr.MessageHash) {
-		err = sebakerror.ErrorVotingResultNotFound
-		return
-	}
-
-	b.Lock()
-	defer b.Unlock()
-
-	delete(b.Results, vr.MessageHash)
-
-	bb.RemoveVotingResult(vr) // TODO detect error
-
-	return
-}
-
 func (b *BallotBoxes) AddBallot(ballot Ballot) (isNew bool, err error) {
 	b.Lock()
 	defer b.Unlock()
 
 	var vr *VotingResult
 
-	isNew = !b.HasMessage(ballot.Message())
+	isNew = !b.HasMessageByString(ballot.MessageHash())
 
 	if !isNew {
 		vr = b.VotingResult(ballot)
@@ -321,7 +319,7 @@ func (b *BallotBoxes) AddBallot(ballot Ballot) (isNew bool, err error) {
 			return
 		}
 
-		if b.ReservedBox.HasMessage(ballot.Message()) {
+		if b.ReservedBox.HasMessageByString(ballot.MessageHash()) {
 			b.ReservedBox.RemoveVotingResult(vr) // TODO detect error
 			b.VotingBox.AddVotingResult(vr)      // TODO detect error
 		}

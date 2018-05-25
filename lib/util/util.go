@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"flag"
+	"fmt"
 	"net/url"
 	"os"
 	"sync"
@@ -30,17 +31,19 @@ func GetUniqueIDFromDate() string {
 	return NowISO8601()
 }
 
-type CheckerErrorStop struct{}
+type CheckerErrorStop struct {
+	Message string
+}
 
 func (c CheckerErrorStop) Error() string {
-	return "stop checker and return"
+	return fmt.Sprintf("stop checker and return: %s", c.Message)
 }
 
 type CheckerFunc func(context.Context, interface{}, ...interface{}) (context.Context, error)
-type DeferFunc func(CheckerFunc, context.Context, error)
+type DeferFunc func(int, CheckerFunc, context.Context, error)
 
 func Checker(ctx context.Context, checkFuncs ...CheckerFunc) func(interface{}, ...interface{}) (context.Context, error) {
-	deferFunc := func(CheckerFunc, context.Context, error) {}
+	deferFunc := func(int, CheckerFunc, context.Context, error) {}
 
 	if ctx != nil {
 		if deferFuncValue := ctx.Value("deferFunc"); deferFuncValue != nil {
@@ -49,13 +52,13 @@ func Checker(ctx context.Context, checkFuncs ...CheckerFunc) func(interface{}, .
 	}
 
 	return func(target interface{}, args ...interface{}) (context.Context, error) {
-		for _, f := range checkFuncs {
+		for i, f := range checkFuncs {
 			var err error
 			if ctx, err = f(ctx, target, args...); err != nil {
-				deferFunc(f, ctx, err)
+				deferFunc(i, f, ctx, err)
 				return ctx, err
 			}
-			deferFunc(f, ctx, err)
+			deferFunc(i, f, ctx, err)
 		}
 		return ctx, nil
 	}

@@ -40,7 +40,7 @@ func TestNewBallot(t *testing.T) {
 		t.Error("`Ballot.H.Reason` is not empty")
 		return
 	}
-	if !ballot.B.Message.Equal(tx) {
+	if !ballot.Data().Message().Equal(tx) {
 		t.Error("`Ballot.B.Hash` mismatch")
 		return
 	}

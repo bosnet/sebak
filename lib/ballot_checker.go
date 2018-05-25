@@ -46,23 +46,22 @@ func checkBallotValidState(ctx context.Context, target interface{}, args ...inte
 
 func checkBallotHasMessage(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
 	ballot := target.(Ballot)
-	if ballot.State() != BallotStateINIT {
-		if ballot.B.Message.Message == nil {
-			return ctx, sebakerror.ErrorBallotHasMessage
+
+	if ballot.Data().IsEmpty() {
+		if ballot.State() == BallotStateINIT {
+			return ctx, sebakerror.ErrorBallotEmptyMessage
 		}
-		return ctx, nil
+	} else if ballot.State() != BallotStateINIT {
+		return ctx, sebakerror.ErrorBallotHasMessage
 	}
 
-	if ballot.B.Message.Message == nil {
-		return ctx, sebakerror.ErrorBallotEmptyMessage
-	}
 	return ctx, nil
 }
 
 func checkBallotResultValidHash(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
 	votingResult := target.(*VotingResult)
 	ballot := args[0].(Ballot)
-	if ballot.Message().GetHash() != votingResult.MessageHash {
+	if ballot.MessageHash() != votingResult.MessageHash {
 		return ctx, sebakerror.ErrorHashDoesNotMatch
 	}
 	return ctx, nil

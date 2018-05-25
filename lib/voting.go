@@ -63,7 +63,7 @@ func (vs VotingStateStaging) IsEmpty() bool {
 }
 
 func (vs VotingStateStaging) IsClosed() bool {
-	if !vs.IsEmpty() {
+	if vs.IsEmpty() {
 		return false
 	}
 	if vs.VotingHole == VotingNO {
@@ -113,7 +113,7 @@ func NewVotingResult(ballot Ballot) (vr *VotingResult, err error) {
 
 	vr = &VotingResult{
 		ID:          util.GetUniqueIDFromUUID(),
-		MessageHash: ballot.Message().GetHash(),
+		MessageHash: ballot.MessageHash(),
 		State:       ballot.State(),
 		Ballots:     ballots,
 	}
@@ -257,7 +257,6 @@ func (vr *VotingResult) MakeResult(policy VotingThresholdPolicy) (VotingHole, Ba
 }
 
 func (vr *VotingResult) ChangeState(votingHole VotingHole, state BallotState) (vs VotingStateStaging, err error) {
-	previousState := vr.State
 	if !vr.SetState(state.Next()) {
 		err = sebakerror.ErrorVotingResultFailedToSetState
 		return
@@ -266,7 +265,7 @@ func (vr *VotingResult) ChangeState(votingHole VotingHole, state BallotState) (v
 	vr.Lock()
 	defer vr.Unlock()
 
-	vs = vr.MakeStaging(votingHole, previousState, vr.State, state)
+	vs = vr.MakeStaging(votingHole, state, vr.State, state)
 	vr.Staging = append(vr.Staging, vs)
 
 	return

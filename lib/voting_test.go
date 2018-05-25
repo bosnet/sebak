@@ -13,7 +13,7 @@ func makeBallotsWithSameMessageHash(n uint32) (kps []*keypair.Full, ballots []Ba
 
 	for i := 0; i < int(n)-1; i++ {
 		kpNode, _, ballot := makeNewBallot(BallotStateINIT, VotingYES)
-		ballot.B.Message.Hash = baseBallot.Message().GetHash()
+		ballot.B.Hash = baseBallot.MessageHash()
 		ballot.UpdateHash()
 		ballot.Sign(kpNode)
 
@@ -47,11 +47,11 @@ func TestAddVotingResult(t *testing.T) {
 		t.Error("`VotingResult.Add` must occurr the `ErrorHashDoesNotMatch`")
 	}
 
-	ballot1.B.Message.Hash = ballot0.Message().GetHash()
+	ballot1.B.Hash = ballot0.MessageHash()
 	ballot1.UpdateHash()
 	ballot1.Sign(kpNode1)
 	if err := vr.Add(ballot1); err != nil {
-		t.Error("failed to `VotingResult.Add`")
+		t.Error("failed to `VotingResult.Add`", err)
 		return
 	}
 }

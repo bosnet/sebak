@@ -57,11 +57,11 @@ func NewTransactionFromJSON(b []byte) (tx Transaction, err error) {
 }
 
 var TransactionWellFormedCheckerFuncs = []util.CheckerFunc{
-	checkTransactionSource,
-	checkTransactionBaseFee,
-	checkTransactionOperationIsWellFormed,
-	checkTransactionVerifySignature,
-	checkTransactionHashMatch,
+	CheckTransactionSource,
+	CheckTransactionBaseFee,
+	CheckTransactionOperationIsWellFormed,
+	CheckTransactionVerifySignature,
+	CheckTransactionHashMatch,
 }
 
 func (o Transaction) IsWellFormed() (err error) {

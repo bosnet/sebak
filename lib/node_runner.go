@@ -38,9 +38,6 @@ func NewNodeRunner(
 		transportServer:   transportServer,
 		consensusProtocol: consensusProtocol,
 		log:               log.New(logging.Ctx{"node": currentNode.Alias()}),
-
-		handleMessageFromClientCheckerFuncs: DefaultHandleMessageFromClientCheckerFuncs,
-		handleBallotCheckerFuncs:            DefaulthandleBallotCheckerFuncs,
 	}
 	nr.ctx = context.WithValue(context.Background(), "currentNode", currentNode)
 
@@ -51,6 +48,8 @@ func NewNodeRunner(
 	)
 	nr.transportServer.AddWatcher(nr.connectionManager.ConnectionWatcher)
 
+	nr.SetHandleMessageFromClientCheckerFuncs(nil, DefaultHandleMessageFromClientCheckerFuncs...)
+	nr.SetHandleBallotCheckerFuncs(nil, DefaultHandleBallotCheckerFuncs...)
 	return nr
 }
 
@@ -92,6 +91,10 @@ func (nr *NodeRunner) ConnectionManager() *network.ConnectionManager {
 	return nr.connectionManager
 }
 
+func (nr *NodeRunner) Log() logging.Logger {
+	return nr.log
+}
+
 func (nr *NodeRunner) ConnectValidators() {
 	ticker := time.NewTicker(time.Millisecond * 5)
 	for t := range ticker.C {
@@ -111,19 +114,18 @@ func (nr *NodeRunner) ConnectValidators() {
 }
 
 var DefaultHandleMessageFromClientCheckerFuncs = []util.CheckerFunc{
-	checkNodeRunnerHandleMessageTransactionUnmarshal,
-	checkNodeRunnerHandleMessageISAACReceiveMessage,
-	checkNodeRunnerHandleMessageSignBallot,
-	checkNodeRunnerHandleMessageBroadcast,
+	CheckNodeRunnerHandleMessageTransactionUnmarshal,
+	CheckNodeRunnerHandleMessageISAACReceiveMessage,
+	CheckNodeRunnerHandleMessageSignBallot,
+	CheckNodeRunnerHandleMessageBroadcast,
 }
 
-var DefaulthandleBallotCheckerFuncs = []util.CheckerFunc{
-	checkNodeRunnerHandleBallotIsWellformed,
-	checkNodeRunnerHandleBallotCheckIsNew,
-	checkNodeRunnerHandleBallotReceiveBallot,
-	checkNodeRunnerHandleBallotIsClosed,
-	checkNodeRunnerHandleBallotBroadcast,
-	checkNodeRunnerHandleBallotStore,
+var DefaultHandleBallotCheckerFuncs = []util.CheckerFunc{
+	CheckNodeRunnerHandleBallotIsWellformed,
+	CheckNodeRunnerHandleBallotCheckIsNew,
+	CheckNodeRunnerHandleBallotReceiveBallot,
+	CheckNodeRunnerHandleBallotStore,
+	CheckNodeRunnerHandleBallotBroadcast,
 }
 
 func (nr *NodeRunner) SetHandleMessageFromClientCheckerFuncs(ctx context.Context, f ...util.CheckerFunc) {
@@ -151,13 +153,13 @@ func (nr *NodeRunner) handleMessage() {
 	for message := range nr.transportServer.ReceiveMessage() {
 		switch message.Type {
 		case network.ConnectMessage:
-			nr.log.Debug("got `ConnectMessage`", "message", message)
+			nr.log.Debug("got `ConnectMessage`", "message", message.String()[:50])
 			if _, err := util.NewValidatorFromString(message.Data); err != nil {
 				nr.log.Error("invalid validator data was received", "data", message.Data)
 				continue
 			}
 		case network.MessageFromClient:
-			nr.log.Debug("got `MessageFromClient`", "message", message)
+			nr.log.Debug("got `MessageFromClient`", "message", message.String()[:50])
 
 			/*
 				- TODO `Message` must be saved in `BlockTransactionHistory`
@@ -174,7 +176,7 @@ func (nr *NodeRunner) handleMessage() {
 				continue
 			}
 		case network.BallotMessage:
-			nr.log.Debug("got `Ballot`", "message", message)
+			nr.log.Debug("got `Ballot`", "message", message.String()[:50])
 			/*
 				- TODO check already `IsWellFormed()`
 				- TODO check already in BlockTransaction
