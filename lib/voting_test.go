@@ -77,7 +77,7 @@ func TestVotingResultCheckThreshold(t *testing.T) {
 		return
 	}
 	policy, _ = NewDefaultVotingThresholdPolicy(100, 100, 100)
-	policy.SetValidators(numberOfBallots * 2)
+	policy.SetConnected(numberOfBallots * 2)
 	if _, ended := vr.CheckThreshold(sebakcommon.BallotStateINIT, policy); ended {
 		t.Error("`BallotStateINIT` must be `false`")
 		return
@@ -95,7 +95,7 @@ func TestVotingResultGetResult(t *testing.T) {
 
 	{
 		policy, _ := NewDefaultVotingThresholdPolicy(100, 30, 30)
-		policy.SetValidators(numberOfBallots)
+		policy.SetConnected(numberOfBallots - 1)
 
 		_, state, ended := vr.MakeResult(policy)
 		if !ended {
@@ -115,7 +115,7 @@ func TestVotingResultGetResult(t *testing.T) {
 	{
 		// too high threshold
 		policy, _ := NewDefaultVotingThresholdPolicy(100, 50, 50)
-		policy.SetValidators(numberOfBallots + 100)
+		policy.SetConnected(numberOfBallots + 100)
 
 		_, state, ended := vr.MakeResult(policy)
 		if ended {

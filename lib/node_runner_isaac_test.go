@@ -104,7 +104,7 @@ func TestNodeRunnerConsensusWithVotingNO(t *testing.T) {
 		// this will manipulate the VotingHole for `say_no_validators`
 		func(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
 			nr := target.(*NodeRunner)
-			if !sebakcommon.InStringArray(say_no_validators, nr.Node().Address()) {
+			if _, found := sebakcommon.InStringArray(say_no_validators, nr.Node().Address()); !found {
 				return ctx, nil
 			}
 

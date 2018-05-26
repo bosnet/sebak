@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"net/url"
 	"os"
-	"sort"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -152,14 +151,17 @@ func InTest() bool {
 	return true
 }
 
-func InStringArray(a []string, s string) bool {
-	l := len(a)
-	if l < 1 {
-		return false
+func InStringArray(a []string, s string) (index int, found bool) {
+	var h string
+	for index, h = range a {
+		found = h == s
+		if found {
+			return
+		}
 	}
-	i := sort.SearchStrings(a, s)
 
-	return i != l && a[i] == s
+	index = -1
+	return
 }
 
 func MustJSONMarshal(o interface{}) []byte {

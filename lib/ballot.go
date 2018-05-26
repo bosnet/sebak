@@ -361,7 +361,8 @@ func (b *BallotBox) HasMessage(m sebakcommon.Message) bool {
 }
 
 func (b *BallotBox) HasMessageByString(hash string) bool {
-	return sebakcommon.InStringArray(b.Hashes, hash)
+	_, found := sebakcommon.InStringArray(b.Hashes, hash)
+	return found
 }
 
 func (b *BallotBox) AddVotingResult(vr *VotingResult) (err error) {
