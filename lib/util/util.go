@@ -3,11 +3,13 @@ package util
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
 	"net/url"
 	"os"
+	"sort"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -148,4 +150,19 @@ func InTest() bool {
 	}
 
 	return true
+}
+
+func InStringArray(a []string, s string) bool {
+	l := len(a)
+	if l < 1 {
+		return false
+	}
+	i := sort.SearchStrings(a, s)
+
+	return i != l && a[i] == s
+}
+
+func MustJSONMarshal(o interface{}) []byte {
+	b, _ := json.Marshal(o)
+	return b
 }

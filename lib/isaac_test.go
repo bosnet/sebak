@@ -63,7 +63,7 @@ func (m DummyMessage) String() string {
 
 func makeISAAC(minimumValidators int) *ISAAC {
 	policy, _ := NewDefaultVotingThresholdPolicy(100, 30, 30)
-	policy.SetValidators(uint64(minimumValidators))
+	policy.SetValidators(minimumValidators)
 
 	is, _ := NewISAAC(NewRandomNode(), policy)
 
@@ -81,7 +81,7 @@ func makeBallot(kp *keypair.Full, m util.Message, state BallotState) Ballot {
 
 func TestNewISAAC(t *testing.T) {
 	policy, _ := NewDefaultVotingThresholdPolicy(100, 30, 30)
-	policy.SetValidators(uint64(1))
+	policy.SetValidators(1)
 
 	is, err := NewISAAC(NewRandomNode(), policy)
 	if err != nil {
@@ -229,7 +229,7 @@ func TestISAACIsVoted(t *testing.T) {
 func TestISAACReceiveBallotStateINITAndMoveNextState(t *testing.T) {
 	is := makeISAAC(5)
 
-	var numberOfBallots uint64 = 5
+	var numberOfBallots int = 5
 
 	m := NewDummyMessage(util.GenerateUUID())
 
@@ -274,7 +274,7 @@ func TestISAACReceiveBallotStateINITAndMoveNextState(t *testing.T) {
 func TestISAACReceiveBallotStateINITAndVotingBox(t *testing.T) {
 	is := makeISAAC(5)
 
-	var numberOfBallots uint64 = 5
+	var numberOfBallots int = 5
 
 	m := NewDummyMessage(util.GenerateUUID())
 
@@ -331,7 +331,7 @@ func voteISAACReceiveBallot(is *ISAAC, ballots []Ballot, kps []*keypair.Full, st
 }
 
 func TestISAACReceiveBallotStateTransition(t *testing.T) {
-	var numberOfBallots uint64 = 5
+	var numberOfBallots int = 5
 	var minimumValidators = 3 // must be passed
 
 	is := makeISAAC(minimumValidators)
@@ -422,7 +422,7 @@ func TestISAACReceiveBallotStateTransition(t *testing.T) {
 }
 
 func TestISAACReceiveSameBallotStates(t *testing.T) {
-	var numberOfBallots uint64 = 5
+	var numberOfBallots int = 5
 	var minimumValidators = 3
 
 	is := makeISAAC(minimumValidators)

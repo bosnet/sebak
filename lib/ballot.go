@@ -361,13 +361,7 @@ func (b *BallotBox) HasMessage(m util.Message) bool {
 }
 
 func (b *BallotBox) HasMessageByString(hash string) bool {
-	l := len(b.Hashes)
-	if l < 1 {
-		return false
-	}
-	i := sort.SearchStrings(b.Hashes, hash)
-
-	return i != l && b.Hashes[i] == hash
+	return util.InStringArray(b.Hashes, hash)
 }
 
 func (b *BallotBox) AddVotingResult(vr *VotingResult) (err error) {

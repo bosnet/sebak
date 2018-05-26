@@ -241,7 +241,7 @@ func main() {
 
 	// TODO policy threshold can be set in cmd options
 	policy, _ := sebak.NewDefaultVotingThresholdPolicy(100, 30, 30)
-	policy.SetValidators(uint64(len(currentNode.GetValidators())) + 1) // including 'self'
+	policy.SetValidators(len(currentNode.GetValidators()) + 1) // including 'self'
 
 	isaac, err := sebak.NewISAAC(currentNode, policy)
 	if err != nil {

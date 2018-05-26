@@ -73,7 +73,7 @@ func createNodeRunners(n int) []*NodeRunner {
 	for i := 0; i < n; i++ {
 		v := validators[i]
 		p, _ := NewDefaultVotingThresholdPolicy(100, 30, 30)
-		p.SetValidators(uint64(len(v.GetValidators())) + 1)
+		p.SetValidators(len(v.GetValidators()) + 1)
 		is, _ := NewISAAC(v, p)
 		nr := NewNodeRunner(v, p, servers[i], is)
 		nodeRunners = append(nodeRunners, nr)
@@ -87,7 +87,7 @@ func createNodeRunnersWithReady(n int) []*NodeRunner {
 
 	for _, nr := range nodeRunners {
 		go nr.Start()
-		defer nr.Stop()
+		//defer nr.Stop()
 	}
 
 	T := time.NewTicker(100 * time.Millisecond)
@@ -124,6 +124,8 @@ func createNodeRunnersWithReady(n int) []*NodeRunner {
 // TestMemoryNetworkCreate checks, `NodeRunner` is correctly started and
 // `GetNodeInfo` returns the validator information correctly.
 func TestMemoryNetworkCreate(t *testing.T) {
+	defer network.CleanUpMemoryServer()
+
 	nodeRunners := createNodeRunners(4)
 	for _, nr := range nodeRunners {
 		go nr.Start()
@@ -152,6 +154,8 @@ func TestMemoryNetworkCreate(t *testing.T) {
 // TestMemoryNetworkHandleMessageFromClient checks, the message can be
 // broadcasted correctly in node.
 func TestMemoryNetworkHandleMessageFromClient(t *testing.T) {
+	defer network.CleanUpMemoryServer()
+
 	nodeRunners := createNodeRunners(4)
 	for _, nr := range nodeRunners {
 		go nr.Start()
@@ -197,7 +201,12 @@ func TestMemoryNetworkHandleMessageFromClient(t *testing.T) {
 // client is broadcasted and the other validators can receive it's ballot
 // correctly.
 func TestMemoryNetworkHandleMessageFromClientBroadcast(t *testing.T) {
+	defer network.CleanUpMemoryServer()
+
 	nodeRunners := createNodeRunnersWithReady(4)
+	for _, nr := range nodeRunners {
+		defer nr.Stop()
+	}
 
 	c0 := nodeRunners[0].TransportServer().GetClient(nodeRunners[0].Node().Endpoint())
 
@@ -288,6 +297,8 @@ L:
 // TestMemoryNetworkHandleBallotCheckIsNew checks, the already received message from
 // client must be ignored.
 func TestMemoryNetworkHandleMessageCheckHasMessage(t *testing.T) {
+	defer network.CleanUpMemoryServer()
+
 	nr := createNodeRunners(1)[0]
 	go nr.Start()
 	defer nr.Stop()
@@ -355,6 +366,8 @@ func TestMemoryNetworkHandleMessageCheckHasMessage(t *testing.T) {
 // TestMemoryNetworkHandleMessageAddBallot checks, the each messages from
 // client will be added.
 func TestMemoryNetworkHandleMessageAddBallot(t *testing.T) {
+	defer network.CleanUpMemoryServer()
+
 	nodeRunners := createNodeRunners(2)
 	nr0 := nodeRunners[0]
 	nr1 := nodeRunners[1]

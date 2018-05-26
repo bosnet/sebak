@@ -6,12 +6,12 @@ import (
 	"github.com/stellar/go/keypair"
 )
 
-func makeBallotsWithSameMessageHash(n uint32) (kps []*keypair.Full, ballots []Ballot) {
+func makeBallotsWithSameMessageHash(n int) (kps []*keypair.Full, ballots []Ballot) {
 	baseKpNode, _, baseBallot := makeNewBallot(BallotStateINIT, VotingYES)
 	kps = append(kps, baseKpNode)
 	ballots = append(ballots, baseBallot)
 
-	for i := 0; i < int(n)-1; i++ {
+	for i := 0; i < n-1; i++ {
 		kpNode, _, ballot := makeNewBallot(BallotStateINIT, VotingYES)
 		ballot.B.Hash = baseBallot.MessageHash()
 		ballot.UpdateHash()
@@ -57,7 +57,7 @@ func TestAddVotingResult(t *testing.T) {
 }
 
 func TestVotingResultCheckThreshold(t *testing.T) {
-	var numberOfBallots uint32 = 5
+	var numberOfBallots int = 5
 	_, ballots := makeBallotsWithSameMessageHash(numberOfBallots)
 
 	vr, _ := NewVotingResult(ballots[0])
@@ -65,26 +65,26 @@ func TestVotingResultCheckThreshold(t *testing.T) {
 		vr.Add(ballot)
 	}
 
-	if _, ended := vr.CheckThreshold(BallotStateNONE, numberOfBallots); ended {
+	policy, _ := NewDefaultVotingThresholdPolicy(100, 100, 100)
+	policy.SetValidators(numberOfBallots)
+	if _, ended := vr.CheckThreshold(BallotStateNONE, policy); ended {
 		t.Error("`BallotStateNONE` must be `false`")
 		return
 	}
-	if _, ended := vr.CheckThreshold(BallotStateINIT, numberOfBallots); !ended {
+	if _, ended := vr.CheckThreshold(BallotStateINIT, policy); !ended {
 		t.Error("`BallotStateINIT` must be `true`")
 		return
 	}
-	if _, ended := vr.CheckThreshold(BallotStateINIT, 0); ended {
-		t.Error("`BallotStateINIT` must be `false`")
-		return
-	}
-	if _, ended := vr.CheckThreshold(BallotStateINIT, numberOfBallots-1); !ended {
+	policy, _ = NewDefaultVotingThresholdPolicy(100, 100, 100)
+	policy.SetValidators(numberOfBallots * 2)
+	if _, ended := vr.CheckThreshold(BallotStateINIT, policy); ended {
 		t.Error("`BallotStateINIT` must be `false`")
 		return
 	}
 }
 
 func TestVotingResultGetResult(t *testing.T) {
-	var numberOfBallots uint32 = 5
+	var numberOfBallots int = 5
 	_, ballots := makeBallotsWithSameMessageHash(numberOfBallots)
 
 	vr, _ := NewVotingResult(ballots[0])
@@ -94,7 +94,7 @@ func TestVotingResultGetResult(t *testing.T) {
 
 	{
 		policy, _ := NewDefaultVotingThresholdPolicy(100, 30, 30)
-		policy.SetValidators(uint64(numberOfBallots))
+		policy.SetValidators(numberOfBallots)
 
 		_, state, ended := vr.MakeResult(policy)
 		if !ended {
@@ -114,7 +114,7 @@ func TestVotingResultGetResult(t *testing.T) {
 	{
 		// too high threshold
 		policy, _ := NewDefaultVotingThresholdPolicy(100, 50, 50)
-		policy.SetValidators(uint64(numberOfBallots) + 100)
+		policy.SetValidators(numberOfBallots + 100)
 
 		_, state, ended := vr.MakeResult(policy)
 		if ended {
@@ -133,7 +133,7 @@ func TestVotingResultGetResult(t *testing.T) {
 }
 
 func TestVotingResultGetResultHigherStateMustBePicked(t *testing.T) {
-	var numberOfBallots uint32 = 5
+	var numberOfBallots int = 5
 	kps, ballots := makeBallotsWithSameMessageHash(numberOfBallots)
 
 	vr, _ := NewVotingResult(ballots[0])
@@ -152,7 +152,7 @@ func TestVotingResultGetResultHigherStateMustBePicked(t *testing.T) {
 
 	{
 		policy, _ := NewDefaultVotingThresholdPolicy(100, 50, 50)
-		policy.SetValidators(uint64(numberOfBallots))
+		policy.SetValidators(numberOfBallots)
 
 		_, state, ended := vr.MakeResult(policy)
 		if state != BallotStateACCEPT {

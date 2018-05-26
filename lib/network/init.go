@@ -17,6 +17,6 @@ func init() {
 	if util.InTestVerbose() {
 		SetLogging(logging.LvlDebug, logging.StreamHandler(os.Stdout, logging.TerminalFormat()))
 	} else {
-		SetLogging(logging.LvlError, logging.StreamHandler(os.Stdout, logging.TerminalFormat()))
+		SetLogging(logging.LvlCrit, logging.StreamHandler(os.Stdout, logging.TerminalFormat()))
 	}
 }

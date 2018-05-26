@@ -91,6 +91,10 @@ func (nr *NodeRunner) ConnectionManager() *network.ConnectionManager {
 	return nr.connectionManager
 }
 
+func (nr *NodeRunner) Policy() VotingThresholdPolicy {
+	return nr.policy
+}
+
 func (nr *NodeRunner) Log() logging.Logger {
 	return nr.log
 }

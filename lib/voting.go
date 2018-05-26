@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"math"
-	"sync"
 
 	"github.com/spikeekips/sebak/lib/error"
 	"github.com/spikeekips/sebak/lib/util"
@@ -91,7 +90,7 @@ func (vs VotingStateStaging) IsStorable() bool {
 }
 
 type VotingResult struct {
-	sync.Mutex
+	util.SafeLock
 
 	ID          string      // ID is unique and sequenital
 	MessageHash string      // MessageHash is `Message.Hash`
@@ -184,7 +183,7 @@ func (vr *VotingResult) Add(ballot Ballot) (err error) {
 	return
 }
 
-func (vr *VotingResult) CanCheckThreshold(state BallotState, threshold uint32) bool {
+func (vr *VotingResult) CanCheckThreshold(state BallotState, threshold int) bool {
 	if threshold < 1 {
 		return false
 	}
@@ -198,7 +197,8 @@ func (vr *VotingResult) CanCheckThreshold(state BallotState, threshold uint32) b
 	return true
 }
 
-func (vr *VotingResult) CheckThreshold(state BallotState, threshold uint32) (VotingHole, bool) {
+func (vr *VotingResult) CheckThreshold(state BallotState, policy VotingThresholdPolicy) (VotingHole, bool) {
+	threshold := policy.Threshold(state)
 	if threshold < 1 {
 		return VotingNOTYET, false
 	}
@@ -218,9 +218,26 @@ func (vr *VotingResult) CheckThreshold(state BallotState, threshold uint32) (Vot
 			no++
 		}
 	}
-	if yes >= int(threshold) {
+
+	log.Debug(
+		"CheckThreshold",
+		"state", state,
+		"threshold", threshold,
+		"yes", yes,
+		"no", no,
+		"policy", policy,
+	)
+
+	if yes >= threshold {
 		return VotingYES, true
-	} else if no >= int(threshold) {
+	} else if no >= threshold {
+		return VotingNO, true
+	}
+
+	// check draw!
+	total := policy.Validators()
+	voted := yes + no
+	if total-voted < threshold-yes && total-voted < threshold-no { // draw
 		return VotingNO, true
 	}
 
@@ -247,7 +264,7 @@ func (vr *VotingResult) MakeResult(policy VotingThresholdPolicy) (VotingHole, Ba
 		if t < 1 {
 			continue
 		}
-		votingHole, ended := vr.CheckThreshold(state, t)
+		votingHole, ended := vr.CheckThreshold(state, policy)
 		if ended {
 			return votingHole, state, true
 		}
@@ -257,15 +274,16 @@ func (vr *VotingResult) MakeResult(policy VotingThresholdPolicy) (VotingHole, Ba
 }
 
 func (vr *VotingResult) ChangeState(votingHole VotingHole, state BallotState) (vs VotingStateStaging, err error) {
-	if !vr.SetState(state.Next()) {
+	if votingHole == VotingYES && !vr.SetState(state.Next()) {
 		err = sebakerror.ErrorVotingResultFailedToSetState
 		return
 	}
 
+	vs = vr.MakeStaging(votingHole, state, vr.State, state)
+
 	vr.Lock()
 	defer vr.Unlock()
 
-	vs = vr.MakeStaging(votingHole, state, vr.State, state)
 	vr.Staging = append(vr.Staging, vs)
 
 	return
@@ -309,23 +327,37 @@ func (vr *VotingResult) CanGetResult(policy VotingThresholdPolicy) bool {
 }
 
 type VotingThresholdPolicy interface {
-	Threshold(BallotState) uint32
-	SetValidators(uint64) error
+	Threshold(BallotState) int
+	SetValidators(int) error
+	Validators() int
+	Reset(BallotState, int) error
+	String() string
 }
 
 type DefaultVotingThresholdPolicy struct {
-	init   uint32 // must be percentile
-	sign   uint32
-	accept uint32
+	init   int // must be percentile
+	sign   int
+	accept int
 
-	validators uint64
+	validators int
 }
 
-func (vt *DefaultVotingThresholdPolicy) Validators() uint64 {
+func (vt *DefaultVotingThresholdPolicy) String() string {
+	o := util.MustJSONMarshal(map[string]interface{}{
+		"init":       vt.init,
+		"sign":       vt.sign,
+		"accept":     vt.accept,
+		"validators": vt.validators,
+	})
+
+	return string(o)
+}
+
+func (vt *DefaultVotingThresholdPolicy) Validators() int {
 	return vt.validators
 }
 
-func (vt *DefaultVotingThresholdPolicy) SetValidators(v uint64) error {
+func (vt *DefaultVotingThresholdPolicy) SetValidators(v int) error {
 	if v < 1 {
 		return sebakerror.ErrorVotingThresholdInvalidValidators
 	}
@@ -335,8 +367,8 @@ func (vt *DefaultVotingThresholdPolicy) SetValidators(v uint64) error {
 	return nil
 }
 
-func (vt *DefaultVotingThresholdPolicy) Threshold(state BallotState) uint32 {
-	var t uint32
+func (vt *DefaultVotingThresholdPolicy) Threshold(state BallotState) int {
+	var t int
 	switch state {
 	case BallotStateINIT:
 		t = vt.init
@@ -347,10 +379,33 @@ func (vt *DefaultVotingThresholdPolicy) Threshold(state BallotState) uint32 {
 	}
 
 	v := float64(vt.validators) * (float64(t) / float64(100))
-	return uint32(math.Ceil(v))
+	return int(math.Ceil(v))
 }
 
-func NewDefaultVotingThresholdPolicy(init, sign, accept uint32) (vt *DefaultVotingThresholdPolicy, err error) {
+func (vt *DefaultVotingThresholdPolicy) Reset(state BallotState, threshold int) (err error) {
+	if threshold <= 0 {
+		err = sebakerror.ErrorInvalidVotingThresholdPolicy
+		return
+	}
+
+	if threshold > 100 {
+		err = sebakerror.ErrorInvalidVotingThresholdPolicy
+		return
+	}
+
+	switch state {
+	case BallotStateINIT:
+		vt.init = threshold
+	case BallotStateSIGN:
+		vt.sign = threshold
+	case BallotStateACCEPT:
+		vt.accept = threshold
+	}
+
+	return nil
+}
+
+func NewDefaultVotingThresholdPolicy(init, sign, accept int) (vt *DefaultVotingThresholdPolicy, err error) {
 	if init <= 0 || sign <= 0 || accept <= 0 {
 		err = sebakerror.ErrorInvalidVotingThresholdPolicy
 		return

@@ -15,8 +15,9 @@ func init() {
 	memServers = map[string]*MemoryTransport{}
 }
 
-func cleanUpMemoryServer() {
-	memServers = map[string]*MemoryTransport{}
+func CleanUpMemoryServer() {
+	// BUG(osx): `CleanUpMemoryServer` causes 'runtime error: invalid memory address or nil pointer dereference'
+	//memServers = map[string]*MemoryTransport{}
 }
 
 func addMemoryServer(server *MemoryTransport) {
