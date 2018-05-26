@@ -1,4 +1,4 @@
-package util
+package sebakcommon
 
 type Message interface {
 	GetType() string

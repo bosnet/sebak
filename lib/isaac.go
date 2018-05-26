@@ -3,13 +3,13 @@ package sebak
 import (
 	"github.com/spikeekips/sebak/lib/error"
 	"github.com/spikeekips/sebak/lib/storage"
-	"github.com/spikeekips/sebak/lib/util"
+	"github.com/spikeekips/sebak/lib/common"
 )
 
 type ISAAC struct {
-	util.SafeLock
+	sebakcommon.SafeLock
 
-	Node                  util.Node
+	Node                  sebakcommon.Node
 	VotingThresholdPolicy VotingThresholdPolicy
 
 	Boxes *BallotBoxes
@@ -17,7 +17,7 @@ type ISAAC struct {
 	Storage *storage.LevelDBBackend
 }
 
-func NewISAAC(node util.Node, votingThresholdPolicy VotingThresholdPolicy) (is *ISAAC, err error) {
+func NewISAAC(node sebakcommon.Node, votingThresholdPolicy VotingThresholdPolicy) (is *ISAAC, err error) {
 	is = &ISAAC{
 		Node: node,
 		VotingThresholdPolicy: votingThresholdPolicy,
@@ -27,11 +27,11 @@ func NewISAAC(node util.Node, votingThresholdPolicy VotingThresholdPolicy) (is *
 	return
 }
 
-func (is *ISAAC) GetNode() util.Node {
+func (is *ISAAC) GetNode() sebakcommon.Node {
 	return is.Node
 }
 
-func (is *ISAAC) HasMessage(message util.Message) bool {
+func (is *ISAAC) HasMessage(message sebakcommon.Message) bool {
 	return is.Boxes.HasMessage(message)
 }
 
@@ -39,7 +39,7 @@ func (is *ISAAC) HasMessageByString(h string) bool {
 	return is.Boxes.HasMessageByString(h)
 }
 
-func (is *ISAAC) ReceiveMessage(m util.Message) (ballot Ballot, err error) {
+func (is *ISAAC) ReceiveMessage(m sebakcommon.Message) (ballot Ballot, err error) {
 	/*
 		Previously the new incoming Message must be checked,
 			- TODO `Message` must be saved in `BlockTransactionHistory`

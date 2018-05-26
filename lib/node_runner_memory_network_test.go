@@ -11,20 +11,20 @@ import (
 	"github.com/google/uuid"
 	"github.com/spikeekips/sebak/lib/error"
 	"github.com/spikeekips/sebak/lib/network"
-	"github.com/spikeekips/sebak/lib/util"
+	"github.com/spikeekips/sebak/lib/common"
 	"github.com/stellar/go/keypair"
 )
 
-func createNewMemoryServer() (*network.MemoryTransport, *util.Validator) {
-	server := network.NewMemoryTransport()
+func createNetMemoryNetwork() (*sebaknetwork.MemoryNetwork, *sebakcommon.Validator) {
+	mn := sebaknetwork.NewMemoryNetwork()
 
 	kp, _ := keypair.Random()
-	validator, _ := util.NewValidator(kp.Address(), server.Endpoint(), "")
+	validator, _ := sebakcommon.NewValidator(kp.Address(), mn.Endpoint(), "")
 	validator.SetKeypair(kp)
 
-	server.SetContext(context.WithValue(context.Background(), "currentNode", validator))
+	mn.SetContext(context.WithValue(context.Background(), "currentNode", validator))
 
-	return server, validator
+	return mn, validator
 }
 
 func makeTransaction(kp *keypair.Full) (tx Transaction) {
@@ -41,7 +41,7 @@ func makeTransaction(kp *keypair.Full) (tx Transaction) {
 	tx = Transaction{
 		T: "transaction",
 		H: TransactionHeader{
-			Created: util.NowISO8601(),
+			Created: sebakcommon.NowISO8601(),
 			Hash:    txBody.MakeHashString(),
 		},
 		B: txBody,
@@ -52,11 +52,11 @@ func makeTransaction(kp *keypair.Full) (tx Transaction) {
 }
 
 func createNodeRunners(n int) []*NodeRunner {
-	var servers []*network.MemoryTransport
-	var validators []*util.Validator
+	var ns []*sebaknetwork.MemoryNetwork
+	var validators []*sebakcommon.Validator
 	for i := 0; i < n; i++ {
-		s, v := createNewMemoryServer()
-		servers = append(servers, s)
+		s, v := createNetMemoryNetwork()
+		ns = append(ns, s)
 		validators = append(validators, v)
 	}
 
@@ -75,7 +75,7 @@ func createNodeRunners(n int) []*NodeRunner {
 		p, _ := NewDefaultVotingThresholdPolicy(100, 30, 30)
 		p.SetValidators(len(v.GetValidators()) + 1)
 		is, _ := NewISAAC(v, p)
-		nr := NewNodeRunner(v, p, servers[i], is)
+		nr := NewNodeRunner(v, p, ns[i], is)
 		nodeRunners = append(nodeRunners, nr)
 	}
 
@@ -124,7 +124,7 @@ func createNodeRunnersWithReady(n int) []*NodeRunner {
 // TestMemoryNetworkCreate checks, `NodeRunner` is correctly started and
 // `GetNodeInfo` returns the validator information correctly.
 func TestMemoryNetworkCreate(t *testing.T) {
-	defer network.CleanUpMemoryServer()
+	defer sebaknetwork.CleanUpMemoryNetwork()
 
 	nodeRunners := createNodeRunners(4)
 	for _, nr := range nodeRunners {
@@ -132,16 +132,16 @@ func TestMemoryNetworkCreate(t *testing.T) {
 		defer nr.Stop()
 	}
 
-	server := nodeRunners[0].TransportServer()
+	mn := nodeRunners[0].Network()
 	for _, nr := range nodeRunners {
-		client := server.GetClient(nr.Node().Endpoint())
+		client := mn.GetClient(nr.Node().Endpoint())
 		b, err := client.GetNodeInfo()
 		if err != nil {
 			t.Error(err)
 			return
 		}
 
-		if rv, err := util.NewValidatorFromString(b); err != nil {
+		if rv, err := sebakcommon.NewValidatorFromString(b); err != nil {
 			t.Error("invalid validator data was received")
 			return
 		} else if !nr.Node().DeepEqual(rv) {
@@ -154,7 +154,7 @@ func TestMemoryNetworkCreate(t *testing.T) {
 // TestMemoryNetworkHandleMessageFromClient checks, the message can be
 // broadcasted correctly in node.
 func TestMemoryNetworkHandleMessageFromClient(t *testing.T) {
-	defer network.CleanUpMemoryServer()
+	defer sebaknetwork.CleanUpMemoryNetwork()
 
 	nodeRunners := createNodeRunners(4)
 	for _, nr := range nodeRunners {
@@ -162,10 +162,10 @@ func TestMemoryNetworkHandleMessageFromClient(t *testing.T) {
 		defer nr.Stop()
 	}
 
-	c0 := nodeRunners[0].TransportServer().GetClient(nodeRunners[0].Node().Endpoint())
+	c0 := nodeRunners[0].Network().GetClient(nodeRunners[0].Node().Endpoint())
 
 	chanGotMessageFromClient := make(chan Ballot)
-	var handleMessageFromClientCheckerFuncs = []util.CheckerFunc{
+	var handleMessageFromClientCheckerFuncs = []sebakcommon.CheckerFunc{
 		CheckNodeRunnerHandleMessageTransactionUnmarshal,
 		CheckNodeRunnerHandleMessageISAACReceiveMessage,
 		CheckNodeRunnerHandleMessageSignBallot,
@@ -201,21 +201,21 @@ func TestMemoryNetworkHandleMessageFromClient(t *testing.T) {
 // client is broadcasted and the other validators can receive it's ballot
 // correctly.
 func TestMemoryNetworkHandleMessageFromClientBroadcast(t *testing.T) {
-	defer network.CleanUpMemoryServer()
+	defer sebaknetwork.CleanUpMemoryNetwork()
 
 	nodeRunners := createNodeRunnersWithReady(4)
 	for _, nr := range nodeRunners {
 		defer nr.Stop()
 	}
 
-	c0 := nodeRunners[0].TransportServer().GetClient(nodeRunners[0].Node().Endpoint())
+	c0 := nodeRunners[0].Network().GetClient(nodeRunners[0].Node().Endpoint())
 
 	chanCancel := make(chan bool)
 	chanGotBallot := make(chan Ballot)
-	var handleBallotCheckerFuncs = []util.CheckerFunc{
+	var handleBallotCheckerFuncs = []sebakcommon.CheckerFunc{
 		func(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
 			var err error
-			message, ok := args[0].(network.Message)
+			message, ok := args[0].(sebaknetwork.Message)
 			if !ok {
 				err = errors.New("invalid `network.Message`")
 				t.Error(err)
@@ -235,7 +235,7 @@ func TestMemoryNetworkHandleMessageFromClientBroadcast(t *testing.T) {
 	}
 
 	chanGotMessageFromClient := make(chan Ballot)
-	var handleMessageFromClientCheckerFuncs = []util.CheckerFunc{
+	var handleMessageFromClientCheckerFuncs = []sebakcommon.CheckerFunc{
 		CheckNodeRunnerHandleMessageTransactionUnmarshal,
 		CheckNodeRunnerHandleMessageISAACReceiveMessage,
 		CheckNodeRunnerHandleMessageSignBallot,
@@ -297,13 +297,13 @@ L:
 // TestMemoryNetworkHandleBallotCheckIsNew checks, the already received message from
 // client must be ignored.
 func TestMemoryNetworkHandleMessageCheckHasMessage(t *testing.T) {
-	defer network.CleanUpMemoryServer()
+	defer sebaknetwork.CleanUpMemoryNetwork()
 
 	nr := createNodeRunners(1)[0]
 	go nr.Start()
 	defer nr.Stop()
 
-	c0 := nr.TransportServer().GetClient(nr.Node().Endpoint())
+	c0 := nr.Network().GetClient(nr.Node().Endpoint())
 
 	var wg sync.WaitGroup
 
@@ -312,7 +312,7 @@ func TestMemoryNetworkHandleMessageCheckHasMessage(t *testing.T) {
 
 	var addedBallot []Ballot
 	var foundErrors []error
-	var handleMessageFromClientCheckerFuncs = []util.CheckerFunc{
+	var handleMessageFromClientCheckerFuncs = []sebakcommon.CheckerFunc{
 		CheckNodeRunnerHandleMessageTransactionUnmarshal,
 		CheckNodeRunnerHandleMessageISAACReceiveMessage,
 		func(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
@@ -324,7 +324,7 @@ func TestMemoryNetworkHandleMessageCheckHasMessage(t *testing.T) {
 		},
 	}
 
-	var deferFunc util.DeferFunc = func(n int, f util.CheckerFunc, ctx context.Context, err error) {
+	var deferFunc sebakcommon.DeferFunc = func(n int, f sebakcommon.CheckerFunc, ctx context.Context, err error) {
 		if reflect.ValueOf(f).Pointer() == reflect.ValueOf(CheckNodeRunnerHandleMessageISAACReceiveMessage).Pointer() {
 			defer wg.Done()
 		}
@@ -366,7 +366,7 @@ func TestMemoryNetworkHandleMessageCheckHasMessage(t *testing.T) {
 // TestMemoryNetworkHandleMessageAddBallot checks, the each messages from
 // client will be added.
 func TestMemoryNetworkHandleMessageAddBallot(t *testing.T) {
-	defer network.CleanUpMemoryServer()
+	defer sebaknetwork.CleanUpMemoryNetwork()
 
 	nodeRunners := createNodeRunners(2)
 	nr0 := nodeRunners[0]
@@ -374,7 +374,7 @@ func TestMemoryNetworkHandleMessageAddBallot(t *testing.T) {
 	go nr0.Start()
 	defer nr0.Stop()
 
-	c0 := nr0.TransportServer().GetClient(nr0.Node().Endpoint())
+	c0 := nr0.Network().GetClient(nr0.Node().Endpoint())
 
 	var wg sync.WaitGroup
 
@@ -383,7 +383,7 @@ func TestMemoryNetworkHandleMessageAddBallot(t *testing.T) {
 
 	var addedBallot []Ballot
 	var foundErrors []error
-	var handleMessageFromClientCheckerFuncs = []util.CheckerFunc{
+	var handleMessageFromClientCheckerFuncs = []sebakcommon.CheckerFunc{
 		CheckNodeRunnerHandleMessageTransactionUnmarshal,
 		CheckNodeRunnerHandleMessageISAACReceiveMessage,
 		func(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
@@ -395,7 +395,7 @@ func TestMemoryNetworkHandleMessageAddBallot(t *testing.T) {
 		},
 	}
 
-	var deferFunc util.DeferFunc = func(n int, f util.CheckerFunc, ctx context.Context, err error) {
+	var deferFunc sebakcommon.DeferFunc = func(n int, f sebakcommon.CheckerFunc, ctx context.Context, err error) {
 		if reflect.ValueOf(f).Pointer() == reflect.ValueOf(CheckNodeRunnerHandleMessageISAACReceiveMessage).Pointer() {
 			defer wg.Done()
 		}

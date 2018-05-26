@@ -1,4 +1,4 @@
-package network
+package sebaknetwork
 
 import (
 	"io/ioutil"
@@ -6,12 +6,12 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/spikeekips/sebak/lib/util"
+	"github.com/spikeekips/sebak/lib/common"
 )
 
-type HTTP2TransportClient struct {
-	endpoint       *util.Endpoint
-	client         *util.HTTP2Client
+type HTTP2NetworkClient struct {
+	endpoint       *sebakcommon.Endpoint
+	client         *sebakcommon.HTTP2Client
 	defaultHeaders http.Header
 }
 
@@ -20,23 +20,23 @@ var (
 	defaultIdleTimeout = 3 * time.Second
 )
 
-func NewHTTP2TransportClient(endpoint *util.Endpoint, client *util.HTTP2Client) *HTTP2TransportClient {
+func NewHTTP2NetworkClient(endpoint *sebakcommon.Endpoint, client *sebakcommon.HTTP2Client) *HTTP2NetworkClient {
 	if client == nil {
-		client, _ = util.NewHTTP2Client(
+		client, _ = sebakcommon.NewHTTP2Client(
 			defaultTimeout,
 			defaultIdleTimeout,
 			false,
 		)
 	}
 
-	return &HTTP2TransportClient{endpoint: endpoint, client: client, defaultHeaders: http.Header{}}
+	return &HTTP2NetworkClient{endpoint: endpoint, client: client, defaultHeaders: http.Header{}}
 }
 
-func (c *HTTP2TransportClient) Endpoint() *util.Endpoint {
+func (c *HTTP2NetworkClient) Endpoint() *sebakcommon.Endpoint {
 	return c.endpoint
 }
 
-func (c *HTTP2TransportClient) SetDefaultHeaders(headers http.Header) {
+func (c *HTTP2NetworkClient) SetDefaultHeaders(headers http.Header) {
 	for key, values := range headers {
 		for _, v := range values {
 			c.defaultHeaders.Set(key, v)
@@ -44,7 +44,7 @@ func (c *HTTP2TransportClient) SetDefaultHeaders(headers http.Header) {
 	}
 }
 
-func (c *HTTP2TransportClient) DefaultHeaders() http.Header {
+func (c *HTTP2NetworkClient) DefaultHeaders() http.Header {
 	headers := http.Header{}
 	for key, values := range c.defaultHeaders {
 		for _, v := range values {
@@ -55,12 +55,12 @@ func (c *HTTP2TransportClient) DefaultHeaders() http.Header {
 	return headers
 }
 
-func (c *HTTP2TransportClient) resolvePath(path string) (u *url.URL) {
+func (c *HTTP2NetworkClient) resolvePath(path string) (u *url.URL) {
 	u = (*url.URL)(c.endpoint).ResolveReference(&url.URL{Path: path})
 	return u
 }
 
-func (c *HTTP2TransportClient) GetNodeInfo() (body []byte, err error) {
+func (c *HTTP2NetworkClient) GetNodeInfo() (body []byte, err error) {
 	headers := c.DefaultHeaders()
 	headers.Set("Content-Type", "application/json")
 
@@ -76,7 +76,7 @@ func (c *HTTP2TransportClient) GetNodeInfo() (body []byte, err error) {
 	return
 }
 
-func (c *HTTP2TransportClient) Connect(node util.Node) (body []byte, err error) {
+func (c *HTTP2NetworkClient) Connect(node sebakcommon.Node) (body []byte, err error) {
 	headers := c.DefaultHeaders()
 	headers.Set("Content-Type", "application/json")
 
@@ -91,7 +91,7 @@ func (c *HTTP2TransportClient) Connect(node util.Node) (body []byte, err error) 
 	return
 }
 
-func (c *HTTP2TransportClient) SendMessage(message util.Serializable) (err error) {
+func (c *HTTP2NetworkClient) SendMessage(message sebakcommon.Serializable) (err error) {
 	headers := c.DefaultHeaders()
 	headers.Set("Content-Type", "application/json")
 
@@ -112,7 +112,7 @@ func (c *HTTP2TransportClient) SendMessage(message util.Serializable) (err error
 	return
 }
 
-func (c *HTTP2TransportClient) SendBallot(message util.Serializable) (err error) {
+func (c *HTTP2NetworkClient) SendBallot(message sebakcommon.Serializable) (err error) {
 	headers := c.DefaultHeaders()
 	headers.Set("Content-Type", "application/json")
 

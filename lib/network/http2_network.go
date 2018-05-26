@@ -1,4 +1,4 @@
-package network
+package sebaknetwork
 
 import (
 	"context"
@@ -11,12 +11,12 @@ import (
 	"time"
 
 	"github.com/gorilla/handlers"
-	"github.com/spikeekips/sebak/lib/util"
+	"github.com/spikeekips/sebak/lib/common"
 
 	"golang.org/x/net/http2"
 )
 
-type HTTP2TransportConfig struct {
+type HTTP2NetworkConfig struct {
 	NodeName string
 	Addr     string
 
@@ -31,7 +31,7 @@ type HTTP2TransportConfig struct {
 	HTTP2LogOutput io.Writer
 }
 
-func NewHTTP2TransportConfigFromEndpoint(endpoint *util.Endpoint) (config HTTP2TransportConfig, err error) {
+func NewHTTP2NetworkConfigFromEndpoint(endpoint *sebakcommon.Endpoint) (config HTTP2NetworkConfig, err error) {
 	query := endpoint.Query()
 
 	var NodeName string
@@ -42,7 +42,7 @@ func NewHTTP2TransportConfigFromEndpoint(endpoint *util.Endpoint) (config HTTP2T
 	var TLSCertFile, TLSKeyFile string
 	var HTTP2LogOutput io.Writer
 
-	if ReadTimeout, err = time.ParseDuration(util.GetUrlQuery(query, "ReadTimeout", "0s")); err != nil {
+	if ReadTimeout, err = time.ParseDuration(sebakcommon.GetUrlQuery(query, "ReadTimeout", "0s")); err != nil {
 		return
 	}
 	if ReadTimeout < 0*time.Second {
@@ -50,7 +50,7 @@ func NewHTTP2TransportConfigFromEndpoint(endpoint *util.Endpoint) (config HTTP2T
 		return
 	}
 
-	if ReadHeaderTimeout, err = time.ParseDuration(util.GetUrlQuery(query, "ReadHeaderTimeout", "0s")); err != nil {
+	if ReadHeaderTimeout, err = time.ParseDuration(sebakcommon.GetUrlQuery(query, "ReadHeaderTimeout", "0s")); err != nil {
 		return
 	}
 	if ReadHeaderTimeout < 0*time.Second {
@@ -58,7 +58,7 @@ func NewHTTP2TransportConfigFromEndpoint(endpoint *util.Endpoint) (config HTTP2T
 		return
 	}
 
-	if WriteTimeout, err = time.ParseDuration(util.GetUrlQuery(query, "WriteTimeout", "0s")); err != nil {
+	if WriteTimeout, err = time.ParseDuration(sebakcommon.GetUrlQuery(query, "WriteTimeout", "0s")); err != nil {
 		return
 	}
 	if WriteTimeout < 0*time.Second {
@@ -66,7 +66,7 @@ func NewHTTP2TransportConfigFromEndpoint(endpoint *util.Endpoint) (config HTTP2T
 		return
 	}
 
-	if IdleTimeout, err = time.ParseDuration(util.GetUrlQuery(query, "IdleTimeout", "0s")); err != nil {
+	if IdleTimeout, err = time.ParseDuration(sebakcommon.GetUrlQuery(query, "IdleTimeout", "0s")); err != nil {
 		return
 	}
 	if IdleTimeout < 0*time.Second {
@@ -104,7 +104,7 @@ func NewHTTP2TransportConfigFromEndpoint(endpoint *util.Endpoint) (config HTTP2T
 		}
 	}
 
-	config = HTTP2TransportConfig{
+	config = HTTP2NetworkConfig{
 		NodeName:          NodeName,
 		Addr:              endpoint.Host,
 		ReadTimeout:       ReadTimeout,
@@ -119,7 +119,7 @@ func NewHTTP2TransportConfigFromEndpoint(endpoint *util.Endpoint) (config HTTP2T
 	return
 }
 
-type HTTP2Transport struct {
+type HTTP2Network struct {
 	ctx         context.Context
 	tlsCertFile string
 	tlsKeyFile  string
@@ -131,14 +131,14 @@ type HTTP2Transport struct {
 	ready bool
 
 	handlers map[string]func(http.ResponseWriter, *http.Request)
-	watchers []func(TransportServer, net.Conn, http.ConnState)
+	watchers []func(Network, net.Conn, http.ConnState)
 
-	config HTTP2TransportConfig
+	config HTTP2NetworkConfig
 }
 
 type HandlerFunc func(w http.ResponseWriter, r *http.Request)
 
-func NewHTTP2Transport(config HTTP2TransportConfig) (transport *HTTP2Transport) {
+func NewHTTP2Network(config HTTP2NetworkConfig) (h2n *HTTP2Network) {
 	server := &http.Server{
 		Addr:              config.Addr,
 		ReadTimeout:       config.ReadTimeout,
@@ -158,35 +158,35 @@ func NewHTTP2Transport(config HTTP2TransportConfig) (transport *HTTP2Transport) 
 		},
 	)
 
-	transport = &HTTP2Transport{
+	h2n = &HTTP2Network{
 		server:         server,
 		tlsCertFile:    config.TLSCertFile,
 		tlsKeyFile:     config.TLSKeyFile,
 		receiveChannel: make(chan Message),
 	}
 
-	transport.config = config
-	transport.handlers = map[string]func(http.ResponseWriter, *http.Request){}
+	h2n.config = config
+	h2n.handlers = map[string]func(http.ResponseWriter, *http.Request){}
 
-	transport.setNotReadyHandler()
-	transport.server.ConnState = transport.ConnState
+	h2n.setNotReadyHandler()
+	h2n.server.ConnState = h2n.ConnState
 
-	return transport
+	return
 }
 
-func (t *HTTP2Transport) Context() context.Context {
+func (t *HTTP2Network) Context() context.Context {
 	return t.ctx
 }
 
-func (t *HTTP2Transport) SetContext(ctx context.Context) {
+func (t *HTTP2Network) SetContext(ctx context.Context) {
 	t.ctx = ctx
 }
 
 // GetClient creates new keep-alive HTTP2 client
-func (t *HTTP2Transport) GetClient(endpoint *util.Endpoint) TransportClient {
-	rawClient, _ := util.NewHTTP2Client(defaultTimeout, 0, true)
+func (t *HTTP2Network) GetClient(endpoint *sebakcommon.Endpoint) NetworkClient {
+	rawClient, _ := sebakcommon.NewHTTP2Client(defaultTimeout, 0, true)
 
-	client := NewHTTP2TransportClient(endpoint, rawClient)
+	client := NewHTTP2NetworkClient(endpoint, rawClient)
 
 	headers := http.Header{}
 	headers.Set("User-Agent", fmt.Sprintf("v-%s", t.config.NodeName))
@@ -195,22 +195,22 @@ func (t *HTTP2Transport) GetClient(endpoint *util.Endpoint) TransportClient {
 	return client
 }
 
-func (t *HTTP2Transport) Endpoint() *util.Endpoint {
+func (t *HTTP2Network) Endpoint() *sebakcommon.Endpoint {
 	host, port, _ := net.SplitHostPort(t.server.Addr)
-	return &util.Endpoint{Scheme: "https", Host: fmt.Sprintf("%s:%s", host, port)}
+	return &sebakcommon.Endpoint{Scheme: "https", Host: fmt.Sprintf("%s:%s", host, port)}
 }
 
-func (t *HTTP2Transport) AddWatcher(f func(TransportServer, net.Conn, http.ConnState)) {
+func (t *HTTP2Network) AddWatcher(f func(Network, net.Conn, http.ConnState)) {
 	t.watchers = append(t.watchers, f)
 }
 
-func (t *HTTP2Transport) ConnState(c net.Conn, state http.ConnState) {
+func (t *HTTP2Network) ConnState(c net.Conn, state http.ConnState) {
 	for _, f := range t.watchers {
 		go f(t, c, state)
 	}
 }
 
-func (t *HTTP2Transport) setNotReadyHandler() {
+func (t *HTTP2Network) setNotReadyHandler() {
 	handler := http.NewServeMux()
 	handler.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if !t.ready {
@@ -222,12 +222,12 @@ func (t *HTTP2Transport) setNotReadyHandler() {
 	t.server.Handler = handlers.CombinedLoggingHandler(t.config.HTTP2LogOutput, handler)
 }
 
-func (t *HTTP2Transport) AddHandler(ctx context.Context, pattern string, handler func(context.Context, *HTTP2Transport) HandlerFunc) (err error) {
+func (t *HTTP2Network) AddHandler(ctx context.Context, pattern string, handler func(context.Context, *HTTP2Network) HandlerFunc) (err error) {
 	t.handlers[pattern] = handler(ctx, t)
 	return nil
 }
 
-func (t *HTTP2Transport) Ready() error {
+func (t *HTTP2Network) Ready() error {
 	t.AddHandler(t.Context(), "/", Index)
 	t.AddHandler(t.Context(), "/connect", ConnectHandler)
 	t.AddHandler(t.Context(), "/message", MessageHandler)
@@ -245,22 +245,22 @@ func (t *HTTP2Transport) Ready() error {
 	return nil
 }
 
-func (t *HTTP2Transport) IsReady() bool {
-	client, err := util.NewHTTP2Client(50*time.Millisecond, 50*time.Millisecond, false)
+func (t *HTTP2Network) IsReady() bool {
+	client, err := sebakcommon.NewHTTP2Client(50*time.Millisecond, 50*time.Millisecond, false)
 	if err != nil {
 		return false
 	}
 	defer client.Close()
 
-	transport := NewHTTP2TransportClient(t.Endpoint(), client)
-	if _, err := transport.GetNodeInfo(); err != nil {
+	h2n := NewHTTP2NetworkClient(t.Endpoint(), client)
+	if _, err := h2n.GetNodeInfo(); err != nil {
 		return false
 	}
 
 	return true
 }
 
-func (t *HTTP2Transport) Start() (err error) {
+func (t *HTTP2Network) Start() (err error) {
 	defer func() {
 		close(t.receiveChannel)
 	}()
@@ -268,14 +268,14 @@ func (t *HTTP2Transport) Start() (err error) {
 	return t.server.ListenAndServeTLS(t.tlsCertFile, t.tlsKeyFile)
 }
 
-func (t *HTTP2Transport) Stop() {
+func (t *HTTP2Network) Stop() {
 	t.server.Close()
 }
 
-func (t *HTTP2Transport) ReceiveChannel() chan Message {
+func (t *HTTP2Network) ReceiveChannel() chan Message {
 	return t.receiveChannel
 }
 
-func (t *HTTP2Transport) ReceiveMessage() <-chan Message {
+func (t *HTTP2Network) ReceiveMessage() <-chan Message {
 	return t.receiveChannel
 }

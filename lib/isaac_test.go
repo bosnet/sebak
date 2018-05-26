@@ -9,12 +9,12 @@ import (
 	"github.com/stellar/go/keypair"
 
 	"github.com/spikeekips/sebak/lib/error"
-	"github.com/spikeekips/sebak/lib/util"
+	"github.com/spikeekips/sebak/lib/common"
 )
 
-func NewRandomNode() util.Node {
+func NewRandomNode() sebakcommon.Node {
 	kp, _ := keypair.Random()
-	a, _ := util.NewValidator(kp.Address(), &util.Endpoint{}, "")
+	a, _ := sebakcommon.NewValidator(kp.Address(), &sebakcommon.Endpoint{}, "")
 	a.SetKeypair(kp)
 	return a
 }
@@ -40,7 +40,7 @@ func (m DummyMessage) GetType() string {
 	return m.T
 }
 
-func (m DummyMessage) Equal(n util.Message) bool {
+func (m DummyMessage) Equal(n sebakcommon.Message) bool {
 	return m.Hash == n.GetHash()
 }
 
@@ -49,7 +49,7 @@ func (m DummyMessage) GetHash() string {
 }
 
 func (m *DummyMessage) UpdateHash() {
-	m.Hash = base58.Encode(util.MustMakeObjectHash(m.Data))
+	m.Hash = base58.Encode(sebakcommon.MustMakeObjectHash(m.Data))
 }
 
 func (m DummyMessage) Serialize() ([]byte, error) {
@@ -70,7 +70,7 @@ func makeISAAC(minimumValidators int) *ISAAC {
 	return is
 }
 
-func makeBallot(kp *keypair.Full, m util.Message, state BallotState) Ballot {
+func makeBallot(kp *keypair.Full, m sebakcommon.Message, state BallotState) Ballot {
 	ballot, _ := NewBallotFromMessage(kp.Address(), m)
 	ballot.SetState(state)
 	ballot.Vote(VotingYES)
@@ -107,7 +107,7 @@ func TestNewISAAC(t *testing.T) {
 func TestISAACNewIncomingMessage(t *testing.T) {
 	is := makeISAAC(1)
 
-	m := NewDummyMessage(util.GenerateUUID())
+	m := NewDummyMessage(sebakcommon.GenerateUUID())
 
 	{
 		var err error
@@ -156,7 +156,7 @@ func TestISAACNewIncomingMessage(t *testing.T) {
 	{
 		var err error
 
-		another := NewDummyMessage(util.GenerateUUID())
+		another := NewDummyMessage(sebakcommon.GenerateUUID())
 
 		_, err = is.ReceiveMessage(another)
 		if err != nil {
@@ -187,7 +187,7 @@ func TestISAACNewIncomingMessage(t *testing.T) {
 
 func TestISAACReceiveBallotStateINIT(t *testing.T) {
 	is := makeISAAC(1)
-	m := NewDummyMessage(util.GenerateUUID())
+	m := NewDummyMessage(sebakcommon.GenerateUUID())
 
 	kp, _ := keypair.Random()
 	ballot := makeBallot(kp, m, BallotStateINIT)
@@ -206,7 +206,7 @@ func TestISAACReceiveBallotStateINIT(t *testing.T) {
 
 func TestISAACIsVoted(t *testing.T) {
 	is := makeISAAC(1)
-	m := NewDummyMessage(util.GenerateUUID())
+	m := NewDummyMessage(sebakcommon.GenerateUUID())
 
 	is.ReceiveMessage(m)
 
@@ -231,7 +231,7 @@ func TestISAACReceiveBallotStateINITAndMoveNextState(t *testing.T) {
 
 	var numberOfBallots int = 5
 
-	m := NewDummyMessage(util.GenerateUUID())
+	m := NewDummyMessage(sebakcommon.GenerateUUID())
 
 	// make ballots
 	var err error
@@ -276,7 +276,7 @@ func TestISAACReceiveBallotStateINITAndVotingBox(t *testing.T) {
 
 	var numberOfBallots int = 5
 
-	m := NewDummyMessage(util.GenerateUUID())
+	m := NewDummyMessage(sebakcommon.GenerateUUID())
 
 	// make ballots
 	var err error
@@ -336,7 +336,7 @@ func TestISAACReceiveBallotStateTransition(t *testing.T) {
 
 	is := makeISAAC(minimumValidators)
 
-	m := NewDummyMessage(util.GenerateUUID())
+	m := NewDummyMessage(sebakcommon.GenerateUUID())
 
 	var ballots []Ballot
 	var kps []*keypair.Full
@@ -427,7 +427,7 @@ func TestISAACReceiveSameBallotStates(t *testing.T) {
 
 	is := makeISAAC(minimumValidators)
 
-	m := NewDummyMessage(util.GenerateUUID())
+	m := NewDummyMessage(sebakcommon.GenerateUUID())
 
 	var ballots []Ballot
 	var kps []*keypair.Full

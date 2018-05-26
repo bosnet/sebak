@@ -14,8 +14,8 @@ import (
 	logging "github.com/inconshreveable/log15"
 	"github.com/mattn/go-isatty"
 	"github.com/spikeekips/sebak/lib"
+	"github.com/spikeekips/sebak/lib/common"
 	"github.com/spikeekips/sebak/lib/network"
-	"github.com/spikeekips/sebak/lib/util"
 	"github.com/stellar/go/keypair"
 )
 
@@ -27,7 +27,7 @@ const defaultPort int = 12345
 const defaultHost string = "0.0.0.0"
 const defaultLogLevel logging.Lvl = logging.LvlInfo
 
-type FlagValidators []*util.Validator
+type FlagValidators []*sebakcommon.Validator
 
 func (f *FlagValidators) String() string {
 	return ""
@@ -46,11 +46,11 @@ func (f *FlagValidators) Set(v string) error {
 		parsed = append(parsed, "")
 	}
 
-	endpoint, err := util.ParseNodeEndpoint(parsed[1])
+	endpoint, err := sebakcommon.ParseNodeEndpoint(parsed[1])
 	if err != nil {
 		return err
 	}
-	node, err := util.NewValidator(parsed[0], endpoint, parsed[2])
+	node, err := sebakcommon.NewValidator(parsed[0], endpoint, parsed[2])
 	if err != nil {
 		return fmt.Errorf("failed to create validator: %v", err)
 	}
@@ -74,17 +74,17 @@ var (
 	flags *flag.FlagSet
 
 	kp                 *keypair.Full
-	flagKPSecretSeed   string = util.GetENVValue("SEBAK_SECRET_SEED", "")
-	flagLogLevel       string = util.GetENVValue("SEBAK_LOG_LEVEL", defaultLogLevel.String())
-	flagLogOutput      string = util.GetENVValue("SEBAK_LOG_OUTPUT", "")
+	flagKPSecretSeed   string = sebakcommon.GetENVValue("SEBAK_SECRET_SEED", "")
+	flagLogLevel       string = sebakcommon.GetENVValue("SEBAK_LOG_LEVEL", defaultLogLevel.String())
+	flagLogOutput      string = sebakcommon.GetENVValue("SEBAK_LOG_OUTPUT", "")
 	flagVerbose        bool   = false
-	nodeEndpoint       *util.Endpoint
-	flagEndpointString string = util.GetENVValue(
+	nodeEndpoint       *sebakcommon.Endpoint
+	flagEndpointString string = sebakcommon.GetENVValue(
 		"SEBAK_ENDPOINT",
 		fmt.Sprintf("%s://%s:%d", defaultNetwork, defaultHost, defaultPort),
 	)
-	flagTLSCertFile string = util.GetENVValue("SEBAK_TLS_CERT", "sebak.crt")
-	flagTLSKeyFile  string = util.GetENVValue("SEBAK_TLS_KEY", "sebak.key")
+	flagTLSCertFile string = sebakcommon.GetENVValue("SEBAK_TLS_CERT", "sebak.crt")
+	flagTLSKeyFile  string = sebakcommon.GetENVValue("SEBAK_TLS_KEY", "sebak.key")
 	flagValidators  FlagValidators
 
 	logLevel logging.Lvl
@@ -115,7 +115,7 @@ func init() {
 		fmt.Fprintf(os.Stderr, "\n")
 	}
 
-	flagVerbose = util.GetENVValue("SEBAK_VERBOSE", "0") == "1"
+	flagVerbose = sebakcommon.GetENVValue("SEBAK_VERBOSE", "0") == "1"
 
 	// flags
 	flags.StringVar(&flagKPSecretSeed, "secret-seed", flagKPSecretSeed, "secret seed of this node")
@@ -144,7 +144,7 @@ func init() {
 		kp = parsedKP.(*keypair.Full)
 	}
 
-	if p, err := util.ParseNodeEndpoint(flagEndpointString); err != nil {
+	if p, err := sebakcommon.ParseNodeEndpoint(flagEndpointString); err != nil {
 		printFlagsError("-endpoint", err)
 	} else {
 		nodeEndpoint = p
@@ -155,7 +155,7 @@ func init() {
 	queries.Add("TLSCertFile", flagTLSCertFile)
 	queries.Add("TLSKeyFile", flagTLSKeyFile)
 	queries.Add("IdleTimeout", "3s")
-	queries.Add("NodeName", util.MakeAlias(kp.Address()))
+	queries.Add("NodeName", sebakcommon.MakeAlias(kp.Address()))
 	nodeEndpoint.RawQuery = queries.Encode()
 
 	for _, n := range flagValidators {
@@ -192,7 +192,7 @@ func init() {
 	log = logging.New("module", "main")
 	log.SetHandler(logging.LvlFilterHandler(logLevel, logHandler))
 	sebak.SetLogging(logLevel, logHandler)
-	network.SetLogging(logLevel, logHandler)
+	sebaknetwork.SetLogging(logLevel, logHandler)
 
 	log.Info("Starting Sebak")
 
@@ -223,7 +223,7 @@ func init() {
 
 func main() {
 	// create current Node
-	currentNode, err := util.NewValidator(kp.Address(), nodeEndpoint, "")
+	currentNode, err := sebakcommon.NewValidator(kp.Address(), nodeEndpoint, "")
 	if err != nil {
 		log.Error("failed to launch main node", "error", err)
 		return
@@ -232,7 +232,7 @@ func main() {
 	currentNode.AddValidators(flagValidators...)
 
 	// create network
-	nt, err := network.NewTransportServer(nodeEndpoint)
+	nt, err := sebaknetwork.NewNetwork(nodeEndpoint)
 	if err != nil {
 		log.Crit("transport error", "error", err)
 

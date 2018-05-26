@@ -7,7 +7,7 @@ import (
 
 	"github.com/spikeekips/sebak/lib/error"
 	"github.com/spikeekips/sebak/lib/storage"
-	"github.com/spikeekips/sebak/lib/util"
+	"github.com/spikeekips/sebak/lib/common"
 )
 
 /*
@@ -77,7 +77,7 @@ func (bo BlockOperation) Save(st *storage.LevelDBBackend) (err error) {
 }
 
 func (bo BlockOperation) Serialize() (encoded []byte, err error) {
-	encoded, err = util.EncodeJSONValue(bo)
+	encoded, err = sebakcommon.EncodeJSONValue(bo)
 	return
 }
 
@@ -105,7 +105,7 @@ func (bo BlockOperation) NewBlockOperationTxHashKey() string {
 	return fmt.Sprintf(
 		"%s%s",
 		GetBlockOperationKeyPrefixTxHash(bo.TxHash),
-		util.GetUniqueIDFromUUID(),
+		sebakcommon.GetUniqueIDFromUUID(),
 	)
 }
 
@@ -113,7 +113,7 @@ func (bo BlockOperation) NewBlockOperationSourceKey() string {
 	return fmt.Sprintf(
 		"%s%s",
 		GetBlockOperationKeyPrefixSource(bo.Source),
-		util.GetUniqueIDFromUUID(),
+		sebakcommon.GetUniqueIDFromUUID(),
 	)
 }
 
@@ -121,7 +121,7 @@ func (bo BlockOperation) NewBlockOperationTargetKey() string {
 	return fmt.Sprintf(
 		"%s%s",
 		GetBlockOperationKeyPrefixTarget(bo.Target),
-		util.GetUniqueIDFromUUID(),
+		sebakcommon.GetUniqueIDFromUUID(),
 	)
 }
 
@@ -131,7 +131,7 @@ func (bo BlockOperation) NewBlockOperationPeersKey() string {
 	return fmt.Sprintf(
 		"%s%s",
 		GetBlockOperationKeyPrefixPeers(addresses[0], addresses[1]),
-		util.GetUniqueIDFromUUID(),
+		sebakcommon.GetUniqueIDFromUUID(),
 	)
 }
 

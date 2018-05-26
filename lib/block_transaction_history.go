@@ -1,6 +1,6 @@
 package sebak
 
-import "github.com/spikeekips/sebak/lib/util"
+import "github.com/spikeekips/sebak/lib/common"
 
 /*
 BlockTransactionHistory is for keeping `Transaction` history. the storage should support,
@@ -22,7 +22,7 @@ func NewTransactionHistoryFromTransaction(tx Transaction, message string) BlockT
 	return BlockTransactionHistory{
 		Hash:      tx.H.Hash,
 		Source:    tx.B.Source,
-		Confirmed: util.NowISO8601(),
+		Confirmed: sebakcommon.NowISO8601(),
 		Created:   tx.H.Created,
 		Message:   message,
 	}

@@ -7,7 +7,7 @@ import (
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/spikeekips/sebak/lib/error"
 	"github.com/spikeekips/sebak/lib/network"
-	"github.com/spikeekips/sebak/lib/util"
+	"github.com/spikeekips/sebak/lib/common"
 	"github.com/stellar/go/keypair"
 )
 
@@ -65,7 +65,7 @@ func CheckTransactionHashMatch(ctx context.Context, target interface{}, args ...
 }
 
 func CheckNodeRunnerHandleMessageTransactionUnmarshal(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
-	message, ok := args[0].(network.Message)
+	message, ok := args[0].(sebaknetwork.Message)
 	if !ok {
 		return ctx, errors.New("found invalid transaction message")
 	}
@@ -92,7 +92,7 @@ func CheckNodeRunnerHandleMessageISAACReceiveMessage(ctx context.Context, target
 
 	var err error
 	var ballot Ballot
-	if ballot, err = nr.consensusProtocol.ReceiveMessage(tx); err != nil {
+	if ballot, err = nr.consensus.ReceiveMessage(tx); err != nil {
 		return ctx, err
 	}
 
@@ -102,7 +102,7 @@ func CheckNodeRunnerHandleMessageISAACReceiveMessage(ctx context.Context, target
 func CheckNodeRunnerHandleMessageSignBallot(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
 	ballot := ctx.Value("ballot").(Ballot)
 
-	currentNode := ctx.Value("currentNode").(*util.Validator)
+	currentNode := ctx.Value("currentNode").(*sebakcommon.Validator)
 
 	// self-sign
 	ballot.Vote(VotingYES)
@@ -123,7 +123,7 @@ func CheckNodeRunnerHandleMessageBroadcast(ctx context.Context, target interface
 }
 
 func CheckNodeRunnerHandleBallotIsWellformed(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
-	message, ok := args[0].(network.Message)
+	message, ok := args[0].(sebaknetwork.Message)
 	if !ok {
 		return ctx, errors.New("found invalid transaction message")
 	}
@@ -144,7 +144,7 @@ func CheckNodeRunnerHandleBallotCheckIsNew(ctx context.Context, target interface
 		return ctx, errors.New("found invalid ballot")
 	}
 
-	isNew := !nr.consensusProtocol.HasMessageByString(ballot.MessageHash())
+	isNew := !nr.consensus.HasMessageByString(ballot.MessageHash())
 
 	return context.WithValue(ctx, "isNew", isNew), nil
 }
@@ -158,7 +158,7 @@ func CheckNodeRunnerHandleBallotReceiveBallot(ctx context.Context, target interf
 
 	var err error
 	var vs VotingStateStaging
-	if vs, err = nr.consensusProtocol.ReceiveBallot(ballot); err != nil {
+	if vs, err = nr.consensus.ReceiveBallot(ballot); err != nil {
 		return ctx, err
 	}
 
@@ -183,7 +183,7 @@ func CheckNodeRunnerHandleBallotStore(ctx context.Context, target interface{}, a
 
 	nr.Log().Debug("got consensus", "ballot", ballot.MessageHash(), "votingResultStaging", vs)
 
-	return ctx, util.CheckerErrorStop{"got consensus"}
+	return ctx, sebakcommon.CheckerErrorStop{"got consensus"}
 }
 
 func CheckNodeRunnerHandleBallotBroadcast(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
@@ -192,7 +192,7 @@ func CheckNodeRunnerHandleBallotBroadcast(ctx context.Context, target interface{
 	vs := ctx.Value("vs").(VotingStateStaging)
 	isNew := ctx.Value("isNew").(bool)
 	if vs.IsClosed() {
-		return ctx, util.CheckerErrorStop{"VotingResult is already closed"}
+		return ctx, sebakcommon.CheckerErrorStop{"VotingResult is already closed"}
 	} else if vs.IsChanged() {
 		willBroadcast = true
 	} else if isNew {

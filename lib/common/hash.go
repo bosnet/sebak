@@ -1,4 +1,4 @@
-package util
+package sebakcommon
 
 import (
 	"github.com/ethereum/go-ethereum/rlp"

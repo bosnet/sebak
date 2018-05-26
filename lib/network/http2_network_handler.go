@@ -1,4 +1,4 @@
-package network
+package sebaknetwork
 
 import (
 	"context"
@@ -7,15 +7,15 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/spikeekips/sebak/lib/util"
+	"github.com/spikeekips/sebak/lib/common"
 )
 
-func Index(ctx context.Context, t *HTTP2Transport) HandlerFunc {
-	var currentNode util.Serializable
+func Index(ctx context.Context, t *HTTP2Network) HandlerFunc {
+	var currentNode sebakcommon.Serializable
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		if currentNode == nil {
-			currentNode = ctx.Value("currentNode").(util.Serializable)
+			currentNode = ctx.Value("currentNode").(sebakcommon.Serializable)
 		}
 
 		o, _ := currentNode.Serialize()
@@ -23,12 +23,12 @@ func Index(ctx context.Context, t *HTTP2Transport) HandlerFunc {
 	}
 }
 
-func ConnectHandler(ctx context.Context, t *HTTP2Transport) HandlerFunc {
-	var currentNode util.Serializable
+func ConnectHandler(ctx context.Context, t *HTTP2Network) HandlerFunc {
+	var currentNode sebakcommon.Serializable
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		if currentNode == nil {
-			currentNode = ctx.Value("currentNode").(util.Serializable)
+			currentNode = ctx.Value("currentNode").(sebakcommon.Serializable)
 		}
 
 		if r.Method != "POST" {
@@ -50,7 +50,7 @@ func ConnectHandler(ctx context.Context, t *HTTP2Transport) HandlerFunc {
 	}
 }
 
-func MessageHandler(ctx context.Context, t *HTTP2Transport) HandlerFunc {
+func MessageHandler(ctx context.Context, t *HTTP2Network) HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 
@@ -76,7 +76,7 @@ func MessageHandler(ctx context.Context, t *HTTP2Transport) HandlerFunc {
 	}
 }
 
-func BallotHandler(ctx context.Context, t *HTTP2Transport) HandlerFunc {
+func BallotHandler(ctx context.Context, t *HTTP2Network) HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
 			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)

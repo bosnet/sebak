@@ -1,4 +1,4 @@
-package network
+package sebaknetwork
 
 import (
 	"context"
@@ -6,15 +6,15 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/spikeekips/sebak/lib/util"
+	"github.com/spikeekips/sebak/lib/common"
 )
 
-type TransportServer interface {
-	Endpoint() *util.Endpoint
+type Network interface {
+	Endpoint() *sebakcommon.Endpoint
 	Context() context.Context
 	SetContext(context.Context)
-	GetClient(endpoint *util.Endpoint) TransportClient
-	AddWatcher(func(TransportServer, net.Conn, http.ConnState))
+	GetClient(endpoint *sebakcommon.Endpoint) NetworkClient
+	AddWatcher(func(Network, net.Conn, http.ConnState))
 
 	Start() error
 	Stop()
@@ -25,13 +25,29 @@ type TransportServer interface {
 	ReceiveMessage() <-chan Message
 }
 
-type TransportClient interface {
-	Endpoint() *util.Endpoint
+func NewNetwork(endpoint *sebakcommon.Endpoint) (n Network, err error) {
+	switch endpoint.Scheme {
+	case "memory":
+		n = NewMemoryNetwork()
+	case "https":
+		var config HTTP2NetworkConfig
+		config, err = NewHTTP2NetworkConfigFromEndpoint(endpoint)
+		if err != nil {
+			return
+		}
+		n = NewHTTP2Network(config)
+	}
 
-	Connect(node util.Node) ([]byte, error)
+	return
+}
+
+type NetworkClient interface {
+	Endpoint() *sebakcommon.Endpoint
+
+	Connect(node sebakcommon.Node) ([]byte, error)
 	GetNodeInfo() ([]byte, error)
-	SendMessage(util.Serializable) error
-	SendBallot(util.Serializable) error
+	SendMessage(sebakcommon.Serializable) error
+	SendBallot(sebakcommon.Serializable) error
 }
 
 type MessageType string
@@ -64,20 +80,4 @@ func NewMessage(mt MessageType, data []byte) Message {
 		Data: data,
 		//DataString: string(data),
 	}
-}
-
-func NewTransportServer(endpoint *util.Endpoint) (transport TransportServer, err error) {
-	switch endpoint.Scheme {
-	case "memory":
-		transport = NewMemoryTransport()
-	case "https":
-		var config HTTP2TransportConfig
-		config, err = NewHTTP2TransportConfigFromEndpoint(endpoint)
-		if err != nil {
-			return
-		}
-		transport = NewHTTP2Transport(config)
-	}
-
-	return
 }

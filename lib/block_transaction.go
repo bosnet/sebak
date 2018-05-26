@@ -6,7 +6,7 @@ import (
 
 	"github.com/spikeekips/sebak/lib/error"
 	"github.com/spikeekips/sebak/lib/storage"
-	"github.com/spikeekips/sebak/lib/util"
+	"github.com/spikeekips/sebak/lib/common"
 )
 
 /*
@@ -64,7 +64,7 @@ func (bt BlockTransaction) NewBlockTransactionKeyCheckpoint() string {
 	return fmt.Sprintf(
 		"%s%s",
 		GetBlockTransactionKeyPrefixCheckpoint(bt.Checkpoint),
-		util.GetUniqueIDFromUUID(),
+		sebakcommon.GetUniqueIDFromUUID(),
 	)
 }
 
@@ -72,7 +72,7 @@ func (bt BlockTransaction) NewBlockTransactionKeySource() string {
 	return fmt.Sprintf(
 		"%s%s",
 		GetBlockTransactionKeyPrefixSource(bt.Source),
-		util.GetUniqueIDFromUUID(),
+		sebakcommon.GetUniqueIDFromUUID(),
 	)
 }
 
@@ -80,7 +80,7 @@ func (bt BlockTransaction) NewBlockTransactionKeyConfirmed() string {
 	return fmt.Sprintf(
 		"%s%s",
 		GetBlockTransactionKeyConfirmed(bt.Confirmed),
-		util.GetUniqueIDFromUUID(),
+		sebakcommon.GetUniqueIDFromUUID(),
 	)
 }
 
@@ -95,7 +95,7 @@ func (bt BlockTransaction) Save(st *storage.LevelDBBackend) (err error) {
 		return sebakerror.ErrorBlockAlreadyExists
 	}
 
-	bt.Confirmed = util.NowISO8601()
+	bt.Confirmed = sebakcommon.NowISO8601()
 	if err = st.New(GetBlockTransactionKey(bt.Hash), bt); err != nil {
 		return
 	}
@@ -113,7 +113,7 @@ func (bt BlockTransaction) Save(st *storage.LevelDBBackend) (err error) {
 }
 
 func (bt BlockTransaction) Serialize() (encoded []byte, err error) {
-	encoded, err = util.EncodeJSONValue(bt)
+	encoded, err = sebakcommon.EncodeJSONValue(bt)
 	return
 }
 

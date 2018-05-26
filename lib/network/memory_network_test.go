@@ -1,4 +1,4 @@
-package network
+package sebaknetwork
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/btcsuite/btcutil/base58"
-	"github.com/spikeekips/sebak/lib/util"
+	"github.com/spikeekips/sebak/lib/common"
 	"github.com/stellar/go/keypair"
 )
 
@@ -33,7 +33,7 @@ func (m DummyMessage) GetType() string {
 	return m.T
 }
 
-func (m DummyMessage) Equal(n util.Message) bool {
+func (m DummyMessage) Equal(n sebakcommon.Message) bool {
 	return m.Hash == n.GetHash()
 }
 
@@ -42,7 +42,7 @@ func (m DummyMessage) GetHash() string {
 }
 
 func (m *DummyMessage) UpdateHash() {
-	m.Hash = base58.Encode(util.MustMakeObjectHash(m.Data))
+	m.Hash = base58.Encode(sebakcommon.MustMakeObjectHash(m.Data))
 }
 
 func (m DummyMessage) Serialize() ([]byte, error) {
@@ -62,38 +62,38 @@ func DummyMessageFromString(b []byte) (d DummyMessage, err error) {
 }
 
 func TestMemoryNetworkCreate(t *testing.T) {
-	defer CleanUpMemoryServer()
+	defer CleanUpMemoryNetwork()
 
-	server := NewMemoryTransport()
-	stored := getMemoryServer(server.Endpoint())
+	mh := NewMemoryNetwork()
+	stored := getMemoryNetwork(mh.Endpoint())
 
-	if fmt.Sprintf("%p", server) != fmt.Sprintf("%p", stored) {
-		t.Error("failed to remember the memory server")
+	if fmt.Sprintf("%p", mh) != fmt.Sprintf("%p", stored) {
+		t.Error("failed to remember the memory network")
 		return
 	}
 }
 
-func createNewMemoryServer() (*keypair.Full, *MemoryTransport, *util.Validator) {
-	server := NewMemoryTransport()
+func createNewMemoryNetwork() (*keypair.Full, *MemoryNetwork, *sebakcommon.Validator) {
+	mn := NewMemoryNetwork()
 
 	kp, _ := keypair.Random()
-	validator, _ := util.NewValidator(kp.Address(), server.Endpoint(), "")
+	validator, _ := sebakcommon.NewValidator(kp.Address(), mn.Endpoint(), "")
 	validator.SetKeypair(kp)
 
-	server.SetContext(context.WithValue(context.Background(), "currentNode", validator))
+	mn.SetContext(context.WithValue(context.Background(), "currentNode", validator))
 
-	return kp, server, validator
+	return kp, mn, validator
 }
 
 func TestMemoryNetworkGetClient(t *testing.T) {
-	defer CleanUpMemoryServer()
+	defer CleanUpMemoryNetwork()
 
-	//if len(memServers) > 0 {
-	//	t.Error("failed to cleanUpMemoryServer")
+	//if len(MemoryNetworks) > 0 {
+	//	t.Error("failed to cleanUpMemoryNetworks)
 	//	return
 	//}
 
-	_, s0, _ := createNewMemoryServer()
+	_, s0, _ := createNewMemoryNetwork()
 
 	gotMessage := make(chan Message)
 	go func() {
@@ -124,9 +124,9 @@ func TestMemoryNetworkGetClient(t *testing.T) {
 }
 
 func TestMemoryNetworkGetNodeInfo(t *testing.T) {
-	defer CleanUpMemoryServer()
+	defer CleanUpMemoryNetwork()
 
-	_, s0, currentNode := createNewMemoryServer()
+	_, s0, currentNode := createNewMemoryNetwork()
 
 	c0 := s0.GetClient(s0.Endpoint())
 	b, err := c0.GetNodeInfo()
@@ -134,7 +134,7 @@ func TestMemoryNetworkGetNodeInfo(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	v, err := util.NewValidatorFromString(b)
+	v, err := sebakcommon.NewValidatorFromString(b)
 	if err != nil {
 		t.Error(err)
 		return
@@ -149,9 +149,9 @@ func TestMemoryNetworkGetNodeInfo(t *testing.T) {
 }
 
 func TestMemoryNetworkConnect(t *testing.T) {
-	defer CleanUpMemoryServer()
+	defer CleanUpMemoryNetwork()
 
-	_, s0, currentNode := createNewMemoryServer()
+	_, s0, currentNode := createNewMemoryNetwork()
 
 	c0 := s0.GetClient(s0.Endpoint())
 	b, err := c0.Connect(currentNode)
@@ -159,7 +159,7 @@ func TestMemoryNetworkConnect(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	v, err := util.NewValidatorFromString(b)
+	v, err := sebakcommon.NewValidatorFromString(b)
 	if err != nil {
 		t.Error(err)
 		return

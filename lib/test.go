@@ -6,7 +6,7 @@ import (
 
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/google/uuid"
-	"github.com/spikeekips/sebak/lib/util"
+	"github.com/spikeekips/sebak/lib/common"
 	"github.com/stellar/go/keypair"
 )
 
@@ -14,7 +14,7 @@ func makeBlockAccount() *BlockAccount {
 	kp, _ := keypair.Random()
 	address := kp.Address()
 	balance := 2000
-	hashed := util.MustMakeObjectHash("")
+	hashed := sebakcommon.MustMakeObjectHash("")
 	checkpoint := base58.Encode(hashed)
 
 	return NewBlockAccount(address, fmt.Sprintf("%d", balance), checkpoint)
@@ -81,7 +81,7 @@ func MakeTransactions(n int) (kp *keypair.Full, tx Transaction) {
 	tx = Transaction{
 		T: "transaction",
 		H: TransactionHeader{
-			Created: util.NowISO8601(),
+			Created: sebakcommon.NowISO8601(),
 			Hash:    txBody.MakeHashString(),
 		},
 		B: txBody,

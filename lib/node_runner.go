@@ -6,18 +6,18 @@ import (
 
 	logging "github.com/inconshreveable/log15"
 	"github.com/spikeekips/sebak/lib/network"
-	"github.com/spikeekips/sebak/lib/util"
+	"github.com/spikeekips/sebak/lib/common"
 )
 
 type NodeRunner struct {
-	currentNode       util.Node
+	currentNode       sebakcommon.Node
 	policy            VotingThresholdPolicy
-	transportServer   network.TransportServer
-	consensusProtocol Consensus
-	connectionManager *network.ConnectionManager
+	network           sebaknetwork.Network
+	consensus         Consensus
+	connectionManager *sebaknetwork.ConnectionManager
 
-	handleBallotCheckerFuncs            []util.CheckerFunc
-	handleMessageFromClientCheckerFuncs []util.CheckerFunc
+	handleBallotCheckerFuncs            []sebakcommon.CheckerFunc
+	handleMessageFromClientCheckerFuncs []sebakcommon.CheckerFunc
 
 	handleBallotCheckerFuncsContext            context.Context
 	handleMessageFromClientCheckerFuncsContext context.Context
@@ -27,26 +27,26 @@ type NodeRunner struct {
 }
 
 func NewNodeRunner(
-	currentNode util.Node,
+	currentNode sebakcommon.Node,
 	policy VotingThresholdPolicy,
-	transportServer network.TransportServer,
+	network sebaknetwork.Network,
 	consensusProtocol Consensus,
 ) *NodeRunner {
 	nr := &NodeRunner{
-		currentNode:       currentNode,
-		policy:            policy,
-		transportServer:   transportServer,
-		consensusProtocol: consensusProtocol,
-		log:               log.New(logging.Ctx{"node": currentNode.Alias()}),
+		currentNode: currentNode,
+		policy:      policy,
+		network:     network,
+		consensus:   consensusProtocol,
+		log:         log.New(logging.Ctx{"node": currentNode.Alias()}),
 	}
 	nr.ctx = context.WithValue(context.Background(), "currentNode", currentNode)
 
-	nr.connectionManager = network.NewConnectionManager(
+	nr.connectionManager = sebaknetwork.NewConnectionManager(
 		nr.currentNode,
-		nr.transportServer,
+		nr.network,
 		nr.currentNode.GetValidators(),
 	)
-	nr.transportServer.AddWatcher(nr.connectionManager.ConnectionWatcher)
+	nr.network.AddWatcher(nr.connectionManager.ConnectionWatcher)
 
 	nr.SetHandleMessageFromClientCheckerFuncs(nil, DefaultHandleMessageFromClientCheckerFuncs...)
 	nr.SetHandleBallotCheckerFuncs(nil, DefaultHandleBallotCheckerFuncs...)
@@ -54,8 +54,8 @@ func NewNodeRunner(
 }
 
 func (nr *NodeRunner) Ready() {
-	nr.transportServer.SetContext(nr.ctx)
-	nr.transportServer.Ready()
+	nr.network.SetContext(nr.ctx)
+	nr.network.Ready()
 }
 
 func (nr *NodeRunner) Start() (err error) {
@@ -64,7 +64,7 @@ func (nr *NodeRunner) Start() (err error) {
 	go nr.handleMessage()
 	go nr.ConnectValidators()
 
-	if err = nr.transportServer.Start(); err != nil {
+	if err = nr.network.Start(); err != nil {
 		return
 	}
 
@@ -72,22 +72,22 @@ func (nr *NodeRunner) Start() (err error) {
 }
 
 func (nr *NodeRunner) Stop() {
-	nr.transportServer.Stop()
+	nr.network.Stop()
 }
 
-func (nr *NodeRunner) Node() util.Node {
+func (nr *NodeRunner) Node() sebakcommon.Node {
 	return nr.currentNode
 }
 
-func (nr *NodeRunner) TransportServer() network.TransportServer {
-	return nr.transportServer
+func (nr *NodeRunner) Network() sebaknetwork.Network {
+	return nr.network
 }
 
 func (nr *NodeRunner) Consensus() Consensus {
-	return nr.consensusProtocol
+	return nr.consensus
 }
 
-func (nr *NodeRunner) ConnectionManager() *network.ConnectionManager {
+func (nr *NodeRunner) ConnectionManager() *sebaknetwork.ConnectionManager {
 	return nr.connectionManager
 }
 
@@ -102,29 +102,29 @@ func (nr *NodeRunner) Log() logging.Logger {
 func (nr *NodeRunner) ConnectValidators() {
 	ticker := time.NewTicker(time.Millisecond * 5)
 	for t := range ticker.C {
-		if !nr.transportServer.IsReady() {
-			nr.log.Debug("current server is not ready: %v", t)
+		if !nr.network.IsReady() {
+			nr.log.Debug("current network is not ready: %v", t)
 			continue
 		}
 
 		ticker.Stop()
 		break
 	}
-	nr.log.Debug("current server is ready")
+	nr.log.Debug("current node is ready")
 	nr.log.Debug("trying to connect to the validators", "validators", nr.currentNode.GetValidators())
 
 	nr.log.Debug("initializing connectionManager for validators")
 	nr.connectionManager.Start()
 }
 
-var DefaultHandleMessageFromClientCheckerFuncs = []util.CheckerFunc{
+var DefaultHandleMessageFromClientCheckerFuncs = []sebakcommon.CheckerFunc{
 	CheckNodeRunnerHandleMessageTransactionUnmarshal,
 	CheckNodeRunnerHandleMessageISAACReceiveMessage,
 	CheckNodeRunnerHandleMessageSignBallot,
 	CheckNodeRunnerHandleMessageBroadcast,
 }
 
-var DefaultHandleBallotCheckerFuncs = []util.CheckerFunc{
+var DefaultHandleBallotCheckerFuncs = []sebakcommon.CheckerFunc{
 	CheckNodeRunnerHandleBallotIsWellformed,
 	CheckNodeRunnerHandleBallotCheckIsNew,
 	CheckNodeRunnerHandleBallotReceiveBallot,
@@ -132,7 +132,7 @@ var DefaultHandleBallotCheckerFuncs = []util.CheckerFunc{
 	CheckNodeRunnerHandleBallotBroadcast,
 }
 
-func (nr *NodeRunner) SetHandleMessageFromClientCheckerFuncs(ctx context.Context, f ...util.CheckerFunc) {
+func (nr *NodeRunner) SetHandleMessageFromClientCheckerFuncs(ctx context.Context, f ...sebakcommon.CheckerFunc) {
 	nr.handleMessageFromClientCheckerFuncs = f
 
 	if ctx == nil {
@@ -142,7 +142,7 @@ func (nr *NodeRunner) SetHandleMessageFromClientCheckerFuncs(ctx context.Context
 	nr.handleMessageFromClientCheckerFuncsContext = ctx
 }
 
-func (nr *NodeRunner) SetHandleBallotCheckerFuncs(ctx context.Context, f ...util.CheckerFunc) {
+func (nr *NodeRunner) SetHandleBallotCheckerFuncs(ctx context.Context, f ...sebakcommon.CheckerFunc) {
 	nr.handleBallotCheckerFuncs = f
 
 	if ctx == nil {
@@ -154,15 +154,15 @@ func (nr *NodeRunner) SetHandleBallotCheckerFuncs(ctx context.Context, f ...util
 
 func (nr *NodeRunner) handleMessage() {
 	var err error
-	for message := range nr.transportServer.ReceiveMessage() {
+	for message := range nr.network.ReceiveMessage() {
 		switch message.Type {
-		case network.ConnectMessage:
+		case sebaknetwork.ConnectMessage:
 			nr.log.Debug("got `ConnectMessage`", "message", message.String()[:50])
-			if _, err := util.NewValidatorFromString(message.Data); err != nil {
+			if _, err := sebakcommon.NewValidatorFromString(message.Data); err != nil {
 				nr.log.Error("invalid validator data was received", "data", message.Data)
 				continue
 			}
-		case network.MessageFromClient:
+		case sebaknetwork.MessageFromClient:
 			nr.log.Debug("got `MessageFromClient`", "message", message.String()[:50])
 
 			/*
@@ -172,14 +172,14 @@ func (nr *NodeRunner) handleMessage() {
 				- TODO check already in BlockTransactionHistory
 			*/
 
-			if _, err = util.Checker(nr.handleMessageFromClientCheckerFuncsContext, nr.handleMessageFromClientCheckerFuncs...)(nr, message); err != nil {
-				if _, ok := err.(util.CheckerErrorStop); ok {
+			if _, err = sebakcommon.Checker(nr.handleMessageFromClientCheckerFuncsContext, nr.handleMessageFromClientCheckerFuncs...)(nr, message); err != nil {
+				if _, ok := err.(sebakcommon.CheckerErrorStop); ok {
 					continue
 				}
 				nr.log.Error("failed to handle message from client", "error", err)
 				continue
 			}
-		case network.BallotMessage:
+		case sebaknetwork.BallotMessage:
 			nr.log.Debug("got `Ballot`", "message", message.String()[:50])
 			/*
 				- TODO check already `IsWellFormed()`
@@ -187,8 +187,8 @@ func (nr *NodeRunner) handleMessage() {
 				- TODO check already in BlockTransactionHistory
 			*/
 
-			if _, err = util.Checker(nr.handleBallotCheckerFuncsContext, nr.handleBallotCheckerFuncs...)(nr, message); err != nil {
-				if _, ok := err.(util.CheckerErrorStop); ok {
+			if _, err = sebakcommon.Checker(nr.handleBallotCheckerFuncsContext, nr.handleBallotCheckerFuncs...)(nr, message); err != nil {
+				if _, ok := err.(sebakcommon.CheckerErrorStop); ok {
 					continue
 				}
 				nr.log.Error("failed to handle ballot", "error", err)

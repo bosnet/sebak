@@ -6,7 +6,7 @@ import (
 	"math"
 
 	"github.com/spikeekips/sebak/lib/error"
-	"github.com/spikeekips/sebak/lib/util"
+	"github.com/spikeekips/sebak/lib/common"
 )
 
 type VotingHole string
@@ -90,7 +90,7 @@ func (vs VotingStateStaging) IsStorable() bool {
 }
 
 type VotingResult struct {
-	util.SafeLock
+	sebakcommon.SafeLock
 
 	ID          string      // ID is unique and sequenital
 	MessageHash string      // MessageHash is `Message.Hash`
@@ -111,7 +111,7 @@ func NewVotingResult(ballot Ballot) (vr *VotingResult, err error) {
 	ballots[ballot.State()][ballot.B.NodeKey] = NewVotingResultBallotFromBallot(ballot)
 
 	vr = &VotingResult{
-		ID:          util.GetUniqueIDFromUUID(),
+		ID:          sebakcommon.GetUniqueIDFromUUID(),
 		MessageHash: ballot.MessageHash(),
 		State:       ballot.State(),
 		Ballots:     ballots,
@@ -167,7 +167,7 @@ func (vr *VotingResult) VotedCount(state BallotState) int {
 	return len(vr.VotedBallotsByState(state))
 }
 
-var VotingResultCheckerFuns = []util.CheckerFunc{
+var VotingResultCheckerFuns = []sebakcommon.CheckerFunc{
 	checkBallotResultValidHash,
 }
 
@@ -175,7 +175,7 @@ func (vr *VotingResult) Add(ballot Ballot) (err error) {
 	vr.Lock()
 	defer vr.Unlock()
 
-	if _, err = util.Checker(context.Background(), VotingResultCheckerFuns...)(vr, ballot); err != nil {
+	if _, err = sebakcommon.Checker(context.Background(), VotingResultCheckerFuns...)(vr, ballot); err != nil {
 		return
 	}
 	vr.Ballots[ballot.State()][ballot.B.NodeKey] = NewVotingResultBallotFromBallot(ballot)
@@ -343,7 +343,7 @@ type DefaultVotingThresholdPolicy struct {
 }
 
 func (vt *DefaultVotingThresholdPolicy) String() string {
-	o := util.MustJSONMarshal(map[string]interface{}{
+	o := sebakcommon.MustJSONMarshal(map[string]interface{}{
 		"init":       vt.init,
 		"sign":       vt.sign,
 		"accept":     vt.accept,

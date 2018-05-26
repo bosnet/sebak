@@ -6,7 +6,7 @@ import (
 
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/spikeekips/sebak/lib/storage"
-	"github.com/spikeekips/sebak/lib/util"
+	"github.com/spikeekips/sebak/lib/common"
 	"github.com/stellar/go/keypair"
 )
 
@@ -23,7 +23,7 @@ type Operation struct {
 }
 
 func (o Operation) MakeHash() []byte {
-	return util.MustMakeObjectHash(o)
+	return sebakcommon.MustMakeObjectHash(o)
 }
 
 func (o Operation) MakeHashString() string {

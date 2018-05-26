@@ -8,7 +8,7 @@ import (
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/spikeekips/sebak/lib/error"
 	"github.com/spikeekips/sebak/lib/storage"
-	"github.com/spikeekips/sebak/lib/util"
+	"github.com/spikeekips/sebak/lib/common"
 	"github.com/stellar/go/keypair"
 )
 
@@ -21,12 +21,12 @@ func (bd BallotData) IsEmpty() bool {
 	return bd.Data == nil
 }
 
-func (bd BallotData) Message() util.Message {
+func (bd BallotData) Message() sebakcommon.Message {
 	if bd.IsEmpty() {
 		return nil
 	}
 
-	return bd.Data.(util.Message)
+	return bd.Data.(sebakcommon.Message)
 }
 
 func (bd BallotData) Serialize() ([]byte, error) {
@@ -89,7 +89,7 @@ func (b Ballot) String() string {
 
 // NewBallotFromMessage creates `Ballot` from `Message`. It needs to be
 // `Ballot.IsWellFormed()` and `Ballot.Validate()`.
-func NewBallotFromMessage(nodeKey string, m util.Message) (ballot Ballot, err error) {
+func NewBallotFromMessage(nodeKey string, m sebakcommon.Message) (ballot Ballot, err error) {
 	body := BallotBody{
 		Hash:       m.GetHash(),
 		NodeKey:    nodeKey,
@@ -133,7 +133,7 @@ func NewBallotFromJSON(b []byte) (ballot Ballot, err error) {
 	return
 }
 
-var BallotWellFormedCheckerFuncs = []util.CheckerFunc{
+var BallotWellFormedCheckerFuncs = []sebakcommon.CheckerFunc{
 	checkBallotEmptyNodeKey,
 	checkBallotEmptyHashMatch,
 	checkBallotVerifySignature,
@@ -143,7 +143,7 @@ var BallotWellFormedCheckerFuncs = []util.CheckerFunc{
 }
 
 func (b Ballot) IsWellFormed() (err error) {
-	if _, err = util.Checker(context.Background(), BallotWellFormedCheckerFuncs...)(b); err != nil {
+	if _, err = sebakcommon.Checker(context.Background(), BallotWellFormedCheckerFuncs...)(b); err != nil {
 		return
 	}
 
@@ -174,7 +174,7 @@ func (b Ballot) GetType() string {
 	return b.T
 }
 
-func (b Ballot) Equal(m util.Message) bool {
+func (b Ballot) Equal(m sebakcommon.Message) bool {
 	return b.H.Hash == m.GetHash()
 }
 
@@ -190,7 +190,7 @@ func (b Ballot) Data() BallotData {
 	return b.D
 }
 
-func (b *Ballot) SetMessage(m util.Message) {
+func (b *Ballot) SetMessage(m sebakcommon.Message) {
 	b.D.Data = m
 }
 
@@ -242,11 +242,11 @@ type BallotBody struct {
 }
 
 func (bb BallotBody) MakeHash() []byte {
-	return util.MustMakeObjectHash(bb)
+	return sebakcommon.MustMakeObjectHash(bb)
 }
 
 type BallotBoxes struct {
-	util.SafeLock
+	sebakcommon.SafeLock
 
 	Results map[ /* `Message.GetHash()`*/ string]*VotingResult
 
@@ -268,7 +268,7 @@ func (b *BallotBoxes) Len() int {
 	return len(b.Results)
 }
 
-func (b *BallotBoxes) HasMessage(m util.Message) bool {
+func (b *BallotBoxes) HasMessage(m sebakcommon.Message) bool {
 	return b.HasMessageByString(m.GetHash())
 }
 
@@ -343,7 +343,7 @@ func (b *BallotBoxes) AddBallot(ballot Ballot) (isNew bool, err error) {
 }
 
 type BallotBox struct {
-	util.SafeLock
+	sebakcommon.SafeLock
 
 	Hashes sort.StringSlice // `Message.Hash`es
 }
@@ -356,12 +356,12 @@ func (b *BallotBox) Len() int {
 	return len(b.Hashes)
 }
 
-func (b *BallotBox) HasMessage(m util.Message) bool {
+func (b *BallotBox) HasMessage(m sebakcommon.Message) bool {
 	return b.HasMessageByString(m.GetHash())
 }
 
 func (b *BallotBox) HasMessageByString(hash string) bool {
-	return util.InStringArray(b.Hashes, hash)
+	return sebakcommon.InStringArray(b.Hashes, hash)
 }
 
 func (b *BallotBox) AddVotingResult(vr *VotingResult) (err error) {

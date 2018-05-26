@@ -6,7 +6,7 @@ import (
 
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/spikeekips/sebak/lib/storage"
-	"github.com/spikeekips/sebak/lib/util"
+	"github.com/spikeekips/sebak/lib/common"
 	"github.com/stellar/go/keypair"
 )
 
@@ -56,7 +56,7 @@ func NewTransactionFromJSON(b []byte) (tx Transaction, err error) {
 	return
 }
 
-var TransactionWellFormedCheckerFuncs = []util.CheckerFunc{
+var TransactionWellFormedCheckerFuncs = []sebakcommon.CheckerFunc{
 	CheckTransactionSource,
 	CheckTransactionBaseFee,
 	CheckTransactionOperationIsWellFormed,
@@ -65,7 +65,7 @@ var TransactionWellFormedCheckerFuncs = []util.CheckerFunc{
 }
 
 func (o Transaction) IsWellFormed() (err error) {
-	if _, err = util.Checker(context.Background(), TransactionWellFormedCheckerFuncs...)(o); err != nil {
+	if _, err = sebakcommon.Checker(context.Background(), TransactionWellFormedCheckerFuncs...)(o); err != nil {
 		return
 	}
 
@@ -90,7 +90,7 @@ func (o Transaction) GetType() string {
 	return o.T
 }
 
-func (o Transaction) Equal(m util.Message) bool {
+func (o Transaction) Equal(m sebakcommon.Message) bool {
 	return o.H.Hash == m.GetHash()
 }
 
@@ -144,7 +144,7 @@ type TransactionBody struct {
 }
 
 func (tb TransactionBody) MakeHash() []byte {
-	return util.MustMakeObjectHash(tb)
+	return sebakcommon.MustMakeObjectHash(tb)
 }
 
 func (tb TransactionBody) MakeHashString() string {

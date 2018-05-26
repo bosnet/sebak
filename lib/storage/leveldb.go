@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/spikeekips/sebak/lib/util"
+	"github.com/spikeekips/sebak/lib/common"
 	"github.com/syndtr/goleveldb/leveldb"
 	leveldbStorage "github.com/syndtr/goleveldb/leveldb/storage"
 	leveldbUtil "github.com/syndtr/goleveldb/leveldb/util"
@@ -71,11 +71,11 @@ func (st *LevelDBBackend) Get(k string, i interface{}) (err error) {
 
 func (st *LevelDBBackend) New(k string, v interface{}) (err error) {
 	var encoded []byte
-	serializable, ok := v.(util.Serializable)
+	serializable, ok := v.(sebakcommon.Serializable)
 	if ok {
 		encoded, err = serializable.Serialize()
 	} else {
-		encoded, err = util.EncodeJSONValue(v)
+		encoded, err = sebakcommon.EncodeJSONValue(v)
 	}
 	if err != nil {
 		return
@@ -113,7 +113,7 @@ func (st *LevelDBBackend) News(vs ...Item) (err error) {
 	batch := new(leveldb.Batch)
 	for _, v := range vs {
 		var encoded []byte
-		if encoded, err = util.EncodeJSONValue(v); err != nil {
+		if encoded, err = sebakcommon.EncodeJSONValue(v); err != nil {
 			return
 		}
 
@@ -127,7 +127,7 @@ func (st *LevelDBBackend) News(vs ...Item) (err error) {
 
 func (st *LevelDBBackend) Set(k string, v interface{}) (err error) {
 	var encoded []byte
-	if encoded, err = util.EncodeJSONValue(v); err != nil {
+	if encoded, err = sebakcommon.EncodeJSONValue(v); err != nil {
 		return
 	}
 
@@ -163,7 +163,7 @@ func (st *LevelDBBackend) Sets(vs ...Item) (err error) {
 	batch := new(leveldb.Batch)
 	for _, v := range vs {
 		var encoded []byte
-		if encoded, err = util.EncodeJSONValue(v); err != nil {
+		if encoded, err = sebakcommon.EncodeJSONValue(v); err != nil {
 			return
 		}
 

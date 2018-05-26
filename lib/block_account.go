@@ -7,7 +7,7 @@ import (
 	"strconv"
 
 	"github.com/spikeekips/sebak/lib/storage"
-	"github.com/spikeekips/sebak/lib/util"
+	"github.com/spikeekips/sebak/lib/common"
 )
 
 /*
@@ -55,7 +55,7 @@ func (b *BlockAccount) Save(st *storage.LevelDBBackend) (err error) {
 		// TODO consider to use
 		// [`Transaction`](https://godoc.org/github.com/syndtr/goleveldb/leveldb#DB.OpenTransaction)
 		err = st.New(key, b)
-		createdKey := GetBlockAccountCreatedKey(util.GetUniqueIDFromUUID())
+		createdKey := GetBlockAccountCreatedKey(sebakcommon.GetUniqueIDFromUUID())
 		err = st.New(createdKey, b.Address)
 	}
 
@@ -63,7 +63,7 @@ func (b *BlockAccount) Save(st *storage.LevelDBBackend) (err error) {
 }
 
 func (b *BlockAccount) Serialize() (encoded []byte, err error) {
-	encoded, err = util.EncodeJSONValue(b)
+	encoded, err = sebakcommon.EncodeJSONValue(b)
 	return
 }
 

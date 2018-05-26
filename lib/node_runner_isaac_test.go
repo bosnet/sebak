@@ -6,12 +6,12 @@ import (
 	"testing"
 
 	"github.com/spikeekips/sebak/lib/network"
-	"github.com/spikeekips/sebak/lib/util"
+	"github.com/spikeekips/sebak/lib/common"
 )
 
 // TestNodeRunnerConsensus checks, all the validators can get consensus.
 func TestNodeRunnerConsensus(t *testing.T) {
-	defer network.CleanUpMemoryServer()
+	defer sebaknetwork.CleanUpMemoryNetwork()
 
 	numberOfNodes := 10
 	nodeRunners := createNodeRunnersWithReady(numberOfNodes)
@@ -23,7 +23,7 @@ func TestNodeRunnerConsensus(t *testing.T) {
 
 	wg.Add(numberOfNodes)
 
-	var handleBallotCheckerFuncs = []util.CheckerFunc{
+	var handleBallotCheckerFuncs = []sebakcommon.CheckerFunc{
 		CheckNodeRunnerHandleBallotIsWellformed,
 		CheckNodeRunnerHandleBallotCheckIsNew,
 		CheckNodeRunnerHandleBallotReceiveBallot,
@@ -32,12 +32,12 @@ func TestNodeRunnerConsensus(t *testing.T) {
 	}
 
 	var dones []VotingStateStaging
-	var deferFunc util.DeferFunc = func(n int, f util.CheckerFunc, ctx context.Context, err error) {
+	var deferFunc sebakcommon.DeferFunc = func(n int, f sebakcommon.CheckerFunc, ctx context.Context, err error) {
 		if err == nil {
 			return
 		}
 
-		if _, ok := err.(util.CheckerErrorStop); ok {
+		if _, ok := err.(sebakcommon.CheckerErrorStop); ok {
 			vs, _ := ctx.Value("vs").(VotingStateStaging)
 			if vs.State == BallotStateALLCONFIRM {
 				dones = append(dones, vs)
@@ -53,7 +53,7 @@ func TestNodeRunnerConsensus(t *testing.T) {
 
 	nr0 := nodeRunners[0]
 
-	client := nr0.TransportServer().GetClient(nr0.Node().Endpoint())
+	client := nr0.Network().GetClient(nr0.Node().Endpoint())
 
 	tx := makeTransaction(nr0.Node().Keypair())
 	client.SendMessage(tx)
@@ -75,7 +75,7 @@ func TestNodeRunnerConsensus(t *testing.T) {
 // TestNodeRunnerConsensusWithVotingNO checks, consensus will be ended with
 // VotingNO over threshold.
 func TestNodeRunnerConsensusWithVotingNO(t *testing.T) {
-	defer network.CleanUpMemoryServer()
+	defer sebaknetwork.CleanUpMemoryNetwork()
 
 	numberOfNodes := 3
 	nodeRunners := createNodeRunnersWithReady(numberOfNodes)
@@ -97,14 +97,14 @@ func TestNodeRunnerConsensusWithVotingNO(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(numberOfNodes)
 
-	var handleBallotCheckerFuncs = []util.CheckerFunc{
+	var handleBallotCheckerFuncs = []sebakcommon.CheckerFunc{
 		CheckNodeRunnerHandleBallotIsWellformed,
 		CheckNodeRunnerHandleBallotCheckIsNew,
 		CheckNodeRunnerHandleBallotReceiveBallot,
 		// this will manipulate the VotingHole for `say_no_validators`
 		func(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
 			nr := target.(*NodeRunner)
-			if !util.InStringArray(say_no_validators, nr.Node().Address()) {
+			if !sebakcommon.InStringArray(say_no_validators, nr.Node().Address()) {
 				return ctx, nil
 			}
 
@@ -125,7 +125,7 @@ func TestNodeRunnerConsensusWithVotingNO(t *testing.T) {
 		CheckNodeRunnerHandleBallotBroadcast,
 	}
 
-	var deferFunc util.DeferFunc = func(n int, f util.CheckerFunc, ctx context.Context, err error) {
+	var deferFunc sebakcommon.DeferFunc = func(n int, f sebakcommon.CheckerFunc, ctx context.Context, err error) {
 		if err == nil {
 			return
 		}
@@ -152,7 +152,7 @@ func TestNodeRunnerConsensusWithVotingNO(t *testing.T) {
 	}
 	nr0 := nodeRunners[0]
 
-	client := nr0.TransportServer().GetClient(nr0.Node().Endpoint())
+	client := nr0.Network().GetClient(nr0.Node().Endpoint())
 
 	tx := makeTransaction(nr0.Node().Keypair())
 	client.SendMessage(tx)
