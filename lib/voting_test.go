@@ -3,16 +3,17 @@ package sebak
 import (
 	"testing"
 
+	"github.com/spikeekips/sebak/lib/common"
 	"github.com/stellar/go/keypair"
 )
 
 func makeBallotsWithSameMessageHash(n int) (kps []*keypair.Full, ballots []Ballot) {
-	baseKpNode, _, baseBallot := makeNewBallot(BallotStateINIT, VotingYES)
+	baseKpNode, _, baseBallot := makeNewBallot(sebakcommon.BallotStateINIT, VotingYES)
 	kps = append(kps, baseKpNode)
 	ballots = append(ballots, baseBallot)
 
 	for i := 0; i < n-1; i++ {
-		kpNode, _, ballot := makeNewBallot(BallotStateINIT, VotingYES)
+		kpNode, _, ballot := makeNewBallot(sebakcommon.BallotStateINIT, VotingYES)
 		ballot.B.Hash = baseBallot.MessageHash()
 		ballot.UpdateHash()
 		ballot.Sign(kpNode)
@@ -25,7 +26,7 @@ func makeBallotsWithSameMessageHash(n int) (kps []*keypair.Full, ballots []Ballo
 }
 
 func TestNewVotingResult(t *testing.T) {
-	_, _, ballot := makeNewBallot(BallotStateINIT, VotingYES)
+	_, _, ballot := makeNewBallot(sebakcommon.BallotStateINIT, VotingYES)
 
 	vr, err := NewVotingResult(ballot)
 	if err != nil {
@@ -39,8 +40,8 @@ func TestNewVotingResult(t *testing.T) {
 }
 
 func TestAddVotingResult(t *testing.T) {
-	_, _, ballot0 := makeNewBallot(BallotStateINIT, VotingYES)
-	kpNode1, _, ballot1 := makeNewBallot(BallotStateINIT, VotingYES)
+	_, _, ballot0 := makeNewBallot(sebakcommon.BallotStateINIT, VotingYES)
+	kpNode1, _, ballot1 := makeNewBallot(sebakcommon.BallotStateINIT, VotingYES)
 
 	vr, _ := NewVotingResult(ballot0)
 	if err := vr.Add(ballot1); err == nil {
@@ -67,17 +68,17 @@ func TestVotingResultCheckThreshold(t *testing.T) {
 
 	policy, _ := NewDefaultVotingThresholdPolicy(100, 100, 100)
 	policy.SetValidators(numberOfBallots)
-	if _, ended := vr.CheckThreshold(BallotStateNONE, policy); ended {
+	if _, ended := vr.CheckThreshold(sebakcommon.BallotStateNONE, policy); ended {
 		t.Error("`BallotStateNONE` must be `false`")
 		return
 	}
-	if _, ended := vr.CheckThreshold(BallotStateINIT, policy); !ended {
+	if _, ended := vr.CheckThreshold(sebakcommon.BallotStateINIT, policy); !ended {
 		t.Error("`BallotStateINIT` must be `true`")
 		return
 	}
 	policy, _ = NewDefaultVotingThresholdPolicy(100, 100, 100)
 	policy.SetValidators(numberOfBallots * 2)
-	if _, ended := vr.CheckThreshold(BallotStateINIT, policy); ended {
+	if _, ended := vr.CheckThreshold(sebakcommon.BallotStateINIT, policy); ended {
 		t.Error("`BallotStateINIT` must be `false`")
 		return
 	}
@@ -101,7 +102,7 @@ func TestVotingResultGetResult(t *testing.T) {
 			t.Error("failed to make agreement")
 			return
 		}
-		if state != BallotStateINIT {
+		if state != sebakcommon.BallotStateINIT {
 			t.Errorf("state must be `BallotStateINIT`: %v", state)
 			return
 		}
@@ -121,7 +122,7 @@ func TestVotingResultGetResult(t *testing.T) {
 			t.Error("agreement must be failed")
 			return
 		}
-		if state != BallotStateINIT {
+		if state != sebakcommon.BallotStateINIT {
 			t.Errorf("state must be `BallotStateINIT`: %v", state)
 			return
 		}
@@ -143,7 +144,7 @@ func TestVotingResultGetResultHigherStateMustBePicked(t *testing.T) {
 
 	// move to `BallotStateACCEPT`
 	for i, ballot := range ballots {
-		ballot.B.State = BallotStateACCEPT
+		ballot.B.State = sebakcommon.BallotStateACCEPT
 		ballot.UpdateHash()
 		ballot.Sign(kps[i])
 
@@ -155,7 +156,7 @@ func TestVotingResultGetResultHigherStateMustBePicked(t *testing.T) {
 		policy.SetValidators(numberOfBallots)
 
 		_, state, ended := vr.MakeResult(policy)
-		if state != BallotStateACCEPT {
+		if state != sebakcommon.BallotStateACCEPT {
 			t.Error("state must be `BallotStateACCEPT`")
 			return
 		}

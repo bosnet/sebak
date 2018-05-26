@@ -5,10 +5,11 @@ import (
 
 	"github.com/stellar/go/keypair"
 
+	"github.com/spikeekips/sebak/lib/common"
 	"github.com/spikeekips/sebak/lib/error"
 )
 
-func makeNewBallot(state BallotState, vote VotingHole) (*keypair.Full, Transaction, Ballot) {
+func makeNewBallot(state sebakcommon.BallotState, vote VotingHole) (*keypair.Full, Transaction, Ballot) {
 	kpNode, tx := MakeTransactions(1)
 	ballot, _ := NewBallotFromMessage(kpNode.Address(), tx)
 
@@ -44,7 +45,7 @@ func TestNewBallot(t *testing.T) {
 		t.Error("`Ballot.B.Hash` mismatch")
 		return
 	}
-	if ballot.B.State != InitialState {
+	if ballot.B.State != sebakcommon.InitialState {
 		t.Error("`Ballot.B.State` is not `InitialState`")
 		return
 	}
@@ -55,7 +56,7 @@ func TestNewBallot(t *testing.T) {
 }
 
 func TestBallotSign(t *testing.T) {
-	kpNode, _, ballot := makeNewBallot(BallotStateINIT, VotingYES)
+	kpNode, _, ballot := makeNewBallot(sebakcommon.BallotStateINIT, VotingYES)
 	ballot.Sign(kpNode)
 
 	if len(ballot.H.Signature) < 1 {
@@ -70,7 +71,7 @@ func TestBallotSign(t *testing.T) {
 }
 
 func TestBallotVote(t *testing.T) {
-	kpNode, _, ballot := makeNewBallot(BallotStateINIT, VotingNOTYET)
+	kpNode, _, ballot := makeNewBallot(sebakcommon.BallotStateINIT, VotingNOTYET)
 
 	var err error
 
@@ -107,7 +108,7 @@ func TestBallotVote(t *testing.T) {
 }
 
 func TestBallotNewBallotFromMessageWithTransaction(t *testing.T) {
-	kp, _, ballot := makeNewBallot(BallotStateINIT, VotingYES)
+	kp, _, ballot := makeNewBallot(sebakcommon.BallotStateINIT, VotingYES)
 	ballot.Sign(kp)
 
 	jsoned, err := ballot.Serialize()

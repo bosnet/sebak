@@ -5,8 +5,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/spikeekips/sebak/lib/network"
 	"github.com/spikeekips/sebak/lib/common"
+	"github.com/spikeekips/sebak/lib/network"
 )
 
 // TestNodeRunnerConsensus checks, all the validators can get consensus.
@@ -39,7 +39,7 @@ func TestNodeRunnerConsensus(t *testing.T) {
 
 		if _, ok := err.(sebakcommon.CheckerErrorStop); ok {
 			vs, _ := ctx.Value("vs").(VotingStateStaging)
-			if vs.State == BallotStateALLCONFIRM {
+			if vs.State == sebakcommon.BallotStateALLCONFIRM {
 				dones = append(dones, vs)
 				wg.Done()
 			}
@@ -61,7 +61,7 @@ func TestNodeRunnerConsensus(t *testing.T) {
 	wg.Wait()
 
 	for _, done := range dones {
-		if done.State != BallotStateALLCONFIRM {
+		if done.State != sebakcommon.BallotStateALLCONFIRM {
 			t.Error("failed to get consensus")
 			return
 		}
@@ -85,7 +85,7 @@ func TestNodeRunnerConsensusWithVotingNO(t *testing.T) {
 	}
 
 	for _, nr := range nodeRunners {
-		nr.Policy().Reset(BallotStateINIT, 100)
+		nr.Policy().Reset(sebakcommon.BallotStateINIT, 100)
 	}
 
 	say_no_validators := []string{
@@ -109,7 +109,7 @@ func TestNodeRunnerConsensusWithVotingNO(t *testing.T) {
 			}
 
 			ballot := ctx.Value("ballot").(Ballot)
-			if ballot.State() != BallotStateINIT {
+			if ballot.State() != sebakcommon.BallotStateINIT {
 				return ctx, nil
 			}
 
@@ -136,7 +136,7 @@ func TestNodeRunnerConsensusWithVotingNO(t *testing.T) {
 			t.Error("VotingResult must be closed.")
 			return
 		}
-		if vs.State != BallotStateINIT {
+		if vs.State != sebakcommon.BallotStateINIT {
 			t.Error("the final state must be `BallotStateINIT`.")
 			return
 		}

@@ -1,23 +1,23 @@
 package sebak
 
 import (
+	"github.com/spikeekips/sebak/lib/common"
 	"github.com/spikeekips/sebak/lib/error"
 	"github.com/spikeekips/sebak/lib/storage"
-	"github.com/spikeekips/sebak/lib/common"
 )
 
 type ISAAC struct {
 	sebakcommon.SafeLock
 
 	Node                  sebakcommon.Node
-	VotingThresholdPolicy VotingThresholdPolicy
+	VotingThresholdPolicy sebakcommon.VotingThresholdPolicy
 
 	Boxes *BallotBoxes
 
 	Storage *storage.LevelDBBackend
 }
 
-func NewISAAC(node sebakcommon.Node, votingThresholdPolicy VotingThresholdPolicy) (is *ISAAC, err error) {
+func NewISAAC(node sebakcommon.Node, votingThresholdPolicy sebakcommon.VotingThresholdPolicy) (is *ISAAC, err error) {
 	is = &ISAAC{
 		Node: node,
 		VotingThresholdPolicy: votingThresholdPolicy,
@@ -58,7 +58,7 @@ func (is *ISAAC) ReceiveMessage(m sebakcommon.Message) (ballot Ballot, err error
 	}
 
 	// self-sign; make new `Ballot` from `Message`
-	ballot.SetState(BallotStateINIT)
+	ballot.SetState(sebakcommon.BallotStateINIT)
 	ballot.Vote(VotingYES) // TODO YES or NO
 	ballot.UpdateHash()
 	ballot.Sign(is.Node.Keypair())
@@ -88,9 +88,9 @@ func (is *ISAAC) ReceiveBallot(ballot Ballot) (vs VotingStateStaging, err error)
 	*/
 
 	switch ballot.State() {
-	case BallotStateINIT:
+	case sebakcommon.BallotStateINIT:
 		vs, err = is.receiveBallotStateINIT(ballot)
-	case BallotStateALLCONFIRM:
+	case sebakcommon.BallotStateALLCONFIRM:
 		err = sebakerror.ErrorBallotHasInvalidState
 		return
 	default:
@@ -119,7 +119,7 @@ func (is *ISAAC) receiveBallotStateINIT(ballot Ballot) (vs VotingStateStaging, e
 		}
 
 		// self-sign
-		newBallot.SetState(BallotStateINIT)
+		newBallot.SetState(sebakcommon.BallotStateINIT)
 		newBallot.Vote(VotingYES) // TODO YES or NO
 		newBallot.UpdateHash()
 		newBallot.Sign(is.Node.Keypair())

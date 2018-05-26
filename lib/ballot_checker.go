@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/btcsuite/btcutil/base58"
+	"github.com/spikeekips/sebak/lib/common"
 	"github.com/spikeekips/sebak/lib/error"
 )
 
@@ -38,7 +39,7 @@ func checkBallotNoVoting(ctx context.Context, target interface{}, args ...interf
 }
 
 func checkBallotValidState(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
-	if target.(Ballot).State() == BallotStateNONE {
+	if target.(Ballot).State() == sebakcommon.BallotStateNONE {
 		return ctx, sebakerror.ErrorInvalidState
 	}
 	return ctx, nil
@@ -48,10 +49,10 @@ func checkBallotHasMessage(ctx context.Context, target interface{}, args ...inte
 	ballot := target.(Ballot)
 
 	if ballot.Data().IsEmpty() {
-		if ballot.State() == BallotStateINIT {
+		if ballot.State() == sebakcommon.BallotStateINIT {
 			return ctx, sebakerror.ErrorBallotEmptyMessage
 		}
-	} else if ballot.State() != BallotStateINIT {
+	} else if ballot.State() != sebakcommon.BallotStateINIT {
 		return ctx, sebakerror.ErrorBallotHasMessage
 	}
 

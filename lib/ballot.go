@@ -6,9 +6,9 @@ import (
 	"sort"
 
 	"github.com/btcsuite/btcutil/base58"
+	"github.com/spikeekips/sebak/lib/common"
 	"github.com/spikeekips/sebak/lib/error"
 	"github.com/spikeekips/sebak/lib/storage"
-	"github.com/spikeekips/sebak/lib/common"
 	"github.com/stellar/go/keypair"
 )
 
@@ -70,7 +70,7 @@ func (b Ballot) Clone() Ballot {
 }
 
 func (b Ballot) Serialize() (encoded []byte, err error) {
-	if b.State() == BallotStateINIT {
+	if b.State() == sebakcommon.BallotStateINIT {
 		encoded, err = json.Marshal(b)
 		return
 	}
@@ -93,7 +93,7 @@ func NewBallotFromMessage(nodeKey string, m sebakcommon.Message) (ballot Ballot,
 	body := BallotBody{
 		Hash:       m.GetHash(),
 		NodeKey:    nodeKey,
-		State:      InitialState,
+		State:      sebakcommon.InitialState,
 		VotingHole: VotingNOTYET,
 	}
 	data := BallotData{
@@ -194,11 +194,11 @@ func (b *Ballot) SetMessage(m sebakcommon.Message) {
 	b.D.Data = m
 }
 
-func (b Ballot) State() BallotState {
+func (b Ballot) State() sebakcommon.BallotState {
 	return b.B.State
 }
 
-func (b *Ballot) SetState(state BallotState) {
+func (b *Ballot) SetState(state sebakcommon.BallotState) {
 	b.B.State = state
 
 	return
@@ -234,11 +234,11 @@ type BallotHeader struct {
 }
 
 type BallotBody struct {
-	Hash       string      `json:"hash"`
-	NodeKey    string      `json:"node_key"` // validator's public address
-	State      BallotState `json:"state"`
-	VotingHole VotingHole  `json:"voting_hole"`
-	Reason     string      `json:"reason"`
+	Hash       string                  `json:"hash"`
+	NodeKey    string                  `json:"node_key"` // validator's public address
+	State      sebakcommon.BallotState `json:"state"`
+	VotingHole VotingHole              `json:"voting_hole"`
+	Reason     string                  `json:"reason"`
 }
 
 func (bb BallotBody) MakeHash() []byte {
@@ -333,7 +333,7 @@ func (b *BallotBoxes) AddBallot(ballot Ballot) (isNew bool, err error) {
 	}
 
 	// unknown ballot will be in `WaitingBox`
-	if ballot.State() == BallotStateINIT {
+	if ballot.State() == sebakcommon.BallotStateINIT {
 		err = b.AddVotingResult(vr, b.WaitingBox)
 	} else {
 		err = b.AddVotingResult(vr, b.VotingBox)

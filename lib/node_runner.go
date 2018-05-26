@@ -5,13 +5,13 @@ import (
 	"time"
 
 	logging "github.com/inconshreveable/log15"
-	"github.com/spikeekips/sebak/lib/network"
 	"github.com/spikeekips/sebak/lib/common"
+	"github.com/spikeekips/sebak/lib/network"
 )
 
 type NodeRunner struct {
 	currentNode       sebakcommon.Node
-	policy            VotingThresholdPolicy
+	policy            sebakcommon.VotingThresholdPolicy
 	network           sebaknetwork.Network
 	consensus         Consensus
 	connectionManager *sebaknetwork.ConnectionManager
@@ -28,7 +28,7 @@ type NodeRunner struct {
 
 func NewNodeRunner(
 	currentNode sebakcommon.Node,
-	policy VotingThresholdPolicy,
+	policy sebakcommon.VotingThresholdPolicy,
 	network sebaknetwork.Network,
 	consensusProtocol Consensus,
 ) *NodeRunner {
@@ -44,6 +44,7 @@ func NewNodeRunner(
 	nr.connectionManager = sebaknetwork.NewConnectionManager(
 		nr.currentNode,
 		nr.network,
+		nr.policy,
 		nr.currentNode.GetValidators(),
 	)
 	nr.network.AddWatcher(nr.connectionManager.ConnectionWatcher)
@@ -91,7 +92,7 @@ func (nr *NodeRunner) ConnectionManager() *sebaknetwork.ConnectionManager {
 	return nr.connectionManager
 }
 
-func (nr *NodeRunner) Policy() VotingThresholdPolicy {
+func (nr *NodeRunner) Policy() sebakcommon.VotingThresholdPolicy {
 	return nr.policy
 }
 

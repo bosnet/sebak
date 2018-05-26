@@ -15,26 +15,32 @@ type ConnectionManager struct {
 	sync.Mutex
 
 	currentNode sebakcommon.Node
-	server      Network
-	validators  map[ /* nodd.Address() */ string]*sebakcommon.Validator
-	clients     map[ /* nodd.Address() */ string]NetworkClient
-	connected   map[ /* nodd.Address() */ string]bool
+	network     Network
+	policy      sebakcommon.VotingThresholdPolicy
+
+	validators map[ /* nodd.Address() */ string]*sebakcommon.Validator
+	clients    map[ /* nodd.Address() */ string]NetworkClient
+	connected  map[ /* nodd.Address() */ string]bool
 
 	log logging.Logger
 }
 
 func NewConnectionManager(
 	currentNode sebakcommon.Node,
-	server Network,
+	network Network,
+	policy sebakcommon.VotingThresholdPolicy,
 	validators map[string]*sebakcommon.Validator,
 ) *ConnectionManager {
 	return &ConnectionManager{
 		currentNode: currentNode,
-		server:      server,
-		validators:  validators,
-		clients:     map[string]NetworkClient{},
-		connected:   map[string]bool{},
-		log:         log.New(logging.Ctx{"node": currentNode.Alias()}),
+
+		network:    network,
+		policy:     policy,
+		validators: validators,
+
+		clients:   map[string]NetworkClient{},
+		connected: map[string]bool{},
+		log:       log.New(logging.Ctx{"node": currentNode.Alias()}),
 	}
 }
 
@@ -53,7 +59,7 @@ func (c *ConnectionManager) GetConnection(address string) (client NetworkClient)
 		return
 	}
 
-	client = c.server.GetClient(validator.Endpoint())
+	client = c.network.GetClient(validator.Endpoint())
 	if client != nil {
 		c.clients[address] = client
 	}
@@ -70,10 +76,12 @@ func (c *ConnectionManager) Start() {
 func (c *ConnectionManager) setConnected(v *sebakcommon.Validator, connected bool) bool {
 	c.Lock()
 	defer c.Unlock()
+	defer func() {
+		c.policy.SetConnected(c.CountConnected())
+	}()
 
 	_, ok := c.connected[v.Address()]
 	if !connected {
-
 		delete(c.connected, v.Address())
 		return ok
 	}
