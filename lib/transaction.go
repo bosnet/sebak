@@ -10,6 +10,8 @@ import (
 	"github.com/stellar/go/keypair"
 )
 
+// TODO versioning
+
 type Transaction struct {
 	T string
 	H TransactionHeader

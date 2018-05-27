@@ -44,6 +44,8 @@ func (bd BallotData) String() string {
 	return string(encoded)
 }
 
+// TODO versioning
+
 type Ballot struct {
 	T string
 	H BallotHeader

@@ -135,6 +135,8 @@ func CheckNodeRunnerHandleMessageBroadcast(ctx context.Context, target interface
 	return ctx, nil
 }
 
+// TODO check the ballot from known validators
+
 func CheckNodeRunnerHandleBallotIsWellformed(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
 	message, ok := args[0].(sebaknetwork.Message)
 	if !ok {

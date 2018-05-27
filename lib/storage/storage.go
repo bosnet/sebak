@@ -1,5 +1,6 @@
 package storage
 
+// TODO use URI
 type Config map[string]string
 
 type IterItem struct {

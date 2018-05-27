@@ -63,6 +63,8 @@ const (
 	GetNodeInfoMessage             = "get-node-info"
 )
 
+// TODO versioning
+
 type Message struct {
 	Type MessageType
 	Data []byte
