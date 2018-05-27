@@ -9,15 +9,15 @@ import (
 	"runtime"
 	"strings"
 
-	"golang.org/x/net/http2"
-
 	logging "github.com/inconshreveable/log15"
 	"github.com/mattn/go-isatty"
+	"github.com/stellar/go/keypair"
+	"golang.org/x/net/http2"
+
 	"github.com/spikeekips/sebak/lib"
 	"github.com/spikeekips/sebak/lib/common"
 	"github.com/spikeekips/sebak/lib/network"
 	"github.com/spikeekips/sebak/lib/storage"
-	"github.com/stellar/go/keypair"
 )
 
 // TODO "github.com/cockroachdb/cmux", split request streams
@@ -78,18 +78,20 @@ var (
 	flagKPSecretSeed   string = sebakcommon.GetENVValue("SEBAK_SECRET_SEED", "")
 	flagLogLevel       string = sebakcommon.GetENVValue("SEBAK_LOG_LEVEL", defaultLogLevel.String())
 	flagLogOutput      string = sebakcommon.GetENVValue("SEBAK_LOG_OUTPUT", "")
-	flagVerbose        bool   = false
-	nodeEndpoint       *sebakcommon.Endpoint
+	flagVerbose        bool   = sebakcommon.GetENVValue("SEBAK_VERBOSE", "0") == "1"
 	flagEndpointString string = sebakcommon.GetENVValue(
 		"SEBAK_ENDPOINT",
 		fmt.Sprintf("%s://%s:%d", defaultNetwork, defaultHost, defaultPort),
 	)
-	flagTLSCertFile string = sebakcommon.GetENVValue("SEBAK_TLS_CERT", "sebak.crt")
-	flagTLSKeyFile  string = sebakcommon.GetENVValue("SEBAK_TLS_KEY", "sebak.key")
-	flagValidators  FlagValidators
+	flagStorageConfigString string
+	flagTLSCertFile         string = sebakcommon.GetENVValue("SEBAK_TLS_CERT", "sebak.crt")
+	flagTLSKeyFile          string = sebakcommon.GetENVValue("SEBAK_TLS_KEY", "sebak.key")
+	flagValidators          FlagValidators
 
-	logLevel logging.Lvl
-	log      logging.Logger
+	nodeEndpoint  *sebakcommon.Endpoint
+	storageConfig *storage.Config
+	logLevel      logging.Lvl
+	log           logging.Logger
 )
 
 func printFlagsError(flagName string, err error) {
@@ -111,12 +113,19 @@ func init() {
 	flags.Usage = func() {
 		fmt.Println(filepath.Base(os.Args[0]), "[options]")
 
-		fmt.Fprintf(os.Stderr, "\n")
 		flags.PrintDefaults()
 		fmt.Fprintf(os.Stderr, "\n")
 	}
 
-	flagVerbose = sebakcommon.GetENVValue("SEBAK_VERBOSE", "0") == "1"
+	// storage
+	var currentDirectory string
+	if currentDirectory, err = os.Getwd(); err != nil {
+		printFlagsError("-tls-cert", err)
+	}
+	if currentDirectory, err = filepath.Abs(currentDirectory); err != nil {
+		printFlagsError("-tls-cert", err)
+	}
+	flagStorageConfigString = sebakcommon.GetENVValue("SEBAK_STORAGE", fmt.Sprintf("file://%s/db", currentDirectory))
 
 	// flags
 	flags.StringVar(&flagKPSecretSeed, "secret-seed", flagKPSecretSeed, "secret seed of this node")
@@ -124,6 +133,7 @@ func init() {
 	flags.StringVar(&flagLogOutput, "log-output", flagLogOutput, "set log output file")
 	flags.BoolVar(&flagVerbose, "verbose", flagVerbose, "verbose")
 	flags.StringVar(&flagEndpointString, "endpoint", flagEndpointString, "endpoint uri to listen on ('https://0.0.0.0:12345')")
+	flags.StringVar(&flagStorageConfigString, "storage", flagStorageConfigString, "storage uri")
 	flags.StringVar(&flagTLSCertFile, "tls-cert", flagTLSCertFile, "tls certificate file")
 	flags.StringVar(&flagTLSKeyFile, "tls-Key", flagTLSKeyFile, "tls Keyificate file")
 	flags.Var(&flagValidators, "validator", "set validator: '<public address>,<endpoint url>,<alias>' or <public address>,<endpoint url>")
@@ -162,12 +172,14 @@ func init() {
 	for _, n := range flagValidators {
 		if n.Address() == kp.Address() {
 			printFlagsError("-validator", fmt.Errorf("duplicated public address found"))
-			break
 		}
 		if n.Endpoint() == nodeEndpoint {
 			printFlagsError("-validator", fmt.Errorf("duplicated endpoint found"))
-			break
 		}
+	}
+
+	if storageConfig, err = storage.NewConfigFromString(flagStorageConfigString); err != nil {
+		printFlagsError("-storage", err)
 	}
 
 	if logLevel, err = logging.LvlFromString(flagLogLevel); err != nil {
@@ -202,6 +214,7 @@ func init() {
 	parsedFlags = append(parsedFlags, "\n\tlog-level", flagLogLevel)
 	parsedFlags = append(parsedFlags, "\n\tlog-output", flagLogOutput)
 	parsedFlags = append(parsedFlags, "\n\tendpoint", flagEndpointString)
+	parsedFlags = append(parsedFlags, "\n\tstorage", flagStorageConfigString)
 	parsedFlags = append(parsedFlags, "\n\ttls-cert", flagTLSCertFile)
 	parsedFlags = append(parsedFlags, "\n\ttls-key", flagTLSKeyFile)
 
@@ -250,8 +263,12 @@ func main() {
 		return
 	}
 
-	// TODO support file-based LevelDBBackend
-	st, _ := storage.NewTestMemoryLevelDBBackend()
+	st, err := storage.NewStorage(storageConfig)
+	if err != nil {
+		log.Crit("failed to initialize storage", "error", err)
+
+		os.Exit(1)
+	}
 	nr := sebak.NewNodeRunner(currentNode, policy, nt, isaac, st)
 	if err := nr.Start(); err != nil {
 		log.Crit("failed to start node", "error", err)

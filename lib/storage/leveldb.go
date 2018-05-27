@@ -15,14 +15,12 @@ type LevelDBBackend struct {
 	DB *leveldb.DB
 }
 
-func (st *LevelDBBackend) Init(config Config) (err error) {
+func (st *LevelDBBackend) Init(config *Config) (err error) {
 	var sto leveldbStorage.Storage
-	if path, ok := config["path"]; !ok {
-		err = fmt.Errorf("`path` is not missing")
-	} else if path == "_memory_" {
+	if config.Scheme == "memory" {
 		sto = leveldbStorage.NewMemStorage()
-	} else {
-		if sto, err = leveldbStorage.OpenFile(path, false); err != nil {
+	} else if config.Scheme == "file" {
+		if sto, err = leveldbStorage.OpenFile(config.Path, false); err != nil {
 			return
 		}
 	}

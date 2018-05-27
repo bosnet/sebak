@@ -18,7 +18,8 @@ func TestLevelDBBackendInitFileStorage(t *testing.T) {
 	st := &LevelDBBackend{}
 	defer st.Close()
 
-	if err := st.Init(map[string]string{"path": path}); err != nil {
+	config, _ := NewConfigFromString("memory://")
+	if err := st.Init(config); err != nil {
 		t.Errorf("failed to initialize file db: %v", err)
 	}
 }
@@ -27,7 +28,8 @@ func TestLevelDBBackendInitMemStorage(t *testing.T) {
 	st := &LevelDBBackend{}
 	defer st.Close()
 
-	if err := st.Init(map[string]string{"path": "_memory_"}); err != nil {
+	config, _ := NewConfigFromString("memory://")
+	if err := st.Init(config); err != nil {
 		t.Errorf("failed to initialize mem db: %v", err)
 	}
 }
@@ -177,7 +179,8 @@ func TestLevelDBBackendRemove(t *testing.T) {
 func newTestFileLevelDBBackend() (st LevelDBBackend, path string, err error) {
 	path, _ = ioutil.TempDir("/tmp", "sebak")
 
-	if err = st.Init(map[string]string{"path": path}); err != nil {
+	config, _ := NewConfigFromString("memory://")
+	if err = st.Init(config); err != nil {
 		return
 	}
 
