@@ -46,15 +46,15 @@ func checkBallotValidState(ctx context.Context, target interface{}, args ...inte
 }
 
 func checkBallotHasMessage(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
-	ballot := target.(Ballot)
-
-	if ballot.Data().IsEmpty() {
-		if ballot.State() == sebakcommon.BallotStateINIT {
-			return ctx, sebakerror.ErrorBallotEmptyMessage
-		}
-	} else if ballot.State() != sebakcommon.BallotStateINIT {
-		return ctx, sebakerror.ErrorBallotHasMessage
-	}
+	//ballot := target.(Ballot)
+	//
+	//if ballot.Data().IsEmpty() {
+	//	if ballot.State() == sebakcommon.BallotStateINIT {
+	//		return ctx, sebakerror.ErrorBallotEmptyMessage
+	//	}
+	//} else if ballot.State() != sebakcommon.BallotStateINIT {
+	//	return ctx, sebakerror.ErrorBallotHasMessage
+	//}
 
 	return ctx, nil
 }

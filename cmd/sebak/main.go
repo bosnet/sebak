@@ -16,6 +16,7 @@ import (
 	"github.com/spikeekips/sebak/lib"
 	"github.com/spikeekips/sebak/lib/common"
 	"github.com/spikeekips/sebak/lib/network"
+	"github.com/spikeekips/sebak/lib/storage"
 	"github.com/stellar/go/keypair"
 )
 
@@ -249,7 +250,9 @@ func main() {
 		return
 	}
 
-	nr := sebak.NewNodeRunner(currentNode, policy, nt, isaac)
+	// TODO support file-based LevelDBBackend
+	st, _ := storage.NewTestMemoryLevelDBBackend()
+	nr := sebak.NewNodeRunner(currentNode, policy, nt, isaac, st)
 	if err := nr.Start(); err != nil {
 		log.Crit("failed to start node", "error", err)
 

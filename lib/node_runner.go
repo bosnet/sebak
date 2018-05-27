@@ -7,6 +7,7 @@ import (
 	logging "github.com/inconshreveable/log15"
 	"github.com/spikeekips/sebak/lib/common"
 	"github.com/spikeekips/sebak/lib/network"
+	"github.com/spikeekips/sebak/lib/storage"
 )
 
 type NodeRunner struct {
@@ -15,6 +16,7 @@ type NodeRunner struct {
 	network           sebaknetwork.Network
 	consensus         Consensus
 	connectionManager *sebaknetwork.ConnectionManager
+	storage           *storage.LevelDBBackend
 
 	handleBallotCheckerFuncs            []sebakcommon.CheckerFunc
 	handleMessageFromClientCheckerFuncs []sebakcommon.CheckerFunc
@@ -30,13 +32,15 @@ func NewNodeRunner(
 	currentNode sebakcommon.Node,
 	policy sebakcommon.VotingThresholdPolicy,
 	network sebaknetwork.Network,
-	consensusProtocol Consensus,
+	consensus Consensus,
+	storage *storage.LevelDBBackend,
 ) *NodeRunner {
 	nr := &NodeRunner{
 		currentNode: currentNode,
 		policy:      policy,
 		network:     network,
-		consensus:   consensusProtocol,
+		consensus:   consensus,
+		storage:     storage,
 		log:         log.New(logging.Ctx{"node": currentNode.Alias()}),
 	}
 	nr.ctx = context.WithValue(context.Background(), "currentNode", currentNode)
@@ -92,6 +96,10 @@ func (nr *NodeRunner) ConnectionManager() *sebaknetwork.ConnectionManager {
 	return nr.connectionManager
 }
 
+func (nr *NodeRunner) Storage() *storage.LevelDBBackend {
+	return nr.storage
+}
+
 func (nr *NodeRunner) Policy() sebakcommon.VotingThresholdPolicy {
 	return nr.policy
 }
@@ -120,6 +128,7 @@ func (nr *NodeRunner) ConnectValidators() {
 
 var DefaultHandleMessageFromClientCheckerFuncs = []sebakcommon.CheckerFunc{
 	CheckNodeRunnerHandleMessageTransactionUnmarshal,
+	CheckNodeRunnerHandleMessageHistory,
 	CheckNodeRunnerHandleMessageISAACReceiveMessage,
 	CheckNodeRunnerHandleMessageSignBallot,
 	CheckNodeRunnerHandleMessageBroadcast,
@@ -129,6 +138,7 @@ var DefaultHandleBallotCheckerFuncs = []sebakcommon.CheckerFunc{
 	CheckNodeRunnerHandleBallotIsWellformed,
 	CheckNodeRunnerHandleBallotCheckIsNew,
 	CheckNodeRunnerHandleBallotReceiveBallot,
+	CheckNodeRunnerHandleBallotHistory,
 	CheckNodeRunnerHandleBallotStore,
 	CheckNodeRunnerHandleBallotBroadcast,
 }
@@ -158,13 +168,13 @@ func (nr *NodeRunner) handleMessage() {
 	for message := range nr.network.ReceiveMessage() {
 		switch message.Type {
 		case sebaknetwork.ConnectMessage:
-			nr.log.Debug("got `ConnectMessage`", "message", message.String()[:50])
+			nr.log.Debug("got connect", "message", message.String()[:50])
 			if _, err := sebakcommon.NewValidatorFromString(message.Data); err != nil {
 				nr.log.Error("invalid validator data was received", "data", message.Data)
 				continue
 			}
 		case sebaknetwork.MessageFromClient:
-			nr.log.Debug("got `MessageFromClient`", "message", message.String()[:50])
+			nr.log.Debug("got message from client`", "message", message.String()[:50])
 
 			/*
 				- TODO `Message` must be saved in `BlockTransactionHistory`
@@ -181,7 +191,7 @@ func (nr *NodeRunner) handleMessage() {
 				continue
 			}
 		case sebaknetwork.BallotMessage:
-			nr.log.Debug("got `Ballot`", "message", message.String()[:50])
+			nr.log.Debug("got ballot", "message", message.String()[:50])
 			/*
 				- TODO check already `IsWellFormed()`
 				- TODO check already in BlockTransaction

@@ -27,7 +27,7 @@ func TestLevelDBBackendInitMemStorage(t *testing.T) {
 	st := &LevelDBBackend{}
 	defer st.Close()
 
-	if err := st.Init(map[string]string{"path": "<memory>"}); err != nil {
+	if err := st.Init(map[string]string{"path": "_memory_"}); err != nil {
 		t.Errorf("failed to initialize mem db: %v", err)
 	}
 }

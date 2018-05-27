@@ -15,3 +15,12 @@ type Item struct {
 
 type Model struct {
 }
+
+func NewStorage(config Config) (st *LevelDBBackend, err error) {
+	st = &LevelDBBackend{}
+	if err = st.Init(config); err != nil {
+		return
+	}
+
+	return
+}

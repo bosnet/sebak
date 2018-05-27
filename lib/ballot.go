@@ -14,7 +14,7 @@ import (
 
 type BallotData struct {
 	//Hash    string      `json:"hash"`
-	Data interface{} `json:"message"` // if `BallotStateINIT` must have the original `Message`
+	Data interface{} `json:"data"` // if `BallotStateINIT` must have the original `Message`
 }
 
 func (bd BallotData) IsEmpty() bool {
@@ -33,7 +33,7 @@ func (bd BallotData) Serialize() ([]byte, error) {
 	if bd.Data == nil {
 		return []byte{}, nil
 	}
-	return json.Marshal(bd)
+	return json.Marshal(bd.Data)
 }
 
 func (bd BallotData) String() string {
@@ -69,15 +69,23 @@ func (b Ballot) Clone() Ballot {
 	}
 }
 
-func (b Ballot) Serialize() (encoded []byte, err error) {
-	if b.State() == sebakcommon.BallotStateINIT {
-		encoded, err = json.Marshal(b)
-		return
-	}
+// NOTE(Ballot.Serialize): `Ballot.Serialize`: the original idea was this, every
+// time to transfer the ballot with tx message is waste of network, so the tx
+// message will be received at the first time(at BallotStateINIT), but if node
+// get consensus after BallotStateINIT, the node has no way to find the original
+// tx message.
+// TODO(Ballot.Serialize): `Ballot.Serialize`: find the way to reduce the ballot
+// size without message.
 
-	newBallot := b
-	newBallot.D.Data = nil
-	encoded, err = json.Marshal(newBallot)
+func (b Ballot) Serialize() (encoded []byte, err error) {
+	//if b.State() == sebakcommon.BallotStateINIT {
+	//	encoded, err = json.Marshal(b)
+	//	return
+	//}
+
+	//newBallot := b
+	//newBallot.D.Data = nil
+	encoded, err = json.Marshal(b)
 
 	return
 }
@@ -125,7 +133,7 @@ func NewBallotFromJSON(b []byte) (ballot Ballot, err error) {
 
 	// TODO BallotMessage should load message by it's `GetType()`
 	tx, _ := NewTransactionFromJSON(a)
-	ballot.SetMessage(tx)
+	ballot.SetData(tx)
 	//if err = ballot.IsWellFormed(); err != nil {
 	//	return
 	//}
@@ -190,7 +198,7 @@ func (b Ballot) Data() BallotData {
 	return b.D
 }
 
-func (b *Ballot) SetMessage(m sebakcommon.Message) {
+func (b *Ballot) SetData(m sebakcommon.Message) {
 	b.D.Data = m
 }
 
@@ -301,6 +309,17 @@ func (b *BallotBoxes) AddVotingResult(vr *VotingResult, bb *BallotBox) (err erro
 
 	b.Results[vr.MessageHash] = vr
 	bb.AddVotingResult(vr) // TODO detect error
+
+	return
+}
+
+func (b *BallotBoxes) RemoveVotingResult(vr *VotingResult) (err error) {
+	if !b.HasMessageByString(vr.MessageHash) {
+		err = sebakerror.ErrorVotingResultNotFound
+		return
+	}
+
+	delete(b.Results, vr.MessageHash)
 
 	return
 }

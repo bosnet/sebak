@@ -5,9 +5,9 @@ import (
 	"errors"
 
 	"github.com/btcsuite/btcutil/base58"
+	"github.com/spikeekips/sebak/lib/common"
 	"github.com/spikeekips/sebak/lib/error"
 	"github.com/spikeekips/sebak/lib/network"
-	"github.com/spikeekips/sebak/lib/common"
 	"github.com/stellar/go/keypair"
 )
 
@@ -80,10 +80,23 @@ func CheckNodeRunnerHandleMessageTransactionUnmarshal(ctx context.Context, targe
 		return ctx, err
 	}
 
-	// TODO if failed, save in `BlockTransactionHistory`????
 	nr := target.(*NodeRunner)
 	nr.Log().Debug("message is transaction")
 	return context.WithValue(ctx, "transaction", tx), nil
+}
+
+func CheckNodeRunnerHandleMessageHistory(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
+	message, _ := args[0].(sebaknetwork.Message)
+	tx := ctx.Value("transaction").(Transaction)
+
+	nr := target.(*NodeRunner)
+	bt := NewTransactionHistoryFromTransaction(tx, message.Data)
+	if err := bt.Save(nr.Storage()); err != nil {
+		return ctx, err
+	}
+
+	nr.Log().Debug("saved in history", "transction", tx.GetHash())
+	return ctx, nil
 }
 
 func CheckNodeRunnerHandleMessageISAACReceiveMessage(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
@@ -165,6 +178,29 @@ func CheckNodeRunnerHandleBallotReceiveBallot(ctx context.Context, target interf
 	return context.WithValue(ctx, "vs", vs), nil
 }
 
+func CheckNodeRunnerHandleBallotHistory(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
+	isNew := ctx.Value("isNew").(bool)
+	if !isNew {
+		return ctx, nil
+	}
+
+	ballot, _ := ctx.Value("ballot").(Ballot)
+	tx := ballot.Data().Data.(Transaction)
+	raw, err := ballot.Data().Serialize()
+	if err != nil {
+		return ctx, err
+	}
+
+	nr := target.(*NodeRunner)
+	bt := NewTransactionHistoryFromTransaction(tx, raw)
+	if err := bt.Save(nr.Storage()); err != nil {
+		return ctx, err
+	}
+
+	nr.Log().Debug("saved in history from ballot", "transction", tx.GetHash())
+	return ctx, nil
+}
+
 func CheckNodeRunnerHandleBallotStore(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
 	vs, ok := ctx.Value("vs").(VotingStateStaging)
 	if !ok {
@@ -175,11 +211,22 @@ func CheckNodeRunnerHandleBallotStore(ctx context.Context, target interface{}, a
 		return ctx, nil
 	}
 
-	// TODO store
+	ballot, _ := ctx.Value("ballot").(Ballot)
+	tx := ballot.Data().Data.(Transaction)
+	raw, err := ballot.Data().Serialize()
+	if err != nil {
+		return ctx, err
+	}
 
 	nr := target.(*NodeRunner)
-	ballot, _ := ctx.Value("ballot").(Ballot)
-	nr.Consensus().CloseConsensus(ballot)
+	bt := NewBlockTransactionFromTransaction(tx, raw)
+	if err := bt.Save(nr.Storage()); err != nil {
+		return ctx, err
+	}
+
+	if err := nr.Consensus().CloseConsensus(ballot); err != nil {
+		nr.Log().Error("failed to close consensus", "error", err)
+	}
 
 	nr.Log().Debug("got consensus", "ballot", ballot.MessageHash(), "votingResultStaging", vs)
 
@@ -189,9 +236,14 @@ func CheckNodeRunnerHandleBallotStore(ctx context.Context, target interface{}, a
 func CheckNodeRunnerHandleBallotBroadcast(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
 	var willBroadcast bool
 
+	nr := target.(*NodeRunner)
+	ballot, _ := ctx.Value("ballot").(Ballot)
 	vs := ctx.Value("vs").(VotingStateStaging)
 	isNew := ctx.Value("isNew").(bool)
 	if vs.IsClosed() {
+		if err := nr.Consensus().CloseConsensus(ballot); err != nil {
+			nr.Log().Error("failed to close consensus", "error", err)
+		}
 		return ctx, sebakcommon.CheckerErrorStop{"VotingResult is already closed"}
 	} else if vs.IsChanged() {
 		willBroadcast = true
@@ -202,9 +254,6 @@ func CheckNodeRunnerHandleBallotBroadcast(ctx context.Context, target interface{
 	if !willBroadcast {
 		return ctx, nil
 	}
-
-	ballot, _ := ctx.Value("ballot").(Ballot)
-	nr := target.(*NodeRunner)
 
 	var newBallot Ballot
 	newBallot = ballot.Clone()

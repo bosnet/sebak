@@ -1,6 +1,12 @@
 package sebak
 
-import "github.com/spikeekips/sebak/lib/common"
+import (
+	"fmt"
+
+	"github.com/spikeekips/sebak/lib/common"
+	"github.com/spikeekips/sebak/lib/error"
+	"github.com/spikeekips/sebak/lib/storage"
+)
 
 /*
 BlockTransactionHistory is for keeping `Transaction` history. the storage should support,
@@ -9,6 +15,10 @@ BlockTransactionHistory is for keeping `Transaction` history. the storage should
  * sort by `Confirmed`
  * sort by `Created`
 */
+const (
+	BlockTransactionHistoryPrefixHash string = "bth-hash-" // bt-hash-<BlockTransactionHistory.Hash>
+)
+
 type BlockTransactionHistory struct {
 	Hash   string
 	Source string
@@ -18,14 +28,49 @@ type BlockTransactionHistory struct {
 	Message   string
 }
 
-func NewTransactionHistoryFromTransaction(tx Transaction, message string) BlockTransactionHistory {
+func NewTransactionHistoryFromTransaction(tx Transaction, message []byte) BlockTransactionHistory {
 	return BlockTransactionHistory{
 		Hash:      tx.H.Hash,
 		Source:    tx.B.Source,
 		Confirmed: sebakcommon.NowISO8601(),
 		Created:   tx.H.Created,
-		Message:   message,
+		Message:   string(message),
 	}
+}
+
+func GetBlockTransactionHistoryKey(hash string) string {
+	return fmt.Sprintf("%s%s", BlockTransactionHistoryPrefixHash, hash)
+}
+
+func (bt BlockTransactionHistory) Serialize() (encoded []byte, err error) {
+	encoded, err = sebakcommon.EncodeJSONValue(bt)
+	return
+}
+func (bt BlockTransactionHistory) Save(st *storage.LevelDBBackend) (err error) {
+	key := GetBlockTransactionHistoryKey(bt.Hash)
+
+	var exists bool
+	exists, err = st.Has(key)
+	if err != nil {
+		return
+	} else if exists {
+		return sebakerror.ErrorBlockAlreadyExists
+	}
+
+	bt.Confirmed = sebakcommon.NowISO8601()
+	if err = st.New(GetBlockTransactionHistoryKey(bt.Hash), bt); err != nil {
+		return
+	}
+
+	return nil
+}
+
+func GetBlockTransactionHistory(st *storage.LevelDBBackend, hash string) (bt BlockTransactionHistory, err error) {
+	if err = st.Get(GetBlockTransactionHistoryKey(hash), &bt); err != nil {
+		return
+	}
+
+	return
 }
 
 /*

@@ -168,7 +168,8 @@ func (is *ISAAC) AddBallot(ballot Ballot) (err error) {
 }
 
 func (is *ISAAC) CloseConsensus(ballot Ballot) (err error) {
-	if !is.HasMessage(ballot) {
+	log.Debug("consensus of this ballot will be closed", "ballot", ballot.MessageHash())
+	if !is.HasMessageByString(ballot.MessageHash()) {
 		return sebakerror.ErrorVotingResultNotInBox
 	}
 
@@ -177,6 +178,7 @@ func (is *ISAAC) CloseConsensus(ballot Ballot) (err error) {
 	is.Boxes.WaitingBox.RemoveVotingResult(vr)  // TODO detect error
 	is.Boxes.VotingBox.RemoveVotingResult(vr)   // TODO detect error
 	is.Boxes.ReservedBox.RemoveVotingResult(vr) // TODO detect error
+	is.Boxes.RemoveVotingResult(vr)             // TODO detect error
 
 	return
 }

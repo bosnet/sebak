@@ -14,7 +14,7 @@ func CleanDB(path string) {
 
 func NewTestMemoryLevelDBBackend() (st *LevelDBBackend, err error) {
 	st = &LevelDBBackend{}
-	if err = st.Init(map[string]string{"path": "<memory>"}); err != nil {
+	if err = st.Init(map[string]string{"path": "_memory_"}); err != nil {
 		return
 	}
 

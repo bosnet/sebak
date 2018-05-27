@@ -19,7 +19,7 @@ func (st *LevelDBBackend) Init(config Config) (err error) {
 	var sto leveldbStorage.Storage
 	if path, ok := config["path"]; !ok {
 		err = fmt.Errorf("`path` is not missing")
-	} else if path == "<memory>" {
+	} else if path == "_memory_" {
 		sto = leveldbStorage.NewMemStorage()
 	} else {
 		if sto, err = leveldbStorage.OpenFile(path, false); err != nil {
@@ -38,8 +38,12 @@ func (st *LevelDBBackend) Close() error {
 	return st.DB.Close()
 }
 
+func (st *LevelDBBackend) makeKey(key string) []byte {
+	return []byte(key)
+}
+
 func (st *LevelDBBackend) Has(k string) (bool, error) {
-	return st.DB.Has([]byte(k), nil)
+	return st.DB.Has(st.makeKey(k), nil)
 }
 
 func (st *LevelDBBackend) GetRaw(k string) (b []byte, err error) {
@@ -51,7 +55,7 @@ func (st *LevelDBBackend) GetRaw(k string) (b []byte, err error) {
 		return
 	}
 
-	b, err = st.DB.Get([]byte(k), nil)
+	b, err = st.DB.Get(st.makeKey(k), nil)
 
 	return
 }
@@ -89,7 +93,7 @@ func (st *LevelDBBackend) New(k string, v interface{}) (err error) {
 		return
 	}
 
-	err = st.DB.Put([]byte(k), encoded, nil)
+	err = st.DB.Put(st.makeKey(k), encoded, nil)
 
 	return
 }
@@ -117,7 +121,7 @@ func (st *LevelDBBackend) News(vs ...Item) (err error) {
 			return
 		}
 
-		batch.Put([]byte(v.Key), encoded)
+		batch.Put(st.makeKey(v.Key), encoded)
 	}
 
 	err = st.DB.Write(batch, nil)
@@ -139,7 +143,7 @@ func (st *LevelDBBackend) Set(k string, v interface{}) (err error) {
 		return
 	}
 
-	err = st.DB.Put([]byte(k), encoded, nil)
+	err = st.DB.Put(st.makeKey(k), encoded, nil)
 
 	return
 }
@@ -167,7 +171,7 @@ func (st *LevelDBBackend) Sets(vs ...Item) (err error) {
 			return
 		}
 
-		batch.Put([]byte(v.Key), encoded)
+		batch.Put(st.makeKey(v.Key), encoded)
 	}
 
 	err = st.DB.Write(batch, nil)
@@ -184,7 +188,7 @@ func (st *LevelDBBackend) Remove(k string) (err error) {
 		return
 	}
 
-	err = st.DB.Delete([]byte(k), nil)
+	err = st.DB.Delete(st.makeKey(k), nil)
 
 	return
 }
@@ -192,7 +196,7 @@ func (st *LevelDBBackend) Remove(k string) (err error) {
 func (st *LevelDBBackend) GetIterator(prefix string, reverse bool) (func() (IterItem, bool), func()) {
 	var dbRange *leveldbUtil.Range
 	if len(prefix) > 0 {
-		dbRange = leveldbUtil.BytesPrefix([]byte(prefix))
+		dbRange = leveldbUtil.BytesPrefix(st.makeKey(prefix))
 	}
 
 	iter := st.DB.NewIterator(dbRange, nil)

@@ -220,7 +220,7 @@ func (vr *VotingResult) CheckThreshold(state sebakcommon.BallotState, policy seb
 	}
 
 	log.Debug(
-		"CheckThreshold",
+		"check threshold",
 		"state", state,
 		"threshold", threshold,
 		"yes", yes,

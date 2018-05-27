@@ -9,9 +9,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/spikeekips/sebak/lib/common"
 	"github.com/spikeekips/sebak/lib/error"
 	"github.com/spikeekips/sebak/lib/network"
-	"github.com/spikeekips/sebak/lib/common"
+	"github.com/spikeekips/sebak/lib/storage"
 	"github.com/stellar/go/keypair"
 )
 
@@ -75,7 +76,8 @@ func createNodeRunners(n int) []*NodeRunner {
 		p, _ := NewDefaultVotingThresholdPolicy(100, 30, 30)
 		p.SetValidators(len(v.GetValidators()) + 1)
 		is, _ := NewISAAC(v, p)
-		nr := NewNodeRunner(v, p, ns[i], is)
+		st, _ := storage.NewTestMemoryLevelDBBackend()
+		nr := NewNodeRunner(v, p, ns[i], is, st)
 		nodeRunners = append(nodeRunners, nr)
 	}
 
