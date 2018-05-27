@@ -36,7 +36,7 @@ func TestNewBlockOperationFromOperation(t *testing.T) {
 }
 
 func TestBlockOperationSaveAndGet(t *testing.T) {
-	st, _ := storage.NewTestMemoryLevelDBBackend()
+	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
 
 	bos := MakeNewBlockOperation(1)
 	if err := bos[0].Save(st); err != nil {
@@ -78,7 +78,7 @@ func TestBlockOperationSaveAndGet(t *testing.T) {
 }
 
 func TestBlockOperationSaveExisting(t *testing.T) {
-	st, _ := storage.NewTestMemoryLevelDBBackend()
+	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
 
 	bos := MakeNewBlockOperation(1)
 	bo := bos[0]
@@ -102,7 +102,7 @@ func TestBlockOperationSaveExisting(t *testing.T) {
 }
 
 func TestGetSortedBlockOperationsByTxHash(t *testing.T) {
-	st, _ := storage.NewTestMemoryLevelDBBackend()
+	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
 
 	// create 30 `BlockOperation`
 	var txHashes []string

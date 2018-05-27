@@ -3,7 +3,6 @@ package sebak
 import (
 	"github.com/spikeekips/sebak/lib/common"
 	"github.com/spikeekips/sebak/lib/error"
-	"github.com/spikeekips/sebak/lib/storage"
 )
 
 type ISAAC struct {
@@ -13,8 +12,6 @@ type ISAAC struct {
 	VotingThresholdPolicy sebakcommon.VotingThresholdPolicy
 
 	Boxes *BallotBoxes
-
-	Storage *storage.LevelDBBackend
 }
 
 func NewISAAC(node sebakcommon.Node, votingThresholdPolicy sebakcommon.VotingThresholdPolicy) (is *ISAAC, err error) {

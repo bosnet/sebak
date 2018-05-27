@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/spikeekips/sebak/lib/common"
 	"github.com/spikeekips/sebak/lib/error"
 	"github.com/spikeekips/sebak/lib/storage"
-	"github.com/spikeekips/sebak/lib/common"
 )
 
 /*
@@ -84,7 +84,7 @@ func (bt BlockTransaction) NewBlockTransactionKeyConfirmed() string {
 	)
 }
 
-func (bt BlockTransaction) Save(st *storage.LevelDBBackend) (err error) {
+func (bt BlockTransaction) Save(st *sebakstorage.LevelDBBackend) (err error) {
 	key := GetBlockTransactionKey(bt.Hash)
 
 	var exists bool
@@ -133,7 +133,7 @@ func GetBlockTransactionKeyConfirmed(confirmed string) string {
 	return fmt.Sprintf("%s%s-", BlockTransactionPrefixConfirmed, confirmed)
 }
 
-func GetBlockTransaction(st *storage.LevelDBBackend, hash string) (bt BlockTransaction, err error) {
+func GetBlockTransaction(st *sebakstorage.LevelDBBackend, hash string) (bt BlockTransaction, err error) {
 	if err = st.Get(GetBlockTransactionKey(hash), &bt); err != nil {
 		return
 	}
@@ -141,13 +141,13 @@ func GetBlockTransaction(st *storage.LevelDBBackend, hash string) (bt BlockTrans
 	return
 }
 
-func ExistBlockTransaction(st *storage.LevelDBBackend, hash string) (bool, error) {
+func ExistBlockTransaction(st *sebakstorage.LevelDBBackend, hash string) (bool, error) {
 	return st.Has(GetBlockTransactionKey(hash))
 }
 
 func LoadBlockTransactionsInsideIterator(
-	st *storage.LevelDBBackend,
-	iterFunc func() (storage.IterItem, bool),
+	st *sebakstorage.LevelDBBackend,
+	iterFunc func() (sebakstorage.IterItem, bool),
 	closeFunc func(),
 ) (
 	func() (BlockTransaction, bool),
@@ -174,7 +174,7 @@ func LoadBlockTransactionsInsideIterator(
 		})
 }
 
-func GetBlockTransactionsByCheckpoint(st *storage.LevelDBBackend, checkpoint string, reverse bool) (
+func GetBlockTransactionsByCheckpoint(st *sebakstorage.LevelDBBackend, checkpoint string, reverse bool) (
 	func() (BlockTransaction, bool),
 	func(),
 ) {
@@ -183,7 +183,7 @@ func GetBlockTransactionsByCheckpoint(st *storage.LevelDBBackend, checkpoint str
 	return LoadBlockTransactionsInsideIterator(st, iterFunc, closeFunc)
 }
 
-func GetBlockTransactionsBySource(st *storage.LevelDBBackend, source string, reverse bool) (
+func GetBlockTransactionsBySource(st *sebakstorage.LevelDBBackend, source string, reverse bool) (
 	func() (BlockTransaction, bool),
 	func(),
 ) {
@@ -192,7 +192,7 @@ func GetBlockTransactionsBySource(st *storage.LevelDBBackend, source string, rev
 	return LoadBlockTransactionsInsideIterator(st, iterFunc, closeFunc)
 }
 
-func GetBlockTransactionsByConfirmed(st *storage.LevelDBBackend, reverse bool) (
+func GetBlockTransactionsByConfirmed(st *sebakstorage.LevelDBBackend, reverse bool) (
 	func() (BlockTransaction, bool),
 	func(),
 ) {

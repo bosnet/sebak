@@ -16,7 +16,7 @@ type NodeRunner struct {
 	network           sebaknetwork.Network
 	consensus         Consensus
 	connectionManager *sebaknetwork.ConnectionManager
-	storage           *storage.LevelDBBackend
+	storage           *sebakstorage.LevelDBBackend
 
 	handleBallotCheckerFuncs            []sebakcommon.CheckerFunc
 	handleMessageFromClientCheckerFuncs []sebakcommon.CheckerFunc
@@ -33,7 +33,7 @@ func NewNodeRunner(
 	policy sebakcommon.VotingThresholdPolicy,
 	network sebaknetwork.Network,
 	consensus Consensus,
-	storage *storage.LevelDBBackend,
+	storage *sebakstorage.LevelDBBackend,
 ) *NodeRunner {
 	nr := &NodeRunner{
 		currentNode: currentNode,
@@ -96,7 +96,7 @@ func (nr *NodeRunner) ConnectionManager() *sebaknetwork.ConnectionManager {
 	return nr.connectionManager
 }
 
-func (nr *NodeRunner) Storage() *storage.LevelDBBackend {
+func (nr *NodeRunner) Storage() *sebakstorage.LevelDBBackend {
 	return nr.storage
 }
 

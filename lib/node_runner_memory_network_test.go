@@ -76,7 +76,7 @@ func createNodeRunners(n int) []*NodeRunner {
 		p, _ := NewDefaultVotingThresholdPolicy(100, 30, 30)
 		p.SetValidators(len(v.GetValidators()) + 1)
 		is, _ := NewISAAC(v, p)
-		st, _ := storage.NewTestMemoryLevelDBBackend()
+		st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
 		nr := NewNodeRunner(v, p, ns[i], is, st)
 		nodeRunners = append(nodeRunners, nr)
 	}

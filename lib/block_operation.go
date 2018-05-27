@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/spikeekips/sebak/lib/common"
 	"github.com/spikeekips/sebak/lib/error"
 	"github.com/spikeekips/sebak/lib/storage"
-	"github.com/spikeekips/sebak/lib/common"
 )
 
 /*
@@ -50,7 +50,7 @@ func NewBlockOperationFromOperation(op Operation, tx Transaction) BlockOperation
 	}
 }
 
-func (bo BlockOperation) Save(st *storage.LevelDBBackend) (err error) {
+func (bo BlockOperation) Save(st *sebakstorage.LevelDBBackend) (err error) {
 	key := GetBlockOperationKey(bo.Hash)
 
 	var exists bool
@@ -135,11 +135,11 @@ func (bo BlockOperation) NewBlockOperationPeersKey() string {
 	)
 }
 
-func ExistBlockOperation(st *storage.LevelDBBackend, hash string) (bool, error) {
+func ExistBlockOperation(st *sebakstorage.LevelDBBackend, hash string) (bool, error) {
 	return st.Has(GetBlockOperationKey(hash))
 }
 
-func GetBlockOperation(st *storage.LevelDBBackend, hash string) (bo BlockOperation, err error) {
+func GetBlockOperation(st *sebakstorage.LevelDBBackend, hash string) (bo BlockOperation, err error) {
 	if err = st.Get(GetBlockOperationKey(hash), &bo); err != nil {
 		return
 	}
@@ -148,8 +148,8 @@ func GetBlockOperation(st *storage.LevelDBBackend, hash string) (bo BlockOperati
 }
 
 func LoadBlockOperationsInsideIterator(
-	st *storage.LevelDBBackend,
-	iterFunc func() (storage.IterItem, bool),
+	st *sebakstorage.LevelDBBackend,
+	iterFunc func() (sebakstorage.IterItem, bool),
 	closeFunc func(),
 ) (
 	func() (BlockOperation, bool),
@@ -176,7 +176,7 @@ func LoadBlockOperationsInsideIterator(
 		})
 }
 
-func GetBlockOperationsByTxHash(st *storage.LevelDBBackend, txHash string, reverse bool) (
+func GetBlockOperationsByTxHash(st *sebakstorage.LevelDBBackend, txHash string, reverse bool) (
 	func() (BlockOperation, bool),
 	func(),
 ) {
@@ -185,7 +185,7 @@ func GetBlockOperationsByTxHash(st *storage.LevelDBBackend, txHash string, rever
 	return LoadBlockOperationsInsideIterator(st, iterFunc, closeFunc)
 }
 
-func GetBlockOperationsBySource(st *storage.LevelDBBackend, source string, reverse bool) (
+func GetBlockOperationsBySource(st *sebakstorage.LevelDBBackend, source string, reverse bool) (
 	func() (BlockOperation, bool),
 	func(),
 ) {
@@ -194,7 +194,7 @@ func GetBlockOperationsBySource(st *storage.LevelDBBackend, source string, rever
 	return LoadBlockOperationsInsideIterator(st, iterFunc, closeFunc)
 }
 
-func GetBlockOperationsByTarget(st *storage.LevelDBBackend, target string, reverse bool) (
+func GetBlockOperationsByTarget(st *sebakstorage.LevelDBBackend, target string, reverse bool) (
 	func() (BlockOperation, bool),
 	func(),
 ) {

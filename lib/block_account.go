@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/spikeekips/sebak/lib/storage"
 	"github.com/spikeekips/sebak/lib/common"
+	"github.com/spikeekips/sebak/lib/storage"
 )
 
 /*
@@ -40,7 +40,7 @@ func NewBlockAccount(address, balance, checkpoint string) *BlockAccount {
 	}
 }
 
-func (b *BlockAccount) Save(st *storage.LevelDBBackend) (err error) {
+func (b *BlockAccount) Save(st *sebakstorage.LevelDBBackend) (err error) {
 	key := GetBlockAccountKey(b.Address)
 
 	var exists bool
@@ -75,11 +75,11 @@ func GetBlockAccountCreatedKey(created string) string {
 	return fmt.Sprintf("%s%s", BlockAccountPrefixCreated, created)
 }
 
-func ExistBlockAccount(st *storage.LevelDBBackend, address string) (exists bool, err error) {
+func ExistBlockAccount(st *sebakstorage.LevelDBBackend, address string) (exists bool, err error) {
 	return st.Has(GetBlockAccountKey(address))
 }
 
-func GetBlockAccount(st *storage.LevelDBBackend, address string) (b *BlockAccount, err error) {
+func GetBlockAccount(st *sebakstorage.LevelDBBackend, address string) (b *BlockAccount, err error) {
 	if err = st.Get(GetBlockAccountKey(address), &b); err != nil {
 		return
 	}
@@ -87,7 +87,7 @@ func GetBlockAccount(st *storage.LevelDBBackend, address string) (b *BlockAccoun
 	return
 }
 
-func GetBlockAccountAddressesByCreated(st *storage.LevelDBBackend, reverse bool) (func() (string, bool), func()) {
+func GetBlockAccountAddressesByCreated(st *sebakstorage.LevelDBBackend, reverse bool) (func() (string, bool), func()) {
 	iterFunc, closeFunc := st.GetIterator(BlockAccountPrefixCreated, reverse)
 
 	return (func() (string, bool) {
@@ -104,7 +104,7 @@ func GetBlockAccountAddressesByCreated(st *storage.LevelDBBackend, reverse bool)
 		})
 }
 
-func GetBlockAccountsByCreated(st *storage.LevelDBBackend, reverse bool) (func() (*BlockAccount, bool), func()) {
+func GetBlockAccountsByCreated(st *sebakstorage.LevelDBBackend, reverse bool) (func() (*BlockAccount, bool), func()) {
 	iterFunc, closeFunc := GetBlockAccountAddressesByCreated(st, reverse)
 
 	return (func() (*BlockAccount, bool) {

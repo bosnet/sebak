@@ -57,7 +57,7 @@ func TestNewBlockTransaction(t *testing.T) {
 }
 
 func TestBlockTransactionSaveAndGet(t *testing.T) {
-	st, _ := storage.NewTestMemoryLevelDBBackend()
+	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
 
 	bt := MakeNewBlockTransaction(1)
 	if err := bt.Save(st); err != nil {
@@ -110,7 +110,7 @@ func TestBlockTransactionSaveAndGet(t *testing.T) {
 }
 
 func TestBlockTransactionSaveExisting(t *testing.T) {
-	st, _ := storage.NewTestMemoryLevelDBBackend()
+	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
 
 	bt := MakeNewBlockTransaction(1)
 	bt.Save(st)
@@ -133,7 +133,7 @@ func TestBlockTransactionSaveExisting(t *testing.T) {
 }
 
 func TestGetSortedBlockTransactionsByCheckpoint(t *testing.T) {
-	st, _ := storage.NewTestMemoryLevelDBBackend()
+	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
 
 	// create 30 `BlockOperation`
 	var createdOrder []string

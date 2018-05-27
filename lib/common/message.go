@@ -7,5 +7,5 @@ type Message interface {
 	String() string
 	IsWellFormed() error
 	Equal(Message) bool
-	// Validate(storage.LevelDBBackend) error
+	// Validate(sebakstorage.LevelDBBackend) error
 }

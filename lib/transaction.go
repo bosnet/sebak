@@ -76,7 +76,7 @@ func (o Transaction) IsWellFormed() (err error) {
 	return
 }
 
-func (o Transaction) Validate(st *storage.LevelDBBackend) (err error) {
+func (o Transaction) Validate(st *sebakstorage.LevelDBBackend) (err error) {
 	// TODO check whether `Checkpoint` is in `Block Transaction` and is latest
 	// `Checkpoint`
 	// TODO check whether `Source` is in `Block Account`

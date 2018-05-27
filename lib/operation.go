@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/btcsuite/btcutil/base58"
-	"github.com/spikeekips/sebak/lib/storage"
 	"github.com/spikeekips/sebak/lib/common"
+	"github.com/spikeekips/sebak/lib/storage"
 	"github.com/stellar/go/keypair"
 )
 
@@ -38,7 +38,7 @@ func (o Operation) IsWellFormed() (err error) {
 	return
 }
 
-func (o Operation) Validate(st storage.LevelDBBackend) (err error) {
+func (o Operation) Validate(st sebakstorage.LevelDBBackend) (err error) {
 	if err = o.B.Validate(); err != nil {
 		return
 	}

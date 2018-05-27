@@ -23,7 +23,7 @@ func TestLoadTransactionFromJSON(t *testing.T) {
 }
 
 func TestIsWellFormedTransaction(t *testing.T) {
-	st, _ := storage.NewTestMemoryLevelDBBackend()
+	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
 	_, tx := MakeTransactions(1)
 
 	var err error
@@ -35,7 +35,7 @@ func TestIsWellFormedTransaction(t *testing.T) {
 func TestIsWellFormedTransactionWithLowerFee(t *testing.T) {
 	var err error
 
-	st, _ := storage.NewTestMemoryLevelDBBackend()
+	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
 	kp, tx := MakeTransactions(1)
 	tx.B.Fee = Amount(BaseFee)
 	tx.H.Hash = tx.B.MakeHashString()

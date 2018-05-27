@@ -19,6 +19,8 @@ const (
 	BlockTransactionHistoryPrefixHash string = "bth-hash-" // bt-hash-<BlockTransactionHistory.Hash>
 )
 
+// TODO Is it correct to save raw `message` in BlockTransactionHistory?
+
 type BlockTransactionHistory struct {
 	Hash   string
 	Source string
@@ -46,7 +48,7 @@ func (bt BlockTransactionHistory) Serialize() (encoded []byte, err error) {
 	encoded, err = sebakcommon.EncodeJSONValue(bt)
 	return
 }
-func (bt BlockTransactionHistory) Save(st *storage.LevelDBBackend) (err error) {
+func (bt BlockTransactionHistory) Save(st *sebakstorage.LevelDBBackend) (err error) {
 	key := GetBlockTransactionHistoryKey(bt.Hash)
 
 	var exists bool
@@ -65,7 +67,7 @@ func (bt BlockTransactionHistory) Save(st *storage.LevelDBBackend) (err error) {
 	return nil
 }
 
-func GetBlockTransactionHistory(st *storage.LevelDBBackend, hash string) (bt BlockTransactionHistory, err error) {
+func GetBlockTransactionHistory(st *sebakstorage.LevelDBBackend, hash string) (bt BlockTransactionHistory, err error) {
 	if err = st.Get(GetBlockTransactionHistoryKey(hash), &bt); err != nil {
 		return
 	}

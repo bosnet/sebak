@@ -89,7 +89,7 @@ var (
 	flagValidators          FlagValidators
 
 	nodeEndpoint  *sebakcommon.Endpoint
-	storageConfig *storage.Config
+	storageConfig *sebakstorage.Config
 	logLevel      logging.Lvl
 	log           logging.Logger
 )
@@ -178,7 +178,7 @@ func init() {
 		}
 	}
 
-	if storageConfig, err = storage.NewConfigFromString(flagStorageConfigString); err != nil {
+	if storageConfig, err = sebakstorage.NewConfigFromString(flagStorageConfigString); err != nil {
 		printFlagsError("-storage", err)
 	}
 
@@ -263,7 +263,7 @@ func main() {
 		return
 	}
 
-	st, err := storage.NewStorage(storageConfig)
+	st, err := sebakstorage.NewStorage(storageConfig)
 	if err != nil {
 		log.Crit("failed to initialize storage", "error", err)
 

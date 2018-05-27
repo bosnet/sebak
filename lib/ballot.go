@@ -176,7 +176,7 @@ func (b Ballot) VerifySignature() (err error) {
 	return
 }
 
-func (b Ballot) Validate(st *storage.LevelDBBackend) (err error) {
+func (b Ballot) Validate(st *sebakstorage.LevelDBBackend) (err error) {
 	return
 }
 
