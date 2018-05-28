@@ -96,8 +96,8 @@ func TestBlockOperationSaveExisting(t *testing.T) {
 	if err := bo.Save(st); err == nil {
 		t.Error("`ErrorBlockAlreayExists` Errors must be occurred")
 		return
-	} else if err != sebakerror.ErrorBlockAlreadyExists {
-		t.Error("`ErrorBlockAlreayExists` Errors must be occurred")
+	} else if err != sebakerror.ErrorAlreadySaved {
+		t.Error("`ErrorAlreadySaved` Errors must be occurred")
 		return
 	}
 }

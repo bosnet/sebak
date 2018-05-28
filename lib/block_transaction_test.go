@@ -128,8 +128,8 @@ func TestBlockTransactionSaveExisting(t *testing.T) {
 	if err := bt.Save(st); err == nil {
 		t.Error("`ErrorBlockAlreayExists` Errors must be occurred")
 		return
-	} else if err != sebakerror.ErrorBlockAlreadyExists {
-		t.Error("`ErrorBlockAlreayExists` Errors must be occurred")
+	} else if err != sebakerror.ErrorAlreadySaved {
+		t.Error("`ErrorAlreadySaved` Errors must be occurred")
 		return
 	}
 }
@@ -327,4 +327,22 @@ func TestMultipleBlockTransactionConfirmed(t *testing.T) {
 			}
 		}
 	}
+}
+
+func TestBlockTransactionMultipleSave(t *testing.T) {
+	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
+
+	bt := TestMakeNewBlockTransaction(1)
+	if err := bt.Save(st); err != nil {
+		t.Error(err)
+		return
+	}
+
+	if err := bt.Save(st); err != nil {
+		if err != sebakerror.ErrorAlreadySaved {
+			t.Errorf("mutiple saving will occur error, 'ErrorAlreadySaved': %v", err)
+			return
+		}
+	}
+
 }

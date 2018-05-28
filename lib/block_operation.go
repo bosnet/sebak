@@ -40,6 +40,7 @@ type BlockOperation struct {
 
 	// transaction will be used only for `Save` time.
 	transaction Transaction
+	isSaved     bool
 }
 
 func NewBlockOperationFromOperation(op Operation, tx Transaction) BlockOperation {
@@ -56,7 +57,11 @@ func NewBlockOperationFromOperation(op Operation, tx Transaction) BlockOperation
 	}
 }
 
-func (bo BlockOperation) Save(st *sebakstorage.LevelDBBackend) (err error) {
+func (bo *BlockOperation) Save(st *sebakstorage.LevelDBBackend) (err error) {
+	if bo.isSaved {
+		return sebakerror.ErrorAlreadySaved
+	}
+
 	key := GetBlockOperationKey(bo.Hash)
 
 	var exists bool
@@ -81,6 +86,8 @@ func (bo BlockOperation) Save(st *sebakstorage.LevelDBBackend) (err error) {
 	if err = st.New(bo.NewBlockOperationCheckpoint(), bo.Hash); err != nil {
 		return
 	}
+
+	bo.isSaved = true
 
 	return nil
 }
@@ -169,6 +176,7 @@ func GetBlockOperation(st *sebakstorage.LevelDBBackend, hash string) (bo BlockOp
 		return
 	}
 
+	bo.isSaved = true
 	return
 }
 

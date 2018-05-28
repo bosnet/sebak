@@ -42,6 +42,7 @@ type BlockTransaction struct {
 	Message   []byte
 
 	transaction Transaction
+	isSaved     bool
 }
 
 func NewBlockTransactionFromTransaction(tx Transaction, message []byte) BlockTransaction {
@@ -92,7 +93,11 @@ func (bt BlockTransaction) NewBlockTransactionKeyConfirmed() string {
 	)
 }
 
-func (bt BlockTransaction) Save(st *sebakstorage.LevelDBBackend) (err error) {
+func (bt *BlockTransaction) Save(st *sebakstorage.LevelDBBackend) (err error) {
+	if bt.isSaved {
+		return sebakerror.ErrorAlreadySaved
+	}
+
 	key := GetBlockTransactionKey(bt.Hash)
 
 	var exists bool
@@ -125,6 +130,8 @@ func (bt BlockTransaction) Save(st *sebakstorage.LevelDBBackend) (err error) {
 			return
 		}
 	}
+
+	bt.isSaved = true
 
 	return nil
 }
@@ -161,6 +168,7 @@ func GetBlockTransaction(st *sebakstorage.LevelDBBackend, hash string) (bt Block
 		return
 	}
 
+	bt.isSaved = true
 	return
 }
 

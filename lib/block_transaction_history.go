@@ -28,6 +28,8 @@ type BlockTransactionHistory struct {
 	Confirmed string
 	Created   string
 	Message   string
+
+	isSaved bool
 }
 
 func NewTransactionHistoryFromTransaction(tx Transaction, message []byte) BlockTransactionHistory {
@@ -48,7 +50,11 @@ func (bt BlockTransactionHistory) Serialize() (encoded []byte, err error) {
 	encoded, err = sebakcommon.EncodeJSONValue(bt)
 	return
 }
-func (bt BlockTransactionHistory) Save(st *sebakstorage.LevelDBBackend) (err error) {
+func (bt *BlockTransactionHistory) Save(st *sebakstorage.LevelDBBackend) (err error) {
+	if bt.isSaved {
+		return sebakerror.ErrorAlreadySaved
+	}
+
 	key := GetBlockTransactionHistoryKey(bt.Hash)
 
 	var exists bool
@@ -64,6 +70,8 @@ func (bt BlockTransactionHistory) Save(st *sebakstorage.LevelDBBackend) (err err
 		return
 	}
 
+	bt.isSaved = true
+
 	return nil
 }
 
@@ -72,6 +80,7 @@ func GetBlockTransactionHistory(st *sebakstorage.LevelDBBackend, hash string) (b
 		return
 	}
 
+	bt.isSaved = true
 	return
 }
 
