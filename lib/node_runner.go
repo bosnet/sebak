@@ -154,7 +154,9 @@ func (nr *NodeRunner) SetHandleMessageFromClientCheckerFuncs(ctx context.Context
 }
 
 func (nr *NodeRunner) SetHandleBallotCheckerFuncs(ctx context.Context, f ...sebakcommon.CheckerFunc) {
-	nr.handleBallotCheckerFuncs = f
+	if len(f) > 0 {
+		nr.handleBallotCheckerFuncs = f
+	}
 
 	if ctx == nil {
 		ctx = context.Background()

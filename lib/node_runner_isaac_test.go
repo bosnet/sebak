@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/spikeekips/sebak/lib/common"
+	"github.com/spikeekips/sebak/lib/error"
 	"github.com/spikeekips/sebak/lib/network"
 )
 
@@ -23,11 +24,34 @@ func TestNodeRunnerConsensus(t *testing.T) {
 
 	wg.Add(numberOfNodes)
 
+	var saved []string
 	var handleBallotCheckerFuncs = []sebakcommon.CheckerFunc{
 		CheckNodeRunnerHandleBallotIsWellformed,
 		CheckNodeRunnerHandleBallotCheckIsNew,
 		CheckNodeRunnerHandleBallotReceiveBallot,
-		CheckNodeRunnerHandleBallotStore,
+		//CheckNodeRunnerHandleBallotStore,
+		func(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
+			vs, ok := ctx.Value("vs").(VotingStateStaging)
+			if !ok {
+				return ctx, nil
+			}
+
+			if !vs.IsStorable() {
+				return ctx, nil
+			}
+
+			nr := target.(*NodeRunner)
+			ballot, _ := ctx.Value("ballot").(Ballot)
+			if _, found := sebakcommon.InStringArray(saved, ballot.MessageHash()); found {
+				nr.Log().Error("", "error", sebakerror.ErrorAlreadySaved)
+				return ctx, sebakcommon.CheckerErrorStop{"got consensus"}
+			}
+
+			saved = append(saved, ballot.MessageHash())
+			nr.Log().Debug("got consensus", "ballot", ballot.MessageHash(), "votingResultStaging", vs)
+
+			return ctx, sebakcommon.CheckerErrorStop{"got consensus"}
+		},
 		CheckNodeRunnerHandleBallotBroadcast,
 	}
 

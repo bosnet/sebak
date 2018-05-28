@@ -13,7 +13,7 @@ import (
 	"github.com/spikeekips/sebak/lib/network"
 )
 
-func TestNodeRunnerCreateAccount(t *testing.T) {
+func TestNodeRunnerPayment(t *testing.T) {
 	defer sebaknetwork.CleanUpMemoryNetwork()
 
 	numberOfNodes := 3
@@ -22,19 +22,29 @@ func TestNodeRunnerCreateAccount(t *testing.T) {
 		defer nr.Stop()
 	}
 
-	kp, _ := keypair.Random()
-	kpNewAccount, _ := keypair.Random()
+	kpSource, _ := keypair.Random()
+	kpTarget, _ := keypair.Random()
 
-	// create new account in all nodes
-	var account *BlockAccount
+	var accountSource, accountTarget *BlockAccount
 	for _, nr := range nodeRunners {
-		address := kp.Address()
-		balance := strconv.FormatInt(int64(2000), 10)
-		hashed := sebakcommon.MustMakeObjectHash("")
-		checkpoint := base58.Encode(hashed)
+		{
+			address := kpSource.Address()
+			balance := strconv.FormatInt(int64(2000), 10)
+			hashed := sebakcommon.MustMakeObjectHash("")
+			checkpoint := base58.Encode(hashed)
 
-		account = NewBlockAccount(address, balance, checkpoint)
-		account.Save(nr.Storage())
+			accountSource = NewBlockAccount(address, balance, checkpoint)
+			accountSource.Save(nr.Storage())
+		}
+
+		{
+			balance := strconv.FormatInt(int64(2000), 10)
+			hashed := sebakcommon.MustMakeObjectHash("")
+			checkpoint := base58.Encode(hashed)
+
+			accountTarget = NewBlockAccount(kpTarget.Address(), balance, checkpoint)
+			accountTarget.Save(nr.Storage())
+		}
 	}
 
 	var wg sync.WaitGroup
@@ -65,8 +75,8 @@ func TestNodeRunnerCreateAccount(t *testing.T) {
 
 	client := nr0.Network().GetClient(nr0.Node().Endpoint())
 
-	initialBalance := uint64(100)
-	tx := makeTransactionCreateAccount(kp, kpNewAccount.Address(), initialBalance)
+	amount := uint64(100)
+	tx := makeTransactionPayment(kpSource, kpTarget.Address(), amount)
 	client.SendMessage(tx)
 
 	wg.Wait()
@@ -83,22 +93,23 @@ func TestNodeRunnerCreateAccount(t *testing.T) {
 	}
 
 	// check balance
-	baSource, err := GetBlockAccount(nr0.Storage(), kp.Address())
+	baSource, err := GetBlockAccount(nr0.Storage(), kpSource.Address())
 	if err != nil {
 		t.Error("failed to get source account")
 		return
 	}
-	baTarget, err := GetBlockAccount(nr0.Storage(), kpNewAccount.Address())
+	baTarget, err := GetBlockAccount(nr0.Storage(), kpTarget.Address())
 	if err != nil {
 		t.Error("failed to get target account")
 		return
 	}
 
-	if baTarget.GetBalance() != int64(initialBalance) {
-		t.Error("failed to transfer the initial amount to target")
+	expectedTargetAmount, _ := accountTarget.GetBalanceAmount().Add(int64(amount))
+	if baTarget.GetBalance() != int64(expectedTargetAmount) {
+		t.Errorf("failed to transfer the initial amount to target; %d != %d", baTarget.GetBalance(), int64(amount))
 		return
 	}
-	if account.GetBalance()-int64(initialBalance) != baSource.GetBalance() {
+	if accountSource.GetBalance()-int64(amount) != baSource.GetBalance() {
 		t.Error("failed to subtract the transfered amount from source")
 		return
 	}

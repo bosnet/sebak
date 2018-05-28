@@ -53,12 +53,46 @@ func makeTransaction(kp *keypair.Full) (tx Transaction) {
 	return
 }
 
-func makeTransactionCreateAccount(kpSource, kpTarget *keypair.Full, amount uint64) (tx Transaction) {
+func makeTransactionPayment(kpSource *keypair.Full, target string, amount uint64) (tx Transaction) {
 	for amount < 0 {
 		amount = uint64(rand.Intn(5000))
 	}
 
-	opb := NewOperationBodyCreateAccount(kpTarget.Address(), Amount(amount))
+	opb := NewOperationBodyPayment(target, Amount(amount))
+
+	op := Operation{
+		H: OperationHeader{
+			Type: OperationPayment,
+		},
+		B: opb,
+	}
+
+	txBody := TransactionBody{
+		Source:     kpSource.Address(),
+		Fee:        Amount(BaseFee),
+		Checkpoint: uuid.New().String(),
+		Operations: []Operation{op},
+	}
+
+	tx = Transaction{
+		T: "transaction",
+		H: TransactionHeader{
+			Created: sebakcommon.NowISO8601(),
+			Hash:    txBody.MakeHashString(),
+		},
+		B: txBody,
+	}
+	tx.Sign(kpSource)
+
+	return
+}
+
+func makeTransactionCreateAccount(kpSource *keypair.Full, target string, amount uint64) (tx Transaction) {
+	for amount < 0 {
+		amount = uint64(rand.Intn(5000))
+	}
+
+	opb := NewOperationBodyCreateAccount(target, Amount(amount))
 
 	op := Operation{
 		H: OperationHeader{
