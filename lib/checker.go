@@ -236,6 +236,11 @@ func CheckNodeRunnerHandleBallotStore(ctx context.Context, target interface{}, a
 	if err := bt.Save(nr.Storage()); err != nil {
 		return ctx, err
 	}
+	for _, op := range tx.B.Operations {
+		if err := FinishOperation(nr.Storage(), tx, op); err != nil {
+			return ctx, err
+		}
+	}
 
 	if err := nr.Consensus().CloseConsensus(ballot); err != nil {
 		nr.Log().Error("failed to close consensus", "error", err)

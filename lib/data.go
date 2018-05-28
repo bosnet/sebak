@@ -3,12 +3,25 @@ package sebak
 import (
 	"fmt"
 	"strconv"
+
+	"github.com/spikeekips/sebak/lib/error"
 )
 
 type Amount uint64
 
 func (a Amount) String() string {
 	return strconv.FormatInt(int64(a), 10)
+}
+
+func (a Amount) Add(i int64) (n Amount, err error) {
+	b := int64(a)
+	if b+i < 0 {
+		err = sebakerror.ErrorAccountBalanceUnderZero
+		return
+	}
+
+	n = Amount(b + i)
+	return
 }
 
 func (a Amount) MarshalJSON() ([]byte, error) {

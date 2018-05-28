@@ -130,6 +130,10 @@ func (b *BlockAccount) GetBalance() int64 {
 	return n
 }
 
+func (b *BlockAccount) GetBalanceAmount() Amount {
+	return Amount(b.GetBalance())
+}
+
 func (b *BlockAccount) setBalance(n int64) (err error) {
 	if n < 0 {
 		err = errors.New("wrong balance value")

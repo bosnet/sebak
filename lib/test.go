@@ -6,8 +6,9 @@ import (
 
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/google/uuid"
-	"github.com/spikeekips/sebak/lib/common"
 	"github.com/stellar/go/keypair"
+
+	"github.com/spikeekips/sebak/lib/common"
 )
 
 func testMakeBlockAccount() *BlockAccount {

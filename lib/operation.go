@@ -5,9 +5,11 @@ import (
 	"fmt"
 
 	"github.com/btcsuite/btcutil/base58"
-	"github.com/spikeekips/sebak/lib/common"
-	"github.com/spikeekips/sebak/lib/storage"
 	"github.com/stellar/go/keypair"
+
+	"github.com/spikeekips/sebak/lib/common"
+	"github.com/spikeekips/sebak/lib/error"
+	"github.com/spikeekips/sebak/lib/storage"
 )
 
 type OperationType string
@@ -80,7 +82,12 @@ func NewOperationFromInterface(oj OperationFromJSON) (op Operation, err error) {
 	body := oj.B.(map[string]interface{})
 	switch op.H.Type {
 	case OperationCreateAccount:
-		//
+		var amount Amount
+		amount, err = AmountFromString(fmt.Sprintf("%v", body["amount"]))
+		if err != nil {
+			return
+		}
+		op.B = NewOperationBodyCreateAccount(body["target"].(string), amount)
 	case OperationPayment:
 		var amount Amount
 		amount, err = AmountFromString(fmt.Sprintf("%v", body["amount"]))
@@ -96,6 +103,34 @@ func NewOperationFromInterface(oj OperationFromJSON) (op Operation, err error) {
 		}
 	}
 
+	return
+}
+
+func NewOperation(t OperationType, body OperationBody) (op Operation, err error) {
+	if err = body.IsWellFormed(); err != nil {
+		return
+	}
+
+	switch t {
+	case OperationCreateAccount:
+		if _, ok := body.(OperationBodyCreateAccount); !ok {
+			err = sebakerror.ErrorTypeOperationBodyNotMatched
+			return
+		}
+	case OperationPayment:
+		if _, ok := body.(OperationBodyPayment); !ok {
+			err = sebakerror.ErrorTypeOperationBodyNotMatched
+			return
+		}
+	default:
+		err = sebakerror.ErrorUnknownOperationType
+		return
+	}
+
+	op = Operation{
+		H: OperationHeader{Type: t},
+		B: body,
+	}
 	return
 }
 
@@ -150,6 +185,13 @@ func (o OperationBodyPayment) GetAmount() Amount {
 type OperationBodyCreateAccount struct {
 	Target string `json:"target"`
 	Amount Amount `json:"amount"`
+}
+
+func NewOperationBodyCreateAccount(target string, amount Amount) OperationBodyCreateAccount {
+	return OperationBodyCreateAccount{
+		Target: target,
+		Amount: amount,
+	}
 }
 
 func (o OperationBodyCreateAccount) IsWellFormed() (err error) {
