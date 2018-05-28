@@ -8,7 +8,7 @@ import (
 )
 
 func TestNewBlockOperationFromOperation(t *testing.T) {
-	_, tx := MakeTransactions(1)
+	_, tx := TestMakeTransaction(1)
 
 	op := tx.B.Operations[0]
 	bo := NewBlockOperationFromOperation(op, tx)
@@ -38,7 +38,7 @@ func TestNewBlockOperationFromOperation(t *testing.T) {
 func TestBlockOperationSaveAndGet(t *testing.T) {
 	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
 
-	bos := MakeNewBlockOperation(1)
+	bos := TestMakeNewBlockOperation(1)
 	if err := bos[0].Save(st); err != nil {
 		t.Error(err)
 		return
@@ -80,7 +80,7 @@ func TestBlockOperationSaveAndGet(t *testing.T) {
 func TestBlockOperationSaveExisting(t *testing.T) {
 	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
 
-	bos := MakeNewBlockOperation(1)
+	bos := TestMakeNewBlockOperation(1)
 	bo := bos[0]
 	bo.Save(st)
 
@@ -108,7 +108,7 @@ func TestGetSortedBlockOperationsByTxHash(t *testing.T) {
 	var txHashes []string
 	createdOrder := map[string][]string{}
 	for _ = range [3]int{0, 0, 0} {
-		bos := MakeNewBlockOperation(10)
+		bos := TestMakeNewBlockOperation(10)
 		txHashes = append(txHashes, bos[0].TxHash)
 
 		for _, bo := range bos {

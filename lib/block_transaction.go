@@ -13,17 +13,19 @@ import (
 BlockTransaction is `Transaction` data for block. the storage should support,
  * find by `Hash`
 
- * get list by `Checkpoint` and created order
+ * //get list by `Checkpoint` and created order
  * get list by `Source` and created order
  * get list by `Confirmed` order
 */
 
 const (
-	BlockTransactionPrefixHash       string = "bt-hash-"       // bt-hash-<BlockTransaction.Hash>
-	BlockTransactionPrefixCheckpoint string = "bt-checkpoint-" // bt-hash-<BlockTransaction.Checkpoint>
-	BlockTransactionPrefixSource     string = "bt-source-"     // bt-hash-<BlockTransaction.Source>
-	BlockTransactionPrefixConfirmed  string = "bt-confirmed-"  // bt-hash-<BlockTransaction.Confirmed>
+	BlockTransactionPrefixHash string = "bt-hash-" // bt-hash-<BlockTransaction.Hash>
+	//BlockTransactionPrefixCheckpoint string = "bt-checkpoint-" // bt-hash-<BlockTransaction.Checkpoint>
+	BlockTransactionPrefixSource    string = "bt-source-"    // bt-hash-<BlockTransaction.Source>
+	BlockTransactionPrefixConfirmed string = "bt-confirmed-" // bt-hash-<BlockTransaction.Confirmed>
 )
+
+// TODO(BlockTransaction): support counting
 
 type BlockTransaction struct {
 	Hash string
@@ -38,6 +40,8 @@ type BlockTransaction struct {
 	Confirmed string
 	Created   string
 	Message   []byte
+
+	tx Transaction
 }
 
 func NewBlockTransactionFromTransaction(tx Transaction, message []byte) BlockTransaction {
@@ -57,9 +61,12 @@ func NewBlockTransactionFromTransaction(tx Transaction, message []byte) BlockTra
 
 		Created: tx.H.Created,
 		Message: message,
+
+		tx: tx,
 	}
 }
 
+/*
 func (bt BlockTransaction) NewBlockTransactionKeyCheckpoint() string {
 	return fmt.Sprintf(
 		"%s%s",
@@ -67,6 +74,7 @@ func (bt BlockTransaction) NewBlockTransactionKeyCheckpoint() string {
 		sebakcommon.GetUniqueIDFromUUID(),
 	)
 }
+*/
 
 func (bt BlockTransaction) NewBlockTransactionKeySource() string {
 	return fmt.Sprintf(
@@ -79,7 +87,7 @@ func (bt BlockTransaction) NewBlockTransactionKeySource() string {
 func (bt BlockTransaction) NewBlockTransactionKeyConfirmed() string {
 	return fmt.Sprintf(
 		"%s%s",
-		GetBlockTransactionKeyConfirmed(bt.Confirmed),
+		GetBlockTransactionKeyPrefixConfirmed(bt.Confirmed),
 		sebakcommon.GetUniqueIDFromUUID(),
 	)
 }
@@ -99,13 +107,15 @@ func (bt BlockTransaction) Save(st *sebakstorage.LevelDBBackend) (err error) {
 	if err = st.New(GetBlockTransactionKey(bt.Hash), bt); err != nil {
 		return
 	}
-	if err = st.New(GetBlockTransactionKeyPrefixCheckpoint(bt.Checkpoint), bt.Hash); err != nil {
+	/*
+		if err = st.New(bt.NewBlockTransactionKeyCheckpoint(), bt.Hash); err != nil {
+			return
+		}
+	*/
+	if err = st.New(bt.NewBlockTransactionKeySource(), bt.Hash); err != nil {
 		return
 	}
-	if err = st.New(GetBlockTransactionKeyPrefixSource(bt.Source), bt.Hash); err != nil {
-		return
-	}
-	if err = st.New(GetBlockTransactionKeyConfirmed(bt.Confirmed), bt.Hash); err != nil {
+	if err = st.New(bt.NewBlockTransactionKeyConfirmed(), bt.Hash); err != nil {
 		return
 	}
 
@@ -117,20 +127,22 @@ func (bt BlockTransaction) Serialize() (encoded []byte, err error) {
 	return
 }
 
-func GetBlockTransactionKey(hash string) string {
-	return fmt.Sprintf("%s%s", BlockTransactionPrefixHash, hash)
-}
-
+/*
 func GetBlockTransactionKeyPrefixCheckpoint(checkpoint string) string {
 	return fmt.Sprintf("%s%s-", BlockTransactionPrefixCheckpoint, checkpoint)
 }
+*/
 
 func GetBlockTransactionKeyPrefixSource(source string) string {
 	return fmt.Sprintf("%s%s-", BlockTransactionPrefixSource, source)
 }
 
-func GetBlockTransactionKeyConfirmed(confirmed string) string {
+func GetBlockTransactionKeyPrefixConfirmed(confirmed string) string {
 	return fmt.Sprintf("%s%s-", BlockTransactionPrefixConfirmed, confirmed)
+}
+
+func GetBlockTransactionKey(hash string) string {
+	return fmt.Sprintf("%s%s", BlockTransactionPrefixHash, hash)
 }
 
 func GetBlockTransaction(st *sebakstorage.LevelDBBackend, hash string) (bt BlockTransaction, err error) {
@@ -174,6 +186,9 @@ func LoadBlockTransactionsInsideIterator(
 		})
 }
 
+/*
+// GetBlockTransactionsByCheckpoint is maybe useless, because the only one
+// transaction could be possible from a transaction.
 func GetBlockTransactionsByCheckpoint(st *sebakstorage.LevelDBBackend, checkpoint string, reverse bool) (
 	func() (BlockTransaction, bool),
 	func(),
@@ -182,6 +197,7 @@ func GetBlockTransactionsByCheckpoint(st *sebakstorage.LevelDBBackend, checkpoin
 
 	return LoadBlockTransactionsInsideIterator(st, iterFunc, closeFunc)
 }
+*/
 
 func GetBlockTransactionsBySource(st *sebakstorage.LevelDBBackend, source string, reverse bool) (
 	func() (BlockTransaction, bool),

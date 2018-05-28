@@ -10,7 +10,7 @@ import (
 	"github.com/stellar/go/keypair"
 )
 
-func makeBlockAccount() *BlockAccount {
+func testMakeBlockAccount() *BlockAccount {
 	kp, _ := keypair.Random()
 	address := kp.Address()
 	balance := 2000
@@ -20,8 +20,8 @@ func makeBlockAccount() *BlockAccount {
 	return NewBlockAccount(address, fmt.Sprintf("%d", balance), checkpoint)
 }
 
-func MakeNewBlockOperation(n int) (bos []BlockOperation) {
-	_, tx := MakeTransactions(n)
+func TestMakeNewBlockOperation(n int) (bos []BlockOperation) {
+	_, tx := TestMakeTransaction(n)
 
 	for _, op := range tx.B.Operations {
 		bos = append(bos, NewBlockOperationFromOperation(op, tx))
@@ -30,14 +30,14 @@ func MakeNewBlockOperation(n int) (bos []BlockOperation) {
 	return
 }
 
-func MakeNewBlockTransaction(n int) BlockTransaction {
-	_, tx := MakeTransactions(n)
+func TestMakeNewBlockTransaction(n int) BlockTransaction {
+	_, tx := TestMakeTransaction(n)
 
 	a, _ := tx.Serialize()
 	return NewBlockTransactionFromTransaction(tx, a)
 }
 
-func MakeOperationBodyPayment(amount int) OperationBodyPayment {
+func TestMakeOperationBodyPayment(amount int) OperationBodyPayment {
 	kp, _ := keypair.Random()
 
 	for amount < 0 {
@@ -50,8 +50,8 @@ func MakeOperationBodyPayment(amount int) OperationBodyPayment {
 	}
 }
 
-func MakeOperation(amount int) Operation {
-	opb := MakeOperationBodyPayment(amount)
+func TestMakeOperation(amount int) Operation {
+	opb := TestMakeOperationBodyPayment(amount)
 
 	op := Operation{
 		H: OperationHeader{
@@ -63,12 +63,12 @@ func MakeOperation(amount int) Operation {
 	return op
 }
 
-func MakeTransactions(n int) (kp *keypair.Full, tx Transaction) {
+func TestMakeTransaction(n int) (kp *keypair.Full, tx Transaction) {
 	kp, _ = keypair.Random()
 
 	var ops []Operation
 	for i := 0; i < n; i++ {
-		ops = append(ops, MakeOperation(-1))
+		ops = append(ops, TestMakeOperation(-1))
 	}
 
 	txBody := TransactionBody{
@@ -86,6 +86,17 @@ func MakeTransactions(n int) (kp *keypair.Full, tx Transaction) {
 		},
 		B: txBody,
 	}
+	tx.Sign(kp)
+
+	return
+}
+
+func TestMakeTransactionWithKeypair(n int, kp *keypair.Full) (tx Transaction) {
+	var ops []Operation
+	for i := 0; i < n; i++ {
+		ops = append(ops, TestMakeOperation(-1))
+	}
+	tx, _ = NewTransaction(kp.Address(), uuid.New().String(), ops...)
 	tx.Sign(kp)
 
 	return

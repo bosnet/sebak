@@ -30,7 +30,7 @@ func createNetMemoryNetwork() (*sebaknetwork.MemoryNetwork, *sebakcommon.Validat
 
 func makeTransaction(kp *keypair.Full) (tx Transaction) {
 	var ops []Operation
-	ops = append(ops, MakeOperation(-1))
+	ops = append(ops, TestMakeOperation(-1))
 
 	txBody := TransactionBody{
 		Source:     kp.Address(),

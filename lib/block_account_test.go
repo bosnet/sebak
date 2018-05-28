@@ -9,7 +9,7 @@ import (
 func TestSaveNewBlockAccount(t *testing.T) {
 	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
 
-	b := makeBlockAccount()
+	b := testMakeBlockAccount()
 	err := b.Save(st)
 	if err != nil {
 		t.Errorf("failed to save BlockAccount, %v", err)
@@ -31,7 +31,7 @@ func TestSaveNewBlockAccount(t *testing.T) {
 func TestSaveExistingBlockAccount(t *testing.T) {
 	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
 
-	b := makeBlockAccount()
+	b := testMakeBlockAccount()
 	b.Save(st)
 
 	b.EnsureUpdate(100, "fake-checkpoint", b.GetBalance()+100)
@@ -49,7 +49,7 @@ func TestSortMultipleBlockAccount(t *testing.T) {
 
 	var createdOrder []string
 	for i := 0; i < 50; i++ {
-		b := makeBlockAccount()
+		b := testMakeBlockAccount()
 		b.Save(st)
 
 		createdOrder = append(createdOrder, b.Address)
@@ -80,7 +80,7 @@ func TestGetSortedBlockAccounts(t *testing.T) {
 
 	var createdOrder []string
 	for i := 0; i < 50; i++ {
-		b := makeBlockAccount()
+		b := testMakeBlockAccount()
 		b.Save(st)
 
 		createdOrder = append(createdOrder, b.Address)

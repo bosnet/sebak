@@ -23,4 +23,5 @@ var (
 	ErrorVotingThresholdInvalidValidators = NewError(120, "invalid validators")
 	ErrorBallotHasInvalidState            = NewError(121, "ballot has invalid state")
 	ErrorVotingResultFailedToClose        = NewError(122, "failed to close `VotingResult`")
+	ErrorTransactionEmptyOperations       = NewError(123, "operations needs in transaction")
 )

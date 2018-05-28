@@ -10,7 +10,7 @@ import (
 )
 
 func makeNewBallot(state sebakcommon.BallotState, vote VotingHole) (*keypair.Full, Transaction, Ballot) {
-	kpNode, tx := MakeTransactions(1)
+	kpNode, tx := TestMakeTransaction(1)
 	ballot, _ := NewBallotFromMessage(kpNode.Address(), tx)
 
 	ballot.SetState(state)
@@ -22,7 +22,7 @@ func makeNewBallot(state sebakcommon.BallotState, vote VotingHole) (*keypair.Ful
 }
 
 func TestNewBallot(t *testing.T) {
-	kpNode, tx := MakeTransactions(1)
+	kpNode, tx := TestMakeTransaction(1)
 	ballot, _ := NewBallotFromMessage(kpNode.Address(), tx)
 
 	if len(ballot.H.Hash) < 1 {

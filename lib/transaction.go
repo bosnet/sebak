@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 
 	"github.com/btcsuite/btcutil/base58"
-	"github.com/spikeekips/sebak/lib/common"
-	"github.com/spikeekips/sebak/lib/storage"
 	"github.com/stellar/go/keypair"
+
+	"github.com/spikeekips/sebak/lib/common"
+	"github.com/spikeekips/sebak/lib/error"
+	"github.com/spikeekips/sebak/lib/storage"
 )
 
 // TODO versioning
@@ -53,6 +55,31 @@ func NewTransactionFromJSON(b []byte) (tx Transaction, err error) {
 		Fee:        txt.B.Fee,
 		Checkpoint: txt.B.Checkpoint,
 		Operations: operations,
+	}
+
+	return
+}
+
+func NewTransaction(source, checkpoint string, ops ...Operation) (tx Transaction, err error) {
+	if len(ops) < 1 {
+		err = sebakerror.ErrorTransactionEmptyOperations
+		return
+	}
+
+	txBody := TransactionBody{
+		Source:     source,
+		Fee:        Amount(BaseFee),
+		Checkpoint: checkpoint,
+		Operations: ops,
+	}
+
+	tx = Transaction{
+		T: "transaction",
+		H: TransactionHeader{
+			Created: sebakcommon.NowISO8601(),
+			Hash:    txBody.MakeHashString(),
+		},
+		B: txBody,
 	}
 
 	return

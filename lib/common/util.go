@@ -168,3 +168,14 @@ func MustJSONMarshal(o interface{}) []byte {
 	b, _ := json.Marshal(o)
 	return b
 }
+
+func ReverseStringSlice(a []string) []string {
+	if len(a) < 1 {
+		return []string{}
+	}
+	b := make([]string, len(a))
+	for i, j := 0, len(a)-1; i < j; i, j = i+1, j-1 {
+		b[i], b[j] = a[j], a[i]
+	}
+	return b
+}

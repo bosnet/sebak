@@ -3,13 +3,15 @@ package sebak
 import (
 	"testing"
 
-	"github.com/google/uuid"
+	"github.com/stellar/go/keypair"
+
+	"github.com/spikeekips/sebak/lib/common"
 	"github.com/spikeekips/sebak/lib/error"
 	"github.com/spikeekips/sebak/lib/storage"
 )
 
 func TestNewBlockTransaction(t *testing.T) {
-	_, tx := MakeTransactions(1)
+	_, tx := TestMakeTransaction(1)
 	a, _ := tx.Serialize()
 	bt := NewBlockTransactionFromTransaction(tx, a)
 
@@ -59,7 +61,7 @@ func TestNewBlockTransaction(t *testing.T) {
 func TestBlockTransactionSaveAndGet(t *testing.T) {
 	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
 
-	bt := MakeNewBlockTransaction(1)
+	bt := TestMakeNewBlockTransaction(1)
 	if err := bt.Save(st); err != nil {
 		t.Error(err)
 		return
@@ -112,7 +114,7 @@ func TestBlockTransactionSaveAndGet(t *testing.T) {
 func TestBlockTransactionSaveExisting(t *testing.T) {
 	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
 
-	bt := MakeNewBlockTransaction(1)
+	bt := TestMakeNewBlockTransaction(1)
 	bt.Save(st)
 
 	if exists, err := ExistBlockTransaction(st, bt.Hash); err != nil {
@@ -132,6 +134,7 @@ func TestBlockTransactionSaveExisting(t *testing.T) {
 	}
 }
 
+/*
 func TestGetSortedBlockTransactionsByCheckpoint(t *testing.T) {
 	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
 
@@ -140,7 +143,7 @@ func TestGetSortedBlockTransactionsByCheckpoint(t *testing.T) {
 
 	checkpoint := uuid.New().String()
 	for i := 0; i < 10; i++ {
-		bt := MakeNewBlockTransaction(1)
+		bt := TestMakeNewBlockTransaction(1)
 		bt.Checkpoint = checkpoint
 		createdOrder = append(createdOrder, bt.Hash)
 	}
@@ -161,6 +164,167 @@ func TestGetSortedBlockTransactionsByCheckpoint(t *testing.T) {
 		if bt.Hash != createdOrder[i] {
 			t.Error("order mismatch")
 			break
+		}
+	}
+}
+*/
+
+func TestMultipleBlockTransactionSource(t *testing.T) {
+	kp, _ := keypair.Random()
+	kpAnother, _ := keypair.Random()
+	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
+
+	numTxs := 10
+
+	var txs []Transaction
+	var createdOrder []string
+	for i := 0; i < numTxs; i++ {
+		tx := TestMakeTransactionWithKeypair(1, kp)
+		txs = append(txs, tx)
+		createdOrder = append(createdOrder, tx.GetHash())
+
+		a, _ := tx.Serialize()
+		bt := NewBlockTransactionFromTransaction(tx, a)
+		err := bt.Save(st)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+	}
+
+	// create txs from another keypair
+	for i := 0; i < numTxs; i++ {
+		tx := TestMakeTransactionWithKeypair(1, kpAnother)
+		a, _ := tx.Serialize()
+		bt := NewBlockTransactionFromTransaction(tx, a)
+		err := bt.Save(st)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+	}
+
+	{
+		var saved []BlockTransaction
+		iterFunc, closeFunc := GetBlockTransactionsBySource(st, kp.Address(), false)
+		for {
+			bo, hasNext := iterFunc()
+			if !hasNext {
+				break
+			}
+
+			saved = append(saved, bo)
+		}
+		closeFunc()
+
+		if len(saved) != len(createdOrder) {
+			t.Error("fetched records insufficient")
+			return
+		}
+		for i, bt := range saved {
+			if bt.Hash != createdOrder[i] {
+				t.Error("order mismatch")
+				return
+			}
+		}
+	}
+
+	{
+		// reverse order
+		var saved []BlockTransaction
+		iterFunc, closeFunc := GetBlockTransactionsBySource(st, kp.Address(), true)
+		for {
+			bo, hasNext := iterFunc()
+			if !hasNext {
+				break
+			}
+
+			saved = append(saved, bo)
+		}
+		closeFunc()
+
+		if len(saved) != len(createdOrder) {
+			t.Error("fetched records insufficient")
+			return
+		}
+		reverseCreatedOrder := sebakcommon.ReverseStringSlice(createdOrder)
+
+		for i, bt := range saved {
+			if bt.Hash != reverseCreatedOrder[i] {
+				t.Error("reverse order mismatch")
+				return
+			}
+		}
+	}
+}
+
+func TestMultipleBlockTransactionConfirmed(t *testing.T) {
+	kp, _ := keypair.Random()
+	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
+
+	numTxs := 10
+
+	var createdOrder []string
+	for i := 0; i < numTxs; i++ {
+		tx := TestMakeTransactionWithKeypair(1, kp)
+		createdOrder = append(createdOrder, tx.GetHash())
+		a, _ := tx.Serialize()
+		bt := NewBlockTransactionFromTransaction(tx, a)
+		err := bt.Save(st)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+	}
+
+	var saved []BlockTransaction
+	iterFunc, closeFunc := GetBlockTransactionsByConfirmed(st, false)
+	for {
+		bo, hasNext := iterFunc()
+		if !hasNext {
+			break
+		}
+
+		saved = append(saved, bo)
+	}
+	closeFunc()
+
+	if len(saved) != len(createdOrder) {
+		t.Errorf("fetched records insufficient: %d != %d", len(saved), len(createdOrder))
+		return
+	}
+	for i, bt := range saved {
+		if bt.Hash != createdOrder[i] {
+			t.Error("order mismatch")
+			return
+		}
+	}
+
+	{
+		// reverse order
+		var saved []BlockTransaction
+		iterFunc, closeFunc := GetBlockTransactionsByConfirmed(st, true)
+		for {
+			bo, hasNext := iterFunc()
+			if !hasNext {
+				break
+			}
+
+			saved = append(saved, bo)
+		}
+		closeFunc()
+
+		if len(saved) != len(createdOrder) {
+			t.Error("fetched records insufficient")
+			return
+		}
+		reverseCreatedOrder := sebakcommon.ReverseStringSlice(createdOrder)
+
+		for i, bt := range saved {
+			if bt.Hash != reverseCreatedOrder[i] {
+				t.Error("reverse order mismatch")
+				return
+			}
 		}
 	}
 }
