@@ -3,6 +3,7 @@ package sebak
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/spikeekips/sebak/lib/common"
@@ -27,15 +28,25 @@ func CheckTransactionBaseFee(ctx context.Context, target interface{}, args ...in
 	return ctx, nil
 }
 
-func CheckTransactionOperationIsWellFormed(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
+func CheckTransactionOperation(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
 	tx := target.(Transaction)
+
+	var hashes []string
 	for _, op := range tx.B.Operations {
-		if ta := op.B.TargetAddress(); tx.B.Source == ta {
+		if tx.B.Source == op.B.TargetAddress() {
 			return ctx, sebakerror.ErrorInvalidOperation
 		}
 		if err := op.IsWellFormed(); err != nil {
 			return ctx, err
 		}
+		// if there are multiple operations which has same 'Type' and same
+		// 'TargetAddress()', this transaction will be invalid.
+		u := fmt.Sprintf("%s-%s", op.H.Type, op.B.TargetAddress())
+		if _, found := sebakcommon.InStringArray(hashes, u); found {
+			return ctx, sebakerror.ErrorDuplicatedOperation
+		}
+
+		hashes = append(hashes, u)
 	}
 
 	return ctx, nil
@@ -159,7 +170,7 @@ func CheckNodeRunnerHandleBallotCheckIsNew(ctx context.Context, target interface
 		return ctx, errors.New("found invalid ballot")
 	}
 
-	isNew := !nr.consensus.HasMessageByString(ballot.MessageHash())
+	isNew := !nr.consensus.HasMessageByHash(ballot.MessageHash())
 
 	return context.WithValue(ctx, "isNew", isNew), nil
 }
@@ -273,7 +284,6 @@ func CheckNodeRunnerHandleBallotBroadcast(ctx context.Context, target interface{
 
 	nr.Consensus().AddBallot(newBallot)
 
-	// TODO state is changed, so broadcast
 	nr.Log().Debug("ballot will be broadcasted", "ballot", newBallot.MessageHash(), "isNew", isNew)
 	nr.ConnectionManager().Broadcast(newBallot)
 

@@ -193,7 +193,7 @@ func TestNodeRunnerConsensusStoreInHistoryIncomingTxMessage(t *testing.T) {
 
 	wg.Wait()
 
-	if nr0.Consensus().HasMessageByString(tx.GetHash()) {
+	if nr0.Consensus().HasMessageByHash(tx.GetHash()) {
 		t.Error("failed to close consensus; message still in consensus")
 		return
 	}

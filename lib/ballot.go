@@ -279,17 +279,16 @@ func (b *BallotBoxes) Len() int {
 }
 
 func (b *BallotBoxes) HasMessage(m sebakcommon.Message) bool {
-	return b.HasMessageByString(m.GetHash())
+	return b.HasMessageByHash(m.GetHash())
 }
 
-// TODO rename to `HasMessageByHash`
-func (b *BallotBoxes) HasMessageByString(hash string) bool {
+func (b *BallotBoxes) HasMessageByHash(hash string) bool {
 	_, ok := b.Results[hash]
 	return ok
 }
 
 func (b *BallotBoxes) VotingResult(ballot Ballot) *VotingResult {
-	if !b.HasMessageByString(ballot.MessageHash()) {
+	if !b.HasMessageByHash(ballot.MessageHash()) {
 		return nil
 	}
 
@@ -316,7 +315,7 @@ func (b *BallotBoxes) AddVotingResult(vr *VotingResult, bb *BallotBox) (err erro
 }
 
 func (b *BallotBoxes) RemoveVotingResult(vr *VotingResult) (err error) {
-	if !b.HasMessageByString(vr.MessageHash) {
+	if !b.HasMessageByHash(vr.MessageHash) {
 		err = sebakerror.ErrorVotingResultNotFound
 		return
 	}
@@ -332,7 +331,7 @@ func (b *BallotBoxes) AddBallot(ballot Ballot) (isNew bool, err error) {
 
 	var vr *VotingResult
 
-	isNew = !b.HasMessageByString(ballot.MessageHash())
+	isNew = !b.HasMessageByHash(ballot.MessageHash())
 
 	if !isNew {
 		vr = b.VotingResult(ballot)
@@ -340,7 +339,7 @@ func (b *BallotBoxes) AddBallot(ballot Ballot) (isNew bool, err error) {
 			return
 		}
 
-		if b.ReservedBox.HasMessageByString(ballot.MessageHash()) {
+		if b.ReservedBox.HasMessageByHash(ballot.MessageHash()) {
 			b.ReservedBox.RemoveVotingResult(vr) // TODO detect error
 			b.VotingBox.AddVotingResult(vr)      // TODO detect error
 		}
@@ -378,16 +377,16 @@ func (b *BallotBox) Len() int {
 }
 
 func (b *BallotBox) HasMessage(m sebakcommon.Message) bool {
-	return b.HasMessageByString(m.GetHash())
+	return b.HasMessageByHash(m.GetHash())
 }
 
-func (b *BallotBox) HasMessageByString(hash string) bool {
+func (b *BallotBox) HasMessageByHash(hash string) bool {
 	_, found := sebakcommon.InStringArray(b.Hashes, hash)
 	return found
 }
 
 func (b *BallotBox) AddVotingResult(vr *VotingResult) (err error) {
-	if b.HasMessageByString(vr.MessageHash) {
+	if b.HasMessageByHash(vr.MessageHash) {
 		err = sebakerror.ErrorVotingResultAlreadyExists
 		return
 	}
@@ -402,7 +401,7 @@ func (b *BallotBox) AddVotingResult(vr *VotingResult) (err error) {
 }
 
 func (b *BallotBox) RemoveVotingResult(vr *VotingResult) (err error) {
-	if !b.HasMessageByString(vr.MessageHash) {
+	if !b.HasMessageByHash(vr.MessageHash) {
 		err = sebakerror.ErrorVotingResultNotFound
 		return
 	}

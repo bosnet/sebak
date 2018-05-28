@@ -144,7 +144,8 @@ func NewHTTP2Network(config HTTP2NetworkConfig) (h2n *HTTP2Network) {
 		ReadTimeout:       config.ReadTimeout,
 		ReadHeaderTimeout: config.ReadHeaderTimeout,
 		WriteTimeout:      config.WriteTimeout,
-		//ErrorLog: , // TODO replace custom logger
+		// TODO replace custom logger
+		//ErrorLog:
 	}
 	server.SetKeepAlivesEnabled(true)
 

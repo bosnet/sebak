@@ -177,7 +177,6 @@ func (nr *NodeRunner) handleMessage() {
 			nr.log.Debug("got message from client`", "message", message.String()[:50])
 
 			/*
-				- TODO `Message` must be saved in `BlockTransactionHistory`
 				- TODO check already `IsWellFormed()`
 				- TODO check already in BlockTransaction
 				- TODO check already in BlockTransactionHistory

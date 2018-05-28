@@ -32,8 +32,8 @@ func (is *ISAAC) HasMessage(message sebakcommon.Message) bool {
 	return is.Boxes.HasMessage(message)
 }
 
-func (is *ISAAC) HasMessageByString(h string) bool {
-	return is.Boxes.HasMessageByString(h)
+func (is *ISAAC) HasMessageByHash(h string) bool {
+	return is.Boxes.HasMessageByHash(h)
 }
 
 func (is *ISAAC) ReceiveMessage(m sebakcommon.Message) (ballot Ballot, err error) {
@@ -56,7 +56,7 @@ func (is *ISAAC) ReceiveMessage(m sebakcommon.Message) (ballot Ballot, err error
 
 	// self-sign; make new `Ballot` from `Message`
 	ballot.SetState(sebakcommon.BallotStateINIT)
-	ballot.Vote(VotingYES) // TODO YES or NO
+	ballot.Vote(VotingYES) // The initial ballot from client will have 'VotingYES'
 	ballot.UpdateHash()
 	ballot.Sign(is.Node.Keypair())
 
@@ -80,10 +80,6 @@ const (
 )
 
 func (is *ISAAC) ReceiveBallot(ballot Ballot) (vs VotingStateStaging, err error) {
-	/*
-		TODO Previously the new incoming Ballot must be checked `IsWellFormed()`
-	*/
-
 	switch ballot.State() {
 	case sebakcommon.BallotStateINIT:
 		vs, err = is.receiveBallotStateINIT(ballot)
@@ -117,7 +113,7 @@ func (is *ISAAC) receiveBallotStateINIT(ballot Ballot) (vs VotingStateStaging, e
 
 		// self-sign
 		newBallot.SetState(sebakcommon.BallotStateINIT)
-		newBallot.Vote(VotingYES) // TODO YES or NO
+		newBallot.Vote(VotingYES) // The BallotStateINIT ballot will have 'VotingYES'
 		newBallot.UpdateHash()
 		newBallot.Sign(is.Node.Keypair())
 
@@ -147,8 +143,6 @@ func (is *ISAAC) receiveBallotStateINIT(ballot Ballot) (vs VotingStateStaging, e
 		}
 	}
 
-	// TODO this ballot should be broadcasted
-
 	return
 }
 
@@ -166,7 +160,7 @@ func (is *ISAAC) AddBallot(ballot Ballot) (err error) {
 
 func (is *ISAAC) CloseConsensus(ballot Ballot) (err error) {
 	log.Debug("consensus of this ballot will be closed", "ballot", ballot.MessageHash())
-	if !is.HasMessageByString(ballot.MessageHash()) {
+	if !is.HasMessageByHash(ballot.MessageHash()) {
 		return sebakerror.ErrorVotingResultNotInBox
 	}
 
@@ -198,8 +192,6 @@ func (is *ISAAC) receiveBallotVotingStates(ballot Ballot) (vs VotingStateStaging
 	if vs, err = vr.ChangeState(votingHole, state); err != nil {
 		return
 	}
-
-	// TODO if state reaches `BallotStateALLCONFIRM`, externalize it.
 
 	return
 }

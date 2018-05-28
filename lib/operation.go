@@ -39,7 +39,7 @@ func (o Operation) IsWellFormed() (err error) {
 }
 
 func (o Operation) Validate(st sebakstorage.LevelDBBackend) (err error) {
-	if err = o.B.Validate(); err != nil {
+	if err = o.B.Validate(st); err != nil {
 		return
 	}
 
@@ -104,7 +104,7 @@ type OperationHeader struct {
 }
 
 type OperationBody interface {
-	Validate() error
+	Validate(sebakstorage.LevelDBBackend) error
 	IsWellFormed() error
 	TargetAddress() string
 	GetAmount() Amount
@@ -133,9 +133,9 @@ func (o OperationBodyPayment) IsWellFormed() (err error) {
 	return
 }
 
-func (o OperationBodyPayment) Validate() (err error) {
+func (o OperationBodyPayment) Validate(st sebakstorage.LevelDBBackend) (err error) {
 	// TODO check whether `Target` is in `Block Account`
-
+	// TODO check over minimum balance
 	return
 }
 
@@ -160,12 +160,12 @@ func (o OperationBodyCreateAccount) IsWellFormed() (err error) {
 	if int64(o.Amount) < 1 {
 		err = fmt.Errorf("invalid `Amount`: lower than 1")
 		return
-	} // TODO check over minimum balance
+	}
 
 	return
 }
 
-func (o OperationBodyCreateAccount) Validate() (err error) {
+func (o OperationBodyCreateAccount) Validate(st sebakstorage.LevelDBBackend) (err error) {
 	// TODO check whether `Target` is not in `Block Account`
 
 	return

@@ -88,18 +88,17 @@ func NewTransaction(source, checkpoint string, ops ...Operation) (tx Transaction
 var TransactionWellFormedCheckerFuncs = []sebakcommon.CheckerFunc{
 	CheckTransactionSource,
 	CheckTransactionBaseFee,
-	CheckTransactionOperationIsWellFormed,
+	CheckTransactionOperation,
 	CheckTransactionVerifySignature,
 	CheckTransactionHashMatch,
 }
 
 func (o Transaction) IsWellFormed() (err error) {
+	// TODO check `Version` format with SemVer
 	if _, err = sebakcommon.Checker(context.Background(), TransactionWellFormedCheckerFuncs...)(o); err != nil {
 		return
 	}
 
-	// TODO check `Version` format with SemVer
-	// TODO check duplication Operations
 	return
 }
 

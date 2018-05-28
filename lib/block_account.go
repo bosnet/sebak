@@ -52,8 +52,7 @@ func (b *BlockAccount) Save(st *sebakstorage.LevelDBBackend) (err error) {
 	if exists {
 		err = st.Set(key, b)
 	} else {
-		// TODO consider to use
-		// [`Transaction`](https://godoc.org/github.com/syndtr/goleveldb/leveldb#DB.OpenTransaction)
+		// TODO consider to use, [`Transaction`](https://godoc.org/github.com/syndtr/goleveldb/leveldb#DB.OpenTransaction)
 		err = st.New(key, b)
 		createdKey := GetBlockAccountCreatedKey(sebakcommon.GetUniqueIDFromUUID())
 		err = st.New(createdKey, b.Address)
