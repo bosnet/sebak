@@ -21,11 +21,12 @@ BlockOperation is `Operation` data for block. the storage should support,
 */
 
 const (
-	BlockOperationPrefixHash   string = "bo-hash-"   // bo-hash-<BlockOperation.Hash>
-	BlockOperationPrefixTxHash string = "bo-txhash-" // bo-txhash-<BlockOperation.TxHash>-<created>
-	BlockOperationPrefixSource string = "bo-source-" // bo-source-<BlockOperation.Source>-<created>
-	BlockOperationPrefixTarget string = "bo-target-" // bo-target-<BlockOperation.Target>-<created>
-	BlockOperationPrefixPeers  string = "bo-peers-"  // bo-target-<Address0>-<Address1>-<created>
+	BlockOperationPrefixHash       string = "bo-hash-"       // bo-hash-<BlockOperation.Hash>
+	BlockOperationPrefixTxHash     string = "bo-txhash-"     // bo-txhash-<BlockOperation.TxHash>-<created>
+	BlockOperationPrefixSource     string = "bo-source-"     // bo-source-<BlockOperation.Source>-<created>
+	BlockOperationPrefixTarget     string = "bo-target-"     // bo-target-<BlockOperation.Target>-<created>
+	BlockOperationPrefixPeers      string = "bo-peers-"      // bo-target-<Address0>-<Address1>-<created>
+	BlockOperationPrefixCheckpoint string = "bo-checkpoint-" // bo-checkpoint-<Transaction.B.Checkpoint>-<created>
 )
 
 type BlockOperation struct {
@@ -36,6 +37,9 @@ type BlockOperation struct {
 	Source string
 	Target string
 	Amount Amount
+
+	// transaction will be used only for `Save` time.
+	transaction Transaction
 }
 
 func NewBlockOperationFromOperation(op Operation, tx Transaction) BlockOperation {
@@ -47,6 +51,8 @@ func NewBlockOperationFromOperation(op Operation, tx Transaction) BlockOperation
 		Source: tx.B.Source,
 		Target: op.B.TargetAddress(),
 		Amount: op.B.GetAmount(),
+
+		transaction: tx,
 	}
 }
 
@@ -72,6 +78,9 @@ func (bo BlockOperation) Save(st *sebakstorage.LevelDBBackend) (err error) {
 	if err = st.New(bo.NewBlockOperationTargetKey(), bo.Hash); err != nil {
 		return
 	}
+	if err = st.New(bo.NewBlockOperationCheckpoint(), bo.Hash); err != nil {
+		return
+	}
 
 	return nil
 }
@@ -79,6 +88,10 @@ func (bo BlockOperation) Save(st *sebakstorage.LevelDBBackend) (err error) {
 func (bo BlockOperation) Serialize() (encoded []byte, err error) {
 	encoded, err = sebakcommon.EncodeJSONValue(bo)
 	return
+}
+
+func (bo BlockOperation) Transaction() Transaction {
+	return bo.transaction
 }
 
 func GetBlockOperationKey(hash string) string {
@@ -95,6 +108,10 @@ func GetBlockOperationKeyPrefixSource(source string) string {
 
 func GetBlockOperationKeyPrefixTarget(target string) string {
 	return fmt.Sprintf("%s%s-", BlockOperationPrefixTarget, target)
+}
+
+func GetBlockOperationKeyPrefixCheckpoint(checkpoint string) string {
+	return fmt.Sprintf("%s%s-", BlockOperationPrefixTarget, checkpoint)
 }
 
 func GetBlockOperationKeyPrefixPeers(one, two string) string {
@@ -121,6 +138,14 @@ func (bo BlockOperation) NewBlockOperationTargetKey() string {
 	return fmt.Sprintf(
 		"%s%s",
 		GetBlockOperationKeyPrefixTarget(bo.Target),
+		sebakcommon.GetUniqueIDFromUUID(),
+	)
+}
+
+func (bo BlockOperation) NewBlockOperationCheckpoint() string {
+	return fmt.Sprintf(
+		"%s%s",
+		GetBlockOperationKeyPrefixTarget(bo.transaction.B.Checkpoint),
 		sebakcommon.GetUniqueIDFromUUID(),
 	)
 }
@@ -199,6 +224,15 @@ func GetBlockOperationsByTarget(st *sebakstorage.LevelDBBackend, target string, 
 	func(),
 ) {
 	iterFunc, closeFunc := st.GetIterator(GetBlockOperationKeyPrefixTarget(target), reverse)
+
+	return LoadBlockOperationsInsideIterator(st, iterFunc, closeFunc)
+}
+
+func GetBlockOperationsByCheckpoint(st *sebakstorage.LevelDBBackend, checkpoint string, reverse bool) (
+	func() (BlockOperation, bool),
+	func(),
+) {
+	iterFunc, closeFunc := st.GetIterator(GetBlockOperationKeyPrefixCheckpoint(checkpoint), reverse)
 
 	return LoadBlockOperationsInsideIterator(st, iterFunc, closeFunc)
 }

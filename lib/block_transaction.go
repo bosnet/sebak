@@ -41,7 +41,7 @@ type BlockTransaction struct {
 	Created   string
 	Message   []byte
 
-	tx Transaction
+	transaction Transaction
 }
 
 func NewBlockTransactionFromTransaction(tx Transaction, message []byte) BlockTransaction {
@@ -62,7 +62,7 @@ func NewBlockTransactionFromTransaction(tx Transaction, message []byte) BlockTra
 		Created: tx.H.Created,
 		Message: message,
 
-		tx: tx,
+		transaction: tx,
 	}
 }
 
@@ -119,12 +119,23 @@ func (bt BlockTransaction) Save(st *sebakstorage.LevelDBBackend) (err error) {
 		return
 	}
 
+	for _, op := range bt.transaction.B.Operations {
+		bo := NewBlockOperationFromOperation(op, bt.transaction)
+		if err = bo.Save(st); err != nil {
+			return
+		}
+	}
+
 	return nil
 }
 
 func (bt BlockTransaction) Serialize() (encoded []byte, err error) {
 	encoded, err = sebakcommon.EncodeJSONValue(bt)
 	return
+}
+
+func (bt BlockTransaction) Transaction() Transaction {
+	return bt.transaction
 }
 
 /*
