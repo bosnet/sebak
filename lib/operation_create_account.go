@@ -3,10 +3,8 @@ package sebak
 import (
 	"fmt"
 
-	"github.com/btcsuite/btcutil/base58"
 	"github.com/stellar/go/keypair"
 
-	"github.com/spikeekips/sebak/lib/common"
 	"github.com/spikeekips/sebak/lib/error"
 	"github.com/spikeekips/sebak/lib/storage"
 )
@@ -63,31 +61,12 @@ func FinishOperationCreateAccount(st *sebakstorage.LevelDBBackend, tx Transactio
 		err = nil
 	}
 
-	// TODO make initial checkpoint for newly created account
-	hashed := sebakcommon.MustMakeObjectHash("")
-	checkpoint := base58.Encode(hashed)
-
 	baTarget = NewBlockAccount(
 		op.B.TargetAddress(),
 		op.B.GetAmount().String(),
-		checkpoint,
+		tx.B.Checkpoint,
 	)
 	if err = baTarget.Save(st); err != nil {
-		return
-	}
-
-	// TODO make new checkpoint
-	var expected Amount
-	if expected, err = baSource.GetBalanceAmount().Add(int64(op.B.GetAmount()) * -1); err != nil {
-		return
-	}
-
-	baSource.EnsureUpdate(
-		int64(op.B.GetAmount())*-1,
-		checkpoint,
-		int64(expected),
-	)
-	if err = baSource.Save(st); err != nil {
 		return
 	}
 

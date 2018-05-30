@@ -226,20 +226,9 @@ func CheckNodeRunnerHandleBallotStore(ctx context.Context, target interface{}, a
 
 	ballot, _ := ctx.Value("ballot").(Ballot)
 	tx := ballot.Data().Data.(Transaction)
-	raw, err := ballot.Data().Serialize()
-	if err != nil {
-		return ctx, err
-	}
-
 	nr := target.(*NodeRunner)
-	bt := NewBlockTransactionFromTransaction(tx, raw)
-	if err := bt.Save(nr.Storage()); err != nil {
+	if err := FinishTransaction(nr.Storage(), ballot, tx); err != nil {
 		return ctx, err
-	}
-	for _, op := range tx.B.Operations {
-		if err := FinishOperation(nr.Storage(), tx, op); err != nil {
-			return ctx, err
-		}
 	}
 
 	nr.Log().Debug("got consensus", "ballot", ballot.MessageHash(), "votingResultStaging", vs)
@@ -281,20 +270,29 @@ func CheckNodeRunnerHandleBallotVotingHole(ctx context.Context, target interface
 	tx := ballot.Data().Data.(Transaction)
 
 	votingHole := VotingYES
-	bt, err := GetBlockTransactionByCheckpoint(nr.Storage(), tx.B.Checkpoint)
+
+	if tx.B.Fee < Amount(BaseFee) {
+		votingHole = VotingNO
+	}
 
 	// NOTE(CheckNodeRunnerHandleBallotVotingHole): if BlockTransaction was
 	// not found by tx.B.Checkpoint, it will be genesis block.
-	if err == nil {
-		// compare the stored BlockTransaction with tx
-		if votingHole == VotingYES && tx.B.Source != bt.Source {
-			votingHole = VotingNO
+	if votingHole == VotingYES {
+		bt, err := GetBlockTransactionByCheckpoint(nr.Storage(), tx.B.Checkpoint)
+		if err == nil {
+			// compare the stored BlockTransaction with tx
+			if votingHole == VotingYES && tx.B.Source != bt.Source {
+				votingHole = VotingNO
+			}
 		}
 	}
+
 	if votingHole == VotingYES {
 		if ba, err := GetBlockAccount(nr.Storage(), tx.B.Source); err != nil {
 			votingHole = VotingNO
 		} else if tx.B.Checkpoint != ba.Checkpoint {
+			votingHole = VotingNO
+		} else if tx.TotalAmount(true) > MustAmountFromString(ba.Balance) {
 			votingHole = VotingNO
 		}
 	}

@@ -188,3 +188,42 @@ func (tb TransactionBody) MakeHash() []byte {
 func (tb TransactionBody) MakeHashString() string {
 	return base58.Encode(tb.MakeHash())
 }
+
+func FinishTransaction(st *sebakstorage.LevelDBBackend, ballot Ballot, tx Transaction) (err error) {
+	var raw []byte
+	raw, err = ballot.Data().Serialize()
+	if err != nil {
+		return
+	}
+
+	bt := NewBlockTransactionFromTransaction(tx, raw)
+	if err = bt.Save(st); err != nil {
+		return
+	}
+	for _, op := range tx.B.Operations {
+		if err = FinishOperation(st, tx, op); err != nil {
+			return
+		}
+	}
+
+	var baSource *BlockAccount
+	if baSource, err = GetBlockAccount(st, tx.B.Source); err != nil {
+		err = sebakerror.ErrorBlockAccountDoesNotExists
+		return
+	}
+	var expected Amount
+	if expected, err = baSource.GetBalanceAmount().Add(int64(tx.TotalAmount(true)) * -1); err != nil {
+		return
+	}
+
+	baSource.EnsureUpdate(
+		int64(tx.TotalAmount(true))*-1,
+		tx.NextCheckpoint(),
+		int64(expected),
+	)
+	if err = baSource.Save(st); err != nil {
+		return
+	}
+
+	return
+}

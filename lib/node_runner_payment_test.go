@@ -31,7 +31,7 @@ func TestNodeRunnerPayment(t *testing.T) {
 	for _, nr := range nodeRunners {
 		{
 			address := kpSource.Address()
-			balance := strconv.FormatInt(int64(2000), 10)
+			balance := strconv.FormatInt(BaseFee+1, 10)
 
 			accountSource = NewBlockAccount(address, balance, checkpoint)
 			accountSource.Save(nr.Storage())
@@ -75,7 +75,7 @@ func TestNodeRunnerPayment(t *testing.T) {
 
 	client := nr0.Network().GetClient(nr0.Node().Endpoint())
 
-	amount := uint64(100)
+	amount := uint64(1)
 	tx := makeTransactionPayment(kpSource, kpTarget.Address(), amount)
 	tx.B.Checkpoint = accountSource.Checkpoint
 	tx.Sign(kpSource)
@@ -112,7 +112,7 @@ func TestNodeRunnerPayment(t *testing.T) {
 		t.Errorf("failed to transfer the initial amount to target; %d != %d", baTarget.GetBalance(), int64(amount))
 		return
 	}
-	if accountSource.GetBalance()-int64(amount) != baSource.GetBalance() {
+	if accountSource.GetBalance()-int64(tx.TotalAmount(true)) != baSource.GetBalance() {
 		t.Error("failed to subtract the transfered amount from source")
 		return
 	}

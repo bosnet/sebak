@@ -4,10 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/btcsuite/btcutil/base58"
 	"github.com/stellar/go/keypair"
 
-	"github.com/spikeekips/sebak/lib/common"
 	"github.com/spikeekips/sebak/lib/error"
 	"github.com/spikeekips/sebak/lib/storage"
 )
@@ -67,25 +65,6 @@ func FinishOperationPayment(st *sebakstorage.LevelDBBackend, tx Transaction, op 
 		return
 	}
 
-	// TODO make initial checkpoint for newly created account
-	hashed := sebakcommon.MustMakeObjectHash("")
-	checkpoint := base58.Encode(hashed)
-
-	// TODO make new checkpoint
-	var expectedSource Amount
-	if expectedSource, err = baSource.GetBalanceAmount().Add(int64(op.B.GetAmount()) * -1); err != nil {
-		return
-	}
-
-	baSource.EnsureUpdate(
-		int64(op.B.GetAmount())*-1,
-		checkpoint,
-		int64(expectedSource),
-	)
-	if err = baSource.Save(st); err != nil {
-		return
-	}
-
 	var expectedTarget Amount
 	if expectedTarget, err = baTarget.GetBalanceAmount().Add(int64(op.B.GetAmount())); err != nil {
 		return
@@ -93,12 +72,14 @@ func FinishOperationPayment(st *sebakstorage.LevelDBBackend, tx Transaction, op 
 
 	baTarget.EnsureUpdate(
 		int64(op.B.GetAmount()),
-		checkpoint,
+		tx.B.Checkpoint,
 		int64(expectedTarget),
 	)
 	if err = baTarget.Save(st); err != nil {
 		return
 	}
+
+	log.Debug("payment done", "source", baSource, "target", baTarget, "amount", op.B.GetAmount())
 
 	return
 }

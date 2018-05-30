@@ -53,3 +53,8 @@ func AmountFromBytes(s []byte) (a Amount, err error) {
 func AmountFromString(s string) (Amount, error) {
 	return AmountFromBytes([]byte(s))
 }
+
+func MustAmountFromString(s string) Amount {
+	a, _ := AmountFromBytes([]byte(s))
+	return a
+}
