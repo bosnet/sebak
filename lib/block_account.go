@@ -40,6 +40,14 @@ func NewBlockAccount(address, balance, checkpoint string) *BlockAccount {
 	}
 }
 
+func NewBlockAccountFromTransaction(address, balance string, tx Transaction) *BlockAccount {
+	return NewBlockAccount(address, balance, tx.NextCheckpoint())
+}
+
+func (b *BlockAccount) String() string {
+	return string(sebakcommon.MustJSONMarshal(b))
+}
+
 func (b *BlockAccount) Save(st *sebakstorage.LevelDBBackend) (err error) {
 	key := GetBlockAccountKey(b.Address)
 

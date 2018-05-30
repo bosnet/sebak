@@ -220,7 +220,7 @@ func CheckNodeRunnerHandleBallotStore(ctx context.Context, target interface{}, a
 		return ctx, nil
 	}
 
-	if !vs.IsStorable() {
+	if !vs.IsStorable() || !vs.IsClosed() {
 		return ctx, nil
 	}
 
@@ -242,13 +242,65 @@ func CheckNodeRunnerHandleBallotStore(ctx context.Context, target interface{}, a
 		}
 	}
 
-	if err := nr.Consensus().CloseConsensus(ballot); err != nil {
-		nr.Log().Error("failed to close consensus", "error", err)
-	}
-
 	nr.Log().Debug("got consensus", "ballot", ballot.MessageHash(), "votingResultStaging", vs)
 
 	return ctx, sebakcommon.CheckerErrorStop{"got consensus"}
+}
+
+func CheckNodeRunnerHandleBallotIsBroadcastable(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
+	vs := ctx.Value("vs").(VotingStateStaging)
+	if vs.IsClosed() {
+		return ctx, sebakcommon.CheckerErrorStop{"VotingResult is already closed"}
+	}
+
+	var willBroadcast bool
+
+	isNew := ctx.Value("isNew").(bool)
+	if isNew || vs.IsChanged() {
+		willBroadcast = true
+	}
+
+	ctx = context.WithValue(ctx, "willBroadcast", willBroadcast)
+	return ctx, nil
+}
+
+func CheckNodeRunnerHandleBallotVotingHole(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
+	// validate transaction, so decide say VotingYES or VotingNO
+
+	// checkpoint is valid in BallotStateSIGN
+	vs := ctx.Value("vs").(VotingStateStaging)
+	if !vs.IsChanged() {
+		return ctx, nil
+	}
+	if vs.State != sebakcommon.BallotStateSIGN {
+		return ctx, nil
+	}
+
+	nr := target.(*NodeRunner)
+	ballot, _ := ctx.Value("ballot").(Ballot)
+	tx := ballot.Data().Data.(Transaction)
+
+	votingHole := VotingYES
+	bt, err := GetBlockTransactionByCheckpoint(nr.Storage(), tx.B.Checkpoint)
+
+	// NOTE(CheckNodeRunnerHandleBallotVotingHole): if BlockTransaction was
+	// not found by tx.B.Checkpoint, it will be genesis block.
+	if err == nil {
+		// compare the stored BlockTransaction with tx
+		if votingHole == VotingYES && tx.B.Source != bt.Source {
+			votingHole = VotingNO
+		}
+	}
+	if votingHole == VotingYES {
+		if ba, err := GetBlockAccount(nr.Storage(), tx.B.Source); err != nil {
+			votingHole = VotingNO
+		} else if tx.B.Checkpoint != ba.Checkpoint {
+			votingHole = VotingNO
+		}
+	}
+	ctx = context.WithValue(ctx, "votingHole", votingHole)
+
+	return ctx, nil
 }
 
 func CheckNodeRunnerHandleBallotBroadcast(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
@@ -281,6 +333,10 @@ func CheckNodeRunnerHandleBallotBroadcast(ctx context.Context, target interface{
 	if vs.IsChanged() {
 		state = vs.State
 		votingHole = vs.VotingHole
+	}
+
+	if vt, ok := ctx.Value("votingHole").(VotingHole); ok {
+		votingHole = vt
 	}
 
 	newBallot.SetState(state)

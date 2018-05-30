@@ -14,7 +14,7 @@ import (
 func TestNodeRunnerConsensus(t *testing.T) {
 	defer sebaknetwork.CleanUpMemoryNetwork()
 
-	numberOfNodes := 10
+	numberOfNodes := 3
 	nodeRunners := createNodeRunnersWithReady(numberOfNodes)
 	for _, nr := range nodeRunners {
 		defer nr.Stop()
@@ -29,6 +29,7 @@ func TestNodeRunnerConsensus(t *testing.T) {
 		CheckNodeRunnerHandleBallotIsWellformed,
 		CheckNodeRunnerHandleBallotCheckIsNew,
 		CheckNodeRunnerHandleBallotReceiveBallot,
+		CheckNodeRunnerHandleBallotHistory,
 		//CheckNodeRunnerHandleBallotStore,
 		func(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
 			vs, ok := ctx.Value("vs").(VotingStateStaging)
@@ -36,7 +37,7 @@ func TestNodeRunnerConsensus(t *testing.T) {
 				return ctx, nil
 			}
 
-			if !vs.IsStorable() {
+			if !vs.IsStorable() || !vs.IsClosed() {
 				return ctx, nil
 			}
 
@@ -52,6 +53,10 @@ func TestNodeRunnerConsensus(t *testing.T) {
 
 			return ctx, sebakcommon.CheckerErrorStop{"got consensus"}
 		},
+		CheckNodeRunnerHandleBallotIsBroadcastable,
+		func(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
+			return ctx, nil
+		},
 		CheckNodeRunnerHandleBallotBroadcast,
 	}
 
@@ -61,13 +66,13 @@ func TestNodeRunnerConsensus(t *testing.T) {
 			return
 		}
 
-		if _, ok := err.(sebakcommon.CheckerErrorStop); ok {
-			vs, _ := ctx.Value("vs").(VotingStateStaging)
-			if vs.State == sebakcommon.BallotStateALLCONFIRM {
+		if vs, ok := ctx.Value("vs").(VotingStateStaging); ok && vs.IsClosed() {
+			if _, ok := err.(sebakcommon.CheckerErrorStop); ok {
 				dones = append(dones, vs)
 				wg.Done()
 			}
 		}
+
 	}
 
 	ctx := context.WithValue(context.Background(), "deferFunc", deferFunc)
@@ -149,25 +154,19 @@ func TestNodeRunnerConsensusWithVotingNO(t *testing.T) {
 		CheckNodeRunnerHandleBallotBroadcast,
 	}
 
+	var dones []VotingStateStaging
 	var deferFunc sebakcommon.DeferFunc = func(n int, f sebakcommon.CheckerFunc, ctx context.Context, err error) {
 		if err == nil {
 			return
 		}
 
-		defer wg.Done()
-		vs, _ := ctx.Value("vs").(VotingStateStaging)
-		if !vs.IsClosed() {
-			t.Error("VotingResult must be closed.")
-			return
+		if vs, ok := ctx.Value("vs").(VotingStateStaging); ok && vs.IsClosed() {
+			if _, ok := err.(sebakcommon.CheckerErrorStop); ok {
+				dones = append(dones, vs)
+				wg.Done()
+			}
 		}
-		if vs.State != sebakcommon.BallotStateINIT {
-			t.Error("the final state must be `BallotStateINIT`.")
-			return
-		}
-		if vs.VotingHole != VotingNO {
-			t.Error("the final VotingHole must be `VotingNO`.")
-			return
-		}
+
 	}
 
 	ctx := context.WithValue(context.Background(), "deferFunc", deferFunc)
@@ -182,6 +181,17 @@ func TestNodeRunnerConsensusWithVotingNO(t *testing.T) {
 	client.SendMessage(tx)
 
 	wg.Wait()
+
+	for _, vs := range dones {
+		if vs.State != sebakcommon.BallotStateINIT {
+			t.Error("the final state must be `BallotStateINIT`.")
+			return
+		}
+		if vs.VotingHole != VotingNO {
+			t.Error("the final VotingHole must be `VotingNO`.")
+			return
+		}
+	}
 }
 
 // TestNodeRunnerConsensusStoreInHistoryIncomingTxMessage checks, the incoming tx message will be

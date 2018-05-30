@@ -346,3 +346,56 @@ func TestBlockTransactionMultipleSave(t *testing.T) {
 	}
 
 }
+
+func TestBlockTransactionGetByCheckpoint(t *testing.T) {
+	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
+
+	bt := TestMakeNewBlockTransaction(1)
+	if err := bt.Save(st); err != nil {
+		t.Error(err)
+		return
+	}
+
+	fetched, err := GetBlockTransactionByCheckpoint(st, bt.Checkpoint)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if bt.Hash != fetched.Hash {
+		t.Error("mismatch `Hash`")
+		return
+	}
+	if bt.Checkpoint != fetched.Checkpoint {
+		t.Error("mismatch `Checkpoint`")
+		return
+	}
+	if bt.Signature != fetched.Signature {
+		t.Error("mismatch `Signature`")
+		return
+	}
+	if bt.Source != fetched.Source {
+		t.Error("mismatch `Source`")
+		return
+	}
+	if bt.Fee != fetched.Fee {
+		t.Error("mismatch `Fee`")
+		return
+	}
+	for i, opHash := range fetched.Operations {
+		if opHash != bt.Operations[i] {
+			t.Error("mismatch Operation Hashes`")
+		}
+	}
+	if bt.Amount != fetched.Amount {
+		t.Error("mismatch `Amount`")
+		return
+	}
+	if bt.Created != fetched.Created {
+		t.Error("mismatch `Created`")
+		return
+	}
+	if len(fetched.Confirmed) < 1 {
+		t.Error("`Confirmed` missing")
+		return
+	}
+}

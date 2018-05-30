@@ -140,6 +140,8 @@ var DefaultHandleBallotCheckerFuncs = []sebakcommon.CheckerFunc{
 	CheckNodeRunnerHandleBallotReceiveBallot,
 	CheckNodeRunnerHandleBallotHistory,
 	CheckNodeRunnerHandleBallotStore,
+	CheckNodeRunnerHandleBallotIsBroadcastable,
+	CheckNodeRunnerHandleBallotVotingHole,
 	CheckNodeRunnerHandleBallotBroadcast,
 }
 
@@ -184,11 +186,13 @@ func (nr *NodeRunner) handleMessage() {
 				- TODO check already in BlockTransactionHistory
 			*/
 
-			if _, err = sebakcommon.Checker(nr.handleMessageFromClientCheckerFuncsContext, nr.handleMessageFromClientCheckerFuncs...)(nr, message); err != nil {
+			ctx := nr.handleMessageFromClientCheckerFuncsContext
+			if _, err = sebakcommon.Checker(ctx, nr.handleMessageFromClientCheckerFuncs...)(nr, message); err != nil {
 				if _, ok := err.(sebakcommon.CheckerErrorStop); ok {
 					continue
 				}
 				nr.log.Error("failed to handle message from client", "error", err)
+				nr.closeConsensus(ctx)
 				continue
 			}
 		case sebaknetwork.BallotMessage:
@@ -199,13 +203,46 @@ func (nr *NodeRunner) handleMessage() {
 				- TODO check already in BlockTransactionHistory
 			*/
 
-			if _, err = sebakcommon.Checker(nr.handleBallotCheckerFuncsContext, nr.handleBallotCheckerFuncs...)(nr, message); err != nil {
+			ctx := nr.handleBallotCheckerFuncsContext
+			if ctx, err = sebakcommon.Checker(ctx, nr.handleBallotCheckerFuncs...)(nr, message); err != nil {
 				if _, ok := err.(sebakcommon.CheckerErrorStop); ok {
+					nr.closeConsensus(ctx)
 					continue
 				}
 				nr.log.Error("failed to handle ballot", "error", err)
+
+				if err = nr.closeConsensus(ctx); err != nil {
+					nr.Log().Error("failed to close consensus", "error", err)
+				} else {
+					nr.Log().Error("consensus closed")
+				}
+
 				continue
 			}
+
+			nr.closeConsensus(ctx)
 		}
 	}
+}
+
+func (nr *NodeRunner) closeConsensus(ctx context.Context) (err error) {
+	vs, ok := ctx.Value("vs").(VotingStateStaging)
+	if !ok {
+		return
+	}
+	if !vs.IsClosed() {
+		return
+	}
+
+	ballot, ok := ctx.Value("ballot").(Ballot)
+	if !ok {
+		return
+	}
+	if err = nr.Consensus().CloseConsensus(ballot); err != nil {
+		nr.Log().Error("failed to close consensus", "error", err)
+		return
+	}
+
+	nr.Log().Debug("consensus closed")
+	return
 }

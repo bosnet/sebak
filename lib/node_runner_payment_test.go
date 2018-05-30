@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/btcsuite/btcutil/base58"
+	"github.com/google/uuid"
 	"github.com/stellar/go/keypair"
 
 	"github.com/spikeekips/sebak/lib/common"
@@ -25,13 +26,12 @@ func TestNodeRunnerPayment(t *testing.T) {
 	kpSource, _ := keypair.Random()
 	kpTarget, _ := keypair.Random()
 
+	checkpoint := uuid.New().String()
 	var accountSource, accountTarget *BlockAccount
 	for _, nr := range nodeRunners {
 		{
 			address := kpSource.Address()
 			balance := strconv.FormatInt(int64(2000), 10)
-			hashed := sebakcommon.MustMakeObjectHash("")
-			checkpoint := base58.Encode(hashed)
 
 			accountSource = NewBlockAccount(address, balance, checkpoint)
 			accountSource.Save(nr.Storage())
@@ -57,13 +57,13 @@ func TestNodeRunnerPayment(t *testing.T) {
 			return
 		}
 
-		if _, ok := err.(sebakcommon.CheckerErrorStop); ok {
-			vs, _ := ctx.Value("vs").(VotingStateStaging)
-			if vs.State == sebakcommon.BallotStateALLCONFIRM {
+		if vs, ok := ctx.Value("vs").(VotingStateStaging); ok && vs.IsClosed() {
+			if _, ok := err.(sebakcommon.CheckerErrorStop); ok {
 				dones = append(dones, vs)
 				wg.Done()
 			}
 		}
+
 	}
 
 	ctx := context.WithValue(context.Background(), "deferFunc", deferFunc)
@@ -77,6 +77,9 @@ func TestNodeRunnerPayment(t *testing.T) {
 
 	amount := uint64(100)
 	tx := makeTransactionPayment(kpSource, kpTarget.Address(), amount)
+	tx.B.Checkpoint = accountSource.Checkpoint
+	tx.Sign(kpSource)
+
 	client.SendMessage(tx)
 
 	wg.Wait()

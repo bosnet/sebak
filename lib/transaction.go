@@ -3,6 +3,7 @@ package sebak
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/stellar/go/keypair"
@@ -150,11 +151,20 @@ func (o Transaction) String() string {
 }
 
 func (o *Transaction) Sign(kp keypair.KP) {
+	o.H.Hash = o.B.MakeHashString()
 	signature, _ := kp.Sign([]byte(o.H.Hash))
 
 	o.H.Signature = base58.Encode(signature)
 
 	return
+}
+
+func (o Transaction) NextCheckpoint() string {
+	return string(
+		sebakcommon.MakeHash(
+			[]byte(fmt.Sprintf("%s%s", o.B.Checkpoint, o.GetHash())),
+		),
+	)
 }
 
 type TransactionHeader struct {

@@ -91,5 +91,7 @@ func FinishOperationCreateAccount(st *sebakstorage.LevelDBBackend, tx Transactio
 		return
 	}
 
+	log.Debug("new account created", "source", baSource, "target", baTarget)
+
 	return
 }
