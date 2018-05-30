@@ -133,6 +133,11 @@ func (bt BlockTransaction) Serialize() (encoded []byte, err error) {
 	return
 }
 
+func (bt BlockTransaction) String() string {
+	encoded, _ := sebakcommon.EncodeJSONValue(bt)
+	return string(encoded)
+}
+
 func (bt BlockTransaction) Transaction() Transaction {
 	return bt.transaction
 }

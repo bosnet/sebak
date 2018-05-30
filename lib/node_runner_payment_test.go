@@ -2,6 +2,7 @@ package sebak
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"sync"
 	"testing"
@@ -115,5 +116,129 @@ func TestNodeRunnerPayment(t *testing.T) {
 	if accountSource.GetBalance()-int64(tx.TotalAmount(true)) != baSource.GetBalance() {
 		t.Error("failed to subtract the transfered amount from source")
 		return
+	}
+}
+
+func doConsensus(nodeRunners []*NodeRunner, tx Transaction) []VotingStateStaging {
+	var wg sync.WaitGroup
+	wg.Add(len(nodeRunners))
+
+	var dones []VotingStateStaging
+	var messageDeferFunc sebakcommon.DeferFunc = func(n int, f sebakcommon.CheckerFunc, ctx context.Context, err error) {
+		if err == nil {
+			return
+		}
+
+		return
+	}
+
+	var ballotDeferFunc sebakcommon.DeferFunc = func(n int, f sebakcommon.CheckerFunc, ctx context.Context, err error) {
+		if err == nil {
+			return
+		}
+
+		if vs, ok := ctx.Value("vs").(VotingStateStaging); ok && vs.IsClosed() {
+			if _, ok := err.(sebakcommon.CheckerErrorStop); ok {
+				dones = append(dones, vs)
+				wg.Done()
+			}
+		}
+	}
+
+	ballotCtx := context.WithValue(context.Background(), "deferFunc", ballotDeferFunc)
+	messageCtx := context.WithValue(context.Background(), "deferFunc", messageDeferFunc)
+	for _, nr := range nodeRunners {
+		nr.SetHandleBallotCheckerFuncs(ballotCtx)
+		nr.SetHandleMessageFromClientCheckerFuncs(messageCtx)
+	}
+
+	nr0 := nodeRunners[0]
+
+	client := nr0.Network().GetClient(nr0.Node().Endpoint())
+
+	client.SendMessage(tx)
+
+	wg.Wait()
+
+	return dones
+}
+
+func TestNodeRunnerSerializedPayment(t *testing.T) {
+	defer sebaknetwork.CleanUpMemoryNetwork()
+
+	numberOfNodes := 3
+	nodeRunners := createNodeRunnersWithReady(numberOfNodes)
+
+	sourceKP, _ := keypair.Random()
+	targetKP, _ := keypair.Random()
+
+	checkpoint := uuid.New().String()
+	var sourceAccount, targetAccount *BlockAccount
+	for _, nr := range nodeRunners {
+		balance := (BaseFee + 1) * 2
+
+		sourceAccount = NewBlockAccount(sourceKP.Address(), fmt.Sprintf("%d", balance), checkpoint)
+		sourceAccount.Save(nr.Storage())
+
+		targetAccount = NewBlockAccount(targetKP.Address(), fmt.Sprintf("%d", balance), checkpoint)
+		targetAccount.Save(nr.Storage())
+	}
+
+	nr0 := nodeRunners[0]
+	{
+		sourceAccount0, _ := GetBlockAccount(nr0.Storage(), sourceKP.Address())
+		targetAccount0, _ := GetBlockAccount(nr0.Storage(), targetKP.Address())
+
+		tx := makeTransactionPayment(sourceKP, targetKP.Address(), uint64(1))
+		tx.B.Checkpoint = checkpoint
+		tx.Sign(sourceKP)
+
+		dones := doConsensus(nodeRunners, tx)
+		for _, vs := range dones {
+			if vs.State != sebakcommon.BallotStateALLCONFIRM {
+				t.Error("failed to get consensus")
+				return
+			}
+		}
+
+		sourceAccount1, _ := GetBlockAccount(nr0.Storage(), sourceKP.Address())
+		targetAccount1, _ := GetBlockAccount(nr0.Storage(), targetKP.Address())
+
+		if sourceAccount0.GetBalance()-int64(tx.TotalAmount(true)) != sourceAccount1.GetBalance() {
+			t.Errorf("payment failed: %d != %d", sourceAccount0.GetBalance()-int64(tx.TotalAmount(true)), sourceAccount1.GetBalance())
+			return
+		}
+		if targetAccount0.GetBalance()+int64(tx.B.Operations[0].B.GetAmount()) != targetAccount1.GetBalance() {
+			t.Errorf("payment failed: %d != %d", targetAccount0.GetBalance()-int64(tx.TotalAmount(true)), targetAccount1.GetBalance())
+			return
+		}
+	}
+
+	{
+		sourceAccount0, _ := GetBlockAccount(nr0.Storage(), sourceKP.Address())
+		targetAccount0, _ := GetBlockAccount(nr0.Storage(), targetKP.Address())
+		tx := makeTransactionPayment(sourceKP, targetKP.Address(), uint64(1))
+		tx.B.Checkpoint = sourceAccount0.Checkpoint
+		tx.Sign(sourceKP)
+
+		dones := doConsensus(nodeRunners, tx)
+		for _, vs := range dones {
+			if vs.State != sebakcommon.BallotStateALLCONFIRM {
+				t.Error("failed to get consensus")
+				return
+			}
+		}
+
+		sourceAccount1, _ := GetBlockAccount(nr0.Storage(), sourceKP.Address())
+		targetAccount1, _ := GetBlockAccount(nr0.Storage(), targetKP.Address())
+
+		if sourceAccount0.GetBalance()-int64(tx.TotalAmount(true)) != sourceAccount1.GetBalance() {
+			t.Errorf("payment failed: %d != %d", sourceAccount0.GetBalance()-int64(tx.TotalAmount(true)), sourceAccount1.GetBalance())
+			return
+		}
+		if targetAccount0.GetBalance()+int64(tx.B.Operations[0].B.GetAmount()) != targetAccount1.GetBalance() {
+			t.Errorf("payment failed: %d != %d", targetAccount0.GetBalance()-int64(tx.TotalAmount(true)), targetAccount1.GetBalance())
+			return
+		}
 	}
 }

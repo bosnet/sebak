@@ -43,9 +43,13 @@ type BlockOperation struct {
 	isSaved     bool
 }
 
+func NewBlockOperationKey(op Operation, tx Transaction) string {
+	return fmt.Sprintf("%s-%s", op.MakeHashString(), tx.GetHash())
+}
+
 func NewBlockOperationFromOperation(op Operation, tx Transaction) BlockOperation {
 	return BlockOperation{
-		Hash:   op.MakeHashString(),
+		Hash:   NewBlockOperationKey(op, tx),
 		TxHash: tx.H.Hash,
 
 		Type:   op.H.Type,

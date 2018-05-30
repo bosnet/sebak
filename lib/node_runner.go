@@ -146,7 +146,9 @@ var DefaultHandleBallotCheckerFuncs = []sebakcommon.CheckerFunc{
 }
 
 func (nr *NodeRunner) SetHandleMessageFromClientCheckerFuncs(ctx context.Context, f ...sebakcommon.CheckerFunc) {
-	nr.handleMessageFromClientCheckerFuncs = f
+	if len(f) > 0 {
+		nr.handleMessageFromClientCheckerFuncs = f
+	}
 
 	if ctx == nil {
 		ctx = context.Background()

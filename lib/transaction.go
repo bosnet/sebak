@@ -161,8 +161,10 @@ func (o *Transaction) Sign(kp keypair.KP) {
 
 func (o Transaction) NextCheckpoint() string {
 	return string(
-		sebakcommon.MakeHash(
-			[]byte(fmt.Sprintf("%s%s", o.B.Checkpoint, o.GetHash())),
+		base58.Encode(
+			sebakcommon.MakeHash(
+				[]byte(fmt.Sprintf("%s%s", o.B.Checkpoint, o.GetHash())),
+			),
 		),
 	)
 }
