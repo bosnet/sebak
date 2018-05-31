@@ -29,12 +29,12 @@ func init() {
 			if len(args) > 0 {
 				flagInput = strings.TrimSpace(strings.Join(args, " "))
 			} else if flagPublicKey && len(flagInput) < 1 {
-				common.PrintFlagsError(GenerateCmd, "--publicKey", errors.New("--publicKey needs <public key>"))
+				common.PrintFlagsError(c, "--publicKey", errors.New("--publicKey needs <public key>"))
 			}
 
 			kp, err := generateKP()
 			if err != nil {
-				common.PrintFlagsError(GenerateCmd, "<input>", fmt.Errorf("failed to parse public key: %v", err))
+				common.PrintFlagsError(c, "<input>", fmt.Errorf("failed to parse public key: %v", err))
 			}
 
 			if flagShort {
