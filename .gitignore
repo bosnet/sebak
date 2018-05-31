@@ -9,3 +9,5 @@
 tmp*
 *tmp
 /vendor/
+db
+*.orig
