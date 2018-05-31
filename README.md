@@ -6,7 +6,7 @@ Sebak is the core node for crypto-currency blockchain.
 
 ## Installation
 
-Before installing, you must install Go 1.8 or above and 'dep'. You can check how to install 'dep' in [dep installation](https://github.com/golang/dep#installation).
+Before installing, you must install Go 1.9 or above and 'dep'. You can check how to install 'dep' in [dep installation](https://github.com/golang/dep#installation).
 
 To start sebak:
 
