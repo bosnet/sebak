@@ -6,7 +6,7 @@
 
 ## Box
 
-* The number of room in box: infinit
+* The number of room in box: *infinit*
 
 
 ### Waiting Box

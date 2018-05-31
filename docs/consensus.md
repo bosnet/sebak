@@ -7,6 +7,9 @@ There are 4 state, `INIT` → `SIGN` → `ACCEPT` → `ALL-CONFIRM`
 
 ## State Transition
 
+* If same source address is found in boxes, it will be ignored.; except 'reserved box'. if found in 'reserved box', reserved one will be removed.
+* If same target address is found in boxes after `INIT`, it will wait until the previous is finished.
+
 ### `INIT` → `SIGN`
 
 In this state, trying to broadcast new incoming transaction from client to the entire network.
