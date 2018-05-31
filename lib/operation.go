@@ -31,8 +31,8 @@ func (o Operation) MakeHashString() string {
 	return base58.Encode(o.MakeHash())
 }
 
-func (o Operation) IsWellFormed() (err error) {
-	if err = o.B.IsWellFormed(); err != nil {
+func (o Operation) IsWellFormed(networkID []byte) (err error) {
+	if err = o.B.IsWellFormed(networkID); err != nil {
 		return
 	}
 
@@ -93,20 +93,14 @@ func NewOperationFromInterface(oj OperationFromJSON) (op Operation, err error) {
 		if err != nil {
 			return
 		}
-		op.B = OperationBodyPayment{
-			Target: body["target"].(string),
-			Amount: amount,
-		}
-		if err != nil {
-			return
-		}
+		op.B = NewOperationBodyPayment(body["target"].(string), amount)
 	}
 
 	return
 }
 
 func NewOperation(t OperationType, body OperationBody) (op Operation, err error) {
-	if err = body.IsWellFormed(); err != nil {
+	if err = body.IsWellFormed([]byte("")); err != nil {
 		return
 	}
 
@@ -139,7 +133,7 @@ type OperationHeader struct {
 
 type OperationBody interface {
 	Validate(sebakstorage.LevelDBBackend) error
-	IsWellFormed() error
+	IsWellFormed([]byte) error
 	TargetAddress() string
 	GetAmount() Amount
 }

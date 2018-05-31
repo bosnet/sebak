@@ -16,7 +16,7 @@ func makeBallotsWithSameMessageHash(n int) (kps []*keypair.Full, ballots []Ballo
 		kpNode, _, ballot := makeNewBallot(sebakcommon.BallotStateINIT, VotingYES)
 		ballot.B.Hash = baseBallot.MessageHash()
 		ballot.UpdateHash()
-		ballot.Sign(kpNode)
+		ballot.Sign(kpNode, networkID)
 
 		kps = append(kps, kpNode)
 		ballots = append(ballots, ballot)
@@ -50,7 +50,7 @@ func TestAddVotingResult(t *testing.T) {
 
 	ballot1.B.Hash = ballot0.MessageHash()
 	ballot1.UpdateHash()
-	ballot1.Sign(kpNode1)
+	ballot1.Sign(kpNode1, networkID)
 	if err := vr.Add(ballot1); err != nil {
 		t.Error("failed to `VotingResult.Add`", err)
 		return
@@ -146,7 +146,7 @@ func TestVotingResultGetResultHigherStateMustBePicked(t *testing.T) {
 	for i, ballot := range ballots {
 		ballot.B.State = sebakcommon.BallotStateACCEPT
 		ballot.UpdateHash()
-		ballot.Sign(kps[i])
+		ballot.Sign(kps[i], networkID)
 
 		vr.Add(ballot)
 	}

@@ -5,7 +5,7 @@ type Message interface {
 	GetHash() string
 	Serialize() ([]byte, error)
 	String() string
-	IsWellFormed() error
+	IsWellFormed([]byte) error
 	Equal(Message) bool
 	// Validate(sebakstorage.LevelDBBackend) error
 }

@@ -143,7 +143,7 @@ func TestNodeRunnerConsensusWithVotingNO(t *testing.T) {
 			}
 
 			ballot.Vote(VotingNO)
-			ballot.Sign(nr.Node().Keypair())
+			ballot.Sign(nr.Node().Keypair(), nr.NetworkID())
 
 			ctx = context.WithValue(ctx, "ballot", ballot)
 

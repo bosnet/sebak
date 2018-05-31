@@ -66,7 +66,7 @@ func TestNodeRunnerCreateAccount(t *testing.T) {
 	initialBalance := uint64(1)
 	tx := makeTransactionCreateAccount(kp, kpNewAccount.Address(), initialBalance)
 	tx.B.Checkpoint = account.Checkpoint
-	tx.Sign(kp)
+	tx.Sign(kp, networkID)
 
 	client.SendMessage(tx)
 
@@ -160,7 +160,7 @@ func TestNodeRunnerCreateAccountInvalidCheckpoint(t *testing.T) {
 
 	// set invalid checkpoint
 	tx.B.Checkpoint = uuid.New().String()
-	tx.Sign(kp)
+	tx.Sign(kp, networkID)
 
 	client.SendMessage(tx)
 
@@ -244,7 +244,7 @@ func TestNodeRunnerCreateAccountSufficient(t *testing.T) {
 	initialBalance := uint64(MustAmountFromString(account.Balance)) - uint64(1*BaseFee)
 	tx := makeTransactionCreateAccount(kp, kpNewAccount.Address(), initialBalance)
 	tx.B.Checkpoint = checkpoint
-	tx.Sign(kp)
+	tx.Sign(kp, networkID)
 
 	client.SendMessage(tx)
 
@@ -332,7 +332,7 @@ func TestNodeRunnerCreateAccountInsufficient(t *testing.T) {
 	initialBalance := uint64(MustAmountFromString(account.Balance))
 	tx := makeTransactionCreateAccount(kp, kpNewAccount.Address(), initialBalance)
 	tx.B.Checkpoint = checkpoint
-	tx.Sign(kp)
+	tx.Sign(kp, networkID)
 
 	client.SendMessage(tx)
 

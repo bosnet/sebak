@@ -21,8 +21,8 @@ func testMakeBlockAccount() *BlockAccount {
 	return NewBlockAccount(address, fmt.Sprintf("%d", balance), checkpoint)
 }
 
-func TestMakeNewBlockOperation(n int) (bos []BlockOperation) {
-	_, tx := TestMakeTransaction(n)
+func TestMakeNewBlockOperation(networkID []byte, n int) (bos []BlockOperation) {
+	_, tx := TestMakeTransaction(networkID, n)
 
 	for _, op := range tx.B.Operations {
 		bos = append(bos, NewBlockOperationFromOperation(op, tx))
@@ -31,8 +31,8 @@ func TestMakeNewBlockOperation(n int) (bos []BlockOperation) {
 	return
 }
 
-func TestMakeNewBlockTransaction(n int) BlockTransaction {
-	_, tx := TestMakeTransaction(n)
+func TestMakeNewBlockTransaction(networkID []byte, n int) BlockTransaction {
+	_, tx := TestMakeTransaction(networkID, n)
 
 	a, _ := tx.Serialize()
 	return NewBlockTransactionFromTransaction(tx, a)
@@ -64,7 +64,7 @@ func TestMakeOperation(amount int) Operation {
 	return op
 }
 
-func TestMakeTransaction(n int) (kp *keypair.Full, tx Transaction) {
+func TestMakeTransaction(networkID []byte, n int) (kp *keypair.Full, tx Transaction) {
 	kp, _ = keypair.Random()
 
 	var ops []Operation
@@ -87,18 +87,18 @@ func TestMakeTransaction(n int) (kp *keypair.Full, tx Transaction) {
 		},
 		B: txBody,
 	}
-	tx.Sign(kp)
+	tx.Sign(kp, networkID)
 
 	return
 }
 
-func TestMakeTransactionWithKeypair(n int, kp *keypair.Full) (tx Transaction) {
+func TestMakeTransactionWithKeypair(networkID []byte, n int, kp *keypair.Full) (tx Transaction) {
 	var ops []Operation
 	for i := 0; i < n; i++ {
 		ops = append(ops, TestMakeOperation(-1))
 	}
 	tx, _ = NewTransaction(kp.Address(), uuid.New().String(), ops...)
-	tx.Sign(kp)
+	tx.Sign(kp, networkID)
 
 	return
 }

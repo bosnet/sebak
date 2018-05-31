@@ -10,19 +10,19 @@ import (
 )
 
 func makeNewBallot(state sebakcommon.BallotState, vote VotingHole) (*keypair.Full, Transaction, Ballot) {
-	kpNode, tx := TestMakeTransaction(1)
+	kpNode, tx := TestMakeTransaction(networkID, 1)
 	ballot, _ := NewBallotFromMessage(kpNode.Address(), tx)
 
 	ballot.SetState(state)
 	ballot.Vote(vote)
 	ballot.UpdateHash()
-	ballot.Sign(kpNode)
+	ballot.Sign(kpNode, networkID)
 
 	return kpNode, tx, ballot
 }
 
 func TestNewBallot(t *testing.T) {
-	kpNode, tx := TestMakeTransaction(1)
+	kpNode, tx := TestMakeTransaction(networkID, 1)
 	ballot, _ := NewBallotFromMessage(kpNode.Address(), tx)
 
 	if len(ballot.H.Hash) < 1 {
@@ -57,14 +57,14 @@ func TestNewBallot(t *testing.T) {
 
 func TestBallotSign(t *testing.T) {
 	kpNode, _, ballot := makeNewBallot(sebakcommon.BallotStateINIT, VotingYES)
-	ballot.Sign(kpNode)
+	ballot.Sign(kpNode, networkID)
 
 	if len(ballot.H.Signature) < 1 {
 		t.Error("`Ballot.H.Signature` is empty")
 		return
 	}
 
-	if err := ballot.VerifySignature(); err != nil {
+	if err := ballot.VerifySignature(networkID); err != nil {
 		t.Error(err)
 		return
 	}
@@ -85,22 +85,22 @@ func TestBallotVote(t *testing.T) {
 		ballot.Sign(kpNode)
 	*/
 
-	err = ballot.IsWellFormed()
+	err = ballot.IsWellFormed(networkID)
 	if err.(*sebakerror.Error).Code != sebakerror.ErrorBallotNoVoting.Code {
 		t.Errorf("error must be %v", sebakerror.ErrorBallotNoVoting)
 		return
 	}
 
 	ballot.Vote(VotingYES)
-	err = ballot.IsWellFormed()
+	err = ballot.IsWellFormed(networkID)
 	if err.(*sebakerror.Error).Code != sebakerror.ErrorHashDoesNotMatch.Code {
 		t.Errorf("error must be %v", sebakerror.ErrorHashDoesNotMatch)
 		return
 	}
 
 	ballot.UpdateHash()
-	ballot.Sign(kpNode)
-	err = ballot.IsWellFormed()
+	ballot.Sign(kpNode, networkID)
+	err = ballot.IsWellFormed(networkID)
 	if err != nil {
 		t.Errorf("failed to `UpdateHash()`: %v", err)
 		return
@@ -109,7 +109,7 @@ func TestBallotVote(t *testing.T) {
 
 func TestBallotNewBallotFromMessageWithTransaction(t *testing.T) {
 	kp, _, ballot := makeNewBallot(sebakcommon.BallotStateINIT, VotingYES)
-	ballot.Sign(kp)
+	ballot.Sign(kp, networkID)
 
 	jsoned, err := ballot.Serialize()
 	if err != nil {
@@ -123,7 +123,7 @@ func TestBallotNewBallotFromMessageWithTransaction(t *testing.T) {
 		return
 	}
 
-	if err := newBallot.IsWellFormed(); err != nil {
+	if err := newBallot.IsWellFormed(networkID); err != nil {
 		t.Error(err)
 		return
 	}

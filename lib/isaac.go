@@ -8,20 +8,26 @@ import (
 type ISAAC struct {
 	sebakcommon.SafeLock
 
+	networkID             []byte
 	Node                  sebakcommon.Node
 	VotingThresholdPolicy sebakcommon.VotingThresholdPolicy
 
 	Boxes *BallotBoxes
 }
 
-func NewISAAC(node sebakcommon.Node, votingThresholdPolicy sebakcommon.VotingThresholdPolicy) (is *ISAAC, err error) {
+func NewISAAC(networkID []byte, node sebakcommon.Node, votingThresholdPolicy sebakcommon.VotingThresholdPolicy) (is *ISAAC, err error) {
 	is = &ISAAC{
-		Node: node,
+		networkID: networkID,
+		Node:      node,
 		VotingThresholdPolicy: votingThresholdPolicy,
 		Boxes: NewBallotBoxes(),
 	}
 
 	return
+}
+
+func (is *ISAAC) NetworkID() []byte {
+	return is.networkID
 }
 
 func (is *ISAAC) GetNode() sebakcommon.Node {
@@ -58,9 +64,9 @@ func (is *ISAAC) ReceiveMessage(m sebakcommon.Message) (ballot Ballot, err error
 	ballot.SetState(sebakcommon.BallotStateINIT)
 	ballot.Vote(VotingYES) // The initial ballot from client will have 'VotingYES'
 	ballot.UpdateHash()
-	ballot.Sign(is.Node.Keypair())
+	ballot.Sign(is.Node.Keypair(), is.networkID)
 
-	if err = ballot.IsWellFormed(); err != nil {
+	if err = ballot.IsWellFormed(is.networkID); err != nil {
 		return
 	}
 
@@ -115,9 +121,9 @@ func (is *ISAAC) receiveBallotStateINIT(ballot Ballot) (vs VotingStateStaging, e
 		newBallot.SetState(sebakcommon.BallotStateINIT)
 		newBallot.Vote(VotingYES) // The BallotStateINIT ballot will have 'VotingYES'
 		newBallot.UpdateHash()
-		newBallot.Sign(is.Node.Keypair())
+		newBallot.Sign(is.Node.Keypair(), is.networkID)
 
-		if err = newBallot.IsWellFormed(); err != nil {
+		if err = newBallot.IsWellFormed(is.networkID); err != nil {
 			return
 		}
 

@@ -25,7 +25,8 @@ func checkBallotEmptyHashMatch(ctx context.Context, target interface{}, args ...
 }
 
 func checkBallotVerifySignature(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
-	if err := target.(Ballot).VerifySignature(); err != nil {
+	networkID := ctx.Value("networkID").([]byte)
+	if err := target.(Ballot).VerifySignature(networkID); err != nil {
 		return ctx, err
 	}
 	return ctx, nil

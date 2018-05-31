@@ -48,7 +48,7 @@ func makeTransaction(kp *keypair.Full) (tx Transaction) {
 		},
 		B: txBody,
 	}
-	tx.Sign(kp)
+	tx.Sign(kp, networkID)
 
 	return
 }
@@ -82,7 +82,7 @@ func makeTransactionPayment(kpSource *keypair.Full, target string, amount uint64
 		},
 		B: txBody,
 	}
-	tx.Sign(kpSource)
+	tx.Sign(kpSource, networkID)
 
 	return
 }
@@ -116,7 +116,7 @@ func makeTransactionCreateAccount(kpSource *keypair.Full, target string, amount 
 		},
 		B: txBody,
 	}
-	tx.Sign(kpSource)
+	tx.Sign(kpSource, networkID)
 
 	return
 }
@@ -144,9 +144,9 @@ func createNodeRunners(n int) []*NodeRunner {
 		v := validators[i]
 		p, _ := NewDefaultVotingThresholdPolicy(100, 30, 30)
 		p.SetValidators(len(v.GetValidators()) + 1)
-		is, _ := NewISAAC(v, p)
+		is, _ := NewISAAC(networkID, v, p)
 		st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
-		nr := NewNodeRunner(v, p, ns[i], is, st)
+		nr := NewNodeRunner(string(networkID), v, p, ns[i], is, st)
 		nodeRunners = append(nodeRunners, nr)
 	}
 

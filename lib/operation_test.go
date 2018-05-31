@@ -27,14 +27,14 @@ func TestMakeHashOfOperationBodyPayment(t *testing.T) {
 
 func TestIsWellFormedOperation(t *testing.T) {
 	op := TestMakeOperation(-1)
-	if err := op.IsWellFormed(); err != nil {
+	if err := op.IsWellFormed(networkID); err != nil {
 		t.Errorf("failed to check `Operation.IsWellFormed`: %v", err)
 	}
 }
 
 func TestIsWellFormedOperationLowerAmount(t *testing.T) {
 	obp := TestMakeOperationBodyPayment(0)
-	if err := obp.IsWellFormed(); err == nil {
+	if err := obp.IsWellFormed(networkID); err == nil {
 		t.Errorf("failed to `Operation.IsWellFormed`: `Amount` must occur error")
 	}
 }

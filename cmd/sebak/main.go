@@ -76,6 +76,7 @@ var (
 
 	kp                 *keypair.Full
 	flagKPSecretSeed   string = sebakcommon.GetENVValue("SEBAK_SECRET_SEED", "")
+	flagNetworkID      string = sebakcommon.GetENVValue("SEBAK_NETWORK_ID", "")
 	flagLogLevel       string = sebakcommon.GetENVValue("SEBAK_LOG_LEVEL", defaultLogLevel.String())
 	flagLogOutput      string = sebakcommon.GetENVValue("SEBAK_LOG_OUTPUT", "")
 	flagVerbose        bool   = sebakcommon.GetENVValue("SEBAK_VERBOSE", "0") == "1"
@@ -129,6 +130,7 @@ func init() {
 
 	// flags
 	flags.StringVar(&flagKPSecretSeed, "secret-seed", flagKPSecretSeed, "secret seed of this node")
+	flags.StringVar(&flagNetworkID, "network-id", flagNetworkID, "network id")
 	flags.StringVar(&flagLogLevel, "log-level", flagLogLevel, "log level, {crit, error, warn, info, debug}")
 	flags.StringVar(&flagLogOutput, "log-output", flagLogOutput, "set log output file")
 	flags.BoolVar(&flagVerbose, "verbose", flagVerbose, "verbose")
@@ -139,6 +141,10 @@ func init() {
 	flags.Var(&flagValidators, "validator", "set validator: '<public address>,<endpoint url>,<alias>' or <public address>,<endpoint url>")
 
 	flags.Parse(os.Args[1:])
+
+	if len(flagNetworkID) < 1 {
+		printFlagsError("-network-id", errors.New("-network-id must be given"))
+	}
 
 	if _, err = os.Stat(flagTLSCertFile); os.IsNotExist(err) {
 		printFlagsError("-tls-cert", err)
@@ -211,6 +217,7 @@ func init() {
 
 	// print flags
 	parsedFlags := []interface{}{}
+	parsedFlags = append(parsedFlags, "\n\network-id", flagNetworkID)
 	parsedFlags = append(parsedFlags, "\n\tlog-level", flagLogLevel)
 	parsedFlags = append(parsedFlags, "\n\tlog-output", flagLogOutput)
 	parsedFlags = append(parsedFlags, "\n\tendpoint", flagEndpointString)
@@ -257,7 +264,7 @@ func main() {
 	policy, _ := sebak.NewDefaultVotingThresholdPolicy(100, 30, 30)
 	policy.SetValidators(len(currentNode.GetValidators()) + 1) // including 'self'
 
-	isaac, err := sebak.NewISAAC(currentNode, policy)
+	isaac, err := sebak.NewISAAC([]byte(flagNetworkID), currentNode, policy)
 	if err != nil {
 		log.Error("failed to launch consensus", "error", err)
 		return
@@ -269,7 +276,7 @@ func main() {
 
 		os.Exit(1)
 	}
-	nr := sebak.NewNodeRunner(currentNode, policy, nt, isaac, st)
+	nr := sebak.NewNodeRunner(flagNetworkID, currentNode, policy, nt, isaac, st)
 	if err := nr.Start(); err != nil {
 		log.Crit("failed to start node", "error", err)
 

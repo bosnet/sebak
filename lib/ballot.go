@@ -152,8 +152,9 @@ var BallotWellFormedCheckerFuncs = []sebakcommon.CheckerFunc{
 	checkBallotValidState,
 }
 
-func (b Ballot) IsWellFormed() (err error) {
-	if _, err = sebakcommon.Checker(context.Background(), BallotWellFormedCheckerFuncs...)(b); err != nil {
+func (b Ballot) IsWellFormed(networkID []byte) (err error) {
+	ctx := context.WithValue(context.Background(), "networkID", networkID)
+	if _, err = sebakcommon.Checker(ctx, BallotWellFormedCheckerFuncs...)(b); err != nil {
 		return
 	}
 
@@ -164,9 +165,9 @@ func (b Ballot) IsWellFormed() (err error) {
 	return
 }
 
-func (b Ballot) VerifySignature() (err error) {
+func (b Ballot) VerifySignature(networkID []byte) (err error) {
 	err = keypair.MustParse(b.B.NodeKey).Verify(
-		[]byte(b.GetHash()),
+		append(networkID, []byte(b.GetHash())...),
 		base58.Decode(b.H.Signature),
 	)
 	if err != nil {
@@ -214,13 +215,13 @@ func (b *Ballot) SetState(state sebakcommon.BallotState) {
 	return
 }
 
-func (b *Ballot) Sign(kp *keypair.Full) {
+func (b *Ballot) Sign(kp *keypair.Full, networkID []byte) {
 	if kp.Address() != b.B.NodeKey {
 		b.B.NodeKey = kp.Address()
 	}
 
 	b.UpdateHash()
-	signature, _ := kp.Sign([]byte(b.GetHash()))
+	signature, _ := kp.Sign(append(networkID, []byte(b.GetHash())...))
 
 	b.H.Signature = base58.Encode(signature)
 	return

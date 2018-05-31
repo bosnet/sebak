@@ -27,7 +27,7 @@ func (o OperationBodyPayment) Serialize() (encoded []byte, err error) {
 	return
 }
 
-func (o OperationBodyPayment) IsWellFormed() (err error) {
+func (o OperationBodyPayment) IsWellFormed([]byte) (err error) {
 	if _, err = keypair.Parse(o.Target); err != nil {
 		return
 	}

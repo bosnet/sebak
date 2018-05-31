@@ -25,7 +25,7 @@ func NewDummyMessage(data string) DummyMessage {
 	return d
 }
 
-func (m DummyMessage) IsWellFormed() error {
+func (m DummyMessage) IsWellFormed([]byte) error {
 	return nil
 }
 

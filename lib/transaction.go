@@ -94,9 +94,10 @@ var TransactionWellFormedCheckerFuncs = []sebakcommon.CheckerFunc{
 	CheckTransactionHashMatch,
 }
 
-func (o Transaction) IsWellFormed() (err error) {
+func (o Transaction) IsWellFormed(networkID []byte) (err error) {
 	// TODO check `Version` format with SemVer
-	if _, err = sebakcommon.Checker(context.Background(), TransactionWellFormedCheckerFuncs...)(o); err != nil {
+	ctx := context.WithValue(context.Background(), "networkID", networkID)
+	if _, err = sebakcommon.Checker(ctx, TransactionWellFormedCheckerFuncs...)(o); err != nil {
 		return
 	}
 
@@ -150,9 +151,9 @@ func (o Transaction) String() string {
 	return string(encoded)
 }
 
-func (o *Transaction) Sign(kp keypair.KP) {
+func (o *Transaction) Sign(kp keypair.KP, networkID []byte) {
 	o.H.Hash = o.B.MakeHashString()
-	signature, _ := kp.Sign([]byte(o.H.Hash))
+	signature, _ := kp.Sign(append(networkID, []byte(o.H.Hash)...))
 
 	o.H.Signature = base58.Encode(signature)
 

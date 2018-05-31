@@ -11,6 +11,7 @@ import (
 )
 
 type NodeRunner struct {
+	networkID         []byte
 	currentNode       sebakcommon.Node
 	policy            sebakcommon.VotingThresholdPolicy
 	network           sebaknetwork.Network
@@ -29,6 +30,7 @@ type NodeRunner struct {
 }
 
 func NewNodeRunner(
+	networkID string,
 	currentNode sebakcommon.Node,
 	policy sebakcommon.VotingThresholdPolicy,
 	network sebaknetwork.Network,
@@ -36,6 +38,7 @@ func NewNodeRunner(
 	storage *sebakstorage.LevelDBBackend,
 ) *NodeRunner {
 	nr := &NodeRunner{
+		networkID:   []byte(networkID),
 		currentNode: currentNode,
 		policy:      policy,
 		network:     network,
@@ -44,6 +47,7 @@ func NewNodeRunner(
 		log:         log.New(logging.Ctx{"node": currentNode.Alias()}),
 	}
 	nr.ctx = context.WithValue(context.Background(), "currentNode", currentNode)
+	nr.ctx = context.WithValue(nr.ctx, "networkID", nr.networkID)
 
 	nr.connectionManager = sebaknetwork.NewConnectionManager(
 		nr.currentNode,
@@ -82,6 +86,10 @@ func (nr *NodeRunner) Stop() {
 
 func (nr *NodeRunner) Node() sebakcommon.Node {
 	return nr.currentNode
+}
+
+func (nr *NodeRunner) NetworkID() []byte {
+	return nr.networkID
 }
 
 func (nr *NodeRunner) Network() sebaknetwork.Network {
@@ -154,6 +162,7 @@ func (nr *NodeRunner) SetHandleMessageFromClientCheckerFuncs(ctx context.Context
 		ctx = context.Background()
 	}
 	ctx = context.WithValue(ctx, "currentNode", nr.currentNode)
+	ctx = context.WithValue(ctx, "networkID", nr.networkID)
 	nr.handleMessageFromClientCheckerFuncsContext = ctx
 }
 
@@ -166,6 +175,7 @@ func (nr *NodeRunner) SetHandleBallotCheckerFuncs(ctx context.Context, f ...seba
 		ctx = context.Background()
 	}
 	ctx = context.WithValue(ctx, "currentNode", nr.currentNode)
+	ctx = context.WithValue(ctx, "networkID", nr.networkID)
 	nr.handleBallotCheckerFuncsContext = ctx
 }
 

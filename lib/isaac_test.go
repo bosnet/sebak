@@ -32,7 +32,7 @@ func NewDummyMessage(data string) DummyMessage {
 	return d
 }
 
-func (m DummyMessage) IsWellFormed() error {
+func (m DummyMessage) IsWellFormed([]byte) error {
 	return nil
 }
 
@@ -65,7 +65,7 @@ func makeISAAC(minimumValidators int) *ISAAC {
 	policy, _ := NewDefaultVotingThresholdPolicy(100, 30, 30)
 	policy.SetValidators(minimumValidators)
 
-	is, _ := NewISAAC(NewRandomNode(), policy)
+	is, _ := NewISAAC(networkID, NewRandomNode(), policy)
 
 	return is
 }
@@ -74,7 +74,7 @@ func makeBallot(kp *keypair.Full, m sebakcommon.Message, state sebakcommon.Ballo
 	ballot, _ := NewBallotFromMessage(kp.Address(), m)
 	ballot.SetState(state)
 	ballot.Vote(VotingYES)
-	ballot.Sign(kp)
+	ballot.Sign(kp, networkID)
 
 	return ballot
 }
@@ -83,7 +83,7 @@ func TestNewISAAC(t *testing.T) {
 	policy, _ := NewDefaultVotingThresholdPolicy(100, 30, 30)
 	policy.SetValidators(1)
 
-	is, err := NewISAAC(NewRandomNode(), policy)
+	is, err := NewISAAC(networkID, NewRandomNode(), policy)
 	if err != nil {
 		t.Errorf("`NewISAAC` must not be failed: %v", err)
 		return
@@ -312,7 +312,7 @@ func TestISAACReceiveBallotStateINITAndVotingBox(t *testing.T) {
 func voteISAACReceiveBallot(is *ISAAC, ballots []Ballot, kps []*keypair.Full, state sebakcommon.BallotState) (vs VotingStateStaging, err error) {
 	for i, ballot := range ballots {
 		ballot.SetState(state)
-		ballot.Sign(kps[i])
+		ballot.Sign(kps[i], networkID)
 
 		if vs, err = is.ReceiveBallot(ballot); err != nil {
 			break

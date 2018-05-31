@@ -30,13 +30,14 @@ func CheckTransactionBaseFee(ctx context.Context, target interface{}, args ...in
 
 func CheckTransactionOperation(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
 	tx := target.(Transaction)
+	networkID := ctx.Value("networkID").([]byte)
 
 	var hashes []string
 	for _, op := range tx.B.Operations {
 		if tx.B.Source == op.B.TargetAddress() {
 			return ctx, sebakerror.ErrorInvalidOperation
 		}
-		if err := op.IsWellFormed(); err != nil {
+		if err := op.IsWellFormed(networkID); err != nil {
 			return ctx, err
 		}
 		// if there are multiple operations which has same 'Type' and same
@@ -59,7 +60,8 @@ func CheckTransactionVerifySignature(ctx context.Context, target interface{}, ar
 	if err != nil {
 		return ctx, err
 	}
-	err = kp.Verify([]byte(tx.H.Hash), base58.Decode(tx.H.Signature))
+	networkID := ctx.Value("networkID").([]byte)
+	err = kp.Verify(append(networkID, []byte(tx.H.Hash)...), base58.Decode(tx.H.Signature))
 	if err != nil {
 		return ctx, err
 	}
@@ -87,7 +89,8 @@ func CheckNodeRunnerHandleMessageTransactionUnmarshal(ctx context.Context, targe
 		return ctx, err
 	}
 
-	if err = tx.IsWellFormed(); err != nil {
+	networkID := ctx.Value("networkID").([]byte)
+	if err = tx.IsWellFormed(networkID); err != nil {
 		return ctx, err
 	}
 
@@ -124,14 +127,14 @@ func CheckNodeRunnerHandleMessageISAACReceiveMessage(ctx context.Context, target
 }
 
 func CheckNodeRunnerHandleMessageSignBallot(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
+	nr := target.(*NodeRunner)
 	ballot := ctx.Value("ballot").(Ballot)
-
 	currentNode := ctx.Value("currentNode").(*sebakcommon.Validator)
 
 	// self-sign
 	ballot.Vote(VotingYES)
 	ballot.UpdateHash()
-	ballot.Sign(currentNode.Keypair())
+	ballot.Sign(currentNode.Keypair(), nr.NetworkID())
 
 	return context.WithValue(ctx, "ballot", ballot), nil
 }
@@ -339,7 +342,7 @@ func CheckNodeRunnerHandleBallotBroadcast(ctx context.Context, target interface{
 
 	newBallot.SetState(state)
 	newBallot.Vote(votingHole)
-	newBallot.Sign(nr.Node().Keypair())
+	newBallot.Sign(nr.Node().Keypair(), nr.NetworkID())
 
 	nr.Consensus().AddBallot(newBallot)
 

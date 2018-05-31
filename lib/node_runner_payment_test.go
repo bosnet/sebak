@@ -79,7 +79,7 @@ func TestNodeRunnerPayment(t *testing.T) {
 	amount := uint64(1)
 	tx := makeTransactionPayment(kpSource, kpTarget.Address(), amount)
 	tx.B.Checkpoint = accountSource.Checkpoint
-	tx.Sign(kpSource)
+	tx.Sign(kpSource, networkID)
 
 	client.SendMessage(tx)
 
@@ -191,7 +191,7 @@ func TestNodeRunnerSerializedPayment(t *testing.T) {
 
 		tx := makeTransactionPayment(sourceKP, targetKP.Address(), uint64(1))
 		tx.B.Checkpoint = checkpoint
-		tx.Sign(sourceKP)
+		tx.Sign(sourceKP, networkID)
 
 		dones := doConsensus(nodeRunners, tx)
 		for _, vs := range dones {
@@ -219,7 +219,7 @@ func TestNodeRunnerSerializedPayment(t *testing.T) {
 		targetAccount0, _ := GetBlockAccount(nr0.Storage(), targetKP.Address())
 		tx := makeTransactionPayment(sourceKP, targetKP.Address(), uint64(1))
 		tx.B.Checkpoint = sourceAccount0.Checkpoint
-		tx.Sign(sourceKP)
+		tx.Sign(sourceKP, networkID)
 
 		dones := doConsensus(nodeRunners, tx)
 		for _, vs := range dones {
