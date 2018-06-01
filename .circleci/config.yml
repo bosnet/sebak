@@ -1,0 +1,36 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/golang:1.9
+
+    working_directory: /go/src/github.com/owlchain/sebak
+    steps:
+      - checkout
+      - run:
+          name: Checkout merge commit
+          command: |
+            if [[ -n "${CIRCLE_PR_NUMBER}" ]]
+            then
+              FETCH_REFS="${FETCH_REFS} +refs/pull/${CIRCLE_PR_NUMBER}/merge:pr/${CIRCLE_PR_NUMBER}/merge"
+              git fetch -u origin ${FETCH_REFS}
+              git checkout "pr/${CIRCLE_PR_NUMBER}/merge"
+            fi
+      - run:
+          name: install dep
+          command: curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+      - restore_cache:
+          key: dependency-cache-{{ checksum "Gopkg.lock" }}
+      - run:
+          name: install dependencies
+          command: dep ensure
+      - save_cache:
+          key: dependency-cache-{{ checksum "Gopkg.lock" }}
+          paths:
+            - vendor
+      - run:
+          name: check formatting
+          command: if [[ -n "$(gofmt -l src)" ]]; then gofmt -l src; exit 1; fi
+      - run:
+          name: run tests
+          command: go test -v ./...
