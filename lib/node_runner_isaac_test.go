@@ -5,9 +5,9 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/spikeekips/sebak/lib/common"
-	"github.com/spikeekips/sebak/lib/error"
-	"github.com/spikeekips/sebak/lib/network"
+	"github.com/owlchain/sebak/lib/common"
+	"github.com/owlchain/sebak/lib/error"
+	"github.com/owlchain/sebak/lib/network"
 )
 
 // TestNodeRunnerConsensus checks, all the validators can get consensus.

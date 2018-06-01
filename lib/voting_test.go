@@ -3,7 +3,7 @@ package sebak
 import (
 	"testing"
 
-	"github.com/spikeekips/sebak/lib/common"
+	"github.com/owlchain/sebak/lib/common"
 	"github.com/stellar/go/keypair"
 )
 

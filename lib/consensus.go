@@ -1,7 +1,7 @@
 package sebak
 
 import (
-	"github.com/spikeekips/sebak/lib/common"
+	"github.com/owlchain/sebak/lib/common"
 )
 
 type Consensus interface {

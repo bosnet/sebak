@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stellar/go/keypair"
 
-	"github.com/spikeekips/sebak/lib/common"
+	"github.com/owlchain/sebak/lib/common"
 )
 
 func testMakeBlockAccount() *BlockAccount {

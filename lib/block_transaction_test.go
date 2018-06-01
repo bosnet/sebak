@@ -5,9 +5,9 @@ import (
 
 	"github.com/stellar/go/keypair"
 
-	"github.com/spikeekips/sebak/lib/common"
-	"github.com/spikeekips/sebak/lib/error"
-	"github.com/spikeekips/sebak/lib/storage"
+	"github.com/owlchain/sebak/lib/common"
+	"github.com/owlchain/sebak/lib/error"
+	"github.com/owlchain/sebak/lib/storage"
 )
 
 func TestNewBlockTransaction(t *testing.T) {

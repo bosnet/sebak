@@ -5,8 +5,8 @@ import (
 
 	"github.com/stellar/go/keypair"
 
-	"github.com/spikeekips/sebak/lib/error"
-	"github.com/spikeekips/sebak/lib/storage"
+	"github.com/owlchain/sebak/lib/error"
+	"github.com/owlchain/sebak/lib/storage"
 )
 
 type OperationBodyCreateAccount struct {

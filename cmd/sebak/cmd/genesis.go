@@ -12,11 +12,11 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/stellar/go/keypair"
 
-	"github.com/spikeekips/sebak/lib"
-	"github.com/spikeekips/sebak/lib/common"
-	"github.com/spikeekips/sebak/lib/storage"
+	"github.com/owlchain/sebak/lib"
+	"github.com/owlchain/sebak/lib/common"
+	"github.com/owlchain/sebak/lib/storage"
 
-	"github.com/spikeekips/sebak/cmd/sebak/common"
+	"github.com/owlchain/sebak/cmd/sebak/common"
 )
 
 var (

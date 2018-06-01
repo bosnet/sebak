@@ -3,7 +3,7 @@ package sebak
 import (
 	"testing"
 
-	"github.com/spikeekips/sebak/lib/storage"
+	"github.com/owlchain/sebak/lib/storage"
 )
 
 func TestSaveNewBlockAccount(t *testing.T) {

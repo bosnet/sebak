@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/btcsuite/btcutil/base58"
-	"github.com/spikeekips/sebak/lib/storage"
+	"github.com/owlchain/sebak/lib/storage"
 	"github.com/stellar/go/keypair"
 )
 

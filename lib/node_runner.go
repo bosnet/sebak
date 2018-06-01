@@ -5,9 +5,9 @@ import (
 	"time"
 
 	logging "github.com/inconshreveable/log15"
-	"github.com/spikeekips/sebak/lib/common"
-	"github.com/spikeekips/sebak/lib/network"
-	"github.com/spikeekips/sebak/lib/storage"
+	"github.com/owlchain/sebak/lib/common"
+	"github.com/owlchain/sebak/lib/network"
+	"github.com/owlchain/sebak/lib/storage"
 )
 
 type NodeRunner struct {

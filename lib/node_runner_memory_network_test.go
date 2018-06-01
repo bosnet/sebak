@@ -10,10 +10,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/spikeekips/sebak/lib/common"
-	"github.com/spikeekips/sebak/lib/error"
-	"github.com/spikeekips/sebak/lib/network"
-	"github.com/spikeekips/sebak/lib/storage"
+	"github.com/owlchain/sebak/lib/common"
+	"github.com/owlchain/sebak/lib/error"
+	"github.com/owlchain/sebak/lib/network"
+	"github.com/owlchain/sebak/lib/storage"
 	"github.com/stellar/go/keypair"
 )
 

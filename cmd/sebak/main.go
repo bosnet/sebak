@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/spikeekips/sebak/cmd/sebak/cmd"
+	"github.com/owlchain/sebak/cmd/sebak/cmd"
 )
 
 func main() {

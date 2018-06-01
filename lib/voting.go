@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"math"
 
-	"github.com/spikeekips/sebak/lib/common"
-	"github.com/spikeekips/sebak/lib/error"
+	"github.com/owlchain/sebak/lib/common"
+	"github.com/owlchain/sebak/lib/error"
 )
 
 type VotingHole string

@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/spikeekips/sebak/lib"
+	"github.com/owlchain/sebak/lib"
 )
 
 func init() {

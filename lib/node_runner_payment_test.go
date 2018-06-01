@@ -11,8 +11,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/stellar/go/keypair"
 
-	"github.com/spikeekips/sebak/lib/common"
-	"github.com/spikeekips/sebak/lib/network"
+	"github.com/owlchain/sebak/lib/common"
+	"github.com/owlchain/sebak/lib/network"
 )
 
 func TestNodeRunnerPayment(t *testing.T) {

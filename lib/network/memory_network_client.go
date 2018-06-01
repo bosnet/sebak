@@ -1,7 +1,7 @@
 package sebaknetwork
 
 import (
-	"github.com/spikeekips/sebak/lib/common"
+	"github.com/owlchain/sebak/lib/common"
 )
 
 type MemoryTransportClient struct {

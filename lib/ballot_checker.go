@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/btcsuite/btcutil/base58"
-	"github.com/spikeekips/sebak/lib/common"
-	"github.com/spikeekips/sebak/lib/error"
+	"github.com/owlchain/sebak/lib/common"
+	"github.com/owlchain/sebak/lib/error"
 )
 
 func checkBallotEmptyNodeKey(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {

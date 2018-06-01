@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/spikeekips/sebak/lib/common"
+	"github.com/owlchain/sebak/lib/common"
 	"github.com/syndtr/goleveldb/leveldb"
 	leveldbStorage "github.com/syndtr/goleveldb/leveldb/storage"
 	leveldbUtil "github.com/syndtr/goleveldb/leveldb/util"

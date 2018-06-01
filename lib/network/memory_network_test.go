@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/btcsuite/btcutil/base58"
-	"github.com/spikeekips/sebak/lib/common"
+	"github.com/owlchain/sebak/lib/common"
 	"github.com/stellar/go/keypair"
 )
 

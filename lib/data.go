@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/spikeekips/sebak/lib/error"
+	"github.com/owlchain/sebak/lib/error"
 )
 
 type Amount uint64

@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/gorilla/handlers"
-	"github.com/spikeekips/sebak/lib/common"
+	"github.com/owlchain/sebak/lib/common"
 
 	"golang.org/x/net/http2"
 )

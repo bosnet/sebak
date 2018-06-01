@@ -5,8 +5,8 @@ import (
 
 	"github.com/stellar/go/keypair"
 
-	"github.com/spikeekips/sebak/lib/common"
-	"github.com/spikeekips/sebak/lib/error"
+	"github.com/owlchain/sebak/lib/common"
+	"github.com/owlchain/sebak/lib/error"
 )
 
 func makeNewBallot(state sebakcommon.BallotState, vote VotingHole) (*keypair.Full, Transaction, Ballot) {

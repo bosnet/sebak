@@ -1,6 +1,6 @@
 # SEBAK
 
-[![GoDoc](https://godoc.org/github.com/golang/gddo?status.svg)](http://godoc.org/github.com/spikeekips/sebak/lib) [![Build Status](https://travis-ci.org/spikeekips/sebak.svg?branch=master)](https://travis-ci.org/spikeekips/sebak)
+[![GoDoc](https://godoc.org/github.com/golang/gddo?status.svg)](http://godoc.org/github.com/owlchain/sebak/lib) [![Build Status](https://travis-ci.org/owlchain/sebak.svg?branch=master)](https://travis-ci.org/owlchain/sebak)
 
 Sebak is the core node for crypto-currency blockchain.
 
@@ -14,10 +14,10 @@ To start sebak:
 $ mkdir sebak
 $ cd sebak
 $ export GOPATH=$(pwd)
-$ go get github.com/spikeekips/sebak
-$ cd src/github.com/spikeekips/sebak
+$ go get github.com/owlchain/sebak
+$ cd src/github.com/owlchain/sebak
 $ dep ensure
-$ go install github.com/spikeekips/sebak/cmd/sebak
+$ go install github.com/owlchain/sebak/cmd/sebak
 ```
 
 ## Test

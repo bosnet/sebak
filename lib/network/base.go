@@ -6,7 +6,7 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/spikeekips/sebak/lib/common"
+	"github.com/owlchain/sebak/lib/common"
 )
 
 type Network interface {
