@@ -1,7 +1,6 @@
 package sebak
 
 import (
-	"context"
 	"encoding/json"
 	"math"
 
@@ -175,7 +174,12 @@ func (vr *VotingResult) Add(ballot Ballot) (err error) {
 	vr.Lock()
 	defer vr.Unlock()
 
-	if _, err = sebakcommon.Checker(context.Background(), VotingResultCheckerFuns...)(vr, ballot); err != nil {
+	checker := &VotingResultChecker{
+		DefaultChecker: sebakcommon.DefaultChecker{VotingResultCheckerFuns},
+		VotingResult:   vr,
+		Ballot:         ballot,
+	}
+	if err = sebakcommon.RunChecker(checker, sebakcommon.DefaultDeferFunc); err != nil {
 		return
 	}
 	vr.Ballots[ballot.State()][ballot.B.NodeKey] = NewVotingResultBallotFromBallot(ballot)

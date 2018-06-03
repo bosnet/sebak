@@ -152,8 +152,7 @@ func (c *ConnectionManager) connectValidator(v *sebakcommon.Validator) (err erro
 		return
 	}
 
-	/* load and check validator info; addresses are same?
-	 */
+	// load and check validator info; addresses are same?
 	var validator *sebakcommon.Validator
 	validator, err = sebakcommon.NewValidatorFromString(b)
 	if err != nil {

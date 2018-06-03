@@ -8,13 +8,12 @@ import (
 	"github.com/owlchain/sebak/lib/storage"
 )
 
-/*
-BlockTransactionHistory is for keeping `Transaction` history. the storage should support,
- * find by `Hash`
- * find by `Source`
- * sort by `Confirmed`
- * sort by `Created`
-*/
+// BlockTransactionHistory is for keeping `Transaction` history. the storage should support,
+//  * find by `Hash`
+//  * find by `Source`
+//  * sort by `Confirmed`
+//  * sort by `Created`
+
 const (
 	BlockTransactionHistoryPrefixHash string = "bth-hash-" // bt-hash-<BlockTransactionHistory.Hash>
 )
@@ -84,11 +83,10 @@ func GetBlockTransactionHistory(st *sebakstorage.LevelDBBackend, hash string) (b
 	return
 }
 
-/*
-BlockTransactionError stores all the non-confirmed transactions and it's reason.
-the storage should support,
- * find by `Hash`
-*/
+// BlockTransactionError stores all the non-confirmed transactions and it's reason.
+// the storage should support,
+//  * find by `Hash`
+
 type BlockTransactionError struct {
 	Hash string
 

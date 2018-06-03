@@ -2,7 +2,6 @@ package sebakcommon
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -38,31 +37,6 @@ type CheckerErrorStop struct {
 
 func (c CheckerErrorStop) Error() string {
 	return fmt.Sprintf("stop checker and return: %s", c.Message)
-}
-
-type CheckerFunc func(context.Context, interface{}, ...interface{}) (context.Context, error)
-type DeferFunc func(int, CheckerFunc, context.Context, error)
-
-func Checker(ctx context.Context, checkFuncs ...CheckerFunc) func(interface{}, ...interface{}) (context.Context, error) {
-	deferFunc := func(int, CheckerFunc, context.Context, error) {}
-
-	if ctx != nil {
-		if deferFuncValue := ctx.Value("deferFunc"); deferFuncValue != nil {
-			deferFunc = deferFuncValue.(DeferFunc)
-		}
-	}
-
-	return func(target interface{}, args ...interface{}) (context.Context, error) {
-		for i, f := range checkFuncs {
-			var err error
-			if ctx, err = f(ctx, target, args...); err != nil {
-				deferFunc(i, f, ctx, err)
-				return ctx, err
-			}
-			deferFunc(i, f, ctx, err)
-		}
-		return ctx, nil
-	}
 }
 
 type SafeLock struct {

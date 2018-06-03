@@ -1,7 +1,6 @@
 package sebak
 
 import (
-	"context"
 	"encoding/json"
 	"sort"
 
@@ -79,6 +78,10 @@ func (b Ballot) Clone() Ballot {
 // TODO(Ballot.Serialize): `Ballot.Serialize`: find the way to reduce the ballot
 // size without message.
 
+func (b Ballot) IsEmpty() bool {
+	return len(b.GetType()) < 1
+}
+
 func (b Ballot) Serialize() (encoded []byte, err error) {
 	//if b.State() == sebakcommon.BallotStateINIT {
 	//	encoded, err = json.Marshal(b)
@@ -153,14 +156,14 @@ var BallotWellFormedCheckerFuncs = []sebakcommon.CheckerFunc{
 }
 
 func (b Ballot) IsWellFormed(networkID []byte) (err error) {
-	ctx := context.WithValue(context.Background(), "networkID", networkID)
-	if _, err = sebakcommon.Checker(ctx, BallotWellFormedCheckerFuncs...)(b); err != nil {
+	checker := &BallotChecker{
+		DefaultChecker: sebakcommon.DefaultChecker{BallotWellFormedCheckerFuncs},
+		Ballot:         b,
+		NetworkID:      networkID,
+	}
+	if err = sebakcommon.RunChecker(checker, sebakcommon.DefaultDeferFunc); err != nil {
 		return
 	}
-
-	//if err = b.Message().IsWellFormed(); err != nil {
-	//	return
-	//}
 
 	return
 }

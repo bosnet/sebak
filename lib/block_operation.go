@@ -10,15 +10,12 @@ import (
 	"github.com/owlchain/sebak/lib/storage"
 )
 
-/*
-BlockOperation is `Operation` data for block. the storage should support,
- * find by `Hash`
- * find by `TxHash`
-
- * get list by `Source` and created order
- * get list by `Target` and created order
-
-*/
+// BlockOperation is `Operation` data for block. the storage should support,
+//  * find by `Hash`
+//  * find by `TxHash`
+//
+//  * get list by `Source` and created order
+//  * get list by `Target` and created order
 
 const (
 	BlockOperationPrefixHash       string = "bo-hash-"       // bo-hash-<BlockOperation.Hash>

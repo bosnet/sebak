@@ -1,7 +1,6 @@
 package sebak
 
 import (
-	"context"
 	"fmt"
 	"strconv"
 	"sync"
@@ -53,23 +52,30 @@ func TestNodeRunnerPayment(t *testing.T) {
 	wg.Add(numberOfNodes)
 
 	var dones []VotingStateStaging
-	var deferFunc sebakcommon.DeferFunc = func(n int, f sebakcommon.CheckerFunc, ctx context.Context, err error) {
+	var deferFunc sebakcommon.CheckerDeferFunc = func(n int, c sebakcommon.Checker, err error) {
 		if err == nil {
 			return
 		}
 
-		if vs, ok := ctx.Value("vs").(VotingStateStaging); ok && vs.IsClosed() {
-			if _, ok := err.(sebakcommon.CheckerErrorStop); ok {
-				dones = append(dones, vs)
-				wg.Done()
-			}
+		if _, ok := err.(sebakcommon.CheckerErrorStop); !ok {
+			return
 		}
 
+		checker := c.(*NodeRunnerHandleBallotChecker)
+		if checker.VotingStateStaging.IsEmpty() {
+			return
+		}
+
+		if !checker.VotingStateStaging.IsClosed() {
+			return
+		}
+
+		dones = append(dones, checker.VotingStateStaging)
+		wg.Done()
 	}
 
-	ctx := context.WithValue(context.Background(), "deferFunc", deferFunc)
 	for _, nr := range nodeRunners {
-		nr.SetHandleBallotCheckerFuncs(ctx)
+		nr.SetHandleBallotCheckerFuncs(deferFunc)
 	}
 
 	nr0 := nodeRunners[0]
@@ -124,7 +130,7 @@ func doConsensus(nodeRunners []*NodeRunner, tx Transaction) []VotingStateStaging
 	wg.Add(len(nodeRunners))
 
 	var dones []VotingStateStaging
-	var messageDeferFunc sebakcommon.DeferFunc = func(n int, f sebakcommon.CheckerFunc, ctx context.Context, err error) {
+	var messageDeferFunc sebakcommon.CheckerDeferFunc = func(n int, c sebakcommon.Checker, err error) {
 		if err == nil {
 			return
 		}
@@ -132,24 +138,30 @@ func doConsensus(nodeRunners []*NodeRunner, tx Transaction) []VotingStateStaging
 		return
 	}
 
-	var ballotDeferFunc sebakcommon.DeferFunc = func(n int, f sebakcommon.CheckerFunc, ctx context.Context, err error) {
+	var ballotDeferFunc sebakcommon.CheckerDeferFunc = func(n int, c sebakcommon.Checker, err error) {
 		if err == nil {
 			return
 		}
 
-		if vs, ok := ctx.Value("vs").(VotingStateStaging); ok && vs.IsClosed() {
-			if _, ok := err.(sebakcommon.CheckerErrorStop); ok {
-				dones = append(dones, vs)
-				wg.Done()
-			}
+		if _, ok := err.(sebakcommon.CheckerErrorStop); !ok {
+			return
 		}
-	}
 
-	ballotCtx := context.WithValue(context.Background(), "deferFunc", ballotDeferFunc)
-	messageCtx := context.WithValue(context.Background(), "deferFunc", messageDeferFunc)
+		checker := c.(*NodeRunnerHandleBallotChecker)
+		if checker.VotingStateStaging.IsEmpty() {
+			return
+		}
+
+		if !checker.VotingStateStaging.IsClosed() {
+			return
+		}
+
+		dones = append(dones, checker.VotingStateStaging)
+		wg.Done()
+	}
 	for _, nr := range nodeRunners {
-		nr.SetHandleBallotCheckerFuncs(ballotCtx)
-		nr.SetHandleMessageFromClientCheckerFuncs(messageCtx)
+		nr.SetHandleMessageFromClientCheckerFuncs(messageDeferFunc)
+		nr.SetHandleBallotCheckerFuncs(ballotDeferFunc)
 	}
 
 	nr0 := nodeRunners[0]
