@@ -10,18 +10,16 @@ import (
 	"github.com/owlchain/sebak/lib/storage"
 )
 
-/*
-BlockAccount is account model in block. the storage should support,
- * find by `Address`:
-	- key: `Address`: value: `ID` of BlockAccount
- * get list by created order:
-
-models
- * 'address'
-	- 'ba-address-<BlockAccount.Address>': `BlockAccount`
- * 'created'
-	- 'ba-created-<sequential uuid1>': `BlockAccouna.Address`
-*/
+// BlockAccount is account model in block. the storage should support,
+//  * find by `Address`:
+// 	- key: `Address`: value: `ID` of BlockAccount
+//  * get list by created order:
+//
+// models
+//  * 'address'
+// 	- 'ba-address-<BlockAccount.Address>': `BlockAccount`
+//  * 'created'
+// 	- 'ba-created-<sequential uuid1>': `BlockAccouna.Address`
 
 const BlockAccountPrefixAddress string = "ba-address-"
 const BlockAccountPrefixCreated string = "ba-created-"

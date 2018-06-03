@@ -1,7 +1,6 @@
 package sebak
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 
@@ -96,8 +95,13 @@ var TransactionWellFormedCheckerFuncs = []sebakcommon.CheckerFunc{
 
 func (o Transaction) IsWellFormed(networkID []byte) (err error) {
 	// TODO check `Version` format with SemVer
-	ctx := context.WithValue(context.Background(), "networkID", networkID)
-	if _, err = sebakcommon.Checker(ctx, TransactionWellFormedCheckerFuncs...)(o); err != nil {
+
+	checker := &TransactionChecker{
+		DefaultChecker: sebakcommon.DefaultChecker{TransactionWellFormedCheckerFuncs},
+		NetworkID:      networkID,
+		Transaction:    o,
+	}
+	if err = sebakcommon.RunChecker(checker, sebakcommon.DefaultDeferFunc); err != nil {
 		return
 	}
 
@@ -109,9 +113,6 @@ func (o Transaction) Validate(st *sebakstorage.LevelDBBackend) (err error) {
 	// `Checkpoint`
 	// TODO check whether `Source` is in `Block Account`
 	// TODO check whether the balance of `Source` is greater than `totalAmount`
-	/*
-		totalAmount := o.GetTotalAmount(true)
-	*/
 
 	return
 }

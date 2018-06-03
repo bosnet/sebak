@@ -9,14 +9,12 @@ import (
 	"github.com/owlchain/sebak/lib/storage"
 )
 
-/*
-BlockTransaction is `Transaction` data for block. the storage should support,
- * find by `Hash`
-
- * //get list by `Checkpoint` and created order
- * get list by `Source` and created order
- * get list by `Confirmed` order
-*/
+// BlockTransaction is `Transaction` data for block. the storage should support,
+//  * find by `Hash`
+//
+//  * //get list by `Checkpoint` and created order
+//  * get list by `Source` and created order
+//  * get list by `Confirmed` order
 
 const (
 	BlockTransactionPrefixHash       string = "bt-hash-"       // bt-hash-<BlockTransaction.Hash>

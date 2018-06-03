@@ -1,65 +1,69 @@
 package sebak
 
 import (
-	"context"
-
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/owlchain/sebak/lib/common"
 	"github.com/owlchain/sebak/lib/error"
 )
 
-func checkBallotEmptyNodeKey(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
-	ballot := target.(Ballot)
-	if len(ballot.B.NodeKey) < 1 {
-		return ctx, sebakerror.ErrorBallotNoNodeKey
-	}
-	return ctx, nil
+type BallotChecker struct {
+	sebakcommon.DefaultChecker
+
+	Ballot    Ballot
+	NetworkID []byte
 }
 
-func checkBallotEmptyHashMatch(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
-	ballot := target.(Ballot)
-	if base58.Encode(ballot.B.MakeHash()) != ballot.GetHash() {
-		return ctx, sebakerror.ErrorHashDoesNotMatch
+func checkBallotEmptyNodeKey(c sebakcommon.Checker, args ...interface{}) error {
+	checker := c.(*BallotChecker)
+
+	if len(checker.Ballot.B.NodeKey) < 1 {
+		return sebakerror.ErrorBallotNoNodeKey
 	}
-	return ctx, nil
+	return nil
 }
 
-func checkBallotVerifySignature(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
-	networkID := ctx.Value("networkID").([]byte)
-	if err := target.(Ballot).VerifySignature(networkID); err != nil {
-		return ctx, err
+func checkBallotEmptyHashMatch(c sebakcommon.Checker, args ...interface{}) error {
+	checker := c.(*BallotChecker)
+
+	if base58.Encode(checker.Ballot.B.MakeHash()) != checker.Ballot.GetHash() {
+		return sebakerror.ErrorHashDoesNotMatch
 	}
-	return ctx, nil
+	return nil
 }
 
-func checkBallotNoVoting(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
-	if target.(Ballot).B.VotingHole == VotingNOTYET {
-		return ctx, sebakerror.ErrorBallotNoVoting
+func checkBallotVerifySignature(c sebakcommon.Checker, args ...interface{}) error {
+	checker := c.(*BallotChecker)
+
+	if err := checker.Ballot.VerifySignature(checker.NetworkID); err != nil {
+		return err
 	}
-	return ctx, nil
+	return nil
 }
 
-func checkBallotValidState(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
-	if target.(Ballot).State() == sebakcommon.BallotStateNONE {
-		return ctx, sebakerror.ErrorInvalidState
+func checkBallotNoVoting(c sebakcommon.Checker, args ...interface{}) error {
+	checker := c.(*BallotChecker)
+
+	if checker.Ballot.B.VotingHole == VotingNOTYET {
+		return sebakerror.ErrorBallotNoVoting
 	}
-	return ctx, nil
+	return nil
 }
 
-func checkBallotHasMessage(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
-	ballot := target.(Ballot)
-	if ballot.Data().Data == nil {
-		return ctx, sebakerror.ErrorBallotEmptyMessage
-	}
+func checkBallotValidState(c sebakcommon.Checker, args ...interface{}) error {
+	checker := c.(*BallotChecker)
 
-	return ctx, nil
+	if checker.Ballot.State() == sebakcommon.BallotStateNONE {
+		return sebakerror.ErrorInvalidState
+	}
+	return nil
 }
 
-func checkBallotResultValidHash(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
-	votingResult := target.(*VotingResult)
-	ballot := args[0].(Ballot)
-	if ballot.MessageHash() != votingResult.MessageHash {
-		return ctx, sebakerror.ErrorHashDoesNotMatch
+func checkBallotHasMessage(c sebakcommon.Checker, args ...interface{}) error {
+	checker := c.(*BallotChecker)
+
+	if checker.Ballot.Data().Data == nil {
+		return sebakerror.ErrorBallotEmptyMessage
 	}
-	return ctx, nil
+
+	return nil
 }

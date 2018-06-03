@@ -2,9 +2,7 @@ package sebak
 
 import (
 	"context"
-	"errors"
 	"math/rand"
-	"reflect"
 	"sync"
 	"testing"
 	"time"
@@ -240,14 +238,13 @@ func TestMemoryNetworkHandleMessageFromClient(t *testing.T) {
 		CheckNodeRunnerHandleMessageTransactionUnmarshal,
 		CheckNodeRunnerHandleMessageISAACReceiveMessage,
 		CheckNodeRunnerHandleMessageSignBallot,
-		func(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
-			nr := target.(*NodeRunner)
-			ballot := ctx.Value("ballot").(Ballot)
+		func(c sebakcommon.Checker, args ...interface{}) error {
+			checker := c.(*NodeRunnerHandleMessageChecker)
 
-			nr.log.Debug("ballot from client will be broadcasted", "ballot", ballot.MessageHash())
-			chanGotMessageFromClient <- ballot
+			checker.NodeRunner.log.Debug("ballot from client will be broadcasted", "ballot", checker.Ballot.MessageHash())
+			chanGotMessageFromClient <- checker.Ballot
 
-			return ctx, nil
+			return nil
 		},
 	}
 
@@ -284,24 +281,17 @@ func TestMemoryNetworkHandleMessageFromClientBroadcast(t *testing.T) {
 	chanCancel := make(chan bool)
 	chanGotBallot := make(chan Ballot)
 	var handleBallotCheckerFuncs = []sebakcommon.CheckerFunc{
-		func(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
-			var err error
-			message, ok := args[0].(sebaknetwork.Message)
-			if !ok {
-				err = errors.New("invalid `network.Message`")
-				t.Error(err)
-				chanCancel <- true
-
-				return ctx, err
-			}
+		func(c sebakcommon.Checker, args ...interface{}) (err error) {
+			checker := c.(*NodeRunnerHandleBallotChecker)
 
 			var ballot Ballot
-			if ballot, err = NewBallotFromJSON(message.Data); err != nil {
-				return ctx, err
+			if ballot, err = NewBallotFromJSON(checker.Message.Data); err != nil {
+				return
 			}
 
-			chanGotBallot <- ballot
-			return ctx, nil
+			checker.Ballot = ballot
+			chanGotBallot <- checker.Ballot
+			return nil
 		},
 	}
 
@@ -310,14 +300,13 @@ func TestMemoryNetworkHandleMessageFromClientBroadcast(t *testing.T) {
 		CheckNodeRunnerHandleMessageTransactionUnmarshal,
 		CheckNodeRunnerHandleMessageISAACReceiveMessage,
 		CheckNodeRunnerHandleMessageSignBallot,
-		func(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
-			ballot := ctx.Value("ballot").(Ballot)
+		func(c sebakcommon.Checker, args ...interface{}) (err error) {
+			checker := c.(*NodeRunnerHandleMessageChecker)
 
-			nr := target.(*NodeRunner)
-			nr.log.Debug("ballot from client will be broadcasted", "ballot", ballot.MessageHash())
-			chanGotMessageFromClient <- ballot
+			checker.NodeRunner.log.Debug("ballot from client will be broadcasted", "ballot", checker.Ballot.MessageHash())
+			chanGotMessageFromClient <- checker.Ballot
 
-			return ctx, nil
+			return nil
 		},
 		CheckNodeRunnerHandleMessageBroadcast,
 	}
@@ -386,17 +375,17 @@ func TestMemoryNetworkHandleMessageCheckHasMessage(t *testing.T) {
 	var handleMessageFromClientCheckerFuncs = []sebakcommon.CheckerFunc{
 		CheckNodeRunnerHandleMessageTransactionUnmarshal,
 		CheckNodeRunnerHandleMessageISAACReceiveMessage,
-		func(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
-			ballot := ctx.Value("ballot").(Ballot)
+		func(c sebakcommon.Checker, args ...interface{}) error {
+			checker := c.(*NodeRunnerHandleMessageChecker)
 
-			addedBallot = append(addedBallot, ballot)
+			addedBallot = append(addedBallot, checker.Ballot)
 
-			return ctx, nil
+			return nil
 		},
 	}
 
-	var deferFunc sebakcommon.DeferFunc = func(n int, f sebakcommon.CheckerFunc, ctx context.Context, err error) {
-		if reflect.ValueOf(f).Pointer() == reflect.ValueOf(CheckNodeRunnerHandleMessageISAACReceiveMessage).Pointer() {
+	var deferFunc sebakcommon.CheckerDeferFunc = func(n int, c sebakcommon.Checker, err error) {
+		if n == 1 {
 			defer wg.Done()
 		}
 
@@ -405,9 +394,8 @@ func TestMemoryNetworkHandleMessageCheckHasMessage(t *testing.T) {
 		}
 		foundErrors = append(foundErrors, err)
 	}
-	ctx := context.WithValue(context.Background(), "deferFunc", deferFunc)
 
-	nr.SetHandleMessageFromClientCheckerFuncs(ctx, handleMessageFromClientCheckerFuncs...)
+	nr.SetHandleMessageFromClientCheckerFuncs(deferFunc, handleMessageFromClientCheckerFuncs...)
 
 	tx := makeTransaction(nr.Node().Keypair())
 	c0.SendMessage(tx)
@@ -457,17 +445,17 @@ func TestMemoryNetworkHandleMessageAddBallot(t *testing.T) {
 	var handleMessageFromClientCheckerFuncs = []sebakcommon.CheckerFunc{
 		CheckNodeRunnerHandleMessageTransactionUnmarshal,
 		CheckNodeRunnerHandleMessageISAACReceiveMessage,
-		func(ctx context.Context, target interface{}, args ...interface{}) (context.Context, error) {
-			ballot := ctx.Value("ballot").(Ballot)
+		func(c sebakcommon.Checker, args ...interface{}) error {
+			checker := c.(*NodeRunnerHandleMessageChecker)
 
-			addedBallot = append(addedBallot, ballot)
+			addedBallot = append(addedBallot, checker.Ballot)
 
-			return ctx, nil
+			return nil
 		},
 	}
 
-	var deferFunc sebakcommon.DeferFunc = func(n int, f sebakcommon.CheckerFunc, ctx context.Context, err error) {
-		if reflect.ValueOf(f).Pointer() == reflect.ValueOf(CheckNodeRunnerHandleMessageISAACReceiveMessage).Pointer() {
+	var deferFunc sebakcommon.CheckerDeferFunc = func(n int, c sebakcommon.Checker, err error) {
+		if n == 1 {
 			defer wg.Done()
 		}
 
@@ -476,9 +464,8 @@ func TestMemoryNetworkHandleMessageAddBallot(t *testing.T) {
 		}
 		foundErrors = append(foundErrors, err)
 	}
-	ctx := context.WithValue(context.Background(), "deferFunc", deferFunc)
 
-	nr0.SetHandleMessageFromClientCheckerFuncs(ctx, handleMessageFromClientCheckerFuncs...)
+	nr0.SetHandleMessageFromClientCheckerFuncs(deferFunc, handleMessageFromClientCheckerFuncs...)
 
 	c0.SendMessage(makeTransaction(nr0.Node().Keypair()))
 	c0.SendMessage(makeTransaction(nr1.Node().Keypair()))

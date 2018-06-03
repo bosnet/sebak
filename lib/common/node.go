@@ -23,10 +23,6 @@ type Node interface {
 	Endpoint() *Endpoint
 	Equal(Node) bool
 	DeepEqual(Node) bool
-	/*
-		Transport() network.TransportServer
-		SetTransport(network.TransportServer) error
-	*/
 	GetValidators() map[string]*Validator
 	AddValidators(validators ...*Validator) error
 	RemoveValidators(validators ...*Validator) error
@@ -98,17 +94,6 @@ func (v *Validator) SetAlias(s string) {
 func (v *Validator) Endpoint() *Endpoint {
 	return v.endpoint
 }
-
-/*
-func (v *Validator) Transport() network.TransportServer {
-	return v.transport
-}
-
-func (v *Validator) SetTransport(t network.TransportServer) error {
-	v.transport = t
-	return nil
-}
-*/
 
 func (v *Validator) GetValidators() map[string]*Validator {
 	return v.validators
