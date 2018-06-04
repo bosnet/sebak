@@ -111,3 +111,22 @@ $ sebak node \
     --validator GBNUTWSM4FRSEULVMHZF7NFQWIBGEDF5X5OHXFOZJB6SH5MIEDEJEJ2F,https://localhost:12345 \
     --validator GDPQ2LBYP3RL3O675H2N5IEYM6PRJNUA5QFMKXIHGTKEB5KS5T3KHFA2,https://localhost:12346
 ```
+
+## Spinning a test net using Docker
+
+To spawn a simple network, first build the docker image:
+```sh
+docker build . -t sebak
+# The build process creates a rather large image, which is regenarated every time
+# To clean up all orphaned images, you can run the following command
+docker rmi -f $(docker images -f "dangling=true" -q)
+```
+
+Then you can spawn 3 nodes using the following commands:
+```sh
+docker run --net host --rm -it --env-file=docker/node1.env sebak
+docker run --net host --rm -it --env-file=docker/node2.env sebak
+docker run --net host --rm -it --env-file=docker/node3.env sebak
+```
+
+Changing the number of test nodes should be fairly simple once #46 is solved.
