@@ -4,6 +4,11 @@
 * All new code requires tests to ensure against regressions.
 * If this PR is related to github issues, please mention them in descriptions
 
+### Github Issue
+<!--
+    Add the github issue number if exists(ex. Fixes #1, Closes #1 or Resolves #1).
+-->
+
 ### Background
 <!--
     Explain why this pull request was created.
