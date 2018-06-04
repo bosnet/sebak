@@ -8,7 +8,7 @@ import (
 	"github.com/satori/go.uuid"
 )
 
-func TestSequentialUUIDWithsatori(t *testing.T) {
+func TestSequentialUUIDWithSatori(t *testing.T) {
 	var ids []string
 	for i := 0; i < 500000; i++ {
 		ids = append(ids, uuid.Must(uuid.NewV1(), nil).String())
