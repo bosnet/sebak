@@ -47,7 +47,7 @@ $ sebak key generate
 Before running node, you must generate genesis block.
 
 ```
-$ sebak genesis GALQG5SCKCPXUG4ODPMFZJGZ6XBVJTLAJFR7OJKJOJVARA7M4H5SGSOG 1,000,000,000,000.0000000
+$ sebak genesis GALQG5SCKCPXUG4ODPMFZJGZ6XBVJTLAJFR7OJKJOJVARA7M4H5SGSOG --balance 1,000,000,000,000.0000000
 successfully created genesis block
 ```
 
