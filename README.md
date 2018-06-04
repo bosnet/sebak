@@ -1,6 +1,6 @@
 # SEBAK
 
-[![GoDoc](https://godoc.org/github.com/golang/gddo?status.svg)](http://godoc.org/github.com/owlchain/sebak/lib) [![Build Status](https://travis-ci.org/owlchain/sebak.svg?branch=master)](https://travis-ci.org/owlchain/sebak)
+[![GoDoc](https://godoc.org/github.com/golang/gddo?status.svg)](http://godoc.org/github.com/owlchain/sebak/lib) [![CircleCI](https://circleci.com/gh/owlchain/sebak.svg?style=svg&circle-token=fd8cbd27a7594539b58dd3c46363a2c693f25edb)](https://circleci.com/gh/owlchain/sebak)
 
 Sebak is the core node for crypto-currency blockchain.
 
