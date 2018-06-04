@@ -142,3 +142,37 @@ func (c *HTTP2NetworkClient) SendBallot(message sebakcommon.Serializable) (retBo
 
 	return
 }
+
+///
+/// Perform a raw Get request on this peer
+///
+/// This is a quick way to request the API.
+/// As APIs are rapidly evolving, wrapping all of them properly
+/// would be counter productive, to this function is provided.
+///
+/// Params:
+///   endpoint = URL chunk to request (e.g. `/api/foo?bar=baguette`)
+///
+/// Returns:
+///   []byte = Body part returned by the query if it was successful
+///   error  = Error information if the query wasn't successful
+///
+func (client *HTTP2NetworkClient) Get(endpoint string) ([]byte, error) {
+	var body []byte
+	var err error
+	var response *http.Response
+	headers := client.DefaultHeaders()
+
+	headers.Set("Accept", "application/json")
+	u := client.resolvePath(endpoint)
+
+	if response, err = client.client.Get(u.String(), headers); err != nil {
+		return nil, err
+	}
+	defer response.Body.Close()
+	if response.StatusCode == http.StatusOK {
+		body, err = ioutil.ReadAll(response.Body)
+	}
+
+	return body, err
+}
