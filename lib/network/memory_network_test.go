@@ -88,11 +88,6 @@ func createNewMemoryNetwork() (*keypair.Full, *MemoryNetwork, *sebakcommon.Valid
 func TestMemoryNetworkGetClient(t *testing.T) {
 	defer CleanUpMemoryNetwork()
 
-	//if len(MemoryNetworks) > 0 {
-	//	t.Error("failed to cleanUpMemoryNetworks)
-	//	return
-	//}
-
 	_, s0, _ := createNewMemoryNetwork()
 
 	gotMessage := make(chan Message)

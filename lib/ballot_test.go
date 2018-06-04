@@ -75,16 +75,6 @@ func TestBallotVote(t *testing.T) {
 
 	var err error
 
-	/*
-			err = ballot.IsWellFormed()
-			if err.(sebakerror.Error).Code != sebakerror.ErrorSignatureVerificationFailed.Code {
-				t.Errorf("error must be `ErrorSignatureVerificationFailed`: %v", err)
-				return
-			}
-
-		ballot.Sign(kpNode)
-	*/
-
 	err = ballot.IsWellFormed(networkID)
 	if err.(*sebakerror.Error).Code != sebakerror.ErrorBallotNoVoting.Code {
 		t.Errorf("error must be %v", sebakerror.ErrorBallotNoVoting)

@@ -18,7 +18,7 @@ func (b B) MarshalJSON() ([]byte, error) {
 	return json.Marshal(map[string]string{"b": b.B, "c": "findme"})
 }
 
-func TestJSONMarshallJSONFunc(t *testing.T) {
+func TestJSONMarshalJSONFunc(t *testing.T) {
 	a := A{A: "a", B: B{B: "b"}}
 	m, err := json.Marshal(a)
 	if err != nil {

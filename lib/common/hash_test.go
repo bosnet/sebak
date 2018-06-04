@@ -12,7 +12,7 @@ type intSideType struct {
 	i int64
 }
 
-func TestInt64HashableLRP(t *testing.T) {
+func TestInt64HashableRLP(t *testing.T) {
 	i := intType(10)
 	_, err := rlp.EncodeToBytes(i)
 	if err != nil {
@@ -21,7 +21,7 @@ func TestInt64HashableLRP(t *testing.T) {
 	}
 }
 
-func TestInt64StructHashableLRP(t *testing.T) {
+func TestInt64StructHashableRLP(t *testing.T) {
 	i := intSideType{i: 64}
 	_, err := rlp.EncodeToBytes(i)
 	if err != nil {
