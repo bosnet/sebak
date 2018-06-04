@@ -267,6 +267,8 @@ type BallotBoxes struct {
 	WaitingBox  *BallotBox
 	VotingBox   *BallotBox
 	ReservedBox *BallotBox
+
+	Messages map[ /* `Message.GetHash()`*/ string]sebakcommon.Message
 }
 
 func NewBallotBoxes() *BallotBoxes {
@@ -275,6 +277,7 @@ func NewBallotBoxes() *BallotBoxes {
 		WaitingBox:  NewBallotBox(),
 		VotingBox:   NewBallotBox(),
 		ReservedBox: NewBallotBox(),
+		Messages:    map[string]sebakcommon.Message{},
 	}
 }
 
@@ -325,6 +328,7 @@ func (b *BallotBoxes) RemoveVotingResult(vr *VotingResult) (err error) {
 	}
 
 	delete(b.Results, vr.MessageHash)
+	delete(b.Messages, vr.MessageHash)
 
 	return
 }
@@ -361,6 +365,10 @@ func (b *BallotBoxes) AddBallot(ballot Ballot) (isNew bool, err error) {
 		err = b.AddVotingResult(vr, b.WaitingBox)
 	} else {
 		err = b.AddVotingResult(vr, b.VotingBox)
+	}
+
+	if _, found := b.Messages[ballot.MessageHash()]; !found {
+		b.Messages[ballot.MessageHash()] = ballot.Data().Data.(sebakcommon.Message)
 	}
 
 	return

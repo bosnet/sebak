@@ -137,6 +137,7 @@ func (nr *NodeRunner) ConnectValidators() {
 
 var DefaultHandleMessageFromClientCheckerFuncs = []sebakcommon.CheckerFunc{
 	CheckNodeRunnerHandleMessageTransactionUnmarshal,
+	CheckNodeRunnerHandleMessageTransactionHasSameSource,
 	CheckNodeRunnerHandleMessageHistory,
 	CheckNodeRunnerHandleMessageISAACReceiveMessage,
 	CheckNodeRunnerHandleMessageSignBallot,
