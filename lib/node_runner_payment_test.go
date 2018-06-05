@@ -31,7 +31,7 @@ func TestNodeRunnerPayment(t *testing.T) {
 	for _, nr := range nodeRunners {
 		{
 			address := kpSource.Address()
-			balance := strconv.FormatInt(BaseFee+1, 10)
+			balance := BaseFee.MustAdd(1).String()
 
 			accountSource = NewBlockAccount(address, balance, checkpoint)
 			accountSource.Save(nr.Storage())
@@ -82,7 +82,7 @@ func TestNodeRunnerPayment(t *testing.T) {
 
 	client := nr0.Network().GetClient(nr0.Node().Endpoint())
 
-	amount := uint64(1)
+	amount := Amount(1)
 	tx := makeTransactionPayment(kpSource, kpTarget.Address(), amount)
 	tx.B.Checkpoint = accountSource.Checkpoint
 	tx.Sign(kpSource, networkID)
@@ -114,7 +114,7 @@ func TestNodeRunnerPayment(t *testing.T) {
 		return
 	}
 
-	expectedTargetAmount, _ := accountTarget.GetBalanceAmount().Add(int64(amount))
+	expectedTargetAmount, _ := accountTarget.GetBalanceAmount().Add(amount)
 	if baTarget.GetBalance() != int64(expectedTargetAmount) {
 		t.Errorf("failed to transfer the initial amount to target; %d != %d", baTarget.GetBalance(), int64(amount))
 		return
@@ -201,7 +201,7 @@ func TestNodeRunnerSerializedPayment(t *testing.T) {
 		sourceAccount0, _ := GetBlockAccount(nr0.Storage(), sourceKP.Address())
 		targetAccount0, _ := GetBlockAccount(nr0.Storage(), targetKP.Address())
 
-		tx := makeTransactionPayment(sourceKP, targetKP.Address(), uint64(1))
+		tx := makeTransactionPayment(sourceKP, targetKP.Address(), Amount(1))
 		tx.B.Checkpoint = checkpoint
 		tx.Sign(sourceKP, networkID)
 
@@ -229,7 +229,7 @@ func TestNodeRunnerSerializedPayment(t *testing.T) {
 	{
 		sourceAccount0, _ := GetBlockAccount(nr0.Storage(), sourceKP.Address())
 		targetAccount0, _ := GetBlockAccount(nr0.Storage(), targetKP.Address())
-		tx := makeTransactionPayment(sourceKP, targetKP.Address(), uint64(1))
+		tx := makeTransactionPayment(sourceKP, targetKP.Address(), Amount(1))
 		tx.B.Checkpoint = sourceAccount0.Checkpoint
 		tx.Sign(sourceKP, networkID)
 

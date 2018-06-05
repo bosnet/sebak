@@ -216,7 +216,7 @@ func FinishTransaction(st *sebakstorage.LevelDBBackend, ballot Ballot, tx Transa
 		return
 	}
 	var expected Amount
-	if expected, err = baSource.GetBalanceAmount().Add(int64(tx.TotalAmount(true)) * -1); err != nil {
+	if expected, err = baSource.GetBalanceAmount().Sub(tx.TotalAmount(true)); err != nil {
 		return
 	}
 

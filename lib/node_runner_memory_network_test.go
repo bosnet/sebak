@@ -2,7 +2,6 @@ package sebak
 
 import (
 	"context"
-	"math/rand"
 	"sync"
 	"testing"
 	"time"
@@ -51,12 +50,8 @@ func makeTransaction(kp *keypair.Full) (tx Transaction) {
 	return
 }
 
-func makeTransactionPayment(kpSource *keypair.Full, target string, amount uint64) (tx Transaction) {
-	for amount < 0 {
-		amount = uint64(rand.Intn(5000))
-	}
-
-	opb := NewOperationBodyPayment(target, Amount(amount))
+func makeTransactionPayment(kpSource *keypair.Full, target string, amount Amount) (tx Transaction) {
+	opb := NewOperationBodyPayment(target, amount)
 
 	op := Operation{
 		H: OperationHeader{
@@ -85,11 +80,7 @@ func makeTransactionPayment(kpSource *keypair.Full, target string, amount uint64
 	return
 }
 
-func makeTransactionCreateAccount(kpSource *keypair.Full, target string, amount uint64) (tx Transaction) {
-	for amount < 0 {
-		amount = uint64(rand.Intn(5000))
-	}
-
+func makeTransactionCreateAccount(kpSource *keypair.Full, target string, amount Amount) (tx Transaction) {
 	opb := NewOperationBodyCreateAccount(target, Amount(amount))
 
 	op := Operation{
