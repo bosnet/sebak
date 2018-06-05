@@ -216,12 +216,12 @@ func TestNodeRunnerSerializedPayment(t *testing.T) {
 		sourceAccount1, _ := GetBlockAccount(nr0.Storage(), sourceKP.Address())
 		targetAccount1, _ := GetBlockAccount(nr0.Storage(), targetKP.Address())
 
-		if sourceAccount0.GetBalance()-int64(tx.TotalAmount(true)) != sourceAccount1.GetBalance() {
-			t.Errorf("payment failed: %d != %d", sourceAccount0.GetBalance()-int64(tx.TotalAmount(true)), sourceAccount1.GetBalance())
+		if val := sourceAccount0.GetBalance() - int64(tx.TotalAmount(true)); val != sourceAccount1.GetBalance() {
+			t.Errorf("payment failed: %d != %d", val, sourceAccount1.GetBalance())
 			return
 		}
-		if targetAccount0.GetBalance()+int64(tx.B.Operations[0].B.GetAmount()) != targetAccount1.GetBalance() {
-			t.Errorf("payment failed: %d != %d", targetAccount0.GetBalance()-int64(tx.TotalAmount(true)), targetAccount1.GetBalance())
+		if val := targetAccount0.GetBalance() + int64(tx.B.Operations[0].B.GetAmount()); val != targetAccount1.GetBalance() {
+			t.Errorf("payment failed: %d != %d", val, targetAccount1.GetBalance())
 			return
 		}
 	}
@@ -244,12 +244,12 @@ func TestNodeRunnerSerializedPayment(t *testing.T) {
 		sourceAccount1, _ := GetBlockAccount(nr0.Storage(), sourceKP.Address())
 		targetAccount1, _ := GetBlockAccount(nr0.Storage(), targetKP.Address())
 
-		if sourceAccount0.GetBalance()-int64(tx.TotalAmount(true)) != sourceAccount1.GetBalance() {
-			t.Errorf("payment failed: %d != %d", sourceAccount0.GetBalance()-int64(tx.TotalAmount(true)), sourceAccount1.GetBalance())
+		if val := sourceAccount0.GetBalance() - int64(tx.TotalAmount(true)); val != sourceAccount1.GetBalance() {
+			t.Errorf("payment failed: %d != %d", val, sourceAccount1.GetBalance())
 			return
 		}
-		if targetAccount0.GetBalance()+int64(tx.B.Operations[0].B.GetAmount()) != targetAccount1.GetBalance() {
-			t.Errorf("payment failed: %d != %d", targetAccount0.GetBalance()-int64(tx.TotalAmount(true)), targetAccount1.GetBalance())
+		if val := targetAccount0.GetBalance() + int64(tx.B.Operations[0].B.GetAmount()); val != targetAccount1.GetBalance() {
+			t.Errorf("payment failed: %d != %d", val, targetAccount1.GetBalance())
 			return
 		}
 	}
