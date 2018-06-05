@@ -1,8 +1,6 @@
 package sebak
 
 import (
-	"fmt"
-	"strconv"
 	"sync"
 	"testing"
 
@@ -31,14 +29,14 @@ func TestNodeRunnerPayment(t *testing.T) {
 	for _, nr := range nodeRunners {
 		{
 			address := kpSource.Address()
-			balance := BaseFee.MustAdd(1).String()
+			balance := BaseFee.MustAdd(1)
 
 			accountSource = NewBlockAccount(address, balance, checkpoint)
 			accountSource.Save(nr.Storage())
 		}
 
 		{
-			balance := strconv.FormatInt(int64(2000), 10)
+			balance := Amount(2000)
 			hashed := sebakcommon.MustMakeObjectHash("")
 			checkpoint := base58.Encode(hashed)
 
@@ -114,12 +112,12 @@ func TestNodeRunnerPayment(t *testing.T) {
 		return
 	}
 
-	expectedTargetAmount, _ := accountTarget.GetBalanceAmount().Add(amount)
-	if baTarget.GetBalance() != int64(expectedTargetAmount) {
-		t.Errorf("failed to transfer the initial amount to target; %d != %d", baTarget.GetBalance(), int64(amount))
+	expectedTargetAmount := accountTarget.GetBalance().MustAdd(amount)
+	if baTarget.GetBalance() != expectedTargetAmount {
+		t.Errorf("failed to transfer the initial amount to target; %d != %d", baTarget.GetBalance(), amount)
 		return
 	}
-	if accountSource.GetBalance()-int64(tx.TotalAmount(true)) != baSource.GetBalance() {
+	if accountSource.GetBalance().MustSub(tx.TotalAmount(true)) != baSource.GetBalance() {
 		t.Error("failed to subtract the transfered amount from source")
 		return
 	}
@@ -187,12 +185,12 @@ func TestNodeRunnerSerializedPayment(t *testing.T) {
 	checkpoint := uuid.New().String()
 	var sourceAccount, targetAccount *BlockAccount
 	for _, nr := range nodeRunners {
-		balance := (BaseFee + 1) * 2
+		balance := BaseFee.MustAdd(1).MustAdd(BaseFee.MustAdd(1))
 
-		sourceAccount = NewBlockAccount(sourceKP.Address(), fmt.Sprintf("%d", balance), checkpoint)
+		sourceAccount = NewBlockAccount(sourceKP.Address(), balance, checkpoint)
 		sourceAccount.Save(nr.Storage())
 
-		targetAccount = NewBlockAccount(targetKP.Address(), fmt.Sprintf("%d", balance), checkpoint)
+		targetAccount = NewBlockAccount(targetKP.Address(), balance, checkpoint)
 		targetAccount.Save(nr.Storage())
 	}
 
@@ -216,11 +214,11 @@ func TestNodeRunnerSerializedPayment(t *testing.T) {
 		sourceAccount1, _ := GetBlockAccount(nr0.Storage(), sourceKP.Address())
 		targetAccount1, _ := GetBlockAccount(nr0.Storage(), targetKP.Address())
 
-		if val := sourceAccount0.GetBalance() - int64(tx.TotalAmount(true)); val != sourceAccount1.GetBalance() {
+		if val := sourceAccount0.GetBalance().MustSub(tx.TotalAmount(true)); val != sourceAccount1.GetBalance() {
 			t.Errorf("payment failed: %d != %d", val, sourceAccount1.GetBalance())
 			return
 		}
-		if val := targetAccount0.GetBalance() + int64(tx.B.Operations[0].B.GetAmount()); val != targetAccount1.GetBalance() {
+		if val := targetAccount0.GetBalance().MustAdd(tx.B.Operations[0].B.GetAmount()); val != targetAccount1.GetBalance() {
 			t.Errorf("payment failed: %d != %d", val, targetAccount1.GetBalance())
 			return
 		}
@@ -244,11 +242,11 @@ func TestNodeRunnerSerializedPayment(t *testing.T) {
 		sourceAccount1, _ := GetBlockAccount(nr0.Storage(), sourceKP.Address())
 		targetAccount1, _ := GetBlockAccount(nr0.Storage(), targetKP.Address())
 
-		if val := sourceAccount0.GetBalance() - int64(tx.TotalAmount(true)); val != sourceAccount1.GetBalance() {
+		if val := sourceAccount0.GetBalance().MustSub(tx.TotalAmount(true)); val != sourceAccount1.GetBalance() {
 			t.Errorf("payment failed: %d != %d", val, sourceAccount1.GetBalance())
 			return
 		}
-		if val := targetAccount0.GetBalance() + int64(tx.B.Operations[0].B.GetAmount()); val != targetAccount1.GetBalance() {
+		if val := targetAccount0.GetBalance().MustAdd(tx.B.Operations[0].B.GetAmount()); val != targetAccount1.GetBalance() {
 			t.Errorf("payment failed: %d != %d", val, targetAccount1.GetBalance())
 			return
 		}

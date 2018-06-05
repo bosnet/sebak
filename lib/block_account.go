@@ -3,7 +3,6 @@ package sebak
 import (
 	"encoding/json"
 	"fmt"
-	"strconv"
 
 	"github.com/owlchain/sebak/lib/common"
 	"github.com/owlchain/sebak/lib/storage"
@@ -29,15 +28,15 @@ type BlockAccount struct {
 	Checkpoint string
 }
 
-func NewBlockAccount(address, balance, checkpoint string) *BlockAccount {
+func NewBlockAccount(address string, balance Amount, checkpoint string) *BlockAccount {
 	return &BlockAccount{
 		Address:    address,
-		Balance:    balance,
+		Balance:    balance.String(),
 		Checkpoint: checkpoint,
 	}
 }
 
-func NewBlockAccountFromTransaction(address, balance string, tx Transaction) *BlockAccount {
+func NewBlockAccountFromTransaction(address string, balance Amount, tx Transaction) *BlockAccount {
 	return NewBlockAccount(address, balance, tx.NextCheckpoint())
 }
 
@@ -130,13 +129,8 @@ func GetBlockAccountsByCreated(st *sebakstorage.LevelDBBackend, reverse bool) (f
 		})
 }
 
-func (b *BlockAccount) GetBalance() int64 {
-	n, _ := strconv.ParseInt(b.Balance, 10, 64)
-	return n
-}
-
-func (b *BlockAccount) GetBalanceAmount() Amount {
-	return Amount(b.GetBalance())
+func (b *BlockAccount) GetBalance() Amount {
+	return MustAmountFromString(b.Balance)
 }
 
 // Add fund to an account
@@ -144,7 +138,7 @@ func (b *BlockAccount) GetBalanceAmount() Amount {
 // If the amount would make the account overflow over the full supply of coin,
 // an `error` is returned.
 func (b *BlockAccount) Deposit(fund Amount, checkpoint string) error {
-	if val, err := b.GetBalanceAmount().Add(fund); err != nil {
+	if val, err := b.GetBalance().Add(fund); err != nil {
 		return err
 	} else {
 		b.Balance = val.String()
@@ -157,7 +151,7 @@ func (b *BlockAccount) Deposit(fund Amount, checkpoint string) error {
 //
 // If the amount would make the account go negative, an `error` is returned.
 func (b *BlockAccount) Withdraw(fund Amount, checkpoint string) error {
-	if val, err := b.GetBalanceAmount().Sub(fund); err != nil {
+	if val, err := b.GetBalance().Sub(fund); err != nil {
 		return err
 	} else {
 		b.Balance = val.String()

@@ -59,7 +59,7 @@ func init() {
 			}
 
 			checkpoint := uuid.New().String()
-			account := sebak.NewBlockAccount(kp.Address(), balance.String(), checkpoint)
+			account := sebak.NewBlockAccount(kp.Address(), balance, checkpoint)
 			account.Save(st)
 
 			fmt.Println("successfully created genesis block")

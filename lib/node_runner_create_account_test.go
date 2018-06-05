@@ -1,7 +1,6 @@
 package sebak
 
 import (
-	"strconv"
 	"sync"
 	"testing"
 
@@ -29,7 +28,7 @@ func TestNodeRunnerCreateAccount(t *testing.T) {
 	checkpoint := uuid.New().String()
 	for _, nr := range nodeRunners {
 		address := kp.Address()
-		balance := strconv.FormatInt(int64(BaseFee+1), 10)
+		balance := BaseFee.MustAdd(1)
 
 		account = NewBlockAccount(address, balance, checkpoint)
 		account.Save(nr.Storage())
@@ -102,11 +101,11 @@ func TestNodeRunnerCreateAccount(t *testing.T) {
 		return
 	}
 
-	if baTarget.GetBalance() != int64(initialBalance) {
+	if baTarget.GetBalance() != initialBalance {
 		t.Error("failed to transfer the initial amount to target")
 		return
 	}
-	if account.GetBalance()-int64(tx.TotalAmount(true)) != baSource.GetBalance() {
+	if account.GetBalance().MustSub(tx.TotalAmount(true)) != baSource.GetBalance() {
 		t.Error("failed to subtract the transfered amount from source")
 		return
 	}
@@ -129,7 +128,7 @@ func TestNodeRunnerCreateAccountInvalidCheckpoint(t *testing.T) {
 	checkpoint := uuid.New().String() // set initial checkpoint
 	for _, nr := range nodeRunners {
 		address := kp.Address()
-		balance := strconv.FormatInt(int64(2000), 10)
+		balance := Amount(2000)
 
 		account = NewBlockAccount(address, balance, checkpoint)
 		account.Save(nr.Storage())
@@ -223,7 +222,7 @@ func TestNodeRunnerCreateAccountSufficient(t *testing.T) {
 	checkpoint := uuid.New().String() // set initial checkpoint
 	for _, nr := range nodeRunners {
 		address := kp.Address()
-		balance := BaseFee.MustAdd(1).String()
+		balance := BaseFee.MustAdd(1)
 
 		account = NewBlockAccount(address, balance, checkpoint)
 		account.Save(nr.Storage())
@@ -319,7 +318,7 @@ func TestNodeRunnerCreateAccountInsufficient(t *testing.T) {
 	checkpoint := uuid.New().String() // set initial checkpoint
 	for _, nr := range nodeRunners {
 		address := kp.Address()
-		balance := strconv.FormatInt(int64(2000), 10)
+		balance := Amount(2000)
 
 		account = NewBlockAccount(address, balance, checkpoint)
 		account.Save(nr.Storage())
