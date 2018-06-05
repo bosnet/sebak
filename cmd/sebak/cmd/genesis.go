@@ -19,9 +19,13 @@ import (
 	"github.com/owlchain/sebak/cmd/sebak/common"
 )
 
+const (
+	initialBalance = "1,000,000,000,000.0000000"
+)
+
 var (
 	genesisCmd  *cobra.Command
-	flagBalance string = sebakcommon.GetENVValue("SEBAK_GENESIS_BALANCE", sebak.TotalBalanceWithComma)
+	flagBalance string = sebakcommon.GetENVValue("SEBAK_GENESIS_BALANCE", initialBalance)
 )
 
 func init() {
