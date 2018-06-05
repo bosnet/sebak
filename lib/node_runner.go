@@ -145,6 +145,7 @@ var DefaultHandleMessageFromClientCheckerFuncs = []sebakcommon.CheckerFunc{
 
 var DefaultHandleBallotCheckerFuncs = []sebakcommon.CheckerFunc{
 	CheckNodeRunnerHandleBallotIsWellformed,
+	CheckNodeRunnerHandleBallotNotFromKnownValidators,
 	CheckNodeRunnerHandleBallotCheckIsNew,
 	CheckNodeRunnerHandleBallotReceiveBallot,
 	CheckNodeRunnerHandleBallotHistory,
@@ -233,12 +234,12 @@ func (nr *NodeRunner) handleMessage() {
 			}
 			if err = sebakcommon.RunChecker(checker, nr.handleBallotCheckerDeferFunc); err != nil {
 				if _, ok := err.(sebakcommon.CheckerErrorStop); ok {
-					nr.newCloseConsensus(checker)
+					nr.closeConsensus(checker)
 					continue
 				}
 				nr.log.Error("failed to handle ballot", "error", err)
 
-				if err = nr.newCloseConsensus(checker); err != nil {
+				if err = nr.closeConsensus(checker); err != nil {
 					nr.Log().Error("failed to close consensus", "error", err)
 				} else {
 					nr.Log().Error("consensus closed")
@@ -246,34 +247,12 @@ func (nr *NodeRunner) handleMessage() {
 
 				continue
 			}
-			nr.newCloseConsensus(checker)
+			nr.closeConsensus(checker)
 		}
 	}
 }
 
-func (nr *NodeRunner) closeConsensus(ctx context.Context) (err error) {
-	vs, ok := ctx.Value("vs").(VotingStateStaging)
-	if !ok {
-		return
-	}
-	if !vs.IsClosed() {
-		return
-	}
-
-	ballot, ok := ctx.Value("ballot").(Ballot)
-	if !ok {
-		return
-	}
-	if err = nr.Consensus().CloseConsensus(ballot); err != nil {
-		nr.Log().Error("failed to close consensus", "error", err)
-		return
-	}
-
-	nr.Log().Debug("consensus closed")
-	return
-}
-
-func (nr *NodeRunner) newCloseConsensus(c sebakcommon.Checker) (err error) {
+func (nr *NodeRunner) closeConsensus(c sebakcommon.Checker) (err error) {
 	checker := c.(*NodeRunnerHandleBallotChecker)
 
 	if checker.VotingStateStaging.IsEmpty() {
@@ -288,6 +267,6 @@ func (nr *NodeRunner) newCloseConsensus(c sebakcommon.Checker) (err error) {
 		return
 	}
 
-	nr.Log().Debug("new consensus closed")
+	nr.Log().Debug("consensus closed")
 	return
 }
