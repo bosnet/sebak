@@ -5,10 +5,13 @@ import (
 	"io/ioutil"
 	"math"
 	"math/rand"
+	"os"
 	"reflect"
 	"testing"
 
 	"github.com/google/uuid"
+
+	"github.com/owlchain/sebak/lib/common"
 )
 
 func TestLevelDBBackendInitFileStorage(t *testing.T) {
@@ -347,6 +350,84 @@ func TestLevelDBIteratorReverseOrder(t *testing.T) {
 		if a != collected[len(collected)-1-i] {
 			t.Error("failed to reverse `GetIterator`")
 		}
+	}
+
+	return
+}
+
+func TestLevelDBBackendTransactionNew(t *testing.T) {
+	dbpath := fmt.Sprintf("/tmp/%s", sebakcommon.GetUniqueIDFromUUID())
+	defer os.RemoveAll(dbpath)
+
+	st, _ := NewTestFileLevelDBBackend(dbpath)
+	defer st.Close()
+
+	ts, _ := st.OpenTransaction()
+
+	key0 := sebakcommon.GetUniqueIDFromUUID()
+	value0 := "findme"
+	if err := ts.New(key0, value0); err != nil {
+		t.Error(err)
+		return
+	}
+
+	var returned string
+	if err := ts.Get(key0, &returned); err != nil {
+		t.Error(err)
+		return
+	}
+	if returned != value0 {
+		t.Errorf("wrong value returned; '%s' != '%s'", value0, returned)
+		return
+	}
+
+	ts.Commit()
+
+	var returnedAgain string
+	if err := st.Get(key0, &returnedAgain); err != nil {
+		t.Errorf("failed to get after 'Commit()': %v", err)
+		return
+	}
+	if returnedAgain != value0 {
+		t.Errorf("wrong value returned after 'Commit()'; '%s' != '%s'", value0, returnedAgain)
+		return
+	}
+
+	return
+}
+
+func TestLevelDBBackendTransactionDiscard(t *testing.T) {
+	dbpath := fmt.Sprintf("/tmp/%s", sebakcommon.GetUniqueIDFromUUID())
+	defer os.RemoveAll(dbpath)
+
+	st, _ := NewTestFileLevelDBBackend(dbpath)
+	defer st.Close()
+
+	ts, _ := st.OpenTransaction()
+
+	key0 := sebakcommon.GetUniqueIDFromUUID()
+	value0 := "findme"
+	if err := ts.New(key0, value0); err != nil {
+		t.Error(err)
+		return
+	}
+
+	var returned string
+	if err := ts.Get(key0, &returned); err != nil {
+		t.Error(err)
+		return
+	}
+	if returned != value0 {
+		t.Errorf("wrong value returned; '%s' != '%s'", value0, returned)
+		return
+	}
+
+	ts.Discard()
+
+	var returnedAgain string
+	if err := st.Get(key0, &returnedAgain); err == nil {
+		t.Errorf("value is stored after 'Discard()': %v", err)
+		return
 	}
 
 	return
