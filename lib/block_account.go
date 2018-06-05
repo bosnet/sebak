@@ -2,7 +2,6 @@ package sebak
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strconv"
 
@@ -140,26 +139,29 @@ func (b *BlockAccount) GetBalanceAmount() Amount {
 	return Amount(b.GetBalance())
 }
 
-func (b *BlockAccount) setBalance(n int64) (err error) {
-	if n < 0 {
-		err = errors.New("wrong balance value")
-		return
+// Add fund to an account
+//
+// If the amount would make the account overflow over the full supply of coin,
+// an `error` is returned.
+func (b *BlockAccount) Deposit(fund Amount, checkpoint string) error {
+	if val, err := b.GetBalanceAmount().Add(fund); err != nil {
+		return err
+	} else {
+		b.Balance = val.String()
+		b.Checkpoint = checkpoint
 	}
-
-	b.Balance = strconv.FormatInt(n, 10)
-
-	return
+	return nil
 }
 
-func (b *BlockAccount) EnsureUpdate(balance int64, checkpoint string, expectedBalance int64) (err error) {
-	n := b.GetBalance() + balance
-	if n != expectedBalance {
-		err = errors.New("unexpected balance")
-		return
+// Remove fund from an account
+//
+// If the amount would make the account go negative, an `error` is returned.
+func (b *BlockAccount) Withdraw(fund Amount, checkpoint string) error {
+	if val, err := b.GetBalanceAmount().Sub(fund); err != nil {
+		return err
+	} else {
+		b.Balance = val.String()
+		b.Checkpoint = checkpoint
 	}
-
-	b.setBalance(n)
-	b.Checkpoint = checkpoint
-
-	return
+	return nil
 }

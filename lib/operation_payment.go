@@ -65,16 +65,9 @@ func FinishOperationPayment(st *sebakstorage.LevelDBBackend, tx Transaction, op 
 		return
 	}
 
-	var expectedTarget Amount
-	if expectedTarget, err = baTarget.GetBalanceAmount().Add(op.B.GetAmount()); err != nil {
+	if err = baTarget.Deposit(op.B.GetAmount(), tx.NextCheckpoint()); err != nil {
 		return
 	}
-
-	baTarget.EnsureUpdate(
-		int64(op.B.GetAmount()),
-		tx.NextCheckpoint(),
-		int64(expectedTarget),
-	)
 	if err = baTarget.Save(st); err != nil {
 		return
 	}
