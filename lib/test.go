@@ -1,7 +1,6 @@
 package sebak
 
 import (
-	"fmt"
 	"math/rand"
 
 	"github.com/btcsuite/btcutil/base58"
@@ -14,11 +13,11 @@ import (
 func testMakeBlockAccount() *BlockAccount {
 	kp, _ := keypair.Random()
 	address := kp.Address()
-	balance := 2000
+	balance := Amount(2000)
 	hashed := sebakcommon.MustMakeObjectHash("")
 	checkpoint := base58.Encode(hashed)
 
-	return NewBlockAccount(address, fmt.Sprintf("%d", balance), checkpoint)
+	return NewBlockAccount(address, balance, checkpoint)
 }
 
 func TestMakeNewBlockOperation(networkID []byte, n int) (bos []BlockOperation) {

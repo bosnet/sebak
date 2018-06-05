@@ -1,7 +1,6 @@
 package sebak
 
 import (
-	"strconv"
 	"sync"
 	"testing"
 
@@ -31,7 +30,7 @@ func TestNodeRunnerLimitIncomingBallotsFromUnknownValidator(t *testing.T) {
 	checkpoint := uuid.New().String() // set initial checkpoint
 	for _, nr := range nodeRunners {
 		address := kp.Address()
-		balance := strconv.FormatInt(int64(BaseFee+1), 10)
+		balance := BaseFee.MustAdd(1)
 
 		account = NewBlockAccount(address, balance, checkpoint)
 		account.Save(nr.Storage())

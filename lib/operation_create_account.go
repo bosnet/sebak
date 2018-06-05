@@ -63,7 +63,7 @@ func FinishOperationCreateAccount(st *sebakstorage.LevelDBBackend, tx Transactio
 
 	baTarget = NewBlockAccount(
 		op.B.TargetAddress(),
-		op.B.GetAmount().String(),
+		op.B.GetAmount(),
 		tx.B.Checkpoint,
 	)
 	if err = baTarget.Save(st); err != nil {
