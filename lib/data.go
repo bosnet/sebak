@@ -110,22 +110,26 @@ func (a *Amount) UnmarshalJSON(b []byte) (err error) {
 	return
 }
 
-func AmountFromBytes(s []byte) (a Amount, err error) {
-	var c int64
-	if c, err = strconv.ParseInt(string(s), 10, 64); err != nil {
-		return
+// Parse an `Amount` from a string input
+//
+// Params:
+//   str = a string consisting only of numbers, expressing an amount in GON
+//
+// Returns:
+//  A valid `Amount` and a `nil` error, or an invalid amount and an `error`
+func AmountFromString(str string) (Amount, error) {
+	if value, err := strconv.ParseInt(str, 10, 64); err != nil {
+		return invalidValue, err
+	} else {
+		return Amount(value), nil
 	}
-
-	a = Amount(c)
-
-	return
 }
 
-func AmountFromString(s string) (Amount, error) {
-	return AmountFromBytes([]byte(s))
-}
-
-func MustAmountFromString(s string) Amount {
-	a, _ := AmountFromBytes([]byte(s))
-	return a
+// Same as AmountFromString, except it `panic`s if an error happens
+func MustAmountFromString(str string) Amount {
+	if value, err := AmountFromString(str); err != nil {
+		panic(err)
+	} else {
+		return value
+	}
 }
