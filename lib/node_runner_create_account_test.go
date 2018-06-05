@@ -70,7 +70,7 @@ func TestNodeRunnerCreateAccount(t *testing.T) {
 
 	client := nr0.Network().GetClient(nr0.Node().Endpoint())
 
-	initialBalance := uint64(1)
+	initialBalance := Amount(1)
 	tx := makeTransactionCreateAccount(kp, kpNewAccount.Address(), initialBalance)
 	tx.B.Checkpoint = account.Checkpoint
 	tx.Sign(kp, networkID)
@@ -170,7 +170,7 @@ func TestNodeRunnerCreateAccountInvalidCheckpoint(t *testing.T) {
 
 	client := nr0.Network().GetClient(nr0.Node().Endpoint())
 
-	initialBalance := uint64(100)
+	initialBalance := Amount(100)
 	tx := makeTransactionCreateAccount(kp, kpNewAccount.Address(), initialBalance)
 
 	// set invalid checkpoint
@@ -223,7 +223,7 @@ func TestNodeRunnerCreateAccountSufficient(t *testing.T) {
 	checkpoint := uuid.New().String() // set initial checkpoint
 	for _, nr := range nodeRunners {
 		address := kp.Address()
-		balance := strconv.FormatInt(BaseFee+1, 10)
+		balance := BaseFee.MustAdd(1).String()
 
 		account = NewBlockAccount(address, balance, checkpoint)
 		account.Save(nr.Storage())
@@ -264,7 +264,7 @@ func TestNodeRunnerCreateAccountSufficient(t *testing.T) {
 
 	client := nr0.Network().GetClient(nr0.Node().Endpoint())
 
-	initialBalance := uint64(MustAmountFromString(account.Balance)) - uint64(1*BaseFee)
+	initialBalance := MustAmountFromString(account.Balance).MustSub(BaseFee)
 	tx := makeTransactionCreateAccount(kp, kpNewAccount.Address(), initialBalance)
 	tx.B.Checkpoint = checkpoint
 	tx.Sign(kp, networkID)
@@ -360,7 +360,7 @@ func TestNodeRunnerCreateAccountInsufficient(t *testing.T) {
 
 	client := nr0.Network().GetClient(nr0.Node().Endpoint())
 
-	initialBalance := uint64(MustAmountFromString(account.Balance))
+	initialBalance := MustAmountFromString(account.Balance)
 	tx := makeTransactionCreateAccount(kp, kpNewAccount.Address(), initialBalance)
 	tx.B.Checkpoint = checkpoint
 	tx.Sign(kp, networkID)

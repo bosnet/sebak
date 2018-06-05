@@ -66,7 +66,7 @@ func FinishOperationPayment(st *sebakstorage.LevelDBBackend, tx Transaction, op 
 	}
 
 	var expectedTarget Amount
-	if expectedTarget, err = baTarget.GetBalanceAmount().Add(int64(op.B.GetAmount())); err != nil {
+	if expectedTarget, err = baTarget.GetBalanceAmount().Add(op.B.GetAmount()); err != nil {
 		return
 	}
 

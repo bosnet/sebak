@@ -15,8 +15,8 @@ var TotalBalance string
 var TotalBalanceLength int
 
 // BaseFee is the default transaction fee, if fee is lower than BaseFee, the
-// transaction will be failed to be validated.
-var BaseFee int64 = 10000
+// transaction will fail validation.
+var BaseFee Amount = 10000
 
 func init() {
 	TotalBalance = regexp.MustCompile("[,\\.]").ReplaceAllString(TotalBalanceWithComma, "")
