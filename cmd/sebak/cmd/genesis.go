@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strconv"
-	"strings"
 
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
@@ -35,16 +33,14 @@ func init() {
 		Args:  cobra.ExactArgs(1),
 		Run: func(c *cobra.Command, args []string) {
 			var err error
-
 			var kp keypair.KP
-			kp, err = keypair.Parse(args[0])
-			if err != nil {
+			var balance sebak.Amount
+
+			if kp, err = keypair.Parse(args[0]); err != nil {
 				common.PrintFlagsError(c, "<public key>", err)
 			}
 
-			balance := strings.Replace(flagBalance, ",", "", -1)
-			balance = strings.Replace(balance, ".", "", -1)
-			if _, err := strconv.ParseUint(balance, 10, 64); err != nil {
+			if balance, err = common.ParseAmountFromString(flagBalance); err != nil {
 				common.PrintFlagsError(c, "--balance", err)
 			}
 
@@ -63,7 +59,7 @@ func init() {
 			}
 
 			checkpoint := uuid.New().String()
-			account := sebak.NewBlockAccount(kp.Address(), balance, checkpoint)
+			account := sebak.NewBlockAccount(kp.Address(), balance.String(), checkpoint)
 			account.Save(st)
 
 			fmt.Println("successfully created genesis block")
