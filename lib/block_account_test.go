@@ -34,7 +34,7 @@ func TestSaveExistingBlockAccount(t *testing.T) {
 	b := testMakeBlockAccount()
 	b.Save(st)
 
-	b.EnsureUpdate(100, "fake-checkpoint", b.GetBalance()+100)
+	b.Deposit(100, "fake-checkpoint")
 	b.Save(st)
 
 	fetched, _ := GetBlockAccount(st, b.Address)

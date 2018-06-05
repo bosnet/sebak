@@ -223,18 +223,14 @@ func FinishTransaction(st *sebakstorage.LevelDBBackend, ballot Ballot, tx Transa
 		ts.Discard()
 		return
 	}
-	var expected Amount
-	if expected, err = baSource.GetBalanceAmount().Sub(tx.TotalAmount(true)); err != nil {
+
+	if err = baSource.Withdraw(tx.TotalAmount(true), tx.NextCheckpoint()); err != nil {
 		ts.Discard()
 		return
 	}
 
-	baSource.EnsureUpdate(
-		int64(tx.TotalAmount(true))*-1,
-		tx.NextCheckpoint(),
-		int64(expected),
-	)
 	if err = baSource.Save(ts); err != nil {
+		ts.Discard()
 		return
 	}
 
