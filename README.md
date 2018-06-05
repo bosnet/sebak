@@ -57,5 +57,23 @@ To run sebak, you need SSL certificates for HTTP2 protocol. To create self-signe
 
 After you successfully create genesis block and your own SSL certificates, run sebak:
 ```
-$ sebak node --network-id 'this-is-test-sebak-network' --endpoint "https://localhost:12345" --tls-key 'sebak.key' --tls-cert 'sebak.crt' --log-level debug --secret-seed SCN4NSV5SVHIZWUDJFT4Z5FFVHO3TFRTOIBQLHMNPAZJ37K5A2YFSCBM --validator GBWCMWDUZK67YNUZ44UPNVFYZRSCCS4OLE6ORWD4ZLI2MVGY4KJDPHMO,https://localhost:12346 --validator GCHCJZQ3F6XJCO6EP47XVWX6UT53GTBZ5T6BQZSODGJWOU3LOORQ4TN6,https://localhost:12347
+$ cd cmd/sebak
+$ sebak node --network-id 'this-is-test-sebak-network' --endpoint "https://localhost:12345" --tls-key 'sebak.key' --tls-cert 'sebak.crt' --log-level debug --secret-seed SCN4NSV5SVHIZWUDJFT4Z5FFVHO3TFRTOIBQLHMNPAZJ37K5A2YFSCBM --validator GBWCMWDUZK67YNUZ44UPNVFYZRSCCS4OLE6ORWD4ZLI2MVGY4KJDPHMO,https://localhost:12346 --validator GCZG7MBKRSS6MJVZOALYBJB5C223FSZ43MDTPX2O4UGQTCXTHWBDNUB6,https://localhost:12347
+```
+
+To run multiple sebak nodes on the local machine, then you must set up the different db paths each:
+
+- node12345
+```
+$ sebak node --network-id 'this-is-test-sebak-network' --endpoint "https://localhost:12345" --tls-key 'sebak.key' --tls-cert 'sebak.crt' --log-level debug --secret-seed SCN4NSV5SVHIZWUDJFT4Z5FFVHO3TFRTOIBQLHMNPAZJ37K5A2YFSCBM --storage=file:///Users/charles/go/src/github.com/owlchain/sebak/cmd/sebak/db5 --validator GDPQ2LBYP3RL3O675H2N5IEYM6PRJNUA5QFMKXIHGTKEB5KS5T3KHFA2,https://localhost:12346 --validator GCZG7MBKRSS6MJVZOALYBJB5C223FSZ43MDTPX2O4UGQTCXTHWBDNUB6,https://localhost:12347
+```
+
+- node12346
+```
+$ sebak node --network-id 'this-is-test-sebak-network' --endpoint "https://localhost:12346" --tls-key 'sebak.key' --tls-cert 'sebak.crt' --log-level debug --secret-seed SBGJDQ2J4PIYU7JVGKIBLNF6X3DOEVW3I4W2T77M2B47X2MPSUNXZ7T7 --storage=file:///Users/charles/go/src/github.com/owlchain/sebak/cmd/sebak/db6 --validator GBNUTWSM4FRSEULVMHZF7NFQWIBGEDF5X5OHXFOZJB6SH5MIEDEJEJ2F,https://localhost:12345 --validator GCZG7MBKRSS6MJVZOALYBJB5C223FSZ43MDTPX2O4UGQTCXTHWBDNUB6,https://localhost:12347
+```
+
+- node12347
+```
+$ sebak node --network-id 'this-is-test-sebak-network' --endpoint "https://localhost:12347" --tls-key 'sebak.key' --tls-cert 'sebak.crt' --log-level debug --secret-seed SDQKKG2MBSAXVLUE5JFNM7MXQ7MV7WPRIEOS7U7KLWFDKYDKXTLSSRTC --storage=file:///Users/charles/go/src/github.com/owlchain/sebak/cmd/sebak/db7 --validator GBNUTWSM4FRSEULVMHZF7NFQWIBGEDF5X5OHXFOZJB6SH5MIEDEJEJ2F,https://localhost:12345 --validator GDPQ2LBYP3RL3O675H2N5IEYM6PRJNUA5QFMKXIHGTKEB5KS5T3KHFA2,https://localhost:12346
 ```
