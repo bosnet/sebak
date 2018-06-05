@@ -30,7 +30,7 @@ jobs:
             - vendor
       - run:
           name: check formatting
-          command: if [[ -n "$(gofmt -l cmd lib)" ]]; then gofmt -l src; exit 1; fi
+          command: if [[ -n "$(gofmt -l cmd lib)" ]]; then gofmt -l cmd lib; exit 1; fi
       - run:
           name: run tests
           command: go test -v ./...
