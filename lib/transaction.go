@@ -238,7 +238,10 @@ func FinishTransaction(st *sebakstorage.LevelDBBackend, ballot Ballot, tx Transa
 		return
 	}
 
-	ts.Commit()
+	if err = ts.Commit(); err != nil {
+		ts.Discard()
+		return
+	}
 
 	return
 }
