@@ -19,7 +19,7 @@ import (
 
 const (
 	BlockTransactionPrefixHash       string = "bt-hash-"       // bt-hash-<BlockTransaction.Hash>
-	BlockTransactionPrefixCheckpoint string = "bt-checkpoint-" // bt-hash-<BlockTransaction.Checkpoint>
+	BlockTransactionPrefixCheckpoint string = "bt-checkpoint-" // bt-hash-<BlockTransaction.PreviousCheckpoint>,bt-hash-<BlockTransaction.SourceCheckpoint>,  bt-hash-<BlockTransaction.TargetCheckpoint>,
 	BlockTransactionPrefixSource     string = "bt-source-"     // bt-hash-<BlockTransaction.Source>
 	BlockTransactionPrefixConfirmed  string = "bt-confirmed-"  // bt-hash-<BlockTransaction.Confirmed>
 	BlockTransactionPrefixAccount    string = "bt-account-"    //bt-hash-<BlockTransaction.Source>,<BlockTransaction.Operations.Target>
@@ -30,12 +30,14 @@ const (
 type BlockTransaction struct {
 	Hash string
 
-	Checkpoint string
-	Signature  string
-	Source     string
-	Fee        Amount
-	Operations []string
-	Amount     Amount
+	PreviousCheckpoint string
+	SourceCheckpoint   string
+	TargetCheckpoint   string
+	Signature          string
+	Source             string
+	Fee                Amount
+	Operations         []string
+	Amount             Amount
 
 	Confirmed string
 	Created   string
@@ -52,13 +54,15 @@ func NewBlockTransactionFromTransaction(tx Transaction, message []byte) BlockTra
 	}
 
 	return BlockTransaction{
-		Hash:       tx.H.Hash,
-		Checkpoint: tx.B.Checkpoint,
-		Signature:  tx.H.Signature,
-		Source:     tx.B.Source,
-		Fee:        tx.B.Fee,
-		Operations: opHashes,
-		Amount:     tx.TotalAmount(true),
+		Hash:               tx.H.Hash,
+		PreviousCheckpoint: tx.B.Checkpoint,
+		SourceCheckpoint:   tx.NextSourceCheckpoint(),
+		TargetCheckpoint:   tx.NextTargetCheckpoint(),
+		Signature:          tx.H.Signature,
+		Source:             tx.B.Source,
+		Fee:                tx.B.Fee,
+		Operations:         opHashes,
+		Amount:             tx.TotalAmount(true),
 
 		Created: tx.H.Created,
 		Message: message,
@@ -114,7 +118,10 @@ func (bt *BlockTransaction) Save(st *sebakstorage.LevelDBBackend) (err error) {
 	if err = st.New(GetBlockTransactionKey(bt.Hash), bt); err != nil {
 		return
 	}
-	if err = st.New(GetBlockTransactionKeyCheckpoint(bt.Checkpoint), bt.Hash); err != nil {
+	if err = st.New(GetBlockTransactionKeyCheckpoint(bt.SourceCheckpoint), bt.Hash); err != nil {
+		return
+	}
+	if err = st.New(GetBlockTransactionKeyCheckpoint(bt.TargetCheckpoint), bt.Hash); err != nil {
 		return
 	}
 	if err = st.New(bt.NewBlockTransactionKeySource(), bt.Hash); err != nil {

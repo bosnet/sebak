@@ -19,8 +19,8 @@ func TestNewBlockTransaction(t *testing.T) {
 		t.Error("`BlockTransaction.Hash mismatch`")
 		return
 	}
-	if bt.Checkpoint != tx.B.Checkpoint {
-		t.Error("`BlockTransaction.Checkpoint mismatch`")
+	if bt.PreviousCheckpoint != tx.B.Checkpoint {
+		t.Error("`BlockTransaction.PreviousCheckpoint mismatch`")
 		return
 	}
 	if bt.Signature != tx.H.Signature {
@@ -76,7 +76,7 @@ func TestBlockTransactionSaveAndGet(t *testing.T) {
 		t.Error("mismatch `Hash`")
 		return
 	}
-	if bt.Checkpoint != fetched.Checkpoint {
+	if bt.PreviousCheckpoint != fetched.PreviousCheckpoint {
 		t.Error("mismatch `Checkpoint`")
 		return
 	}
@@ -356,7 +356,7 @@ func TestBlockTransactionGetByCheckpoint(t *testing.T) {
 		return
 	}
 
-	fetched, err := GetBlockTransactionByCheckpoint(st, bt.Checkpoint)
+	fetched, err := GetBlockTransactionByCheckpoint(st, bt.SourceCheckpoint)
 	if err != nil {
 		t.Error(err)
 		return
@@ -365,7 +365,7 @@ func TestBlockTransactionGetByCheckpoint(t *testing.T) {
 		t.Error("mismatch `Hash`")
 		return
 	}
-	if bt.Checkpoint != fetched.Checkpoint {
+	if bt.PreviousCheckpoint != fetched.PreviousCheckpoint {
 		t.Error("mismatch `Checkpoint`")
 		return
 	}

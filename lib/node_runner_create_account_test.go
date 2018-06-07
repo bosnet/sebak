@@ -25,7 +25,7 @@ func TestNodeRunnerCreateAccount(t *testing.T) {
 
 	// create new account in all nodes
 	var account *BlockAccount
-	checkpoint := uuid.New().String()
+	checkpoint := sebakcommon.MakeGenesisCheckpoint(networkID)
 	for _, nr := range nodeRunners {
 		address := kp.Address()
 		balance := BaseFee.MustAdd(1)
@@ -39,24 +39,21 @@ func TestNodeRunnerCreateAccount(t *testing.T) {
 	wg.Add(numberOfNodes)
 
 	var dones []VotingStateStaging
+	var finished []string
 	var deferFunc sebakcommon.CheckerDeferFunc = func(n int, c sebakcommon.Checker, err error) {
 		if err == nil {
 			return
 		}
 
-		if _, ok := err.(sebakcommon.CheckerErrorStop); !ok {
+		if _, ok := err.(sebakcommon.CheckerErrorStop); ok {
 			return
 		}
 
 		checker := c.(*NodeRunnerHandleBallotChecker)
-		if checker.VotingStateStaging.IsEmpty() {
+		if _, found := sebakcommon.InStringArray(finished, checker.CurrentNode.Alias()); found {
 			return
 		}
-
-		if !checker.VotingStateStaging.IsClosed() {
-			return
-		}
-
+		finished = append(finished, checker.CurrentNode.Alias())
 		dones = append(dones, checker.VotingStateStaging)
 		wg.Done()
 	}
@@ -125,7 +122,7 @@ func TestNodeRunnerCreateAccountInvalidCheckpoint(t *testing.T) {
 
 	// create new account in all nodes
 	var account *BlockAccount
-	checkpoint := uuid.New().String() // set initial checkpoint
+	checkpoint := sebakcommon.MakeGenesisCheckpoint(networkID) // set initial checkpoint
 	for _, nr := range nodeRunners {
 		address := kp.Address()
 		balance := Amount(2000)
@@ -139,24 +136,21 @@ func TestNodeRunnerCreateAccountInvalidCheckpoint(t *testing.T) {
 	wg.Add(numberOfNodes)
 
 	var dones []VotingStateStaging
+	var finished []string
 	var deferFunc sebakcommon.CheckerDeferFunc = func(n int, c sebakcommon.Checker, err error) {
 		if err == nil {
 			return
 		}
 
-		if _, ok := err.(sebakcommon.CheckerErrorStop); !ok {
+		if _, ok := err.(sebakcommon.CheckerErrorStop); ok {
 			return
 		}
 
 		checker := c.(*NodeRunnerHandleBallotChecker)
-		if checker.VotingStateStaging.IsEmpty() {
+		if _, found := sebakcommon.InStringArray(finished, checker.CurrentNode.Alias()); found {
 			return
 		}
-
-		if !checker.VotingStateStaging.IsClosed() {
-			return
-		}
-
+		finished = append(finished, checker.CurrentNode.Alias())
 		dones = append(dones, checker.VotingStateStaging)
 		wg.Done()
 	}
@@ -219,7 +213,7 @@ func TestNodeRunnerCreateAccountSufficient(t *testing.T) {
 
 	// create new account in all nodes
 	var account *BlockAccount
-	checkpoint := uuid.New().String() // set initial checkpoint
+	checkpoint := sebakcommon.MakeGenesisCheckpoint(networkID) // set initial checkpoint
 	for _, nr := range nodeRunners {
 		address := kp.Address()
 		balance := BaseFee.MustAdd(1)
@@ -233,24 +227,21 @@ func TestNodeRunnerCreateAccountSufficient(t *testing.T) {
 	wg.Add(numberOfNodes)
 
 	var dones []VotingStateStaging
+	var finished []string
 	var deferFunc sebakcommon.CheckerDeferFunc = func(n int, c sebakcommon.Checker, err error) {
 		if err == nil {
 			return
 		}
 
-		if _, ok := err.(sebakcommon.CheckerErrorStop); !ok {
+		if _, ok := err.(sebakcommon.CheckerErrorStop); ok {
 			return
 		}
 
 		checker := c.(*NodeRunnerHandleBallotChecker)
-		if checker.VotingStateStaging.IsEmpty() {
+		if _, found := sebakcommon.InStringArray(finished, checker.CurrentNode.Alias()); found {
 			return
 		}
-
-		if !checker.VotingStateStaging.IsClosed() {
-			return
-		}
-
+		finished = append(finished, checker.CurrentNode.Alias())
 		dones = append(dones, checker.VotingStateStaging)
 		wg.Done()
 	}
@@ -329,24 +320,21 @@ func TestNodeRunnerCreateAccountInsufficient(t *testing.T) {
 	wg.Add(numberOfNodes)
 
 	var dones []VotingStateStaging
+	var finished []string
 	var deferFunc sebakcommon.CheckerDeferFunc = func(n int, c sebakcommon.Checker, err error) {
 		if err == nil {
 			return
 		}
 
-		if _, ok := err.(sebakcommon.CheckerErrorStop); !ok {
+		if _, ok := err.(sebakcommon.CheckerErrorStop); ok {
 			return
 		}
 
 		checker := c.(*NodeRunnerHandleBallotChecker)
-		if checker.VotingStateStaging.IsEmpty() {
+		if _, found := sebakcommon.InStringArray(finished, checker.CurrentNode.Alias()); found {
 			return
 		}
-
-		if !checker.VotingStateStaging.IsClosed() {
-			return
-		}
-
+		finished = append(finished, checker.CurrentNode.Alias())
 		dones = append(dones, checker.VotingStateStaging)
 		wg.Done()
 	}

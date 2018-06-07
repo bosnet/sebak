@@ -33,4 +33,5 @@ var (
 	ErrorAccountBalanceUnderZero          = NewError(130, "account balance will be under zero")
 	ErrorMaximumBalanceReached            = NewError(131, "monetary amount would be greater than the total supply of coins")
 	ErrorStorageRecordDoesNotExist        = NewError(132, "record does not exist in storage")
+	ErrorTransactionInvalidCheckpoint     = NewError(133, "invalid checkpoint found")
 )
