@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 	"github.com/stellar/go/keypair"
 
@@ -36,6 +35,11 @@ func init() {
 			kp, err = keypair.Parse(args[0])
 			if err != nil {
 				common.PrintFlagsError(c, "<public key>", err)
+				os.Exit(1)
+			}
+
+			if len(flagNetworkID) < 1 {
+				common.PrintFlagsError(c, "--network-id", errors.New("--network-id must be given"))
 			}
 
 			balance := strings.Replace(flagBalance, ",", "", -1)
@@ -58,8 +62,12 @@ func init() {
 				common.PrintFlagsError(c, "<public key>", errors.New("account is already created"))
 			}
 
-			checkpoint := uuid.New().String()
-			account := sebak.NewBlockAccount(kp.Address(), balance, checkpoint)
+			// checkpoint of genesis block is created by `--network-id`
+			account := sebak.NewBlockAccount(
+				kp.Address(),
+				balance,
+				sebakcommon.MakeGenesisCheckpoint([]byte(flagNetworkID)),
+			)
 			account.Save(st)
 
 			fmt.Println("successfully created genesis block")
@@ -82,6 +90,7 @@ func init() {
 
 	genesisCmd.Flags().StringVar(&flagBalance, "balance", flagBalance, "initial balance of genesis block")
 	genesisCmd.Flags().StringVar(&flagStorageConfigString, "storage", flagStorageConfigString, "storage uri")
+	genesisCmd.Flags().StringVar(&flagNetworkID, "network-id", flagNetworkID, "network id")
 
 	rootCmd.AddCommand(genesisCmd)
 }

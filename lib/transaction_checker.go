@@ -27,6 +27,16 @@ func CheckTransactionSource(c sebakcommon.Checker, args ...interface{}) (err err
 	return
 }
 
+func CheckTransactionCheckpoint(c sebakcommon.Checker, args ...interface{}) (err error) {
+	checker := c.(*TransactionChecker)
+	if _, err = sebakcommon.ParseCheckpoint(checker.Transaction.B.Checkpoint); err != nil {
+		err = sebakerror.ErrorTransactionInvalidCheckpoint
+		return
+	}
+
+	return
+}
+
 func CheckTransactionBaseFee(c sebakcommon.Checker, args ...interface{}) (err error) {
 	checker := c.(*TransactionChecker)
 	if int64(checker.Transaction.B.Fee) < BaseFee {
