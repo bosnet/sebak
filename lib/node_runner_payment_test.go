@@ -6,8 +6,6 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/btcsuite/btcutil/base58"
-	"github.com/google/uuid"
 	"github.com/stellar/go/keypair"
 
 	"github.com/owlchain/sebak/lib/common"
@@ -26,7 +24,7 @@ func TestNodeRunnerPayment(t *testing.T) {
 	kpSource, _ := keypair.Random()
 	kpTarget, _ := keypair.Random()
 
-	checkpoint := uuid.New().String()
+	checkpoint := sebakcommon.MakeGenesisCheckpoint(networkID)
 	var accountSource, accountTarget *BlockAccount
 	for _, nr := range nodeRunners {
 		{
@@ -39,9 +37,6 @@ func TestNodeRunnerPayment(t *testing.T) {
 
 		{
 			balance := strconv.FormatInt(int64(2000), 10)
-			hashed := sebakcommon.MustMakeObjectHash("")
-			checkpoint := base58.Encode(hashed)
-
 			accountTarget = NewBlockAccount(kpTarget.Address(), balance, checkpoint)
 			accountTarget.Save(nr.Storage())
 		}
@@ -52,24 +47,21 @@ func TestNodeRunnerPayment(t *testing.T) {
 	wg.Add(numberOfNodes)
 
 	var dones []VotingStateStaging
+	var finished []string
 	var deferFunc sebakcommon.CheckerDeferFunc = func(n int, c sebakcommon.Checker, err error) {
 		if err == nil {
 			return
 		}
 
-		if _, ok := err.(sebakcommon.CheckerErrorStop); !ok {
+		if _, ok := err.(sebakcommon.CheckerErrorStop); ok {
 			return
 		}
 
 		checker := c.(*NodeRunnerHandleBallotChecker)
-		if checker.VotingStateStaging.IsEmpty() {
+		if _, found := sebakcommon.InStringArray(finished, checker.CurrentNode.Alias()); found {
 			return
 		}
-
-		if !checker.VotingStateStaging.IsClosed() {
-			return
-		}
-
+		finished = append(finished, checker.CurrentNode.Alias())
 		dones = append(dones, checker.VotingStateStaging)
 		wg.Done()
 	}
@@ -129,7 +121,6 @@ func doConsensus(nodeRunners []*NodeRunner, tx Transaction) []VotingStateStaging
 	var wg sync.WaitGroup
 	wg.Add(len(nodeRunners))
 
-	var dones []VotingStateStaging
 	var messageDeferFunc sebakcommon.CheckerDeferFunc = func(n int, c sebakcommon.Checker, err error) {
 		if err == nil {
 			return
@@ -138,27 +129,26 @@ func doConsensus(nodeRunners []*NodeRunner, tx Transaction) []VotingStateStaging
 		return
 	}
 
+	var dones []VotingStateStaging
+	var finished []string
 	var ballotDeferFunc sebakcommon.CheckerDeferFunc = func(n int, c sebakcommon.Checker, err error) {
 		if err == nil {
 			return
 		}
 
-		if _, ok := err.(sebakcommon.CheckerErrorStop); !ok {
+		if _, ok := err.(sebakcommon.CheckerErrorStop); ok {
 			return
 		}
 
 		checker := c.(*NodeRunnerHandleBallotChecker)
-		if checker.VotingStateStaging.IsEmpty() {
+		if _, found := sebakcommon.InStringArray(finished, checker.CurrentNode.Alias()); found {
 			return
 		}
-
-		if !checker.VotingStateStaging.IsClosed() {
-			return
-		}
-
+		finished = append(finished, checker.CurrentNode.Alias())
 		dones = append(dones, checker.VotingStateStaging)
 		wg.Done()
 	}
+
 	for _, nr := range nodeRunners {
 		nr.SetHandleMessageFromClientCheckerFuncs(messageDeferFunc)
 		nr.SetHandleBallotCheckerFuncs(ballotDeferFunc)
@@ -184,7 +174,7 @@ func TestNodeRunnerSerializedPayment(t *testing.T) {
 	sourceKP, _ := keypair.Random()
 	targetKP, _ := keypair.Random()
 
-	checkpoint := uuid.New().String()
+	checkpoint := sebakcommon.MakeGenesisCheckpoint(networkID)
 	var sourceAccount, targetAccount *BlockAccount
 	for _, nr := range nodeRunners {
 		balance := (BaseFee + 1) * 2
@@ -208,7 +198,7 @@ func TestNodeRunnerSerializedPayment(t *testing.T) {
 		dones := doConsensus(nodeRunners, tx)
 		for _, vs := range dones {
 			if vs.State != sebakcommon.BallotStateALLCONFIRM {
-				t.Error("failed to get consensus")
+				t.Error("failed to get 1st consensus")
 				return
 			}
 		}
@@ -236,7 +226,7 @@ func TestNodeRunnerSerializedPayment(t *testing.T) {
 		dones := doConsensus(nodeRunners, tx)
 		for _, vs := range dones {
 			if vs.State != sebakcommon.BallotStateALLCONFIRM {
-				t.Error("failed to get consensus")
+				t.Error("failed to get 2nd consensus")
 				return
 			}
 		}

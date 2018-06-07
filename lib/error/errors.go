@@ -31,4 +31,5 @@ var (
 	ErrorBlockAccountDoesNotExists        = NewError(128, "account does not exists in block")
 	ErrorBlockAccountAlreadyExists        = NewError(129, "account already exists in block")
 	ErrorAccountBalanceUnderZero          = NewError(130, "account balance will be under zero")
+	ErrorTransactionInvalidCheckpoint     = NewError(131, "invalid checkpoint found")
 )

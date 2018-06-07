@@ -14,9 +14,9 @@ import (
 func testMakeBlockAccount() *BlockAccount {
 	kp, _ := keypair.Random()
 	address := kp.Address()
-	balance := 2000
-	hashed := sebakcommon.MustMakeObjectHash("")
-	checkpoint := base58.Encode(hashed)
+	balance := 2 * BaseFee
+
+	checkpoint := TestGenerateNewCheckpoint()
 
 	return NewBlockAccount(address, fmt.Sprintf("%d", balance), checkpoint)
 }
@@ -92,12 +92,21 @@ func TestMakeTransaction(networkID []byte, n int) (kp *keypair.Full, tx Transact
 	return
 }
 
+func TestGenerateNewCheckpoint() string {
+	return base58.Encode([]byte(uuid.New().String()))
+}
+
 func TestMakeTransactionWithKeypair(networkID []byte, n int, kp *keypair.Full) (tx Transaction) {
 	var ops []Operation
 	for i := 0; i < n; i++ {
 		ops = append(ops, TestMakeOperation(-1))
 	}
-	tx, _ = NewTransaction(kp.Address(), uuid.New().String(), ops...)
+
+	tx, _ = NewTransaction(
+		kp.Address(),
+		fmt.Sprintf("%s-%s", TestGenerateNewCheckpoint(), TestGenerateNewCheckpoint()),
+		ops...,
+	)
 	tx.Sign(kp, networkID)
 
 	return
