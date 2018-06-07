@@ -115,10 +115,10 @@ func TestNodeRunnerConsensusStoreInHistoryNewBallot(t *testing.T) {
 	}
 }
 
-// TestNodeRunnerConsensuSameSourceWillBeIgnored checks, the transaction which
+// TestNodeRunnerConsensusSameSourceWillBeIgnored checks, the transaction which
 // has same source will be ignored if the transaction has same source and it is
 // in 'SIGN' state.
-func TestNodeRunnerConsensuSameSourceWillBeIgnored(t *testing.T) {
+func TestNodeRunnerConsensusSameSourceWillBeIgnored(t *testing.T) {
 	defer sebaknetwork.CleanUpMemoryNetwork()
 
 	numberOfNodes := 3
@@ -210,10 +210,10 @@ func TestNodeRunnerConsensuSameSourceWillBeIgnored(t *testing.T) {
 	}
 }
 
-// TestNodeRunnerConsensuSameSourceWillNotIgnored checks, the transaction which
+// TestNodeRunnerConsensusSameSourceWillNotIgnored checks, the transaction which
 // has same source will be ignored if the transaction has same source and it is
 // not in 'SIGN' state.
-func TestNodeRunnerConsensuSameSourceWillNotIgnored(t *testing.T) {
+func TestNodeRunnerConsensusSameSourceWillNotIgnored(t *testing.T) {
 	defer sebaknetwork.CleanUpMemoryNetwork()
 
 	numberOfNodes := 3
