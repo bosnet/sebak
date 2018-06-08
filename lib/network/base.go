@@ -77,11 +77,11 @@ func (t Message) String() string {
 	return string(o)
 }
 
-func (t Message) Head() string {
+func (t Message) Head(n int) string {
 	s := t.String()
 	i := math.Min(
 		float64(len(s)),
-		float64(50),
+		float64(n),
 	)
 	return s[:int(i)]
 }
