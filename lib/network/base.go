@@ -3,6 +3,7 @@ package sebaknetwork
 import (
 	"context"
 	"encoding/json"
+	"math"
 	"net"
 	"net/http"
 
@@ -74,6 +75,19 @@ type Message struct {
 func (t Message) String() string {
 	o, _ := json.Marshal(t)
 	return string(o)
+}
+
+func (t Message) Head() string {
+	s := t.String()
+	i := math.Min(
+		float64(len(s)),
+		float64(50),
+	)
+	return s[:int(i)]
+}
+
+func (t Message) IsEmpty() bool {
+	return len(t.Data) < 1
 }
 
 func NewMessage(mt MessageType, data []byte) Message {
