@@ -25,6 +25,7 @@ type Node interface {
 	DeepEqual(Node) bool
 	GetValidators() map[string]*Validator
 	AddValidators(validators ...*Validator) error
+	HasValidators(string) bool
 	RemoveValidators(validators ...*Validator) error
 	Serialize() ([]byte, error)
 }
@@ -93,6 +94,11 @@ func (v *Validator) SetAlias(s string) {
 
 func (v *Validator) Endpoint() *Endpoint {
 	return v.endpoint
+}
+
+func (v *Validator) HasValidators(address string) bool {
+	_, found := v.validators[address]
+	return found
 }
 
 func (v *Validator) GetValidators() map[string]*Validator {

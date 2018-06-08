@@ -137,6 +137,22 @@ func CheckNodeRunnerHandleBallotIsWellformed(c sebakcommon.Checker, args ...inte
 	return
 }
 
+func CheckNodeRunnerHandleBallotNotFromKnownValidators(c sebakcommon.Checker, args ...interface{}) (err error) {
+	checker := c.(*NodeRunnerHandleBallotChecker)
+	if checker.CurrentNode.HasValidators(checker.Ballot.B.NodeKey) {
+		return
+	}
+
+	checker.NodeRunner.Log().Debug(
+		"ballot from unknown validator",
+		"from", checker.Ballot.B.NodeKey,
+		"ballot", checker.Ballot.MessageHash(),
+	)
+
+	err = sebakcommon.CheckerErrorStop{"ballot from unknown validator"}
+	return
+}
+
 func CheckNodeRunnerHandleBallotCheckIsNew(c sebakcommon.Checker, args ...interface{}) (err error) {
 	checker := c.(*NodeRunnerHandleBallotChecker)
 
@@ -233,6 +249,7 @@ func CheckNodeRunnerHandleBallotVotingHole(c sebakcommon.Checker, args ...interf
 	votingHole := VotingYES
 
 	if tx.B.Fee < Amount(BaseFee) {
+		checker.NodeRunner.Log().Debug("VotingNO: tx.B.Fee < Amount(BaseFee)")
 		votingHole = VotingNO
 	}
 
@@ -243,6 +260,7 @@ func CheckNodeRunnerHandleBallotVotingHole(c sebakcommon.Checker, args ...interf
 		if err == nil {
 			// compare the stored BlockTransaction with tx
 			if votingHole == VotingYES && tx.B.Source != bt.Source {
+				checker.NodeRunner.Log().Debug("VotingNO: tx.B.Source != bt.Source", "tx.B.Source", tx.B.Source, "bt.Source", bt.Source)
 				votingHole = VotingNO
 			}
 		}
@@ -250,10 +268,21 @@ func CheckNodeRunnerHandleBallotVotingHole(c sebakcommon.Checker, args ...interf
 
 	if votingHole == VotingYES {
 		if ba, err := GetBlockAccount(checker.NodeRunner.Storage(), tx.B.Source); err != nil {
+			checker.NodeRunner.Log().Debug("VotingNO: ", "error", err)
 			votingHole = VotingNO
 		} else if tx.B.Checkpoint != ba.Checkpoint {
+			checker.NodeRunner.Log().Debug(
+				"VotingNO: tx.B.Checkpoint != ba.Checkpoint",
+				"tx.B.Checkpoint", tx.B.Checkpoint,
+				"ba.Checkpoint", ba.Checkpoint,
+			)
 			votingHole = VotingNO
 		} else if tx.TotalAmount(true) > MustAmountFromString(ba.Balance) {
+			checker.NodeRunner.Log().Debug(
+				"VotingNO: tx.TotalAmount(true) > MustAmountFromString(ba.Balance)",
+				"tx.TotalAmount(true)", tx.TotalAmount(true),
+				"MustAmountFromString(ba.Balance)", MustAmountFromString(ba.Balance),
+			)
 			votingHole = VotingNO
 		}
 	}
