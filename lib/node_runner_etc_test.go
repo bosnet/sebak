@@ -79,7 +79,7 @@ func TestNodeRunnerLimitIncomingBallotsFromUnknownValidator(t *testing.T) {
 	nr0 := nodeRunners[0]
 	client := nr0.Network().GetClient(nr0.Node().Endpoint())
 
-	initialBalance := uint64(1)
+	initialBalance := Amount(1)
 	tx := makeTransactionCreateAccount(kp, kpNewAccount.Address(), initialBalance)
 
 	tx.B.Checkpoint = checkpoint
