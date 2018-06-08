@@ -250,7 +250,7 @@ func CheckNodeRunnerHandleBallotVotingHole(c sebakcommon.Checker, args ...interf
 
 	if votingHole == VotingYES {
 		if ba, err := GetBlockAccount(checker.NodeRunner.Storage(), tx.B.Source); err != nil {
-			checker.NodeRunner.Log().Debug("VotingNO: ", "erorr", err)
+			checker.NodeRunner.Log().Debug("VotingNO: ", "error", err)
 			votingHole = VotingNO
 		} else if tx.B.Checkpoint != ba.Checkpoint {
 			checker.NodeRunner.Log().Debug(
