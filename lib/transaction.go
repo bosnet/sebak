@@ -200,23 +200,32 @@ func FinishTransaction(st *sebakstorage.LevelDBBackend, ballot Ballot, tx Transa
 		return
 	}
 
+	var ts *sebakstorage.LevelDBBackend
+	if ts, err = st.OpenTransaction(); err != nil {
+		return
+	}
+
 	bt := NewBlockTransactionFromTransaction(tx, raw)
-	if err = bt.Save(st); err != nil {
+	if err = bt.Save(ts); err != nil {
+		ts.Discard()
 		return
 	}
 	for _, op := range tx.B.Operations {
-		if err = FinishOperation(st, tx, op); err != nil {
+		if err = FinishOperation(ts, tx, op); err != nil {
+			ts.Discard()
 			return
 		}
 	}
 
 	var baSource *BlockAccount
-	if baSource, err = GetBlockAccount(st, tx.B.Source); err != nil {
+	if baSource, err = GetBlockAccount(ts, tx.B.Source); err != nil {
 		err = sebakerror.ErrorBlockAccountDoesNotExists
+		ts.Discard()
 		return
 	}
 	var expected Amount
 	if expected, err = baSource.GetBalanceAmount().Sub(tx.TotalAmount(true)); err != nil {
+		ts.Discard()
 		return
 	}
 
@@ -225,7 +234,12 @@ func FinishTransaction(st *sebakstorage.LevelDBBackend, ballot Ballot, tx Transa
 		tx.NextCheckpoint(),
 		int64(expected),
 	)
-	if err = baSource.Save(st); err != nil {
+	if err = baSource.Save(ts); err != nil {
+		return
+	}
+
+	if err = ts.Commit(); err != nil {
+		ts.Discard()
 		return
 	}
 
