@@ -4,79 +4,120 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"io"
 	"os"
 	"strings"
 
+	"github.com/owlchain/sebak/cmd/sebak/common"
 	"github.com/spf13/cobra"
 	"github.com/stellar/go/keypair"
-
-	"github.com/owlchain/sebak/cmd/sebak/common"
 )
 
 var (
 	GenerateCmd *cobra.Command
 
-	flagInput     string
-	flagShort     bool
 	flagPublicKey bool
+	flagFormat    string
+
+	encoders = common.NewEncoders(map[string]common.EncodeFn{
+		"default": func(v interface{}) common.Encoder {
+			return &defaultEncoder{v.(keyPair)}
+		},
+		"oneline": func(v interface{}) common.Encoder {
+			return &onelineEncoder{v.(keyPair)}
+		},
+	})
 )
+
+type (
+	keyPair struct {
+		Seed              string  `json:"seed"`
+		Address           string  `json:"address"`
+		NetworkPassphrase *string `json:"network_passphrase,omitempty"`
+	}
+)
+
+type defaultEncoder struct {
+	kp keyPair
+}
+
+func (o *defaultEncoder) Encode(w io.Writer) error {
+	t := template.Must(template.New("").Funcs(template.FuncMap{
+		"valueString": func(input *string) string {
+			if input == nil {
+				return ""
+			} else {
+				return *input
+			}
+		},
+	}).Parse(`       Secret Seed: {{ .Seed }}
+    Public Address: {{ .Address }}{{ if valueString .NetworkPassphrase }}
+Network Passphrase: "{{ .NetworkPassphrase|valueString }}"{{ end }}
+`))
+	return t.Execute(w, o.kp)
+}
+
+type onelineEncoder struct {
+	kp keyPair
+}
+
+func (o *onelineEncoder) Encode(w io.Writer) error {
+	fmt.Fprintf(w, "%s %s\n", o.kp.Seed, o.kp.Address)
+	return nil
+}
 
 func init() {
 	GenerateCmd = &cobra.Command{
 		Use:   "generate",
 		Short: "Generate keypair",
 		Run: func(c *cobra.Command, args []string) {
-			if len(args) > 0 {
-				flagInput = strings.TrimSpace(strings.Join(args, " "))
-			} else if flagPublicKey && len(flagInput) < 1 {
+			var passphrase *string = nil
+			input := strings.TrimSpace(strings.Join(args, " "))
+
+			if flagPublicKey && len(input) == 0 {
 				common.PrintFlagsError(c, "--publicKey", errors.New("--publicKey needs <public key>"))
 			}
 
-			kp, err := generateKP()
-			if err != nil {
+			kp, err := generateKP(input, flagPublicKey)
+
+			if flagPublicKey && err != nil {
 				common.PrintFlagsError(c, "<input>", fmt.Errorf("failed to parse public key: %v", err))
+			} else if !flagPublicKey && len(input) > 0 {
+				passphrase = &input
 			}
 
-			if flagShort {
-				fmt.Fprintf(os.Stdout, "%s %s\n", kp.Seed(), kp.Address())
+			if encoder, ok := encoders.Get(flagFormat); ok {
+				err := encoder(keyPair{
+					Seed:              kp.Seed(),
+					Address:           kp.Address(),
+					NetworkPassphrase: passphrase,
+				}).Encode(os.Stdout)
 
-				os.Exit(0)
+				if err != nil {
+					panic(err)
+				}
+			} else {
+				common.PrintFlagsError(c, "format", fmt.Errorf(`"%s" not recognized`, flagFormat))
 			}
-
-			t := template.Must(template.New("").Parse(`       Secret Seed: {{ .seed }}
-    Public Address: {{ .address }}{{ if .hasNetworkPassphrase }}
-Network Passphrase: "{{ .networkPassphrase}}"{{ end }}
-`))
-			t.Execute(os.Stdout, map[string]interface{}{
-				"address":              kp.Address(),
-				"seed":                 kp.Seed(),
-				"networkPassphrase":    flagInput,
-				"hasNetworkPassphrase": !flagPublicKey && len(flagInput) > 0,
-			})
 		},
 	}
 
-	GenerateCmd.Flags().BoolVar(&flagShort, "short", false, "short format, \"<secret seed> <public address>\"")
-	GenerateCmd.Flags().BoolVar(&flagPublicKey, "publicKey", false, "parse public key")
-	//GenerateCmd.Flags().StringVar(&flagNetworkPassphrase, "short", false, "short format, \"<secret seed> <public address>\"")
+	GenerateCmd.Flags().BoolVar(&flagPublicKey, "parse", false, "parse public key")
+	GenerateCmd.Flags().StringVar(&flagFormat, "format", "default", "format={default, json, oneline, prettyjson}")
 }
 
-func generateKP() (full *keypair.Full, err error) {
-	if len(flagInput) < 1 {
-		full, _ = keypair.Random()
-		return
-	}
-
-	if flagPublicKey {
+func generateKP(seedOrNetworkPassphrase string, fromSeed bool) (full *keypair.Full, err error) {
+	if len(seedOrNetworkPassphrase) == 0 {
+		full, err = keypair.Random()
+	} else if fromSeed {
 		var kp keypair.KP
-		kp, err = keypair.Parse(flagInput)
-		if err != nil {
-			return
-		}
 
-		full = kp.(*keypair.Full)
+		if kp, err = keypair.Parse(seedOrNetworkPassphrase); err == nil {
+			full = kp.(*keypair.Full)
+		}
+	} else {
+		full = keypair.Master(seedOrNetworkPassphrase).(*keypair.Full)
 	}
 
-	full = keypair.Master(flagInput).(*keypair.Full)
 	return
 }

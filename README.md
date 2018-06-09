@@ -37,7 +37,7 @@ $ go test ./... -v
 
 sebak can make keypair, 'secret seed' and 'public address'.
 ```
-$ sebak key generate
+$ sebak key generate --format=default
        Secret Seed: SCN4NSV5SVHIZWUDJFT4Z5FFVHO3TFRTOIBQLHMNPAZJ37K5A2YFSCBM
     Public Address: GALQG5SCKCPXUG4ODPMFZJGZ6XBVJTLAJFR7OJKJOJVARA7M4H5SGSOG
 ```
@@ -65,7 +65,8 @@ $ sebak node \
     --tls-cert 'sebak.crt' \
     --log-level debug \
     --secret-seed SCN4NSV5SVHIZWUDJFT4Z5FFVHO3TFRTOIBQLHMNPAZJ37K5A2YFSCBM \
-    --validator GBWCMWDUZK67YNUZ44UPNVFYZRSCCS4OLE6ORWD4ZLI2MVGY4KJDPHMO,https://localhost:12346 \ --validator GCZG7MBKRSS6MJVZOALYBJB5C223FSZ43MDTPX2O4UGQTCXTHWBDNUB6,https://localhost:12347
+    --validator GBWCMWDUZK67YNUZ44UPNVFYZRSCCS4OLE6ORWD4ZLI2MVGY4KJDPHMO,https://localhost:12346 \
+    --validator GCZG7MBKRSS6MJVZOALYBJB5C223FSZ43MDTPX2O4UGQTCXTHWBDNUB6,https://localhost:12347
 ```
 
 To run multiple sebak nodes on the local machine, then you must set up the different db paths each:
