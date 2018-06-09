@@ -199,13 +199,18 @@ func (nr *NodeRunner) handleMessage() {
 	for message := range nr.network.ReceiveMessage() {
 		switch message.Type {
 		case sebaknetwork.ConnectMessage:
-			nr.log.Debug("got connect", "message", message.String()[:50])
+			nr.log.Debug("got connect", "message", message.Head(50))
 			if _, err := sebakcommon.NewValidatorFromString(message.Data); err != nil {
 				nr.log.Error("invalid validator data was received", "data", message.Data)
 				continue
 			}
 		case sebaknetwork.MessageFromClient:
-			nr.log.Debug("got message from client`", "message", message.String()[:50])
+			if message.IsEmpty() {
+				nr.log.Error("got empty message from client`")
+				continue
+			}
+
+			nr.log.Debug("got message from client`", "message", message.Head(50))
 
 			checker := &NodeRunnerHandleMessageChecker{
 				DefaultChecker: sebakcommon.DefaultChecker{nr.handleMessageFromClientCheckerFuncs},
@@ -223,7 +228,11 @@ func (nr *NodeRunner) handleMessage() {
 				continue
 			}
 		case sebaknetwork.BallotMessage:
-			nr.log.Debug("got ballot", "message", message.String()[:50])
+			if message.IsEmpty() {
+				nr.log.Error("got empty ballot message`")
+				continue
+			}
+			nr.log.Debug("got ballot", "message", message.Head(50))
 
 			checker := &NodeRunnerHandleBallotChecker{
 				DefaultChecker: sebakcommon.DefaultChecker{nr.handleBallotCheckerFuncs},
@@ -249,6 +258,8 @@ func (nr *NodeRunner) handleMessage() {
 				continue
 			}
 			nr.closeConsensus(checker)
+		default:
+			nr.log.Error("got unknown", "message", message.Head(50))
 		}
 	}
 }
