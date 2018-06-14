@@ -25,4 +25,5 @@ COPY --from=builder /go/bin/sebak /sebak/
 ENV SEBAK_NETWORK_ID    sebak-test-network
 
 WORKDIR /sebak/
-ENTRYPOINT ./entrypoint.sh
+ENTRYPOINT [ "./entrypoint.sh" ]
+CMD []
