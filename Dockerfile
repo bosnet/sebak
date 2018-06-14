@@ -3,8 +3,8 @@ FROM golang:alpine AS builder
 LABEL maintainer="BOSCoin Developers <devteam@boscoin.io>"
 
 #golang:alpine set $GOPATH to `/go`
-COPY ./ /go/src/github.com/owlchain/sebak
-WORKDIR /go/src/github.com/owlchain/sebak
+COPY ./ /go/src/boscoin.io/sebak
+WORKDIR /go/src/boscoin.io/sebak
 
 ## Since those need to be re-run every time anyway, they are in a single stage
 # `git` and `openssh` are needed for `go get`

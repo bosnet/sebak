@@ -1,7 +1,7 @@
 package sebaknetwork
 
 import (
-	"github.com/owlchain/sebak/lib/common"
+	"boscoin.io/sebak/lib/common"
 )
 
 type MemoryTransportClient struct {

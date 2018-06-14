@@ -7,8 +7,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/stellar/go/keypair"
 
-	"github.com/owlchain/sebak/lib/common"
-	"github.com/owlchain/sebak/lib/network"
+	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/network"
 )
 
 // TestNodeRunnerLimitIncomingBallotsFromUnknownValidator checks, the incoming

@@ -3,7 +3,7 @@ package cmd
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/owlchain/sebak/cmd/sebak/cmd/key"
+	"boscoin.io/sebak/cmd/sebak/cmd/key"
 )
 
 var (

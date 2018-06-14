@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/stellar/go/keypair"
 
-	"github.com/owlchain/sebak/cmd/sebak/common"
+	"boscoin.io/sebak/cmd/sebak/common"
 )
 
 var (

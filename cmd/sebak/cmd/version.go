@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/owlchain/sebak/lib"
+	"boscoin.io/sebak/lib"
 	"github.com/spf13/cobra"
 )
 

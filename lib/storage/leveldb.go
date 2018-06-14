@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/owlchain/sebak/lib/common"
+	"boscoin.io/sebak/lib/common"
 	"github.com/syndtr/goleveldb/leveldb"
 	leveldbIterator "github.com/syndtr/goleveldb/leveldb/iterator"
 	leveldbOpt "github.com/syndtr/goleveldb/leveldb/opt"

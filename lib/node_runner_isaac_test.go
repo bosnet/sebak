@@ -4,8 +4,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/owlchain/sebak/lib/common"
-	"github.com/owlchain/sebak/lib/network"
+	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/network"
 )
 
 // TestNodeRunnerConsensusStoreInHistoryIncomingTxMessage checks, the incoming tx message will be

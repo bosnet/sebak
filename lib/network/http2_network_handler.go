@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/owlchain/sebak/lib/common"
+	"boscoin.io/sebak/lib/common"
 )
 
 func Index(ctx context.Context, t *HTTP2Network) HandlerFunc {

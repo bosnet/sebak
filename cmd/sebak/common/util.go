@@ -7,7 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/owlchain/sebak/lib"
+	"boscoin.io/sebak/lib"
 )
 
 /**
