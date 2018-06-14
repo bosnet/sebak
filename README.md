@@ -1,6 +1,6 @@
 # SEBAK
 
-[![GoDoc](https://godoc.org/github.com/golang/gddo?status.svg)](http://godoc.org/github.com/owlchain/sebak/lib) [![CircleCI](https://circleci.com/gh/owlchain/sebak.svg?style=svg&circle-token=fd8cbd27a7594539b58dd3c46363a2c693f25edb)](https://circleci.com/gh/owlchain/sebak)
+[![GoDoc](https://godoc.org/github.com/golang/gddo?status.svg)](http://godoc.org/github.com/bosnet/sebak/lib) [![CircleCI](https://circleci.com/gh/bosnet/sebak.svg?style=svg&circle-token=fd8cbd27a7594539b58dd3c46363a2c693f25edb)](https://circleci.com/gh/bosnet/sebak)
 
 Sebak is the core node for crypto-currency blockchain.
 
@@ -14,10 +14,10 @@ To start sebak:
 $ mkdir sebak
 $ cd sebak
 $ export GOPATH=$(pwd)
-$ go get github.com/owlchain/sebak
-$ cd src/github.com/owlchain/sebak
+$ go get boscoin.io/sebak
+$ cd src/boscoin.io/sebak
 $ dep ensure
-$ go install github.com/owlchain/sebak/cmd/sebak
+$ go install boscoin.io/sebak/cmd/sebak
 ```
 
 ## Test

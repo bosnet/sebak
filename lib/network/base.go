@@ -7,7 +7,7 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/owlchain/sebak/lib/common"
+	"boscoin.io/sebak/lib/common"
 )
 
 type Network interface {

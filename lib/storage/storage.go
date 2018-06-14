@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/url"
 
-	"github.com/owlchain/sebak/lib/common"
+	"boscoin.io/sebak/lib/common"
 )
 
 var SupportedStorageType []string = []string{

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/owlchain/sebak/cmd/sebak/cmd"
+	"boscoin.io/sebak/cmd/sebak/cmd"
 )
 
 func main() {

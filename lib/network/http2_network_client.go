@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/owlchain/sebak/lib/common"
+	"boscoin.io/sebak/lib/common"
 )
 
 type HTTP2NetworkClient struct {

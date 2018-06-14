@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/owlchain/sebak/cmd/sebak/common"
+	"boscoin.io/sebak/cmd/sebak/common"
 )
 
 var rootCmd = &cobra.Command{
