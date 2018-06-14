@@ -5,8 +5,8 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/google/uuid"
 	"boscoin.io/sebak/lib/common"
+	"github.com/google/uuid"
 )
 
 var memoryNetworks map[ /* endpoint */ string]*MemoryNetwork

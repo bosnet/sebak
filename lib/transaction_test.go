@@ -3,8 +3,8 @@ package sebak
 import (
 	"testing"
 
-	"github.com/btcsuite/btcutil/base58"
 	"boscoin.io/sebak/lib/storage"
+	"github.com/btcsuite/btcutil/base58"
 	"github.com/stellar/go/keypair"
 )
 

@@ -6,11 +6,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/storage"
+	"github.com/google/uuid"
 	"github.com/stellar/go/keypair"
 )
 

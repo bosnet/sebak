@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
-	logging "github.com/inconshreveable/log15"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/storage"
+	logging "github.com/inconshreveable/log15"
 )
 
 type NodeRunner struct {

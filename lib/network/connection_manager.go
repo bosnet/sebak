@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	logging "github.com/inconshreveable/log15"
 	"boscoin.io/sebak/lib/common"
+	logging "github.com/inconshreveable/log15"
 )
 
 type ConnectionManager struct {
