@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"boscoin.io/sebak/lib/storage"
+	"sync"
+	"fmt"
 )
 
 func TestSaveNewBlockAccount(t *testing.T) {
@@ -107,5 +109,41 @@ func TestGetSortedBlockAccounts(t *testing.T) {
 			t.Error("failed to save `BlockAccount` by creation order")
 			break
 		}
+	}
+}
+
+func TestBlockAccountObserver(t *testing.T) {
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	b := testMakeBlockAccount()
+
+	var triggered *BlockAccount
+	ObserverFunc := func(args ...interface{}) {
+		triggered = args[0].(*BlockAccount)
+		wg.Done()
+	}
+	BlockAccountObserver.On(fmt.Sprintf("saved-%s", b.Address), ObserverFunc)
+	defer BlockAccountObserver.Off(fmt.Sprintf("saved-%s", b.Address), ObserverFunc)
+
+
+	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
+
+
+	b.Save(st)
+
+	wg.Wait()
+
+	if b.Address != triggered.Address {
+		t.Error("Address is not match")
+		return
+	}
+	if b.Balance != triggered.Balance {
+		t.Error("Balance is not match")
+		return
+	}
+	if b.Checkpoint != triggered.Checkpoint {
+		t.Error("Checkpoint is not match")
+		return
 	}
 }
