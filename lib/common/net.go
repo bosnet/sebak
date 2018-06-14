@@ -55,6 +55,11 @@ func (e *Endpoint) IsRemote() bool {
 	return e.Scheme != "memory"
 }
 
+func (e *Endpoint) HostAndPort() (string, string) {
+	host, port, _ := net.SplitHostPort(e.Host)
+	return host, port
+}
+
 func (e *Endpoint) Query() url.Values {
 	return (*url.URL)(e).Query()
 }

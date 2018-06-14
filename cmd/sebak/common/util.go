@@ -41,3 +41,8 @@ func ParseAmountFromString(input string) (sebak.Amount, error) {
 	amountStr = strings.Replace(amountStr, "_", "", -1)
 	return sebak.AmountFromString(amountStr)
 }
+
+func PrintError(err error) {
+	fmt.Fprintf(os.Stderr, "error: %v\n", err)
+	os.Exit(1)
+}

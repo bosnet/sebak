@@ -45,3 +45,7 @@
 [[constraint]]
   name = "github.com/spf13/cobra"
   version = "0.0.3"
+
+[[constraint]]
+  name = "github.com/docker/docker"
+  version = "1.13.1"

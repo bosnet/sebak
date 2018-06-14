@@ -115,18 +115,61 @@ $ sebak node \
 ## Spinning a test net using Docker
 
 To spawn a simple network, first build the docker image:
+
 ```sh
-docker build . -t sebak
-# The build process creates a rather large image, which is regenarated every time
-# To clean up all orphaned images, you can run the following command
-docker rmi -f $(docker images -f "dangling=true" -q)
+$ docker build -f docker/simple-3-nodes/Dockerfile -t sebak ./
+```
+The build process creates a rather large image, which is regenarated every time To clean up all orphaned images, you can run the following command
+
+```sh
+$ docker rmi -f $(docker images -f "dangling=true" -q)
 ```
 
 Then you can spawn 3 nodes using the following commands:
+
 ```sh
-docker run --net host --rm -it --env-file=docker/node1.env sebak
-docker run --net host --rm -it --env-file=docker/node2.env sebak
-docker run --net host --rm -it --env-file=docker/node3.env sebak
+$ docker run --net host --rm -it --env-file=docker/node1.env sebak
+$ docker run --net host --rm -it --env-file=docker/node2.env sebak
+$ docker run --net host --rm -it --env-file=docker/node3.env sebak
 ```
 
 Changing the number of test nodes should be fairly simple once #46 is solved.
+
+## Composing test network using Docker
+
+You can compose your own network by composing the shape of network.
+
+```sh
+$ docker build -f docker/compose-network/Dockerfile -t boscoin/sebak/compose-network ./
+$ cd cmd/sebak-compose-network
+$ go run main.go -h
+sebak composing network
+
+Usage:
+  /var/folders/7q/cfmzp61d23scjv7645llr25r0000gn/T/go-build012630019/b001/exe/main [flags]
+
+Flags:
+      --force                    remove the existing sebak containers
+  -h, --help                     help for /var/folders/7q/cfmzp61d23scjv7645llr25r0000gn/T/go-build012630019/b001/exe/main
+      --image string             docker image name for sebak (default "boscoin/sebak/compose-network:latest")
+      --log-level string         log level, {crit, error, warn, info, debug} (default "info")
+      --n uint                   number of node (default 3)
+      --sebak-log-level string   sebak log level, {crit, error, warn, info, debug} (default "dbug")
+```
+
+Set the number of nodes and run it.
+
+```sh
+$ go run main.go --log-level debug --sebak-log-level debug --n 4
+DBUG[06-13|17:04:13] Starting to compose sebak network        module=main
+DBUG[06-13|17:04:13]
+number of nodes: 4
+      log level: debug
+sebak log level: dbug
+		 module=main
+...
+INFO[06-13|17:04:14] 3 container was created and started to make sebak network module=main
+DBUG[06-13|17:04:14] container created                        module=main name=scn.v0 id=5bd status="Up Less than a second"
+DBUG[06-13|17:04:14] container created                        module=main name=scn.v2 id=daf status="Up Less than a second"
+DBUG[06-13|17:04:14] container created                        module=main name=scn.v1 id=0b4 status="Up Less than a second"
+```
