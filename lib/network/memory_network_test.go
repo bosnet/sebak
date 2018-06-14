@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/btcsuite/btcutil/base58"
 	"boscoin.io/sebak/lib/common"
+	"github.com/btcsuite/btcutil/base58"
 	"github.com/stellar/go/keypair"
 )
 
