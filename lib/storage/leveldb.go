@@ -5,12 +5,14 @@ import (
 	"errors"
 	"fmt"
 
-	"boscoin.io/sebak/lib/common"
 	"github.com/syndtr/goleveldb/leveldb"
 	leveldbIterator "github.com/syndtr/goleveldb/leveldb/iterator"
 	leveldbOpt "github.com/syndtr/goleveldb/leveldb/opt"
 	leveldbStorage "github.com/syndtr/goleveldb/leveldb/storage"
 	leveldbUtil "github.com/syndtr/goleveldb/leveldb/util"
+
+	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/error"
 )
 
 type LevelDBCore interface {
@@ -100,8 +102,8 @@ func (st *LevelDBBackend) Has(k string) (bool, error) {
 func (st *LevelDBBackend) GetRaw(k string) (b []byte, err error) {
 	var exists bool
 	if exists, err = st.Has(k); !exists || err != nil {
-		if !exists {
-			err = fmt.Errorf("key, '%s' does not exists", k)
+		if !exists || err == leveldb.ErrNotFound {
+			err = sebakerror.ErrorStorageRecordDoesNotExist
 		}
 		return
 	}
