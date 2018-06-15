@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/observer"
 	"boscoin.io/sebak/lib/storage"
 )
 
@@ -58,6 +59,9 @@ func (b *BlockAccount) Save(st *sebakstorage.LevelDBBackend) (err error) {
 		err = st.New(key, b)
 		createdKey := GetBlockAccountCreatedKey(sebakcommon.GetUniqueIDFromUUID())
 		err = st.New(createdKey, b.Address)
+	}
+	if err == nil {
+		observer.BlockAccountObserver.Trigger(fmt.Sprintf("saved-%s", b.Address), b)
 	}
 
 	bac := NewBlockAccountCheckpoint(b, b.Checkpoint)

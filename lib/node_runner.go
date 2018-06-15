@@ -48,6 +48,7 @@ func NewNodeRunner(
 	}
 	nr.ctx = context.WithValue(context.Background(), "currentNode", currentNode)
 	nr.ctx = context.WithValue(nr.ctx, "networkID", nr.networkID)
+	nr.ctx = context.WithValue(nr.ctx, "storage", nr.storage)
 
 	nr.connectionManager = sebaknetwork.NewConnectionManager(
 		nr.currentNode,
@@ -65,6 +66,7 @@ func NewNodeRunner(
 
 func (nr *NodeRunner) Ready() {
 	nr.network.SetContext(nr.ctx)
+	nr.network.AddHandler(nr.ctx, AddAPIHandlers)
 	nr.network.Ready()
 }
 

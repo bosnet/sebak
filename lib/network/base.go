@@ -16,6 +16,7 @@ type Network interface {
 	SetContext(context.Context)
 	GetClient(endpoint *sebakcommon.Endpoint) NetworkClient
 	AddWatcher(func(Network, net.Conn, http.ConnState))
+	AddHandler(context.Context, ...interface{}) error
 
 	Start() error
 	Stop()
