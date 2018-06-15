@@ -12,12 +12,16 @@ import (
 
 func AddAPIHandlers(s *sebakstorage.LevelDBBackend) func(ctx context.Context, t *sebaknetwork.HTTP2Network) {
 	fn := func(ctx context.Context, t *sebaknetwork.HTTP2Network) {
-		t.AddAPIHandler("/account/{address}", GetAccountHandler(s)).Methods("GET")
+		t.AddAPIHandler(GetAccountHandlerPattern, GetAccountHandler(s)).Methods("GET")
+		t.AddAPIHandler(GetAccountTransactionsHandlerPattern, GetAccountTransactionsHandler(s)).Methods("GET")
+		t.AddAPIHandler(GetAccountOperationsHandlerPattern, GetAccountOperationsHandler(s)).Methods("GET")
+		t.AddAPIHandler(GetTransactionByHashHandlerPattern, GetTransactionByHashHandler(s)).Methods("GET")
 	}
 	return fn
 }
 
-func streaming(o *observable.Observable, w http.ResponseWriter, event string, callBackFunc func(args ...interface{}) ([]byte, error), once []byte) {
+func streaming(o *observable.Observable, w http.ResponseWriter, event string, callBackFunc func(args ...interface{}) ([]byte, error), readyChan chan struct{}) {
+
 	cn, ok := w.(http.CloseNotifier)
 	if !ok {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -30,16 +34,20 @@ func streaming(o *observable.Observable, w http.ResponseWriter, event string, ca
 		return
 	}
 
-	closeChan := make(chan bool)
+	consumerChan := make(chan struct{})
 	messageChan := make(chan []byte)
 
 	observerFunc := func(args ...interface{}) {
 		s, err := callBackFunc(args...)
 		if err != nil {
-			closeChan <- true
+			//TODO: handle the error
 			return
 		}
-		messageChan <- s
+
+		select {
+		case messageChan <- s:
+		case <-consumerChan:
+		}
 	}
 
 	o.On(event, observerFunc)
@@ -47,20 +55,16 @@ func streaming(o *observable.Observable, w http.ResponseWriter, event string, ca
 
 	w.Header().Set("Content-Type", "application/json")
 
-	if len(once) != 0 {
-		fmt.Fprintf(w, "%s\n", once)
-		flusher.Flush()
-	}
-
+	readyChan <- struct{}{}
 	for {
 		select {
 		case <-cn.CloseNotify():
-			return
-		case <-closeChan:
+			close(consumerChan)
 			return
 		case message := <-messageChan:
 			fmt.Fprintf(w, "%s\n", message)
 			flusher.Flush()
 		}
 	}
+
 }

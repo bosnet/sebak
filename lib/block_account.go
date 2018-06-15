@@ -61,7 +61,9 @@ func (b *BlockAccount) Save(st *sebakstorage.LevelDBBackend) (err error) {
 		err = st.New(createdKey, b.Address)
 	}
 	if err == nil {
-		observer.BlockAccountObserver.Trigger(fmt.Sprintf("saved-%s", b.Address), b)
+		event := "saved"
+		event += " " + fmt.Sprintf("address-%s", b.Address)
+		observer.BlockAccountObserver.Trigger(event, b)
 	}
 
 	bac := NewBlockAccountCheckpoint(b, b.Checkpoint)
