@@ -36,4 +36,5 @@ var (
 	ErrorTransactionInvalidCheckpoint     = NewError(133, "invalid checkpoint found")
 	ErrorBlockTransactionDoesNotExists    = NewError(134, "transaction does not exists in block")
 	ErrorBlockOperationDoesNotExists      = NewError(135, "operation does not exists in block")
+	ErrorSerialized                       = NewError(136, "serialization failed")
 )

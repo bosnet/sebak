@@ -1,6 +1,7 @@
 package sebak
 
 import (
+	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/storage"
 	"bufio"
 	"bytes"
@@ -45,11 +46,9 @@ func TestGetAccountHandler(t *testing.T) {
 
 	// Do Request
 	url := ts.URL + fmt.Sprintf("/account/%s", ba.Address)
-	req, err := http.NewRequest("GET", url, nil)
-	checkError(t, err)
+	req, _ := http.NewRequest("GET", url, nil)
 	req.Header.Set("Accept", "text/event-stream")
-	resp, err := ts.Client().Do(req)
-	checkError(t, err)
+	resp, _ := ts.Client().Do(req)
 	reader := bufio.NewReader(resp.Body)
 
 	// Do stream Request to the Server

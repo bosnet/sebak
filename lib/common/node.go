@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 
+	"boscoin.io/sebak/lib/observer"
 	"github.com/stellar/go/keypair"
 )
 
@@ -46,6 +47,11 @@ type Validator struct {
 	address    string
 	endpoint   *Endpoint
 	validators map[ /* Node.Address() */ string]*Validator
+}
+
+func (v *Validator) Unlock() {
+	v.Mutex.Unlock()
+	observer.NodeObserver.Trigger("change", v)
 }
 
 func (v *Validator) String() string {
