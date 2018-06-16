@@ -85,8 +85,8 @@ var (
 		fmt.Sprintf("%s://%s:%d", defaultNetwork, defaultHost, defaultPort),
 	)
 	flagStorageConfigString string
-	flagTLSCertFile         string = sebakcommon.GetENVValue("SEBAK_TLS_CERT", "sebak.crt")
-	flagTLSKeyFile          string = sebakcommon.GetENVValue("SEBAK_TLS_KEY", "sebak.key")
+	flagTLSCertFile         string = sebakcommon.GetENVValue("SEBAK_TLS_CERT", "")
+	flagTLSKeyFile          string = sebakcommon.GetENVValue("SEBAK_TLS_KEY", "")
 	flagValidators          FlagValidators
 )
 
@@ -137,7 +137,6 @@ func init() {
 
 	nodeCmd.MarkFlagRequired("network-id")
 	nodeCmd.MarkFlagRequired("secret-seed")
-	nodeCmd.MarkFlagRequired("validator")
 
 	rootCmd.AddCommand(nodeCmd)
 }
@@ -146,16 +145,8 @@ func parseFlagsNode() {
 	var err error
 
 	if len(flagNetworkID) < 1 {
-		common.PrintFlagsError(nodeCmd, "--network-id", errors.New("-network-id must be given"))
+		common.PrintFlagsError(nodeCmd, "--network-id", errors.New("--network-id must be given"))
 	}
-
-	if _, err = os.Stat(flagTLSCertFile); os.IsNotExist(err) {
-		common.PrintFlagsError(nodeCmd, "--tls-cert", err)
-	}
-	if _, err = os.Stat(flagTLSKeyFile); os.IsNotExist(err) {
-		common.PrintFlagsError(nodeCmd, "--tls-key", err)
-	}
-
 	var parsedKP keypair.KP
 	parsedKP, err = keypair.Parse(flagKPSecretSeed)
 	if err != nil {
@@ -169,6 +160,20 @@ func parseFlagsNode() {
 	} else {
 		nodeEndpoint = p
 		flagEndpointString = nodeEndpoint.String()
+	}
+
+	if (len(flagTLSCertFile) < 1) || (len(flagTLSKeyFile) < 1) {
+		fileName := strings.Replace(nodeEndpoint.Host, ":", "_", 1)
+		g := sebaknetwork.NewKeyGenerator(fileName)
+		flagTLSCertFile = g.GetCertPath()
+		flagTLSKeyFile = g.GetKeyPath()
+	}
+
+	if _, err = os.Stat(flagTLSCertFile); os.IsNotExist(err) {
+		common.PrintFlagsError(nodeCmd, "--tls-cert", err)
+	}
+	if _, err = os.Stat(flagTLSKeyFile); os.IsNotExist(err) {
+		common.PrintFlagsError(nodeCmd, "--tls-key", err)
 	}
 
 	queries := nodeEndpoint.Query()
