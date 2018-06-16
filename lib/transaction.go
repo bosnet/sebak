@@ -244,7 +244,7 @@ func FinishTransaction(st *sebakstorage.LevelDBBackend, ballot Ballot, tx Transa
 		return
 	}
 
-	if err = baSource.Withdraw(tx.TotalAmount(true), tx.NextCheckpoint()); err != nil {
+	if err = baSource.Withdraw(tx.TotalAmount(true), tx.NextSourceCheckpoint()); err != nil {
 		ts.Discard()
 		return
 	}

@@ -239,7 +239,14 @@ func TestNodeRunnerConsensusSameSourceWillNotIgnored(t *testing.T) {
 		CheckNodeRunnerHandleBallotHistory,
 		CheckNodeRunnerHandleBallotStore,
 		CheckNodeRunnerHandleBallotIsBroadcastable,
-		CheckNodeRunnerHandleBallotVotingHole,
+		// instead of `CheckNodeRunnerHandleBallotVotingHole`
+		func(c sebakcommon.Checker, args ...interface{}) (err error) {
+			checker := c.(*NodeRunnerHandleBallotChecker)
+
+			checker.VotingHole = VotingYES
+
+			return
+		},
 		CheckNodeRunnerHandleBallotBroadcast,
 	}
 
@@ -292,8 +299,29 @@ func TestNodeRunnerConsensusSameSourceWillNotIgnored(t *testing.T) {
 		wg.Done()
 	}
 
+	var secondHandleBallotCheckerFuncs = []sebakcommon.CheckerFunc{
+		CheckNodeRunnerHandleBallotIsWellformed,
+		CheckNodeRunnerHandleBallotCheckIsNew,
+		CheckNodeRunnerHandleBallotReceiveBallot,
+		CheckNodeRunnerHandleBallotHistory,
+		// CheckNodeRunnerHandleBallotStore
+		func(c sebakcommon.Checker, args ...interface{}) (err error) {
+			return
+		},
+		CheckNodeRunnerHandleBallotIsBroadcastable,
+		// instead of `CheckNodeRunnerHandleBallotVotingHole`
+		func(c sebakcommon.Checker, args ...interface{}) (err error) {
+			checker := c.(*NodeRunnerHandleBallotChecker)
+
+			checker.VotingHole = VotingYES
+
+			return
+		},
+		CheckNodeRunnerHandleBallotBroadcast,
+	}
+
 	for _, nr := range nodeRunners {
-		nr.SetHandleBallotCheckerFuncs(deferFunc, DefaultHandleBallotCheckerFuncs...)
+		nr.SetHandleBallotCheckerFuncs(deferFunc, secondHandleBallotCheckerFuncs...)
 	}
 
 	wg = sync.WaitGroup{}

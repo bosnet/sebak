@@ -38,10 +38,6 @@ func NewBlockAccount(address string, balance Amount, checkpoint string) *BlockAc
 	}
 }
 
-func NewBlockAccountFromTransaction(address string, balance Amount, tx Transaction) *BlockAccount {
-	return NewBlockAccount(address, balance, tx.NextCheckpoint())
-}
-
 func (b *BlockAccount) String() string {
 	return string(sebakcommon.MustJSONMarshal(b))
 }
