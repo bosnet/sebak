@@ -74,20 +74,6 @@ func remove(filePath string) {
 	}
 }
 
-// func isDirEmpty(name string) (bool, error) {
-// 	f, err := os.Open(name)
-// 	if err != nil {
-// 		return false, err
-// 	}
-// 	defer f.Close()
-
-// 	_, err = f.Readdirnames(1) // Or f.Readdir(1)
-// 	if err == io.EOF {
-// 		return true, nil
-// 	}
-// 	return false, err // Either not empty or error, suits both cases
-// }
-
 func NewKeyGenerator(endPoint string) *KeyGenerator {
 	p := &KeyGenerator{}
 
@@ -108,11 +94,6 @@ func (g *KeyGenerator) GetCertPath() string {
 
 func (g *KeyGenerator) GetKeyPath() string {
 	return g.keyPath
-}
-
-func (g *KeyGenerator) Close() {
-	remove(g.certPath)
-	remove(g.keyPath)
 }
 
 func GenerateKey(dirPath string, certPath string, keyPath string) {
