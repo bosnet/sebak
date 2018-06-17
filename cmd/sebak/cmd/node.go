@@ -137,6 +137,7 @@ func init() {
 
 	nodeCmd.MarkFlagRequired("network-id")
 	nodeCmd.MarkFlagRequired("secret-seed")
+	nodeCmd.MarkFlagRequired("validator")
 
 	rootCmd.AddCommand(nodeCmd)
 }
