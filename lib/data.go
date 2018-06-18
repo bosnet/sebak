@@ -42,7 +42,7 @@ func (this Amount) Invariant() {
 // Stringer interface implementation
 func (a Amount) String() string {
 	a.Invariant()
-	return strconv.FormatInt(int64(a), 10)
+	return strconv.FormatUint(uint64(a), 10)
 }
 
 //
@@ -115,7 +115,7 @@ func (a *Amount) UnmarshalJSON(b []byte) (err error) {
 // Returns:
 //  A valid `Amount` and a `nil` error, or an invalid amount and an `error`
 func AmountFromString(str string) (Amount, error) {
-	if value, err := strconv.ParseInt(str, 10, 64); err != nil {
+	if value, err := strconv.ParseUint(str, 10, 64); err != nil {
 		return invalidValue, err
 	} else {
 		return Amount(value), nil
