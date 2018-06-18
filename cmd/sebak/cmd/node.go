@@ -167,7 +167,7 @@ func parseFlagsNode() {
 
 	if flagTLSAuto {
 		fileName := strings.Replace(nodeEndpoint.Host, ":", "_", 1)
-		g := sebaknetwork.NewKeyGenerator(fileName)
+		g := sebaknetwork.NewKeyGenerator(fileName, false)
 		flagTLSCertFile = g.GetCertPath()
 		flagTLSKeyFile = g.GetKeyPath()
 	}

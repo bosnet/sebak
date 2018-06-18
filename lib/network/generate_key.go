@@ -1,7 +1,6 @@
 package sebaknetwork
 
 import (
-	"crypto/ecdsa"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -14,45 +13,17 @@ import (
 	"time"
 )
 
-var (
-	host     = "localhost"
-	validFor = time.Duration(1000000)
-	rsaBits  = 2048
+const (
+	host          = "localhost"
+	validForMonth = time.Hour * 24 * 30
 )
-
-func publicKey(priv interface{}) interface{} {
-	switch k := priv.(type) {
-	case *rsa.PrivateKey:
-		return &k.PublicKey
-	case *ecdsa.PrivateKey:
-		return &k.PublicKey
-	default:
-		return nil
-	}
-}
-
-func pemBlockForKey(priv interface{}) *pem.Block {
-	switch k := priv.(type) {
-	case *rsa.PrivateKey:
-		return &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(k)}
-	case *ecdsa.PrivateKey:
-		b, err := x509.MarshalECPrivateKey(k)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Unable to marshal ECDSA private key: %v", err)
-			os.Exit(2)
-		}
-		return &pem.Block{Type: "EC PRIVATE KEY", Bytes: b}
-	default:
-		return nil
-	}
-}
 
 type KeyGenerator struct {
 	certPath string
 	keyPath  string
 }
 
-var (
+const (
 	tlsDirPath  = "tls_tmp"
 	tlsPrefix   = "sebak"
 	certPostfix = ".cert"
@@ -74,7 +45,7 @@ func remove(filePath string) {
 	}
 }
 
-func NewKeyGenerator(endPoint string) *KeyGenerator {
+func NewKeyGenerator(endPoint string, forTest bool) *KeyGenerator {
 	p := &KeyGenerator{}
 
 	p.certPath = fmt.Sprintf("%s/%s_%s%s", tlsDirPath, tlsPrefix, endPoint, certPostfix)
@@ -83,7 +54,7 @@ func NewKeyGenerator(endPoint string) *KeyGenerator {
 	remove(p.certPath)
 	remove(p.keyPath)
 
-	GenerateKey(tlsDirPath, p.certPath, p.keyPath)
+	GenerateKey(tlsDirPath, p.certPath, p.keyPath, forTest)
 
 	return p
 }
@@ -96,16 +67,18 @@ func (g *KeyGenerator) GetKeyPath() string {
 	return g.keyPath
 }
 
-func GenerateKey(dirPath string, certPath string, keyPath string) {
-	var priv interface{}
-	var err error
-	priv, err = rsa.GenerateKey(rand.Reader, rsaBits)
+func GenerateKey(dirPath string, certPath string, keyPath string, forTest bool) {
+	rsaBits := 4096
+	if forTest {
+		rsaBits = 1024
+	}
+	priv, err := rsa.GenerateKey(rand.Reader, rsaBits)
 	if err != nil {
 		log.Debug("failed to generate private key: %s", err)
 	}
 
 	notBefore := time.Now()
-	notAfter := notBefore.Add(validFor)
+	notAfter := notBefore.Add(validForMonth)
 
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
 	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
@@ -116,7 +89,7 @@ func GenerateKey(dirPath string, certPath string, keyPath string) {
 	template := x509.Certificate{
 		SerialNumber: serialNumber,
 		Subject: pkix.Name{
-			Organization: []string{"Acme Co"},
+			Organization: []string{"Self-Signed BOScoin Sebak Certificate"},
 		},
 		NotBefore: notBefore,
 		NotAfter:  notAfter,
@@ -130,7 +103,7 @@ func GenerateKey(dirPath string, certPath string, keyPath string) {
 	template.IsCA = true
 	template.KeyUsage |= x509.KeyUsageCertSign
 
-	derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, publicKey(priv), priv)
+	derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, priv.PublicKey, priv)
 	if err != nil {
 		log.Debug("Failed to create certificate: %s", err)
 	}
@@ -139,18 +112,17 @@ func GenerateKey(dirPath string, certPath string, keyPath string) {
 
 	certOut, err := os.Create(certPath)
 	if err != nil {
-		log.Debug("failed to open %s for writing: %s", certPath, err)
+		log.Error("failed to open certificate", "certfile", certPath, "error", err)
 	}
 	pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
 	certOut.Close()
-	log.Debug("written " + certPath + "\n")
 
 	keyOut, err := os.OpenFile(keyPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
-		log.Debug("failed to open %s for writing:", keyPath, err)
+		log.Error("failed to open certificate", "keyfile", keyPath, "error", err)
 		return
 	}
-	pem.Encode(keyOut, pemBlockForKey(priv))
+	block := pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(priv)}
+	pem.Encode(keyOut, &block)
 	keyOut.Close()
-	log.Debug("written " + keyPath + "\n")
 }
