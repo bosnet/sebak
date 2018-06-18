@@ -22,7 +22,7 @@ const (
 	BlockTransactionPrefixCheckpoint string = "bt-checkpoint-" // bt-hash-<BlockTransaction.Checkpoint>
 	BlockTransactionPrefixSource     string = "bt-source-"     // bt-hash-<BlockTransaction.Source>
 	BlockTransactionPrefixConfirmed  string = "bt-confirmed-"  // bt-hash-<BlockTransaction.Confirmed>
-	BlockTransactionPrefixByAccount  string = "bt-byaccount-"  //bt-hash-<BlockTransaction.Source | BlockTransaction.Operations.Target>
+	BlockTransactionPrefixAccount    string = "bt-account-"    //bt-hash-<BlockTransaction.Source>,<BlockTransaction.Operations.Target>
 )
 
 // TODO(BlockTransaction): support counting
@@ -90,7 +90,7 @@ func (bt BlockTransaction) NewBlockTransactionKeyConfirmed() string {
 func (bt BlockTransaction) NewBlockTransactionKeyByAccount(accountAddress string) string {
 	return fmt.Sprintf(
 		"%s%s",
-		GetBlockTransactionKeyPrefixByAccount(accountAddress),
+		GetBlockTransactionKeyPrefixAccount(accountAddress),
 		sebakcommon.GetUniqueIDFromUUID(),
 	)
 }
@@ -165,8 +165,8 @@ func GetBlockTransactionKeyPrefixConfirmed(confirmed string) string {
 	return fmt.Sprintf("%s%s-", BlockTransactionPrefixConfirmed, confirmed)
 }
 
-func GetBlockTransactionKeyPrefixByAccount(accountAddress string) string {
-	return fmt.Sprintf("%s%s-", BlockTransactionPrefixByAccount, accountAddress)
+func GetBlockTransactionKeyPrefixAccount(accountAddress string) string {
+	return fmt.Sprintf("%s%s-", BlockTransactionPrefixAccount, accountAddress)
 }
 
 func GetBlockTransactionKey(hash string) string {
@@ -247,7 +247,7 @@ func GetBlockTransactionsByAccount(st *sebakstorage.LevelDBBackend, accountAddre
 	func() (BlockTransaction, bool),
 	func(),
 ) {
-	iterFunc, closeFunc := st.GetIterator(GetBlockTransactionKeyPrefixByAccount(accountAddress), reverse)
+	iterFunc, closeFunc := st.GetIterator(GetBlockTransactionKeyPrefixAccount(accountAddress), reverse)
 	return LoadBlockTransactionsInsideIterator(st, iterFunc, closeFunc)
 }
 
