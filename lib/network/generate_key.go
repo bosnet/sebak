@@ -16,6 +16,7 @@ import (
 const (
 	host          = "localhost"
 	validForMonth = time.Hour * 24 * 30
+	rsaBits       = 4096
 )
 
 type KeyGenerator struct {
@@ -45,16 +46,16 @@ func remove(filePath string) {
 	}
 }
 
-func NewKeyGenerator(endPoint string, forTest bool) *KeyGenerator {
+func NewKeyGenerator(name string) *KeyGenerator {
 	p := &KeyGenerator{}
 
-	p.certPath = fmt.Sprintf("%s/%s_%s%s", tlsDirPath, tlsPrefix, endPoint, certPostfix)
-	p.keyPath = fmt.Sprintf("%s/%s_%s%s", tlsDirPath, tlsPrefix, endPoint, keyPostfix)
+	p.certPath = fmt.Sprintf("%s/%s_%s%s", tlsDirPath, tlsPrefix, name, certPostfix)
+	p.keyPath = fmt.Sprintf("%s/%s_%s%s", tlsDirPath, tlsPrefix, name, keyPostfix)
 
 	remove(p.certPath)
 	remove(p.keyPath)
 
-	GenerateKey(tlsDirPath, p.certPath, p.keyPath, forTest)
+	GenerateKey(tlsDirPath, p.certPath, p.keyPath)
 
 	return p
 }
@@ -67,11 +68,7 @@ func (g *KeyGenerator) GetKeyPath() string {
 	return g.keyPath
 }
 
-func GenerateKey(dirPath string, certPath string, keyPath string, forTest bool) {
-	rsaBits := 4096
-	if forTest {
-		rsaBits = 1024
-	}
+func GenerateKey(dirPath string, certPath string, keyPath string) {
 	priv, err := rsa.GenerateKey(rand.Reader, rsaBits)
 	if err != nil {
 		log.Debug("failed to generate private key: %s", err)
@@ -103,7 +100,7 @@ func GenerateKey(dirPath string, certPath string, keyPath string, forTest bool) 
 	template.IsCA = true
 	template.KeyUsage |= x509.KeyUsageCertSign
 
-	derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, priv.PublicKey, priv)
+	derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, &priv.PublicKey, priv)
 	if err != nil {
 		log.Debug("Failed to create certificate: %s", err)
 	}

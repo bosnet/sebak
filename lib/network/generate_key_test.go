@@ -13,7 +13,7 @@ func isExists(path string) bool {
 }
 
 func TestGenerateKey(t *testing.T) {
-	g := NewKeyGenerator("localhost_5001", true)
+	g := NewKeyGenerator("localhost_5001")
 	certPath := "tls_tmp/sebak_localhost_5001.cert"
 	keyPath := "tls_tmp/sebak_localhost_5001.key"
 

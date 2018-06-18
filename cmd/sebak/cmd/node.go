@@ -85,9 +85,8 @@ var (
 		fmt.Sprintf("%s://%s:%d", defaultNetwork, defaultHost, defaultPort),
 	)
 	flagStorageConfigString string
-	flagTLSAuto             bool   = false
-	flagTLSCertFile         string = sebakcommon.GetENVValue("SEBAK_TLS_CERT", "")
-	flagTLSKeyFile          string = sebakcommon.GetENVValue("SEBAK_TLS_KEY", "")
+	flagTLSCertFile         string = sebakcommon.GetENVValue("SEBAK_TLS_CERT", "sebak.crt")
+	flagTLSKeyFile          string = sebakcommon.GetENVValue("SEBAK_TLS_KEY", "sebak.key")
 	flagValidators          FlagValidators
 )
 
@@ -132,7 +131,6 @@ func init() {
 	nodeCmd.Flags().BoolVar(&flagVerbose, "verbose", flagVerbose, "verbose")
 	nodeCmd.Flags().StringVar(&flagEndpointString, "endpoint", flagEndpointString, "endpoint uri to listen on")
 	nodeCmd.Flags().StringVar(&flagStorageConfigString, "storage", flagStorageConfigString, "storage uri")
-	nodeCmd.Flags().BoolVar(&flagTLSAuto, "tls-auto", flagTLSAuto, "generate and use TLS cert and key files")
 	nodeCmd.Flags().StringVar(&flagTLSCertFile, "tls-cert", flagTLSCertFile, "tls certificate file")
 	nodeCmd.Flags().StringVar(&flagTLSKeyFile, "tls-key", flagTLSKeyFile, "tls key file")
 	nodeCmd.Flags().Var(&flagValidators, "validator", "set validator: '<public address>,<endpoint url>,<alias>' or <public address>,<endpoint url>")
@@ -163,13 +161,6 @@ func parseFlagsNode() {
 	} else {
 		nodeEndpoint = p
 		flagEndpointString = nodeEndpoint.String()
-	}
-
-	if flagTLSAuto {
-		fileName := strings.Replace(nodeEndpoint.Host, ":", "_", 1)
-		g := sebaknetwork.NewKeyGenerator(fileName, false)
-		flagTLSCertFile = g.GetCertPath()
-		flagTLSKeyFile = g.GetKeyPath()
 	}
 
 	if _, err = os.Stat(flagTLSCertFile); os.IsNotExist(err) {
