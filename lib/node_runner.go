@@ -244,19 +244,9 @@ func (nr *NodeRunner) handleMessage() {
 				VotingHole:             VotingNOTYET,
 			}
 			if err = sebakcommon.RunChecker(checker, nr.handleBallotCheckerDeferFunc); err != nil {
-				if _, ok := err.(sebakcommon.CheckerErrorStop); ok {
-					nr.closeConsensus(checker)
-					continue
+				if _, ok := err.(sebakcommon.CheckerErrorStop); !ok {
+					nr.log.Error("failed to handle ballot", "error", err)
 				}
-				nr.log.Error("failed to handle ballot", "error", err)
-
-				if err = nr.closeConsensus(checker); err != nil {
-					nr.Log().Error("failed to close consensus", "error", err)
-				} else {
-					nr.Log().Error("consensus closed")
-				}
-
-				continue
 			}
 			nr.closeConsensus(checker)
 		default:
