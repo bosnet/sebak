@@ -95,18 +95,15 @@ func (a Amount) MustSub(sub Amount) Amount {
 	}
 }
 
+// Implement JSON's Marshaler interface
 func (a Amount) MarshalJSON() ([]byte, error) {
-	return []byte(fmt.Sprintf("\"%s\"", strconv.FormatInt(int64(a), 10))), nil
+	return []byte(fmt.Sprintf("\"%s\"", a.String())), nil
 }
 
+// Implement JSON's Unmarshaler interface
+// If Unmarshalling errors, `a` will have an `invalidValue`
 func (a *Amount) UnmarshalJSON(b []byte) (err error) {
-	var c int64
-	if c, err = strconv.ParseInt(string(b[1:len(b)-1]), 10, 64); err != nil {
-		return
-	}
-
-	*a = Amount(c)
-
+	*a, err = AmountFromString(string(b[1 : len(b)-1]))
 	return
 }
 
