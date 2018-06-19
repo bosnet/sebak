@@ -57,6 +57,8 @@ func (t TempTLSInfo) GetTLSKeyInfo(*sebakcommon.Endpoint) (string, error) {
 }
 
 func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, mn *HTTP2Network, validator *sebakcommon.Validator) {
+	NewKeyGenerator(dirPath, certPath, keyPath)
+
 	var config HTTP2NetworkConfig
 	endpoint, err := sebakcommon.NewEndpointFromString("https://localhost:5000?NodeName=n1")
 	if err != nil {
@@ -97,11 +99,11 @@ func removeWhiteSpaces(str string) string {
 }
 
 func TestHTTP2NetworkGetNodeInfo(t *testing.T) {
-	g := NewKeyGenerator(dirPath, certPath, keyPath)
-	defer g.Close()
 	_, s0, currentNode := createNewHTTP2Network(t)
 	s0.Ready(TestHttpRe{})
+
 	go s0.Start()
+	defer s0.Stop()
 
 	c0 := s0.GetClient(s0.Endpoint())
 
@@ -124,29 +126,29 @@ func TestHTTP2NetworkGetNodeInfo(t *testing.T) {
 }
 
 func TestHTTP2NetworkConnect(t *testing.T) {
-	g := NewKeyGenerator(dirPath, certPath, keyPath)
-	defer g.Close()
 	_, s0, currentNode := createNewHTTP2Network(t)
 	s0.Ready(TestHttpRe{})
+
 	go s0.Start()
+	defer s0.Stop()
 
 	c0 := s0.GetClient(s0.Endpoint())
 
-	returnMsg, _ := c0.Connect(currentNode)
-
-	returnStr := removeWhiteSpaces(string(returnMsg))
 	o, _ := currentNode.Serialize()
 	nodeStr := removeWhiteSpaces(string(o))
+
+	returnMsg, _ := c0.Connect(currentNode)
+	returnStr := removeWhiteSpaces(string(returnMsg))
 
 	assert.Equal(t, returnStr, nodeStr, "The connectNode and the return should be the same.")
 }
 
 func TestHTTP2NetworkSendMessage(t *testing.T) {
-	g := NewKeyGenerator(dirPath, certPath, keyPath)
-	defer g.Close()
 	_, s0, _ := createNewHTTP2Network(t)
 	s0.Ready(TestHttpRe{})
+
 	go s0.Start()
+	defer s0.Stop()
 
 	c0 := s0.GetClient(s0.Endpoint())
 
@@ -160,11 +162,10 @@ func TestHTTP2NetworkSendMessage(t *testing.T) {
 }
 
 func TestHTTP2NetworkSendBallot(t *testing.T) {
-	g := NewKeyGenerator(dirPath, certPath, keyPath)
-	defer g.Close()
 	_, s0, _ := createNewHTTP2Network(t)
 	s0.Ready(TestHttpRe{})
 	go s0.Start()
+	defer s0.Stop()
 
 	c0 := s0.GetClient(s0.Endpoint())
 
