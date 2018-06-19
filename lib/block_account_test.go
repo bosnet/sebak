@@ -109,3 +109,45 @@ func TestGetSortedBlockAccounts(t *testing.T) {
 		}
 	}
 }
+
+func TestBlockAccountSaveBlockAccountCheckpoints(t *testing.T) {
+	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
+
+	b := testMakeBlockAccount()
+	b.Save(st)
+
+	var saved []BlockAccount
+	saved = append(saved, *b)
+	for i := 0; i < 10; i++ {
+		b.Checkpoint = TestGenerateNewCheckpoint()
+		b.Save(st)
+
+		saved = append(saved, *b)
+	}
+
+	var fetched []BlockAccountCheckpoint
+	iterFunc, closeFunc := GetBlockAccountCheckpointByAddress(st, b.Address, false)
+	for {
+		bac, hasNext := iterFunc()
+		if !hasNext {
+			break
+		}
+		fetched = append(fetched, bac)
+	}
+	closeFunc()
+
+	for i := 0; i < len(saved); i++ {
+		if saved[i].Address != fetched[i].Address {
+			t.Error("mismatch: Address")
+			return
+		}
+		if saved[i].Balance != fetched[i].Balance {
+			t.Error("mismatch: Balance")
+			return
+		}
+		if saved[i].Checkpoint != fetched[i].Checkpoint {
+			t.Error("mismatch: Checkpoint")
+			return
+		}
+	}
+}

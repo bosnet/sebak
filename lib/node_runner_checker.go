@@ -99,20 +99,19 @@ func CheckNodeRunnerHandleMessageBroadcast(c sebakcommon.Checker, args ...interf
 	return
 }
 
-// TODO check the ballot from known validators
-
 type NodeRunnerHandleBallotChecker struct {
 	sebakcommon.DefaultChecker
 
-	NodeRunner         *NodeRunner
-	CurrentNode        sebakcommon.Node
-	NetworkID          []byte
-	Message            sebaknetwork.Message
-	Ballot             Ballot
-	IsNew              bool
-	VotingStateStaging VotingStateStaging
-	VotingHole         VotingHole
-	WillBroadcast      bool
+	GenesisBlockCheckpoint string
+	NodeRunner             *NodeRunner
+	CurrentNode            sebakcommon.Node
+	NetworkID              []byte
+	Message                sebaknetwork.Message
+	Ballot                 Ballot
+	IsNew                  bool
+	VotingStateStaging     VotingStateStaging
+	VotingHole             VotingHole
+	WillBroadcast          bool
 }
 
 func (c *NodeRunnerHandleBallotChecker) GetTransaction() (tx Transaction) {
@@ -236,58 +235,90 @@ func CheckNodeRunnerHandleBallotIsBroadcastable(c sebakcommon.Checker, args ...i
 
 func CheckNodeRunnerHandleBallotVotingHole(c sebakcommon.Checker, args ...interface{}) (err error) {
 	checker := c.(*NodeRunnerHandleBallotChecker)
+	votingHole := VotingNOTYET
+	defer func() {
+		checker.VotingHole = votingHole
+	}()
 
-	if !checker.VotingStateStaging.IsChanged() {
-		return
-	}
 	if checker.VotingStateStaging.State != sebakcommon.BallotStateSIGN {
 		return
 	}
 
+	if !checker.WillBroadcast {
+		return
+	}
+
+	votingHole = VotingNO
+
 	tx := checker.GetTransaction()
-
-	votingHole := VotingYES
-
 	if tx.B.Fee < Amount(BaseFee) {
 		checker.NodeRunner.Log().Debug("VotingNO: tx.B.Fee < Amount(BaseFee)")
 		votingHole = VotingNO
+
+		return
 	}
 
-	// NOTE(CheckNodeRunnerHandleBallotVotingHole): if BlockTransaction was
-	// not found by tx.B.Checkpoint, it will be genesis block.
-	if votingHole == VotingYES {
-		bt, err := GetBlockTransactionByCheckpoint(checker.NodeRunner.Storage(), tx.B.Checkpoint)
-		if err == nil {
-			// compare the stored BlockTransaction with tx
-			if votingHole == VotingYES && tx.B.Source != bt.Source {
-				checker.NodeRunner.Log().Debug("VotingNO: tx.B.Source != bt.Source", "tx.B.Source", tx.B.Source, "bt.Source", bt.Source)
-				votingHole = VotingNO
-			}
-		}
-	}
+	// TODO error like `ErrorRecordDoesNotExist` must be checked, whether record
+	// does not exist or not.
 
-	if votingHole == VotingYES {
-		if ba, err := GetBlockAccount(checker.NodeRunner.Storage(), tx.B.Source); err != nil {
+	if tx.B.Checkpoint == checker.GenesisBlockCheckpoint { // if tx is first from genesis block
+		// if tx is based on genesis account, check the source is genesis
+		// account.
+		if _, err = GetBlockAccountCheckpoint(
+			checker.NodeRunner.Storage(),
+			tx.B.Source,
+			checker.GenesisBlockCheckpoint,
+		); err != nil {
 			checker.NodeRunner.Log().Debug("VotingNO: ", "error", err)
-			votingHole = VotingNO
-		} else if tx.B.Checkpoint != ba.Checkpoint {
-			checker.NodeRunner.Log().Debug(
-				"VotingNO: tx.B.Checkpoint != ba.Checkpoint",
-				"tx.B.Checkpoint", tx.B.Checkpoint,
-				"ba.Checkpoint", ba.Checkpoint,
-			)
-			votingHole = VotingNO
-		} else if tx.TotalAmount(true) > MustAmountFromString(ba.Balance) {
-			checker.NodeRunner.Log().Debug(
-				"VotingNO: tx.TotalAmount(true) > MustAmountFromString(ba.Balance)",
-				"tx.TotalAmount(true)", tx.TotalAmount(true),
-				"MustAmountFromString(ba.Balance)", MustAmountFromString(ba.Balance),
-			)
-			votingHole = VotingNO
+			return
+		}
+	} else {
+		// check, the checkpoint of tx exists
+		var bt BlockTransaction
+		if bt, err = GetBlockTransactionByCheckpoint(checker.NodeRunner.Storage(), tx.B.Checkpoint); err != nil {
+			return
+		}
+		// check, source is same with the `BlockTransaction` of tx's checkpoint
+		if tx.B.Source != bt.Source {
+			return
 		}
 	}
 
-	checker.VotingHole = votingHole
+	// check, source exists
+	var ba *BlockAccount
+	if ba, err = GetBlockAccount(checker.NodeRunner.Storage(), tx.B.Source); err != nil {
+		return
+	}
+
+	// check, checkpoint is based on latest checkpoint
+	if !tx.IsValidCheckpoint(ba.Checkpoint) {
+		return
+	}
+
+	// get the balance at checkpoint
+	var bac BlockAccountCheckpoint
+	bac, err = GetBlockAccountCheckpoint(checker.NodeRunner.Storage(), tx.B.Source, tx.B.Checkpoint)
+	if err != nil {
+		return
+	}
+
+	totalAmount := tx.TotalAmount(true)
+	// check, have enough balance at checkpoint
+	if MustAmountFromString(bac.Balance) < totalAmount {
+		return
+	}
+
+	// check, have enough balance now
+	if MustAmountFromString(ba.Balance) < totalAmount {
+		checker.NodeRunner.Log().Debug(
+			"VotingNO: tx.TotalAmount(true) > MustAmountFromString(ba.Balance)",
+			"tx.TotalAmount(true)", totalAmount,
+			"MustAmountFromString(ba.Balance)", MustAmountFromString(ba.Balance),
+		)
+		return
+	}
+
+	votingHole = VotingYES
 
 	return
 }

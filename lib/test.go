@@ -1,6 +1,7 @@
 package sebak
 
 import (
+	"fmt"
 	"math/rand"
 
 	"github.com/btcsuite/btcutil/base58"
@@ -14,8 +15,7 @@ func testMakeBlockAccount() *BlockAccount {
 	kp, _ := keypair.Random()
 	address := kp.Address()
 	balance := Amount(2000)
-	hashed := sebakcommon.MustMakeObjectHash("")
-	checkpoint := base58.Encode(hashed)
+	checkpoint := TestGenerateNewCheckpoint()
 
 	return NewBlockAccount(address, balance, checkpoint)
 }
@@ -97,6 +97,10 @@ func TestMakeTransaction(networkID []byte, n int) (kp *keypair.Full, tx Transact
 	return
 }
 
+func TestGenerateNewCheckpoint() string {
+	return base58.Encode([]byte(uuid.New().String()))
+}
+
 func TestMakeTransactionWithKeypair(networkID []byte, n int, srcKp *keypair.Full, targetKps ...*keypair.Full) (tx Transaction) {
 	var ops []Operation
 	var targetAddr string
@@ -108,7 +112,12 @@ func TestMakeTransactionWithKeypair(networkID []byte, n int, srcKp *keypair.Full
 	for i := 0; i < n; i++ {
 		ops = append(ops, TestMakeOperation(-1, targetAddr))
 	}
-	tx, _ = NewTransaction(srcKp.Address(), uuid.New().String(), ops...)
+
+	tx, _ = NewTransaction(
+		srcKp.Address(),
+		fmt.Sprintf("%s-%s", TestGenerateNewCheckpoint(), TestGenerateNewCheckpoint()),
+		ops...,
+	)
 	tx.Sign(srcKp, networkID)
 
 	return
