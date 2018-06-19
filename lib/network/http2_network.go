@@ -71,22 +71,6 @@ func NewHTTP2Network(config HTTP2NetworkConfig) (h2n *HTTP2Network) {
 	return
 }
 
-func (t *HTTP2Network) TLSCertFile() string {
-	return t.tlsCertFile
-}
-
-func (t *HTTP2Network) TLSKeyFile() string {
-	return t.tlsKeyFile
-}
-
-func (t *HTTP2Network) SetTLSCertFile(certFile string) {
-	t.tlsCertFile = certFile
-}
-
-func (t *HTTP2Network) SetTLSKeyFile(keyFile string) {
-	t.tlsKeyFile = keyFile
-}
-
 func (t *HTTP2Network) Context() context.Context {
 	return t.ctx
 }
