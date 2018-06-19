@@ -10,7 +10,6 @@ import (
 	"golang.org/x/net/http2"
 
 	logging "github.com/inconshreveable/log15"
-	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
 	"github.com/stellar/go/keypair"
 
@@ -194,15 +193,7 @@ func parseFlagsNode() {
 		common.PrintFlagsError(nodeCmd, "--log-level", err)
 	}
 
-	var logHandler logging.Handler
-
-	var formatter logging.Format
-	if isatty.IsTerminal(os.Stdout.Fd()) {
-		formatter = logging.TerminalFormat()
-	} else {
-		formatter = logging.JsonFormatEx(false, true)
-	}
-	logHandler = logging.StreamHandler(os.Stdout, formatter)
+	logHandler := logging.StdoutHandler
 
 	if len(flagLogOutput) < 1 {
 		flagLogOutput = "<stdout>"
