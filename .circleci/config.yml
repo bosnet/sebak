@@ -2,20 +2,10 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/golang:1.9
-
+      - image: circleci/golang:1.10
     working_directory: /go/src/boscoin.io/sebak
     steps:
       - checkout
-      - run:
-          name: Checkout merge commit
-          command: |
-            if [[ -n "${CIRCLE_PR_NUMBER}" ]]
-            then
-              FETCH_REFS="${FETCH_REFS} +refs/pull/${CIRCLE_PR_NUMBER}/merge:pr/${CIRCLE_PR_NUMBER}/merge"
-              git fetch -u origin ${FETCH_REFS}
-              git checkout "pr/${CIRCLE_PR_NUMBER}/merge"
-            fi
       - run:
           name: install dep
           command: curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
@@ -28,9 +18,79 @@ jobs:
           key: dependency-cache-{{ checksum "Gopkg.lock" }}
           paths:
             - vendor
+      - persist_to_workspace:
+          root: /go/src/boscoin.io
+          paths:
+            - sebak
+
+  fmt:
+    docker:
+      - image: circleci/golang:1.10
+    working_directory: /go/src/boscoin.io/sebak
+    steps:
+      - attach_workspace:
+          at: /go/src/boscoin.io
       - run:
           name: check formatting
           command: if [[ -n "$(gofmt -l cmd lib)" ]]; then gofmt -l cmd lib; exit 1; fi
+
+  test_go1_10:
+    docker:
+      - image: circleci/golang:1.10
+    working_directory: /go/src/boscoin.io/sebak
+    steps:
+      - attach_workspace:
+          at: /go/src/boscoin.io
       - run:
           name: run tests
-          command: SEBAK_LOG_HANDLER=null go test -v ./...
+          command: SEBAK_LOG_HANDLER=null go test -v -timeout 3m ./...
+
+  test_go1_9:
+    docker:
+      - image: circleci/golang:1.9
+    working_directory: /go/src/boscoin.io/sebak
+    steps:
+      - attach_workspace:
+          at: /go/src/boscoin.io
+      - run:
+          name: run tests
+          command: SEBAK_LOG_HANDLER=null go test -v -timeout 3m ./...
+
+  test_merged:
+    docker:
+      - image: circleci/golang:1.10
+    working_directory: /go/src/boscoin.io/sebak
+    steps:
+      - attach_workspace:
+          at: /go/src/boscoin.io
+      - run:
+          name: Checkout merge commit
+          command: |
+            if [[ -n "${CIRCLE_PR_NUMBER}" ]]
+            then
+              FETCH_REFS="${FETCH_REFS} +refs/pull/${CIRCLE_PR_NUMBER}/merge:pr/${CIRCLE_PR_NUMBER}/merge"
+              git fetch -u origin ${FETCH_REFS}
+              git checkout "pr/${CIRCLE_PR_NUMBER}/merge"
+            fi
+      - run:
+          name: run tests
+          command: SEBAK_LOG_HANDLER=null go test -v -timeout 3m ./...
+
+workflows:
+  version: 2
+  build_and_test:
+    jobs:
+      - build
+      - fmt:
+          requires:
+            - build
+      - test_go1_10:
+          requires:
+            - fmt
+      - test_go1_9:
+          requires:
+            - fmt
+      - test_merged:
+          requires:
+            - test_go1_10
+            - test_go1_9
