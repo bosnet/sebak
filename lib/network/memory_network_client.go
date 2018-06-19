@@ -31,7 +31,7 @@ func (m *MemoryTransportClient) GetNodeInfo() (b []byte, err error) {
 	return
 }
 
-func (m *MemoryTransportClient) SendMessage(message sebakcommon.Serializable) (err error) {
+func (m *MemoryTransportClient) SendMessage(message sebakcommon.Serializable) (body []byte, err error) {
 	var s []byte
 	if s, err = message.Serialize(); err != nil {
 		return
@@ -41,7 +41,7 @@ func (m *MemoryTransportClient) SendMessage(message sebakcommon.Serializable) (e
 	return
 }
 
-func (m *MemoryTransportClient) SendBallot(message sebakcommon.Serializable) (err error) {
+func (m *MemoryTransportClient) SendBallot(message sebakcommon.Serializable) (body []byte, err error) {
 	var s []byte
 	if s, err = message.Serialize(); err != nil {
 		return

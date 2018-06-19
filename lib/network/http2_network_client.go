@@ -72,7 +72,9 @@ func (c *HTTP2NetworkClient) GetNodeInfo() (body []byte, err error) {
 		return
 	}
 	defer response.Body.Close()
-	body, err = ioutil.ReadAll(response.Body)
+	if response.StatusCode == http.StatusOK {
+		body, err = ioutil.ReadAll(response.Body)
+	}
 	return
 }
 
@@ -87,11 +89,13 @@ func (c *HTTP2NetworkClient) Connect(node sebakcommon.Node) (body []byte, err er
 		return
 	}
 	defer response.Body.Close()
-	body, err = ioutil.ReadAll(response.Body)
+	if response.StatusCode == http.StatusOK {
+		body, err = ioutil.ReadAll(response.Body)
+	}
 	return
 }
 
-func (c *HTTP2NetworkClient) SendMessage(message sebakcommon.Serializable) (err error) {
+func (c *HTTP2NetworkClient) SendMessage(message sebakcommon.Serializable) (retBody []byte, err error) {
 	headers := c.DefaultHeaders()
 	headers.Set("Content-Type", "application/json")
 
@@ -108,11 +112,14 @@ func (c *HTTP2NetworkClient) SendMessage(message sebakcommon.Serializable) (err 
 		return
 	}
 	defer response.Body.Close()
+	if response.StatusCode == http.StatusOK {
+		retBody, err = ioutil.ReadAll(response.Body)
+	}
 
 	return
 }
 
-func (c *HTTP2NetworkClient) SendBallot(message sebakcommon.Serializable) (err error) {
+func (c *HTTP2NetworkClient) SendBallot(message sebakcommon.Serializable) (retBody []byte, err error) {
 	headers := c.DefaultHeaders()
 	headers.Set("Content-Type", "application/json")
 
@@ -129,6 +136,9 @@ func (c *HTTP2NetworkClient) SendBallot(message sebakcommon.Serializable) (err e
 		return
 	}
 	defer response.Body.Close()
+	if response.StatusCode == http.StatusOK {
+		retBody, err = ioutil.ReadAll(response.Body)
+	}
 
 	return
 }
