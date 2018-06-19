@@ -2,7 +2,6 @@ package sebak
 
 import (
 	"encoding/json"
-	"strings"
 
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/stellar/go/keypair"
@@ -131,13 +130,16 @@ func (o Transaction) IsValidCheckpoint(checkpoint string) bool {
 		return true
 	}
 
-	a := strings.SplitN(checkpoint, "-", 2)
-	b := strings.SplitN(o.B.Checkpoint, "-", 2)
-	if len(a) < 2 || len(b) < 2 {
+	var err error
+	var inputCheckpoint, currentCheckpoint [2]string
+	if inputCheckpoint, err = sebakcommon.ParseCheckpoint(checkpoint); err != nil {
+		return false
+	}
+	if currentCheckpoint, err = sebakcommon.ParseCheckpoint(o.B.Checkpoint); err != nil {
 		return false
 	}
 
-	return a[0] == b[0]
+	return inputCheckpoint[0] == currentCheckpoint[0]
 }
 
 func (o Transaction) GetHash() string {
