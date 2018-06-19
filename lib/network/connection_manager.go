@@ -174,7 +174,7 @@ func (c *ConnectionManager) Broadcast(message sebakcommon.Message) {
 	for _, validator := range c.AllConnected() {
 		go func(v *sebakcommon.Validator) {
 			client := c.GetConnection(v.Address())
-			if err := client.SendBallot(message); err != nil {
+			if _, err := client.SendBallot(message); err != nil {
 				c.log.Error("failed to SendBallot", "error", err, "validator", v)
 			}
 		}(validator)

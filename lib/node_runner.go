@@ -2,6 +2,8 @@ package sebak
 
 import (
 	"context"
+	"fmt"
+	"net/http"
 	"time"
 
 	"boscoin.io/sebak/lib/common"
@@ -63,9 +65,18 @@ func NewNodeRunner(
 	return nr
 }
 
+type HttpRe struct{}
+
+func (r HttpRe) ResponseMessage(w http.ResponseWriter, o string) {
+	fmt.Fprintf(w, string(o))
+	// fmt.Fprintf(w, "What the fun!")
+}
+
+func (r HttpRe) ReceiveMessage(*sebaknetwork.HTTP2Network, sebaknetwork.Message) {}
+
 func (nr *NodeRunner) Ready() {
 	nr.network.SetContext(nr.ctx)
-	nr.network.Ready()
+	nr.network.Ready(HttpRe{})
 }
 
 func (nr *NodeRunner) Start() (err error) {

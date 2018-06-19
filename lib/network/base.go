@@ -19,7 +19,7 @@ type Network interface {
 
 	Start() error
 	Stop()
-	Ready() error
+	Ready(Re) error
 	IsReady() bool
 
 	ReceiveChannel() chan Message
@@ -32,7 +32,8 @@ func NewNetwork(endpoint *sebakcommon.Endpoint) (n Network, err error) {
 		n = NewMemoryNetwork()
 	case "https":
 		var config HTTP2NetworkConfig
-		config, err = NewHTTP2NetworkConfigFromEndpoint(endpoint)
+		tlsInfo := ValidTLSInfo{}
+		config, err = NewHTTP2NetworkConfigFromEndpoint(tlsInfo, endpoint)
 		if err != nil {
 			return
 		}
@@ -47,8 +48,8 @@ type NetworkClient interface {
 
 	Connect(node sebakcommon.Node) ([]byte, error)
 	GetNodeInfo() ([]byte, error)
-	SendMessage(sebakcommon.Serializable) error
-	SendBallot(sebakcommon.Serializable) error
+	SendMessage(sebakcommon.Serializable) ([]byte, error)
+	SendBallot(sebakcommon.Serializable) ([]byte, error)
 }
 
 type MessageType string
