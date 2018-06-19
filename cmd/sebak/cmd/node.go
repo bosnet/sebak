@@ -129,7 +129,7 @@ func init() {
 	nodeCmd.Flags().StringVar(&flagLogLevel, "log-level", flagLogLevel, "log level, {crit, error, warn, info, debug}")
 	nodeCmd.Flags().StringVar(&flagLogOutput, "log-output", flagLogOutput, "set log output file")
 	nodeCmd.Flags().BoolVar(&flagVerbose, "verbose", flagVerbose, "verbose")
-	nodeCmd.Flags().StringVar(&flagEndpointString, "endpoint", flagEndpointString, "endpoint uri to listen on ('https://0.0.0.0:12345')")
+	nodeCmd.Flags().StringVar(&flagEndpointString, "endpoint", flagEndpointString, "endpoint uri to listen on")
 	nodeCmd.Flags().StringVar(&flagStorageConfigString, "storage", flagStorageConfigString, "storage uri")
 	nodeCmd.Flags().StringVar(&flagTLSCertFile, "tls-cert", flagTLSCertFile, "tls certificate file")
 	nodeCmd.Flags().StringVar(&flagTLSKeyFile, "tls-key", flagTLSKeyFile, "tls key file")
@@ -146,16 +146,8 @@ func parseFlagsNode() {
 	var err error
 
 	if len(flagNetworkID) < 1 {
-		common.PrintFlagsError(nodeCmd, "--network-id", errors.New("-network-id must be given"))
+		common.PrintFlagsError(nodeCmd, "--network-id", errors.New("--network-id must be given"))
 	}
-
-	if _, err = os.Stat(flagTLSCertFile); os.IsNotExist(err) {
-		common.PrintFlagsError(nodeCmd, "--tls-cert", err)
-	}
-	if _, err = os.Stat(flagTLSKeyFile); os.IsNotExist(err) {
-		common.PrintFlagsError(nodeCmd, "--tls-key", err)
-	}
-
 	var parsedKP keypair.KP
 	parsedKP, err = keypair.Parse(flagKPSecretSeed)
 	if err != nil {
@@ -169,6 +161,13 @@ func parseFlagsNode() {
 	} else {
 		nodeEndpoint = p
 		flagEndpointString = nodeEndpoint.String()
+	}
+
+	if _, err = os.Stat(flagTLSCertFile); os.IsNotExist(err) {
+		common.PrintFlagsError(nodeCmd, "--tls-cert", err)
+	}
+	if _, err = os.Stat(flagTLSKeyFile); os.IsNotExist(err) {
+		common.PrintFlagsError(nodeCmd, "--tls-key", err)
 	}
 
 	queries := nodeEndpoint.Query()

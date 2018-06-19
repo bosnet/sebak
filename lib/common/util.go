@@ -6,6 +6,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"net/url"
 	"os"
 	"strings"
@@ -154,6 +155,30 @@ func ReverseStringSlice(a []string) []string {
 		b[i], b[j] = a[j], a[i]
 	}
 	return b
+}
+
+func IsExists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
+}
+
+func IsNotExists(path string) bool {
+	_, err := os.Stat(path)
+	return os.IsNotExist(err)
+}
+
+func IsEmpty(path string) (bool, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return false, err
+	}
+	defer f.Close()
+
+	_, err = f.Readdirnames(1) // Or f.Readdir(1)
+	if err == io.EOF {
+		return true, nil
+	}
+	return false, err // Either not empty or error, suits both cases
 }
 
 func MakeCheckpoint(a, b string) string {
