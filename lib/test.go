@@ -118,7 +118,7 @@ func TestMakeTransactionWithKeypair(networkID []byte, n int, srcKp *keypair.Full
 		fmt.Sprintf("%s-%s", TestGenerateNewCheckpoint(), TestGenerateNewCheckpoint()),
 		ops...,
 	)
-	tx.Sign(kp, networkID)
+	tx.Sign(srcKp, networkID)
 
 	return
 }
