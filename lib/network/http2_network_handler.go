@@ -9,7 +9,7 @@ import (
 	"boscoin.io/sebak/lib/common"
 )
 
-func Index(re Re, ctx context.Context, t *HTTP2Network) HandlerFunc {
+func Index(ctx context.Context, t *HTTP2Network, re Re) HandlerFunc {
 	var currentNode sebakcommon.Serializable
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -22,7 +22,7 @@ func Index(re Re, ctx context.Context, t *HTTP2Network) HandlerFunc {
 	}
 }
 
-func ConnectHandler(re Re, ctx context.Context, t *HTTP2Network) HandlerFunc {
+func ConnectHandler(ctx context.Context, t *HTTP2Network, re Re) HandlerFunc {
 	var currentNode sebakcommon.Serializable
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -48,7 +48,7 @@ func ConnectHandler(re Re, ctx context.Context, t *HTTP2Network) HandlerFunc {
 	}
 }
 
-func MessageHandler(re Re, ctx context.Context, t *HTTP2Network) HandlerFunc {
+func MessageHandler(ctx context.Context, t *HTTP2Network, re Re) HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 
@@ -74,7 +74,7 @@ func MessageHandler(re Re, ctx context.Context, t *HTTP2Network) HandlerFunc {
 	}
 }
 
-func BallotHandler(re Re, ctx context.Context, t *HTTP2Network) HandlerFunc {
+func BallotHandler(ctx context.Context, t *HTTP2Network, re Re) HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
 			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)

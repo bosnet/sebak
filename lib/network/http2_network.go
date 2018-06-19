@@ -140,16 +140,16 @@ type Re interface {
 	ReceiveMessage(*HTTP2Network, Message)
 }
 
-func (t *HTTP2Network) AddHandler(re Re, ctx context.Context, pattern string, handler func(Re, context.Context, *HTTP2Network) HandlerFunc) (err error) {
-	t.handlers[pattern] = handler(re, ctx, t)
+func (t *HTTP2Network) AddHandler(ctx context.Context, pattern string, handler func(context.Context, *HTTP2Network, Re) HandlerFunc, re Re) (err error) {
+	t.handlers[pattern] = handler(ctx, t, re)
 	return nil
 }
 
 func (t *HTTP2Network) Ready(re Re) error {
-	t.AddHandler(re, t.Context(), "/", Index)
-	t.AddHandler(re, t.Context(), "/connect", ConnectHandler)
-	t.AddHandler(re, t.Context(), "/message", MessageHandler)
-	t.AddHandler(re, t.Context(), "/ballot", BallotHandler)
+	t.AddHandler(t.Context(), "/", Index, re)
+	t.AddHandler(t.Context(), "/connect", ConnectHandler, re)
+	t.AddHandler(t.Context(), "/message", MessageHandler, re)
+	t.AddHandler(t.Context(), "/ballot", BallotHandler, re)
 
 	handler := new(http.ServeMux)
 	for pattern, handlerFunc := range t.handlers {
