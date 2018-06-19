@@ -69,7 +69,6 @@ type HttpRe struct{}
 
 func (r HttpRe) ResponseMessage(w http.ResponseWriter, o string) {
 	fmt.Fprintf(w, string(o))
-	// fmt.Fprintf(w, "What the fun!")
 }
 
 func (r HttpRe) ReceiveMessage(*sebaknetwork.HTTP2Network, sebaknetwork.Message) {}
