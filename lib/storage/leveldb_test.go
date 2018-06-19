@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/error"
 )
 
 func TestLevelDBBackendInitFileStorage(t *testing.T) {
@@ -133,6 +134,11 @@ func TestLevelDBBackendGetRaw(t *testing.T) {
 	input := "findme"
 
 	st.New(key, input)
+
+	// when record does not exist, it should return ErrorStorageRecordDoesNotExist
+	if _, err := st.GetRaw("vacuum"); err != sebakerror.ErrorStorageRecordDoesNotExist {
+		t.Errorf("failed to GetRaw: want=%v have=%v", sebakerror.ErrorStorageRecordDoesNotExist, err)
+	}
 }
 
 func TestLevelDBBackendSet(t *testing.T) {

@@ -1,6 +1,7 @@
 package sebak
 
 import (
+	"fmt"
 	"math/rand"
 
 	"github.com/btcsuite/btcutil/base58"
@@ -14,8 +15,7 @@ func testMakeBlockAccount() *BlockAccount {
 	kp, _ := keypair.Random()
 	address := kp.Address()
 	balance := Amount(2000)
-	hashed := sebakcommon.MustMakeObjectHash("")
-	checkpoint := base58.Encode(hashed)
+	checkpoint := TestGenerateNewCheckpoint()
 
 	return NewBlockAccount(address, balance, checkpoint)
 }
@@ -37,21 +37,27 @@ func TestMakeNewBlockTransaction(networkID []byte, n int) BlockTransaction {
 	return NewBlockTransactionFromTransaction(tx, a)
 }
 
-func TestMakeOperationBodyPayment(amount int) OperationBodyPayment {
-	kp, _ := keypair.Random()
+func TestMakeOperationBodyPayment(amount int, addressList ...string) OperationBodyPayment {
+	var address string
+	if len(addressList) > 0 {
+		address = addressList[0]
+	} else {
+		kp, _ := keypair.Random()
+		address = kp.Address()
+	}
 
 	for amount < 0 {
 		amount = rand.Intn(5000)
 	}
 
 	return OperationBodyPayment{
-		Target: kp.Address(),
+		Target: address,
 		Amount: Amount(amount),
 	}
 }
 
-func TestMakeOperation(amount int) Operation {
-	opb := TestMakeOperationBodyPayment(amount)
+func TestMakeOperation(amount int, addressList ...string) Operation {
+	opb := TestMakeOperationBodyPayment(amount, addressList...)
 
 	op := Operation{
 		H: OperationHeader{
@@ -91,13 +97,28 @@ func TestMakeTransaction(networkID []byte, n int) (kp *keypair.Full, tx Transact
 	return
 }
 
-func TestMakeTransactionWithKeypair(networkID []byte, n int, kp *keypair.Full) (tx Transaction) {
+func TestGenerateNewCheckpoint() string {
+	return base58.Encode([]byte(uuid.New().String()))
+}
+
+func TestMakeTransactionWithKeypair(networkID []byte, n int, srcKp *keypair.Full, targetKps ...*keypair.Full) (tx Transaction) {
 	var ops []Operation
-	for i := 0; i < n; i++ {
-		ops = append(ops, TestMakeOperation(-1))
+	var targetAddr string
+
+	if len(targetKps) > 0 {
+		targetAddr = targetKps[0].Address()
 	}
-	tx, _ = NewTransaction(kp.Address(), uuid.New().String(), ops...)
-	tx.Sign(kp, networkID)
+
+	for i := 0; i < n; i++ {
+		ops = append(ops, TestMakeOperation(-1, targetAddr))
+	}
+
+	tx, _ = NewTransaction(
+		srcKp.Address(),
+		fmt.Sprintf("%s-%s", TestGenerateNewCheckpoint(), TestGenerateNewCheckpoint()),
+		ops...,
+	)
+	tx.Sign(srcKp, networkID)
 
 	return
 }

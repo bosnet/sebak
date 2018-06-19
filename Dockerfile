@@ -6,12 +6,12 @@ LABEL maintainer="BOSCoin Developers <devteam@boscoin.io>"
 COPY ./ /go/src/boscoin.io/sebak
 WORKDIR /go/src/boscoin.io/sebak
 
-## Since those need to be re-run every time anyway, they are in a single stage
-# `git` and `openssh` are needed for `go get`
-RUN apk add --no-cache git openssh          \
-    && go get github.com/golang/dep/cmd/dep \
-    && dep ensure -v                        \
-    && go install -v ./...
+## Note that we do not get the dependencies anew
+## We carry over whatever is in `vendor`, so the user MUST run `dep ensure` in their local copy
+## This make building the container orders of magnitude faster (`dep ensure` is extremely slow),
+## greatly reduce the container's size, and gives more control to the user as to what is tested
+## (one can replace a dependency, if needed).
+RUN go install -v ./...
 
 ## This one is much more lightweight
 FROM alpine:latest AS runner
@@ -25,4 +25,5 @@ COPY --from=builder /go/bin/sebak /sebak/
 ENV SEBAK_NETWORK_ID    sebak-test-network
 
 WORKDIR /sebak/
-ENTRYPOINT ./entrypoint.sh
+ENTRYPOINT [ "./entrypoint.sh" ]
+CMD []
