@@ -304,10 +304,7 @@ func TestNodeRunnerConsensusSameSourceWillNotIgnored(t *testing.T) {
 		CheckNodeRunnerHandleBallotCheckIsNew,
 		CheckNodeRunnerHandleBallotReceiveBallot,
 		CheckNodeRunnerHandleBallotHistory,
-		// CheckNodeRunnerHandleBallotStore
-		func(c sebakcommon.Checker, args ...interface{}) (err error) {
-			return
-		},
+		// skip `CheckNodeRunnerHandleBallotStore`
 		CheckNodeRunnerHandleBallotIsBroadcastable,
 		// instead of `CheckNodeRunnerHandleBallotVotingHole`
 		func(c sebakcommon.Checker, args ...interface{}) (err error) {
