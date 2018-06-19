@@ -1,8 +1,5 @@
 package sebak
 
-/*
-import "sync"
-
 import (
 	"boscoin.io/sebak/lib/storage"
 	"bufio"
@@ -96,4 +93,3 @@ func TestStreaming(t *testing.T) {
 	wg.Wait()
 	server.Shutdown(context.Background())
 }
-*/
