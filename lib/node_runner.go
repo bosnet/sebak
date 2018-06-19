@@ -71,7 +71,9 @@ func (r HttpRe) ResponseMessage(w http.ResponseWriter, o string) {
 	fmt.Fprintf(w, string(o))
 }
 
-func (r HttpRe) ReceiveMessage(*sebaknetwork.HTTP2Network, sebaknetwork.Message) {}
+func (r HttpRe) ReceiveMessage(t *sebaknetwork.HTTP2Network, msg sebaknetwork.Message) {
+	t.ReceiveChannel() <- msg
+}
 
 func (nr *NodeRunner) Ready() {
 	nr.network.SetContext(nr.ctx)
