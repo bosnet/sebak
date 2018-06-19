@@ -129,3 +129,7 @@ func NewMemoryNetwork() *MemoryNetwork {
 
 	return n
 }
+
+func (p MemoryNetwork) GetRouter() interface{} {
+	return nil
+}
