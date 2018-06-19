@@ -177,10 +177,10 @@ func (o *Transaction) Sign(kp keypair.KP, networkID []byte) {
 }
 
 // NextSourceCheckpoint generate new checkpoint from current Transaction. It has
-// 2 part, "<head>-<body>".
+// 2 part, "<subtracted>-<added>".
 //
-// <head>: hash of last paid transaction of source account
-// <body>: hash of last transaction
+// <subtracted>: hash of last paid transaction, it means balance is subtracted
+// <added>: hash of last added transaction, it means balance is added
 func (o Transaction) NextSourceCheckpoint() string {
 	return sebakcommon.MakeCheckpoint(o.GetHash(), o.GetHash())
 }
