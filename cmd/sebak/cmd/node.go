@@ -89,8 +89,8 @@ var (
 	flagTLSCertFile         string = sebakcommon.GetENVValue("SEBAK_TLS_CERT", "sebak.crt")
 	flagTLSKeyFile          string = sebakcommon.GetENVValue("SEBAK_TLS_KEY", "sebak.key")
 	flagValidators          FlagValidators
-	flagSignThreshold		string = sebakcommon.GetENVValue("SEBAK_SIGN_THRESHOLD", "30")
-	flagAcceptThreshold		string = sebakcommon.GetENVValue("SEBAK_ACCEPT_THRESHOLD", "30")
+	flagSignThreshold       string = sebakcommon.GetENVValue("SEBAK_SIGN_THRESHOLD", "30")
+	flagAcceptThreshold     string = sebakcommon.GetENVValue("SEBAK_ACCEPT_THRESHOLD", "30")
 )
 
 var (
