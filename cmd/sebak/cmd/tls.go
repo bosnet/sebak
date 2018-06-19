@@ -12,21 +12,23 @@ import (
 )
 
 var (
-	tlsCmd *cobra.Command
+	tlsCmd            *cobra.Command
+	flagTLSOutputPath = "."
 )
 
 func init() {
 	tlsCmd = &cobra.Command{
 		Use:   "tls",
-		Short: "Generate simple tls cert and key file",
+		Short: "Generate tls certificate and key file",
 		Run: func(c *cobra.Command, args []string) {
 			generate()
 			return
 		},
 	}
 
-	tlsCmd.Flags().StringVar(&flagTLSCertFile, "cert-name", flagTLSCertFile, "tls certificate file name")
-	tlsCmd.Flags().StringVar(&flagTLSKeyFile, "key-name", flagTLSKeyFile, "tls key file name")
+	tlsCmd.Flags().StringVar(&flagTLSCertFile, "cert", flagTLSCertFile, "tls certificate file name")
+	tlsCmd.Flags().StringVar(&flagTLSKeyFile, "key", flagTLSKeyFile, "tls key file name")
+	tlsCmd.Flags().StringVar(&flagTLSOutputPath, "output", flagTLSOutputPath, "tls output path")
 
 	rootCmd.AddCommand(tlsCmd)
 }
@@ -34,17 +36,20 @@ func init() {
 func generate() {
 	var err error
 
-	sebaknetwork.GenerateKey(".", flagTLSCertFile, flagTLSKeyFile)
+	sebaknetwork.NewKeyGenerator(flagTLSOutputPath, flagTLSCertFile, flagTLSKeyFile)
 
-	if _, err = os.Stat(flagTLSCertFile); os.IsNotExist(err) {
+	if _, err = os.Stat(flagTLSOutputPath); os.IsNotExist(err) {
+		common.PrintFlagsError(tlsCmd, "output", err)
+	}
+	if _, err = os.Stat(flagTLSOutputPath + "/" + flagTLSCertFile); os.IsNotExist(err) {
 		common.PrintFlagsError(tlsCmd, "cert", err)
 	}
-	if _, err = os.Stat(flagTLSKeyFile); os.IsNotExist(err) {
+	if _, err = os.Stat(flagTLSOutputPath + "/" + flagTLSKeyFile); os.IsNotExist(err) {
 		common.PrintFlagsError(tlsCmd, "key", err)
 	}
 
 	log = logging.New("module", "tls")
 
-	log.Info("Generate tls cert and key files", "cert", flagTLSCertFile, "key", flagTLSKeyFile)
+	log.Info("Generate tls certificate and key files", "cert", flagTLSCertFile, "key", flagTLSKeyFile, "out", flagTLSOutputPath)
 
 }

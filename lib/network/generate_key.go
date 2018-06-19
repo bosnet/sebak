@@ -11,6 +11,8 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
+	"boscoin.io/sebak/lib/common"
 )
 
 const (
@@ -20,8 +22,9 @@ const (
 )
 
 type KeyGenerator struct {
-	certPath string
-	keyPath  string
+	dirPath,
+	certPath,
+	keyPath string
 }
 
 const (
@@ -46,16 +49,16 @@ func remove(filePath string) {
 	}
 }
 
-func NewKeyGenerator(name string) *KeyGenerator {
+func NewKeyGenerator(dirPath, certPath, keyPath string) *KeyGenerator {
 	p := &KeyGenerator{}
 
-	p.certPath = fmt.Sprintf("%s/%s_%s%s", tlsDirPath, tlsPrefix, name, certPostfix)
-	p.keyPath = fmt.Sprintf("%s/%s_%s%s", tlsDirPath, tlsPrefix, name, keyPostfix)
+	p.dirPath = dirPath
+	p.certPath = fmt.Sprintf("%s/%s", dirPath, certPath)
+	p.keyPath = fmt.Sprintf("%s/%s", dirPath, keyPath)
 
-	remove(p.certPath)
-	remove(p.keyPath)
-
-	GenerateKey(tlsDirPath, p.certPath, p.keyPath)
+	if !sebakcommon.IsExists(p.certPath) || !sebakcommon.IsExists(p.keyPath) {
+		GenerateKey(p.dirPath, p.certPath, p.keyPath)
+	}
 
 	return p
 }
@@ -68,7 +71,19 @@ func (g *KeyGenerator) GetKeyPath() string {
 	return g.keyPath
 }
 
-func GenerateKey(dirPath string, certPath string, keyPath string) {
+func (g *KeyGenerator) Close() {
+	remove(g.keyPath)
+	remove(g.certPath)
+	if res, _ := sebakcommon.IsEmpty(g.dirPath); res {
+		remove(g.dirPath)
+	}
+}
+
+func GenerateKey(dirPath, certPath, keyPath string) {
+	if sebakcommon.IsNotExists(dirPath) {
+		os.Mkdir(dirPath, 0755)
+	}
+
 	priv, err := rsa.GenerateKey(rand.Reader, rsaBits)
 	if err != nil {
 		log.Debug("failed to generate private key: %s", err)
@@ -104,8 +119,6 @@ func GenerateKey(dirPath string, certPath string, keyPath string) {
 	if err != nil {
 		log.Debug("Failed to create certificate: %s", err)
 	}
-
-	os.Mkdir(dirPath, 0777)
 
 	certOut, err := os.Create(certPath)
 	if err != nil {

@@ -1,26 +1,23 @@
 package sebaknetwork
 
 import (
-	"os"
 	"testing"
 
+	"boscoin.io/sebak/lib/common"
 	"github.com/stretchr/testify/assert"
 )
 
-func isExists(path string) bool {
-	_, err := os.Stat(path)
-	return err == nil
-}
-
 func TestGenerateKey(t *testing.T) {
-	g := NewKeyGenerator("localhost_5001")
-	certPath := "tls_tmp/sebak_localhost_5001.cert"
-	keyPath := "tls_tmp/sebak_localhost_5001.key"
+	g := NewKeyGenerator("tls_tmp", "sebak.cert", "sebak.key")
+	defer g.Close()
+
+	certPath := "tls_tmp/sebak.cert"
+	keyPath := "tls_tmp/sebak.key"
 
 	assert.Equal(t, g.GetCertPath(), certPath)
 	assert.Equal(t, g.GetKeyPath(), keyPath)
 
-	assert.Equal(t, isExists(certPath), true)
-	assert.Equal(t, isExists(keyPath), true)
+	assert.Equal(t, sebakcommon.IsExists(certPath), true)
+	assert.Equal(t, sebakcommon.IsExists(keyPath), true)
 
 }
