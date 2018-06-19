@@ -309,7 +309,7 @@ func CheckNodeRunnerHandleBallotVotingHole(c sebakcommon.Checker, args ...interf
 	}
 
 	// check, have enough balance now
-	if totalAmount > MustAmountFromString(ba.Balance) {
+	if MustAmountFromString(ba.Balance) < totalAmount {
 		checker.NodeRunner.Log().Debug(
 			"VotingNO: tx.TotalAmount(true) > MustAmountFromString(ba.Balance)",
 			"tx.TotalAmount(true)", totalAmount,
