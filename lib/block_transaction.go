@@ -12,15 +12,17 @@ import (
 // BlockTransaction is `Transaction` data for block. the storage should support,
 //  * find by `Hash`
 //
-//  * //get list by `Checkpoint` and created order
+//  * get list by `Checkpoint` and created order
 //  * get list by `Source` and created order
 //  * get list by `Confirmed` order
+//  * get list by `Account` and created order
 
 const (
 	BlockTransactionPrefixHash       string = "bt-hash-"       // bt-hash-<BlockTransaction.Hash>
 	BlockTransactionPrefixCheckpoint string = "bt-checkpoint-" // bt-hash-<BlockTransaction.Checkpoint>
 	BlockTransactionPrefixSource     string = "bt-source-"     // bt-hash-<BlockTransaction.Source>
 	BlockTransactionPrefixConfirmed  string = "bt-confirmed-"  // bt-hash-<BlockTransaction.Confirmed>
+	BlockTransactionPrefixAccount    string = "bt-account-"    //bt-hash-<BlockTransaction.Source>,<BlockTransaction.Operations.Target>
 )
 
 // TODO(BlockTransaction): support counting
@@ -85,6 +87,14 @@ func (bt BlockTransaction) NewBlockTransactionKeyConfirmed() string {
 	)
 }
 
+func (bt BlockTransaction) NewBlockTransactionKeyByAccount(accountAddress string) string {
+	return fmt.Sprintf(
+		"%s%s",
+		GetBlockTransactionKeyPrefixAccount(accountAddress),
+		sebakcommon.GetUniqueIDFromUUID(),
+	)
+}
+
 func (bt *BlockTransaction) Save(st *sebakstorage.LevelDBBackend) (err error) {
 	if bt.isSaved {
 		return sebakerror.ErrorAlreadySaved
@@ -113,10 +123,17 @@ func (bt *BlockTransaction) Save(st *sebakstorage.LevelDBBackend) (err error) {
 	if err = st.New(bt.NewBlockTransactionKeyConfirmed(), bt.Hash); err != nil {
 		return
 	}
-
+	if err = st.New(bt.NewBlockTransactionKeyByAccount(bt.Source), bt.Hash); err != nil {
+		return
+	}
 	for _, op := range bt.transaction.B.Operations {
 		bo := NewBlockOperationFromOperation(op, bt.transaction)
 		if err = bo.Save(st); err != nil {
+			return
+		}
+
+		target := op.B.TargetAddress()
+		if err = st.New(bt.NewBlockTransactionKeyByAccount(target), bt.Hash); err != nil {
 			return
 		}
 	}
@@ -146,6 +163,10 @@ func GetBlockTransactionKeyPrefixSource(source string) string {
 
 func GetBlockTransactionKeyPrefixConfirmed(confirmed string) string {
 	return fmt.Sprintf("%s%s-", BlockTransactionPrefixConfirmed, confirmed)
+}
+
+func GetBlockTransactionKeyPrefixAccount(accountAddress string) string {
+	return fmt.Sprintf("%s%s-", BlockTransactionPrefixAccount, accountAddress)
 }
 
 func GetBlockTransactionKey(hash string) string {
@@ -219,6 +240,14 @@ func GetBlockTransactionsByConfirmed(st *sebakstorage.LevelDBBackend, reverse bo
 ) {
 	iterFunc, closeFunc := st.GetIterator(BlockTransactionPrefixConfirmed, reverse)
 
+	return LoadBlockTransactionsInsideIterator(st, iterFunc, closeFunc)
+}
+
+func GetBlockTransactionsByAccount(st *sebakstorage.LevelDBBackend, accountAddress string, reverse bool) (
+	func() (BlockTransaction, bool),
+	func(),
+) {
+	iterFunc, closeFunc := st.GetIterator(GetBlockTransactionKeyPrefixAccount(accountAddress), reverse)
 	return LoadBlockTransactionsInsideIterator(st, iterFunc, closeFunc)
 }
 
