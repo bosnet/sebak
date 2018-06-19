@@ -19,8 +19,8 @@ func TestNewBlockTransaction(t *testing.T) {
 		t.Error("`BlockTransaction.Hash mismatch`")
 		return
 	}
-	if bt.Checkpoint != tx.B.Checkpoint {
-		t.Error("`BlockTransaction.Checkpoint mismatch`")
+	if bt.PreviousCheckpoint != tx.B.Checkpoint {
+		t.Error("`BlockTransaction.PreviousCheckpoint mismatch`")
 		return
 	}
 	if bt.Signature != tx.H.Signature {
@@ -76,7 +76,7 @@ func TestBlockTransactionSaveAndGet(t *testing.T) {
 		t.Error("mismatch `Hash`")
 		return
 	}
-	if bt.Checkpoint != fetched.Checkpoint {
+	if bt.PreviousCheckpoint != fetched.PreviousCheckpoint {
 		t.Error("mismatch `Checkpoint`")
 		return
 	}
@@ -356,7 +356,7 @@ func TestBlockTransactionGetByCheckpoint(t *testing.T) {
 		return
 	}
 
-	fetched, err := GetBlockTransactionByCheckpoint(st, bt.Checkpoint)
+	fetched, err := GetBlockTransactionByCheckpoint(st, bt.SourceCheckpoint)
 	if err != nil {
 		t.Error(err)
 		return
@@ -365,7 +365,7 @@ func TestBlockTransactionGetByCheckpoint(t *testing.T) {
 		t.Error("mismatch `Hash`")
 		return
 	}
-	if bt.Checkpoint != fetched.Checkpoint {
+	if bt.PreviousCheckpoint != fetched.PreviousCheckpoint {
 		t.Error("mismatch `Checkpoint`")
 		return
 	}
@@ -397,5 +397,82 @@ func TestBlockTransactionGetByCheckpoint(t *testing.T) {
 	if len(fetched.Confirmed) < 1 {
 		t.Error("`Confirmed` missing")
 		return
+	}
+}
+
+func TestMultipleBlockTransactionGetByAccount(t *testing.T) {
+	kp, _ := keypair.Random()
+	kpAnother, _ := keypair.Random()
+	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
+
+	numTxs := 5
+
+	var txs []Transaction
+	var createdOrder []string
+
+	for i := 0; i < numTxs; i++ {
+		tx := TestMakeTransactionWithKeypair(networkID, 1, kp)
+		txs = append(txs, tx)
+		createdOrder = append(createdOrder, tx.GetHash())
+
+		a, _ := tx.Serialize()
+		bt := NewBlockTransactionFromTransaction(tx, a)
+		err := bt.Save(st)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+	}
+
+	// create txs from another keypair source but target is this keypair
+	for i := 0; i < numTxs; i++ {
+		tx := TestMakeTransactionWithKeypair(networkID, 1, kpAnother, kp)
+		txs = append(txs, tx)
+		createdOrder = append(createdOrder, tx.GetHash())
+
+		a, _ := tx.Serialize()
+		bt := NewBlockTransactionFromTransaction(tx, a)
+		err := bt.Save(st)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+	}
+
+	// create txs from another keypair
+	for i := 0; i < numTxs; i++ {
+		tx := TestMakeTransactionWithKeypair(networkID, 1, kpAnother)
+		a, _ := tx.Serialize()
+		bt := NewBlockTransactionFromTransaction(tx, a)
+		err := bt.Save(st)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+	}
+
+	{
+		var saved []BlockTransaction
+		iterFunc, closeFunc := GetBlockTransactionsByAccount(st, kp.Address(), false)
+		for {
+			bo, hasNext := iterFunc()
+			if !hasNext {
+				break
+			}
+
+			saved = append(saved, bo)
+		}
+		closeFunc()
+
+		if len(saved) != len(createdOrder) {
+			t.Error("fetched records insufficient")
+		}
+		for i, bt := range saved {
+			if bt.Hash != createdOrder[i] {
+				t.Error("order mismatch")
+				return
+			}
+		}
+
 	}
 }

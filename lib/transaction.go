@@ -2,7 +2,6 @@ package sebak
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/stellar/go/keypair"
@@ -86,6 +85,7 @@ func NewTransaction(source, checkpoint string, ops ...Operation) (tx Transaction
 }
 
 var TransactionWellFormedCheckerFuncs = []sebakcommon.CheckerFunc{
+	CheckTransactionCheckpoint,
 	CheckTransactionSource,
 	CheckTransactionBaseFee,
 	CheckTransactionOperation,
@@ -125,6 +125,23 @@ func (o Transaction) Equal(m sebakcommon.Message) bool {
 	return o.H.Hash == m.GetHash()
 }
 
+func (o Transaction) IsValidCheckpoint(checkpoint string) bool {
+	if o.B.Checkpoint == checkpoint {
+		return true
+	}
+
+	var err error
+	var inputCheckpoint, currentCheckpoint [2]string
+	if inputCheckpoint, err = sebakcommon.ParseCheckpoint(checkpoint); err != nil {
+		return false
+	}
+	if currentCheckpoint, err = sebakcommon.ParseCheckpoint(o.B.Checkpoint); err != nil {
+		return false
+	}
+
+	return inputCheckpoint[0] == currentCheckpoint[0]
+}
+
 func (o Transaction) GetHash() string {
 	return o.H.Hash
 }
@@ -161,14 +178,19 @@ func (o *Transaction) Sign(kp keypair.KP, networkID []byte) {
 	return
 }
 
-func (o Transaction) NextCheckpoint() string {
-	return string(
-		base58.Encode(
-			sebakcommon.MakeHash(
-				[]byte(fmt.Sprintf("%s%s", o.B.Checkpoint, o.GetHash())),
-			),
-		),
-	)
+// NextSourceCheckpoint generate new checkpoint from current Transaction. It has
+// 2 part, "<subtracted>-<added>".
+//
+// <subtracted>: hash of last paid transaction, it means balance is subtracted
+// <added>: hash of last added transaction, it means balance is added
+func (o Transaction) NextSourceCheckpoint() string {
+	return sebakcommon.MakeCheckpoint(o.GetHash(), o.GetHash())
+}
+
+func (o Transaction) NextTargetCheckpoint() string {
+	parsed, _ := sebakcommon.ParseCheckpoint(o.B.Checkpoint)
+
+	return sebakcommon.MakeCheckpoint(parsed[0], o.GetHash())
 }
 
 type TransactionHeader struct {
@@ -224,7 +246,7 @@ func FinishTransaction(st *sebakstorage.LevelDBBackend, ballot Ballot, tx Transa
 		return
 	}
 
-	if err = baSource.Withdraw(tx.TotalAmount(true), tx.NextCheckpoint()); err != nil {
+	if err = baSource.Withdraw(tx.TotalAmount(true), tx.NextSourceCheckpoint()); err != nil {
 		ts.Discard()
 		return
 	}
@@ -236,7 +258,6 @@ func FinishTransaction(st *sebakstorage.LevelDBBackend, ballot Ballot, tx Transa
 
 	if err = ts.Commit(); err != nil {
 		ts.Discard()
-		return
 	}
 
 	return
