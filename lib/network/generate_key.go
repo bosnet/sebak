@@ -27,13 +27,6 @@ type KeyGenerator struct {
 	keyPath string
 }
 
-const (
-	tlsDirPath  = "tls_tmp"
-	tlsPrefix   = "sebak"
-	certPostfix = ".cert"
-	keyPostfix  = ".key"
-)
-
 func remove(filePath string) {
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		return
@@ -43,9 +36,9 @@ func remove(filePath string) {
 	if err != nil {
 		absFilePath, absErr := filepath.Abs(filePath)
 		if absErr != nil {
-			log.Error(fmt.Sprintf("failed to get an absolute path(%s)", filePath), "error", absErr)
+			log.Error("failed to get an absolute path", "path", filePath, "error", absErr)
 		}
-		log.Error(fmt.Sprintf("failed to remove a file(%s)", absFilePath), "error", err)
+		log.Error("failed to remove a file", "file", absFilePath, "error", err)
 	}
 }
 
@@ -86,7 +79,7 @@ func GenerateKey(dirPath, certPath, keyPath string) {
 
 	priv, err := rsa.GenerateKey(rand.Reader, rsaBits)
 	if err != nil {
-		log.Debug("failed to generate private key: %s", err)
+		log.Debug("failed to generate private key", "error", err)
 	}
 
 	notBefore := time.Now()
@@ -95,7 +88,7 @@ func GenerateKey(dirPath, certPath, keyPath string) {
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
 	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
 	if err != nil {
-		log.Debug("failed to generate serial number: %s", err)
+		log.Debug("failed to generate serial number", "error", err)
 	}
 
 	template := x509.Certificate{
@@ -117,7 +110,7 @@ func GenerateKey(dirPath, certPath, keyPath string) {
 
 	derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, &priv.PublicKey, priv)
 	if err != nil {
-		log.Debug("Failed to create certificate: %s", err)
+		log.Debug("Failed to create certificate", "error", err)
 	}
 
 	certOut, err := os.Create(certPath)
