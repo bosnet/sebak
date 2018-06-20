@@ -1,11 +1,11 @@
 package sebaknetwork
 
 import (
-	"os"
-
 	logging "github.com/inconshreveable/log15"
+
+	"boscoin.io/sebak/lib/common/test"
 )
 
 func init() {
-	SetLogging(logging.LvlDebug, logging.StreamHandler(os.Stdout, logging.TerminalFormat()))
+	SetLogging(logging.LvlDebug, test.LogHandler())
 }
