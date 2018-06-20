@@ -2,7 +2,6 @@ package sebak
 
 import (
 	"encoding/json"
-	"sort"
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
@@ -98,6 +97,22 @@ func (b Ballot) Serialize() (encoded []byte, err error) {
 func (b Ballot) String() string {
 	encoded, _ := json.MarshalIndent(b, "", "  ")
 	return string(encoded)
+}
+
+func (b Ballot) IsFitInVoting() (ret bool) {
+	switch b.State() {
+	case sebakcommon.BallotStateSIGN:
+	case sebakcommon.BallotStateACCEPT:
+	case sebakcommon.BallotStateALLCONFIRM:
+		ret = true
+	default:
+		ret = false
+	}
+	return
+}
+
+func (b Ballot) IsFitInWaiting() bool {
+	return !b.IsFitInVoting()
 }
 
 // NewBallotFromMessage creates `Ballot` from `Message`. It needs to be
@@ -316,7 +331,7 @@ func (b *BallotBoxes) AddVotingResult(vr *VotingResult, bb *BallotBox) (err erro
 	defer b.Unlock()
 
 	b.Results[vr.MessageHash] = vr
-	bb.AddVotingResult(vr) // TODO detect error
+	err = bb.AddVotingResult(vr)
 
 	return
 }
@@ -346,12 +361,20 @@ func (b *BallotBoxes) AddBallot(ballot Ballot) (isNew bool, err error) {
 		if err = vr.Add(ballot); err != nil {
 			return
 		}
-
 		if b.ReservedBox.HasMessageByHash(ballot.MessageHash()) {
-			b.ReservedBox.RemoveVotingResult(vr) // TODO detect error
-			b.VotingBox.AddVotingResult(vr)      // TODO detect error
+			if err = b.ReservedBox.RemoveVotingResult(vr); err != nil {
+				log.Error("ReservedBox has a message but cannot remove it", "MessageHash", ballot.MessageHash(), "error", err)
+			}
+			if ballot.IsFitInVoting() {
+				err = b.AddVotingResult(vr, b.VotingBox)
+			} else {
+				err = b.AddVotingResult(vr, b.WaitingBox)
+			}
+			if err != nil {
+				log.Warn("The message is already exists", "MessageHash", ballot.MessageHash(), "error", err)
+				err = nil
+			}
 		}
-
 		return
 	}
 
@@ -361,10 +384,10 @@ func (b *BallotBoxes) AddBallot(ballot Ballot) (isNew bool, err error) {
 	}
 
 	// unknown ballot will be in `WaitingBox`
-	if ballot.State() == sebakcommon.BallotStateINIT {
-		err = b.AddVotingResult(vr, b.WaitingBox)
-	} else {
+	if ballot.IsFitInVoting() {
 		err = b.AddVotingResult(vr, b.VotingBox)
+	} else {
+		err = b.AddVotingResult(vr, b.WaitingBox)
 	}
 
 	if _, found := b.Messages[ballot.MessageHash()]; !found {
@@ -377,11 +400,11 @@ func (b *BallotBoxes) AddBallot(ballot Ballot) (isNew bool, err error) {
 type BallotBox struct {
 	sebakcommon.SafeLock
 
-	Hashes sort.StringSlice // `Message.Hash`es
+	Hashes map[string]bool // `Message.Hash`es
 }
 
 func NewBallotBox() *BallotBox {
-	return &BallotBox{}
+	return &BallotBox{Hashes: make(map[string]bool)}
 }
 
 func (b *BallotBox) Len() int {
@@ -393,7 +416,7 @@ func (b *BallotBox) HasMessage(m sebakcommon.Message) bool {
 }
 
 func (b *BallotBox) HasMessageByHash(hash string) bool {
-	_, found := sebakcommon.InStringArray(b.Hashes, hash)
+	_, found := b.Hashes[hash]
 	return found
 }
 
@@ -406,8 +429,7 @@ func (b *BallotBox) AddVotingResult(vr *VotingResult) (err error) {
 	b.Lock()
 	defer b.Unlock()
 
-	b.Hashes = append(b.Hashes, vr.MessageHash)
-	sort.Strings(b.Hashes)
+	b.Hashes[vr.MessageHash] = true
 
 	return
 }
@@ -421,9 +443,7 @@ func (b *BallotBox) RemoveVotingResult(vr *VotingResult) (err error) {
 	b.Lock()
 	defer b.Unlock()
 
-	i := sort.SearchStrings(b.Hashes, vr.MessageHash)
-	b.Hashes = append(b.Hashes[:i], b.Hashes[i+1:]...)
-	sort.Strings(b.Hashes)
+	delete(b.Hashes, vr.MessageHash)
 
 	return
 }

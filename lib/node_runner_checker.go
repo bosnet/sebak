@@ -41,7 +41,7 @@ func CheckNodeRunnerHandleMessageTransactionHasSameSource(c sebakcommon.Checker,
 	incomingTx := checker.Transaction
 	isaac := checker.NodeRunner.Consensus().(*ISAAC)
 
-	for _, hash := range isaac.Boxes.VotingBox.Hashes {
+	for hash, _ := range isaac.Boxes.VotingBox.Hashes {
 		existingTx := isaac.Boxes.Messages[hash].(Transaction)
 		if incomingTx.B.Source != existingTx.B.Source {
 			continue
