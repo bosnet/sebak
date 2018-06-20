@@ -89,8 +89,8 @@ var (
 	flagTLSCertFile         string = sebakcommon.GetENVValue("SEBAK_TLS_CERT", "sebak.crt")
 	flagTLSKeyFile          string = sebakcommon.GetENVValue("SEBAK_TLS_KEY", "sebak.key")
 	flagValidators          FlagValidators
-	flagSignThreshold       string = sebakcommon.GetENVValue("SEBAK_SIGN_THRESHOLD", "30")
-	flagAcceptThreshold     string = sebakcommon.GetENVValue("SEBAK_ACCEPT_THRESHOLD", "30")
+	flagSignThreshold       string = sebakcommon.GetENVValue("SEBAK_SIGN_THRESHOLD", "60")
+	flagAcceptThreshold     string = sebakcommon.GetENVValue("SEBAK_ACCEPT_THRESHOLD", "60")
 )
 
 var (
@@ -137,8 +137,8 @@ func init() {
 	nodeCmd.Flags().StringVar(&flagTLSCertFile, "tls-cert", flagTLSCertFile, "tls certificate file")
 	nodeCmd.Flags().StringVar(&flagTLSKeyFile, "tls-key", flagTLSKeyFile, "tls key file")
 	nodeCmd.Flags().Var(&flagValidators, "validator", "set validator: '<public address>,<endpoint url>,<alias>' or <public address>,<endpoint url>")
-	nodeCmd.Flags().StringVar(&flagSignThreshold, "sign-th", flagSignThreshold, "sign threshold")
-	nodeCmd.Flags().StringVar(&flagAcceptThreshold, "accept-th", flagAcceptThreshold, "accept threshold")
+	nodeCmd.Flags().StringVar(&flagSignThreshold, "sign-threshold", flagSignThreshold, "sign threshold")
+	nodeCmd.Flags().StringVar(&flagAcceptThreshold, "accept-threshold", flagAcceptThreshold, "accept threshold")
 
 	nodeCmd.MarkFlagRequired("network-id")
 	nodeCmd.MarkFlagRequired("secret-seed")
