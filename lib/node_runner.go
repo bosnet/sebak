@@ -77,7 +77,7 @@ func (r Http2MessageBroker) ReceiveMessage(t *sebaknetwork.HTTP2Network, msg seb
 
 func (nr *NodeRunner) Ready() {
 	nr.network.SetContext(nr.ctx)
-	nr.network.Ready(Http2MessageBroker{})
+	nr.network.Ready()
 }
 
 func (nr *NodeRunner) Start() (err error) {

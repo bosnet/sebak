@@ -91,7 +91,8 @@ func removeWhiteSpaces(str string) string {
 
 func TestHTTP2NetworkGetNodeInfo(t *testing.T) {
 	_, s0, currentNode := createNewHTTP2Network(t)
-	s0.Ready(TestMessageBroker{})
+	s0.SetMessageBroker(TestMessageBroker{})
+	s0.Ready()
 
 	go s0.Start()
 	defer s0.Stop()
@@ -118,7 +119,8 @@ func TestHTTP2NetworkGetNodeInfo(t *testing.T) {
 
 func TestHTTP2NetworkConnect(t *testing.T) {
 	_, s0, currentNode := createNewHTTP2Network(t)
-	s0.Ready(TestMessageBroker{})
+	s0.SetMessageBroker(TestMessageBroker{})
+	s0.Ready()
 
 	go s0.Start()
 	defer s0.Stop()
@@ -136,7 +138,8 @@ func TestHTTP2NetworkConnect(t *testing.T) {
 
 func TestHTTP2NetworkSendMessage(t *testing.T) {
 	_, s0, _ := createNewHTTP2Network(t)
-	s0.Ready(TestMessageBroker{})
+	s0.SetMessageBroker(TestMessageBroker{})
+	s0.Ready()
 
 	go s0.Start()
 	defer s0.Stop()
@@ -154,7 +157,8 @@ func TestHTTP2NetworkSendMessage(t *testing.T) {
 
 func TestHTTP2NetworkSendBallot(t *testing.T) {
 	_, s0, _ := createNewHTTP2Network(t)
-	s0.Ready(TestMessageBroker{})
+	s0.SetMessageBroker(TestMessageBroker{})
+	s0.Ready()
 	go s0.Start()
 	defer s0.Stop()
 

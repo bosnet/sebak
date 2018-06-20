@@ -24,12 +24,18 @@ type HTTP2Network struct {
 
 	receiveChannel chan Message
 
-	ready bool
+	messageBroker MessageBroker
+	ready         bool
 
 	handlers Handlers
 	watchers []func(Network, net.Conn, http.ConnState)
 
 	config HTTP2NetworkConfig
+}
+
+type MessageBroker interface {
+	ResponseMessage(http.ResponseWriter, string)
+	ReceiveMessage(*HTTP2Network, Message)
 }
 
 type HandlerFunc func(w http.ResponseWriter, r *http.Request)
@@ -68,7 +74,19 @@ func NewHTTP2Network(config HTTP2NetworkConfig) (h2n *HTTP2Network) {
 	h2n.setNotReadyHandler()
 	h2n.server.ConnState = h2n.ConnState
 
+	h2n.SetMessageBroker(Http2MessageBroker{})
+
 	return
+}
+
+type Http2MessageBroker struct{}
+
+func (r Http2MessageBroker) ResponseMessage(w http.ResponseWriter, o string) {
+	fmt.Fprintf(w, string(o))
+}
+
+func (r Http2MessageBroker) ReceiveMessage(t *HTTP2Network, msg Message) {
+	t.ReceiveChannel() <- msg
 }
 
 func (t *HTTP2Network) Context() context.Context {
@@ -119,21 +137,22 @@ func (t *HTTP2Network) setNotReadyHandler() {
 	t.server.Handler = handlers.CombinedLoggingHandler(t.config.HTTP2LogOutput, handler)
 }
 
-type MessageBroker interface {
-	ResponseMessage(http.ResponseWriter, string)
-	ReceiveMessage(*HTTP2Network, Message)
-}
-
-func (t *HTTP2Network) AddHandler(ctx context.Context, pattern string, handler func(context.Context, *HTTP2Network, MessageBroker) HandlerFunc, mb MessageBroker) (err error) {
-	t.handlers[pattern] = handler(ctx, t, mb)
+func (t *HTTP2Network) AddHandler(ctx context.Context, pattern string, handler func(context.Context, *HTTP2Network, MessageBroker) HandlerFunc) (err error) {
+	t.handlers[pattern] = handler(ctx, t, t.messageBroker)
 	return nil
 }
 
-func (t *HTTP2Network) Ready(mb MessageBroker) error {
-	t.AddHandler(t.Context(), "/", Index, mb)
-	t.AddHandler(t.Context(), "/connect", ConnectHandler, mb)
-	t.AddHandler(t.Context(), "/message", MessageHandler, mb)
-	t.AddHandler(t.Context(), "/ballot", BallotHandler, mb)
+func (t *HTTP2Network) SetMessageBroker(mb MessageBroker) {
+	t.messageBroker = mb
+}
+
+func (t *HTTP2Network) Ready() error {
+	//
+
+	t.AddHandler(t.Context(), "/", Index)
+	t.AddHandler(t.Context(), "/connect", ConnectHandler)
+	t.AddHandler(t.Context(), "/message", MessageHandler)
+	t.AddHandler(t.Context(), "/ballot", BallotHandler)
 
 	handler := new(http.ServeMux)
 	for pattern, handlerFunc := range t.handlers {

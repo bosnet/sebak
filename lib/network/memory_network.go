@@ -74,8 +74,12 @@ func (p *MemoryNetwork) Stop() {
 	p.close <- true
 }
 
-func (p *MemoryNetwork) Ready(MessageBroker) error {
+func (p *MemoryNetwork) Ready() error {
 	return nil
+}
+
+func (p *MemoryNetwork) SetMessageBroker(MessageBroker) {
+
 }
 
 func (p *MemoryNetwork) IsReady() bool {
