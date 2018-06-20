@@ -2,12 +2,9 @@ package sebaknetwork
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"io"
 	"net"
 	"net/http"
-	"os"
 	"time"
 
 	"boscoin.io/sebak/lib/common"
@@ -16,108 +13,7 @@ import (
 	"golang.org/x/net/http2"
 )
 
-type HTTP2NetworkConfig struct {
-	NodeName string
-	Addr     string
-
-	ReadTimeout,
-	ReadHeaderTimeout,
-	WriteTimeout,
-	IdleTimeout time.Duration
-
-	TLSCertFile,
-	TLSKeyFile string
-
-	HTTP2LogOutput io.Writer
-}
-
-func NewHTTP2NetworkConfigFromEndpoint(endpoint *sebakcommon.Endpoint) (config HTTP2NetworkConfig, err error) {
-	query := endpoint.Query()
-
-	var NodeName string
-	var ReadTimeout time.Duration = 0
-	var ReadHeaderTimeout time.Duration = 0
-	var WriteTimeout time.Duration = 0
-	var IdleTimeout time.Duration = 5
-	var TLSCertFile, TLSKeyFile string
-	var HTTP2LogOutput io.Writer
-
-	if ReadTimeout, err = time.ParseDuration(sebakcommon.GetUrlQuery(query, "ReadTimeout", "0s")); err != nil {
-		return
-	}
-	if ReadTimeout < 0*time.Second {
-		err = errors.New("invalid 'ReadTimeout'")
-		return
-	}
-
-	if ReadHeaderTimeout, err = time.ParseDuration(sebakcommon.GetUrlQuery(query, "ReadHeaderTimeout", "0s")); err != nil {
-		return
-	}
-	if ReadHeaderTimeout < 0*time.Second {
-		err = errors.New("invalid 'ReadHeaderTimeout'")
-		return
-	}
-
-	if WriteTimeout, err = time.ParseDuration(sebakcommon.GetUrlQuery(query, "WriteTimeout", "0s")); err != nil {
-		return
-	}
-	if WriteTimeout < 0*time.Second {
-		err = errors.New("invalid 'WriteTimeout'")
-		return
-	}
-
-	if IdleTimeout, err = time.ParseDuration(sebakcommon.GetUrlQuery(query, "IdleTimeout", "0s")); err != nil {
-		return
-	}
-	if IdleTimeout < 0*time.Second {
-		err = errors.New("invalid 'IdleTimeout'")
-		return
-	}
-
-	if v := query.Get("TLSCertFile"); len(v) < 1 {
-		err = errors.New("'TLSCertFile' is missing")
-		return
-	} else {
-		TLSCertFile = v
-	}
-
-	if v := query.Get("TLSKeyFile"); len(v) < 1 {
-		err = errors.New("'TLSKeyFile' is missing")
-		return
-	} else {
-		TLSKeyFile = v
-	}
-
-	if v := query.Get("NodeName"); len(v) < 1 {
-		err = errors.New("`NodeName` must be given")
-		return
-	} else {
-		NodeName = v
-	}
-
-	if v := query.Get("HTTP2LogOutput"); len(v) < 1 {
-		HTTP2LogOutput = os.Stdout
-	} else {
-		HTTP2LogOutput, err = os.OpenFile(v, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
-		if err != nil {
-			return
-		}
-	}
-
-	config = HTTP2NetworkConfig{
-		NodeName:          NodeName,
-		Addr:              endpoint.Host,
-		ReadTimeout:       ReadTimeout,
-		ReadHeaderTimeout: ReadHeaderTimeout,
-		WriteTimeout:      WriteTimeout,
-		IdleTimeout:       IdleTimeout,
-		TLSCertFile:       TLSCertFile,
-		TLSKeyFile:        TLSKeyFile,
-		HTTP2LogOutput:    HTTP2LogOutput,
-	}
-
-	return
-}
+type Handlers map[string]func(http.ResponseWriter, *http.Request)
 
 type HTTP2Network struct {
 	ctx         context.Context
@@ -128,12 +24,18 @@ type HTTP2Network struct {
 
 	receiveChannel chan Message
 
-	ready bool
+	messageBroker MessageBroker
+	ready         bool
 
-	handlers map[string]func(http.ResponseWriter, *http.Request)
+	handlers Handlers
 	watchers []func(Network, net.Conn, http.ConnState)
 
 	config HTTP2NetworkConfig
+}
+
+type MessageBroker interface {
+	ResponseMessage(http.ResponseWriter, string)
+	ReceiveMessage(*HTTP2Network, Message)
 }
 
 type HandlerFunc func(w http.ResponseWriter, r *http.Request)
@@ -167,12 +69,24 @@ func NewHTTP2Network(config HTTP2NetworkConfig) (h2n *HTTP2Network) {
 	}
 
 	h2n.config = config
-	h2n.handlers = map[string]func(http.ResponseWriter, *http.Request){}
+	h2n.handlers = Handlers{}
 
 	h2n.setNotReadyHandler()
 	h2n.server.ConnState = h2n.ConnState
 
+	h2n.SetMessageBroker(Http2MessageBroker{})
+
 	return
+}
+
+type Http2MessageBroker struct{}
+
+func (r Http2MessageBroker) ResponseMessage(w http.ResponseWriter, o string) {
+	fmt.Fprintf(w, o)
+}
+
+func (r Http2MessageBroker) ReceiveMessage(t *HTTP2Network, msg Message) {
+	t.ReceiveChannel() <- msg
 }
 
 func (t *HTTP2Network) Context() context.Context {
@@ -228,8 +142,12 @@ func (t *HTTP2Network) AddHandler(ctx context.Context, pattern string, handler f
 	return nil
 }
 
+func (t *HTTP2Network) SetMessageBroker(mb MessageBroker) {
+	t.messageBroker = mb
+}
+
 func (t *HTTP2Network) Ready() error {
-	t.AddHandler(t.Context(), "/", Index)
+	t.AddHandler(t.Context(), "/", IndexHandler)
 	t.AddHandler(t.Context(), "/connect", ConnectHandler)
 	t.AddHandler(t.Context(), "/message", MessageHandler)
 	t.AddHandler(t.Context(), "/ballot", BallotHandler)

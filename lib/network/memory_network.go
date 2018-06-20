@@ -78,6 +78,10 @@ func (p *MemoryNetwork) Ready() error {
 	return nil
 }
 
+func (p *MemoryNetwork) SetMessageBroker(MessageBroker) {
+
+}
+
 func (p *MemoryNetwork) IsReady() bool {
 	return true
 }

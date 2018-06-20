@@ -19,6 +19,7 @@ type Network interface {
 
 	Start() error
 	Stop()
+	SetMessageBroker(MessageBroker)
 	Ready() error
 	IsReady() bool
 
@@ -47,8 +48,8 @@ type NetworkClient interface {
 
 	Connect(node sebakcommon.Node) ([]byte, error)
 	GetNodeInfo() ([]byte, error)
-	SendMessage(sebakcommon.Serializable) error
-	SendBallot(sebakcommon.Serializable) error
+	SendMessage(sebakcommon.Serializable) ([]byte, error)
+	SendBallot(sebakcommon.Serializable) ([]byte, error)
 }
 
 type MessageType string
