@@ -64,7 +64,7 @@ func (c *HTTP2NetworkClient) GetNodeInfo() (body []byte, err error) {
 	headers := c.DefaultHeaders()
 	headers.Set("Content-Type", "application/json")
 
-	u := c.resolvePath(UrlNodePrefix +"/")
+	u := c.resolvePath(UrlNodePrefix + "/")
 
 	var response *http.Response
 	response, err = c.client.Get(u.String(), headers)
@@ -84,7 +84,7 @@ func (c *HTTP2NetworkClient) Connect(node sebakcommon.Node) (body []byte, err er
 
 	n, _ := node.Serialize()
 	var response *http.Response
-	response, err = c.client.Post(c.resolvePath(UrlNodePrefix + "/connect").String(), n, headers)
+	response, err = c.client.Post(c.resolvePath(UrlNodePrefix+"/connect").String(), n, headers)
 	if err != nil {
 		return
 	}

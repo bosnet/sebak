@@ -17,8 +17,8 @@ import (
 type Handlers map[string]func(http.ResponseWriter, *http.Request)
 
 const (
-	UrlNodePrefix   = "/node"
-	UrlApiPrefix    = "/api"
+	UrlNodePrefix = "/node"
+	UrlApiPrefix  = "/api"
 )
 
 type HTTP2Network struct {
