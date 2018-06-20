@@ -13,23 +13,18 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type NonTLSInfo struct{}
-
-func (t NonTLSInfo) GetTLSCertInfo(*sebakcommon.Endpoint) (string, error) {
-	return "", nil
-}
-
-func (t NonTLSInfo) GetTLSKeyInfo(*sebakcommon.Endpoint) (string, error) {
-	return "", nil
-}
-
 func ExampleHttp2NetworkConfigCreateWithNonTLS() {
 	var config HTTP2NetworkConfig
 	endpoint, err := sebakcommon.NewEndpointFromString("https://localhost:5000?NodeName=n1")
 	if err != nil {
 		fmt.Print("Error in NewEndpointFromString")
 	}
-	config, err = NewHTTP2NetworkConfigFromEndpoint(NonTLSInfo{}, endpoint)
+	queries := endpoint.Query()
+	queries.Add("TLSCertFile", "")
+	queries.Add("TLSKeyFile", "")
+	endpoint.RawQuery = queries.Encode()
+
+	config, err = NewHTTP2NetworkConfigFromEndpoint(endpoint)
 	if err != nil {
 		fmt.Print("Error in NewHTTP2NetworkConfigFromEndpoint")
 	}
@@ -40,24 +35,14 @@ func ExampleHttp2NetworkConfigCreateWithNonTLS() {
 	// localhost:5000
 }
 
-var (
+const (
 	dirPath  = "tmp"
 	certPath = "cert.pem"
 	keyPath  = "key.pem"
 )
 
-type TempTLSInfo struct{}
-
-func (t TempTLSInfo) GetTLSCertInfo(*sebakcommon.Endpoint) (string, error) {
-	return dirPath + "/" + certPath, nil
-}
-
-func (t TempTLSInfo) GetTLSKeyInfo(*sebakcommon.Endpoint) (string, error) {
-	return dirPath + "/" + keyPath, nil
-}
-
 func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, mn *HTTP2Network, validator *sebakcommon.Validator) {
-	NewKeyGenerator(dirPath, certPath, keyPath)
+	g := NewKeyGenerator(dirPath, certPath, keyPath)
 
 	var config HTTP2NetworkConfig
 	endpoint, err := sebakcommon.NewEndpointFromString("https://localhost:5000?NodeName=n1")
@@ -65,7 +50,13 @@ func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, mn *HTTP2Network, va
 		t.Error(err)
 		return
 	}
-	config, err = NewHTTP2NetworkConfigFromEndpoint(TempTLSInfo{}, endpoint)
+
+	queries := endpoint.Query()
+	queries.Add("TLSCertFile", g.GetCertPath())
+	queries.Add("TLSKeyFile", g.GetKeyPath())
+	endpoint.RawQuery = queries.Encode()
+
+	config, err = NewHTTP2NetworkConfigFromEndpoint(endpoint)
 	if err != nil {
 		t.Error(err)
 		return

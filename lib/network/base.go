@@ -32,8 +32,7 @@ func NewNetwork(endpoint *sebakcommon.Endpoint) (n Network, err error) {
 		n = NewMemoryNetwork()
 	case "https":
 		var config HTTP2NetworkConfig
-		tlsInfo := ValidTLSInfo{}
-		config, err = NewHTTP2NetworkConfigFromEndpoint(tlsInfo, endpoint)
+		config, err = NewHTTP2NetworkConfigFromEndpoint(endpoint)
 		if err != nil {
 			return
 		}

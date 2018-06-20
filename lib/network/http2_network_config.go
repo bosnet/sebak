@@ -9,35 +9,6 @@ import (
 	"boscoin.io/sebak/lib/common"
 )
 
-type TLSInfo interface {
-	GetTLSCertInfo(*sebakcommon.Endpoint) (string, error)
-	GetTLSKeyInfo(*sebakcommon.Endpoint) (string, error)
-}
-
-type ValidTLSInfo struct{}
-
-func (t ValidTLSInfo) GetTLSCertInfo(endpoint *sebakcommon.Endpoint) (result string, err error) {
-	query := endpoint.Query()
-	if v := query.Get("TLSCertFile"); len(v) < 1 {
-		err = errors.New("'TLSCertFile' is missing")
-		return
-	} else {
-		result = v
-	}
-	return
-}
-
-func (t ValidTLSInfo) GetTLSKeyInfo(endpoint *sebakcommon.Endpoint) (result string, err error) {
-	query := endpoint.Query()
-	if v := query.Get("TLSKeyFile"); len(v) < 1 {
-		err = errors.New("'TLSKeyFile' is missing")
-		return
-	} else {
-		result = v
-	}
-	return
-}
-
 type HTTP2NetworkConfig struct {
 	NodeName string
 	Addr     string
@@ -53,7 +24,7 @@ type HTTP2NetworkConfig struct {
 	HTTP2LogOutput io.Writer
 }
 
-func NewHTTP2NetworkConfigFromEndpoint(tls TLSInfo, endpoint *sebakcommon.Endpoint) (config HTTP2NetworkConfig, err error) {
+func NewHTTP2NetworkConfigFromEndpoint(endpoint *sebakcommon.Endpoint) (config HTTP2NetworkConfig, err error) {
 	query := endpoint.Query()
 
 	var NodeName string
@@ -96,15 +67,8 @@ func NewHTTP2NetworkConfigFromEndpoint(tls TLSInfo, endpoint *sebakcommon.Endpoi
 		return
 	}
 
-	TLSCertFile, err = tls.GetTLSCertInfo(endpoint)
-	if err != nil {
-		return
-	}
-
-	TLSKeyFile, err = tls.GetTLSKeyInfo(endpoint)
-	if err != nil {
-		return
-	}
+	TLSCertFile = query.Get("TLSCertFile")
+	TLSKeyFile = query.Get("TLSKeyFile")
 
 	if v := query.Get("NodeName"); len(v) < 1 {
 		err = errors.New("`NodeName` must be given")
