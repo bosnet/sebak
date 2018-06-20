@@ -9,7 +9,7 @@ import (
 	"boscoin.io/sebak/lib/common"
 )
 
-func IndexHandler(ctx context.Context, t *HTTP2Network, mb MessageBroker) HandlerFunc {
+func IndexHandler(ctx context.Context, t *HTTP2Network) HandlerFunc {
 	var currentNode sebakcommon.Serializable
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -18,11 +18,11 @@ func IndexHandler(ctx context.Context, t *HTTP2Network, mb MessageBroker) Handle
 		}
 
 		o, _ := currentNode.Serialize()
-		mb.ResponseMessage(w, string(o))
+		t.messageBroker.ResponseMessage(w, string(o))
 	}
 }
 
-func ConnectHandler(ctx context.Context, t *HTTP2Network, mb MessageBroker) HandlerFunc {
+func ConnectHandler(ctx context.Context, t *HTTP2Network) HandlerFunc {
 	var currentNode sebakcommon.Serializable
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -42,13 +42,13 @@ func ConnectHandler(ctx context.Context, t *HTTP2Network, mb MessageBroker) Hand
 			http.Error(w, "Error reading request body", http.StatusInternalServerError)
 		}
 
-		mb.ReceiveMessage(t, Message{Type: ConnectMessage, Data: body})
+		t.messageBroker.ReceiveMessage(t, Message{Type: ConnectMessage, Data: body})
 		o, _ := currentNode.Serialize()
-		mb.ResponseMessage(w, string(o))
+		t.messageBroker.ResponseMessage(w, string(o))
 	}
 }
 
-func MessageHandler(ctx context.Context, t *HTTP2Network, mb MessageBroker) HandlerFunc {
+func MessageHandler(ctx context.Context, t *HTTP2Network) HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 
@@ -67,14 +67,14 @@ func MessageHandler(ctx context.Context, t *HTTP2Network, mb MessageBroker) Hand
 			http.Error(w, "Error reading request body", http.StatusInternalServerError)
 		}
 
-		mb.ReceiveMessage(t, Message{Type: MessageFromClient, Data: body})
-		mb.ResponseMessage(w, string(body))
+		t.messageBroker.ReceiveMessage(t, Message{Type: MessageFromClient, Data: body})
+		t.messageBroker.ResponseMessage(w, string(body))
 
 		return
 	}
 }
 
-func BallotHandler(ctx context.Context, t *HTTP2Network, mb MessageBroker) HandlerFunc {
+func BallotHandler(ctx context.Context, t *HTTP2Network) HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
 			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
@@ -90,8 +90,8 @@ func BallotHandler(ctx context.Context, t *HTTP2Network, mb MessageBroker) Handl
 			http.Error(w, "Error reading request body", http.StatusInternalServerError)
 		}
 
-		mb.ReceiveMessage(t, Message{Type: BallotMessage, Data: body})
-		mb.ResponseMessage(w, string(body))
+		t.messageBroker.ReceiveMessage(t, Message{Type: BallotMessage, Data: body})
+		t.messageBroker.ResponseMessage(w, string(body))
 
 		return
 	}

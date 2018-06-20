@@ -137,8 +137,8 @@ func (t *HTTP2Network) setNotReadyHandler() {
 	t.server.Handler = handlers.CombinedLoggingHandler(t.config.HTTP2LogOutput, handler)
 }
 
-func (t *HTTP2Network) AddHandler(ctx context.Context, pattern string, handler func(context.Context, *HTTP2Network, MessageBroker) HandlerFunc) (err error) {
-	t.handlers[pattern] = handler(ctx, t, t.messageBroker)
+func (t *HTTP2Network) AddHandler(ctx context.Context, pattern string, handler func(context.Context, *HTTP2Network) HandlerFunc) (err error) {
+	t.handlers[pattern] = handler(ctx, t)
 	return nil
 }
 
