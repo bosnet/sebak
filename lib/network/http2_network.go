@@ -82,7 +82,7 @@ func NewHTTP2Network(config HTTP2NetworkConfig) (h2n *HTTP2Network) {
 type Http2MessageBroker struct{}
 
 func (r Http2MessageBroker) ResponseMessage(w http.ResponseWriter, o string) {
-	fmt.Fprintf(w, string(o))
+	fmt.Fprintf(w, o)
 }
 
 func (r Http2MessageBroker) ReceiveMessage(t *HTTP2Network, msg Message) {

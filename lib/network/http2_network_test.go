@@ -117,6 +117,31 @@ func TestHTTP2NetworkGetNodeInfo(t *testing.T) {
 	assert.Equal(t, currentNode.Address(), v.Address(), "Server address and received address should be the same.")
 }
 
+type StringResponseMessageBroker struct {
+	msg string
+}
+
+func (r StringResponseMessageBroker) ResponseMessage(w http.ResponseWriter, _ string) {
+	fmt.Fprintf(w, r.msg)
+}
+
+func (r StringResponseMessageBroker) ReceiveMessage(*HTTP2Network, Message) {}
+
+func TestHTTP2NetworkMessageBrokerResponseMessage(t *testing.T) {
+	_, s0, currentNode := createNewHTTP2Network(t)
+	s0.SetMessageBroker(StringResponseMessageBroker{"ResponseMessage"})
+	s0.Ready()
+
+	go s0.Start()
+	defer s0.Stop()
+
+	c0 := s0.GetClient(s0.Endpoint())
+
+	returnMsg, _ := c0.Connect(currentNode)
+
+	assert.Equal(t, string(returnMsg), "ResponseMessage", "The connectNode and the return should be the same.")
+}
+
 func TestHTTP2NetworkConnect(t *testing.T) {
 	_, s0, currentNode := createNewHTTP2Network(t)
 	s0.SetMessageBroker(TestMessageBroker{})

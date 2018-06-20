@@ -2,8 +2,6 @@ package sebak
 
 import (
 	"context"
-	"fmt"
-	"net/http"
 	"time"
 
 	"boscoin.io/sebak/lib/common"
@@ -63,16 +61,6 @@ func NewNodeRunner(
 	nr.SetHandleBallotCheckerFuncs(nil, DefaultHandleBallotCheckerFuncs...)
 
 	return nr
-}
-
-type Http2MessageBroker struct{}
-
-func (r Http2MessageBroker) ResponseMessage(w http.ResponseWriter, o string) {
-	fmt.Fprintf(w, string(o))
-}
-
-func (r Http2MessageBroker) ReceiveMessage(t *sebaknetwork.HTTP2Network, msg sebaknetwork.Message) {
-	t.ReceiveChannel() <- msg
 }
 
 func (nr *NodeRunner) Ready() {
