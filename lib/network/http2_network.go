@@ -147,7 +147,7 @@ func (t *HTTP2Network) SetMessageBroker(mb MessageBroker) {
 }
 
 func (t *HTTP2Network) Ready() error {
-	t.AddHandler(t.Context(), "/", Index)
+	t.AddHandler(t.Context(), "/", IndexHandler)
 	t.AddHandler(t.Context(), "/connect", ConnectHandler)
 	t.AddHandler(t.Context(), "/message", MessageHandler)
 	t.AddHandler(t.Context(), "/ballot", BallotHandler)

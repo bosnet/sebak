@@ -9,7 +9,7 @@ import (
 	"boscoin.io/sebak/lib/common"
 )
 
-func Index(ctx context.Context, t *HTTP2Network, mb MessageBroker) HandlerFunc {
+func IndexHandler(ctx context.Context, t *HTTP2Network, mb MessageBroker) HandlerFunc {
 	var currentNode sebakcommon.Serializable
 
 	return func(w http.ResponseWriter, r *http.Request) {
