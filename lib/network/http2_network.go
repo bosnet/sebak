@@ -16,6 +16,11 @@ import (
 
 type Handlers map[string]func(http.ResponseWriter, *http.Request)
 
+const (
+	UrlNodePrefix   = "/node"
+	UrlApiPrefix    = "/api"
+)
+
 type HTTP2Network struct {
 	ctx         context.Context
 	tlsCertFile string
@@ -164,7 +169,7 @@ func (t *HTTP2Network) SetMessageBroker(mb MessageBroker) {
 
 func (t *HTTP2Network) Ready() error {
 	nodeRouter := t.routers["node"]
-	nodeRouter.HandleFunc("/", IndexHandler(t.Context(), t))
+	nodeRouter.HandleFunc("/", NodeInfoHandler(t.Context(), t))
 	nodeRouter.HandleFunc("/connect", ConnectHandler(t.Context(), t)).Methods("POST")
 	nodeRouter.HandleFunc("/message", MessageHandler(t.Context(), t)).Methods("POST")
 	nodeRouter.HandleFunc("/ballot", BallotHandler(t.Context(), t)).Methods("POST")
