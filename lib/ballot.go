@@ -99,7 +99,7 @@ func (b Ballot) String() string {
 	return string(encoded)
 }
 
-func (b Ballot) IsFitInVoting() (ret bool) {
+func (b Ballot) FitsInVoting() (ret bool) {
 	switch b.State() {
 	case sebakcommon.BallotStateSIGN:
 	case sebakcommon.BallotStateACCEPT:
@@ -111,8 +111,8 @@ func (b Ballot) IsFitInVoting() (ret bool) {
 	return
 }
 
-func (b Ballot) IsFitInWaiting() bool {
-	return !b.IsFitInVoting()
+func (b Ballot) FitsInWaiting() bool {
+	return !b.FitsInVoting()
 }
 
 // NewBallotFromMessage creates `Ballot` from `Message`. It needs to be
@@ -365,13 +365,13 @@ func (b *BallotBoxes) AddBallot(ballot Ballot) (isNew bool, err error) {
 			if err = b.ReservedBox.RemoveVotingResult(vr); err != nil {
 				log.Error("ReservedBox has a message but cannot remove it", "MessageHash", ballot.MessageHash(), "error", err)
 			}
-			if ballot.IsFitInVoting() {
+			if ballot.FitsInVoting() {
 				err = b.AddVotingResult(vr, b.VotingBox)
 			} else {
 				err = b.AddVotingResult(vr, b.WaitingBox)
 			}
 			if err != nil {
-				log.Warn("The message is already exists", "MessageHash", ballot.MessageHash(), "error", err)
+				log.Warn("The message already exists", "MessageHash", ballot.MessageHash(), "error", err)
 				err = nil
 			}
 		}
@@ -384,7 +384,7 @@ func (b *BallotBoxes) AddBallot(ballot Ballot) (isNew bool, err error) {
 	}
 
 	// unknown ballot will be in `WaitingBox`
-	if ballot.IsFitInVoting() {
+	if ballot.FitsInVoting() {
 		err = b.AddVotingResult(vr, b.VotingBox)
 	} else {
 		err = b.AddVotingResult(vr, b.WaitingBox)

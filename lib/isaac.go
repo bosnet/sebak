@@ -75,14 +75,6 @@ func (is *ISAAC) ReceiveMessage(m sebakcommon.Message) (ballot Ballot, err error
 	return
 }
 
-// type BallotStateChange string
-
-// const (
-// 	BallotStateNone       BallotStateChange = "none"
-// 	BallotStateChanged    BallotStateChange = "changed"
-// 	BallotStateNotChanged BallotStateChange = "nnnnnnnnnnnnnnnn-changed"
-// )
-
 func (is *ISAAC) ReceiveBallot(ballot Ballot) (vs VotingStateStaging, err error) {
 	switch ballot.State() {
 	case sebakcommon.BallotStateINIT:
