@@ -119,21 +119,21 @@ func (t *HTTP2Network) setNotReadyHandler() {
 	t.server.Handler = handlers.CombinedLoggingHandler(t.config.HTTP2LogOutput, handler)
 }
 
-type Re interface {
+type MessageBroker interface {
 	ResponseMessage(http.ResponseWriter, string)
 	ReceiveMessage(*HTTP2Network, Message)
 }
 
-func (t *HTTP2Network) AddHandler(ctx context.Context, pattern string, handler func(context.Context, *HTTP2Network, Re) HandlerFunc, re Re) (err error) {
-	t.handlers[pattern] = handler(ctx, t, re)
+func (t *HTTP2Network) AddHandler(ctx context.Context, pattern string, handler func(context.Context, *HTTP2Network, MessageBroker) HandlerFunc, mb MessageBroker) (err error) {
+	t.handlers[pattern] = handler(ctx, t, mb)
 	return nil
 }
 
-func (t *HTTP2Network) Ready(re Re) error {
-	t.AddHandler(t.Context(), "/", Index, re)
-	t.AddHandler(t.Context(), "/connect", ConnectHandler, re)
-	t.AddHandler(t.Context(), "/message", MessageHandler, re)
-	t.AddHandler(t.Context(), "/ballot", BallotHandler, re)
+func (t *HTTP2Network) Ready(mb MessageBroker) error {
+	t.AddHandler(t.Context(), "/", Index, mb)
+	t.AddHandler(t.Context(), "/connect", ConnectHandler, mb)
+	t.AddHandler(t.Context(), "/message", MessageHandler, mb)
+	t.AddHandler(t.Context(), "/ballot", BallotHandler, mb)
 
 	handler := new(http.ServeMux)
 	for pattern, handlerFunc := range t.handlers {

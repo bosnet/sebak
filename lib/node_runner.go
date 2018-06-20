@@ -65,19 +65,19 @@ func NewNodeRunner(
 	return nr
 }
 
-type HttpRe struct{}
+type Http2MessageBroker struct{}
 
-func (r HttpRe) ResponseMessage(w http.ResponseWriter, o string) {
+func (r Http2MessageBroker) ResponseMessage(w http.ResponseWriter, o string) {
 	fmt.Fprintf(w, string(o))
 }
 
-func (r HttpRe) ReceiveMessage(t *sebaknetwork.HTTP2Network, msg sebaknetwork.Message) {
+func (r Http2MessageBroker) ReceiveMessage(t *sebaknetwork.HTTP2Network, msg sebaknetwork.Message) {
 	t.ReceiveChannel() <- msg
 }
 
 func (nr *NodeRunner) Ready() {
 	nr.network.SetContext(nr.ctx)
-	nr.network.Ready(HttpRe{})
+	nr.network.Ready(Http2MessageBroker{})
 }
 
 func (nr *NodeRunner) Start() (err error) {

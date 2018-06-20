@@ -19,7 +19,7 @@ type Network interface {
 
 	Start() error
 	Stop()
-	Ready(Re) error
+	Ready(MessageBroker) error
 	IsReady() bool
 
 	ReceiveChannel() chan Message

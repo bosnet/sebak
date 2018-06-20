@@ -81,13 +81,13 @@ func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, mn *HTTP2Network, va
 	return
 }
 
-type TestHttpRe struct{}
+type TestMessageBroker struct{}
 
-func (r TestHttpRe) ResponseMessage(w http.ResponseWriter, o string) {
+func (r TestMessageBroker) ResponseMessage(w http.ResponseWriter, o string) {
 	fmt.Fprintf(w, o)
 }
 
-func (r TestHttpRe) ReceiveMessage(*HTTP2Network, Message) {}
+func (r TestMessageBroker) ReceiveMessage(*HTTP2Network, Message) {}
 
 func removeWhiteSpaces(str string) string {
 	return strings.Map(func(r rune) rune {
@@ -100,7 +100,7 @@ func removeWhiteSpaces(str string) string {
 
 func TestHTTP2NetworkGetNodeInfo(t *testing.T) {
 	_, s0, currentNode := createNewHTTP2Network(t)
-	s0.Ready(TestHttpRe{})
+	s0.Ready(TestMessageBroker{})
 
 	go s0.Start()
 	defer s0.Stop()
@@ -127,7 +127,7 @@ func TestHTTP2NetworkGetNodeInfo(t *testing.T) {
 
 func TestHTTP2NetworkConnect(t *testing.T) {
 	_, s0, currentNode := createNewHTTP2Network(t)
-	s0.Ready(TestHttpRe{})
+	s0.Ready(TestMessageBroker{})
 
 	go s0.Start()
 	defer s0.Stop()
@@ -145,7 +145,7 @@ func TestHTTP2NetworkConnect(t *testing.T) {
 
 func TestHTTP2NetworkSendMessage(t *testing.T) {
 	_, s0, _ := createNewHTTP2Network(t)
-	s0.Ready(TestHttpRe{})
+	s0.Ready(TestMessageBroker{})
 
 	go s0.Start()
 	defer s0.Stop()
@@ -163,7 +163,7 @@ func TestHTTP2NetworkSendMessage(t *testing.T) {
 
 func TestHTTP2NetworkSendBallot(t *testing.T) {
 	_, s0, _ := createNewHTTP2Network(t)
-	s0.Ready(TestHttpRe{})
+	s0.Ready(TestMessageBroker{})
 	go s0.Start()
 	defer s0.Stop()
 
