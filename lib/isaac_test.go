@@ -48,6 +48,10 @@ func (m DummyMessage) GetHash() string {
 	return m.Hash
 }
 
+func (m DummyMessage) Source() string {
+	return m.Hash
+}
+
 func (m *DummyMessage) UpdateHash() {
 	m.Hash = base58.Encode(sebakcommon.MustMakeObjectHash(m.Data))
 }

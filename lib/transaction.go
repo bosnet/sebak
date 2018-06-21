@@ -146,6 +146,10 @@ func (o Transaction) GetHash() string {
 	return o.H.Hash
 }
 
+func (o Transaction) Source() string {
+	return o.B.Source
+}
+
 func (o Transaction) TotalAmount(withFee bool) Amount {
 	var amount int64
 	for _, op := range o.B.Operations {

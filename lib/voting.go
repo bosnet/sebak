@@ -93,6 +93,7 @@ type VotingResult struct {
 
 	ID          string                  // ID is unique and sequential
 	MessageHash string                  // MessageHash is `Message.Hash`
+	Source      string                  // MessageHash is `Message.Hash`
 	State       sebakcommon.BallotState // Latest `BallotState`
 	Ballots     map[sebakcommon.BallotState]VotingResultBallots
 	Staging     []VotingStateStaging // state changing histories
@@ -112,6 +113,7 @@ func NewVotingResult(ballot Ballot) (vr *VotingResult, err error) {
 	vr = &VotingResult{
 		ID:          sebakcommon.GetUniqueIDFromUUID(),
 		MessageHash: ballot.MessageHash(),
+		Source:      ballot.Source(),
 		State:       ballot.State(),
 		Ballots:     ballots,
 	}

@@ -63,6 +63,7 @@ func (b Ballot) Clone() Ballot {
 		H: BallotHeader{
 			Hash:      b.H.Hash,
 			Signature: b.H.Signature,
+			Source:    b.H.Source,
 		},
 		B: body,
 		D: b.D,
@@ -132,6 +133,7 @@ func NewBallotFromMessage(nodeKey string, m sebakcommon.Message) (ballot Ballot,
 		H: BallotHeader{
 			Hash:      base58.Encode(body.MakeHash()),
 			Signature: "",
+			Source:    m.Source(),
 		},
 		B: body,
 		D: data,
@@ -211,6 +213,10 @@ func (b Ballot) GetHash() string {
 	return b.H.Hash
 }
 
+func (b Ballot) Source() string {
+	return b.H.Source
+}
+
 func (b Ballot) MessageHash() string {
 	return b.B.Hash
 }
@@ -260,6 +266,7 @@ func (b *Ballot) Vote(v VotingHole) {
 type BallotHeader struct {
 	Hash      string `json:"ballot_hash"`
 	Signature string `json:"signature"`
+	Source    string `json:source`
 }
 
 type BallotBody struct {
@@ -284,6 +291,7 @@ type BallotBoxes struct {
 	ReservedBox *BallotBox
 
 	Messages map[ /* `Message.GetHash()`*/ string]sebakcommon.Message
+	Sources  map[ /* `Message.Source()` */ string]string /* `Message.GetHash()`*/
 }
 
 func NewBallotBoxes() *BallotBoxes {
@@ -293,6 +301,7 @@ func NewBallotBoxes() *BallotBoxes {
 		VotingBox:   NewBallotBox(),
 		ReservedBox: NewBallotBox(),
 		Messages:    map[string]sebakcommon.Message{},
+		Sources:     map[string]string{},
 	}
 }
 
@@ -351,8 +360,12 @@ func (b *BallotBoxes) RemoveVotingResult(vr *VotingResult) (err error) {
 		return
 	}
 
+	b.Lock()
+	defer b.Unlock()
+
 	delete(b.Results, vr.MessageHash)
 	delete(b.Messages, vr.MessageHash)
+	delete(b.Sources, vr.Source)
 
 	return
 }
@@ -398,6 +411,15 @@ func (b *BallotBoxes) AddBallot(ballot Ballot) (isNew bool, err error) {
 	}
 
 	return
+}
+
+func (b *BallotBoxes) AddSource(m sebakcommon.Message) {
+	b.Sources[m.Source()] = m.GetHash()
+}
+
+func (b *BallotBoxes) IsSameSourceUnderVoting(m sebakcommon.Message) bool {
+	existingHash, found := b.Sources[m.Source()]
+	return found && existingHash != m.GetHash()
 }
 
 type BallotBox struct {

@@ -41,11 +41,7 @@ func CheckNodeRunnerHandleMessageTransactionHasSameSource(c sebakcommon.Checker,
 	incomingTx := checker.Transaction
 	isaac := checker.NodeRunner.Consensus().(*ISAAC)
 
-	for hash, _ := range isaac.Boxes.VotingBox.Hashes {
-		existingTx := isaac.Boxes.Messages[hash].(Transaction)
-		if incomingTx.B.Source != existingTx.B.Source {
-			continue
-		}
+	if isaac.Boxes.IsSameSourceUnderVoting(incomingTx) {
 		err = sebakcommon.CheckerErrorStop{"stop consensus, because same source transaction already in progress"}
 		return
 	}
