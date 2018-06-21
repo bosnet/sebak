@@ -330,14 +330,16 @@ func (b *BallotBoxes) AddVotingResult(vr *VotingResult, ballot Ballot) (err erro
 	b.Lock()
 	defer b.Unlock()
 
-	b.Results[vr.MessageHash] = vr
-
 	if ballot.CanFitInVotingBox() {
 		err = b.VotingBox.AddVotingResult(vr)
 	} else if ballot.CanFitInWaitingBox() {
 		err = b.WaitingBox.AddVotingResult(vr)
 	} else {
-		// do nothing
+		err = sebakerror.ErrorBallotHasInvalidState
+	}
+
+	if err == nil {
+		b.Results[vr.MessageHash] = vr
 	}
 
 	return
