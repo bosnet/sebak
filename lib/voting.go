@@ -93,7 +93,7 @@ type VotingResult struct {
 
 	ID          string                  // ID is unique and sequential
 	MessageHash string                  // MessageHash is `Message.Hash`
-	Source      string                  // MessageHash is `Message.Hash`
+	Source      string                  // Source is `Ballot.Source()`
 	State       sebakcommon.BallotState // Latest `BallotState`
 	Ballots     map[sebakcommon.BallotState]VotingResultBallots
 	Staging     []VotingStateStaging // state changing histories

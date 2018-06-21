@@ -406,6 +406,11 @@ func (b *BallotBoxes) AddBallot(ballot Ballot) (isNew bool, err error) {
 		err = nil
 	}
 
+	// if unknown ballot and it is in SIGN state,
+	if ballot.State() == sebakcommon.BallotStateSIGN {
+		b.AddSource(ballot)
+	}
+
 	if _, found := b.Messages[ballot.MessageHash()]; !found {
 		b.Messages[ballot.MessageHash()] = ballot.Data().Data.(sebakcommon.Message)
 	}
