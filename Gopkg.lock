@@ -3,6 +3,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/GianlucaGuarini/go-observable"
+  packages = ["."]
+  revision = "e39e699e0a002c560bdff16804c81ac1cd12fac2"
+
+[[projects]]
+  branch = "master"
   name = "github.com/agl/ed25519"
   packages = [
     ".",
@@ -196,6 +202,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "8f77cc4c5efc230724310757037db0fbf01c718f39d2efc9b5e3d695a1ecdcb3"
+  inputs-digest = "22bea8df38b9a921915c67651cb283a0b2db2583f9f11a21d22a79e029c07a24"
   solver-name = "gps-cdcl"
   solver-version = 1

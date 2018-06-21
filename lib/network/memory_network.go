@@ -133,3 +133,7 @@ func NewMemoryNetwork() *MemoryNetwork {
 
 	return n
 }
+
+func (p *MemoryNetwork) AddHandler(context.Context, ...interface{}) error {
+	return nil
+}
