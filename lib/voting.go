@@ -91,7 +91,7 @@ func (vs VotingStateStaging) IsStorable() bool {
 type VotingResult struct {
 	sebakcommon.SafeLock
 
-	ID          string                  // ID is unique and sequenital
+	ID          string                  // ID is unique and sequential
 	MessageHash string                  // MessageHash is `Message.Hash`
 	State       sebakcommon.BallotState // Latest `BallotState`
 	Ballots     map[sebakcommon.BallotState]VotingResultBallots
