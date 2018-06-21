@@ -46,7 +46,6 @@ func (is *ISAAC) ReceiveMessage(m sebakcommon.Message) (ballot Ballot, err error
 	/*
 		Previously the new incoming Message must be checked,
 			- TODO `Message` must be saved in `BlockTransactionHistory`
-			- TODO check already `IsWellFormed()`
 			- TODO check already in BlockTransaction
 			- TODO check already in BlockTransactionHistory
 	*/
@@ -63,7 +62,6 @@ func (is *ISAAC) ReceiveMessage(m sebakcommon.Message) (ballot Ballot, err error
 	// self-sign; make new `Ballot` from `Message`
 	ballot.SetState(sebakcommon.BallotStateINIT)
 	ballot.Vote(VotingYES) // The initial ballot from client will have 'VotingYES'
-	ballot.UpdateHash()
 	ballot.Sign(is.Node.Keypair(), is.networkID)
 
 	if err = ballot.IsWellFormed(is.networkID); err != nil {
@@ -77,27 +75,14 @@ func (is *ISAAC) ReceiveMessage(m sebakcommon.Message) (ballot Ballot, err error
 	return
 }
 
-type BallotStateChange string
-
-const (
-	BallotStateNone       BallotStateChange = "none"
-	BallotStateChanged    BallotStateChange = "changed"
-	BallotStateNotChanged BallotStateChange = "nnnnnnnnnnnnnnnn-changed"
-)
-
 func (is *ISAAC) ReceiveBallot(ballot Ballot) (vs VotingStateStaging, err error) {
 	switch ballot.State() {
 	case sebakcommon.BallotStateINIT:
 		vs, err = is.receiveBallotStateINIT(ballot)
 	case sebakcommon.BallotStateALLCONFIRM:
 		err = sebakerror.ErrorBallotHasInvalidState
-		return
 	default:
 		vs, err = is.receiveBallotVotingStates(ballot)
-	}
-
-	if err != nil {
-		return
 	}
 
 	return
@@ -120,7 +105,6 @@ func (is *ISAAC) receiveBallotStateINIT(ballot Ballot) (vs VotingStateStaging, e
 		// self-sign
 		newBallot.SetState(sebakcommon.BallotStateINIT)
 		newBallot.Vote(VotingYES) // The BallotStateINIT ballot will have 'VotingYES'
-		newBallot.UpdateHash()
 		newBallot.Sign(is.Node.Keypair(), is.networkID)
 
 		if err = newBallot.IsWellFormed(is.networkID); err != nil {
