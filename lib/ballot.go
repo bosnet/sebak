@@ -375,8 +375,7 @@ func (b *BallotBoxes) AddBallot(ballot Ballot) (isNew bool, err error) {
 				log.Error("ReservedBox has a message but cannot remove it", "MessageHash", ballot.MessageHash(), "error", err)
 			}
 
-			err = b.AddVotingResult(vr, ballot)
-			if err != nil {
+			if err = b.AddVotingResult(vr, ballot); err != nil {
 				log.Warn("failed to add VotingResult", "MessageHash", ballot.MessageHash(), "error", err)
 				err = nil
 			}
@@ -384,14 +383,14 @@ func (b *BallotBoxes) AddBallot(ballot Ballot) (isNew bool, err error) {
 		return
 	}
 
-	vr, err = NewVotingResult(ballot)
-	if err != nil {
+	if vr, err = NewVotingResult(ballot); err != nil {
 		return
 	}
 
 	// unknown ballot will be in `WaitingBox`
 	if err = b.AddVotingResult(vr, ballot); err != nil {
 		log.Warn("failed to add VotingResult", "MessageHash", ballot.MessageHash(), "error", err)
+		err = nil
 	}
 
 	if _, found := b.Messages[ballot.MessageHash()]; !found {
