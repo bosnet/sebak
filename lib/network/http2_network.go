@@ -17,8 +17,13 @@ import (
 type Handlers map[string]func(http.ResponseWriter, *http.Request)
 
 const (
-	UrlNodePrefix = "/node"
-	UrlApiPrefix  = "/api"
+	RouterNameNode = "node"
+	RouterNameAPI  = "api"
+)
+
+var (
+	UrlPathPrefixNode = fmt.Sprintf("/%s", RouterNameNode)
+	UrlPathPrefixAPI  = fmt.Sprintf("/%s", RouterNameAPI)
 )
 
 type HTTP2Network struct {
@@ -80,8 +85,8 @@ func NewHTTP2Network(config HTTP2NetworkConfig) (h2n *HTTP2Network) {
 	}
 	h2n.handlers = map[string]func(http.ResponseWriter, *http.Request){}
 	h2n.routers = map[string]*mux.Router{
-		"node": baseRouter.PathPrefix("/node").Subrouter(),
-		"api":  baseRouter.PathPrefix("/api").Subrouter(),
+		RouterNameNode: baseRouter.PathPrefix(UrlPathPrefixNode).Subrouter(),
+		RouterNameAPI:  baseRouter.PathPrefix(UrlPathPrefixAPI).Subrouter(),
 	}
 
 	h2n.config = config
@@ -156,11 +161,9 @@ func (t *HTTP2Network) AddHandler(ctx context.Context, args ...interface{}) (err
 	addAPIFunc(ctx, t)
 	return
 }
-func (t *HTTP2Network) AddAPIHandler(ctx context.Context, args ...interface{}) (router *mux.Route) {
-	pattern := args[0].(string)
-	handler := args[1].(func(context.Context, *HTTP2Network) HandlerFunc)
-	apiRouter := t.routers["api"]
-	return apiRouter.HandleFunc(pattern, handler(ctx, t))
+func (t *HTTP2Network) AddAPIHandler(pattern string, handlerFunc http.HandlerFunc) (router *mux.Route) {
+	apiRouter := t.routers[RouterNameNode]
+	return apiRouter.HandleFunc(pattern, handlerFunc)
 }
 
 func (t *HTTP2Network) SetMessageBroker(mb MessageBroker) {
@@ -168,7 +171,7 @@ func (t *HTTP2Network) SetMessageBroker(mb MessageBroker) {
 }
 
 func (t *HTTP2Network) Ready() error {
-	nodeRouter := t.routers["node"]
+	nodeRouter := t.routers[RouterNameNode]
 	nodeRouter.HandleFunc("/", NodeInfoHandler(t.Context(), t))
 	nodeRouter.HandleFunc("/connect", ConnectHandler(t.Context(), t)).Methods("POST")
 	nodeRouter.HandleFunc("/message", MessageHandler(t.Context(), t)).Methods("POST")

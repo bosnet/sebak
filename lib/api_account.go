@@ -1,23 +1,17 @@
 package sebak
 
 import (
-	"context"
-	"errors"
 	"fmt"
 	"net/http"
 
 	"boscoin.io/sebak/lib/error"
-	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/observer"
 	"boscoin.io/sebak/lib/storage"
 	"github.com/gorilla/mux"
 )
 
-func GetAccountHandler(ctx context.Context, t *sebaknetwork.HTTP2Network) sebaknetwork.HandlerFunc {
-	storage, ok := ctx.Value("storage").(*sebakstorage.LevelDBBackend)
-	if !ok {
-		panic(errors.New("storage is missing in context"))
-	}
+func GetAccountHandler(s *sebakstorage.LevelDBBackend) http.HandlerFunc {
+	storage := s
 
 	return func(w http.ResponseWriter, r *http.Request) {
 

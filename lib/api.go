@@ -6,12 +6,15 @@ import (
 	"net/http"
 
 	"boscoin.io/sebak/lib/network"
+	"boscoin.io/sebak/lib/storage"
 	"github.com/GianlucaGuarini/go-observable"
 )
 
-func AddAPIHandlers(ctx context.Context, t *sebaknetwork.HTTP2Network) {
-
-	t.AddAPIHandler(ctx, "/account/{address}", GetAccountHandler).Methods("GET")
+func AddAPIHandlers(s *sebakstorage.LevelDBBackend) func(ctx context.Context, t *sebaknetwork.HTTP2Network) {
+	fn := func(ctx context.Context, t *sebaknetwork.HTTP2Network) {
+		t.AddAPIHandler("/account/{address}", GetAccountHandler(s)).Methods("GET")
+	}
+	return fn
 }
 
 func streaming(o *observable.Observable, w http.ResponseWriter, event string, callBackFunc func(args ...interface{}) ([]byte, error), once []byte) {

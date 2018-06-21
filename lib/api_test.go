@@ -30,9 +30,8 @@ func TestStreaming(t *testing.T) {
 	}
 	defer storage.Close()
 
-	ctx := context.WithValue(context.Background(), "storage", storage)
 	router := mux.NewRouter()
-	router.HandleFunc("/account/{address}", GetAccountHandler(ctx, nil)).Methods("GET")
+	router.HandleFunc("/account/{address}", GetAccountHandler(storage)).Methods("GET")
 	server := &http.Server{Addr: ":5000", Handler: router}
 	go server.ListenAndServe()
 
