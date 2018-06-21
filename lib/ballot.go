@@ -99,20 +99,20 @@ func (b Ballot) String() string {
 	return string(encoded)
 }
 
-func (b Ballot) FitsInVoting() (ret bool) {
+func (b Ballot) CanFitInVotingBox() (ret bool) {
 	switch b.State() {
 	case sebakcommon.BallotStateSIGN:
 	case sebakcommon.BallotStateACCEPT:
-	case sebakcommon.BallotStateALLCONFIRM:
 		ret = true
 	default:
 		ret = false
 	}
+
 	return
 }
 
-func (b Ballot) FitsInWaiting() bool {
-	return !b.FitsInVoting()
+func (b Ballot) CanFitInWaitingBox() bool {
+	return b.State() == sebakcommon.BallotStateINIT
 }
 
 // NewBallotFromMessage creates `Ballot` from `Message`. It needs to be
@@ -326,12 +326,17 @@ func (b *BallotBoxes) IsVoted(ballot Ballot) bool {
 	return vr.IsVoted(ballot)
 }
 
-func (b *BallotBoxes) AddVotingResult(vr *VotingResult, bb *BallotBox) (err error) {
+func (b *BallotBoxes) AddVotingResult(vr *VotingResult, ballot Ballot) (err error) {
 	b.Lock()
 	defer b.Unlock()
 
 	b.Results[vr.MessageHash] = vr
-	err = bb.AddVotingResult(vr)
+
+	if ballot.CanFitInVotingBox() {
+		err = b.VotingBox.AddVotingResult(vr)
+	} else if ballot.CanFitInWaitingBox() {
+		err = b.WaitingBox.AddVotingResult(vr)
+	}
 
 	return
 }
@@ -365,13 +370,10 @@ func (b *BallotBoxes) AddBallot(ballot Ballot) (isNew bool, err error) {
 			if err = b.ReservedBox.RemoveVotingResult(vr); err != nil {
 				log.Error("ReservedBox has a message but cannot remove it", "MessageHash", ballot.MessageHash(), "error", err)
 			}
-			if ballot.FitsInVoting() {
-				err = b.AddVotingResult(vr, b.VotingBox)
-			} else {
-				err = b.AddVotingResult(vr, b.WaitingBox)
-			}
+
+			err = b.AddVotingResult(vr, ballot)
 			if err != nil {
-				log.Warn("The message already exists", "MessageHash", ballot.MessageHash(), "error", err)
+				log.Warn("failed to add VotingResult", "MessageHash", ballot.MessageHash(), "error", err)
 				err = nil
 			}
 		}
@@ -384,10 +386,8 @@ func (b *BallotBoxes) AddBallot(ballot Ballot) (isNew bool, err error) {
 	}
 
 	// unknown ballot will be in `WaitingBox`
-	if ballot.FitsInVoting() {
-		err = b.AddVotingResult(vr, b.VotingBox)
-	} else {
-		err = b.AddVotingResult(vr, b.WaitingBox)
+	if err = b.AddVotingResult(vr, ballot); err != nil {
+		log.Warn("failed to add VotingResult", "MessageHash", ballot.MessageHash(), "error", err)
 	}
 
 	if _, found := b.Messages[ballot.MessageHash()]; !found {
