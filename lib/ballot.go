@@ -336,6 +336,8 @@ func (b *BallotBoxes) AddVotingResult(vr *VotingResult, ballot Ballot) (err erro
 		err = b.VotingBox.AddVotingResult(vr)
 	} else if ballot.CanFitInWaitingBox() {
 		err = b.WaitingBox.AddVotingResult(vr)
+	} else {
+		// do nothing
 	}
 
 	return
