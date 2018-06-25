@@ -1,22 +1,19 @@
 package sebak
 
 import (
-	"time"
-	"fmt"
 	"boscoin.io/sebak/lib/common"
+	"time"
 )
-
 
 type ExpiredBallotChecker struct {
 	interval time.Duration
 
-	WaitingResult map[/*VotingResultHash*/ string] /*Message.GetHash() */string
-	VotingResult map[/*VotingResultHash*/ string] /*Message.GetHash() */string
-	ReservedResult map[/*VotingResultHash*/ string] /*Message.GetHash() */string
-
+	WaitingResult  map[ /*VotingResultHash*/ string] /*Message.GetHash() */ string
+	VotingResult   map[ /*VotingResultHash*/ string] /*Message.GetHash() */ string
+	ReservedResult map[ /*VotingResultHash*/ string] /*Message.GetHash() */ string
 }
 
-func NewExpiredBallotChecker(curr *BallotBoxes, interval time.Duration) *ExpiredBallotChecker{
+func NewExpiredBallotChecker(curr *BallotBoxes, interval time.Duration) *ExpiredBallotChecker {
 	e := &ExpiredBallotChecker{}
 
 	e.WaitingResult = extractResultsFrom(curr.Results, curr.WaitingBox.Hashes)
@@ -28,8 +25,8 @@ func NewExpiredBallotChecker(curr *BallotBoxes, interval time.Duration) *Expired
 }
 
 func extractResultsFrom(from map[string]*VotingResult, Hashes map[string]bool) (ret map[string]string) {
-	ret = make(map[/*VotingResultHash*/ string]string)
-	for hash, _:= range Hashes {
+	ret = make(map[ /*VotingResultHash*/ string]string)
+	for hash, _ := range Hashes {
 		if vr, ok := from[hash]; ok {
 			byteArr, err := sebakcommon.MakeObjectHash(vr)
 			log.Error("failed to make voting result hash", "VotingResult", vr, "error", err)
@@ -49,7 +46,7 @@ func extractResultsFrom(from map[string]*VotingResult, Hashes map[string]bool) (
 //
 //}
 
-func (e *ExpiredBallotChecker) TakeSnapshot(curr *BallotBoxes) ([]string, []string, []string){
+func (e *ExpiredBallotChecker) TakeSnapshot(curr *BallotBoxes) ([]string, []string, []string) {
 	currWaitingResult := extractResultsFrom(curr.Results, curr.WaitingBox.Hashes)
 	currVotingResult := extractResultsFrom(curr.Results, curr.VotingBox.Hashes)
 	currReservedResult := extractResultsFrom(curr.Results, curr.ReservedBox.Hashes)

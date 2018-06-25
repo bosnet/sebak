@@ -274,7 +274,6 @@ func (bb BallotBody) MakeHash() []byte {
 	return sebakcommon.MustMakeObjectHash(bb)
 }
 
-
 type BallotBoxes struct {
 	sebakcommon.SafeLock
 
