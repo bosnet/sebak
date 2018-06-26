@@ -61,7 +61,6 @@ jobs:
     steps:
       - attach_workspace:
           at: /go/src/boscoin.io
-      - run: echo ${FINGERPRINTS}
       - add_ssh_keys:
           fingerprints:
             - ${FINGERPRINTS}
