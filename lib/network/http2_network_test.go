@@ -161,8 +161,6 @@ func TestHTTP2NetworkMessageBrokerResponseMessage(t *testing.T) {
 	go s0.Start()
 	defer s0.Stop()
 
-	//fmt.Println(s0.server.Addr())
-
 	c0 := s0.GetClient(s0.Endpoint())
 
 	returnMsg, _ := c0.Connect(currentNode)
