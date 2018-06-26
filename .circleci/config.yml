@@ -1,9 +1,13 @@
 version: 2
+
+defaults: &defaults
+  working_directory: /go/src/boscoin.io/sebak
+  docker:
+    - image: circleci/golang:1.10
+
 jobs:
   build:
-    docker:
-      - image: circleci/golang:1.10
-    working_directory: /go/src/boscoin.io/sebak
+    <<: *defaults
     steps:
       - checkout
       - run:
@@ -24,9 +28,7 @@ jobs:
             - sebak
 
   fmt:
-    docker:
-      - image: circleci/golang:1.10
-    working_directory: /go/src/boscoin.io/sebak
+    <<: *defaults
     steps:
       - attach_workspace:
           at: /go/src/boscoin.io
@@ -35,15 +37,13 @@ jobs:
           command: if [[ -n "$(gofmt -l cmd lib)" ]]; then gofmt -l cmd lib; exit 1; fi
 
   test_go1_10:
-    docker:
-      - image: circleci/golang:1.10
-    working_directory: /go/src/boscoin.io/sebak
+    <<: *defaults
     steps:
       - attach_workspace:
           at: /go/src/boscoin.io
       - run:
           name: run tests
-          command: SEBAK_LOG_HANDLER=null go test -v -timeout 3m ./...
+          command: SEBAK_LOG_HANDLER=null GOCACHE=off go test -v -timeout 3m ./...
 
   test_go1_9:
     docker:
@@ -54,27 +54,53 @@ jobs:
           at: /go/src/boscoin.io
       - run:
           name: run tests
-          command: SEBAK_LOG_HANDLER=null go test -v -timeout 3m ./...
+          command: SEBAK_LOG_HANDLER=null GOCACHE=off go test -v -timeout 3m ./...
 
   test_merged:
-    docker:
-      - image: circleci/golang:1.10
-    working_directory: /go/src/boscoin.io/sebak
+    <<: *defaults
     steps:
       - attach_workspace:
           at: /go/src/boscoin.io
       - run:
           name: Checkout merge commit
           command: |
+            set -ex
             if [[ -n "${CIRCLE_PR_NUMBER}" ]]
             then
               FETCH_REFS="${FETCH_REFS} +refs/pull/${CIRCLE_PR_NUMBER}/merge:pr/${CIRCLE_PR_NUMBER}/merge"
-              git fetch -u origin ${FETCH_REFS}
-              git checkout "pr/${CIRCLE_PR_NUMBER}/merge"
+              GIT_TERMINAL_PROMPT=0 git fetch -u origin ${FETCH_REFS}
+              GIT_TERMINAL_PROMPT=0 git checkout "pr/${CIRCLE_PR_NUMBER}/merge"
             fi
       - run:
           name: run tests
-          command: SEBAK_LOG_HANDLER=null go test -v -timeout 3m ./...
+          command: |
+            mkdir -p /tmp/workspace/test_coverage
+            for pkg in $(go list ./...); do
+              name=$(basename "$pkg")
+              SEBAK_LOG_HANDLER=null GOCACHE=off go test -v -timeout 3m -coverprofile=/tmp/workspace/test_coverage/$name.txt -covermode=atomic "$pkg"
+            done
+      - run: ls -al /tmp/workspace/test_coverage/
+      - persist_to_workspace:
+          root: /tmp/workspace/
+          paths:
+            - "test_coverage/*"
+
+  upload_coverage:
+    <<: *defaults
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: gather coverage files
+          command: |
+            set -ex
+            echo "mode: atomic" > coverage.txt
+            for name in $(ls ./test_coverage/); do
+              tail -n +2 ./test_coverage/$name >> coverage.txt
+            done
+      - run:
+          name: upload
+          command: bash <(curl -s https://codecov.io/bash) -f coverage.txt
 
 workflows:
   version: 2
@@ -94,3 +120,6 @@ workflows:
           requires:
             - test_go1_10
             - test_go1_9
+      - upload_coverage:
+          requires:
+            - test_merged
