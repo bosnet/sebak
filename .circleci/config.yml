@@ -61,6 +61,10 @@ jobs:
     steps:
       - attach_workspace:
           at: /go/src/boscoin.io
+      - run: echo "${FINGERPRINTS}"
+      - add_ssh_keys:
+          fingerprints:
+            - "${FINGERPRINTS}"
       - run:
           name: Checkout merge commit
           command: |
@@ -68,8 +72,8 @@ jobs:
             if [[ -n "${CIRCLE_PR_NUMBER}" ]]
             then
               FETCH_REFS="${FETCH_REFS} +refs/pull/${CIRCLE_PR_NUMBER}/merge:pr/${CIRCLE_PR_NUMBER}/merge"
-              GIT_TERMINAL_PROMPT=0 git fetch -u origin ${FETCH_REFS}
-              GIT_TERMINAL_PROMPT=0 git checkout "pr/${CIRCLE_PR_NUMBER}/merge"
+              git fetch -u origin ${FETCH_REFS}
+              git checkout "pr/${CIRCLE_PR_NUMBER}/merge"
             fi
       - run:
           name: run tests
