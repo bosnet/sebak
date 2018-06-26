@@ -63,7 +63,7 @@ jobs:
           at: /go/src/boscoin.io
       - add_ssh_keys:
           fingerprints:
-            - b2:f8:68:90:b7:98:97:00:bb:49:76:ff:f5:41:18:64
+            - 16:27:ac:a5:76:28:2d:36:63:1b:56:4d:eb:df:a6:48
       - run:
           name: Checkout merge commit
           command: |
