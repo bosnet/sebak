@@ -170,6 +170,10 @@ func (is *ISAAC) receiveBallotVotingStates(ballot Ballot) (vs VotingStateStaging
 		return
 	}
 
+	if !is.Boxes.VotingBox.HasMessageByHash(ballot.MessageHash()) {
+		is.Boxes.AddSource(ballot)
+	}
+
 	vr := is.Boxes.VotingResult(ballot)
 	if vr.IsClosed() || !vr.CanGetResult(is.VotingThresholdPolicy) {
 		return
