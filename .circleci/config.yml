@@ -23,15 +23,16 @@ jobs:
           paths:
             - vendor
       - persist_to_workspace:
-          root: /go/src/boscoin.io
+          root: /
           paths:
-            - sebak
+            - go/src/boscoin.io/sebak
+            - home/circleci/.ssh
 
   fmt:
     <<: *defaults
     steps:
       - attach_workspace:
-          at: /go/src/boscoin.io
+          at: /
       - run:
           name: check formatting
           command: if [[ -n "$(gofmt -l cmd lib)" ]]; then gofmt -l cmd lib; exit 1; fi
@@ -40,7 +41,7 @@ jobs:
     <<: *defaults
     steps:
       - attach_workspace:
-          at: /go/src/boscoin.io
+          at: /
       - run:
           name: run tests
           command: SEBAK_LOG_HANDLER=null GOCACHE=off go test -v -timeout 3m ./...
@@ -51,7 +52,7 @@ jobs:
     working_directory: /go/src/boscoin.io/sebak
     steps:
       - attach_workspace:
-          at: /go/src/boscoin.io
+          at: /
       - run:
           name: run tests
           command: SEBAK_LOG_HANDLER=null GOCACHE=off go test -v -timeout 3m ./...
@@ -60,14 +61,10 @@ jobs:
     <<: *defaults
     steps:
       - attach_workspace:
-          at: /go/src/boscoin.io
-      - add_ssh_keys:
-          fingerprints:
-            - b2:f8:68:90:b7:98:97:00:bb:49:76:ff:f5:41:18:64
+          at: /
       - run:
           name: Checkout merge commit
           command: |
-            set -ex
             if [[ -n "${CIRCLE_PR_NUMBER}" ]]
             then
               FETCH_REFS="${FETCH_REFS} +refs/pull/${CIRCLE_PR_NUMBER}/merge:pr/${CIRCLE_PR_NUMBER}/merge"
