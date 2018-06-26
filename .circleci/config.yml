@@ -61,10 +61,10 @@ jobs:
     steps:
       - attach_workspace:
           at: /go/src/boscoin.io
-      - run: echo "${FINGERPRINTS}"
+      - run: echo ${FINGERPRINTS}
       - add_ssh_keys:
           fingerprints:
-            - "${FINGERPRINTS}"
+            - ${FINGERPRINTS}
       - run:
           name: Checkout merge commit
           command: |
