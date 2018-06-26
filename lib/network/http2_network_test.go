@@ -11,11 +11,38 @@ import (
 	"boscoin.io/sebak/lib/common"
 	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/assert"
+	"math/rand"
+	"net"
+	"strconv"
+	"sync"
+	"time"
 )
 
+var testPort = "5000"
+var once sync.Once
+
+func getPort() string {
+	once.Do(func() {
+		for {
+			s := rand.NewSource(int64(time.Now().Nanosecond()))
+			r := rand.New(s)
+			testPort = strconv.Itoa(r.Intn(65535))
+
+			ln, err := net.Listen("tcp", ":"+testPort)
+			if err == nil {
+				ln.Close()
+				break
+			}
+			ln.Close()
+		}
+	})
+	return testPort
+}
+
 func ExampleHttp2NetworkConfigCreateWithNonTLS() {
+
 	var config HTTP2NetworkConfig
-	endpoint, err := sebakcommon.NewEndpointFromString("https://localhost:5000?NodeName=n1")
+	endpoint, err := sebakcommon.NewEndpointFromString(fmt.Sprintf("https://localhost:%s?NodeName=n1", getPort()))
 	if err != nil {
 		fmt.Print("Error in NewEndpointFromString")
 	}
@@ -45,7 +72,7 @@ func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, mn *HTTP2Network, va
 	g := NewKeyGenerator(dirPath, certPath, keyPath)
 
 	var config HTTP2NetworkConfig
-	endpoint, err := sebakcommon.NewEndpointFromString("https://localhost:5000?NodeName=n1")
+	endpoint, err := sebakcommon.NewEndpointFromString(fmt.Sprintf("https://localhost:%s?NodeName=n1", getPort()))
 	if err != nil {
 		t.Error(err)
 		return
@@ -134,6 +161,8 @@ func TestHTTP2NetworkMessageBrokerResponseMessage(t *testing.T) {
 
 	go s0.Start()
 	defer s0.Stop()
+
+	//fmt.Println(s0.server.Addr())
 
 	c0 := s0.GetClient(s0.Endpoint())
 
