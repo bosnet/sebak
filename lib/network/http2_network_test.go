@@ -33,7 +33,6 @@ func getPort() string {
 				ln.Close()
 				break
 			}
-			ln.Close()
 		}
 	})
 	return testPort
@@ -42,7 +41,7 @@ func getPort() string {
 func ExampleHttp2NetworkConfigCreateWithNonTLS() {
 
 	var config HTTP2NetworkConfig
-	endpoint, err := sebakcommon.NewEndpointFromString(fmt.Sprintf("https://localhost:%s?NodeName=n1", getPort()))
+	endpoint, err := sebakcommon.NewEndpointFromString("https://localhost:5000?NodeName=n1")
 	if err != nil {
 		fmt.Print("Error in NewEndpointFromString")
 	}
