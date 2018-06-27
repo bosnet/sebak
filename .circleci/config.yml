@@ -65,6 +65,7 @@ jobs:
       - run:
           name: Checkout merge commit
           command: |
+            set -ex
             if [[ -n "${CIRCLE_PR_NUMBER}" ]]
             then
               FETCH_REFS="${FETCH_REFS} +refs/pull/${CIRCLE_PR_NUMBER}/merge:pr/${CIRCLE_PR_NUMBER}/merge"
