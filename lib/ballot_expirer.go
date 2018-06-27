@@ -28,10 +28,6 @@ func NewBallotBoxExpireMover(srcBox, targetBox *BallotBox, votingResults map[str
 	return e
 }
 
-//
-// go func() {
-//  e.Run()
-// }()
 func (e *BallotBoxExpireMover) Run() (err error) {
 	ticker := time.NewTicker(e.retain)
 	defer ticker.Stop()

@@ -354,8 +354,20 @@ func (b *BallotBoxes) AddVotingResult(vr *VotingResult, ballot Ballot) (err erro
 	return
 }
 
-func (b *BallotBoxes) RemoveVotingResult(vr *VotingResult) error {
-	return b.RemoveVotingResultByHash(vr.MessageHash)
+func (b *BallotBoxes) RemoveVotingResult(vr *VotingResult) (err error) {
+	if !b.HasMessageByHash(vr.MessageHash) {
+		err = sebakerror.ErrorVotingResultNotFound
+		return
+	}
+
+	b.Lock()
+	defer b.Unlock()
+
+	delete(b.Results, vr.MessageHash)
+	delete(b.Messages, vr.MessageHash)
+	delete(b.Sources, vr.Source)
+
+	return
 }
 
 func (b *BallotBoxes) RemoveVotingResultByHash(hash string) (err error) {
@@ -367,9 +379,9 @@ func (b *BallotBoxes) RemoveVotingResultByHash(hash string) (err error) {
 	b.Lock()
 	defer b.Unlock()
 
-	delete(b.Results, vr.MessageHash)
-	delete(b.Messages, vr.MessageHash)
-	delete(b.Sources, vr.Source)
+	delete(b.Results, hash)
+	delete(b.Messages, hash)
+	// need to delete b.Sources
 
 	return
 }
