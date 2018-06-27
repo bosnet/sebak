@@ -66,7 +66,7 @@ func NewNodeRunner(
 
 func (nr *NodeRunner) Ready() {
 	nr.network.SetContext(nr.ctx)
-	nr.network.AddHandler(nr.ctx, AddAPIHandlers)
+	nr.network.AddHandler(nr.ctx, AddAPIHandlers(nr.storage))
 	nr.network.Ready()
 }
 
