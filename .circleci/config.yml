@@ -23,15 +23,16 @@ jobs:
           paths:
             - vendor
       - persist_to_workspace:
-          root: /go/src/boscoin.io
+          root: /
           paths:
-            - sebak
+            - go/src/boscoin.io/sebak
+            - home/circleci/.ssh
 
   fmt:
     <<: *defaults
     steps:
       - attach_workspace:
-          at: /go/src/boscoin.io
+          at: /
       - run:
           name: check formatting
           command: if [[ -n "$(gofmt -l cmd lib)" ]]; then gofmt -l cmd lib; exit 1; fi
@@ -40,7 +41,7 @@ jobs:
     <<: *defaults
     steps:
       - attach_workspace:
-          at: /go/src/boscoin.io
+          at: /
       - run:
           name: run tests
           command: SEBAK_LOG_HANDLER=null GOCACHE=off go test -v -timeout 3m ./...
@@ -51,7 +52,7 @@ jobs:
     working_directory: /go/src/boscoin.io/sebak
     steps:
       - attach_workspace:
-          at: /go/src/boscoin.io
+          at: /
       - run:
           name: run tests
           command: SEBAK_LOG_HANDLER=null GOCACHE=off go test -v -timeout 3m ./...
@@ -60,10 +61,11 @@ jobs:
     <<: *defaults
     steps:
       - attach_workspace:
-          at: /go/src/boscoin.io
+          at: /
       - run:
           name: Checkout merge commit
           command: |
+            set -ex
             if [[ -n "${CIRCLE_PR_NUMBER}" ]]
             then
               FETCH_REFS="${FETCH_REFS} +refs/pull/${CIRCLE_PR_NUMBER}/merge:pr/${CIRCLE_PR_NUMBER}/merge"
@@ -78,7 +80,6 @@ jobs:
               name=$(basename "$pkg")
               SEBAK_LOG_HANDLER=null GOCACHE=off go test -v -timeout 3m -coverprofile=/tmp/workspace/test_coverage/$name.txt -covermode=atomic "$pkg"
             done
-      - run: ls -al /tmp/workspace/test_coverage/
       - persist_to_workspace:
           root: /tmp/workspace/
           paths:
