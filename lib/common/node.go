@@ -139,9 +139,9 @@ func (v *Validator) MarshalJSON() ([]byte, error) {
 		neighbors[neighbor.Address()] = struct{}{}
 	}
 	return json.Marshal(map[string]interface{}{
-		"address":  v.Address(),
-		"alias":    v.Alias(),
-		"endpoint": v.Endpoint().String(),
+		"address":    v.Address(),
+		"alias":      v.Alias(),
+		"endpoint":   v.Endpoint().String(),
 		"validators": neighbors,
 		//"validators": v.validators,
 	})
