@@ -55,7 +55,7 @@ func (c *ConnectionManager) GetConnection(address string) (client NetworkClient)
 		return
 	}
 
-	var validator sebaknode.Node
+	var validator *sebaknode.Validator
 	if validator, ok = c.validators[address]; !ok {
 		return
 	}
@@ -74,7 +74,7 @@ func (c *ConnectionManager) Start() {
 
 // setConnected returns `true` when the validator is newly connected or
 // disconnected at first
-func (c *ConnectionManager) setConnected(v sebaknode.Node, connected bool) bool {
+func (c *ConnectionManager) setConnected(v *sebaknode.Validator, connected bool) bool {
 	c.Lock()
 	defer c.Unlock()
 	defer func() {
@@ -95,7 +95,7 @@ func (c *ConnectionManager) setConnected(v sebaknode.Node, connected bool) bool 
 	return true
 }
 
-func (c *ConnectionManager) IsConnected(v sebaknode.Node) bool {
+func (c *ConnectionManager) IsConnected(v *sebaknode.Validator) bool {
 	_, ok := c.connected[v.Address()]
 
 	return ok
@@ -123,7 +123,7 @@ func (c *ConnectionManager) connectValidators() {
 	select {}
 }
 
-func (c *ConnectionManager) connectingValidator(v sebaknode.Node) {
+func (c *ConnectionManager) connectingValidator(v *sebaknode.Validator) {
 	ticker := time.NewTicker(time.Second * 1)
 	for _ = range ticker.C {
 		err := c.connectValidator(v)
@@ -144,7 +144,7 @@ func (c *ConnectionManager) connectingValidator(v sebaknode.Node) {
 	return
 }
 
-func (c *ConnectionManager) connectValidator(v sebaknode.Node) (err error) {
+func (c *ConnectionManager) connectValidator(v *sebaknode.Validator) (err error) {
 	client := c.GetConnection(v.Address())
 
 	var b []byte

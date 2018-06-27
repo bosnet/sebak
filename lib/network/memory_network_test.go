@@ -79,7 +79,7 @@ func TestMemoryNetworkCreate(t *testing.T) {
 	}
 }
 
-func createNewMemoryNetwork() (*keypair.Full, *MemoryNetwork, sebaknode.Node) {
+func createNewMemoryNetwork() (*keypair.Full, *MemoryNetwork, *sebaknode.Validator) {
 	mn := NewMemoryNetwork()
 
 	kp, _ := keypair.Random()

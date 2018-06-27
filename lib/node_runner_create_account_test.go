@@ -63,6 +63,7 @@ func TestNodeRunnerCreateAccount(t *testing.T) {
 	}
 
 	nr0 := nodeRunners[0]
+
 	client := nr0.Network().GetClient(nr0.Node().Endpoint())
 
 	initialBalance := Amount(1)
