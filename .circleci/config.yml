@@ -5,6 +5,10 @@ defaults: &defaults
   docker:
     - image: circleci/golang:1.10
 
+workspace: &workspace
+  - attach_workspace:
+    at: /
+
 jobs:
   build:
     <<: *defaults
@@ -31,8 +35,7 @@ jobs:
   fmt:
     <<: *defaults
     steps:
-      - attach_workspace:
-          at: /
+      <<: *workspace
       - run:
           name: check formatting
           command: if [[ -n "$(gofmt -l cmd lib)" ]]; then gofmt -l cmd lib; exit 1; fi
@@ -40,8 +43,7 @@ jobs:
   test_go1_10:
     <<: *defaults
     steps:
-      - attach_workspace:
-          at: /
+      <<: *workspace
       - run:
           name: run tests
           command: SEBAK_LOG_HANDLER=null GOCACHE=off go test -v -timeout 3m ./...
@@ -51,8 +53,7 @@ jobs:
       - image: circleci/golang:1.9
     working_directory: /go/src/boscoin.io/sebak
     steps:
-      - attach_workspace:
-          at: /
+      <<: *workspace
       - run:
           name: run tests
           command: SEBAK_LOG_HANDLER=null GOCACHE=off go test -v -timeout 3m ./...
@@ -60,8 +61,7 @@ jobs:
   test_merged:
     <<: *defaults
     steps:
-      - attach_workspace:
-          at: /
+      <<: *workspace
       - run:
           name: Checkout merge commit
           command: |
