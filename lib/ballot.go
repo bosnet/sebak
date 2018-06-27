@@ -345,14 +345,18 @@ func (b *BallotBoxes) AddVotingResult(vr *VotingResult, ballot Ballot) (err erro
 	return
 }
 
-func (b *BallotBoxes) RemoveVotingResult(vr *VotingResult) (err error) {
-	if !b.HasMessageByHash(vr.MessageHash) {
+func (b *BallotBoxes) RemoveVotingResult(vr *VotingResult) error {
+	return b.RemoveVotingResultByHash(vr.MessageHash)
+}
+
+func (b *BallotBoxes) RemoveVotingResultByHash(hash string) (err error) {
+	if !b.HasMessageByHash(hash) {
 		err = sebakerror.ErrorVotingResultNotFound
 		return
 	}
 
-	delete(b.Results, vr.MessageHash)
-	delete(b.Messages, vr.MessageHash)
+	delete(b.Results, hash)
+	delete(b.Messages, hash)
 
 	return
 }
@@ -423,22 +427,28 @@ func (b *BallotBox) HasMessageByHash(hash string) bool {
 	return found
 }
 
-func (b *BallotBox) AddVotingResult(vr *VotingResult) (err error) {
-	if b.HasMessageByHash(vr.MessageHash) {
+func (b *BallotBox) AddVotingResult(vr *VotingResult) error {
+	return b.AddHash(vr.MessageHash)
+}
+
+func (b *BallotBox) AddHash(hash string) (err error) {
+	if b.HasMessageByHash(hash) {
 		err = sebakerror.ErrorVotingResultAlreadyExists
 		return
 	}
 
 	b.Lock()
 	defer b.Unlock()
-
-	b.Hashes[vr.MessageHash] = true
-
+	b.Hashes[hash] = true
 	return
 }
 
-func (b *BallotBox) RemoveVotingResult(vr *VotingResult) (err error) {
-	if !b.HasMessageByHash(vr.MessageHash) {
+func (b *BallotBox) RemoveVotingResult(vr *VotingResult) error {
+	return b.RemoveHash(vr.MessageHash)
+}
+
+func (b *BallotBox) RemoveHash(hash string) (err error) {
+	if !b.HasMessageByHash(hash) {
 		err = sebakerror.ErrorVotingResultNotFound
 		return
 	}
@@ -446,7 +456,7 @@ func (b *BallotBox) RemoveVotingResult(vr *VotingResult) (err error) {
 	b.Lock()
 	defer b.Unlock()
 
-	delete(b.Hashes, vr.MessageHash)
+	delete(b.Hashes, hash)
 
 	return
 }
