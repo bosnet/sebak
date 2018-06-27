@@ -26,7 +26,7 @@ func getPort() string {
 		for {
 			s := rand.NewSource(int64(time.Now().Nanosecond()))
 			r := rand.New(s)
-			testPort = strconv.Itoa(r.Intn(65535))
+			testPort = strconv.Itoa(r.Intn(16383) + 49152) // ephemeral ports range 49152 ~ 65535
 
 			ln, err := net.Listen("tcp", ":"+testPort)
 			if err == nil {
