@@ -56,7 +56,7 @@ func makeVotingResult() (results map[string]*VotingResult) {
 	return
 }
 
-func TestNewExpiredBallotChecker(t *testing.T) {
+func TestNewExpiredBallotExpirer(t *testing.T) {
 	bb := NewBallotBoxes()
 
 	bb.Results = makeVotingResult()
