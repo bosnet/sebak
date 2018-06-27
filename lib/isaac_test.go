@@ -13,9 +13,9 @@ import (
 	"boscoin.io/sebak/lib/node"
 )
 
-func NewRandomNode() *sebaknode.Node {
+func NewRandomNode() sebaknode.Node {
 	kp, _ := keypair.Random()
-	a, _ := sebaknode.NewNode(kp.Address(), &sebakcommon.Endpoint{}, "")
+	a, _ := sebaknode.NewValidator(kp.Address(), &sebakcommon.Endpoint{}, "")
 	a.SetKeypair(kp)
 	return a
 }

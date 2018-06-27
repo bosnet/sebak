@@ -10,13 +10,13 @@ type ISAAC struct {
 	sebakcommon.SafeLock
 
 	networkID             []byte
-	Node                  *sebaknode.Node
+	Node                  sebaknode.Node
 	VotingThresholdPolicy sebakcommon.VotingThresholdPolicy
 
 	Boxes *BallotBoxes
 }
 
-func NewISAAC(networkID []byte, node *sebaknode.Node, votingThresholdPolicy sebakcommon.VotingThresholdPolicy) (is *ISAAC, err error) {
+func NewISAAC(networkID []byte, node sebaknode.Node, votingThresholdPolicy sebakcommon.VotingThresholdPolicy) (is *ISAAC, err error) {
 	is = &ISAAC{
 		networkID: networkID,
 		Node:      node,
@@ -31,7 +31,7 @@ func (is *ISAAC) NetworkID() []byte {
 	return is.networkID
 }
 
-func (is *ISAAC) GetNode() *sebaknode.Node {
+func (is *ISAAC) GetNode() sebaknode.Node {
 	return is.Node
 }
 

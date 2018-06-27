@@ -86,7 +86,7 @@ func pingAndWait(t *testing.T, c0 NetworkClient) {
 	}
 }
 
-func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, mn *HTTP2Network, validator *sebaknode.Node) {
+func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, mn *HTTP2Network, validator *sebaknode.Validator) {
 	g := NewKeyGenerator(dirPath, certPath, keyPath)
 
 	var config HTTP2NetworkConfig
@@ -109,7 +109,7 @@ func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, mn *HTTP2Network, va
 	mn = NewHTTP2Network(config)
 
 	kp, _ = keypair.Random()
-	validator, _ = sebaknode.NewNode(kp.Address(), mn.Endpoint(), "")
+	validator, _ = sebaknode.NewValidator(kp.Address(), mn.Endpoint(), "")
 	validator.SetKeypair(kp)
 
 	mn.SetContext(context.WithValue(context.Background(), "currentNode", validator))
@@ -149,7 +149,7 @@ func TestHTTP2NetworkGetNodeInfo(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	v, err := sebaknode.NewNodeFromString(b)
+	v, err := sebaknode.NewValidatorFromString(b)
 	if err != nil {
 		t.Error(err)
 		return

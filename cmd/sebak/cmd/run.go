@@ -25,7 +25,7 @@ import (
 	"strconv"
 )
 
-type FlagValidators []*sebaknode.Node
+type FlagValidators []*sebaknode.Validator
 
 func (f *FlagValidators) Type() string {
 	return "validators"
@@ -52,7 +52,7 @@ func (f *FlagValidators) Set(v string) error {
 	if err != nil {
 		return err
 	}
-	node, err := sebaknode.NewNode(parsed[0], endpoint, parsed[2])
+	node, err := sebaknode.NewValidator(parsed[0], endpoint, parsed[2])
 	if err != nil {
 		return fmt.Errorf("failed to create validator: %v", err)
 	}
@@ -276,7 +276,7 @@ func parseFlagsNode() {
 
 func runNode() {
 	// create current Node
-	currentNode, err := sebaknode.NewNode(kp.Address(), nodeEndpoint, "")
+	currentNode, err := sebaknode.NewValidator(kp.Address(), nodeEndpoint, "")
 	if err != nil {
 		log.Error("failed to launch main node", "error", err)
 		return

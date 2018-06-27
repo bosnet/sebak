@@ -16,7 +16,7 @@ func TestNodeStateChange(t *testing.T) {
 	endpoint, err := sebakcommon.NewEndpointFromString(fmt.Sprintf("https://localhost:5000?NodeName=n1"))
 	assert.Equal(t, nil, err)
 
-	node, _ := NewNode(kp.Address(), endpoint, "")
+	node, _ := NewValidator(kp.Address(), endpoint, "")
 
 	assert.Equal(t, NodeStateNONE, node.State())
 
@@ -39,7 +39,7 @@ func TestNodeMarshalJSON(t *testing.T) {
 	endpoint, err := sebakcommon.NewEndpointFromString(fmt.Sprintf("https://localhost:5000?NodeName=n1"))
 	assert.Equal(t, nil, err)
 
-	marshalNode, _ := NewNode(kp.Address(), endpoint, "")
+	marshalNode, _ := NewValidator(kp.Address(), endpoint, "")
 	tmpByte, err := marshalNode.MarshalJSON()
 	assert.Equal(t, nil, err)
 
@@ -73,7 +73,7 @@ func TestNodeUnmarshalJSON(t *testing.T) {
 	endpoint, err := sebakcommon.NewEndpointFromString(fmt.Sprintf("https://localhost:5000?NodeName=n1"))
 	assert.Equal(t, nil, err)
 
-	unmarshalNode, _ := NewNode(kp.Address(), endpoint, "")
+	unmarshalNode, _ := NewValidator(kp.Address(), endpoint, "")
 	jsonStr := "{\"address\":\"GCSDFPEBQJ7FWAPTZDXNVDYPDDBSAPFZU5MKKM6I35JXJPYD3TFRST7F\",\"alias\":\"GCSD.3TFR\",\"endpoint\":\"https://localhost:5000\",\"state\":\"%s\"}"
 	unmarshalNode.UnmarshalJSON([]byte(fmt.Sprintf(jsonStr, "NONE")))
 

@@ -79,7 +79,7 @@ func (c *HTTP2NetworkClient) GetNodeInfo() (body []byte, err error) {
 	return
 }
 
-func (c *HTTP2NetworkClient) Connect(node *sebaknode.Node) (body []byte, err error) {
+func (c *HTTP2NetworkClient) Connect(node sebaknode.Node) (body []byte, err error) {
 	headers := c.DefaultHeaders()
 	headers.Set("Content-Type", "application/json")
 
