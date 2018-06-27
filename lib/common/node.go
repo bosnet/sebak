@@ -134,10 +134,15 @@ func (v *Validator) RemoveValidators(validators ...*Validator) error {
 }
 
 func (v *Validator) MarshalJSON() ([]byte, error) {
+	var neighbors = make(map[string]struct{})
+	for _, neighbor := range v.validators {
+		neighbors[neighbor.Address()] = struct{}{}
+	}
 	return json.Marshal(map[string]interface{}{
 		"address":  v.Address(),
 		"alias":    v.Alias(),
 		"endpoint": v.Endpoint().String(),
+		"validators": neighbors,
 		//"validators": v.validators,
 	})
 }
