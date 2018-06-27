@@ -10,10 +10,21 @@ import (
 	"boscoin.io/sebak/lib/common"
 	"github.com/gorilla/handlers"
 
+	"github.com/gorilla/mux"
 	"golang.org/x/net/http2"
 )
 
 type Handlers map[string]func(http.ResponseWriter, *http.Request)
+
+const (
+	RouterNameNode = "node"
+	RouterNameAPI  = "api"
+)
+
+var (
+	UrlPathPrefixNode = fmt.Sprintf("/%s", RouterNameNode)
+	UrlPathPrefixAPI  = fmt.Sprintf("/%s", RouterNameAPI)
+)
 
 type HTTP2Network struct {
 	ctx         context.Context
@@ -21,14 +32,16 @@ type HTTP2Network struct {
 	tlsKeyFile  string
 
 	server *http.Server
+	router *mux.Router
 
 	receiveChannel chan Message
 
 	messageBroker MessageBroker
 	ready         bool
 
-	handlers Handlers
 	watchers []func(Network, net.Conn, http.ConnState)
+	routers  map[string]*mux.Router
+	handlers map[string]func(http.ResponseWriter, *http.Request)
 
 	config HTTP2NetworkConfig
 }
@@ -61,15 +74,22 @@ func NewHTTP2Network(config HTTP2NetworkConfig) (h2n *HTTP2Network) {
 		},
 	)
 
+	baseRouter := mux.NewRouter()
+
 	h2n = &HTTP2Network{
 		server:         server,
+		router:         baseRouter,
 		tlsCertFile:    config.TLSCertFile,
 		tlsKeyFile:     config.TLSKeyFile,
 		receiveChannel: make(chan Message),
 	}
+	h2n.handlers = map[string]func(http.ResponseWriter, *http.Request){}
+	h2n.routers = map[string]*mux.Router{
+		RouterNameNode: baseRouter.PathPrefix(UrlPathPrefixNode).Subrouter(),
+		RouterNameAPI:  baseRouter.PathPrefix(UrlPathPrefixAPI).Subrouter(),
+	}
 
 	h2n.config = config
-	h2n.handlers = Handlers{}
 
 	h2n.setNotReadyHandler()
 	h2n.server.ConnState = h2n.ConnState
@@ -126,20 +146,24 @@ func (t *HTTP2Network) ConnState(c net.Conn, state http.ConnState) {
 }
 
 func (t *HTTP2Network) setNotReadyHandler() {
-	handler := http.NewServeMux()
-	handler.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	t.router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if !t.ready {
 			http.Error(w, http.StatusText(http.StatusServiceUnavailable), http.StatusServiceUnavailable)
 			return
 		}
 	})
 
-	t.server.Handler = handlers.CombinedLoggingHandler(t.config.HTTP2LogOutput, handler)
+	t.server.Handler = handlers.CombinedLoggingHandler(t.config.HTTP2LogOutput, t.router)
 }
 
-func (t *HTTP2Network) AddHandler(ctx context.Context, pattern string, handler func(context.Context, *HTTP2Network) HandlerFunc) (err error) {
-	t.handlers[pattern] = handler(ctx, t)
-	return nil
+func (t *HTTP2Network) AddHandler(ctx context.Context, args ...interface{}) (err error) {
+	addAPIFunc := args[0].(func(context.Context, *HTTP2Network))
+	addAPIFunc(ctx, t)
+	return
+}
+func (t *HTTP2Network) AddAPIHandler(pattern string, handlerFunc http.HandlerFunc) (router *mux.Route) {
+	apiRouter := t.routers[RouterNameNode]
+	return apiRouter.HandleFunc(pattern, handlerFunc)
 }
 
 func (t *HTTP2Network) SetMessageBroker(mb MessageBroker) {
@@ -147,17 +171,13 @@ func (t *HTTP2Network) SetMessageBroker(mb MessageBroker) {
 }
 
 func (t *HTTP2Network) Ready() error {
-	t.AddHandler(t.Context(), "/", IndexHandler)
-	t.AddHandler(t.Context(), "/connect", ConnectHandler)
-	t.AddHandler(t.Context(), "/message", MessageHandler)
-	t.AddHandler(t.Context(), "/ballot", BallotHandler)
+	nodeRouter := t.routers[RouterNameNode]
+	nodeRouter.HandleFunc("/", NodeInfoHandler(t.Context(), t))
+	nodeRouter.HandleFunc("/connect", ConnectHandler(t.Context(), t)).Methods("POST")
+	nodeRouter.HandleFunc("/message", MessageHandler(t.Context(), t)).Methods("POST")
+	nodeRouter.HandleFunc("/ballot", BallotHandler(t.Context(), t)).Methods("POST")
 
-	handler := new(http.ServeMux)
-	for pattern, handlerFunc := range t.handlers {
-		handler.HandleFunc(pattern, handlerFunc)
-	}
-
-	t.server.Handler = handlers.CombinedLoggingHandler(t.config.HTTP2LogOutput, handler)
+	t.server.Handler = handlers.CombinedLoggingHandler(t.config.HTTP2LogOutput, t.router)
 
 	t.ready = true
 

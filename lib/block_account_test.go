@@ -3,7 +3,10 @@ package sebak
 import (
 	"testing"
 
+	"boscoin.io/sebak/lib/observer"
 	"boscoin.io/sebak/lib/storage"
+	"fmt"
+	"sync"
 )
 
 func TestSaveNewBlockAccount(t *testing.T) {
@@ -149,5 +152,38 @@ func TestBlockAccountSaveBlockAccountCheckpoints(t *testing.T) {
 			t.Error("mismatch: Checkpoint")
 			return
 		}
+	}
+}
+func TestBlockAccountObserver(t *testing.T) {
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	b := testMakeBlockAccount()
+
+	var triggered *BlockAccount
+	ObserverFunc := func(args ...interface{}) {
+		triggered = args[0].(*BlockAccount)
+		wg.Done()
+	}
+	observer.BlockAccountObserver.On(fmt.Sprintf("saved-%s", b.Address), ObserverFunc)
+	defer observer.BlockAccountObserver.Off(fmt.Sprintf("saved-%s", b.Address), ObserverFunc)
+
+	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
+
+	b.Save(st)
+
+	wg.Wait()
+
+	if b.Address != triggered.Address {
+		t.Error("Address is not match")
+		return
+	}
+	if b.Balance != triggered.Balance {
+		t.Error("Balance is not match")
+		return
+	}
+	if b.Checkpoint != triggered.Checkpoint {
+		t.Error("Checkpoint is not match")
+		return
 	}
 }

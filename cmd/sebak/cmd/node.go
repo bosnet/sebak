@@ -10,6 +10,7 @@ import (
 	"golang.org/x/net/http2"
 
 	logging "github.com/inconshreveable/log15"
+	"github.com/oklog/run"
 	"github.com/spf13/cobra"
 	"github.com/stellar/go/keypair"
 
@@ -280,10 +281,32 @@ func runNode() {
 
 		os.Exit(1)
 	}
-	nr := sebak.NewNodeRunner(flagNetworkID, currentNode, policy, nt, isaac, st)
-	if err := nr.Start(); err != nil {
-		log.Crit("failed to start node", "error", err)
 
+	// Execution group.
+	var g run.Group
+	{
+		nr := sebak.NewNodeRunner(flagNetworkID, currentNode, policy, nt, isaac, st)
+		g.Add(func() error {
+			if err := nr.Start(); err != nil {
+				log.Crit("failed to start node", "error", err)
+				return err
+			}
+			return nil
+		}, func(error) {
+			nr.Stop()
+		})
+	}
+	{
+		cancel := make(chan struct{})
+		g.Add(func() error {
+			return common.Interrupt(cancel)
+		}, func(error) {
+			close(cancel)
+		})
+	}
+
+	if err := g.Run(); err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
 }
