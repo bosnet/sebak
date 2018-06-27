@@ -66,7 +66,6 @@ func TestNodeMarshalJSON(t *testing.T) {
 	tmpByte, err = marshalNode.MarshalJSON()
 	assert.Equal(t, nil, err)
 	assert.Equal(t, true, strings.Contains(string(tmpByte), fmt.Sprintf(jsonStr, "TERMINATING")))
-	assert.Equal(t, "", string(tmpByte))
 }
 
 func TestNodeUnmarshalJSON(t *testing.T) {
