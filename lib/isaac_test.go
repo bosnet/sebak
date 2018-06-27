@@ -14,9 +14,9 @@ import (
 
 func NewRandomNode() sebakcommon.Node {
 	kp, _ := keypair.Random()
-	a, _ := sebakcommon.NewValidator(kp.Address(), &sebakcommon.Endpoint{}, "")
+	a, _ := sebakcommon.NewNode(kp.Address(), &sebakcommon.Endpoint{}, "")
 	a.SetKeypair(kp)
-	return a
+	return *a
 }
 
 type DummyMessage struct {

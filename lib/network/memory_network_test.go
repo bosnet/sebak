@@ -81,7 +81,7 @@ func createNewMemoryNetwork() (*keypair.Full, *MemoryNetwork, *sebakcommon.Valid
 	mn := NewMemoryNetwork()
 
 	kp, _ := keypair.Random()
-	validator, _ := sebakcommon.NewValidator(kp.Address(), mn.Endpoint(), "")
+	validator, _ := sebakcommon.NewNode(kp.Address(), mn.Endpoint(), "")
 	validator.SetKeypair(kp)
 
 	mn.SetContext(context.WithValue(context.Background(), "currentNode", validator))
@@ -133,7 +133,7 @@ func TestMemoryNetworkGetNodeInfo(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	v, err := sebakcommon.NewValidatorFromString(b)
+	v, err := sebakcommon.NewNodeFromString(b)
 	if err != nil {
 		t.Error(err)
 		return
@@ -158,7 +158,7 @@ func TestMemoryNetworkConnect(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	v, err := sebakcommon.NewValidatorFromString(b)
+	v, err := sebakcommon.NewNodeFromString(b)
 	if err != nil {
 		t.Error(err)
 		return

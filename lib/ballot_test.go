@@ -45,8 +45,8 @@ func TestNewBallot(t *testing.T) {
 		t.Error("`Ballot.B.Hash` mismatch")
 		return
 	}
-	if ballot.B.State != sebakcommon.InitialState {
-		t.Error("`Ballot.B.State` is not `InitialState`")
+	if ballot.B.State != sebakcommon.BallotInitState {
+		t.Error("`Ballot.B.State` is not `BallotInitState`")
 		return
 	}
 	if ballot.B.VotingHole != VotingNOTYET {

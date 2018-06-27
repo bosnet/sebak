@@ -14,45 +14,30 @@ import (
 
 var DefaultNodePort int = 12345
 
-type Node interface {
-	Address() string
-	Keypair() *keypair.Full
-	SetKeypair(*keypair.Full)
-	Alias() string
-	SetAlias(string)
-	Endpoint() *Endpoint
-	Equal(Node) bool
-	DeepEqual(Node) bool
-	GetValidators() map[string]*Validator
-	AddValidators(validators ...*Validator) error
-	HasValidators(string) bool
-	RemoveValidators(validators ...*Validator) error
-	Serialize() ([]byte, error)
+type NodeFromJSON struct {
+	Alias      string           `json:"alias"`
+	Address    string           `json:"address"`
+	Endpoint   *Endpoint        `json:"endpoint"`
+	Validators map[string]*Node `json:"Validators"`
 }
 
-type ValidatorFromJSON struct {
-	Alias      string                `json:"alias"`
-	Address    string                `json:"address"`
-	Endpoint   *Endpoint             `json:"endpoint"`
-	Validators map[string]*Validator `json:"validators"`
-}
-
-type Validator struct {
+type Node struct {
 	sync.Mutex
 
 	keypair *keypair.Full
 
+	state      NodeState
 	alias      string
 	address    string
 	endpoint   *Endpoint
-	validators map[ /* Node.Address() */ string]*Validator
+	validators map[ /* Node.Address() */ string]*Node
 }
 
-func (v *Validator) String() string {
+func (v *Node) String() string {
 	return v.Alias()
 }
 
-func (v *Validator) Equal(a Node) bool {
+func (v *Node) Equal(a Node) bool {
 	if v.Address() == a.Address() {
 		return true
 	}
@@ -60,7 +45,7 @@ func (v *Validator) Equal(a Node) bool {
 	return false
 }
 
-func (v *Validator) DeepEqual(a Node) bool {
+func (v *Node) DeepEqual(a Node) bool {
 	if !v.Equal(a) {
 		return false
 	}
@@ -71,41 +56,45 @@ func (v *Validator) DeepEqual(a Node) bool {
 	return true
 }
 
-func (v *Validator) Keypair() *keypair.Full {
+func (v *Node) State() NodeState {
+	return v.state
+}
+
+func (v *Node) Address() string {
+	return v.address
+}
+
+func (v *Node) Keypair() *keypair.Full {
 	return v.keypair
 }
 
-func (v *Validator) SetKeypair(kp *keypair.Full) {
+func (v *Node) SetKeypair(kp *keypair.Full) {
 	v.address = kp.Address()
 	v.keypair = kp
 }
 
-func (v *Validator) Address() string {
-	return v.address
-}
-
-func (v *Validator) Alias() string {
+func (v *Node) Alias() string {
 	return v.alias
 }
 
-func (v *Validator) SetAlias(s string) {
+func (v *Node) SetAlias(s string) {
 	v.alias = s
 }
 
-func (v *Validator) Endpoint() *Endpoint {
+func (v *Node) Endpoint() *Endpoint {
 	return v.endpoint
 }
 
-func (v *Validator) HasValidators(address string) bool {
+func (v *Node) HasValidators(address string) bool {
 	_, found := v.validators[address]
 	return found
 }
 
-func (v *Validator) GetValidators() map[string]*Validator {
+func (v *Node) GetValidators() map[string]*Node {
 	return v.validators
 }
 
-func (v *Validator) AddValidators(validators ...*Validator) error {
+func (v *Node) AddValidators(validators ...*Node) error {
 	v.Lock()
 	defer v.Unlock()
 
@@ -119,7 +108,7 @@ func (v *Validator) AddValidators(validators ...*Validator) error {
 	return nil
 }
 
-func (v *Validator) RemoveValidators(validators ...*Validator) error {
+func (v *Node) RemoveValidators(validators ...*Node) error {
 	v.Lock()
 	defer v.Unlock()
 
@@ -133,7 +122,7 @@ func (v *Validator) RemoveValidators(validators ...*Validator) error {
 	return nil
 }
 
-func (v *Validator) MarshalJSON() ([]byte, error) {
+func (v *Node) MarshalJSON() ([]byte, error) {
 	var neighbors = make(map[string]struct{})
 	for _, neighbor := range v.validators {
 		neighbors[neighbor.Address()] = struct{}{}
@@ -146,8 +135,8 @@ func (v *Validator) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (v *Validator) UnmarshalJSON(b []byte) error {
-	var va ValidatorFromJSON
+func (v *Node) UnmarshalJSON(b []byte) error {
+	var va NodeFromJSON
 	if err := json.Unmarshal(b, &va); err != nil {
 		return err
 	}
@@ -160,7 +149,7 @@ func (v *Validator) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-func (v *Validator) Serialize() ([]byte, error) {
+func (v *Node) Serialize() ([]byte, error) {
 	return json.Marshal(v)
 }
 
@@ -169,7 +158,7 @@ func MakeAlias(address string) string {
 	return fmt.Sprintf("%s.%s", address[:4], address[l-8:l-4])
 }
 
-func NewValidator(address string, endpoint *Endpoint, alias string) (v *Validator, err error) {
+func NewNode(address string, endpoint *Endpoint, alias string) (v *Node, err error) {
 	if len(alias) < 1 {
 		alias = MakeAlias(address)
 	}
@@ -178,18 +167,19 @@ func NewValidator(address string, endpoint *Endpoint, alias string) (v *Validato
 		return
 	}
 
-	v = &Validator{
+	v = &Node{
+		state:      NodeStateBOOTING,
 		alias:      alias,
 		address:    address,
 		endpoint:   endpoint,
-		validators: map[string]*Validator{},
+		validators: map[string]*Node{},
 	}
 
 	return
 }
 
-func NewValidatorFromString(b []byte) (*Validator, error) {
-	var v Validator
+func NewNodeFromString(b []byte) (*Node, error) {
+	var v Node
 	if err := json.Unmarshal(b, &v); err != nil {
 		return nil, err
 	}
@@ -236,7 +226,7 @@ func ParseNodeEndpoint(endpoint string) (u *Endpoint, err error) {
 	return
 }
 
-func NewValidatorFromURI(v string) (validator *Validator, err error) {
+func NewValidatorFromURI(v string) (validator *Node, err error) {
 	var parsed *url.URL
 	if parsed, err = url.Parse(v); err != nil {
 		return
@@ -268,7 +258,7 @@ func NewValidatorFromURI(v string) (validator *Validator, err error) {
 		alias = aliasStrings[0]
 	}
 
-	if validator, err = NewValidator(address, endpoint, alias); err != nil {
+	if validator, err = NewNode(address, endpoint, alias); err != nil {
 		return
 	}
 

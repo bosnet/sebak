@@ -106,7 +106,7 @@ func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, mn *HTTP2Network, va
 	mn = NewHTTP2Network(config)
 
 	kp, _ = keypair.Random()
-	validator, _ = sebakcommon.NewValidator(kp.Address(), mn.Endpoint(), "")
+	validator, _ = sebakcommon.NewNode(kp.Address(), mn.Endpoint(), "")
 	validator.SetKeypair(kp)
 
 	mn.SetContext(context.WithValue(context.Background(), "currentNode", validator))
@@ -146,7 +146,7 @@ func TestHTTP2NetworkGetNodeInfo(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	v, err := sebakcommon.NewValidatorFromString(b)
+	v, err := sebakcommon.NewNodeFromString(b)
 	if err != nil {
 		t.Error(err)
 		return

@@ -24,6 +24,53 @@ import (
 	"strconv"
 )
 
+type FlagValidators []*sebakcommon.Node
+
+func (f *FlagValidators) Type() string {
+	return "validators"
+}
+
+func (f *FlagValidators) String() string {
+	return ""
+}
+
+func (f *FlagValidators) Set(v string) error {
+	if strings.Count(v, ",") > 2 {
+		return errors.New("multiple comma, ',' found")
+	}
+
+	parsed := strings.SplitN(v, ",", 3)
+	if len(parsed) < 2 {
+		return errors.New("at least '<public address>,<endpoint url>' must be given")
+	}
+	if len(parsed) < 3 {
+		parsed = append(parsed, "")
+	}
+
+	endpoint, err := sebakcommon.ParseNodeEndpoint(parsed[1])
+	if err != nil {
+		return err
+	}
+	node, err := sebakcommon.NewNode(parsed[0], endpoint, parsed[2])
+	if err != nil {
+		return fmt.Errorf("failed to create validator: %v", err)
+	}
+
+	// check duplication
+	for _, n := range *f {
+		if node.Address() == n.Address() {
+			return fmt.Errorf("duplicated public address found")
+		}
+		if node.Endpoint() == n.Endpoint() {
+			return fmt.Errorf("duplicated endpoint found")
+		}
+	}
+
+	*f = append(*f, node)
+
+	return nil
+}
+
 const defaultNetwork string = "https"
 const defaultPort int = 12345
 const defaultHost string = "0.0.0.0"
@@ -53,7 +100,7 @@ var (
 	kp            *keypair.Full
 	nodeEndpoint  *sebakcommon.Endpoint
 	storageConfig *sebakstorage.Config
-	validators    []*sebakcommon.Validator
+	validators    []*sebakcommon.Node
 	logLevel      logging.Lvl
 	log           logging.Logger
 )
@@ -98,14 +145,14 @@ func init() {
 	rootCmd.AddCommand(nodeCmd)
 }
 
-func parseFlagValidators(v string) (vs []*sebakcommon.Validator, err error) {
+func parseFlagValidators(v string) (vs []*sebakcommon.Node, err error) {
 	splitted := strings.Fields(v)
 	if len(splitted) < 1 {
 		return
 	}
 
 	for _, v := range splitted {
-		var validator *sebakcommon.Validator
+		var validator *sebakcommon.Node
 		if validator, err = sebakcommon.NewValidatorFromURI(v); err != nil {
 			return
 		}
@@ -228,7 +275,7 @@ func parseFlagsNode() {
 
 func runNode() {
 	// create current Node
-	currentNode, err := sebakcommon.NewValidator(kp.Address(), nodeEndpoint, "")
+	currentNode, err := sebakcommon.NewNode(kp.Address(), nodeEndpoint, "")
 	if err != nil {
 		log.Error("failed to launch main node", "error", err)
 		return
@@ -249,7 +296,7 @@ func runNode() {
 	policy, _ := sebak.NewDefaultVotingThresholdPolicy(100, signTh, acceptTh)
 	policy.SetValidators(len(currentNode.GetValidators()) + 1) // including 'self'
 
-	isaac, err := sebak.NewISAAC([]byte(flagNetworkID), currentNode, policy)
+	isaac, err := sebak.NewISAAC([]byte(flagNetworkID), *currentNode, policy)
 	if err != nil {
 		log.Error("failed to launch consensus", "error", err)
 		return
@@ -265,7 +312,7 @@ func runNode() {
 	// Execution group.
 	var g run.Group
 	{
-		nr := sebak.NewNodeRunner(flagNetworkID, currentNode, policy, nt, isaac, st)
+		nr := sebak.NewNodeRunner(flagNetworkID, *currentNode, policy, nt, isaac, st)
 		g.Add(func() error {
 			if err := nr.Start(); err != nil {
 				log.Crit("failed to start node", "error", err)
