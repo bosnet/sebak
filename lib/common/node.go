@@ -33,90 +33,90 @@ type Node struct {
 	validators map[ /* Node.Address() */ string]*Node
 }
 
-func (v *Node) String() string {
-	return v.Alias()
+func (n *Node) String() string {
+	return n.Alias()
 }
 
-func (v *Node) Equal(a Node) bool {
-	if v.Address() == a.Address() {
+func (n *Node) Equal(a Node) bool {
+	if n.Address() == a.Address() {
 		return true
 	}
 
 	return false
 }
 
-func (v *Node) DeepEqual(a Node) bool {
-	if !v.Equal(a) {
+func (n *Node) DeepEqual(a Node) bool {
+	if !n.Equal(a) {
 		return false
 	}
-	if v.Endpoint().String() != a.Endpoint().String() {
+	if n.Endpoint().String() != a.Endpoint().String() {
 		return false
 	}
 
 	return true
 }
 
-func (v *Node) State() NodeState {
-	return v.state
+func (n *Node) State() NodeState {
+	return n.state
 }
 
-func (v *Node) Address() string {
-	return v.address
+func (n *Node) Address() string {
+	return n.address
 }
 
-func (v *Node) Keypair() *keypair.Full {
-	return v.keypair
+func (n *Node) Keypair() *keypair.Full {
+	return n.keypair
 }
 
-func (v *Node) SetKeypair(kp *keypair.Full) {
-	v.address = kp.Address()
-	v.keypair = kp
+func (n *Node) SetKeypair(kp *keypair.Full) {
+	n.address = kp.Address()
+	n.keypair = kp
 }
 
-func (v *Node) Alias() string {
-	return v.alias
+func (n *Node) Alias() string {
+	return n.alias
 }
 
-func (v *Node) SetAlias(s string) {
-	v.alias = s
+func (n *Node) SetAlias(s string) {
+	n.alias = s
 }
 
-func (v *Node) Endpoint() *Endpoint {
-	return v.endpoint
+func (n *Node) Endpoint() *Endpoint {
+	return n.endpoint
 }
 
-func (v *Node) HasValidators(address string) bool {
-	_, found := v.validators[address]
+func (n *Node) HasValidators(address string) bool {
+	_, found := n.validators[address]
 	return found
 }
 
-func (v *Node) GetValidators() map[string]*Node {
-	return v.validators
+func (n *Node) GetValidators() map[string]*Node {
+	return n.validators
 }
 
-func (v *Node) AddValidators(validators ...*Node) error {
-	v.Lock()
-	defer v.Unlock()
+func (n *Node) AddValidators(validators ...*Node) error {
+	n.Lock()
+	defer n.Unlock()
 
 	for _, va := range validators {
-		if v.Address() == va.Address() {
+		if n.Address() == va.Address() {
 			continue
 		}
-		v.validators[va.Address()] = va
+		n.validators[va.Address()] = va
 	}
 
 	return nil
 }
 
-func (v *Node) RemoveValidators(validators ...*Node) error {
-	v.Lock()
-	defer v.Unlock()
+func (n *Node) RemoveValidators(validators ...*Node) error {
+	n.Lock()
+	defer n.Unlock()
 
 	for _, va := range validators {
-		if _, ok := v.validators[va.Address()]; !ok {
+		if _, ok := n.validators[va.Address()]; !ok {
 			continue
 		}
-		delete(v.validators, va.Address())
+		delete(n.validators, va.Address())
 	}
 
 	return nil
@@ -135,22 +135,22 @@ func (v *Node) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (v *Node) UnmarshalJSON(b []byte) error {
+func (n *Node) UnmarshalJSON(b []byte) error {
 	var va NodeFromJSON
 	if err := json.Unmarshal(b, &va); err != nil {
 		return err
 	}
 
-	v.alias = va.Alias
-	v.address = va.Address
-	v.endpoint = va.Endpoint
-	v.validators = va.Validators
+	n.alias = va.Alias
+	n.address = va.Address
+	n.endpoint = va.Endpoint
+	n.validators = va.Validators
 
 	return nil
 }
 
-func (v *Node) Serialize() ([]byte, error) {
-	return json.Marshal(v)
+func (n *Node) Serialize() ([]byte, error) {
+	return json.Marshal(n)
 }
 
 func MakeAlias(address string) string {
@@ -158,7 +158,7 @@ func MakeAlias(address string) string {
 	return fmt.Sprintf("%s.%s", address[:4], address[l-8:l-4])
 }
 
-func NewNode(address string, endpoint *Endpoint, alias string) (v *Node, err error) {
+func NewNode(address string, endpoint *Endpoint, alias string) (n *Node, err error) {
 	if len(alias) < 1 {
 		alias = MakeAlias(address)
 	}
@@ -167,7 +167,7 @@ func NewNode(address string, endpoint *Endpoint, alias string) (v *Node, err err
 		return
 	}
 
-	v = &Node{
+	n = &Node{
 		state:      NodeStateBOOTING,
 		alias:      alias,
 		address:    address,
