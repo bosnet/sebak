@@ -3,19 +3,20 @@ package sebak
 import (
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/node"
 )
 
 type ISAAC struct {
 	sebakcommon.SafeLock
 
 	networkID             []byte
-	Node                  *sebakcommon.Node
+	Node                  *sebaknode.Node
 	VotingThresholdPolicy sebakcommon.VotingThresholdPolicy
 
 	Boxes *BallotBoxes
 }
 
-func NewISAAC(networkID []byte, node *sebakcommon.Node, votingThresholdPolicy sebakcommon.VotingThresholdPolicy) (is *ISAAC, err error) {
+func NewISAAC(networkID []byte, node *sebaknode.Node, votingThresholdPolicy sebakcommon.VotingThresholdPolicy) (is *ISAAC, err error) {
 	is = &ISAAC{
 		networkID: networkID,
 		Node:      node,
@@ -30,7 +31,7 @@ func (is *ISAAC) NetworkID() []byte {
 	return is.networkID
 }
 
-func (is *ISAAC) GetNode() *sebakcommon.Node {
+func (is *ISAAC) GetNode() *sebaknode.Node {
 	return is.Node
 }
 

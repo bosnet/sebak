@@ -17,6 +17,7 @@ import (
 	"boscoin.io/sebak/lib"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/network"
+	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/storage"
 
 	"boscoin.io/sebak/cmd/sebak/common"
@@ -24,7 +25,7 @@ import (
 	"strconv"
 )
 
-type FlagValidators []*sebakcommon.Node
+type FlagValidators []*sebaknode.Node
 
 func (f *FlagValidators) Type() string {
 	return "validators"
@@ -47,11 +48,11 @@ func (f *FlagValidators) Set(v string) error {
 		parsed = append(parsed, "")
 	}
 
-	endpoint, err := sebakcommon.ParseNodeEndpoint(parsed[1])
+	endpoint, err := sebakcommon.ParseEndpoint(parsed[1])
 	if err != nil {
 		return err
 	}
-	node, err := sebakcommon.NewNode(parsed[0], endpoint, parsed[2])
+	node, err := sebaknode.NewNode(parsed[0], endpoint, parsed[2])
 	if err != nil {
 		return fmt.Errorf("failed to create validator: %v", err)
 	}
@@ -183,7 +184,7 @@ func parseFlagsNode() {
 		kp = parsedKP.(*keypair.Full)
 	}
 
-	if p, err := sebakcommon.ParseNodeEndpoint(flagEndpointString); err != nil {
+	if p, err := sebakcommon.ParseEndpoint(flagEndpointString); err != nil {
 		common.PrintFlagsError(nodeCmd, "--endpoint", err)
 	} else {
 		nodeEndpoint = p
@@ -201,7 +202,7 @@ func parseFlagsNode() {
 	queries.Add("TLSCertFile", flagTLSCertFile)
 	queries.Add("TLSKeyFile", flagTLSKeyFile)
 	queries.Add("IdleTimeout", "3s")
-	queries.Add("NodeName", sebakcommon.MakeAlias(kp.Address()))
+	queries.Add("NodeName", sebaknode.MakeAlias(kp.Address()))
 	nodeEndpoint.RawQuery = queries.Encode()
 
 	if validators, err = parseFlagValidators(flagValidators); err != nil {
@@ -275,7 +276,7 @@ func parseFlagsNode() {
 
 func runNode() {
 	// create current Node
-	currentNode, err := sebakcommon.NewNode(kp.Address(), nodeEndpoint, "")
+	currentNode, err := sebaknode.NewNode(kp.Address(), nodeEndpoint, "")
 	if err != nil {
 		log.Error("failed to launch main node", "error", err)
 		return

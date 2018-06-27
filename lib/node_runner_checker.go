@@ -3,13 +3,14 @@ package sebak
 import (
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/network"
+	"boscoin.io/sebak/lib/node"
 )
 
 type NodeRunnerHandleMessageChecker struct {
 	sebakcommon.DefaultChecker
 
 	NodeRunner  *NodeRunner
-	CurrentNode *sebakcommon.Node
+	CurrentNode *sebaknode.Node
 	NetworkID   []byte
 	Message     sebaknetwork.Message
 
@@ -100,7 +101,7 @@ type NodeRunnerHandleBallotChecker struct {
 
 	GenesisBlockCheckpoint string
 	NodeRunner             *NodeRunner
-	CurrentNode            *sebakcommon.Node
+	CurrentNode            *sebaknode.Node
 	NetworkID              []byte
 	Message                sebaknetwork.Message
 	Ballot                 Ballot

@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/node"
+
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/stellar/go/keypair"
 )
@@ -77,11 +79,11 @@ func TestMemoryNetworkCreate(t *testing.T) {
 	}
 }
 
-func createNewMemoryNetwork() (*keypair.Full, *MemoryNetwork, *sebakcommon.Node) {
+func createNewMemoryNetwork() (*keypair.Full, *MemoryNetwork, *sebaknode.Node) {
 	mn := NewMemoryNetwork()
 
 	kp, _ := keypair.Random()
-	validator, _ := sebakcommon.NewNode(kp.Address(), mn.Endpoint(), "")
+	validator, _ := sebaknode.NewNode(kp.Address(), mn.Endpoint(), "")
 	validator.SetKeypair(kp)
 
 	mn.SetContext(context.WithValue(context.Background(), "currentNode", validator))
@@ -133,7 +135,7 @@ func TestMemoryNetworkGetNodeInfo(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	v, err := sebakcommon.NewNodeFromString(b)
+	v, err := sebaknode.NewNodeFromString(b)
 	if err != nil {
 		t.Error(err)
 		return
@@ -158,7 +160,7 @@ func TestMemoryNetworkConnect(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	v, err := sebakcommon.NewNodeFromString(b)
+	v, err := sebaknode.NewNodeFromString(b)
 	if err != nil {
 		t.Error(err)
 		return

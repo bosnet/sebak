@@ -8,17 +8,18 @@ import (
 	"time"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/node"
 	logging "github.com/inconshreveable/log15"
 )
 
 type ConnectionManager struct {
 	sync.Mutex
 
-	currentNode *sebakcommon.Node
+	currentNode *sebaknode.Node
 	network     Network
 	policy      sebakcommon.VotingThresholdPolicy
 
-	validators map[ /* nodd.Address() */ string]*sebakcommon.Node
+	validators map[ /* nodd.Address() */ string]*sebaknode.Node
 	clients    map[ /* nodd.Address() */ string]NetworkClient
 	connected  map[ /* nodd.Address() */ string]bool
 
@@ -26,10 +27,10 @@ type ConnectionManager struct {
 }
 
 func NewConnectionManager(
-	currentNode *sebakcommon.Node,
+	currentNode *sebaknode.Node,
 	network Network,
 	policy sebakcommon.VotingThresholdPolicy,
-	validators map[string]*sebakcommon.Node,
+	validators map[string]*sebaknode.Node,
 ) *ConnectionManager {
 	return &ConnectionManager{
 		currentNode: currentNode,
@@ -54,7 +55,7 @@ func (c *ConnectionManager) GetConnection(address string) (client NetworkClient)
 		return
 	}
 
-	var validator *sebakcommon.Node
+	var validator *sebaknode.Node
 	if validator, ok = c.validators[address]; !ok {
 		return
 	}
@@ -73,7 +74,7 @@ func (c *ConnectionManager) Start() {
 
 // setConnected returns `true` when the validator is newly connected or
 // disconnected at first
-func (c *ConnectionManager) setConnected(v *sebakcommon.Node, connected bool) bool {
+func (c *ConnectionManager) setConnected(v *sebaknode.Node, connected bool) bool {
 	c.Lock()
 	defer c.Unlock()
 	defer func() {
@@ -94,14 +95,14 @@ func (c *ConnectionManager) setConnected(v *sebakcommon.Node, connected bool) bo
 	return true
 }
 
-func (c *ConnectionManager) IsConnected(v *sebakcommon.Node) bool {
+func (c *ConnectionManager) IsConnected(v *sebaknode.Node) bool {
 	_, ok := c.connected[v.Address()]
 
 	return ok
 }
 
-func (c *ConnectionManager) AllConnected() []*sebakcommon.Node {
-	var connected []*sebakcommon.Node
+func (c *ConnectionManager) AllConnected() []*sebaknode.Node {
+	var connected []*sebaknode.Node
 	for address := range c.connected {
 		connected = append(connected, c.validators[address])
 	}
@@ -122,7 +123,7 @@ func (c *ConnectionManager) connectValidators() {
 	select {}
 }
 
-func (c *ConnectionManager) connectingValidator(v *sebakcommon.Node) {
+func (c *ConnectionManager) connectingValidator(v *sebaknode.Node) {
 	ticker := time.NewTicker(time.Second * 1)
 	for _ = range ticker.C {
 		err := c.connectValidator(v)
@@ -143,7 +144,7 @@ func (c *ConnectionManager) connectingValidator(v *sebakcommon.Node) {
 	return
 }
 
-func (c *ConnectionManager) connectValidator(v *sebakcommon.Node) (err error) {
+func (c *ConnectionManager) connectValidator(v *sebaknode.Node) (err error) {
 	client := c.GetConnection(v.Address())
 
 	var b []byte
@@ -153,8 +154,8 @@ func (c *ConnectionManager) connectValidator(v *sebakcommon.Node) (err error) {
 	}
 
 	// load and check validator info; addresses are same?
-	var validator *sebakcommon.Node
-	validator, err = sebakcommon.NewNodeFromString(b)
+	var validator *sebaknode.Node
+	validator, err = sebaknode.NewNodeFromString(b)
 	if err != nil {
 		return
 	}
@@ -172,7 +173,7 @@ func (c *ConnectionManager) ConnectionWatcher(t Network, conn net.Conn, state ht
 
 func (c *ConnectionManager) Broadcast(message sebakcommon.Message) {
 	for _, validator := range c.AllConnected() {
-		go func(v *sebakcommon.Node) {
+		go func(v *sebaknode.Node) {
 			client := c.GetConnection(v.Address())
 			if _, err := client.SendBallot(message); err != nil {
 				c.log.Error("failed to SendBallot", "error", err, "validator", v)

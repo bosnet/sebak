@@ -6,13 +6,14 @@ import (
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/network"
+	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/storage"
 	logging "github.com/inconshreveable/log15"
 )
 
 type NodeRunner struct {
 	networkID         []byte
-	currentNode       *sebakcommon.Node
+	currentNode       *sebaknode.Node
 	policy            sebakcommon.VotingThresholdPolicy
 	network           sebaknetwork.Network
 	consensus         Consensus
@@ -31,7 +32,7 @@ type NodeRunner struct {
 
 func NewNodeRunner(
 	networkID string,
-	currentNode *sebakcommon.Node,
+	currentNode *sebaknode.Node,
 	policy sebakcommon.VotingThresholdPolicy,
 	network sebaknetwork.Network,
 	consensus Consensus,
@@ -87,7 +88,7 @@ func (nr *NodeRunner) Stop() {
 	nr.network.Stop()
 }
 
-func (nr *NodeRunner) Node() *sebakcommon.Node {
+func (nr *NodeRunner) Node() *sebaknode.Node {
 	return nr.currentNode
 }
 
@@ -202,7 +203,7 @@ func (nr *NodeRunner) handleMessage() {
 		switch message.Type {
 		case sebaknetwork.ConnectMessage:
 			nr.log.Debug("got connect", "message", message.Head(50))
-			if _, err := sebakcommon.NewNodeFromString(message.Data); err != nil {
+			if _, err := sebaknode.NewNodeFromString(message.Data); err != nil {
 				nr.log.Error("invalid validator data was received", "data", message.Data)
 				continue
 			}
