@@ -130,6 +130,7 @@ func (is *ISAAC) receiveBallotStateINIT(ballot Ballot) (vs VotingStateStaging, e
 		is.Boxes.WaitingBox.RemoveVotingResult(vr) // TODO detect error
 		if !vs.IsClosed() {
 			is.Boxes.VotingBox.AddVotingResult(vr) // TODO detect error
+			is.Boxes.AddSource(ballot)
 		}
 	}
 
@@ -167,6 +168,10 @@ func (is *ISAAC) CloseConsensus(ballot Ballot) (err error) {
 func (is *ISAAC) receiveBallotVotingStates(ballot Ballot) (vs VotingStateStaging, err error) {
 	if _, err = is.Boxes.AddBallot(ballot); err != nil {
 		return
+	}
+
+	if !is.Boxes.VotingBox.HasMessageByHash(ballot.MessageHash()) {
+		is.Boxes.AddSource(ballot)
 	}
 
 	vr := is.Boxes.VotingResult(ballot)
