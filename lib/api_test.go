@@ -54,7 +54,7 @@ func TestGetAccountHandler(t *testing.T) {
 	url := ts.URL + fmt.Sprintf("/account/%s", ba.Address)
 	req, _ := http.NewRequest("GET", url, nil)
 	req.Header.Set("Accept", "text/event-stream")
-	resp, _ := http.DefaultClient.Do(req)
+	resp, _ := ts.Client().Do(req)
 	reader := bufio.NewReader(resp.Body)
 
 	// Do stream Request to the Server
@@ -89,7 +89,7 @@ func TestGetAccountHandler(t *testing.T) {
 
 	// No streaming
 	req.Header.Del("Accept")
-	resp, _ = http.DefaultClient.Do(req)
+	resp, _ = ts.Client().Do(req)
 	reader = bufio.NewReader(resp.Body)
 	readByte, _ := ioutil.ReadAll(reader)
 	var cba = &BlockAccount{}
@@ -133,7 +133,7 @@ func TestGetAccountTransactionsHandler(t *testing.T) {
 	url := ts.URL + fmt.Sprintf("/account/%s/transactions", kp.Address())
 	req, _ := http.NewRequest("GET", url, nil)
 	req.Header.Set("Accept", "text/event-stream")
-	resp, _ := http.DefaultClient.Do(req)
+	resp, _ := ts.Client().Do(req)
 	reader := bufio.NewReader(resp.Body)
 
 	// Do stream Request to the Server
@@ -169,7 +169,7 @@ func TestGetAccountTransactionsHandler(t *testing.T) {
 
 	// No streaming
 	req.Header.Del("Accept")
-	resp, _ = http.DefaultClient.Do(req)
+	resp, _ = ts.Client().Do(req)
 	reader = bufio.NewReader(resp.Body)
 	readByte, _ := ioutil.ReadAll(reader)
 	var receivedBts []BlockTransaction
@@ -218,7 +218,7 @@ func TestGetAccountOperationsHandler(t *testing.T) {
 	url := ts.URL + fmt.Sprintf("/account/%s/operations", kp.Address())
 	req, _ := http.NewRequest("GET", url, nil)
 	req.Header.Set("Accept", "text/event-stream")
-	resp, _ := http.DefaultClient.Do(req)
+	resp, _ := ts.Client().Do(req)
 	reader := bufio.NewReader(resp.Body)
 
 	// Do stream Request to the Server
@@ -254,7 +254,7 @@ func TestGetAccountOperationsHandler(t *testing.T) {
 
 	// No streaming
 	req.Header.Del("Accept")
-	resp, _ = http.DefaultClient.Do(req)
+	resp, _ = ts.Client().Do(req)
 	reader = bufio.NewReader(resp.Body)
 	readByte, _ := ioutil.ReadAll(reader)
 	var receivedBos []BlockOperation
@@ -297,7 +297,7 @@ func TestGetTransactionByHashHandler(t *testing.T) {
 
 	// Do stream Request to the Server
 	go func() {
-		resp, _ := http.DefaultClient.Do(req)
+		resp, _ := ts.Client().Do(req)
 		reader := bufio.NewReader(resp.Body)
 		line, _ := reader.ReadBytes('\n')
 		line = bytes.Trim(line, "\n\t ")
@@ -317,7 +317,7 @@ func TestGetTransactionByHashHandler(t *testing.T) {
 
 	// No streaming
 	req.Header.Del("Accept")
-	resp, _ := http.DefaultClient.Do(req)
+	resp, _ := ts.Client().Do(req)
 	reader := bufio.NewReader(resp.Body)
 	readByte, _ := ioutil.ReadAll(reader)
 	var receivedBts BlockTransaction
@@ -359,7 +359,7 @@ func TestGetTransactionsHandler(t *testing.T) {
 	url := ts.URL + "/transactions"
 	req, _ := http.NewRequest("GET", url, nil)
 	req.Header.Set("Accept", "text/event-stream")
-	resp, _ := http.DefaultClient.Do(req)
+	resp, _ := ts.Client().Do(req)
 	reader := bufio.NewReader(resp.Body)
 
 	// Do stream Request to the Server
@@ -394,7 +394,7 @@ func TestGetTransactionsHandler(t *testing.T) {
 
 	// No streaming
 	req.Header.Del("Accept")
-	resp, _ = http.DefaultClient.Do(req)
+	resp, _ = ts.Client().Do(req)
 	reader = bufio.NewReader(resp.Body)
 	readByte, _ := ioutil.ReadAll(reader)
 	var receivedBts []BlockTransaction
