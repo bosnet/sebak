@@ -8,14 +8,15 @@ import (
 	"testing"
 	"unicode"
 
-	"boscoin.io/sebak/lib/common"
-	"github.com/stellar/go/keypair"
-	"github.com/stretchr/testify/assert"
 	"math/rand"
 	"net"
 	"strconv"
 	"sync"
 	"time"
+
+	"boscoin.io/sebak/lib/common"
+	"github.com/stellar/go/keypair"
+	"github.com/stretchr/testify/assert"
 )
 
 var testPort = "5000"

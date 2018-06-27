@@ -63,8 +63,8 @@ func TestNodeRunnerCreateAccount(t *testing.T) {
 	}
 
 	nr0 := nodeRunners[0]
-
-	client := nr0.Network().GetClient(nr0.Node().Endpoint())
+	ep := nr0.Node().Endpoint()
+	client := nr0.Network().GetClient(ep)
 
 	initialBalance := Amount(1)
 	tx := makeTransactionCreateAccount(kp, kpNewAccount.Address(), initialBalance)

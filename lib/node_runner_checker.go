@@ -9,7 +9,7 @@ type NodeRunnerHandleMessageChecker struct {
 	sebakcommon.DefaultChecker
 
 	NodeRunner  *NodeRunner
-	CurrentNode sebakcommon.Node
+	CurrentNode *sebakcommon.Node
 	NetworkID   []byte
 	Message     sebaknetwork.Message
 
@@ -100,7 +100,7 @@ type NodeRunnerHandleBallotChecker struct {
 
 	GenesisBlockCheckpoint string
 	NodeRunner             *NodeRunner
-	CurrentNode            sebakcommon.Node
+	CurrentNode            *sebakcommon.Node
 	NetworkID              []byte
 	Message                sebaknetwork.Message
 	Ballot                 Ballot

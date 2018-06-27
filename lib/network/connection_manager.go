@@ -14,7 +14,7 @@ import (
 type ConnectionManager struct {
 	sync.Mutex
 
-	currentNode sebakcommon.Node
+	currentNode *sebakcommon.Node
 	network     Network
 	policy      sebakcommon.VotingThresholdPolicy
 
@@ -26,7 +26,7 @@ type ConnectionManager struct {
 }
 
 func NewConnectionManager(
-	currentNode sebakcommon.Node,
+	currentNode *sebakcommon.Node,
 	network Network,
 	policy sebakcommon.VotingThresholdPolicy,
 	validators map[string]*sebakcommon.Node,

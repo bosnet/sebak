@@ -5,7 +5,7 @@ import (
 )
 
 type Consensus interface {
-	GetNode() sebakcommon.Node
+	GetNode() *sebakcommon.Node
 	HasMessage(sebakcommon.Message) bool
 	HasMessageByHash(string) bool
 	ReceiveMessage(sebakcommon.Message) (Ballot, error)

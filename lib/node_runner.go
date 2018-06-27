@@ -12,7 +12,7 @@ import (
 
 type NodeRunner struct {
 	networkID         []byte
-	currentNode       sebakcommon.Node
+	currentNode       *sebakcommon.Node
 	policy            sebakcommon.VotingThresholdPolicy
 	network           sebaknetwork.Network
 	consensus         Consensus
@@ -31,7 +31,7 @@ type NodeRunner struct {
 
 func NewNodeRunner(
 	networkID string,
-	currentNode sebakcommon.Node,
+	currentNode *sebakcommon.Node,
 	policy sebakcommon.VotingThresholdPolicy,
 	network sebaknetwork.Network,
 	consensus Consensus,
@@ -87,7 +87,7 @@ func (nr *NodeRunner) Stop() {
 	nr.network.Stop()
 }
 
-func (nr *NodeRunner) Node() sebakcommon.Node {
+func (nr *NodeRunner) Node() *sebakcommon.Node {
 	return nr.currentNode
 }
 

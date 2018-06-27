@@ -14,7 +14,7 @@ import (
 	"github.com/stellar/go/keypair"
 )
 
-func createNetMemoryNetwork() (*sebaknetwork.MemoryNetwork, *sebakcommon.Validator) {
+func createNetMemoryNetwork() (*sebaknetwork.MemoryNetwork, *sebakcommon.Node) {
 	mn := sebaknetwork.NewMemoryNetwork()
 
 	kp, _ := keypair.Random()
@@ -112,7 +112,7 @@ func makeTransactionCreateAccount(kpSource *keypair.Full, target string, amount 
 
 func createNodeRunners(n int) []*NodeRunner {
 	var ns []*sebaknetwork.MemoryNetwork
-	var validators []*sebakcommon.Validator
+	var validators []*sebakcommon.Node
 	for i := 0; i < n; i++ {
 		s, v := createNetMemoryNetwork()
 		ns = append(ns, s)
@@ -204,7 +204,7 @@ func TestMemoryNetworkCreate(t *testing.T) {
 		if rv, err := sebakcommon.NewNodeFromString(b); err != nil {
 			t.Error("invalid validator data was received")
 			return
-		} else if !nr.Node().DeepEqual(rv) {
+		} else if !nr.Node().DeepEqual(*rv) {
 			t.Error("loaded validator does not match")
 			return
 		}

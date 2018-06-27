@@ -21,7 +21,7 @@ func (m *MemoryTransportClient) Endpoint() *sebakcommon.Endpoint {
 	return m.endpoint
 }
 
-func (m *MemoryTransportClient) Connect(node sebakcommon.Node) (b []byte, err error) {
+func (m *MemoryTransportClient) Connect(node *sebakcommon.Node) (b []byte, err error) {
 	b = m.server.GetNodeInfo()
 	return
 }
