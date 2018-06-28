@@ -21,6 +21,7 @@ func AddAPIHandlers(s *sebakstorage.LevelDBBackend) func(ctx context.Context, t 
 	}
 	return fn
 }
+
 // Implement `Server Sent Event`
 // Listen event `event` thru `o`
 // When the `event` triggered, `callBackFunc` fired

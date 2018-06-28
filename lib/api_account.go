@@ -99,7 +99,7 @@ func GetAccountTransactionsHandler(storage *sebakstorage.LevelDBBackend) http.Ha
 				for {
 					bt, hasNext := iterFunc()
 					count--
-					if !hasNext || count < 0{
+					if !hasNext || count < 0 {
 						break
 					}
 					observer.BlockTransactionObserver.Trigger(fmt.Sprintf("iterate-%s", iterateId), &bt)
@@ -164,7 +164,7 @@ func GetAccountOperationsHandler(storage *sebakstorage.LevelDBBackend) http.Hand
 				for {
 					bo, hasNext := iterFunc()
 					count--
-					if !hasNext || count < 0{
+					if !hasNext || count < 0 {
 						break
 					}
 					observer.BlockOperationObserver.Trigger(fmt.Sprintf("iterate-%s", iterateId), &bo)

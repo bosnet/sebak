@@ -29,7 +29,7 @@ func GetTransactionsHandler(storage *sebakstorage.LevelDBBackend) http.HandlerFu
 				for {
 					bt, hasNext := iterFunc()
 					count--
-					if !hasNext || count < 0{
+					if !hasNext || count < 0 {
 						break
 					}
 					observer.BlockTransactionObserver.Trigger(fmt.Sprintf("iterate-%s", iterateId), &bt)
