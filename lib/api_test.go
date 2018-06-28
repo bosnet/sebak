@@ -16,27 +16,20 @@ import (
 	"testing"
 )
 
-func prepareServer(pattern string, getHandlerFunc func(storage *sebakstorage.LevelDBBackend) http.HandlerFunc) (testServer *httptest.Server, storage *sebakstorage.LevelDBBackend, err error) {
-	// Setting Server
-	storage, err = sebakstorage.NewTestMemoryLevelDBBackend()
+func checkError(t *testing.T, err error){
 	if err != nil {
-		return
+		t.Error(err)
 	}
-
-	router := mux.NewRouter()
-	router.HandleFunc(pattern, getHandlerFunc(storage)).Methods("GET")
-
-	testServer = httptest.NewServer(router)
-	return
 }
 
 func TestGetAccountHandler(t *testing.T) {
-
+	var err error
 	var wg sync.WaitGroup
 	wg.Add(2)
 
 	// Setting Server
-	storage, _ := sebakstorage.NewTestMemoryLevelDBBackend()
+	storage, err := sebakstorage.NewTestMemoryLevelDBBackend()
+	checkError(t, err)
 	defer storage.Close()
 
 	router := mux.NewRouter()
@@ -52,19 +45,21 @@ func TestGetAccountHandler(t *testing.T) {
 
 	// Do Request
 	url := ts.URL + fmt.Sprintf("/account/%s", ba.Address)
-	req, _ := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", url, nil)
+	checkError(t, err)
 	req.Header.Set("Accept", "text/event-stream")
-	resp, _ := ts.Client().Do(req)
+	resp, err := ts.Client().Do(req)
+	checkError(t, err)
 	reader := bufio.NewReader(resp.Body)
 
 	// Do stream Request to the Server
 	go func() {
 		var n Amount
 		for n = 0; n < 10; n++ {
-			line, _ := reader.ReadBytes('\n')
+			line, err := reader.ReadBytes('\n')
+			checkError(t, err)
 			var cba = &BlockAccount{}
 			json.Unmarshal(line, cba)
-			//fmt.Println(string(line))
 			assert.Equal(t, ba.Address, cba.Address, "not equal")
 			assert.Equal(t, prev+n, cba.GetBalance(), "not equal")
 			prev = cba.GetBalance()
@@ -76,7 +71,8 @@ func TestGetAccountHandler(t *testing.T) {
 	go func() {
 		// Makes Some Events
 		for n := 1; n < 20; n++ {
-			newBalance, _ := ba.GetBalance().Add(Amount(n))
+			newBalance, err := ba.GetBalance().Add(Amount(n))
+			checkError(t, err)
 			ba.Balance = newBalance.String()
 
 			ba.Save(storage)
@@ -89,9 +85,11 @@ func TestGetAccountHandler(t *testing.T) {
 
 	// No streaming
 	req.Header.Del("Accept")
-	resp, _ = ts.Client().Do(req)
+	resp, err = ts.Client().Do(req)
+	checkError(t, err)
 	reader = bufio.NewReader(resp.Body)
-	readByte, _ := ioutil.ReadAll(reader)
+	readByte, err := ioutil.ReadAll(reader)
+	checkError(t, err)
 	var cba = &BlockAccount{}
 	json.Unmarshal(readByte, cba)
 	assert.Equal(t, ba.Address, cba.Address, "not equal")
@@ -100,11 +98,13 @@ func TestGetAccountHandler(t *testing.T) {
 }
 
 func TestGetAccountTransactionsHandler(t *testing.T) {
+	var err error
 
 	var wg sync.WaitGroup
 	wg.Add(1)
 
-	storage, _ := sebakstorage.NewTestMemoryLevelDBBackend()
+	storage, err := sebakstorage.NewTestMemoryLevelDBBackend()
+	checkError(t, err)
 	defer storage.Close()
 
 	router := mux.NewRouter()
@@ -113,36 +113,39 @@ func TestGetAccountTransactionsHandler(t *testing.T) {
 	ts := httptest.NewServer(router)
 	defer ts.Close()
 
-	kp, _ := keypair.Random()
+	kp, err := keypair.Random()
+	checkError(t, err)
 
 	var bts []BlockTransaction
 	for i := 0; i < 5; i++ {
 		tx := TestMakeTransactionWithKeypair(networkID, 1, kp)
 
-		a, _ := tx.Serialize()
+		a, err := tx.Serialize()
+		checkError(t, err)
 		bt := NewBlockTransactionFromTransaction(tx, a)
-		err := bt.Save(storage)
-		if err != nil {
-			t.Error(err)
-			return
-		}
+		err = bt.Save(storage)
+		checkError(t, err)
 		bts = append(bts, bt)
 	}
 
 	// Do a Request
 	url := ts.URL + fmt.Sprintf("/account/%s/transactions", kp.Address())
-	req, _ := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", url, nil)
+	checkError(t, err)
 	req.Header.Set("Accept", "text/event-stream")
-	resp, _ := ts.Client().Do(req)
+	resp, err := ts.Client().Do(req)
+	checkError(t, err)
 	reader := bufio.NewReader(resp.Body)
 
 	// Do stream Request to the Server
 	go func() {
 		var n Amount
 		for n = 0; n < 10; n++ {
-			line, _ := reader.ReadBytes('\n')
+			line, err := reader.ReadBytes('\n')
+			checkError(t, err)
 			line = bytes.Trim(line, "\n\t ")
-			txS, _ := bts[n].Serialize()
+			txS, err := bts[n].Serialize()
+			checkError(t, err)
 			if bytes.Compare(txS, line) != 0 {
 				t.Error("not same")
 			}
@@ -155,13 +158,11 @@ func TestGetAccountTransactionsHandler(t *testing.T) {
 	for i := 0; i < 20; i++ {
 		tx := TestMakeTransactionWithKeypair(networkID, 1, kp)
 
-		a, _ := tx.Serialize()
+		a, err := tx.Serialize()
+		checkError(t, err)
 		bt := NewBlockTransactionFromTransaction(tx, a)
-		err := bt.Save(storage)
-		if err != nil {
-			t.Error(err)
-			return
-		}
+		err = bt.Save(storage)
+		checkError(t, err)
 		bts = append(bts, bt)
 	}
 
@@ -169,9 +170,11 @@ func TestGetAccountTransactionsHandler(t *testing.T) {
 
 	// No streaming
 	req.Header.Del("Accept")
-	resp, _ = ts.Client().Do(req)
+	resp, err = ts.Client().Do(req)
+	checkError(t, err)
 	reader = bufio.NewReader(resp.Body)
-	readByte, _ := ioutil.ReadAll(reader)
+	readByte, err := ioutil.ReadAll(reader)
+	checkError(t, err)
 	var receivedBts []BlockTransaction
 	json.Unmarshal(readByte, &receivedBts)
 
@@ -190,7 +193,8 @@ func TestGetAccountOperationsHandler(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 
-	storage, _ := sebakstorage.NewTestMemoryLevelDBBackend()
+	storage, err := sebakstorage.NewTestMemoryLevelDBBackend()
+	checkError(t, err)
 	defer storage.Close()
 
 	router := mux.NewRouter()
@@ -199,35 +203,42 @@ func TestGetAccountOperationsHandler(t *testing.T) {
 	ts := httptest.NewServer(router)
 	defer ts.Close()
 
-	kp, _ := keypair.Random()
+	kp, err := keypair.Random()
+	checkError(t, err)
 
 	var bos []BlockOperation
 	for i := 0; i < 5; i++ {
 		tx := TestMakeTransactionWithKeypair(networkID, 3, kp)
-		a, _ := tx.Serialize()
+		a, err := tx.Serialize()
+		checkError(t, err)
 		bt := NewBlockTransactionFromTransaction(tx, a)
 		bt.Save(storage)
 
 		for _, boHash := range bt.Operations {
 			var bo BlockOperation
-			bo, _ = GetBlockOperation(storage, boHash)
+			bo, err = GetBlockOperation(storage, boHash)
+			checkError(t, err)
 			bos = append(bos, bo)
 		}
 	}
 	// Do a Request
 	url := ts.URL + fmt.Sprintf("/account/%s/operations", kp.Address())
-	req, _ := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", url, nil)
+	checkError(t, err)
 	req.Header.Set("Accept", "text/event-stream")
-	resp, _ := ts.Client().Do(req)
+	resp, err := ts.Client().Do(req)
+	checkError(t, err)
 	reader := bufio.NewReader(resp.Body)
 
 	// Do stream Request to the Server
 	go func() {
 		var n Amount
 		for n = 0; n < 10; n++ {
-			line, _ := reader.ReadBytes('\n')
+			line, err := reader.ReadBytes('\n')
+			checkError(t, err)
 			line = bytes.Trim(line, "\n\t ")
-			txS, _ := bos[n].Serialize()
+			txS, err := bos[n].Serialize()
+			checkError(t, err)
 			if bytes.Compare(txS, line) != 0 {
 				t.Error("not same")
 			}
@@ -239,13 +250,15 @@ func TestGetAccountOperationsHandler(t *testing.T) {
 	// Makes Some Events
 	for i := 0; i < 20; i++ {
 		tx := TestMakeTransactionWithKeypair(networkID, 3, kp)
-		a, _ := tx.Serialize()
+		a, err := tx.Serialize()
+		checkError(t, err)
 		bt := NewBlockTransactionFromTransaction(tx, a)
 		bt.Save(storage)
 
 		for _, boHash := range bt.Operations {
 			var bo BlockOperation
-			bo, _ = GetBlockOperation(storage, boHash)
+			bo, err = GetBlockOperation(storage, boHash)
+			checkError(t, err)
 			bos = append(bos, bo)
 		}
 	}
@@ -254,9 +267,11 @@ func TestGetAccountOperationsHandler(t *testing.T) {
 
 	// No streaming
 	req.Header.Del("Accept")
-	resp, _ = ts.Client().Do(req)
+	resp, err = ts.Client().Do(req)
+	checkError(t, err)
 	reader = bufio.NewReader(resp.Body)
-	readByte, _ := ioutil.ReadAll(reader)
+	readByte, err := ioutil.ReadAll(reader)
+	checkError(t, err)
 	var receivedBos []BlockOperation
 	json.Unmarshal(readByte, &receivedBos)
 
@@ -275,7 +290,8 @@ func TestGetTransactionByHashHandler(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 
-	storage, _ := sebakstorage.NewTestMemoryLevelDBBackend()
+	storage, err := sebakstorage.NewTestMemoryLevelDBBackend()
+	checkError(t, err)
 	defer storage.Close()
 
 	router := mux.NewRouter()
@@ -284,25 +300,31 @@ func TestGetTransactionByHashHandler(t *testing.T) {
 	ts := httptest.NewServer(router)
 	defer ts.Close()
 
-	kp, _ := keypair.Random()
+	kp, err := keypair.Random()
+	checkError(t, err)
 
 	tx := TestMakeTransactionWithKeypair(networkID, 1, kp)
-	a, _ := tx.Serialize()
+	a, err := tx.Serialize()
+	checkError(t, err)
 	bt := NewBlockTransactionFromTransaction(tx, a)
 
 	// Do a Request
 	url := ts.URL + fmt.Sprintf("/transactions/%s", bt.Hash)
-	req, _ := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", url, nil)
+	checkError(t, err)
 	req.Header.Set("Accept", "text/event-stream")
 
 	// Do stream Request to the Server
 	go func() {
-		resp, _ := ts.Client().Do(req)
+		resp, err := ts.Client().Do(req)
+		checkError(t, err)
 		reader := bufio.NewReader(resp.Body)
-		line, _ := reader.ReadBytes('\n')
+		line, err := reader.ReadBytes('\n')
+		checkError(t, err)
 		line = bytes.Trim(line, "\n\t ")
 
-		serializedBt, _ := bt.Serialize()
+		serializedBt, err := bt.Serialize()
+		checkError(t, err)
 		if !bytes.Equal(serializedBt, line) {
 			assert.Equal(t, serializedBt, line, "not same")
 		}
@@ -317,9 +339,11 @@ func TestGetTransactionByHashHandler(t *testing.T) {
 
 	// No streaming
 	req.Header.Del("Accept")
-	resp, _ := ts.Client().Do(req)
+	resp, err := ts.Client().Do(req)
+	checkError(t, err)
 	reader := bufio.NewReader(resp.Body)
-	readByte, _ := ioutil.ReadAll(reader)
+	readByte, err := ioutil.ReadAll(reader)
+	checkError(t, err)
 	var receivedBts BlockTransaction
 	json.Unmarshal(readByte, &receivedBts)
 
@@ -332,7 +356,8 @@ func TestGetTransactionsHandler(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 
-	storage, _ := sebakstorage.NewTestMemoryLevelDBBackend()
+	storage, err := sebakstorage.NewTestMemoryLevelDBBackend()
+	checkError(t, err)
 	defer storage.Close()
 
 	router := mux.NewRouter()
@@ -345,29 +370,31 @@ func TestGetTransactionsHandler(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		_, tx := TestMakeTransaction(networkID, 1)
 
-		a, _ := tx.Serialize()
+		a, err := tx.Serialize()
+		checkError(t, err)
 		bt := NewBlockTransactionFromTransaction(tx, a)
-		err := bt.Save(storage)
-		if err != nil {
-			t.Error(err)
-			return
-		}
+		err = bt.Save(storage)
+		checkError(t, err)
 		bts = append(bts, bt)
 	}
 
 	// Do a Request
 	url := ts.URL + "/transactions"
-	req, _ := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", url, nil)
+	checkError(t, err)
 	req.Header.Set("Accept", "text/event-stream")
-	resp, _ := ts.Client().Do(req)
+	resp, err := ts.Client().Do(req)
+	checkError(t, err)
 	reader := bufio.NewReader(resp.Body)
 
 	// Do stream Request to the Server
 	go func() {
 		for n := 0; n < 10; n++ {
-			line, _ := reader.ReadBytes('\n')
+			line, err := reader.ReadBytes('\n')
+			checkError(t, err)
 			line = bytes.Trim(line, "\n\t ")
-			txS, _ := bts[n].Serialize()
+			txS, err := bts[n].Serialize()
+			checkError(t, err)
 			if bytes.Compare(txS, line) != 0 {
 				t.Error("not same")
 			}
@@ -380,13 +407,11 @@ func TestGetTransactionsHandler(t *testing.T) {
 	for i := 0; i < 20; i++ {
 		_, tx := TestMakeTransaction(networkID, 1)
 
-		a, _ := tx.Serialize()
+		a, err := tx.Serialize()
+		checkError(t, err)
 		bt := NewBlockTransactionFromTransaction(tx, a)
-		err := bt.Save(storage)
-		if err != nil {
-			t.Error(err)
-			return
-		}
+		err = bt.Save(storage)
+		checkError(t, err)
 		bts = append(bts, bt)
 	}
 
@@ -394,9 +419,11 @@ func TestGetTransactionsHandler(t *testing.T) {
 
 	// No streaming
 	req.Header.Del("Accept")
-	resp, _ = ts.Client().Do(req)
+	resp, err = ts.Client().Do(req)
+	checkError(t, err)
 	reader = bufio.NewReader(resp.Body)
-	readByte, _ := ioutil.ReadAll(reader)
+	readByte, err := ioutil.ReadAll(reader)
+	checkError(t, err)
 	var receivedBts []BlockTransaction
 	json.Unmarshal(readByte, &receivedBts)
 
