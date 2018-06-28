@@ -53,7 +53,7 @@ func TestParseValidatorFromURI(t *testing.T) {
 		endpointURL := "https://localhost:1234"
 		_, err := NewValidatorFromURI(fmt.Sprintf("%s", endpointURL))
 		if err == nil {
-			t.Error("must be failed to parse: address must be given")
+			t.Error("must fail to parse: address must be given")
 			return
 		}
 	}
@@ -64,7 +64,7 @@ func TestParseValidatorFromURI(t *testing.T) {
 		address := "GAWMRHEPMJFTROGBNGIHRR5QEH7E33F7FZNLF6FC5V67BUZI4N2I7BXG"
 		_, err := NewValidatorFromURI(fmt.Sprintf("%s?address=%s", endpointURL, address))
 		if err == nil {
-			t.Error("must be failed to parse: invalid endpoint must be failed")
+			t.Error("must fail to parse: invalid endpoint must be failed")
 			return
 		}
 	}
