@@ -67,6 +67,7 @@ const (
 	keyPath  = "key.pem"
 )
 
+// Waiting until the server is ready
 func pingAndWait(t *testing.T, c0 NetworkClient) {
 	waitCount := 0
 	for {
