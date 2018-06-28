@@ -56,8 +56,23 @@ func makeVotingResult() (results map[string]*VotingResult) {
 	return
 }
 
-func TestNewBallotExpirer(t *testing.T) {
+func makeBallotBox(ballotBoxes *BallotBoxes) {
+	ballotBoxes.WaitingBox.Hashes["message1"] = true
+	ballotBoxes.VotingBox.Hashes["message2"] = true
+	ballotBoxes.VotingBox.Hashes["message3"] = true
+}
+
+func TestMoveMessageHash(t *testing.T) {
 	bb := NewBallotBoxes()
 
 	bb.Results = makeVotingResult()
+	makeBallotBox(bb)
+
+	bem := NewBallotBoxExpireMover(bb.WaitingBox, bb.ReservedBox, bb.Results, 0)
+	bem.moveToTargetBox()
+
+	if _, ok := bb.ReservedBox.Hashes["message1"]; !ok {
+		t.Error("message1 must be in ReservedBox")
+		return
+	}
 }
