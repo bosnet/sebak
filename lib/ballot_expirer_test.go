@@ -20,7 +20,8 @@ func makeVotingResult() (results map[string]*VotingResult) {
 	ballotINIT2.B.NodeKey = "n2"
 	vr1.Add(ballotINIT2)
 
-	vr1.MessageHash = "message1"
+	m1 := NewDummyMessage("message1")
+	vr1.MessageHash = m1.GetHash()
 	results[vr1.MessageHash] = vr1
 
 	_, _, baseBallotSIGN := makeNewBallot(sebakcommon.BallotStateSIGN, VotingYES)
@@ -35,8 +36,9 @@ func makeVotingResult() (results map[string]*VotingResult) {
 	ballotSIGN2.B.NodeKey = "n2"
 	vr2.Add(ballotSIGN2)
 
-	vr1.MessageHash = "message2"
-	results[vr1.MessageHash] = vr1
+	m2 := NewDummyMessage("message2")
+	vr2.MessageHash = m2.GetHash()
+	results[vr2.MessageHash] = vr2
 
 	_, _, baseBallotACCEPT := makeNewBallot(sebakcommon.BallotStateACCEPT, VotingYES)
 	baseBallotACCEPT.B.NodeKey = "n0"
@@ -50,29 +52,33 @@ func makeVotingResult() (results map[string]*VotingResult) {
 	ballotACCEPT2.B.NodeKey = "n2"
 	vr3.Add(ballotACCEPT2)
 
-	vr1.MessageHash = "message3"
-	results[vr1.MessageHash] = vr1
+	m3 := NewDummyMessage("message3")
+	vr3.MessageHash = m3.GetHash()
+	results[vr3.MessageHash] = vr3
 
 	return
 }
 
-func makeBallotBox(ballotBoxes *BallotBoxes) {
-	ballotBoxes.WaitingBox.Hashes["message1"] = true
-	ballotBoxes.VotingBox.Hashes["message2"] = true
-	ballotBoxes.VotingBox.Hashes["message3"] = true
-}
-
-func TestMoveMessageHash(t *testing.T) {
+func TestMakePrevHashesFromSrcBox(t *testing.T) {
 	bb := NewBallotBoxes()
 
 	bb.Results = makeVotingResult()
-	makeBallotBox(bb)
+
+	m1 := NewDummyMessage("message1")
+	bb.WaitingBox.Hashes[m1.GetHash()] = true
+	bb.Messages[m1.GetHash()] = m1
+	bb.Sources[m1.Source()] = m1.GetHash()
+
+	m2 := NewDummyMessage("message2")
+	bb.WaitingBox.Hashes[m2.GetHash()] = true
+	bb.Messages[m2.GetHash()] = m2
+	bb.Sources[m2.Source()] = m2.GetHash()
+
+	m3 := NewDummyMessage("message3")
+	bb.WaitingBox.Hashes[m3.GetHash()] = true
+	bb.Messages[m3.GetHash()] = m3
+	bb.Sources[m3.Source()] = m3.GetHash()
 
 	bem := NewBallotBoxExpireMover(bb.WaitingBox, bb.ReservedBox, bb.Results, 0)
-	bem.moveToTargetBox()
-
-	if _, ok := bb.ReservedBox.Hashes["message1"]; !ok {
-		t.Error("message1 must be in ReservedBox")
-		return
-	}
+	bem.makePrevHashesFromSrcBox()
 }
