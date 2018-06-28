@@ -5,6 +5,7 @@ import (
 	"boscoin.io/sebak/lib/storage"
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
@@ -440,5 +441,60 @@ func TestGetTransactionsHandler(t *testing.T) {
 		assert.Equal(t, bt.Hash, receivedBts[i].Hash, "hash is not same")
 		i++
 	}
+}
 
+func TestNodeHandler(t *testing.T) {
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	var validator *sebakcommon.Validator
+	kp, _ := keypair.Random()
+	endpoint, err := sebakcommon.NewEndpointFromString("dummy")
+	checkError(t, err)
+	validator, err = sebakcommon.NewValidator(kp.Address(), endpoint, "")
+	checkError(t, err)
+	ctx := context.WithValue(context.Background(), "currentNode", validator)
+
+	router := mux.NewRouter()
+	router.HandleFunc(GetNodePattern, GetNodeHandler(ctx)).Methods("GET")
+
+	ts := httptest.NewServer(router)
+	defer ts.Close()
+
+	// Do a Request
+	url := ts.URL + "/node"
+
+	req, _ := http.NewRequest("GET", url, nil)
+	req.Header.Set("Accept", "text/event-stream")
+
+	resp, _ := http.DefaultClient.Do(req)
+	reader := bufio.NewReader(resp.Body)
+
+	// Do stream Request to the Server
+	go func() {
+		for i := 0; i < 5; i++ {
+			line, _ := reader.ReadBytes('\n')
+			fmt.Println(string(line))
+		}
+		resp.Body.Close()
+		wg.Done()
+	}()
+	for i := 0; i < 10; i++ {
+		var newValidator *sebakcommon.Validator
+		kp, _ := keypair.Random()
+		endpoint, _ := sebakcommon.NewEndpointFromString(sebakcommon.GetUniqueIDFromUUID())
+		newValidator, _ = sebakcommon.NewValidator(kp.Address(), endpoint, "")
+		validator.AddValidators(newValidator)
+	}
+
+	wg.Wait()
+	// No streaming
+	req.Header.Del("Accept")
+	resp, err = http.DefaultClient.Do(req)
+	checkError(t, err)
+	reader = bufio.NewReader(resp.Body)
+	readByte, err := ioutil.ReadAll(reader)
+	checkError(t, err)
+	fmt.Println(string(readByte))
 }
