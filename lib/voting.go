@@ -309,6 +309,9 @@ func (vr *VotingResult) MakeStaging(votingHole VotingHole, previousState, nextSt
 }
 
 func (vr *VotingResult) LatestStaging() VotingStateStaging {
+	if vr == nil {
+		panic("votingResult is nil")
+	}
 	if len(vr.Staging) < 1 {
 		return VotingStateStaging{}
 	}
