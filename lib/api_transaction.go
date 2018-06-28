@@ -24,10 +24,12 @@ func GetTransactionsHandler(storage *sebakstorage.LevelDBBackend) http.HandlerFu
 			iterateId := sebakcommon.GetUniqueIDFromUUID()
 			go func() {
 				<-readyChan
+				count := maxNumberOfExistingData
 				iterFunc, closeFunc := GetBlockTransactions(storage, false)
 				for {
 					bt, hasNext := iterFunc()
-					if !hasNext {
+					count--
+					if !hasNext || count < 0{
 						break
 					}
 					observer.BlockTransactionObserver.Trigger(fmt.Sprintf("iterate-%s", iterateId), &bt)
@@ -35,8 +37,6 @@ func GetTransactionsHandler(storage *sebakstorage.LevelDBBackend) http.HandlerFu
 				closeFunc()
 			}()
 
-			event := "saved"
-			event += " " + fmt.Sprintf("iterate-%s", iterateId)
 			callBackFunc := func(args ...interface{}) (account []byte, err error) {
 				ba := args[1].(*BlockTransaction)
 				if account, err = ba.Serialize(); err != nil {
@@ -44,6 +44,8 @@ func GetTransactionsHandler(storage *sebakstorage.LevelDBBackend) http.HandlerFu
 				}
 				return account, nil
 			}
+			event := "saved"
+			event += " " + fmt.Sprintf("iterate-%s", iterateId)
 			streaming(observer.BlockTransactionObserver, w, event, callBackFunc, readyChan)
 		default:
 
@@ -93,9 +95,6 @@ func GetTransactionByHashHandler(storage *sebakstorage.LevelDBBackend) http.Hand
 				observer.BlockTransactionObserver.Trigger(fmt.Sprintf("iterate-%s", iterateId), &bt)
 			}()
 
-			event := fmt.Sprintf("iterate-%s", iterateId)
-			event += " " + fmt.Sprintf("hash-%s", key)
-
 			callBackFunc := func(args ...interface{}) (account []byte, err error) {
 				ba := args[1].(*BlockTransaction)
 				if account, err = ba.Serialize(); err != nil {
@@ -103,6 +102,9 @@ func GetTransactionByHashHandler(storage *sebakstorage.LevelDBBackend) http.Hand
 				}
 				return account, nil
 			}
+
+			event := fmt.Sprintf("iterate-%s", iterateId)
+			event += " " + fmt.Sprintf("hash-%s", key)
 			streaming(observer.BlockTransactionObserver, w, event, callBackFunc, readyChan)
 		default:
 

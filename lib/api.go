@@ -10,6 +10,8 @@ import (
 	"github.com/GianlucaGuarini/go-observable"
 )
 
+const maxNumberOfExistingData = 10
+
 func AddAPIHandlers(s *sebakstorage.LevelDBBackend) func(ctx context.Context, t *sebaknetwork.HTTP2Network) {
 	fn := func(ctx context.Context, t *sebaknetwork.HTTP2Network) {
 		t.AddAPIHandler(GetAccountHandlerPattern, GetAccountHandler(s)).Methods("GET")
@@ -19,7 +21,11 @@ func AddAPIHandlers(s *sebakstorage.LevelDBBackend) func(ctx context.Context, t 
 	}
 	return fn
 }
-
+// Implement `Server Sent Event`
+// Listen event `event` thru `o`
+// When the `event` triggered, `callBackFunc` fired
+// readyChan is used to notify caller of this function that streaming is ready
+// This function is not end until the connection is closed
 func streaming(o *observable.Observable, w http.ResponseWriter, event string, callBackFunc func(args ...interface{}) ([]byte, error), readyChan chan struct{}) {
 
 	cn, ok := w.(http.CloseNotifier)
@@ -34,6 +40,7 @@ func streaming(o *observable.Observable, w http.ResponseWriter, event string, ca
 		return
 	}
 
+	// consumerChan notify observerFunc that messageChan receiver is dismissed
 	consumerChan := make(chan struct{})
 	messageChan := make(chan []byte)
 

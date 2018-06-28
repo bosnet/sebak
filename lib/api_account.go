@@ -35,6 +35,7 @@ func GetAccountHandler(storage *sebakstorage.LevelDBBackend) http.HandlerFunc {
 
 			var readyChan = make(chan struct{})
 
+			// Trigger event for data already stored in the storage
 			iterateId := sebakcommon.GetUniqueIDFromUUID()
 			go func() {
 				<-readyChan
@@ -45,16 +46,16 @@ func GetAccountHandler(storage *sebakstorage.LevelDBBackend) http.HandlerFunc {
 				observer.BlockAccountObserver.Trigger(fmt.Sprintf("iterate-%s", iterateId), ba)
 			}()
 
-			event := fmt.Sprintf("iterate-%s", iterateId)
-			event += " " + fmt.Sprintf("address-%s", address)
 			callBackFunc := func(args ...interface{}) (account []byte, err error) {
-				//typedEvent := args[0].(string)
 				ba := args[1].(*BlockAccount)
 				if account, err = ba.Serialize(); err != nil {
 					return []byte{}, sebakerror.ErrorBlockAccountDoesNotExists
 				}
 				return account, nil
 			}
+
+			event := fmt.Sprintf("iterate-%s", iterateId)
+			event += " " + fmt.Sprintf("address-%s", address)
 			streaming(observer.BlockAccountObserver, w, event, callBackFunc, readyChan)
 		default:
 			if ba, err = GetBlockAccount(storage, address); err != nil {
@@ -93,10 +94,12 @@ func GetAccountTransactionsHandler(storage *sebakstorage.LevelDBBackend) http.Ha
 			iterateId := sebakcommon.GetUniqueIDFromUUID()
 			go func() {
 				<-readyChan
+				count := maxNumberOfExistingData
 				iterFunc, closeFunc := GetBlockTransactionsByAccount(storage, address, false)
 				for {
 					bt, hasNext := iterFunc()
-					if !hasNext {
+					count--
+					if !hasNext || count < 0{
 						break
 					}
 					observer.BlockTransactionObserver.Trigger(fmt.Sprintf("iterate-%s", iterateId), &bt)
@@ -104,16 +107,16 @@ func GetAccountTransactionsHandler(storage *sebakstorage.LevelDBBackend) http.Ha
 				closeFunc()
 			}()
 
-			event := fmt.Sprintf("iterate-%s", iterateId)
-			event += " " + fmt.Sprintf("source-%s", address)
 			callBackFunc := func(args ...interface{}) (btSerialized []byte, err error) {
-				//typedEvent := args[0].(string)
 				bt := args[1].(*BlockTransaction)
 				if btSerialized, err = bt.Serialize(); err != nil {
 					return []byte{}, sebakerror.ErrorBlockTransactionDoesNotExists
 				}
 				return btSerialized, nil
 			}
+
+			event := fmt.Sprintf("iterate-%s", iterateId)
+			event += " " + fmt.Sprintf("source-%s", address)
 			streaming(observer.BlockTransactionObserver, w, event, callBackFunc, readyChan)
 		default:
 
@@ -156,10 +159,12 @@ func GetAccountOperationsHandler(storage *sebakstorage.LevelDBBackend) http.Hand
 			iterateId := sebakcommon.GetUniqueIDFromUUID()
 			go func() {
 				<-readyChan
+				count := maxNumberOfExistingData
 				iterFunc, closeFunc := GetBlockOperationsBySource(storage, address, false)
 				for {
 					bo, hasNext := iterFunc()
-					if !hasNext {
+					count--
+					if !hasNext || count < 0{
 						break
 					}
 					observer.BlockOperationObserver.Trigger(fmt.Sprintf("iterate-%s", iterateId), &bo)
@@ -167,17 +172,15 @@ func GetAccountOperationsHandler(storage *sebakstorage.LevelDBBackend) http.Hand
 				closeFunc()
 			}()
 
-			event := fmt.Sprintf("iterate-%s", iterateId)
-			event += " " + fmt.Sprintf("source-%s", address)
 			callBackFunc := func(args ...interface{}) (boSerialized []byte, err error) {
-
-				//typedEvent := args[0].(string)
 				bo := args[1].(*BlockOperation)
 				if boSerialized, err = bo.Serialize(); err != nil {
 					return []byte{}, sebakerror.ErrorBlockTransactionDoesNotExists
 				}
 				return boSerialized, nil
 			}
+			event := fmt.Sprintf("iterate-%s", iterateId)
+			event += " " + fmt.Sprintf("source-%s", address)
 			streaming(observer.BlockOperationObserver, w, event, callBackFunc, readyChan)
 		default:
 
