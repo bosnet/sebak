@@ -143,7 +143,6 @@ func (v *Validator) MarshalJSON() ([]byte, error) {
 		"alias":      v.Alias(),
 		"endpoint":   v.Endpoint().String(),
 		"validators": neighbors,
-		//"validators": v.validators,
 	})
 }
 
