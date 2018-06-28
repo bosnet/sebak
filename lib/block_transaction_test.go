@@ -41,7 +41,7 @@ func TestNewBlockTransaction(t *testing.T) {
 	}
 	var opHashes []string
 	for _, op := range tx.B.Operations {
-		opHashes = append(opHashes, op.MakeHashString())
+		opHashes = append(opHashes, NewBlockOperationKey(op, tx))
 	}
 	for i, opHash := range bt.Operations {
 		if opHash != opHashes[i] {

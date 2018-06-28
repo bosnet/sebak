@@ -7,6 +7,7 @@ import (
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/observer"
 	"boscoin.io/sebak/lib/storage"
 )
 
@@ -89,6 +90,11 @@ func (bo *BlockOperation) Save(st *sebakstorage.LevelDBBackend) (err error) {
 	}
 
 	bo.isSaved = true
+
+	event := "saved"
+	event += " " + fmt.Sprintf("source-%s", bo.Source)
+	event += " " + fmt.Sprintf("hash-%s", bo.Hash)
+	observer.BlockOperationObserver.Trigger(event, bo)
 
 	return nil
 }
