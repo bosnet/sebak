@@ -46,9 +46,11 @@ func TestGetAccountHandler(t *testing.T) {
 
 	// Do Request
 	url := ts.URL + fmt.Sprintf("/account/%s", ba.Address)
-	req, _ := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", url, nil)
+	checkError(t, err)
 	req.Header.Set("Accept", "text/event-stream")
-	resp, _ := ts.Client().Do(req)
+	resp, err := ts.Client().Do(req)
+	checkError(t, err)
 	reader := bufio.NewReader(resp.Body)
 
 	// Do stream Request to the Server
