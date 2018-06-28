@@ -363,9 +363,9 @@ func (b *BallotBoxes) RemoveVotingResult(vr *VotingResult) (err error) {
 	b.Lock()
 	defer b.Unlock()
 
-	// delete(b.Results, vr.MessageHash)
-	// delete(b.Messages, vr.MessageHash)
-	// delete(b.Sources, vr.Source)
+	delete(b.Results, vr.MessageHash)
+	delete(b.Messages, vr.MessageHash)
+	delete(b.Sources, vr.Source)
 
 	return
 }
