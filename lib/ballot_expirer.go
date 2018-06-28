@@ -135,7 +135,9 @@ func (e *BallotBoxExpireRemover) Stop() {
 func (e *BallotBoxExpireRemover) removeVotingResults() {
 	for _, hash := range e.prevBoxHashes {
 		if e.srcBox.HasMessageByHash(hash) { // srcBox.HasHash(h)?
-			e.boxes.RemoveVotingResultByHash(hash)
+			if vr, ok := e.boxes.Results[hash]; ok {
+				e.boxes.RemoveVotingResult(vr)
+			}
 		}
 	}
 }

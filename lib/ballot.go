@@ -370,22 +370,6 @@ func (b *BallotBoxes) RemoveVotingResult(vr *VotingResult) (err error) {
 	return
 }
 
-func (b *BallotBoxes) RemoveVotingResultByHash(hash string) (err error) {
-	if !b.HasMessageByHash(hash) {
-		err = sebakerror.ErrorVotingResultNotFound
-		return
-	}
-
-	b.Lock()
-	defer b.Unlock()
-
-	delete(b.Results, hash)
-	delete(b.Messages, hash)
-	// need to delete b.Sources
-
-	return
-}
-
 func (b *BallotBoxes) AddBallot(ballot Ballot) (isNew bool, err error) {
 	b.Lock()
 	defer b.Unlock()
