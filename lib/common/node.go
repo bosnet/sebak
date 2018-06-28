@@ -235,3 +235,42 @@ func ParseNodeEndpoint(endpoint string) (u *Endpoint, err error) {
 
 	return
 }
+
+func NewValidatorFromURI(v string) (validator *Validator, err error) {
+	var parsed *url.URL
+	if parsed, err = url.Parse(v); err != nil {
+		return
+	}
+
+	var endpoint *Endpoint
+	endpoint, err = ParseNodeEndpoint(
+		fmt.Sprintf("%s://%s%s", parsed.Scheme, parsed.Host, parsed.Path),
+	)
+	if err != nil {
+		return
+	}
+
+	queries := parsed.Query()
+
+	var address, alias string
+	if addressStrings, ok := queries["address"]; !ok || len(addressStrings) < 1 {
+		err = errors.New("`address` is missing")
+		return
+	} else {
+		var parsedKP keypair.KP
+		if parsedKP, err = keypair.Parse(addressStrings[0]); err != nil {
+			return
+		}
+		address = parsedKP.Address()
+	}
+
+	if aliasStrings, ok := queries["alias"]; ok && len(aliasStrings) > 0 {
+		alias = aliasStrings[0]
+	}
+
+	if validator, err = NewValidator(address, endpoint, alias); err != nil {
+		return
+	}
+
+	return
+}

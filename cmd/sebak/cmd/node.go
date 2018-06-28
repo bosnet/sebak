@@ -24,53 +24,6 @@ import (
 	"strconv"
 )
 
-type FlagValidators []*sebakcommon.Validator
-
-func (f *FlagValidators) Type() string {
-	return "validators"
-}
-
-func (f *FlagValidators) String() string {
-	return ""
-}
-
-func (f *FlagValidators) Set(v string) error {
-	if strings.Count(v, ",") > 2 {
-		return errors.New("multiple comma, ',' found")
-	}
-
-	parsed := strings.SplitN(v, ",", 3)
-	if len(parsed) < 2 {
-		return errors.New("at least '<public address>,<endpoint url>' must be given")
-	}
-	if len(parsed) < 3 {
-		parsed = append(parsed, "")
-	}
-
-	endpoint, err := sebakcommon.ParseNodeEndpoint(parsed[1])
-	if err != nil {
-		return err
-	}
-	node, err := sebakcommon.NewValidator(parsed[0], endpoint, parsed[2])
-	if err != nil {
-		return fmt.Errorf("failed to create validator: %v", err)
-	}
-
-	// check duplication
-	for _, n := range *f {
-		if node.Address() == n.Address() {
-			return fmt.Errorf("duplicated public address found")
-		}
-		if node.Endpoint() == n.Endpoint() {
-			return fmt.Errorf("duplicated endpoint found")
-		}
-	}
-
-	*f = append(*f, node)
-
-	return nil
-}
-
 const defaultNetwork string = "https"
 const defaultPort int = 12345
 const defaultHost string = "0.0.0.0"
@@ -89,7 +42,7 @@ var (
 	flagStorageConfigString string
 	flagTLSCertFile         string = sebakcommon.GetENVValue("SEBAK_TLS_CERT", "sebak.crt")
 	flagTLSKeyFile          string = sebakcommon.GetENVValue("SEBAK_TLS_KEY", "sebak.key")
-	flagValidators          FlagValidators
+	flagValidators          string = sebakcommon.GetENVValue("SEBAK_VALIDATORS", "")
 	flagSignThreshold       string = sebakcommon.GetENVValue("SEBAK_SIGN_THRESHOLD", "60")
 	flagAcceptThreshold     string = sebakcommon.GetENVValue("SEBAK_ACCEPT_THRESHOLD", "60")
 )
@@ -100,6 +53,7 @@ var (
 	kp            *keypair.Full
 	nodeEndpoint  *sebakcommon.Endpoint
 	storageConfig *sebakstorage.Config
+	validators    []*sebakcommon.Validator
 	logLevel      logging.Lvl
 	log           logging.Logger
 )
@@ -137,15 +91,28 @@ func init() {
 	nodeCmd.Flags().StringVar(&flagStorageConfigString, "storage", flagStorageConfigString, "storage uri")
 	nodeCmd.Flags().StringVar(&flagTLSCertFile, "tls-cert", flagTLSCertFile, "tls certificate file")
 	nodeCmd.Flags().StringVar(&flagTLSKeyFile, "tls-key", flagTLSKeyFile, "tls key file")
-	nodeCmd.Flags().Var(&flagValidators, "validator", "set validator: '<public address>,<endpoint url>,<alias>' or <public address>,<endpoint url>")
+	nodeCmd.Flags().StringVar(&flagValidators, "validators", flagValidators, "set validator: <endpoint url>?address=<public address>[&alias=<alias>] [ <validator>...]")
 	nodeCmd.Flags().StringVar(&flagSignThreshold, "sign-threshold", flagSignThreshold, "sign threshold")
 	nodeCmd.Flags().StringVar(&flagAcceptThreshold, "accept-threshold", flagAcceptThreshold, "accept threshold")
 
-	nodeCmd.MarkFlagRequired("network-id")
-	nodeCmd.MarkFlagRequired("secret-seed")
-	nodeCmd.MarkFlagRequired("validator")
-
 	rootCmd.AddCommand(nodeCmd)
+}
+
+func parseFlagValidators(v string) (vs []*sebakcommon.Validator, err error) {
+	splitted := strings.Fields(v)
+	if len(splitted) < 1 {
+		return
+	}
+
+	for _, v := range splitted {
+		var validator *sebakcommon.Validator
+		if validator, err = sebakcommon.NewValidatorFromURI(v); err != nil {
+			return
+		}
+		vs = append(vs, validator)
+	}
+
+	return
 }
 
 func parseFlagsNode() {
@@ -154,6 +121,13 @@ func parseFlagsNode() {
 	if len(flagNetworkID) < 1 {
 		common.PrintFlagsError(nodeCmd, "--network-id", errors.New("--network-id must be given"))
 	}
+	if len(flagValidators) < 1 {
+		common.PrintFlagsError(nodeCmd, "--validators", errors.New("must be given"))
+	}
+	if len(flagKPSecretSeed) < 1 {
+		common.PrintFlagsError(nodeCmd, "--secret-seed", errors.New("must be given"))
+	}
+
 	var parsedKP keypair.KP
 	parsedKP, err = keypair.Parse(flagKPSecretSeed)
 	if err != nil {
@@ -183,7 +157,11 @@ func parseFlagsNode() {
 	queries.Add("NodeName", sebakcommon.MakeAlias(kp.Address()))
 	nodeEndpoint.RawQuery = queries.Encode()
 
-	for _, n := range flagValidators {
+	if validators, err = parseFlagValidators(flagValidators); err != nil {
+		common.PrintFlagsError(nodeCmd, "--validators", err)
+	}
+
+	for _, n := range validators {
 		if n.Address() == kp.Address() {
 			common.PrintFlagsError(nodeCmd, "--validator", fmt.Errorf("duplicated public address found"))
 		}
@@ -230,7 +208,7 @@ func parseFlagsNode() {
 	parsedFlags = append(parsedFlags, "\n\taccept-threshold", flagAcceptThreshold)
 
 	var vl []interface{}
-	for i, v := range flagValidators {
+	for i, v := range validators {
 		vl = append(vl, fmt.Sprintf("\n\tvalidator#%d", i))
 		vl = append(
 			vl,
@@ -254,7 +232,7 @@ func runNode() {
 		return
 	}
 	currentNode.SetKeypair(kp)
-	currentNode.AddValidators(flagValidators...)
+	currentNode.AddValidators(validators...)
 
 	// create network
 	nt, err := sebaknetwork.NewNetwork(nodeEndpoint)
