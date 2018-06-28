@@ -123,6 +123,8 @@ func NewVotingResult(ballot Ballot) (vr *VotingResult, err error) {
 }
 
 func (vr *VotingResult) IsClosed() bool {
+	vr.Lock()
+	defer vr.Unlock()
 	return vr.LatestStaging().IsClosed()
 }
 
@@ -140,16 +142,22 @@ func (vr *VotingResult) SetState(state sebakcommon.BallotState) bool {
 }
 
 func (vr *VotingResult) Serialize() (encoded []byte, err error) {
+	vr.Lock()
+	defer vr.Unlock()
 	encoded, err = json.Marshal(vr)
 	return
 }
 
 func (vr *VotingResult) String() string {
+	vr.Lock()
+	defer vr.Unlock()
 	encoded, _ := json.MarshalIndent(vr, "", "  ")
 	return string(encoded)
 }
 
 func (vr *VotingResult) IsVoted(ballot Ballot) bool {
+	vr.Lock()
+	defer vr.Unlock()
 	ballots, ok := vr.Ballots[ballot.State()]
 	if !ok {
 		return false
@@ -162,10 +170,14 @@ func (vr *VotingResult) IsVoted(ballot Ballot) bool {
 }
 
 func (vr *VotingResult) VotedBallotsByState(state sebakcommon.BallotState) VotingResultBallots {
+	vr.Lock()
+	defer vr.Unlock()
 	return vr.Ballots[state]
 }
 
 func (vr *VotingResult) VotedCount(state sebakcommon.BallotState) int {
+	vr.Lock()
+	defer vr.Unlock()
 	return len(vr.VotedBallotsByState(state))
 }
 
@@ -191,6 +203,8 @@ func (vr *VotingResult) Add(ballot Ballot) (err error) {
 }
 
 func (vr *VotingResult) CanCheckThreshold(state sebakcommon.BallotState, threshold int) bool {
+	vr.Lock()
+	defer vr.Unlock()
 	if threshold < 1 {
 		return false
 	}
@@ -205,6 +219,8 @@ func (vr *VotingResult) CanCheckThreshold(state sebakcommon.BallotState, thresho
 }
 
 func (vr *VotingResult) CheckThreshold(state sebakcommon.BallotState, policy sebakcommon.VotingThresholdPolicy) (VotingHole, bool) {
+	vr.Lock()
+	defer vr.Unlock()
 	threshold := policy.Threshold(state)
 	if threshold < 1 {
 		return VotingNOTYET, false
@@ -258,6 +274,8 @@ var CheckVotingThresholdSequence = []sebakcommon.BallotState{
 }
 
 func (vr *VotingResult) MakeResult(policy sebakcommon.VotingThresholdPolicy) (VotingHole, sebakcommon.BallotState, bool) {
+	vr.Lock()
+	defer vr.Unlock()
 	if vr.State == sebakcommon.BallotStateALLCONFIRM {
 		return VotingNOTYET, sebakcommon.BallotStateALLCONFIRM, false
 	}
@@ -297,6 +315,8 @@ func (vr *VotingResult) ChangeState(votingHole VotingHole, state sebakcommon.Bal
 }
 
 func (vr *VotingResult) MakeStaging(votingHole VotingHole, previousState, nextState, votingState sebakcommon.BallotState) VotingStateStaging {
+	vr.Lock()
+	defer vr.Unlock()
 	// TODO set `VotingResult.Reason`
 	return VotingStateStaging{
 		ID:            vr.ID,
@@ -309,9 +329,8 @@ func (vr *VotingResult) MakeStaging(votingHole VotingHole, previousState, nextSt
 }
 
 func (vr *VotingResult) LatestStaging() VotingStateStaging {
-	if vr == nil {
-		return VotingStateStaging{}
-	}
+	vr.Lock()
+	defer vr.Unlock()
 	if len(vr.Staging) < 1 {
 		return VotingStateStaging{}
 	}
@@ -319,6 +338,8 @@ func (vr *VotingResult) LatestStaging() VotingStateStaging {
 }
 
 func (vr *VotingResult) CanGetResult(policy sebakcommon.VotingThresholdPolicy) bool {
+	vr.Lock()
+	defer vr.Unlock()
 	if vr.State == sebakcommon.BallotStateALLCONFIRM {
 		return false
 	}
