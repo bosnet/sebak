@@ -37,7 +37,7 @@ func TestSaveExistingBlockAccount(t *testing.T) {
 	b := testMakeBlockAccount()
 	b.Save(st)
 
-	if err := b.Deposit(Amount(100), "fake-checkpoint"); err != nil {
+	if err := b.Deposit(Amount(100)); err != nil {
 		panic(err)
 	}
 	if err := b.Save(st); err != nil {

@@ -1,8 +1,6 @@
 package sebak
 
 import (
-	"fmt"
-	"strings"
 	"testing"
 
 	"boscoin.io/sebak/lib/storage"
@@ -100,23 +98,5 @@ func TestIsWellFormedTransactionWithInvalidSignature(t *testing.T) {
 
 	if err = tx.IsWellFormed(networkID); err == nil {
 		t.Errorf("transaction must be failed for signature verification")
-	}
-}
-
-func TestTransactionIsValidCheckpoint(t *testing.T) {
-	networkID := []byte("hehe")
-	kpSource, _ := keypair.Random()
-
-	tx := TestMakeTransactionWithKeypair(networkID, 1, kpSource)
-	l := strings.SplitN(tx.B.Checkpoint, "-", 2)
-
-	newCheckpoint := fmt.Sprintf("%s-%s", l[0], TestGenerateNewCheckpoint())
-	if !(tx.IsValidCheckpoint(tx.B.Checkpoint)) {
-		t.Error("checkpoint has same with tx")
-		return
-	}
-	if !tx.IsValidCheckpoint(newCheckpoint) {
-		t.Error("checkpoint has same head with tx")
-		return
 	}
 }
