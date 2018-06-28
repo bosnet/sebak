@@ -84,7 +84,8 @@ func TestGetAccountHandler(t *testing.T) {
 	wg.Wait()
 
 	// No streaming
-	req.Header.Del("Accept")
+	req, err = http.NewRequest("GET", url, nil)
+	checkError(t, err)
 	resp, err = ts.Client().Do(req)
 	checkError(t, err)
 	reader = bufio.NewReader(resp.Body)
@@ -169,7 +170,8 @@ func TestGetAccountTransactionsHandler(t *testing.T) {
 	wg.Wait()
 
 	// No streaming
-	req.Header.Del("Accept")
+	req, err = http.NewRequest("GET", url, nil)
+	checkError(t, err)
 	resp, err = ts.Client().Do(req)
 	checkError(t, err)
 	reader = bufio.NewReader(resp.Body)
@@ -266,7 +268,8 @@ func TestGetAccountOperationsHandler(t *testing.T) {
 	wg.Wait()
 
 	// No streaming
-	req.Header.Del("Accept")
+	req, err = http.NewRequest("GET", url, nil)
+	checkError(t, err)
 	resp, err = ts.Client().Do(req)
 	checkError(t, err)
 	reader = bufio.NewReader(resp.Body)
@@ -338,7 +341,8 @@ func TestGetTransactionByHashHandler(t *testing.T) {
 	wg.Wait()
 
 	// No streaming
-	req.Header.Del("Accept")
+	req, err = http.NewRequest("GET", url, nil)
+	checkError(t, err)
 	resp, err := ts.Client().Do(req)
 	checkError(t, err)
 	reader := bufio.NewReader(resp.Body)
@@ -418,7 +422,8 @@ func TestGetTransactionsHandler(t *testing.T) {
 	wg.Wait()
 
 	// No streaming
-	req.Header.Del("Accept")
+	req, err = http.NewRequest("GET", url, nil)
+	checkError(t, err)
 	resp, err = ts.Client().Do(req)
 	checkError(t, err)
 	reader = bufio.NewReader(resp.Body)
