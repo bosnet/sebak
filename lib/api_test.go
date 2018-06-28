@@ -16,7 +16,7 @@ import (
 	"testing"
 )
 
-func checkError(t *testing.T, err error){
+func checkError(t *testing.T, err error) {
 	if err != nil {
 		t.Error(err)
 	}
