@@ -112,7 +112,7 @@ func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, mn *HTTP2Network, va
 	validator, _ = sebaknode.NewValidator(kp.Address(), mn.Endpoint(), "")
 	validator.SetKeypair(kp)
 
-	mn.SetContext(context.WithValue(context.Background(), "currentNode", validator))
+	mn.SetContext(context.WithValue(context.Background(), "localNode", validator))
 
 	return
 }
@@ -135,7 +135,7 @@ func removeWhiteSpaces(str string) string {
 }
 
 func TestHTTP2NetworkGetNodeInfo(t *testing.T) {
-	_, s0, currentNode := createNewHTTP2Network(t)
+	_, s0, localNode := createNewHTTP2Network(t)
 	s0.SetMessageBroker(TestMessageBroker{})
 	s0.Ready()
 
@@ -155,11 +155,11 @@ func TestHTTP2NetworkGetNodeInfo(t *testing.T) {
 		return
 	}
 
-	server := currentNode.Endpoint().String()
+	server := localNode.Endpoint().String()
 	client := v.Endpoint().String()
 
 	assert.Equal(t, server, client, "Server endpoint and received endpoint should be the same.")
-	assert.Equal(t, currentNode.Address(), v.Address(), "Server address and received address should be the same.")
+	assert.Equal(t, localNode.Address(), v.Address(), "Server address and received address should be the same.")
 }
 
 type StringResponseMessageBroker struct {
@@ -173,7 +173,7 @@ func (r StringResponseMessageBroker) ResponseMessage(w http.ResponseWriter, _ st
 func (r StringResponseMessageBroker) ReceiveMessage(*HTTP2Network, Message) {}
 
 func TestHTTP2NetworkMessageBrokerResponseMessage(t *testing.T) {
-	_, s0, currentNode := createNewHTTP2Network(t)
+	_, s0, localNode := createNewHTTP2Network(t)
 	s0.SetMessageBroker(StringResponseMessageBroker{"ResponseMessage"})
 	s0.Ready()
 
@@ -183,13 +183,13 @@ func TestHTTP2NetworkMessageBrokerResponseMessage(t *testing.T) {
 	c0 := s0.GetClient(s0.Endpoint())
 	pingAndWait(t, c0)
 
-	returnMsg, _ := c0.Connect(currentNode)
+	returnMsg, _ := c0.Connect(localNode)
 
 	assert.Equal(t, string(returnMsg), "ResponseMessage", "The connectNode and the return should be the same.")
 }
 
 func TestHTTP2NetworkConnect(t *testing.T) {
-	_, s0, currentNode := createNewHTTP2Network(t)
+	_, s0, localNode := createNewHTTP2Network(t)
 	s0.SetMessageBroker(TestMessageBroker{})
 	s0.Ready()
 
@@ -199,10 +199,10 @@ func TestHTTP2NetworkConnect(t *testing.T) {
 	c0 := s0.GetClient(s0.Endpoint())
 	pingAndWait(t, c0)
 
-	o, _ := currentNode.Serialize()
+	o, _ := localNode.Serialize()
 	nodeStr := removeWhiteSpaces(string(o))
 
-	returnMsg, _ := c0.Connect(currentNode)
+	returnMsg, _ := c0.Connect(localNode)
 	returnStr := removeWhiteSpaces(string(returnMsg))
 
 	assert.Equal(t, returnStr, nodeStr, "The connectNode and the return should be the same.")

@@ -13,7 +13,7 @@ import (
 
 type NodeRunner struct {
 	networkID         []byte
-	currentNode       sebaknode.Node
+	localNode         *sebaknode.LocalNode
 	policy            sebakcommon.VotingThresholdPolicy
 	network           sebaknetwork.Network
 	consensus         Consensus
@@ -32,30 +32,30 @@ type NodeRunner struct {
 
 func NewNodeRunner(
 	networkID string,
-	currentNode sebaknode.Node,
+	localNode *sebaknode.LocalNode,
 	policy sebakcommon.VotingThresholdPolicy,
 	network sebaknetwork.Network,
 	consensus Consensus,
 	storage *sebakstorage.LevelDBBackend,
 ) *NodeRunner {
 	nr := &NodeRunner{
-		networkID:   []byte(networkID),
-		currentNode: currentNode,
-		policy:      policy,
-		network:     network,
-		consensus:   consensus,
-		storage:     storage,
-		log:         log.New(logging.Ctx{"node": currentNode.Alias()}),
+		networkID: []byte(networkID),
+		localNode: localNode,
+		policy:    policy,
+		network:   network,
+		consensus: consensus,
+		storage:   storage,
+		log:       log.New(logging.Ctx{"node": localNode.Alias()}),
 	}
-	nr.ctx = context.WithValue(context.Background(), "currentNode", currentNode)
+	nr.ctx = context.WithValue(context.Background(), "localNode", localNode)
 	nr.ctx = context.WithValue(nr.ctx, "networkID", nr.networkID)
 	nr.ctx = context.WithValue(nr.ctx, "storage", nr.storage)
 
 	nr.connectionManager = sebaknetwork.NewConnectionManager(
-		nr.currentNode,
+		nr.localNode,
 		nr.network,
 		nr.policy,
-		nr.currentNode.GetValidators(),
+		nr.localNode.GetValidators(),
 	)
 	nr.network.AddWatcher(nr.connectionManager.ConnectionWatcher)
 
@@ -89,7 +89,7 @@ func (nr *NodeRunner) Stop() {
 }
 
 func (nr *NodeRunner) Node() sebaknode.Node {
-	return nr.currentNode
+	return nr.localNode
 }
 
 func (nr *NodeRunner) NetworkID() []byte {
@@ -132,7 +132,7 @@ func (nr *NodeRunner) ConnectValidators() {
 		break
 	}
 	nr.log.Debug("current node is ready")
-	nr.log.Debug("trying to connect to the validators", "validators", nr.currentNode.GetValidators())
+	nr.log.Debug("trying to connect to the validators", "validators", nr.localNode.GetValidators())
 
 	nr.log.Debug("initializing connectionManager for validators")
 	nr.connectionManager.Start()
@@ -218,7 +218,7 @@ func (nr *NodeRunner) handleMessage() {
 			checker := &NodeRunnerHandleMessageChecker{
 				DefaultChecker: sebakcommon.DefaultChecker{nr.handleMessageFromClientCheckerFuncs},
 				NodeRunner:     nr,
-				CurrentNode:    nr.currentNode,
+				CurrentNode:    nr.localNode,
 				NetworkID:      nr.networkID,
 				Message:        message,
 			}
@@ -241,7 +241,7 @@ func (nr *NodeRunner) handleMessage() {
 				GenesisBlockCheckpoint: sebakcommon.MakeGenesisCheckpoint(nr.networkID),
 				DefaultChecker:         sebakcommon.DefaultChecker{nr.handleBallotCheckerFuncs},
 				NodeRunner:             nr,
-				CurrentNode:            nr.currentNode,
+				CurrentNode:            nr.localNode,
 				NetworkID:              nr.networkID,
 				Message:                message,
 				VotingHole:             VotingNOTYET,

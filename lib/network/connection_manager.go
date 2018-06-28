@@ -15,9 +15,9 @@ import (
 type ConnectionManager struct {
 	sync.Mutex
 
-	currentNode sebaknode.Node
-	network     Network
-	policy      sebakcommon.VotingThresholdPolicy
+	localNode *sebaknode.LocalNode
+	network   Network
+	policy    sebakcommon.VotingThresholdPolicy
 
 	validators map[ /* nodd.Address() */ string]*sebaknode.Validator
 	clients    map[ /* nodd.Address() */ string]NetworkClient
@@ -27,13 +27,13 @@ type ConnectionManager struct {
 }
 
 func NewConnectionManager(
-	currentNode sebaknode.Node,
+	localNode *sebaknode.LocalNode,
 	network Network,
 	policy sebakcommon.VotingThresholdPolicy,
 	validators map[string]*sebaknode.Validator,
 ) *ConnectionManager {
 	return &ConnectionManager{
-		currentNode: currentNode,
+		localNode: localNode,
 
 		network:    network,
 		policy:     policy,
@@ -41,7 +41,7 @@ func NewConnectionManager(
 
 		clients:   map[string]NetworkClient{},
 		connected: map[string]bool{},
-		log:       log.New(logging.Ctx{"node": currentNode.Alias()}),
+		log:       log.New(logging.Ctx{"node": localNode.Alias()}),
 	}
 }
 
@@ -148,7 +148,7 @@ func (c *ConnectionManager) connectValidator(v *sebaknode.Validator) (err error)
 	client := c.GetConnection(v.Address())
 
 	var b []byte
-	b, err = client.Connect(c.currentNode)
+	b, err = client.Connect(c.localNode)
 	if err != nil {
 		return
 	}

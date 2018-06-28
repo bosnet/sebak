@@ -2,7 +2,6 @@ package sebaknode
 
 import (
 	"encoding/json"
-	"fmt"
 	"sync"
 
 	"boscoin.io/sebak/lib/common"
@@ -10,12 +9,11 @@ import (
 	"github.com/stellar/go/keypair"
 )
 
-type NodeFromJSON struct {
-	Alias      string                `json:"alias"`
-	Address    string                `json:"address"`
-	Endpoint   *sebakcommon.Endpoint `json:"endpoint"`
-	Validators map[string]*Validator `json:"Validators"`
-	State      NodeState             `json:"state"`
+type LocalNodeFromJSON struct {
+	Alias    string                `json:"alias"`
+	Address  string                `json:"address"`
+	Endpoint *sebakcommon.Endpoint `json:"endpoint"`
+	State    NodeState             `json:"state"`
 }
 
 type Validator struct {
@@ -23,11 +21,10 @@ type Validator struct {
 
 	keypair *keypair.Full
 
-	state      NodeState
-	alias      string
-	address    string
-	endpoint   *sebakcommon.Endpoint
-	validators map[ /* Node.Address() */ string]*Validator
+	state    NodeState
+	alias    string
+	address  string
+	endpoint *sebakcommon.Endpoint
 }
 
 func (v *Validator) String() string {
@@ -99,39 +96,18 @@ func (v *Validator) Endpoint() *sebakcommon.Endpoint {
 }
 
 func (v *Validator) HasValidators(address string) bool {
-	_, found := v.validators[address]
-	return found
+	return true
 }
 
 func (v *Validator) GetValidators() map[string]*Validator {
-	return v.validators
+	return nil
 }
 
 func (v *Validator) AddValidators(validators ...*Validator) error {
-	v.Lock()
-	defer v.Unlock()
-
-	for _, va := range validators {
-		if v.Address() == va.Address() {
-			continue
-		}
-		v.validators[va.Address()] = va
-	}
-
 	return nil
 }
 
 func (v *Validator) RemoveValidators(validators ...*Validator) error {
-	v.Lock()
-	defer v.Unlock()
-
-	for _, va := range validators {
-		if _, ok := v.validators[va.Address()]; !ok {
-			continue
-		}
-		delete(v.validators, va.Address())
-	}
-
 	return nil
 }
 
@@ -154,7 +130,6 @@ func (v *Validator) UnmarshalJSON(b []byte) error {
 	v.alias = va.Alias
 	v.address = va.Address
 	v.endpoint = va.Endpoint
-	v.validators = va.Validators
 	v.state = va.State
 
 	return nil
@@ -164,12 +139,7 @@ func (v *Validator) Serialize() ([]byte, error) {
 	return json.Marshal(v)
 }
 
-func MakeAlias(address string) string {
-	l := len(address)
-	return fmt.Sprintf("%s.%s", address[:4], address[l-8:l-4])
-}
-
-func NewValidator(address string, endpoint *sebakcommon.Endpoint, alias string) (v *Validator, err error) {
+func NewValidatorFromURI(address string, endpoint *sebakcommon.Endpoint, alias string) (v *Validator, err error) {
 	if len(alias) < 1 {
 		alias = MakeAlias(address)
 	}
@@ -179,11 +149,10 @@ func NewValidator(address string, endpoint *sebakcommon.Endpoint, alias string) 
 	}
 
 	v = &Validator{
-		state:      NodeStateNONE,
-		alias:      alias,
-		address:    address,
-		endpoint:   endpoint,
-		validators: map[string]*Validator{},
+		state:    NodeStateNONE,
+		alias:    alias,
+		address:  address,
+		endpoint: endpoint,
 	}
 
 	return

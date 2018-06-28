@@ -20,4 +20,9 @@ type Node interface {
 	HasValidators(string) bool
 	RemoveValidators(validators ...*Validator) error
 	Serialize() ([]byte, error)
+	State() NodeState
+	SetBooting()
+	SetCatchup()
+	SetConsensus()
+	SetTerminating()
 }
