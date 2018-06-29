@@ -116,7 +116,6 @@ func NewVotingResult(ballot Ballot) (vr *VotingResult, err error) {
 		Source:      ballot.Source(),
 		State:       ballot.State(),
 		Ballots:     ballots,
-		Staging:     make([]VotingStateStaging, 0),
 	}
 
 	return
