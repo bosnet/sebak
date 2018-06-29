@@ -8,6 +8,9 @@ if [ $# -gt 1 ]; then
     ./sebak $@
 else
     # Node mode
+    if [ -f ".env" ]; then
+      source ./.env
+    fi
     ./sebak genesis ${SEBAK_GENESIS_BLOCK}
     ./sebak node --log-level debug
 fi
