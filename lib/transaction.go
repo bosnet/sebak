@@ -93,13 +93,13 @@ var TransactionWellFormedCheckerFuncs = []sebakcommon.CheckerFunc{
 	CheckTransactionHashMatch,
 }
 
-func (o Transaction) IsWellFormed(networkID []byte) (err error) {
+func (tx Transaction) IsWellFormed(networkID []byte) (err error) {
 	// TODO check `Version` format with SemVer
 
 	checker := &TransactionChecker{
 		DefaultChecker: sebakcommon.DefaultChecker{TransactionWellFormedCheckerFuncs},
 		NetworkID:      networkID,
-		Transaction:    o,
+		Transaction:    tx,
 	}
 	if err = sebakcommon.RunChecker(checker, sebakcommon.DefaultDeferFunc); err != nil {
 		return
@@ -108,7 +108,7 @@ func (o Transaction) IsWellFormed(networkID []byte) (err error) {
 	return
 }
 
-func (o Transaction) Validate(st *sebakstorage.LevelDBBackend) (err error) {
+func (tx Transaction) Validate(st *sebakstorage.LevelDBBackend) (err error) {
 	// TODO check whether `Checkpoint` is in `Block Transaction` and is latest
 	// `Checkpoint`
 	// TODO check whether `Source` is in `Block Account`
@@ -117,16 +117,16 @@ func (o Transaction) Validate(st *sebakstorage.LevelDBBackend) (err error) {
 	return
 }
 
-func (o Transaction) GetType() string {
-	return o.T
+func (tx Transaction) GetType() string {
+	return tx.T
 }
 
-func (o Transaction) Equal(m sebakcommon.Message) bool {
-	return o.H.Hash == m.GetHash()
+func (tx Transaction) Equal(m sebakcommon.Message) bool {
+	return tx.H.Hash == m.GetHash()
 }
 
-func (o Transaction) IsValidCheckpoint(checkpoint string) bool {
-	if o.B.Checkpoint == checkpoint {
+func (tx Transaction) IsValidCheckpoint(checkpoint string) bool {
+	if tx.B.Checkpoint == checkpoint {
 		return true
 	}
 
@@ -135,49 +135,49 @@ func (o Transaction) IsValidCheckpoint(checkpoint string) bool {
 	if inputCheckpoint, err = sebakcommon.ParseCheckpoint(checkpoint); err != nil {
 		return false
 	}
-	if currentCheckpoint, err = sebakcommon.ParseCheckpoint(o.B.Checkpoint); err != nil {
+	if currentCheckpoint, err = sebakcommon.ParseCheckpoint(tx.B.Checkpoint); err != nil {
 		return false
 	}
 
 	return inputCheckpoint[0] == currentCheckpoint[0]
 }
 
-func (o Transaction) GetHash() string {
-	return o.H.Hash
+func (tx Transaction) GetHash() string {
+	return tx.H.Hash
 }
 
-func (o Transaction) Source() string {
-	return o.B.Source
+func (tx Transaction) Source() string {
+	return tx.B.Source
 }
 
-func (o Transaction) TotalAmount(withFee bool) Amount {
+func (tx Transaction) TotalAmount(withFee bool) Amount {
 	var amount int64
-	for _, op := range o.B.Operations {
+	for _, op := range tx.B.Operations {
 		amount += int64(op.B.GetAmount())
 	}
 
 	if withFee {
-		amount += int64(len(o.B.Operations)) * int64(o.B.Fee)
+		amount += int64(len(tx.B.Operations)) * int64(tx.B.Fee)
 	}
 
 	return Amount(amount)
 }
 
-func (o Transaction) Serialize() (encoded []byte, err error) {
-	encoded, err = json.Marshal(o)
+func (tx Transaction) Serialize() (encoded []byte, err error) {
+	encoded, err = json.Marshal(tx)
 	return
 }
 
-func (o Transaction) String() string {
-	encoded, _ := json.MarshalIndent(o, "", "  ")
+func (tx Transaction) String() string {
+	encoded, _ := json.MarshalIndent(tx, "", "  ")
 	return string(encoded)
 }
 
-func (o *Transaction) Sign(kp keypair.KP, networkID []byte) {
-	o.H.Hash = o.B.MakeHashString()
-	signature, _ := kp.Sign(append(networkID, []byte(o.H.Hash)...))
+func (tx *Transaction) Sign(kp keypair.KP, networkID []byte) {
+	tx.H.Hash = tx.B.MakeHashString()
+	signature, _ := kp.Sign(append(networkID, []byte(tx.H.Hash)...))
 
-	o.H.Signature = base58.Encode(signature)
+	tx.H.Signature = base58.Encode(signature)
 
 	return
 }
@@ -187,14 +187,14 @@ func (o *Transaction) Sign(kp keypair.KP, networkID []byte) {
 //
 // <subtracted>: hash of last paid transaction, it means balance is subtracted
 // <added>: hash of last added transaction, it means balance is added
-func (o Transaction) NextSourceCheckpoint() string {
-	return sebakcommon.MakeCheckpoint(o.GetHash(), o.GetHash())
+func (tx Transaction) NextSourceCheckpoint() string {
+	return sebakcommon.MakeCheckpoint(tx.GetHash(), tx.GetHash())
 }
 
-func (o Transaction) NextTargetCheckpoint() string {
-	parsed, _ := sebakcommon.ParseCheckpoint(o.B.Checkpoint)
+func (tx Transaction) NextTargetCheckpoint() string {
+	parsed, _ := sebakcommon.ParseCheckpoint(tx.B.Checkpoint)
 
-	return sebakcommon.MakeCheckpoint(parsed[0], o.GetHash())
+	return sebakcommon.MakeCheckpoint(parsed[0], tx.GetHash())
 }
 
 type TransactionHeader struct {
