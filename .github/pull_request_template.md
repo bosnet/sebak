@@ -3,7 +3,7 @@
 * Filling out the template is required. Any pull request that does not include enough information to be reviewed in a timely manner may be closed at the maintainers' discretion.
 * All new code requires tests to ensure against regressions.
 * If this PR is related to github issues, please mention them in descriptions
-* Test coverage should increase monotonically. If coverage percentage is lower than master, add more unit test cases.
+* Test coverage should increase monotonically. If coverage percentage is lower than master, add more test cases.
 
 ### Github Issue
 <!--
