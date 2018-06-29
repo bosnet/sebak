@@ -38,6 +38,7 @@ type BlockTransaction struct {
 	Source             string
 	Fee                Amount
 	Operations         []string
+	Targets            []string
 	Amount             Amount
 
 	Confirmed string
@@ -113,6 +114,10 @@ func (bt *BlockTransaction) Save(st *sebakstorage.LevelDBBackend) (err error) {
 		return
 	} else if exists {
 		return sebakerror.ErrorBlockAlreadyExists
+	}
+	for _, op := range bt.transaction.B.Operations {
+		target := op.B.TargetAddress()
+		bt.Targets = append(bt.Targets, target)
 	}
 
 	bt.Confirmed = sebakcommon.NowISO8601()
