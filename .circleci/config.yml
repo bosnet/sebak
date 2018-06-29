@@ -69,6 +69,7 @@ jobs:
             if [[ -n "${CIRCLE_PR_NUMBER}" ]]
             then
               FETCH_REFS="${FETCH_REFS} +refs/pull/${CIRCLE_PR_NUMBER}/merge:pr/${CIRCLE_PR_NUMBER}/merge"
+              git checkout -- .
               git fetch -u origin ${FETCH_REFS}
               git checkout "pr/${CIRCLE_PR_NUMBER}/merge"
             fi
