@@ -1,10 +1,8 @@
-package sebakcommon
+package sebaknode
 
 import (
 	"fmt"
 	"testing"
-
-	"boscoin.io/sebak/lib/node"
 )
 
 func TestParseValidatorFromURI(t *testing.T) {
@@ -12,7 +10,7 @@ func TestParseValidatorFromURI(t *testing.T) {
 		endpointURL := "https://localhost:1234"
 		address := "GAWMRHEPMJFTROGBNGIHRR5QEH7E33F7FZNLF6FC5V67BUZI4N2I7BXG"
 		alias := "showme"
-		v, err := sebaknode.NewValidatorFromURI(fmt.Sprintf("%s?address=%s&alias=%s", endpointURL, address, alias))
+		v, err := NewValidatorFromURI(fmt.Sprintf("%s?address=%s&alias=%s", endpointURL, address, alias))
 		if err != nil {
 			t.Error(err)
 			return

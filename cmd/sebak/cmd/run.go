@@ -25,53 +25,6 @@ import (
 	"strconv"
 )
 
-type FlagValidators []*sebaknode.Validator
-
-func (f *FlagValidators) Type() string {
-	return "validators"
-}
-
-func (f *FlagValidators) String() string {
-	return ""
-}
-
-func (f *FlagValidators) Set(v string) error {
-	if strings.Count(v, ",") > 2 {
-		return errors.New("multiple comma, ',' found")
-	}
-
-	parsed := strings.SplitN(v, ",", 3)
-	if len(parsed) < 2 {
-		return errors.New("at least '<public address>,<endpoint url>' must be given")
-	}
-	if len(parsed) < 3 {
-		parsed = append(parsed, "")
-	}
-
-	endpoint, err := sebakcommon.ParseEndpoint(parsed[1])
-	if err != nil {
-		return err
-	}
-	node, err := sebaknode.NewValidator(parsed[0], endpoint, parsed[2])
-	if err != nil {
-		return fmt.Errorf("failed to create validator: %v", err)
-	}
-
-	// check duplication
-	for _, n := range *f {
-		if node.Address() == n.Address() {
-			return fmt.Errorf("duplicated public address found")
-		}
-		if node.Endpoint() == n.Endpoint() {
-			return fmt.Errorf("duplicated endpoint found")
-		}
-	}
-
-	*f = append(*f, node)
-
-	return nil
-}
-
 const defaultNetwork string = "https"
 const defaultPort int = 12345
 const defaultHost string = "0.0.0.0"
@@ -282,7 +235,7 @@ func runNode() {
 		return
 	}
 	localNode.SetKeypair(kp)
-	localNode.AddValidators(flagValidators...)
+	localNode.AddValidators(validators...)
 
 	// create network
 	nt, err := sebaknetwork.NewNetwork(nodeEndpoint)

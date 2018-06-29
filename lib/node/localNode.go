@@ -136,12 +136,16 @@ func (n *LocalNode) RemoveValidators(validators ...*Validator) error {
 }
 
 func (n *LocalNode) MarshalJSON() ([]byte, error) {
+	var neighbors = make(map[string]struct{})
+	for _, neighbor := range n.validators {
+		neighbors[neighbor.Address()] = struct{}{}
+	}
 	return json.Marshal(map[string]interface{}{
-		"address":  n.Address(),
-		"alias":    n.Alias(),
-		"endpoint": n.Endpoint().String(),
-		"state":    n.State().String(),
-		//"validators": n.validators,
+		"address":    n.Address(),
+		"alias":      n.Alias(),
+		"endpoint":   n.Endpoint().String(),
+		"state":      n.State().String(),
+		"validators": neighbors,
 	})
 }
 
