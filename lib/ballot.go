@@ -318,21 +318,20 @@ func (b *BallotBoxes) HasMessageByHash(hash string) bool {
 	return ok
 }
 
-func (b *BallotBoxes) VotingResult(ballot Ballot) *VotingResult {
+func (b *BallotBoxes) VotingResult(ballot Ballot) (*VotingResult, error) {
 	if !b.HasMessageByHash(ballot.MessageHash()) {
-		return nil
+		return nil, sebakerror.ErrorVotingResultNotFound
 	}
 
-	return b.Results[ballot.MessageHash()]
+	return b.Results[ballot.MessageHash()], nil
 }
 
 func (b *BallotBoxes) IsVoted(ballot Ballot) bool {
-	vr := b.VotingResult(ballot)
-	if vr == nil {
+	if vr, err := b.VotingResult(ballot); err != nil {
 		return false
+	} else {
+		return vr.IsVoted(ballot)
 	}
-
-	return vr.IsVoted(ballot)
 }
 
 func (b *BallotBoxes) AddVotingResult(vr *VotingResult, ballot Ballot) (err error) {
@@ -379,7 +378,10 @@ func (b *BallotBoxes) AddBallot(ballot Ballot) (isNew bool, err error) {
 	isNew = !b.HasMessageByHash(ballot.MessageHash())
 
 	if !isNew {
-		vr = b.VotingResult(ballot)
+		if vr, err = b.VotingResult(ballot); err != nil {
+			return
+		}
+
 		if err = vr.Add(ballot); err != nil {
 			return
 		}

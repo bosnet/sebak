@@ -116,7 +116,11 @@ func (is *ISAAC) receiveBallotStateINIT(ballot Ballot) (vs VotingStateStaging, e
 		}
 	}
 
-	vr := is.Boxes.VotingResult(ballot)
+	vr, err := is.Boxes.VotingResult(ballot)
+	if err != nil {
+		return
+	}
+
 	if vr.IsClosed() || !vr.CanGetResult(is.VotingThresholdPolicy) {
 		return
 	}
@@ -141,7 +145,10 @@ func (is *ISAAC) receiveBallotStateINIT(ballot Ballot) (vs VotingStateStaging, e
 //
 // NOTE(ISSAC.AddBallot): `ISSAC.AddBallot()` only for self-signed Ballot
 func (is *ISAAC) AddBallot(ballot Ballot) (err error) {
-	vr := is.Boxes.VotingResult(ballot)
+	vr, err := is.Boxes.VotingResult(ballot)
+	if err != nil {
+		return
+	}
 	if vr.IsVoted(ballot) {
 		return nil
 	}
@@ -155,7 +162,10 @@ func (is *ISAAC) CloseConsensus(ballot Ballot) (err error) {
 		return sebakerror.ErrorVotingResultNotInBox
 	}
 
-	vr := is.Boxes.VotingResult(ballot)
+	vr, err := is.Boxes.VotingResult(ballot)
+	if err != nil {
+		return
+	}
 
 	is.Boxes.WaitingBox.RemoveVotingResult(vr)  // TODO detect error
 	is.Boxes.VotingBox.RemoveVotingResult(vr)   // TODO detect error
@@ -174,7 +184,12 @@ func (is *ISAAC) receiveBallotVotingStates(ballot Ballot) (vs VotingStateStaging
 		is.Boxes.AddSource(ballot)
 	}
 
-	vr := is.Boxes.VotingResult(ballot)
+	var vr *VotingResult
+
+	if vr, err = is.Boxes.VotingResult(ballot); err != nil {
+		return
+	}
+
 	if vr.IsClosed() || !vr.CanGetResult(is.VotingThresholdPolicy) {
 		return
 	}
