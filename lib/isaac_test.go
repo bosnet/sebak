@@ -263,8 +263,11 @@ func TestISAACReceiveBallotStateINITAndMoveNextState(t *testing.T) {
 		t.Error("just state changed, not `VotingResult` closed")
 		return
 	}
-
-	vs = is.Boxes.VotingResult(ballots[0]).LatestStaging()
+	vr, err := is.Boxes.VotingResult(ballots[0])
+	if err != nil {
+		t.Error(err)
+	}
+	vs = vr.LatestStaging()
 	if vs.IsEmpty() {
 		t.Error("failed to get valid `VotingStateStaging`")
 		return
@@ -302,7 +305,11 @@ func TestISAACReceiveBallotStateINITAndVotingBox(t *testing.T) {
 		}
 	}
 
-	vs = is.Boxes.VotingResult(ballots[0]).LatestStaging()
+	vr, err := is.Boxes.VotingResult(ballots[0])
+	if err != nil {
+		t.Error(err)
+	}
+	vs = vr.LatestStaging()
 	if !vs.IsChanged() {
 		t.Error("failed to get result")
 		return
@@ -329,7 +336,11 @@ func voteISAACReceiveBallot(is *ISAAC, ballots []Ballot, kps []*keypair.Full, st
 		return
 	}
 
-	vs = is.Boxes.VotingResult(ballots[0]).LatestStaging()
+	vr, err := is.Boxes.VotingResult(ballots[0])
+	if err != nil {
+		return
+	}
+	vs = vr.LatestStaging()
 
 	return
 }
@@ -461,7 +472,10 @@ func TestISAACReceiveSameBallotStates(t *testing.T) {
 			err = errors.New("`VotingResult.State` must be `BallotStateSIGN`")
 		}
 
-		vr := is.Boxes.VotingResult(ballots[0])
+		vr, err := is.Boxes.VotingResult(ballots[0])
+		if err != nil {
+			t.Error(err)
+		}
 		if vr.VotedCount(sebakcommon.BallotStateINIT) != int(numberOfBallots)+1 {
 			t.Error("some ballot was not voted")
 			return
@@ -473,7 +487,10 @@ func TestISAACReceiveSameBallotStates(t *testing.T) {
 		}
 	}
 
-	vrFirst := is.Boxes.VotingResult(ballots[0])
+	vrFirst, err := is.Boxes.VotingResult(ballots[0])
+	if err != nil {
+		t.Error(err)
+	}
 	{
 		_, err := voteISAACReceiveBallot(is, ballots, kps, sebakcommon.BallotStateINIT)
 		if err != nil {
@@ -481,7 +498,10 @@ func TestISAACReceiveSameBallotStates(t *testing.T) {
 			return
 		}
 	}
-	vrSecond := is.Boxes.VotingResult(ballots[0])
+	vrSecond, err := is.Boxes.VotingResult(ballots[0])
+	if err != nil {
+		t.Error(err)
+	}
 	if vrSecond.VotedCount(sebakcommon.BallotStateINIT) != int(numberOfBallots)+1 {
 		t.Error("some ballot was not voted")
 		return
