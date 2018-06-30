@@ -8,33 +8,29 @@ import (
 	"testing"
 	"unicode"
 
-	"boscoin.io/sebak/lib/common"
-	"github.com/stellar/go/keypair"
-	"github.com/stretchr/testify/assert"
 	"math/rand"
 	"net"
 	"strconv"
-	"sync"
 	"time"
+
+	"boscoin.io/sebak/lib/common"
+	"github.com/stellar/go/keypair"
+	"github.com/stretchr/testify/assert"
 )
 
-var testPort = "5000"
-var once sync.Once
-
 func getPort() string {
-	once.Do(func() {
-		for {
-			s := rand.NewSource(int64(time.Now().Nanosecond()))
-			r := rand.New(s)
-			testPort = strconv.Itoa(r.Intn(16383) + 49152) // ephemeral ports range 49152 ~ 65535
+	var testPort = "5000"
+	for {
+		s := rand.NewSource(int64(time.Now().Nanosecond()))
+		r := rand.New(s)
+		testPort = strconv.Itoa(r.Intn(16383) + 49152) // ephemeral ports range 49152 ~ 65535
 
-			ln, err := net.Listen("tcp", ":"+testPort)
-			if err == nil {
-				ln.Close()
-				break
-			}
+		ln, err := net.Listen("tcp", ":"+testPort)
+		if err == nil {
+			ln.Close()
+			break
 		}
-	})
+	}
 	return testPort
 }
 
@@ -140,6 +136,7 @@ func TestHTTP2NetworkGetNodeInfo(t *testing.T) {
 	defer s0.Stop()
 
 	c0 := s0.GetClient(s0.Endpoint())
+	pingAndWait(t, c0)
 
 	b, err := c0.GetNodeInfo()
 	if err != nil {
