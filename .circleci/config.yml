@@ -47,7 +47,7 @@ jobs:
       - run:
           name: run tests
           #command: SEBAK_LOG_HANDLER=null GOCACHE=off go test -v -timeout 3m ./...
-          command: GOCACHE=off go test -v -timeout 3m --run TestNodeRunnerPayment
+          command: GOCACHE=off go test -v -timeout 3m --run TestNodeRunnerPayment ./lib
 
   test_go1_9:
     docker:
@@ -58,7 +58,7 @@ jobs:
       - run:
           name: run tests
           #command: SEBAK_LOG_HANDLER=null GOCACHE=off go test -v -timeout 3m ./...
-          command: GOCACHE=off go test -v -timeout 3m --run TestNodeRunnerPayment
+          command: GOCACHE=off go test -v -timeout 3m --run TestNodeRunnerPayment ./lib
 
   test_merged:
     <<: *defaults
@@ -81,7 +81,7 @@ jobs:
             for pkg in $(go list ./...); do
               name=$(basename "$pkg")
               #SEBAK_LOG_HANDLER=null GOCACHE=off go test -v -timeout 3m -coverprofile=/tmp/workspace/test_coverage/$name.txt -covermode=atomic "$pkg"
-              GOCACHE=off go test -v -timeout 3m --run TestNodeRunnerPayment -coverprofile=/tmp/workspace/test_coverage/$name.txt -covermode=atomic "$pkg"
+              GOCACHE=off go test -v -timeout 3m --run TestNodeRunnerPayment -coverprofile=/tmp/workspace/test_coverage/$name.txt -covermode=atomic "$pkg" ./lib
             done
       - persist_to_workspace:
           root: /tmp/workspace/
