@@ -391,7 +391,7 @@ func (b *BallotBoxes) AddBallot(ballot Ballot) (isNew bool, err error) {
 			}
 
 			if err = b.AddVotingResult(vr, ballot); err != nil {
-				log.Warn("failed to add VotingResult", "MessageHash", ballot.MessageHash(), "error", err)
+				log.Warn("failed to add VotingResult after removing in ReservedBox", "MessageHash", ballot.MessageHash(), "error", err)
 				err = nil
 			}
 		}
