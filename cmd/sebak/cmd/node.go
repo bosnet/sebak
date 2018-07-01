@@ -188,6 +188,8 @@ func parseFlagsNode() {
 		}
 	}
 
+	logHandler = logging.CallerFileHandler(logHandler)
+
 	log = logging.New("module", "main")
 	log.SetHandler(logging.LvlFilterHandler(logLevel, logHandler))
 	sebak.SetLogging(logLevel, logHandler)
