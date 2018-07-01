@@ -343,6 +343,7 @@ func (b *BallotBoxes) AddVotingResult(vr *VotingResult, ballot Ballot) (err erro
 	} else if ballot.CanFitInWaitingBox() {
 		err = b.WaitingBox.AddVotingResult(vr)
 	} else {
+		log.Warn("The ballot has invalid state", "state", ballot.State(), "error", err)
 		err = sebakerror.ErrorBallotHasInvalidState
 	}
 
