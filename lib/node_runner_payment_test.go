@@ -83,7 +83,7 @@ func TestNodeRunnerPayment(t *testing.T) {
 
 	for _, done := range dones {
 		if done.State != sebakcommon.BallotStateALLCONFIRM {
-			t.Error("failed to get consensus")
+			t.Errorf("failed to get consensus(%s)", done.State.String())
 			return
 		}
 		if done.MessageHash != tx.GetHash() {
