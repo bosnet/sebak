@@ -102,8 +102,7 @@ func (b Ballot) String() string {
 
 func (b Ballot) CanFitInVotingBox() (ret bool) {
 	switch b.State() {
-	case sebakcommon.BallotStateSIGN:
-	case sebakcommon.BallotStateACCEPT:
+	case sebakcommon.BallotStateSIGN, sebakcommon.BallotStateACCEPT:
 		ret = true
 	default:
 		ret = false
