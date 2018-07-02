@@ -8,6 +8,7 @@ import (
 
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/storage"
+	"boscoin.io/sebak/lib/common"
 )
 
 type OperationBodyPayment struct {
@@ -64,8 +65,11 @@ func FinishOperationPayment(st *sebakstorage.LevelDBBackend, tx Transaction, op 
 		err = sebakerror.ErrorBlockAccountDoesNotExists
 		return
 	}
+	current, err := sebakcommon.ParseCheckpoint(baTarget.Checkpoint)
+	next, err := sebakcommon.ParseCheckpoint(tx.NextTargetCheckpoint())
+	newCheckPoint := sebakcommon.MakeCheckpoint(current[0], next[1])
 
-	if err = baTarget.Deposit(op.B.GetAmount(), tx.NextTargetCheckpoint()); err != nil {
+	if err = baTarget.Deposit(op.B.GetAmount(), newCheckPoint); err != nil {
 		return
 	}
 	if err = baTarget.Save(st); err != nil {
