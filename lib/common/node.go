@@ -32,10 +32,10 @@ type Node interface {
 }
 
 type ValidatorFromJSON struct {
-	Alias      string                `json:"alias"`
-	Address    string                `json:"address"`
-	Endpoint   *Endpoint             `json:"endpoint"`
-	Validators map[string]*Validator `json:"validators"`
+	Alias      string              `json:"alias"`
+	Address    string              `json:"address"`
+	Endpoint   string              `json:"endpoint"`
+	Validators map[string]struct{} `json:"validators"`
 }
 
 type Validator struct {
@@ -141,18 +141,19 @@ func (v *Validator) RemoveValidators(validators ...*Validator) error {
 
 func (v *Validator) MarshalJSON() ([]byte, error) {
 	var neighbors = make(map[string]struct{})
-	for _, neighbor := range v.validators {
-		neighbors[neighbor.Address()] = struct{}{}
+	for address, _ := range v.validators {
+		neighbors[address] = struct{}{}
 	}
-	return json.Marshal(map[string]interface{}{
-		"address":    v.Address(),
-		"alias":      v.Alias(),
-		"endpoint":   v.Endpoint().String(),
-		"validators": neighbors,
+
+	return json.Marshal(ValidatorFromJSON{
+		v.Alias(),
+		v.Address(),
+		v.Endpoint().String(),
+		neighbors,
 	})
 }
 
-func (v *Validator) UnmarshalJSON(b []byte) error {
+func (v *Validator) UnmarshalJSON(b []byte) (err error) {
 	var va ValidatorFromJSON
 	if err := json.Unmarshal(b, &va); err != nil {
 		return err
@@ -160,8 +161,16 @@ func (v *Validator) UnmarshalJSON(b []byte) error {
 
 	v.alias = va.Alias
 	v.address = va.Address
-	v.endpoint = va.Endpoint
-	v.validators = va.Validators
+	v.endpoint, err = NewEndpointFromString(va.Endpoint)
+	if err != nil {
+		return err
+	}
+	if v.validators == nil {
+		v.validators = make(map[string]*Validator)
+	}
+	for neighbor, _ := range va.Validators {
+		v.validators[neighbor] = &Validator{}
+	}
 
 	return nil
 }

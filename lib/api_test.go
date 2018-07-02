@@ -471,20 +471,33 @@ func TestNodeHandler(t *testing.T) {
 	resp, _ := http.DefaultClient.Do(req)
 	reader := bufio.NewReader(resp.Body)
 
+	var dummyValidatorIDs [10]string
+	for i := 0; i < 10; i++ {
+		key, _ := keypair.Random()
+		dummyValidatorIDs[i] = key.Address()
+	}
+
 	// Do stream Request to the Server
 	go func() {
 		for i := 0; i < 5; i++ {
 			line, _ := reader.ReadBytes('\n')
-			fmt.Println(string(line))
+			var v sebakcommon.Validator
+			json.Unmarshal(line, &v)
+
+			assert.Equal(t, validator.Alias(), v.Alias(), "alias is not same")
+			assert.Equal(t, validator.Address(), v.Address(), "address is not same")
+			assert.Equal(t, validator.Endpoint().String(), v.Endpoint().String(), "endpoint is not same")
+			if i != 0 && !v.HasValidators(dummyValidatorIDs[i-1]) {
+				t.Errorf("%s validator is not exist", dummyValidatorIDs[i])
+			}
 		}
 		resp.Body.Close()
 		wg.Done()
 	}()
 	for i := 0; i < 10; i++ {
 		var newValidator *sebakcommon.Validator
-		kp, _ := keypair.Random()
 		endpoint, _ := sebakcommon.NewEndpointFromString(sebakcommon.GetUniqueIDFromUUID())
-		newValidator, _ = sebakcommon.NewValidator(kp.Address(), endpoint, "")
+		newValidator, _ = sebakcommon.NewValidator(dummyValidatorIDs[i], endpoint, "")
 		validator.AddValidators(newValidator)
 	}
 
@@ -496,5 +509,17 @@ func TestNodeHandler(t *testing.T) {
 	reader = bufio.NewReader(resp.Body)
 	readByte, err := ioutil.ReadAll(reader)
 	checkError(t, err)
-	fmt.Println(string(readByte))
+
+	var v sebakcommon.Validator
+	json.Unmarshal(readByte, &v)
+
+	assert.Equal(t, validator.Alias(), v.Alias(), "alias is not same")
+	assert.Equal(t, validator.Address(), v.Address(), "address is not same")
+	assert.Equal(t, validator.Endpoint().String(), v.Endpoint().String(), "endpoint is not same")
+
+	for _, vId := range dummyValidatorIDs {
+		if !v.HasValidators(vId) {
+			t.Errorf("%s validator is not exist", vId)
+		}
+	}
 }
