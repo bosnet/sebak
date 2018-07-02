@@ -254,44 +254,6 @@ func CheckNodeRunnerHandleBallotVotingHole(c sebakcommon.Checker, args ...interf
 		return
 	}
 
-	// TODO error like `ErrorRecordDoesNotExist` must be checked, whether record
-	// does not exist or not.
-
-	if tx.B.Checkpoint == checker.GenesisBlockCheckpoint { // if tx is first from genesis block
-		// if tx is based on genesis account, check the source is genesis
-		// account.
-		if _, err = GetBlockAccountCheckpoint(
-			checker.NodeRunner.Storage(),
-			tx.B.Source,
-			checker.GenesisBlockCheckpoint,
-		); err != nil {
-			checker.NodeRunner.Log().Debug("VotingNO: ", "error", err)
-			return
-		}
-	} else {
-		// check, the checkpoint of tx exists
-		var bt BlockTransaction
-		if bt, err = GetBlockTransactionByCheckpoint(checker.NodeRunner.Storage(), tx.B.Checkpoint); err != nil {
-			return
-		}
-		// check, source is same with the `BlockTransaction` of tx's checkpoint
-		var checkPoint [2]string
-		if checkPoint, err = sebakcommon.ParseCheckpoint(tx.B.Checkpoint); err != nil {
-			return
-		}
-
-		// The transaction was invoked by the account
-		if checkPoint[0] == checkPoint[1] {
-			if tx.B.Source != bt.Source {
-				return
-			}
-		} else { //The transaction was invoked by another account
-			if _, found := sebakcommon.InStringArray(bt.Targets, tx.B.Source); !found {
-				return
-			}
-		}
-	}
-
 	// check, source exists
 	var ba *BlockAccount
 	if ba, err = GetBlockAccount(checker.NodeRunner.Storage(), tx.B.Source); err != nil {
