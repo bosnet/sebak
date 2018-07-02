@@ -67,6 +67,22 @@ const (
 	keyPath  = "key.pem"
 )
 
+// Waiting until the server is ready
+func pingAndWait(t *testing.T, c0 NetworkClient) {
+	waitCount := 0
+	for {
+		if b, err := c0.GetNodeInfo(); len(b) != 0 && err == nil {
+			break
+		} else {
+			time.Sleep(time.Millisecond * 100)
+			waitCount++
+			if waitCount > 100 {
+				t.Error("Server is not available")
+			}
+		}
+	}
+}
+
 func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, mn *HTTP2Network, validator *sebakcommon.Validator) {
 	g := NewKeyGenerator(dirPath, certPath, keyPath)
 
@@ -162,6 +178,7 @@ func TestHTTP2NetworkMessageBrokerResponseMessage(t *testing.T) {
 	defer s0.Stop()
 
 	c0 := s0.GetClient(s0.Endpoint())
+	pingAndWait(t, c0)
 
 	returnMsg, _ := c0.Connect(currentNode)
 
@@ -177,6 +194,7 @@ func TestHTTP2NetworkConnect(t *testing.T) {
 	defer s0.Stop()
 
 	c0 := s0.GetClient(s0.Endpoint())
+	pingAndWait(t, c0)
 
 	o, _ := currentNode.Serialize()
 	nodeStr := removeWhiteSpaces(string(o))
@@ -196,6 +214,7 @@ func TestHTTP2NetworkSendMessage(t *testing.T) {
 	defer s0.Stop()
 
 	c0 := s0.GetClient(s0.Endpoint())
+	pingAndWait(t, c0)
 
 	msg := NewDummyMessage("findme")
 	returnMsg, _ := c0.SendMessage(msg)
@@ -214,6 +233,7 @@ func TestHTTP2NetworkSendBallot(t *testing.T) {
 	defer s0.Stop()
 
 	c0 := s0.GetClient(s0.Endpoint())
+	pingAndWait(t, c0)
 
 	msg := NewDummyMessage("findme")
 	returnMsg, _ := c0.SendBallot(msg)

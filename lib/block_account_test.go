@@ -165,8 +165,8 @@ func TestBlockAccountObserver(t *testing.T) {
 		triggered = args[0].(*BlockAccount)
 		wg.Done()
 	}
-	observer.BlockAccountObserver.On(fmt.Sprintf("saved-%s", b.Address), ObserverFunc)
-	defer observer.BlockAccountObserver.Off(fmt.Sprintf("saved-%s", b.Address), ObserverFunc)
+	observer.BlockAccountObserver.On(fmt.Sprintf("address-%s", b.Address), ObserverFunc)
+	defer observer.BlockAccountObserver.Off(fmt.Sprintf("address-%s", b.Address), ObserverFunc)
 
 	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
 

@@ -162,7 +162,7 @@ func (t *HTTP2Network) AddHandler(ctx context.Context, args ...interface{}) (err
 	return
 }
 func (t *HTTP2Network) AddAPIHandler(pattern string, handlerFunc http.HandlerFunc) (router *mux.Route) {
-	apiRouter := t.routers[RouterNameNode]
+	apiRouter := t.routers[RouterNameAPI]
 	return apiRouter.HandleFunc(pattern, handlerFunc)
 }
 

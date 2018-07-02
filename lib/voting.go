@@ -39,7 +39,7 @@ type VotingStateStaging struct {
 	State         sebakcommon.BallotState
 	PreviousState sebakcommon.BallotState
 
-	ID          string     // ID is unique and sequenital
+	ID          string     // ID is unique and sequential
 	MessageHash string     // MessageHash is `Message.Hash`
 	VotingHole  VotingHole // voting is closed and it's last `VotingHole`
 	Reason      error      // if `VotingNO` is concluded, the reason

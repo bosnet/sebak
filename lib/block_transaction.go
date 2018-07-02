@@ -6,6 +6,7 @@ import (
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/observer"
 	"boscoin.io/sebak/lib/storage"
 )
 
@@ -37,6 +38,7 @@ type BlockTransaction struct {
 	Source             string
 	Fee                Amount
 	Operations         []string
+	Targets            []string
 	Amount             Amount
 
 	Confirmed string
@@ -50,7 +52,7 @@ type BlockTransaction struct {
 func NewBlockTransactionFromTransaction(tx Transaction, message []byte) BlockTransaction {
 	var opHashes []string
 	for _, op := range tx.B.Operations {
-		opHashes = append(opHashes, op.MakeHashString())
+		opHashes = append(opHashes, NewBlockOperationKey(op, tx))
 	}
 
 	return BlockTransaction{
@@ -113,6 +115,10 @@ func (bt *BlockTransaction) Save(st *sebakstorage.LevelDBBackend) (err error) {
 	} else if exists {
 		return sebakerror.ErrorBlockAlreadyExists
 	}
+	for _, op := range bt.transaction.B.Operations {
+		target := op.B.TargetAddress()
+		bt.Targets = append(bt.Targets, target)
+	}
 
 	bt.Confirmed = sebakcommon.NowISO8601()
 	if err = st.New(GetBlockTransactionKey(bt.Hash), bt); err != nil {
@@ -144,7 +150,10 @@ func (bt *BlockTransaction) Save(st *sebakstorage.LevelDBBackend) (err error) {
 			return
 		}
 	}
-
+	event := "saved"
+	event += " " + fmt.Sprintf("source-%s", bt.Source)
+	event += " " + fmt.Sprintf("hash-%s", bt.Hash)
+	observer.BlockTransactionObserver.Trigger(event, bt)
 	bt.isSaved = true
 
 	return nil
