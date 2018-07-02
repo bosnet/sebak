@@ -1,7 +1,7 @@
 package sebak
 
 import (
-	"boscoin.io/sebak/lib/common"
+	"github.com/mitchellh/hashstructure"
 	"time"
 )
 
@@ -55,8 +55,8 @@ func (e *BallotBoxExpireMover) moveToTargetBox() {
 
 	for hash, _ := range e.srcBox.Hashes {
 		if vr, ok := e.votingResults[hash]; ok {
-			if byteArr, err := sebakcommon.MakeObjectHash(vr); err == nil {
-				currBoxHashes[string(byteArr)] = hash
+			if vrHash, err := hashstructure.Hash(vr, nil); err == nil {
+				e.prevBoxHashes[string(vrHash)] = hash
 			} else {
 				log.Error("failed to make voting result hash", "VotingResult", vr, "error", err)
 			}
@@ -78,8 +78,8 @@ func (e *BallotBoxExpireMover) makePrevHashesFromSrcBox() {
 
 	for hash, _ := range e.srcBox.Hashes {
 		if vr, ok := e.votingResults[hash]; ok {
-			if byteArr, err := sebakcommon.MakeObjectHash(vr); err == nil {
-				e.prevBoxHashes[string(byteArr)] = hash
+			if vrHash, err := hashstructure.Hash(vr, nil); err == nil {
+				e.prevBoxHashes[string(vrHash)] = hash
 			} else {
 				log.Error("failed to make voting result hash", "VotingResult", vr, "error", err)
 			}
@@ -147,8 +147,8 @@ func (e *BallotBoxExpireRemover) makePrevHashesFromSrcBox() {
 
 	for hash, _ := range e.srcBox.Hashes {
 		if vr, ok := e.votingResults[hash]; ok {
-			if byteArr, err := sebakcommon.MakeObjectHash(vr); err == nil {
-				e.prevBoxHashes[string(byteArr)] = hash
+			if vrHash, err := hashstructure.Hash(vr, nil); err == nil {
+				e.prevBoxHashes[string(vrHash)] = hash
 			} else {
 				log.Error("failed to make voting result hash", "VotingResult", vr, "error", err)
 			}
