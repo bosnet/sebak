@@ -10,6 +10,8 @@ import (
 	"boscoin.io/sebak/lib/network"
 )
 
+var lock sync.Mutex
+
 func TestNodeRunnerPayment(t *testing.T) {
 	defer sebaknetwork.CleanUpMemoryNetwork()
 
@@ -56,10 +58,13 @@ func TestNodeRunnerPayment(t *testing.T) {
 		}
 
 		checker := c.(*NodeRunnerHandleBallotChecker)
+		lock.Lock()
 		if _, found := sebakcommon.InStringArray(finished, checker.CurrentNode.Alias()); found {
+			lock.Unlock()
 			return
 		}
 		finished = append(finished, checker.CurrentNode.Alias())
+		lock.Unlock()
 		dones = append(dones, checker.VotingStateStaging)
 		wg.Done()
 	}
