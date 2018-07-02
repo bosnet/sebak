@@ -35,7 +35,7 @@ type ValidatorFromJSON struct {
 	Alias      string              `json:"alias"`
 	Address    string              `json:"address"`
 	Endpoint   string              `json:"endpoint"`
-	Validators map[string]struct{} `json:"validators"`
+	Validators []string `json:"validators"`
 }
 
 type Validator struct {
@@ -139,10 +139,12 @@ func (v *Validator) RemoveValidators(validators ...*Validator) error {
 	return nil
 }
 
+// validator has circular reference
+// To marshall/unmarshall the validator, json structure is different
 func (v *Validator) MarshalJSON() ([]byte, error) {
-	var neighbors = make(map[string]struct{})
+	var neighbors []string
 	for address, _ := range v.validators {
-		neighbors[address] = struct{}{}
+		neighbors = append(neighbors, address)
 	}
 
 	return json.Marshal(ValidatorFromJSON{
@@ -168,7 +170,7 @@ func (v *Validator) UnmarshalJSON(b []byte) (err error) {
 	if v.validators == nil {
 		v.validators = make(map[string]*Validator)
 	}
-	for neighbor, _ := range va.Validators {
+	for _, neighbor := range va.Validators {
 		v.validators[neighbor] = &Validator{}
 	}
 
