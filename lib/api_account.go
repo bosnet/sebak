@@ -94,17 +94,23 @@ func GetAccountTransactionsHandler(storage *sebakstorage.LevelDBBackend) http.Ha
 			iterateId := sebakcommon.GetUniqueIDFromUUID()
 			go func() {
 				<-readyChan
+				var iterList []BlockTransaction
 				count := maxNumberOfExistingData
-				iterFunc, closeFunc := GetBlockTransactionsByAccount(storage, address, false)
+				iterFunc, closeFunc := GetBlockTransactionsByAccount(storage, address, true)
 				for {
 					bt, hasNext := iterFunc()
 					count--
 					if !hasNext || count < 0 {
 						break
 					}
-					observer.BlockTransactionObserver.Trigger(fmt.Sprintf("iterate-%s", iterateId), &bt)
+					iterList = append(iterList, bt)
 				}
 				closeFunc()
+
+				for idx := range iterList {
+					bt := iterList[len(iterList)-1-idx]
+					observer.BlockTransactionObserver.Trigger(fmt.Sprintf("iterate-%s", iterateId), &bt)
+				}
 			}()
 
 			callBackFunc := func(args ...interface{}) (btSerialized []byte, err error) {
@@ -159,17 +165,22 @@ func GetAccountOperationsHandler(storage *sebakstorage.LevelDBBackend) http.Hand
 			iterateId := sebakcommon.GetUniqueIDFromUUID()
 			go func() {
 				<-readyChan
+				var iterList []BlockOperation
 				count := maxNumberOfExistingData
-				iterFunc, closeFunc := GetBlockOperationsBySource(storage, address, false)
+				iterFunc, closeFunc := GetBlockOperationsBySource(storage, address, true)
 				for {
 					bo, hasNext := iterFunc()
 					count--
 					if !hasNext || count < 0 {
 						break
 					}
-					observer.BlockOperationObserver.Trigger(fmt.Sprintf("iterate-%s", iterateId), &bo)
+					iterList = append(iterList, bo)
 				}
 				closeFunc()
+				for idx := range iterList {
+					bo := iterList[len(iterList)-1-idx]
+					observer.BlockOperationObserver.Trigger(fmt.Sprintf("iterate-%s", iterateId), &bo)
+				}
 			}()
 
 			callBackFunc := func(args ...interface{}) (boSerialized []byte, err error) {

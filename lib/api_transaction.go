@@ -24,17 +24,22 @@ func GetTransactionsHandler(storage *sebakstorage.LevelDBBackend) http.HandlerFu
 			iterateId := sebakcommon.GetUniqueIDFromUUID()
 			go func() {
 				<-readyChan
+				var iterList []BlockTransaction
 				count := maxNumberOfExistingData
-				iterFunc, closeFunc := GetBlockTransactions(storage, false)
+				iterFunc, closeFunc := GetBlockTransactions(storage, true)
 				for {
 					bt, hasNext := iterFunc()
 					count--
 					if !hasNext || count < 0 {
 						break
 					}
-					observer.BlockTransactionObserver.Trigger(fmt.Sprintf("iterate-%s", iterateId), &bt)
+					iterList = append(iterList, bt)
 				}
 				closeFunc()
+				for idx := range iterList {
+					bt := iterList[len(iterList)-1-idx]
+					observer.BlockTransactionObserver.Trigger(fmt.Sprintf("iterate-%s", iterateId), &bt)
+				}
 			}()
 
 			callBackFunc := func(args ...interface{}) (account []byte, err error) {

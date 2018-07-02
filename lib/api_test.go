@@ -118,7 +118,7 @@ func TestGetAccountTransactionsHandler(t *testing.T) {
 	checkError(t, err)
 
 	var bts []BlockTransaction
-	for i := 0; i < 5; i++ {
+	for i := 0; i < maxNumberOfExistingData+2; i++ {
 		tx := TestMakeTransactionWithKeypair(networkID, 1, kp)
 
 		a, err := tx.Serialize()
@@ -145,7 +145,7 @@ func TestGetAccountTransactionsHandler(t *testing.T) {
 			line, err := reader.ReadBytes('\n')
 			checkError(t, err)
 			line = bytes.Trim(line, "\n\t ")
-			txS, err := bts[n].Serialize()
+			txS, err := bts[n+2].Serialize()
 			checkError(t, err)
 			if bytes.Compare(txS, line) != 0 {
 				t.Error("not same")
@@ -209,7 +209,7 @@ func TestGetAccountOperationsHandler(t *testing.T) {
 	checkError(t, err)
 
 	var bos []BlockOperation
-	for i := 0; i < 5; i++ {
+	for i := 0; i < maxNumberOfExistingData+3; i++ {
 		tx := TestMakeTransactionWithKeypair(networkID, 3, kp)
 		a, err := tx.Serialize()
 		checkError(t, err)
@@ -239,7 +239,7 @@ func TestGetAccountOperationsHandler(t *testing.T) {
 			line, err := reader.ReadBytes('\n')
 			checkError(t, err)
 			line = bytes.Trim(line, "\n\t ")
-			txS, err := bos[n].Serialize()
+			txS, err := bos[n+3*maxNumberOfExistingData-1].Serialize()
 			checkError(t, err)
 			if bytes.Compare(txS, line) != 0 {
 				t.Error("not same")
@@ -371,7 +371,7 @@ func TestGetTransactionsHandler(t *testing.T) {
 	defer ts.Close()
 
 	var bts []BlockTransaction
-	for i := 0; i < 5; i++ {
+	for i := 0; i < maxNumberOfExistingData+4; i++ {
 		_, tx := TestMakeTransaction(networkID, 1)
 
 		a, err := tx.Serialize()
@@ -397,7 +397,7 @@ func TestGetTransactionsHandler(t *testing.T) {
 			line, err := reader.ReadBytes('\n')
 			checkError(t, err)
 			line = bytes.Trim(line, "\n\t ")
-			txS, err := bts[n].Serialize()
+			txS, err := bts[n+4].Serialize()
 			checkError(t, err)
 			if bytes.Compare(txS, line) != 0 {
 				t.Error("not same")
