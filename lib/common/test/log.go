@@ -12,7 +12,7 @@ func LogHandler() logging.Handler {
 			return logging.DiscardHandler()
 		},
 		"stdout": func() logging.Handler {
-			return logging.StdoutHandler
+			return logging.CallerStackHandler("%+v", logging.StdoutHandler)
 		},
 	}
 
