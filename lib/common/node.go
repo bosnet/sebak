@@ -32,9 +32,9 @@ type Node interface {
 }
 
 type ValidatorFromJSON struct {
-	Alias      string              `json:"alias"`
-	Address    string              `json:"address"`
-	Endpoint   string              `json:"endpoint"`
+	Alias      string   `json:"alias"`
+	Address    string   `json:"address"`
+	Endpoint   string   `json:"endpoint"`
 	Validators []string `json:"validators"`
 }
 
@@ -49,7 +49,7 @@ type Validator struct {
 	validators map[ /* Node.Address() */ string]*Validator
 }
 
-func (v *Validator) triggerEvent(){
+func (v *Validator) triggerEvent() {
 	observer.NodeObserver.Trigger("change", v)
 }
 
