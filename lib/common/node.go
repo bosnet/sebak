@@ -49,8 +49,7 @@ type Validator struct {
 	validators map[ /* Node.Address() */ string]*Validator
 }
 
-func (v *Validator) Unlock() {
-	v.Mutex.Unlock()
+func (v *Validator) triggerEvent(){
 	observer.NodeObserver.Trigger("change", v)
 }
 
@@ -84,6 +83,7 @@ func (v *Validator) Keypair() *keypair.Full {
 func (v *Validator) SetKeypair(kp *keypair.Full) {
 	v.address = kp.Address()
 	v.keypair = kp
+	defer v.triggerEvent()
 }
 
 func (v *Validator) Address() string {
@@ -96,6 +96,7 @@ func (v *Validator) Alias() string {
 
 func (v *Validator) SetAlias(s string) {
 	v.alias = s
+	defer v.triggerEvent()
 }
 
 func (v *Validator) Endpoint() *Endpoint {
@@ -114,6 +115,7 @@ func (v *Validator) GetValidators() map[string]*Validator {
 func (v *Validator) AddValidators(validators ...*Validator) error {
 	v.Lock()
 	defer v.Unlock()
+	defer v.triggerEvent()
 
 	for _, va := range validators {
 		if v.Address() == va.Address() {
@@ -128,6 +130,7 @@ func (v *Validator) AddValidators(validators ...*Validator) error {
 func (v *Validator) RemoveValidators(validators ...*Validator) error {
 	v.Lock()
 	defer v.Unlock()
+	defer v.triggerEvent()
 
 	for _, va := range validators {
 		if _, ok := v.validators[va.Address()]; !ok {
