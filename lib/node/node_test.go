@@ -44,7 +44,7 @@ func TestNodeMarshalJSON(t *testing.T) {
 	assert.Equal(t, nil, err)
 
 	// alias and address cannot be compared with string literal because these are random generated.
-	jsonStr := "\"endpoint\":\"https://localhost:5000\",\"state\":\"%s\""
+	jsonStr := `"endpoint":"https://localhost:5000","state":"%s"`
 	assert.Equal(t, true, strings.Contains(string(tmpByte), fmt.Sprintf(jsonStr, "NONE")))
 
 	marshalNode.SetBooting()
