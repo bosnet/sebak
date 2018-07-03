@@ -17,6 +17,7 @@ import (
 	"boscoin.io/sebak/lib"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/network"
+	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/storage"
 
 	"boscoin.io/sebak/cmd/sebak/common"
@@ -53,7 +54,7 @@ var (
 	kp            *keypair.Full
 	nodeEndpoint  *sebakcommon.Endpoint
 	storageConfig *sebakstorage.Config
-	validators    []*sebakcommon.Validator
+	validators    []*sebaknode.Validator
 	logLevel      logging.Lvl
 	log           logging.Logger
 )
@@ -98,15 +99,15 @@ func init() {
 	rootCmd.AddCommand(nodeCmd)
 }
 
-func parseFlagValidators(v string) (vs []*sebakcommon.Validator, err error) {
+func parseFlagValidators(v string) (vs []*sebaknode.Validator, err error) {
 	splitted := strings.Fields(v)
 	if len(splitted) < 1 {
 		return
 	}
 
 	for _, v := range splitted {
-		var validator *sebakcommon.Validator
-		if validator, err = sebakcommon.NewValidatorFromURI(v); err != nil {
+		var validator *sebaknode.Validator
+		if validator, err = sebaknode.NewValidatorFromURI(v); err != nil {
 			return
 		}
 		vs = append(vs, validator)
@@ -136,7 +137,7 @@ func parseFlagsNode() {
 		kp = parsedKP.(*keypair.Full)
 	}
 
-	if p, err := sebakcommon.ParseNodeEndpoint(flagEndpointString); err != nil {
+	if p, err := sebakcommon.ParseEndpoint(flagEndpointString); err != nil {
 		common.PrintFlagsError(nodeCmd, "--endpoint", err)
 	} else {
 		nodeEndpoint = p
@@ -154,7 +155,7 @@ func parseFlagsNode() {
 	queries.Add("TLSCertFile", flagTLSCertFile)
 	queries.Add("TLSKeyFile", flagTLSKeyFile)
 	queries.Add("IdleTimeout", "3s")
-	queries.Add("NodeName", sebakcommon.MakeAlias(kp.Address()))
+	queries.Add("NodeName", sebaknode.MakeAlias(kp.Address()))
 	nodeEndpoint.RawQuery = queries.Encode()
 
 	if validators, err = parseFlagValidators(flagValidators); err != nil {
@@ -228,13 +229,13 @@ func parseFlagsNode() {
 
 func runNode() {
 	// create current Node
-	currentNode, err := sebakcommon.NewValidator(kp.Address(), nodeEndpoint, "")
+	localNode, err := sebaknode.NewLocalNode(kp.Address(), nodeEndpoint, "")
 	if err != nil {
 		log.Error("failed to launch main node", "error", err)
 		return
 	}
-	currentNode.SetKeypair(kp)
-	currentNode.AddValidators(validators...)
+	localNode.SetKeypair(kp)
+	localNode.AddValidators(validators...)
 
 	// create network
 	nt, err := sebaknetwork.NewNetwork(nodeEndpoint)
@@ -247,9 +248,9 @@ func runNode() {
 	signTh, err := strconv.Atoi(flagSignThreshold)
 	acceptTh, err := strconv.Atoi(flagAcceptThreshold)
 	policy, _ := sebak.NewDefaultVotingThresholdPolicy(100, signTh, acceptTh)
-	policy.SetValidators(len(currentNode.GetValidators()) + 1) // including 'self'
+	policy.SetValidators(len(localNode.GetValidators()) + 1) // including 'self'
 
-	isaac, err := sebak.NewISAAC([]byte(flagNetworkID), currentNode, policy)
+	isaac, err := sebak.NewISAAC([]byte(flagNetworkID), localNode, policy)
 	if err != nil {
 		log.Error("failed to launch consensus", "error", err)
 		return
@@ -265,7 +266,7 @@ func runNode() {
 	// Execution group.
 	var g run.Group
 	{
-		nr := sebak.NewNodeRunner(flagNetworkID, currentNode, policy, nt, isaac, st)
+		nr := sebak.NewNodeRunner(flagNetworkID, localNode, policy, nt, isaac, st)
 		g.Add(func() error {
 			if err := nr.Start(); err != nil {
 				log.Crit("failed to start node", "error", err)

@@ -8,17 +8,18 @@ import (
 	"time"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/node"
 	logging "github.com/inconshreveable/log15"
 )
 
 type ConnectionManager struct {
 	sync.Mutex
 
-	currentNode sebakcommon.Node
-	network     Network
-	policy      sebakcommon.VotingThresholdPolicy
+	localNode *sebaknode.LocalNode
+	network   Network
+	policy    sebakcommon.VotingThresholdPolicy
 
-	validators map[ /* nodd.Address() */ string]*sebakcommon.Validator
+	validators map[ /* nodd.Address() */ string]*sebaknode.Validator
 	clients    map[ /* nodd.Address() */ string]NetworkClient
 	connected  map[ /* nodd.Address() */ string]bool
 
@@ -26,13 +27,13 @@ type ConnectionManager struct {
 }
 
 func NewConnectionManager(
-	currentNode sebakcommon.Node,
+	localNode *sebaknode.LocalNode,
 	network Network,
 	policy sebakcommon.VotingThresholdPolicy,
-	validators map[string]*sebakcommon.Validator,
+	validators map[string]*sebaknode.Validator,
 ) *ConnectionManager {
 	return &ConnectionManager{
-		currentNode: currentNode,
+		localNode: localNode,
 
 		network:    network,
 		policy:     policy,
@@ -40,7 +41,7 @@ func NewConnectionManager(
 
 		clients:   map[string]NetworkClient{},
 		connected: map[string]bool{},
-		log:       log.New(logging.Ctx{"node": currentNode.Alias()}),
+		log:       log.New(logging.Ctx{"node": localNode.Alias()}),
 	}
 }
 
@@ -54,7 +55,7 @@ func (c *ConnectionManager) GetConnection(address string) (client NetworkClient)
 		return
 	}
 
-	var validator *sebakcommon.Validator
+	var validator *sebaknode.Validator
 	if validator, ok = c.validators[address]; !ok {
 		return
 	}
@@ -73,7 +74,7 @@ func (c *ConnectionManager) Start() {
 
 // setConnected returns `true` when the validator is newly connected or
 // disconnected at first
-func (c *ConnectionManager) setConnected(v *sebakcommon.Validator, connected bool) bool {
+func (c *ConnectionManager) setConnected(v *sebaknode.Validator, connected bool) bool {
 	c.Lock()
 	defer c.Unlock()
 	defer func() {
@@ -94,14 +95,14 @@ func (c *ConnectionManager) setConnected(v *sebakcommon.Validator, connected boo
 	return true
 }
 
-func (c *ConnectionManager) IsConnected(v *sebakcommon.Validator) bool {
+func (c *ConnectionManager) IsConnected(v *sebaknode.Validator) bool {
 	_, ok := c.connected[v.Address()]
 
 	return ok
 }
 
-func (c *ConnectionManager) AllConnected() []*sebakcommon.Validator {
-	var connected []*sebakcommon.Validator
+func (c *ConnectionManager) AllConnected() []*sebaknode.Validator {
+	var connected []*sebaknode.Validator
 	for address := range c.connected {
 		connected = append(connected, c.validators[address])
 	}
@@ -122,7 +123,7 @@ func (c *ConnectionManager) connectValidators() {
 	select {}
 }
 
-func (c *ConnectionManager) connectingValidator(v *sebakcommon.Validator) {
+func (c *ConnectionManager) connectingValidator(v *sebaknode.Validator) {
 	ticker := time.NewTicker(time.Second * 1)
 	for _ = range ticker.C {
 		err := c.connectValidator(v)
@@ -143,18 +144,18 @@ func (c *ConnectionManager) connectingValidator(v *sebakcommon.Validator) {
 	return
 }
 
-func (c *ConnectionManager) connectValidator(v *sebakcommon.Validator) (err error) {
+func (c *ConnectionManager) connectValidator(v *sebaknode.Validator) (err error) {
 	client := c.GetConnection(v.Address())
 
 	var b []byte
-	b, err = client.Connect(c.currentNode)
+	b, err = client.Connect(c.localNode)
 	if err != nil {
 		return
 	}
 
 	// load and check validator info; addresses are same?
-	var validator *sebakcommon.Validator
-	validator, err = sebakcommon.NewValidatorFromString(b)
+	var validator *sebaknode.Validator
+	validator, err = sebaknode.NewValidatorFromString(b)
 	if err != nil {
 		return
 	}
@@ -172,7 +173,7 @@ func (c *ConnectionManager) ConnectionWatcher(t Network, conn net.Conn, state ht
 
 func (c *ConnectionManager) Broadcast(message sebakcommon.Message) {
 	for _, validator := range c.AllConnected() {
-		go func(v *sebakcommon.Validator) {
+		go func(v *sebaknode.Validator) {
 			client := c.GetConnection(v.Address())
 			if _, err := client.SendBallot(message); err != nil {
 				c.log.Error("failed to SendBallot", "error", err, "validator", v)

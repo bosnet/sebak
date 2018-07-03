@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/node"
 )
 
 type Network interface {
@@ -47,7 +48,7 @@ func NewNetwork(endpoint *sebakcommon.Endpoint) (n Network, err error) {
 type NetworkClient interface {
 	Endpoint() *sebakcommon.Endpoint
 
-	Connect(node sebakcommon.Node) ([]byte, error)
+	Connect(node sebaknode.Node) ([]byte, error)
 	GetNodeInfo() ([]byte, error)
 	SendMessage(sebakcommon.Serializable) ([]byte, error)
 	SendBallot(sebakcommon.Serializable) ([]byte, error)

@@ -112,8 +112,8 @@ func (p *MemoryNetwork) receiveMessage() {
 }
 
 func (p *MemoryNetwork) GetNodeInfo() []byte {
-	currentNode := p.Context().Value("currentNode").(sebakcommon.Serializable)
-	o, _ := currentNode.Serialize()
+	localNode := p.Context().Value("localNode").(sebakcommon.Serializable)
+	o, _ := localNode.Serialize()
 	return o
 }
 

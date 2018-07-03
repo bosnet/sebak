@@ -10,11 +10,12 @@ import (
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/node"
 )
 
-func NewRandomNode() sebakcommon.Node {
+func NewRandomNode() *sebaknode.LocalNode {
 	kp, _ := keypair.Random()
-	a, _ := sebakcommon.NewValidator(kp.Address(), &sebakcommon.Endpoint{}, "")
+	a, _ := sebaknode.NewLocalNode(kp.Address(), &sebakcommon.Endpoint{}, "")
 	a.SetKeypair(kp)
 	return a
 }
