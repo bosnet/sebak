@@ -68,6 +68,37 @@ func TestNodeMarshalJSON(t *testing.T) {
 	assert.Equal(t, true, strings.Contains(string(tmpByte), fmt.Sprintf(jsonStr, "TERMINATING")))
 }
 
+func TestNodeMarshalJSONWithValidator(t *testing.T) {
+	kp, _ := keypair.Random()
+
+	endpoint, err := sebakcommon.NewEndpointFromString(fmt.Sprintf("https://localhost:5000?NodeName=n1"))
+	assert.Equal(t, nil, err)
+
+	endpoint2, err := sebakcommon.NewEndpointFromString(fmt.Sprintf("https://localhost:5001?NodeName=n2"))
+	assert.Equal(t, nil, err)
+
+	endpoint3, err := sebakcommon.NewEndpointFromString(fmt.Sprintf("https://localhost:5002?NodeName=n3"))
+	assert.Equal(t, nil, err)
+
+	kp2, _ := keypair.Random()
+	kp3, _ := keypair.Random()
+
+	validator1, _ := NewValidator(kp2.Address(), endpoint2, "v1")
+	validator2, _ := NewValidator(kp3.Address(), endpoint3, "v2")
+
+	localNode, _ := NewLocalNode(kp.Address(), endpoint, "node")
+
+	localNode.AddValidators(validator1, validator2)
+
+	tmpByte, err := localNode.MarshalJSON()
+	assert.Equal(t, nil, err)
+
+	jsonStr := `"alias":"%s","endpoint":"https://localhost:%s","state":"%s"`
+	assert.Equal(t, true, strings.Contains(string(tmpByte), fmt.Sprintf(jsonStr, "node", "5000", "NONE")))
+	assert.Equal(t, true, strings.Contains(string(tmpByte), fmt.Sprintf(jsonStr, "v1", "5001", "NONE")))
+	assert.Equal(t, true, strings.Contains(string(tmpByte), fmt.Sprintf(jsonStr, "v2", "5002", "NONE")))
+}
+
 func TestNodeUnmarshalJSON(t *testing.T) {
 	kp, _ := keypair.Random()
 	endpoint, err := sebakcommon.NewEndpointFromString(fmt.Sprintf("https://localhost:5000?NodeName=n1"))
@@ -93,4 +124,51 @@ func TestNodeUnmarshalJSON(t *testing.T) {
 
 	unmarshalNode.UnmarshalJSON([]byte(fmt.Sprintf(jsonStr, "TERMINATING")))
 	assert.Equal(t, NodeStateTERMINATING, unmarshalNode.State())
+}
+
+func TestNodeUnMarshalJSONWithValidator(t *testing.T) {
+	kp, _ := keypair.Random()
+
+	endpoint, err := sebakcommon.NewEndpointFromString(fmt.Sprintf("https://localhost:5000?NodeName=n1"))
+	assert.Equal(t, nil, err)
+
+	localNode, _ := NewLocalNode(kp.Address(), endpoint, "node")
+
+	localNode.UnmarshalJSON([]byte(
+		`{
+			"address":"GCEAJXSDCKHQPIIP32OK22VGEUMXSODLIIQHF3J7C4HQBSM6SWQFW37V",
+			"alias":"node",
+			"endpoint":"https://localhost:5000",
+			"state":"NONE",
+			"validators":{
+				"GBNCCPG47OYMVT5XB4ZKTLUJDCCGYSOPFBKRGLNICUVPKR3RG7RHXECC":
+				{
+					"address":"GBNCCPG47OYMVT5XB4ZKTLUJDCCGYSOPFBKRGLNICUVPKR3RG7RHXECC",
+					"alias":"v2",
+					"endpoint":"https://localhost:5002",
+					"state":"NONE"
+				},
+				"GDKAOAG2HR44MYTL4NXA75QFYICAI626UKSC2AEIP4MRJ5QKQ25LHD6V":
+				{
+					"address":"GDKAOAG2HR44MYTL4NXA75QFYICAI626UKSC2AEIP4MRJ5QKQ25LHD6V",
+					"alias":"v1",
+					"endpoint":"https://localhost:5001",
+					"state":"NONE"
+				}
+			}
+		}`,
+	))
+	assert.Equal(t, nil, err)
+
+	validators := localNode.GetValidators()
+	validator1 := validators["GBNCCPG47OYMVT5XB4ZKTLUJDCCGYSOPFBKRGLNICUVPKR3RG7RHXECC"]
+	assert.Equal(t, "v2", validator1.Alias())
+	assert.Equal(t, "https://localhost:5002", validator1.Endpoint().String())
+	assert.Equal(t, NodeStateNONE, validator1.State())
+
+	validator2 := validators["GDKAOAG2HR44MYTL4NXA75QFYICAI626UKSC2AEIP4MRJ5QKQ25LHD6V"]
+	assert.Equal(t, "v1", validator2.Alias())
+	assert.Equal(t, "https://localhost:5001", validator2.Endpoint().String())
+	assert.Equal(t, NodeStateNONE, validator2.State())
+
 }
