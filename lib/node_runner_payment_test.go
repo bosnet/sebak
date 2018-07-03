@@ -43,6 +43,7 @@ func TestNodeRunnerPayment(t *testing.T) {
 	}
 
 	var wg sync.WaitGroup
+	wg.Add(6)
 	var dones []VotingStateStaging
 	var finished []string
 	var deferFunc sebakcommon.CheckerDeferFunc = func(n int, c sebakcommon.Checker, err error) {
@@ -54,19 +55,19 @@ func TestNodeRunnerPayment(t *testing.T) {
 			return
 		}
 
-		wg.Add(1)
+		// wg.Add(1)
 		lock.Lock()
 		checker := c.(*NodeRunnerHandleBallotChecker)
 		if _, found := sebakcommon.InStringArray(finished, checker.CurrentNode.Alias()); found {
-			lock.Unlock()
 			wg.Done()
+			lock.Unlock()
 			return
 		}
 		finished = append(finished, checker.CurrentNode.Alias())
 		dones = append(dones, checker.VotingStateStaging)
 
-		lock.Unlock()
 		wg.Done()
+		lock.Unlock()
 	}
 
 	for _, nr := range nodeRunners {
