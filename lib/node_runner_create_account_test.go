@@ -50,10 +50,10 @@ func TestNodeRunnerCreateAccount(t *testing.T) {
 		}
 
 		checker := c.(*NodeRunnerHandleBallotChecker)
-		if _, found := sebakcommon.InStringArray(finished, checker.CurrentNode.Alias()); found {
+		if _, found := sebakcommon.InStringArray(finished, checker.LocalNode.Alias()); found {
 			return
 		}
-		finished = append(finished, checker.CurrentNode.Alias())
+		finished = append(finished, checker.LocalNode.Alias())
 		dones = append(dones, checker.VotingStateStaging)
 		wg.Done()
 	}
@@ -147,10 +147,10 @@ func TestNodeRunnerCreateAccountInvalidCheckpoint(t *testing.T) {
 		}
 
 		checker := c.(*NodeRunnerHandleBallotChecker)
-		if _, found := sebakcommon.InStringArray(finished, checker.CurrentNode.Alias()); found {
+		if _, found := sebakcommon.InStringArray(finished, checker.LocalNode.Alias()); found {
 			return
 		}
-		finished = append(finished, checker.CurrentNode.Alias())
+		finished = append(finished, checker.LocalNode.Alias())
 		dones = append(dones, checker.VotingStateStaging)
 		wg.Done()
 	}
@@ -238,10 +238,10 @@ func TestNodeRunnerCreateAccountSufficient(t *testing.T) {
 		}
 
 		checker := c.(*NodeRunnerHandleBallotChecker)
-		if _, found := sebakcommon.InStringArray(finished, checker.CurrentNode.Alias()); found {
+		if _, found := sebakcommon.InStringArray(finished, checker.LocalNode.Alias()); found {
 			return
 		}
-		finished = append(finished, checker.CurrentNode.Alias())
+		finished = append(finished, checker.LocalNode.Alias())
 		dones = append(dones, checker.VotingStateStaging)
 		wg.Done()
 	}
@@ -331,10 +331,10 @@ func TestNodeRunnerCreateAccountInsufficient(t *testing.T) {
 		}
 
 		checker := c.(*NodeRunnerHandleBallotChecker)
-		if _, found := sebakcommon.InStringArray(finished, checker.CurrentNode.Alias()); found {
+		if _, found := sebakcommon.InStringArray(finished, checker.LocalNode.Alias()); found {
 			return
 		}
-		finished = append(finished, checker.CurrentNode.Alias())
+		finished = append(finished, checker.LocalNode.Alias())
 		dones = append(dones, checker.VotingStateStaging)
 		wg.Done()
 	}

@@ -78,12 +78,11 @@ func (v *Validator) Address() string {
 }
 
 func (v *Validator) Keypair() *keypair.Full {
-	return v.keypair
+	return nil
 }
 
 func (v *Validator) SetKeypair(kp *keypair.Full) {
-	v.address = kp.Address()
-	v.keypair = kp
+	return
 }
 
 func (v *Validator) Alias() string {
@@ -96,22 +95,6 @@ func (v *Validator) SetAlias(s string) {
 
 func (v *Validator) Endpoint() *sebakcommon.Endpoint {
 	return v.endpoint
-}
-
-func (v *Validator) HasValidators(address string) bool {
-	return true
-}
-
-func (v *Validator) GetValidators() map[string]*Validator {
-	return nil
-}
-
-func (v *Validator) AddValidators(validators ...*Validator) error {
-	return nil
-}
-
-func (v *Validator) RemoveValidators(validators ...*Validator) error {
-	return nil
 }
 
 func (v *Validator) MarshalJSON() ([]byte, error) {

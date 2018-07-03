@@ -218,7 +218,7 @@ func (nr *NodeRunner) handleMessage() {
 			checker := &NodeRunnerHandleMessageChecker{
 				DefaultChecker: sebakcommon.DefaultChecker{nr.handleMessageFromClientCheckerFuncs},
 				NodeRunner:     nr,
-				CurrentNode:    nr.localNode,
+				LocalNode:      nr.localNode,
 				NetworkID:      nr.networkID,
 				Message:        message,
 			}
@@ -241,7 +241,7 @@ func (nr *NodeRunner) handleMessage() {
 				GenesisBlockCheckpoint: sebakcommon.MakeGenesisCheckpoint(nr.networkID),
 				DefaultChecker:         sebakcommon.DefaultChecker{nr.handleBallotCheckerFuncs},
 				NodeRunner:             nr,
-				CurrentNode:            nr.localNode,
+				LocalNode:              nr.localNode,
 				NetworkID:              nr.networkID,
 				Message:                message,
 				VotingHole:             VotingNOTYET,

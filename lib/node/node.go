@@ -15,10 +15,6 @@ type Node interface {
 	Endpoint() *sebakcommon.Endpoint
 	Equal(Node) bool
 	DeepEqual(Node) bool
-	GetValidators() map[string]*Validator
-	AddValidators(validators ...*Validator) error
-	HasValidators(string) bool
-	RemoveValidators(validators ...*Validator) error
 	Serialize() ([]byte, error)
 	State() NodeState
 	SetBooting()
