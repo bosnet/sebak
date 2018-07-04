@@ -195,10 +195,10 @@ func NewLocalNode(address string, endpoint *sebakcommon.Endpoint, alias string) 
 }
 
 func NewLocalNodeFromString(b []byte) (*LocalNode, error) {
-	var v LocalNode
-	if err := json.Unmarshal(b, &v); err != nil {
+	var n LocalNode
+	if err := json.Unmarshal(b, &n); err != nil {
 		return nil, err
 	}
 
-	return &v, nil
+	return &n, nil
 }
