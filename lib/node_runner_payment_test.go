@@ -64,12 +64,10 @@ func TestNodeRunnerPayment(t *testing.T) {
 		}
 		// lock.Lock()
 		checker := c.(*NodeRunnerHandleBallotChecker)
-		if _, found := sebakcommon.InStringArray(finished, checker.CurrentNode.Alias()); found {
-			wg.Done()
-			// lock.Unlock()
+		if _, found := sebakcommon.InStringArray(finished, checker.LocalNode.Alias()); found {
 			return
 		}
-		finished = append(finished, checker.CurrentNode.Alias())
+		finished = append(finished, checker.LocalNode.Alias())
 		dones = append(dones, checker.VotingStateStaging)
 
 		wg.Done()
@@ -151,10 +149,10 @@ func doConsensus(nodeRunners []*NodeRunner, tx Transaction) []VotingStateStaging
 		}
 
 		checker := c.(*NodeRunnerHandleBallotChecker)
-		if _, found := sebakcommon.InStringArray(finished, checker.CurrentNode.Alias()); found {
+		if _, found := sebakcommon.InStringArray(finished, checker.LocalNode.Alias()); found {
 			return
 		}
-		finished = append(finished, checker.CurrentNode.Alias())
+		finished = append(finished, checker.LocalNode.Alias())
 		dones = append(dones, checker.VotingStateStaging)
 		wg.Done()
 	}

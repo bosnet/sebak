@@ -2,10 +2,11 @@ package sebak
 
 import (
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/node"
 )
 
 type Consensus interface {
-	GetNode() sebakcommon.Node
+	GetNode() *sebaknode.LocalNode
 	HasMessage(sebakcommon.Message) bool
 	HasMessageByHash(string) bool
 	ReceiveMessage(sebakcommon.Message) (Ballot, error)

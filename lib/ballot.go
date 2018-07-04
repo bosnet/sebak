@@ -123,7 +123,7 @@ func NewBallotFromMessage(nodeKey string, m sebakcommon.Message) (ballot Ballot,
 	body := BallotBody{
 		Hash:       m.GetHash(),
 		NodeKey:    nodeKey,
-		State:      sebakcommon.InitialState,
+		State:      sebakcommon.BallotInitState,
 		VotingHole: VotingNOTYET,
 	}
 	data := BallotData{

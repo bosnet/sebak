@@ -1,4 +1,4 @@
-package sebakcommon
+package sebaknode
 
 import (
 	"fmt"

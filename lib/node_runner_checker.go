@@ -3,15 +3,16 @@ package sebak
 import (
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/network"
+	"boscoin.io/sebak/lib/node"
 )
 
 type NodeRunnerHandleMessageChecker struct {
 	sebakcommon.DefaultChecker
 
-	NodeRunner  *NodeRunner
-	CurrentNode sebakcommon.Node
-	NetworkID   []byte
-	Message     sebaknetwork.Message
+	NodeRunner *NodeRunner
+	LocalNode  sebaknode.Node
+	NetworkID  []byte
+	Message    sebaknetwork.Message
 
 	Transaction Transaction
 	Ballot      Ballot
@@ -81,7 +82,7 @@ func CheckNodeRunnerHandleMessageSignBallot(c sebakcommon.Checker, args ...inter
 	// self-sign
 	checker.Ballot.Vote(VotingYES)
 	checker.Ballot.UpdateHash()
-	checker.Ballot.Sign(checker.CurrentNode.Keypair(), checker.NetworkID)
+	checker.Ballot.Sign(checker.LocalNode.Keypair(), checker.NetworkID)
 
 	return
 }
@@ -100,7 +101,7 @@ type NodeRunnerHandleBallotChecker struct {
 
 	GenesisBlockCheckpoint string
 	NodeRunner             *NodeRunner
-	CurrentNode            sebakcommon.Node
+	LocalNode              sebaknode.Node
 	NetworkID              []byte
 	Message                sebaknetwork.Message
 	Ballot                 Ballot
@@ -134,7 +135,8 @@ func CheckNodeRunnerHandleBallotIsWellformed(c sebakcommon.Checker, args ...inte
 
 func CheckNodeRunnerHandleBallotNotFromKnownValidators(c sebakcommon.Checker, args ...interface{}) (err error) {
 	checker := c.(*NodeRunnerHandleBallotChecker)
-	if checker.CurrentNode.HasValidators(checker.Ballot.B.NodeKey) {
+	localNode := checker.LocalNode.(*sebaknode.LocalNode)
+	if localNode.HasValidators(checker.Ballot.B.NodeKey) {
 		return
 	}
 
@@ -254,44 +256,6 @@ func CheckNodeRunnerHandleBallotVotingHole(c sebakcommon.Checker, args ...interf
 		return
 	}
 
-	// TODO error like `ErrorRecordDoesNotExist` must be checked, whether record
-	// does not exist or not.
-
-	if tx.B.Checkpoint == checker.GenesisBlockCheckpoint { // if tx is first from genesis block
-		// if tx is based on genesis account, check the source is genesis
-		// account.
-		if _, err = GetBlockAccountCheckpoint(
-			checker.NodeRunner.Storage(),
-			tx.B.Source,
-			checker.GenesisBlockCheckpoint,
-		); err != nil {
-			checker.NodeRunner.Log().Debug("VotingNO: ", "error", err)
-			return
-		}
-	} else {
-		// check, the checkpoint of tx exists
-		var bt BlockTransaction
-		if bt, err = GetBlockTransactionByCheckpoint(checker.NodeRunner.Storage(), tx.B.Checkpoint); err != nil {
-			return
-		}
-		// check, source is same with the `BlockTransaction` of tx's checkpoint
-		var checkPoint [2]string
-		if checkPoint, err = sebakcommon.ParseCheckpoint(tx.B.Checkpoint); err != nil {
-			return
-		}
-
-		// The transaction was invoked by the account
-		if checkPoint[0] == checkPoint[1] {
-			if tx.B.Source != bt.Source {
-				return
-			}
-		} else { //The transaction was invoked by another account
-			if _, found := sebakcommon.InStringArray(bt.Targets, tx.B.Source); !found {
-				return
-			}
-		}
-	}
-
 	// check, source exists
 	var ba *BlockAccount
 	if ba, err = GetBlockAccount(checker.NodeRunner.Storage(), tx.B.Source); err != nil {
@@ -364,7 +328,7 @@ func CheckNodeRunnerHandleBallotBroadcast(c sebakcommon.Checker, args ...interfa
 
 	newBallot.SetState(state)
 	newBallot.Vote(checker.VotingHole)
-	newBallot.Sign(checker.CurrentNode.Keypair(), checker.NetworkID)
+	newBallot.Sign(checker.LocalNode.Keypair(), checker.NetworkID)
 
 	checker.NodeRunner.Consensus().AddBallot(newBallot)
 

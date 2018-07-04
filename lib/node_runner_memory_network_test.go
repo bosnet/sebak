@@ -9,21 +9,22 @@ import (
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/network"
+	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/storage"
 	"github.com/google/uuid"
 	"github.com/stellar/go/keypair"
 )
 
-func createNetMemoryNetwork() (*sebaknetwork.MemoryNetwork, *sebakcommon.Validator) {
+func createNetMemoryNetwork() (*sebaknetwork.MemoryNetwork, *sebaknode.LocalNode) {
 	mn := sebaknetwork.NewMemoryNetwork()
 
 	kp, _ := keypair.Random()
-	validator, _ := sebakcommon.NewValidator(kp.Address(), mn.Endpoint(), "")
-	validator.SetKeypair(kp)
+	localNode, _ := sebaknode.NewLocalNode(kp.Address(), mn.Endpoint(), "")
+	localNode.SetKeypair(kp)
 
-	mn.SetContext(context.WithValue(context.Background(), "currentNode", validator))
+	mn.SetContext(context.WithValue(context.Background(), "localNode", localNode))
 
-	return mn, validator
+	return mn, localNode
 }
 
 func makeTransaction(kp *keypair.Full) (tx Transaction) {
@@ -112,11 +113,11 @@ func makeTransactionCreateAccount(kpSource *keypair.Full, target string, amount 
 
 func createNodeRunners(n int) []*NodeRunner {
 	var ns []*sebaknetwork.MemoryNetwork
-	var validators []*sebakcommon.Validator
+	var nodes []*sebaknode.LocalNode
 	for i := 0; i < n; i++ {
 		s, v := createNetMemoryNetwork()
 		ns = append(ns, s)
-		validators = append(validators, v)
+		nodes = append(nodes, v)
 	}
 
 	for i := 0; i < n; i++ {
@@ -124,13 +125,13 @@ func createNodeRunners(n int) []*NodeRunner {
 			if i == j {
 				continue
 			}
-			validators[i].AddValidators(validators[j])
+			nodes[i].AddValidators(nodes[j].ConvertToValidator())
 		}
 	}
 
 	var nodeRunners []*NodeRunner
 	for i := 0; i < n; i++ {
-		v := validators[i]
+		v := nodes[i]
 		p, _ := NewDefaultVotingThresholdPolicy(100, 30, 30)
 		p.SetValidators(len(v.GetValidators()) + 1)
 		is, _ := NewISAAC(networkID, v, p)
@@ -201,7 +202,7 @@ func TestMemoryNetworkCreate(t *testing.T) {
 			return
 		}
 
-		if rv, err := sebakcommon.NewValidatorFromString(b); err != nil {
+		if rv, err := sebaknode.NewValidatorFromString(b); err != nil {
 			t.Error("invalid validator data was received")
 			return
 		} else if !nr.Node().DeepEqual(rv) {

@@ -10,26 +10,26 @@ import (
 )
 
 func NodeInfoHandler(ctx context.Context, t *HTTP2Network) HandlerFunc {
-	var currentNode sebakcommon.Serializable
+	var localNode sebakcommon.Serializable
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		if currentNode == nil {
-			currentNode = ctx.Value("currentNode").(sebakcommon.Serializable)
+		if localNode == nil {
+			localNode = ctx.Value("localNode").(sebakcommon.Serializable)
 		}
 
-		o, _ := currentNode.Serialize()
+		o, _ := localNode.Serialize()
 		t.messageBroker.ResponseMessage(w, string(o))
 	}
 }
 
 func ConnectHandler(ctx context.Context, t *HTTP2Network) HandlerFunc {
-	var currentNode sebakcommon.Serializable
+	var localNode sebakcommon.Serializable
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 
-		if currentNode == nil {
-			currentNode = ctx.Value("currentNode").(sebakcommon.Serializable)
+		if localNode == nil {
+			localNode = ctx.Value("localNode").(sebakcommon.Serializable)
 		}
 
 		if r.Method != "POST" {
@@ -43,7 +43,7 @@ func ConnectHandler(ctx context.Context, t *HTTP2Network) HandlerFunc {
 		}
 
 		t.messageBroker.ReceiveMessage(t, Message{Type: ConnectMessage, Data: body})
-		o, _ := currentNode.Serialize()
+		o, _ := localNode.Serialize()
 		t.messageBroker.ResponseMessage(w, string(o))
 	}
 }

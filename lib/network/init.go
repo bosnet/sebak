@@ -9,7 +9,8 @@ import (
 var log logging.Logger = logging.New("module", "network")
 
 func SetLogging(level logging.Lvl, handler logging.Handler) {
-	log.SetHandler(logging.LvlFilterHandler(level, handler))
+	lh := logging.LvlFilterHandler(level, handler)
+	log.SetHandler(lh)
 }
 
 func init() {

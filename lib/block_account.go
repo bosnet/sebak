@@ -144,12 +144,11 @@ func (b *BlockAccount) GetBalance() Amount {
 //
 // If the amount would make the account overflow over the full supply of coin,
 // an `error` is returned.
-func (b *BlockAccount) Deposit(fund Amount, checkpoint string) error {
+func (b *BlockAccount) Deposit(fund Amount) error {
 	if val, err := b.GetBalance().Add(fund); err != nil {
 		return err
 	} else {
 		b.Balance = val.String()
-		b.Checkpoint = checkpoint
 	}
 	return nil
 }

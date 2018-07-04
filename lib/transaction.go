@@ -126,20 +126,7 @@ func (tx Transaction) Equal(m sebakcommon.Message) bool {
 }
 
 func (tx Transaction) IsValidCheckpoint(checkpoint string) bool {
-	if tx.B.Checkpoint == checkpoint {
-		return true
-	}
-
-	var err error
-	var inputCheckpoint, currentCheckpoint [2]string
-	if inputCheckpoint, err = sebakcommon.ParseCheckpoint(checkpoint); err != nil {
-		return false
-	}
-	if currentCheckpoint, err = sebakcommon.ParseCheckpoint(tx.B.Checkpoint); err != nil {
-		return false
-	}
-
-	return inputCheckpoint[0] == currentCheckpoint[0]
+	return tx.B.Checkpoint == checkpoint
 }
 
 func (tx Transaction) GetHash() string {
@@ -182,19 +169,12 @@ func (tx *Transaction) Sign(kp keypair.KP, networkID []byte) {
 	return
 }
 
-// NextSourceCheckpoint generate new checkpoint from current Transaction. It has
-// 2 part, "<subtracted>-<added>".
+// NextSourceCheckpoint returns the next checkpoint from the current Transaction.
 //
-// <subtracted>: hash of last paid transaction, it means balance is subtracted
-// <added>: hash of last added transaction, it means balance is added
+// The checkpoint is simply the hash of the last paid transaction.
+// It is present to prevent replay attacks.
 func (tx Transaction) NextSourceCheckpoint() string {
-	return sebakcommon.MakeCheckpoint(tx.GetHash(), tx.GetHash())
-}
-
-func (tx Transaction) NextTargetCheckpoint() string {
-	parsed, _ := sebakcommon.ParseCheckpoint(tx.B.Checkpoint)
-
-	return sebakcommon.MakeCheckpoint(parsed[0], tx.GetHash())
+	return tx.GetHash()
 }
 
 type TransactionHeader struct {

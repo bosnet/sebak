@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/node"
+
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/stellar/go/keypair"
 )
@@ -77,16 +79,16 @@ func TestMemoryNetworkCreate(t *testing.T) {
 	}
 }
 
-func createNewMemoryNetwork() (*keypair.Full, *MemoryNetwork, *sebakcommon.Validator) {
+func createNewMemoryNetwork() (*keypair.Full, *MemoryNetwork, *sebaknode.LocalNode) {
 	mn := NewMemoryNetwork()
 
 	kp, _ := keypair.Random()
-	validator, _ := sebakcommon.NewValidator(kp.Address(), mn.Endpoint(), "")
-	validator.SetKeypair(kp)
+	localNode, _ := sebaknode.NewLocalNode(kp.Address(), mn.Endpoint(), "")
+	localNode.SetKeypair(kp)
 
-	mn.SetContext(context.WithValue(context.Background(), "currentNode", validator))
+	mn.SetContext(context.WithValue(context.Background(), "localNode", localNode))
 
-	return kp, mn, validator
+	return kp, mn, localNode
 }
 
 func TestMemoryNetworkGetClient(t *testing.T) {
@@ -125,7 +127,7 @@ func TestMemoryNetworkGetClient(t *testing.T) {
 func TestMemoryNetworkGetNodeInfo(t *testing.T) {
 	defer CleanUpMemoryNetwork()
 
-	_, s0, currentNode := createNewMemoryNetwork()
+	_, s0, localNode := createNewMemoryNetwork()
 
 	c0 := s0.GetClient(s0.Endpoint())
 	b, err := c0.GetNodeInfo()
@@ -133,16 +135,16 @@ func TestMemoryNetworkGetNodeInfo(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	v, err := sebakcommon.NewValidatorFromString(b)
+	v, err := sebaknode.NewValidatorFromString(b)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	if currentNode.Endpoint().String() != v.Endpoint().String() {
-		t.Errorf("received node info mismatch; '%s' != '%s'", currentNode.Endpoint().String(), v.Endpoint().String())
+	if localNode.Endpoint().String() != v.Endpoint().String() {
+		t.Errorf("received node info mismatch; '%s' != '%s'", localNode.Endpoint().String(), v.Endpoint().String())
 	}
-	if currentNode.Address() != v.Address() {
-		t.Errorf("received node info mismatch; '%s' != '%s'", currentNode.Address(), v.Address())
+	if localNode.Address() != v.Address() {
+		t.Errorf("received node info mismatch; '%s' != '%s'", localNode.Address(), v.Address())
 		return
 	}
 }
@@ -150,24 +152,24 @@ func TestMemoryNetworkGetNodeInfo(t *testing.T) {
 func TestMemoryNetworkConnect(t *testing.T) {
 	defer CleanUpMemoryNetwork()
 
-	_, s0, currentNode := createNewMemoryNetwork()
+	_, s0, localNode := createNewMemoryNetwork()
 
 	c0 := s0.GetClient(s0.Endpoint())
-	b, err := c0.Connect(currentNode)
+	b, err := c0.Connect(localNode)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	v, err := sebakcommon.NewValidatorFromString(b)
+	v, err := sebaknode.NewValidatorFromString(b)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	if currentNode.Endpoint().String() != v.Endpoint().String() {
-		t.Errorf("received node info mismatch; '%s' != '%s'", currentNode.Endpoint().String(), v.Endpoint().String())
+	if localNode.Endpoint().String() != v.Endpoint().String() {
+		t.Errorf("received node info mismatch; '%s' != '%s'", localNode.Endpoint().String(), v.Endpoint().String())
 	}
-	if currentNode.Address() != v.Address() {
-		t.Errorf("received node info mismatch; '%s' != '%s'", currentNode.Address(), v.Address())
+	if localNode.Address() != v.Address() {
+		t.Errorf("received node info mismatch; '%s' != '%s'", localNode.Address(), v.Address())
 		return
 	}
 }
