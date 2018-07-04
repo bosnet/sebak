@@ -58,7 +58,7 @@ func init() {
 				common.PrintFlagsError(c, "--network-id", fmt.Errorf("A --network-id needs to be provided"))
 			}
 
-			if endpoint, err = sebakcommon.ParseNodeEndpoint(flagEndpoint); err != nil {
+			if endpoint, err = sebakcommon.ParseEndpoint(flagEndpoint); err != nil {
 				common.PrintFlagsError(c, "--endpoint", err)
 			}
 
@@ -68,7 +68,7 @@ func init() {
 			// 1 operation == 1 transaction
 			var tx sebak.Transaction
 			var connection *sebakcommon.HTTP2Client
-			var sender_account sebak.BlockAccount
+			var senderAccount sebak.BlockAccount
 
 			// Keep-alive ignores timeout/idle timeout
 			if connection, err = sebakcommon.NewHTTP2Client(0, 0, true); err != nil {
@@ -77,15 +77,15 @@ func init() {
 			}
 			client := sebaknetwork.NewHTTP2NetworkClient(endpoint, connection)
 
-			if sender_account, err = getSenderDetails(client, sender); err != nil {
+			if senderAccount, err = getSenderDetails(client, sender); err != nil {
 				log.Fatal("Could not fetch sender account: ", err)
 				os.Exit(1)
 			}
 
 			if flagCreateAccount {
-				tx = makeTransactionCreateAccount(sender, receiver, amount, sender_account.Checkpoint)
+				tx = makeTransactionCreateAccount(sender, receiver, amount, senderAccount.Checkpoint)
 			} else {
-				tx = makeTransactionPayment(sender, receiver, amount, sender_account.Checkpoint)
+				tx = makeTransactionPayment(sender, receiver, amount, senderAccount.Checkpoint)
 			}
 
 			tx.Sign(sender, []byte(flagNetworkID))

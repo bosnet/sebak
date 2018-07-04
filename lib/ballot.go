@@ -103,6 +103,7 @@ func (b Ballot) String() string {
 func (b Ballot) CanFitInVotingBox() (ret bool) {
 	switch b.State() {
 	case sebakcommon.BallotStateSIGN:
+		ret = true
 	case sebakcommon.BallotStateACCEPT:
 		ret = true
 	default:
@@ -122,7 +123,7 @@ func NewBallotFromMessage(nodeKey string, m sebakcommon.Message) (ballot Ballot,
 	body := BallotBody{
 		Hash:       m.GetHash(),
 		NodeKey:    nodeKey,
-		State:      sebakcommon.InitialState,
+		State:      sebakcommon.BallotInitState,
 		VotingHole: VotingNOTYET,
 	}
 	data := BallotData{

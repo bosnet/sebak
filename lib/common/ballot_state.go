@@ -14,7 +14,7 @@ const (
 	BallotStateALLCONFIRM
 )
 
-var InitialState = BallotStateNONE
+var BallotInitState = BallotStateNONE
 
 func (s BallotState) String() string {
 	switch s {

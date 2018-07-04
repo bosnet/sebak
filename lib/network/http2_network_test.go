@@ -14,20 +14,24 @@ import (
 	"time"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/node"
+
 	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/assert"
 )
 
 func getPort() string {
+	const ephemeralStart = 49152
 	var testPort = "5000"
 	for {
 		s := rand.NewSource(int64(time.Now().Nanosecond()))
 		r := rand.New(s)
-		testPort = strconv.Itoa(r.Intn(16383) + 49152) // ephemeral ports range 49152 ~ 65535
+		testPort = strconv.Itoa(r.Intn(65535-ephemeralStart) + ephemeralStart) // ephemeral ports range 49152 ~ 65535
 
 		ln, err := net.Listen("tcp", ":"+testPort)
 		if err == nil {
 			ln.Close()
+			time.Sleep(100 * time.Millisecond)
 			break
 		}
 	}
@@ -79,7 +83,7 @@ func pingAndWait(t *testing.T, c0 NetworkClient) {
 	}
 }
 
-func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, mn *HTTP2Network, validator *sebakcommon.Validator) {
+func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, mn *HTTP2Network, localNode *sebaknode.LocalNode) {
 	g := NewKeyGenerator(dirPath, certPath, keyPath)
 
 	var config HTTP2NetworkConfig
@@ -102,10 +106,10 @@ func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, mn *HTTP2Network, va
 	mn = NewHTTP2Network(config)
 
 	kp, _ = keypair.Random()
-	validator, _ = sebakcommon.NewValidator(kp.Address(), mn.Endpoint(), "")
-	validator.SetKeypair(kp)
+	localNode, _ = sebaknode.NewLocalNode(kp.Address(), mn.Endpoint(), "")
+	localNode.SetKeypair(kp)
 
-	mn.SetContext(context.WithValue(context.Background(), "currentNode", validator))
+	mn.SetContext(context.WithValue(context.Background(), "localNode", localNode))
 
 	return
 }
@@ -128,7 +132,7 @@ func removeWhiteSpaces(str string) string {
 }
 
 func TestHTTP2NetworkGetNodeInfo(t *testing.T) {
-	_, s0, currentNode := createNewHTTP2Network(t)
+	_, s0, localNode := createNewHTTP2Network(t)
 	s0.SetMessageBroker(TestMessageBroker{})
 	s0.Ready()
 
@@ -143,17 +147,17 @@ func TestHTTP2NetworkGetNodeInfo(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	v, err := sebakcommon.NewValidatorFromString(b)
+	v, err := sebaknode.NewValidatorFromString(b)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 
-	server := currentNode.Endpoint().String()
+	server := localNode.Endpoint().String()
 	client := v.Endpoint().String()
 
 	assert.Equal(t, server, client, "Server endpoint and received endpoint should be the same.")
-	assert.Equal(t, currentNode.Address(), v.Address(), "Server address and received address should be the same.")
+	assert.Equal(t, localNode.Address(), v.Address(), "Server address and received address should be the same.")
 }
 
 type StringResponseMessageBroker struct {
@@ -167,7 +171,7 @@ func (r StringResponseMessageBroker) ResponseMessage(w http.ResponseWriter, _ st
 func (r StringResponseMessageBroker) ReceiveMessage(*HTTP2Network, Message) {}
 
 func TestHTTP2NetworkMessageBrokerResponseMessage(t *testing.T) {
-	_, s0, currentNode := createNewHTTP2Network(t)
+	_, s0, localNode := createNewHTTP2Network(t)
 	s0.SetMessageBroker(StringResponseMessageBroker{"ResponseMessage"})
 	s0.Ready()
 
@@ -177,13 +181,13 @@ func TestHTTP2NetworkMessageBrokerResponseMessage(t *testing.T) {
 	c0 := s0.GetClient(s0.Endpoint())
 	pingAndWait(t, c0)
 
-	returnMsg, _ := c0.Connect(currentNode)
+	returnMsg, _ := c0.Connect(localNode)
 
 	assert.Equal(t, string(returnMsg), "ResponseMessage", "The connectNode and the return should be the same.")
 }
 
 func TestHTTP2NetworkConnect(t *testing.T) {
-	_, s0, currentNode := createNewHTTP2Network(t)
+	_, s0, localNode := createNewHTTP2Network(t)
 	s0.SetMessageBroker(TestMessageBroker{})
 	s0.Ready()
 
@@ -193,10 +197,10 @@ func TestHTTP2NetworkConnect(t *testing.T) {
 	c0 := s0.GetClient(s0.Endpoint())
 	pingAndWait(t, c0)
 
-	o, _ := currentNode.Serialize()
+	o, _ := localNode.Serialize()
 	nodeStr := removeWhiteSpaces(string(o))
 
-	returnMsg, _ := c0.Connect(currentNode)
+	returnMsg, _ := c0.Connect(localNode)
 	returnStr := removeWhiteSpaces(string(returnMsg))
 
 	assert.Equal(t, returnStr, nodeStr, "The connectNode and the return should be the same.")

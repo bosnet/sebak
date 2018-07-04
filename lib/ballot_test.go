@@ -3,6 +3,8 @@ package sebak
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/stellar/go/keypair"
 
 	"boscoin.io/sebak/lib/common"
@@ -45,8 +47,8 @@ func TestNewBallot(t *testing.T) {
 		t.Error("`Ballot.B.Hash` mismatch")
 		return
 	}
-	if ballot.B.State != sebakcommon.InitialState {
-		t.Error("`Ballot.B.State` is not `InitialState`")
+	if ballot.B.State != sebakcommon.BallotInitState {
+		t.Error("`Ballot.B.State` is not `BallotInitState`")
 		return
 	}
 	if ballot.B.VotingHole != VotingNOTYET {
@@ -117,4 +119,26 @@ func TestBallotNewBallotFromMessageWithTransaction(t *testing.T) {
 		t.Error(err)
 		return
 	}
+}
+
+func TestBallotCanFitVotingBox(t *testing.T) {
+	_, _, ballot := makeNewBallot(sebakcommon.BallotStateNONE, VotingYES)
+	assert.Equal(t, false, ballot.CanFitInVotingBox())
+	assert.Equal(t, false, ballot.CanFitInWaitingBox())
+
+	ballot.SetState(sebakcommon.BallotStateINIT)
+	assert.Equal(t, false, ballot.CanFitInVotingBox())
+	assert.Equal(t, true, ballot.CanFitInWaitingBox())
+
+	ballot.SetState(sebakcommon.BallotStateSIGN)
+	assert.Equal(t, true, ballot.CanFitInVotingBox())
+	assert.Equal(t, false, ballot.CanFitInWaitingBox())
+
+	ballot.SetState(sebakcommon.BallotStateACCEPT)
+	assert.Equal(t, true, ballot.CanFitInVotingBox())
+	assert.Equal(t, false, ballot.CanFitInWaitingBox())
+
+	ballot.SetState(sebakcommon.BallotStateALLCONFIRM)
+	assert.Equal(t, false, ballot.CanFitInVotingBox())
+	assert.Equal(t, false, ballot.CanFitInWaitingBox())
 }
