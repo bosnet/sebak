@@ -3,8 +3,9 @@ package cmd
 import (
 	"fmt"
 
-	"boscoin.io/sebak/lib"
 	"github.com/spf13/cobra"
+
+	"boscoin.io/sebak/lib/version"
 )
 
 func init() {
@@ -15,6 +16,6 @@ var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Print the version",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("%s\n", sebak.Version)
+		fmt.Printf("%s\n", version.ToDetailVersion())
 	},
 }
