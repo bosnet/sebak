@@ -49,7 +49,7 @@ func TestNodeRunnerPayment(t *testing.T) {
 	lock := LockingObject{}
 
 	var wg sync.WaitGroup
-	wg.Add(6)
+	wg.Add(numberOfNodes)
 	var dones []VotingStateStaging
 	var finished []string
 	var deferFunc sebakcommon.CheckerDeferFunc = func(n int, c sebakcommon.Checker, err error) {
