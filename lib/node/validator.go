@@ -12,7 +12,7 @@ import (
 	"github.com/stellar/go/keypair"
 )
 
-type LocalNodeFromJSON struct {
+type ValidatorFromJSON struct {
 	Alias    string                `json:"alias"`
 	Address  string                `json:"address"`
 	Endpoint *sebakcommon.Endpoint `json:"endpoint"`
@@ -107,7 +107,7 @@ func (v *Validator) MarshalJSON() ([]byte, error) {
 }
 
 func (v *Validator) UnmarshalJSON(b []byte) error {
-	var va NodeFromJSON
+	var va ValidatorFromJSON
 	if err := json.Unmarshal(b, &va); err != nil {
 		return err
 	}

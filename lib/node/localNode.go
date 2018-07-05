@@ -10,7 +10,7 @@ import (
 	"github.com/stellar/go/keypair"
 )
 
-type NodeFromJSON struct {
+type LocalNodeFromJSON struct {
 	Alias      string                `json:"alias"`
 	Address    string                `json:"address"`
 	Endpoint   *sebakcommon.Endpoint `json:"endpoint"`
@@ -146,7 +146,7 @@ func (n *LocalNode) MarshalJSON() ([]byte, error) {
 }
 
 func (n *LocalNode) UnmarshalJSON(b []byte) error {
-	var va NodeFromJSON
+	var va LocalNodeFromJSON
 	if err := json.Unmarshal(b, &va); err != nil {
 		return err
 	}
@@ -195,10 +195,10 @@ func NewLocalNode(address string, endpoint *sebakcommon.Endpoint, alias string) 
 }
 
 func NewLocalNodeFromString(b []byte) (*LocalNode, error) {
-	var v LocalNode
-	if err := json.Unmarshal(b, &v); err != nil {
+	var n LocalNode
+	if err := json.Unmarshal(b, &n); err != nil {
 		return nil, err
 	}
 
-	return &v, nil
+	return &n, nil
 }
