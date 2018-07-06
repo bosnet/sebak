@@ -1,10 +1,8 @@
 package sebakcommon
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
-	"flag"
 	"fmt"
 	"io"
 	"net/url"
@@ -74,33 +72,6 @@ func GetENVValue(key, defaultValue string) (v string) {
 	return
 }
 
-type SliceFlags []interface{}
-
-func (s *SliceFlags) String() string {
-	return "slice flags"
-}
-
-func (s *SliceFlags) Set(v string) error {
-	if len(v) < 1 {
-		return errors.New("empty string found")
-	}
-
-	*s = append(*s, v)
-	return nil
-}
-
-func StripZero(b []byte) []byte {
-	var n int
-	if n = bytes.Index(b, []byte("\x00")); n != -1 {
-		b = b[:n]
-	}
-	if n = bytes.LastIndex(b, []byte("\x00")); n != -1 {
-		b = b[n+1:]
-	}
-
-	return b
-}
-
 func GetUrlQuery(query url.Values, key, defaultValue string) string {
 	v := query.Get(key)
 	if len(v) > 0 {
@@ -108,24 +79,6 @@ func GetUrlQuery(query url.Values, key, defaultValue string) string {
 	}
 
 	return defaultValue
-}
-
-func InTestVerbose() bool {
-	flag.Parse()
-	if v := flag.Lookup("test.v"); v == nil || v.Value.String() != "true" {
-		return false
-	}
-
-	return true
-}
-
-func InTest() bool {
-	flag.Parse()
-	if v := flag.Lookup("test.v"); v == nil {
-		return false
-	}
-
-	return true
 }
 
 func InStringArray(a []string, s string) (index int, found bool) {
