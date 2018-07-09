@@ -150,17 +150,29 @@ func (tx Transaction) Source() string {
 	return tx.B.Source
 }
 
+//
+// Returns:
+//   the total monetary value of this transaction,
+//   which is the sum of its operations,
+//   optionally with fees
+//
+// Params:
+//   withFee = If fee should be included in the total
+//
 func (tx Transaction) TotalAmount(withFee bool) Amount {
-	var amount int64
+	// Note that the transaction shouldn't be constructed invalid
+	// (the sum of its Operations should not exceed the maximum supply)
+	var amount Amount
 	for _, op := range tx.B.Operations {
-		amount += int64(op.B.GetAmount())
+		amount = amount.MustAdd(op.B.GetAmount())
 	}
 
+	// TODO: This isn't checked anywhere yet
 	if withFee {
-		amount += int64(len(tx.B.Operations)) * int64(tx.B.Fee)
+		amount = amount.MustAdd(tx.B.Fee.MustMult(len(tx.B.Operations)))
 	}
 
-	return Amount(amount)
+	return amount
 }
 
 func (tx Transaction) Serialize() (encoded []byte, err error) {
