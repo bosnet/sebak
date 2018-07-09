@@ -67,7 +67,7 @@ func NewTransaction(source, checkpoint string, ops ...Operation) (tx Transaction
 
 	txBody := TransactionBody{
 		Source:     source,
-		Fee:        Amount(BaseFee),
+		Fee:        BaseFee,
 		Checkpoint: checkpoint,
 		Operations: ops,
 	}

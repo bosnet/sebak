@@ -79,7 +79,7 @@ func TestMakeTransaction(networkID []byte, n int) (kp *keypair.Full, tx Transact
 
 	txBody := TransactionBody{
 		Source:     kp.Address(),
-		Fee:        Amount(BaseFee),
+		Fee:        BaseFee,
 		Checkpoint: uuid.New().String(),
 		Operations: ops,
 	}
