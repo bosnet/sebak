@@ -249,8 +249,8 @@ func CheckNodeRunnerHandleBallotVotingHole(c sebakcommon.Checker, args ...interf
 	votingHole = VotingNO
 
 	tx := checker.GetTransaction()
-	if tx.B.Fee < Amount(BaseFee) {
-		checker.NodeRunner.Log().Debug("VotingNO: tx.B.Fee < Amount(BaseFee)")
+	if tx.B.Fee < BaseFee {
+		checker.NodeRunner.Log().Debug("VotingNO: tx.B.Fee < BaseFee")
 		votingHole = VotingNO
 
 		return
