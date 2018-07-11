@@ -11,6 +11,8 @@ import (
 	logging "github.com/inconshreveable/log15"
 )
 
+var lock sebakcommon.SafeLock
+
 type NodeRunner struct {
 	networkID         []byte
 	localNode         *sebaknode.LocalNode
@@ -198,6 +200,8 @@ func (nr *NodeRunner) SetHandleBallotCheckerDeferFuncs(deferFunc sebakcommon.Che
 }
 
 func (nr *NodeRunner) handleMessage() {
+	lock.Lock()
+	defer lock.Unlock()
 	var err error
 	for message := range nr.network.ReceiveMessage() {
 		switch message.Type {
