@@ -6,6 +6,11 @@ LABEL maintainer="BOSCoin Developers <devteam@boscoin.io>"
 COPY ./ /go/src/boscoin.io/sebak
 WORKDIR /go/src/boscoin.io/sebak
 
+# You probably don't need to change this
+ARG BUILD_MODE="install"
+ARG BUILD_ARGS=''
+ARG BUILD_PKG="./..."
+
 RUN apk add --no-cache git openssh
 RUN go get github.com/ahmetb/govvv
 
@@ -15,9 +20,10 @@ RUN go get github.com/ahmetb/govvv
 ## greatly reduce the container's size, and gives more control to the user as to what is tested
 ## (one can replace a dependency, if needed).
 ## Otherwise, install dep and dependencies.(e.g Docker Hub automated build)
+
 RUN if [ ! -d vendor ]; then go get github.com/golang/dep/cmd/dep; dep ensure -v; fi
 
-RUN govvv install -pkg boscoin.io/sebak/lib/version -v ./...
+RUN go $BUILD_MODE $BUILD_ARGS -ldflags="$(govvv -pkg boscoin.io/sebak/lib/version -flags)" -v $BUILD_PKG
 
 ## This one is much more lightweight
 FROM alpine:latest AS runner
