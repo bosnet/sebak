@@ -10,8 +10,6 @@ import (
 	"boscoin.io/sebak/lib/network"
 )
 
-// var lock sync.Mutex
-
 type LockingObject struct {
 	sebakcommon.SafeLock
 }
@@ -46,12 +44,11 @@ func TestNodeRunnerPayment(t *testing.T) {
 		}
 	}
 
-	lock := LockingObject{}
-
 	var wg sync.WaitGroup
 	wg.Add(numberOfNodes)
 	var dones []VotingStateStaging
 	var finished []string
+	lock := LockingObject{}
 	var deferFunc sebakcommon.CheckerDeferFunc = func(n int, c sebakcommon.Checker, err error) {
 		lock.Lock()
 		defer lock.Unlock()
@@ -62,7 +59,6 @@ func TestNodeRunnerPayment(t *testing.T) {
 		if _, ok := err.(sebakcommon.CheckerErrorStop); ok {
 			return
 		}
-		// lock.Lock()
 		checker := c.(*NodeRunnerHandleBallotChecker)
 		if _, found := sebakcommon.InStringArray(finished, checker.LocalNode.Alias()); found {
 			return
@@ -71,7 +67,6 @@ func TestNodeRunnerPayment(t *testing.T) {
 		dones = append(dones, checker.VotingStateStaging)
 
 		wg.Done()
-		// lock.Unlock()
 	}
 
 	for _, nr := range nodeRunners {
