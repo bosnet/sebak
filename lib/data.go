@@ -3,8 +3,8 @@
 //
 // One BOSCoin accounts for 10 million currency units.
 // In addition to the `Amount` type, some member functions are defined:
-// - Add / Sub do an addition / substraction and return an error object
-// - AddCheck / SubCheck call `Add` / `Sub` and turn any `error` into a `panic`.
+// - `Add` / `Sub` do an addition / substraction and return an error object
+// - `MustAdd` / `MustSub` call `Add` / `Sub` and turn any `error` into a `panic`.
 //   Those are provided for testing / quick prototyping and should not be in production code.
 // - Invariant `panic`s if the instance it's called on violates its invariant (see Contract programming)
 //
