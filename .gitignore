@@ -12,3 +12,4 @@ tmp*
 db
 *.orig
 .idea
+tests/*/coverage/

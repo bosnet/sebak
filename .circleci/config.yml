@@ -58,7 +58,7 @@ jobs:
           name: run tests
           command: SEBAK_LOG_HANDLER=null GOCACHE=off go test -v -timeout 3m ./...
 
-  test_merged:
+  generate_merged_tree:
     <<: *defaults
     steps:
       - <<: *workspace
@@ -72,6 +72,15 @@ jobs:
               git fetch -u origin ${FETCH_REFS}
               git checkout "pr/${CIRCLE_PR_NUMBER}/merge"
             fi
+      - persist_to_workspace:
+          root: /
+          paths:
+            - go/src/boscoin.io/sebak
+
+  unittests:
+    <<: *defaults
+    steps:
+      - <<: *workspace
       - run:
           name: run tests
           command: |
@@ -85,6 +94,18 @@ jobs:
       - run:
           name: upload coverage reports
           command: bash <(curl -s https://codecov.io/bash) -F unittests
+
+  integration_tests:
+    <<: *defaults
+    steps:
+      - setup_remote_docker
+      - <<: *workspace
+      - run:
+          name: integration tests
+          command: ./tests/run.sh
+      - run:
+          name: upload coverage reports
+          command: bash <(curl -s https://codecov.io/bash) -F integration_tests
 
 workflows:
   version: 2
@@ -100,6 +121,12 @@ workflows:
       - test_go1_9:
           requires:
             - fmt
-      - test_merged:
+      - generate_merged_tree:
           requires:
             - fmt
+      - unittests:
+          requires:
+            - generate_merged_tree
+      - integration_tests:
+          requires:
+            - generate_merged_tree
