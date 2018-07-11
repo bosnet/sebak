@@ -219,6 +219,17 @@ func (tb TransactionBody) MakeHashString() string {
 	return base58.Encode(tb.MakeHash())
 }
 
+///
+/// Apply this transaction (`tx`) to the storage, externalizing it
+///
+/// Params:
+///   st = Storage backend
+///   ballot = the ballot that triggered consensus
+///   tx = `Transaction` to externalize
+///
+/// Returns:
+///   err = If the `Transaction` could not be externalized
+///
 func FinishTransaction(st *sebakstorage.LevelDBBackend, ballot Ballot, tx Transaction) (err error) {
 	var raw []byte
 	raw, err = ballot.Data().Serialize()
