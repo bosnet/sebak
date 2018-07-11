@@ -72,7 +72,6 @@ const (
 type Message struct {
 	Type MessageType
 	Data []byte
-	//DataString string // optional
 }
 
 func (t Message) String() string {
@@ -97,6 +96,5 @@ func NewMessage(mt MessageType, data []byte) Message {
 	return Message{
 		Type: mt,
 		Data: data,
-		//DataString: string(data),
 	}
 }

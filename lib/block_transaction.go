@@ -20,7 +20,7 @@ import (
 
 const (
 	BlockTransactionPrefixHash       string = "bt-hash-"       // bt-hash-<BlockTransaction.Hash>
-	BlockTransactionPrefixCheckpoint string = "bt-checkpoint-" // bt-hash-<BlockTransaction.PreviousCheckpoint>,bt-hash-<BlockTransaction.SourceCheckpoint>,  bt-hash-<BlockTransaction.TargetCheckpoint>,
+	BlockTransactionPrefixCheckpoint string = "bt-checkpoint-" // bt-hash-<BlockTransaction.PreviousCheckpoint>,bt-hash-<BlockTransaction.SourceCheckpoint>
 	BlockTransactionPrefixSource     string = "bt-source-"     // bt-hash-<BlockTransaction.Source>
 	BlockTransactionPrefixConfirmed  string = "bt-confirmed-"  // bt-hash-<BlockTransaction.Confirmed>
 	BlockTransactionPrefixAccount    string = "bt-account-"    //bt-hash-<BlockTransaction.Source>,<BlockTransaction.Operations.Target>
@@ -33,7 +33,6 @@ type BlockTransaction struct {
 
 	PreviousCheckpoint string
 	SourceCheckpoint   string
-	TargetCheckpoint   string
 	Signature          string
 	Source             string
 	Fee                Amount
@@ -58,7 +57,6 @@ func NewBlockTransactionFromTransaction(tx Transaction, message []byte) BlockTra
 		Hash:               tx.H.Hash,
 		PreviousCheckpoint: tx.B.Checkpoint,
 		SourceCheckpoint:   tx.NextSourceCheckpoint(),
-		TargetCheckpoint:   tx.NextTargetCheckpoint(),
 		Signature:          tx.H.Signature,
 		Source:             tx.B.Source,
 		Fee:                tx.B.Fee,
@@ -120,9 +118,6 @@ func (bt *BlockTransaction) Save(st *sebakstorage.LevelDBBackend) (err error) {
 		return
 	}
 	if err = st.New(GetBlockTransactionKeyCheckpoint(bt.SourceCheckpoint), bt.Hash); err != nil {
-		return
-	}
-	if err = st.New(GetBlockTransactionKeyCheckpoint(bt.TargetCheckpoint), bt.Hash); err != nil {
 		return
 	}
 	if err = st.New(bt.NewBlockTransactionKeySource(), bt.Hash); err != nil {

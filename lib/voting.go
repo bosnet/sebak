@@ -280,6 +280,8 @@ func (vr *VotingResult) MakeResult(policy sebakcommon.VotingThresholdPolicy) (Vo
 }
 
 func (vr *VotingResult) ChangeState(votingHole VotingHole, state sebakcommon.BallotState) (vs VotingStateStaging, err error) {
+	log.Info("votingResult", "id", vr.ID, "messageHash", vr.MessageHash)
+	log.Info("change state", "before", vr.State, "after", state)
 	if votingHole == VotingYES && !vr.SetState(state.Next()) {
 		err = sebakerror.ErrorVotingResultFailedToSetState
 		return

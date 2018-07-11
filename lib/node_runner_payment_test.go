@@ -10,6 +10,10 @@ import (
 	"boscoin.io/sebak/lib/network"
 )
 
+type LockingObject struct {
+	sebakcommon.SafeLock
+}
+
 func TestNodeRunnerPayment(t *testing.T) {
 	defer sebaknetwork.CleanUpMemoryNetwork()
 
@@ -41,12 +45,13 @@ func TestNodeRunnerPayment(t *testing.T) {
 	}
 
 	var wg sync.WaitGroup
-
 	wg.Add(numberOfNodes)
-
 	var dones []VotingStateStaging
 	var finished []string
+	lock := LockingObject{}
 	var deferFunc sebakcommon.CheckerDeferFunc = func(n int, c sebakcommon.Checker, err error) {
+		lock.Lock()
+		defer lock.Unlock()
 		if err == nil {
 			return
 		}
@@ -54,13 +59,13 @@ func TestNodeRunnerPayment(t *testing.T) {
 		if _, ok := err.(sebakcommon.CheckerErrorStop); ok {
 			return
 		}
-
 		checker := c.(*NodeRunnerHandleBallotChecker)
 		if _, found := sebakcommon.InStringArray(finished, checker.LocalNode.Alias()); found {
 			return
 		}
 		finished = append(finished, checker.LocalNode.Alias())
 		dones = append(dones, checker.VotingStateStaging)
+
 		wg.Done()
 	}
 
@@ -83,7 +88,7 @@ func TestNodeRunnerPayment(t *testing.T) {
 
 	for _, done := range dones {
 		if done.State != sebakcommon.BallotStateALLCONFIRM {
-			t.Error("failed to get consensus")
+			t.Errorf("failed to get consensus(%s)", done.State.String())
 			return
 		}
 		if done.MessageHash != tx.GetHash() {

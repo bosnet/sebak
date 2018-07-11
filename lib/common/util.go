@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/url"
 	"os"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -134,21 +133,6 @@ func IsEmpty(path string) (bool, error) {
 	return false, err // Either not empty or error, suits both cases
 }
 
-func MakeCheckpoint(a, b string) string {
-	return fmt.Sprintf("%s-%s", a, b)
-}
-
-func ParseCheckpoint(a string) (p [2]string, err error) {
-	s := strings.SplitN(a, "-", 2)
-	if len(s) != 2 {
-		err = errors.New("invalid checkpoint")
-		return
-	}
-	p = [2]string{s[0], s[1]}
-	return
-}
-
 func MakeGenesisCheckpoint(networkID []byte) string {
-	h := base58.Encode(networkID)
-	return MakeCheckpoint(h, h)
+	return base58.Encode(networkID)
 }
