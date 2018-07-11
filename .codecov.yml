@@ -2,4 +2,4 @@
 ## When coverage is uploaded from CI, the absolute path (`/go/src/boscoin.io...`)
 ## is present in the report, which Codecov cannot match by default
 fixes:
-  - "go/src/boscoin.io/sebak/::"  # Remove the prefix
+  - "boscoin.io/sebak/::"  # Remove the prefix
