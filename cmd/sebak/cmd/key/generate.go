@@ -61,13 +61,13 @@ func init() {
 			input := strings.TrimSpace(strings.Join(args, " "))
 
 			if flagPublicKey && len(input) == 0 {
-				common.PrintFlagsError(c, "--publicKey", errors.New("--publicKey needs <public key>"))
+				common.PrintFlagsError(c, "--parse", errors.New("--parse needs <secret seed>"))
 			}
 
 			kp, err := generateKP(input, flagPublicKey)
 
 			if flagPublicKey && err != nil {
-				common.PrintFlagsError(c, "<input>", fmt.Errorf("failed to parse public key: %v", err))
+				common.PrintFlagsError(c, "<input>", fmt.Errorf("failed to parse secret seed: %v", err))
 			} else if !flagPublicKey && len(input) > 0 {
 				passphrase = &input
 			}
@@ -107,7 +107,7 @@ Network Passphrase: "{{ .networkPassphrase}}"{{ end }}
 		},
 	}
 
-	GenerateCmd.Flags().BoolVar(&flagPublicKey, "parse", false, "parse public key")
+	GenerateCmd.Flags().BoolVar(&flagPublicKey, "parse", false, "parse secret seed")
 	GenerateCmd.Flags().StringVar(&flagFormat, "format", "default", "format={default, json, oneline, prettyjson}")
 }
 
@@ -118,7 +118,11 @@ func generateKP(seedOrNetworkPassphrase string, fromSeed bool) (full *keypair.Fu
 		var kp keypair.KP
 
 		if kp, err = keypair.Parse(seedOrNetworkPassphrase); err == nil {
-			full = kp.(*keypair.Full)
+			if kf, ok := kp.(*keypair.Full); ok {
+				full = kf
+			} else {
+				err = fmt.Errorf("not a secret seed")
+			}
 		}
 	} else {
 		full = keypair.Master(seedOrNetworkPassphrase).(*keypair.Full)
