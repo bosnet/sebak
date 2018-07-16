@@ -6,7 +6,7 @@ LABEL maintainer="BOSCoin Developers <devteam@boscoin.io>"
 COPY ./ /go/src/boscoin.io/sebak
 WORKDIR /go/src/boscoin.io/sebak
 
-RUN apk add --no-cache git 
+RUN apk add --no-cache git openssh
 RUN go get github.com/ahmetb/govvv
 
 ## Note that we do not get the dependencies anew
@@ -14,6 +14,9 @@ RUN go get github.com/ahmetb/govvv
 ## This make building the container orders of magnitude faster (`dep ensure` is extremely slow),
 ## greatly reduce the container's size, and gives more control to the user as to what is tested
 ## (one can replace a dependency, if needed).
+## Otherwise, install dep and dependencies.(e.g Docker Hub automated build)
+RUN if [ ! -d vendor ]; then go get github.com/golang/dep/cmd/dep; dep ensure -v; fi
+
 RUN govvv install -pkg boscoin.io/sebak/lib/version -v ./...
 
 ## This one is much more lightweight

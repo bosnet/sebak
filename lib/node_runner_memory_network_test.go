@@ -33,7 +33,7 @@ func makeTransaction(kp *keypair.Full) (tx Transaction) {
 
 	txBody := TransactionBody{
 		Source:     kp.Address(),
-		Fee:        Amount(BaseFee),
+		Fee:        BaseFee,
 		Checkpoint: uuid.New().String(),
 		Operations: ops,
 	}
@@ -63,7 +63,7 @@ func makeTransactionPayment(kpSource *keypair.Full, target string, amount Amount
 
 	txBody := TransactionBody{
 		Source:     kpSource.Address(),
-		Fee:        Amount(BaseFee),
+		Fee:        BaseFee,
 		Checkpoint: uuid.New().String(),
 		Operations: []Operation{op},
 	}
@@ -93,7 +93,7 @@ func makeTransactionCreateAccount(kpSource *keypair.Full, target string, amount 
 
 	txBody := TransactionBody{
 		Source:     kpSource.Address(),
-		Fee:        Amount(BaseFee),
+		Fee:        BaseFee,
 		Checkpoint: uuid.New().String(),
 		Operations: []Operation{op},
 	}

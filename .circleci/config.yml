@@ -75,32 +75,16 @@ jobs:
       - run:
           name: run tests
           command: |
-            mkdir -p /tmp/workspace/test_coverage
-            for pkg in $(go list ./...); do
-              name=$(basename "$pkg")
-              SEBAK_LOG_HANDLER=null GOCACHE=off go test -v -timeout 3m -coverprofile=/tmp/workspace/test_coverage/$name.txt -covermode=atomic "$pkg"
-            done
-      - persist_to_workspace:
-          root: /tmp/workspace/
-          paths:
-            - "test_coverage/*"
-
-  upload_coverage:
-    <<: *defaults
-    steps:
-      - attach_workspace:
-          at: .
-      - run:
-          name: gather coverage files
-          command: |
-            set -ex
-            echo "mode: atomic" > coverage.txt
-            for name in $(ls ./test_coverage/); do
-              tail -n +2 ./test_coverage/$name >> coverage.txt
+            for pkg in $(go list ./... | grep -v vendor); do
+                SEBAK_LOG_HANDLER=null GOCACHE=off go test -v -timeout 3m -coverprofile=profile.out -covermode=atomic "$pkg"
+                if [ -f profile.out ]; then
+                    cat profile.out >> coverage.txt
+                    rm profile.out
+                fi
             done
       - run:
-          name: upload
-          command: bash <(curl -s https://codecov.io/bash) -f coverage.txt
+          name: upload coverage reports
+          command: bash <(curl -s https://codecov.io/bash) -F unittests
 
 workflows:
   version: 2
@@ -118,8 +102,4 @@ workflows:
             - fmt
       - test_merged:
           requires:
-            - test_go1_10
-            - test_go1_9
-      - upload_coverage:
-          requires:
-            - test_merged
+            - fmt

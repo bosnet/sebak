@@ -2,7 +2,13 @@ package sebaknode
 
 import (
 	"fmt"
+	"strings"
 	"testing"
+
+	"boscoin.io/sebak/lib/common"
+
+	"github.com/stellar/go/keypair"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestParseValidatorFromURI(t *testing.T) {
@@ -68,4 +74,58 @@ func TestParseValidatorFromURI(t *testing.T) {
 			return
 		}
 	}
+}
+
+func TestValidatorMarshalJSON(t *testing.T) {
+	kp, _ := keypair.Random()
+
+	endpoint, err := sebakcommon.NewEndpointFromString(fmt.Sprintf("https://localhost:5000?NodeName=n1"))
+	assert.Equal(t, nil, err)
+
+	validator, _ := NewValidator(kp.Address(), endpoint, "v1")
+
+	tmpByte, err := validator.MarshalJSON()
+	assert.Equal(t, nil, err)
+
+	jsonStr := `"alias":"%s","endpoint":"https://localhost:%s","state":"%s"`
+	fmt.Println(string(tmpByte))
+	assert.Equal(t, true, strings.Contains(string(tmpByte), fmt.Sprintf(jsonStr, "v1", "5000", "NONE")))
+}
+
+func TestValidatorNewValidatorFromString(t *testing.T) {
+	validator, _ := NewValidatorFromString([]byte(
+		`{
+			"address":"GATCSN5N6WST3GIJNOF3P55KZTBXG6KUSEFZFHJHV6ZLYNX3OQS2IJTN",
+			"alias":"v1",
+			"endpoint":"https://localhost:5000",
+			"state":"NONE"
+		}`,
+	))
+
+	assert.Equal(t, "v1", validator.Alias())
+	assert.Equal(t, "https://localhost:5000", validator.Endpoint().String())
+	assert.Equal(t, NodeStateNONE, validator.State())
+}
+
+func TestValidatorUnMarshalJSON(t *testing.T) {
+	kp, _ := keypair.Random()
+
+	endpoint, err := sebakcommon.NewEndpointFromString(fmt.Sprintf("https://localhost:5000?NodeName=n1"))
+	assert.Equal(t, nil, err)
+
+	validator, _ := NewValidator(kp.Address(), endpoint, "node")
+
+	validator.UnmarshalJSON([]byte(
+		`{
+			"address":"GATCSN5N6WST3GIJNOF3P55KZTBXG6KUSEFZFHJHV6ZLYNX3OQS2IJTN",
+			"alias":"v1",
+			"endpoint":"https://localhost:5000",
+			"state":"NONE"
+		}`,
+	))
+	assert.Equal(t, nil, err)
+
+	assert.Equal(t, "v1", validator.Alias())
+	assert.Equal(t, "https://localhost:5000", validator.Endpoint().String())
+	assert.Equal(t, NodeStateNONE, validator.State())
 }

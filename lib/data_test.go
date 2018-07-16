@@ -21,6 +21,31 @@ func TestAmount_Invariant(t *testing.T) {
 	amount.Invariant()
 }
 
+func TestAmount_Mult(t *testing.T) {
+	if Amount(100).MustMult(50) != Amount(5000) {
+		t.Errorf("MustMult returned a wrong result")
+	}
+	val, err := Amount(100).MultUint(50)
+	if err != nil || val != Amount(5000) {
+		t.Errorf("MustMult returned an error or a wrong result")
+	}
+	// Test `MustMult` + overflow failure
+	func() {
+		defer func() {
+			if r := recover(); r == nil {
+				t.Errorf("Expected `panic` did not happen")
+			}
+		}()
+		_ = MaximumBalance.MustMult(2)
+		t.Error("Unreachable code")
+	}()
+	// Test negative value
+	_, err = Amount(42).MultInt(-42)
+	if err == nil {
+		t.Errorf("Expected error on negative value was not triggered")
+	}
+}
+
 // https://github.com/bosnet/sebak/issues/85
 func TestAmount_Uint64OutOfRange(t *testing.T) {
 	amount, err := AmountFromString(maximumBalanceStr)

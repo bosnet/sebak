@@ -3,8 +3,8 @@
 //
 // One BOSCoin accounts for 10 million currency units.
 // In addition to the `Amount` type, some member functions are defined:
-// - Add / Sub do an addition / substraction and return an error object
-// - AddCheck / SubCheck call `Add` / `Sub` and turn any `error` into a `panic`.
+// - `Add` / `Sub` do an addition / substraction and return an error object
+// - `MustAdd` / `MustSub` call `Add` / `Sub` and turn any `error` into a `panic`.
 //   Those are provided for testing / quick prototyping and should not be in production code.
 // - Invariant `panic`s if the instance it's called on violates its invariant (see Contract programming)
 //
@@ -83,6 +83,49 @@ func (a Amount) Sub(sub Amount) (Amount, error) {
 		return invalidValue, sebakerror.ErrorAccountBalanceUnderZero
 	}
 	return a - sub, nil
+}
+
+//
+// Add this `Amount` to itself, `n` times
+//
+// If the resulting value would overflow maximumAmount, an error is returned,
+// along with the value (which would trigger a `panic` if used).
+//
+func (a Amount) MultInt(n int) (Amount, error) {
+	return a.MultInt64(int64(n))
+}
+
+/// Ditto
+func (a Amount) MultUint(n uint) (Amount, error) {
+	return a.MultUint64(uint64(n))
+}
+
+/// Ditto
+func (a Amount) MultInt64(n int64) (Amount, error) {
+	if n < 0 {
+		return invalidValue, sebakerror.ErrorAccountBalanceUnderZero
+	}
+	return a.MultUint64(uint64(n))
+}
+
+/// Ditto
+func (a Amount) MultUint64(n uint64) (Amount, error) {
+	a.Invariant()
+	if uint64(MaximumBalance)/n < uint64(a) {
+		return invalidValue, sebakerror.ErrorMaximumBalanceReached
+	}
+
+	return Amount(uint64(a) * n), nil
+}
+
+// Counterpart of `Mult` which panic instead of returning an error
+// Useful for debugging and testing, should be avoided in regular code
+func (a Amount) MustMult(n int) Amount {
+	if v, err := a.MultInt(n); err != nil {
+		panic(err)
+	} else {
+		return v
+	}
 }
 
 // Counterpart of `Sub` which panic instead of returning an error
