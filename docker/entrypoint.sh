@@ -5,12 +5,12 @@
 # environment file
 if [ $# -gt 0 ]; then
     # Argument mode
-    ./sebak $@
+    exec ./sebak $@
 else
     # Node mode
     if [ -f ".env" ]; then
       source ./.env
     fi
     ./sebak genesis ${SEBAK_GENESIS_BLOCK}
-    ./sebak node --log-level debug
+    exec ./sebak node --log-level debug
 fi
