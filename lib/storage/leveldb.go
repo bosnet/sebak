@@ -31,18 +31,17 @@ type LevelDBBackend struct {
 }
 
 func (st *LevelDBBackend) Init(config *Config) (err error) {
-	var sto leveldbStorage.Storage
-	if config.Scheme == "memory" {
-		sto = leveldbStorage.NewMemStorage()
-	} else if config.Scheme == "file" {
-		if sto, err = leveldbStorage.OpenFile(config.Path, false); err != nil {
+	var db *leveldb.DB
+
+	if config.Scheme == "file" {
+		if db, err = leveldb.OpenFile(config.Path, nil); err != nil {
 			return
 		}
-	}
-
-	var db *leveldb.DB
-	if db, err = leveldb.Open(sto, nil); err != nil {
-		return
+	} else if config.Scheme == "memory" {
+		sto := leveldbStorage.NewMemStorage()
+		if db, err = leveldb.Open(sto, nil); err != nil {
+			return
+		}
 	}
 
 	st.DB = db
