@@ -13,7 +13,8 @@ func Interrupt(cancel <-chan struct{}) error {
 	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
 	select {
 	case sig := <-c:
-		return fmt.Errorf("received signal %s", sig)
+		fmt.Println("Received signal ", sig, ", shutting down...")
+		return nil
 	case <-cancel:
 		return errors.New("canceled")
 	}
