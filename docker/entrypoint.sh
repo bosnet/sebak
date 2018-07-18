@@ -11,6 +11,5 @@ else
     if [ -f ".env" ]; then
       source ./.env
     fi
-    ./sebak genesis ${SEBAK_GENESIS_BLOCK}
-    exec ./sebak node --log-level debug
+    exec ./sebak node --genesis=${SEBAK_GENESIS_BLOCK} --log-level debug
 fi
