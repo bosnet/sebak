@@ -76,7 +76,7 @@ jobs:
           name: run tests
           command: |
             for pkg in $(go list ./... | grep -v vendor); do
-                SEBAK_LOG_HANDLER=null GOCACHE=off go test -v -timeout 3m -coverprofile=profile.out -covermode=atomic "$pkg"
+                SEBAK_LOG_HANDLER=null GOCACHE=off go test -v -timeout 3m -coverprofile=profile.out "$pkg"
                 if [ -f profile.out ]; then
                     cat profile.out >> coverage.txt
                     rm profile.out
