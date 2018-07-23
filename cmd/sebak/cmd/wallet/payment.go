@@ -30,6 +30,7 @@ func init() {
 		Run: func(c *cobra.Command, args []string) {
 			var err error
 			var amount sebak.Amount
+			var newBalance sebak.Amount
 			var sender keypair.KP
 			var receiver keypair.KP
 			var endpoint *sebakcommon.Endpoint
@@ -82,6 +83,21 @@ func init() {
 				os.Exit(1)
 			}
 
+			// Check that account's balance is enough before sending the transaction
+			{
+				newBalance, err = sebak.MustAmountFromString(senderAccount.Balance).Sub(amount)
+				if err == nil {
+					newBalance, err = newBalance.Sub(sebak.BaseFee)
+				}
+
+				if err != nil {
+					fmt.Printf("Attempting to draft %v GON (+ %v fees), but sender account only have %v GON\n",
+						amount, sebak.BaseFee, senderAccount.Balance)
+					os.Exit(1)
+				}
+			}
+
+			// TODO: Validate that the account doesn't already exists
 			if flagCreateAccount {
 				tx = makeTransactionCreateAccount(sender, receiver, amount, senderAccount.Checkpoint)
 			} else {
