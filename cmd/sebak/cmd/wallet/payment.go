@@ -20,6 +20,7 @@ var (
 	PaymentCmd        *cobra.Command
 	flagEndpoint      string
 	flagCreateAccount bool
+	flagDry           bool
 )
 
 func init() {
@@ -108,7 +109,9 @@ func init() {
 
 			// Send request
 			var retbody []byte
-			if retbody, err = client.SendMessage(tx); err != nil {
+			if flagDry == true {
+				fmt.Println(tx)
+			} else if retbody, err = client.SendMessage(tx); err != nil {
 				log.Fatal("Network error: ", err, " body: ", retbody)
 				os.Exit(1)
 			}
@@ -117,6 +120,7 @@ func init() {
 	PaymentCmd.Flags().StringVar(&flagEndpoint, "endpoint", flagEndpoint, "endpoint to send the transaction to (https / memory address)")
 	PaymentCmd.Flags().StringVar(&flagNetworkID, "network-id", flagNetworkID, "network id")
 	PaymentCmd.Flags().BoolVar(&flagCreateAccount, "create", flagCreateAccount, "Whether or not the account should be created")
+	PaymentCmd.Flags().BoolVar(&flagDry, "dry-run", flagDry, "Print the transaction instead of sending it")
 }
 
 ///
