@@ -1,0 +1,25 @@
+{
+  "T": "transaction",
+  "H": {
+    "version": "",
+    "created": "2018-09-19T04:25:53.763285000Z",
+    "hash": "4Rh1z7QdfUK9QyHCknj8RupZEEoogFSXjrWpFKkUrrTR",
+    "signature": "5kSPFsUcDncs5y8Gz7hA6y2qYMipzJYYcfaT9qchhyLBGKj8JrZ4eCMv3WA1URLJvUfeZxu1TpFf1oxGgJ7bxiEY"
+  },
+  "B": {
+    "source": "GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ",
+    "fee": "10000",
+    "sequenceID": 0,
+    "operations": [
+      {
+        "H": {
+          "type": "create-account"
+        },
+        "B": {
+          "target": "GDTEPFWEITKFHSUO44NQABY2XHRBBH2UBVGJ2ZJPDREIOL2F6RAEBJE4",
+          "amount": "10000"
+        }
+      }
+    ]
+  }
+}

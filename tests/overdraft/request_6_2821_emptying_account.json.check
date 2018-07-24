@@ -1,0 +1,20 @@
+#!/bin/bash
+
+set -xe
+export TEST_NAME=${BASH_SOURCE[0]}
+source $(dirname ${BASH_SOURCE[0]})/../utils.sh
+
+EXPECTED1="9999999999999970000"
+EXPECTED2="0"
+
+for ((port=2821;port<=2823;port++)); do
+    checkedBalance=$(getAccountWithBalance $port "GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ" ${EXPECTED1})
+    if [ $? -ne 0 ];then
+        die "Expected balance to be ${EXPECTED1}, not ${checkedBalance}"
+    fi
+
+    checkedBalance=$(getAccountWithBalance $port "GDTEPFWEITKFHSUO44NQABY2XHRBBH2UBVGJ2ZJPDREIOL2F6RAEBJE4" ${EXPECTED2})
+    if [ $? -ne 0 ];then
+        die "Expected balance to be ${EXPECTED2}, not ${checkedBalance}"
+    fi
+done
