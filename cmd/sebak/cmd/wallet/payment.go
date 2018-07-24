@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"boscoin.io/sebak/cmd/sebak/common"
 	"boscoin.io/sebak/lib"
@@ -21,6 +22,7 @@ var (
 	flagEndpoint      string
 	flagCreateAccount bool
 	flagDry           bool
+	flagVerbose       bool
 )
 
 func init() {
@@ -84,6 +86,10 @@ func init() {
 				os.Exit(1)
 			}
 
+			if flagVerbose == true {
+				fmt.Println("Account before transaction: ", senderAccount)
+			}
+
 			// Check that account's balance is enough before sending the transaction
 			{
 				newBalance, err = sebak.MustAmountFromString(senderAccount.Balance).Sub(amount)
@@ -109,11 +115,22 @@ func init() {
 
 			// Send request
 			var retbody []byte
-			if flagDry == true {
+			if flagDry == true || flagVerbose == true {
 				fmt.Println(tx)
-			} else if retbody, err = client.SendMessage(tx); err != nil {
-				log.Fatal("Network error: ", err, " body: ", retbody)
-				os.Exit(1)
+			}
+			if flagDry == false {
+				if retbody, err = client.SendMessage(tx); err != nil {
+					log.Fatal("Network error: ", err, " body: ", retbody)
+					os.Exit(1)
+				}
+			}
+			if flagVerbose == true {
+				time.Sleep(5 * time.Second)
+				if recv, err := getSenderDetails(client, receiver); err != nil {
+					fmt.Println("Account ", receiver.Address(), " did not appear after 5 seconds")
+				} else {
+					fmt.Println("Receiver account after 5 seconds: ", recv)
+				}
 			}
 		},
 	}
@@ -121,6 +138,7 @@ func init() {
 	PaymentCmd.Flags().StringVar(&flagNetworkID, "network-id", flagNetworkID, "network id")
 	PaymentCmd.Flags().BoolVar(&flagCreateAccount, "create", flagCreateAccount, "Whether or not the account should be created")
 	PaymentCmd.Flags().BoolVar(&flagDry, "dry-run", flagDry, "Print the transaction instead of sending it")
+	PaymentCmd.Flags().BoolVar(&flagVerbose, "verbose", flagVerbose, "Print extra data (transaction sent, before/after balance...)")
 }
 
 ///
