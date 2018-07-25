@@ -28,8 +28,8 @@ func NewHTTP2Client(timeout, idleTimeout time.Duration, keepAlive bool) (client 
 		IdleConnTimeout:   idleTimeout,
 		DisableKeepAlives: !keepAlive,
 		DialContext: (&net.Dialer{
-			Timeout:   1 * time.Second,
-			KeepAlive: 100000 * time.Second,
+			Timeout:   3 * time.Second,
+			KeepAlive: 1 * time.Second,
 			DualStack: true,
 		}).DialContext,
 	}
