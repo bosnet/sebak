@@ -28,7 +28,6 @@ func NewHTTP2NetworkConfigFromEndpoint(nodeName string, endpoint *common.Endpoin
 	var ReadTimeout time.Duration = 0
 	var ReadHeaderTimeout time.Duration = 0
 	var WriteTimeout time.Duration = 0
-	var IdleTimeout time.Duration = 5
 	var TLSCertFile, TLSKeyFile string
 
 	if ReadTimeout, err = time.ParseDuration(common.GetUrlQuery(query, "ReadTimeout", "0s")); err != nil {
@@ -55,14 +54,6 @@ func NewHTTP2NetworkConfigFromEndpoint(nodeName string, endpoint *common.Endpoin
 		return
 	}
 
-	if IdleTimeout, err = time.ParseDuration(common.GetUrlQuery(query, "IdleTimeout", "0s")); err != nil {
-		return
-	}
-	if IdleTimeout < 0*time.Second {
-		err = errors.New("invalid 'IdleTimeout'")
-		return
-	}
-
 	TLSCertFile = query.Get("TLSCertFile")
 	TLSKeyFile = query.Get("TLSKeyFile")
 
@@ -78,7 +69,7 @@ func NewHTTP2NetworkConfigFromEndpoint(nodeName string, endpoint *common.Endpoin
 		ReadTimeout:       ReadTimeout,
 		ReadHeaderTimeout: ReadHeaderTimeout,
 		WriteTimeout:      WriteTimeout,
-		IdleTimeout:       IdleTimeout,
+		IdleTimeout:       0,
 		TLSCertFile:       TLSCertFile,
 		TLSKeyFile:        TLSKeyFile,
 	}
