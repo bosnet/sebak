@@ -311,7 +311,6 @@ func TestNodeRunnerConsensusSameSourceWillNotIgnored(t *testing.T) {
 		finished = append(finished, checker.LocalNode.Alias())
 		dones = append(dones, checker.VotingStateStaging)
 		wg.Done()
-
 	}
 
 	var secondHandleBallotCheckerFuncs = []sebakcommon.CheckerFunc{
