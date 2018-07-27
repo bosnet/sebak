@@ -148,7 +148,6 @@ func createNodeRunnersWithReady(n int) []*NodeRunner {
 
 	for _, nr := range nodeRunners {
 		go nr.Start()
-		//defer nr.Stop()
 	}
 
 	T := time.NewTicker(100 * time.Millisecond)
@@ -376,7 +375,10 @@ func TestMemoryNetworkHandleMessageCheckHasMessage(t *testing.T) {
 		},
 	}
 
+	var mutex = &sync.Mutex{}
 	var deferFunc sebakcommon.CheckerDeferFunc = func(n int, c sebakcommon.Checker, err error) {
+		mutex.Lock()
+		defer mutex.Unlock()
 		if n == 1 {
 			defer wg.Done()
 		}
@@ -446,7 +448,10 @@ func TestMemoryNetworkHandleMessageAddBallot(t *testing.T) {
 		},
 	}
 
+	var mutex = &sync.Mutex{}
 	var deferFunc sebakcommon.CheckerDeferFunc = func(n int, c sebakcommon.Checker, err error) {
+		mutex.Lock()
+		defer mutex.Unlock()
 		if n == 1 {
 			defer wg.Done()
 		}

@@ -46,6 +46,7 @@ func TestNodeRunnerPayment(t *testing.T) {
 
 	var dones []VotingStateStaging
 	var finished []string
+	var mutex = &sync.Mutex{}
 	var deferFunc sebakcommon.CheckerDeferFunc = func(n int, c sebakcommon.Checker, err error) {
 		if err == nil {
 			return
@@ -54,6 +55,9 @@ func TestNodeRunnerPayment(t *testing.T) {
 		if _, ok := err.(sebakcommon.CheckerErrorStop); ok {
 			return
 		}
+
+		mutex.Lock()
+		defer mutex.Unlock()
 
 		checker := c.(*NodeRunnerHandleBallotChecker)
 		if _, found := sebakcommon.InStringArray(finished, checker.LocalNode.Alias()); found {
@@ -129,6 +133,7 @@ func doConsensus(nodeRunners []*NodeRunner, tx Transaction) []VotingStateStaging
 
 	var dones []VotingStateStaging
 	var finished []string
+	var mutex = &sync.Mutex{}
 	var ballotDeferFunc sebakcommon.CheckerDeferFunc = func(n int, c sebakcommon.Checker, err error) {
 		if err == nil {
 			return
@@ -137,6 +142,9 @@ func doConsensus(nodeRunners []*NodeRunner, tx Transaction) []VotingStateStaging
 		if _, ok := err.(sebakcommon.CheckerErrorStop); ok {
 			return
 		}
+
+		mutex.Lock()
+		defer mutex.Unlock()
 
 		checker := c.(*NodeRunnerHandleBallotChecker)
 		if _, found := sebakcommon.InStringArray(finished, checker.LocalNode.Alias()); found {

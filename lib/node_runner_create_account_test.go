@@ -40,6 +40,7 @@ func TestNodeRunnerCreateAccount(t *testing.T) {
 
 	var dones []VotingStateStaging
 	var finished []string
+	var mutex = &sync.Mutex{}
 	var deferFunc sebakcommon.CheckerDeferFunc = func(n int, c sebakcommon.Checker, err error) {
 		if err == nil {
 			return
@@ -48,6 +49,9 @@ func TestNodeRunnerCreateAccount(t *testing.T) {
 		if _, ok := err.(sebakcommon.CheckerErrorStop); ok {
 			return
 		}
+
+		mutex.Lock()
+		defer mutex.Unlock()
 
 		checker := c.(*NodeRunnerHandleBallotChecker)
 		if _, found := sebakcommon.InStringArray(finished, checker.LocalNode.Alias()); found {
@@ -137,6 +141,7 @@ func TestNodeRunnerCreateAccountInvalidCheckpoint(t *testing.T) {
 
 	var dones []VotingStateStaging
 	var finished []string
+	var mutex = &sync.Mutex{}
 	var deferFunc sebakcommon.CheckerDeferFunc = func(n int, c sebakcommon.Checker, err error) {
 		if err == nil {
 			return
@@ -145,6 +150,9 @@ func TestNodeRunnerCreateAccountInvalidCheckpoint(t *testing.T) {
 		if _, ok := err.(sebakcommon.CheckerErrorStop); ok {
 			return
 		}
+
+		mutex.Lock()
+		defer mutex.Unlock()
 
 		checker := c.(*NodeRunnerHandleBallotChecker)
 		if _, found := sebakcommon.InStringArray(finished, checker.LocalNode.Alias()); found {
@@ -228,6 +236,7 @@ func TestNodeRunnerCreateAccountSufficient(t *testing.T) {
 
 	var dones []VotingStateStaging
 	var finished []string
+	var mutex = &sync.Mutex{}
 	var deferFunc sebakcommon.CheckerDeferFunc = func(n int, c sebakcommon.Checker, err error) {
 		if err == nil {
 			return
@@ -236,6 +245,9 @@ func TestNodeRunnerCreateAccountSufficient(t *testing.T) {
 		if _, ok := err.(sebakcommon.CheckerErrorStop); ok {
 			return
 		}
+
+		mutex.Lock()
+		defer mutex.Unlock()
 
 		checker := c.(*NodeRunnerHandleBallotChecker)
 		if _, found := sebakcommon.InStringArray(finished, checker.LocalNode.Alias()); found {
@@ -321,6 +333,7 @@ func TestNodeRunnerCreateAccountInsufficient(t *testing.T) {
 
 	var dones []VotingStateStaging
 	var finished []string
+	var mutex = &sync.Mutex{}
 	var deferFunc sebakcommon.CheckerDeferFunc = func(n int, c sebakcommon.Checker, err error) {
 		if err == nil {
 			return
@@ -329,6 +342,9 @@ func TestNodeRunnerCreateAccountInsufficient(t *testing.T) {
 		if _, ok := err.(sebakcommon.CheckerErrorStop); ok {
 			return
 		}
+
+		mutex.Lock()
+		defer mutex.Unlock()
 
 		checker := c.(*NodeRunnerHandleBallotChecker)
 		if _, found := sebakcommon.InStringArray(finished, checker.LocalNode.Alias()); found {
