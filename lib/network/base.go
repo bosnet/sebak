@@ -52,6 +52,7 @@ type NetworkClient interface {
 	GetNodeInfo() ([]byte, error)
 	SendMessage(sebakcommon.Serializable) ([]byte, error)
 	SendBallot(sebakcommon.Serializable) ([]byte, error)
+	SendRoundBallot(sebakcommon.Serializable) ([]byte, error)
 }
 
 type MessageType string
@@ -64,6 +65,7 @@ const (
 	MessageFromClient  MessageType = "message"
 	ConnectMessage                 = "connect"
 	BallotMessage                  = "ballot"
+	RoundBallotMessage             = "round-ballot"
 	GetNodeInfoMessage             = "get-node-info"
 )
 
