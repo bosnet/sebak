@@ -144,6 +144,30 @@ func (c *HTTP2NetworkClient) SendBallot(message sebakcommon.Serializable) (retBo
 	return
 }
 
+func (c *HTTP2NetworkClient) SendRoundBallot(message sebakcommon.Serializable) (retBody []byte, err error) {
+	headers := c.DefaultHeaders()
+	headers.Set("Content-Type", "application/json")
+
+	var body []byte
+	if body, err = message.Serialize(); err != nil {
+		return
+	}
+
+	u := c.resolvePath(UrlPathPrefixNode + "/round-ballot")
+
+	var response *http.Response
+	response, err = c.client.Post(u.String(), body, headers)
+	if err != nil {
+		return
+	}
+	defer response.Body.Close()
+	if response.StatusCode == http.StatusOK {
+		retBody, err = ioutil.ReadAll(response.Body)
+	}
+
+	return
+}
+
 ///
 /// Perform a raw Get request on this peer
 ///
