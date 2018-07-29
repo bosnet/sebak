@@ -51,3 +51,13 @@ func (m *MemoryTransportClient) SendBallot(message sebakcommon.Serializable) (bo
 
 	return
 }
+
+func (m *MemoryTransportClient) SendRoundBallot(message sebakcommon.Serializable) (body []byte, err error) {
+	var s []byte
+	if s, err = message.Serialize(); err != nil {
+		return
+	}
+	m.server.Send(RoundBallotMessage, s)
+
+	return
+}
