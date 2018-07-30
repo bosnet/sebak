@@ -2,7 +2,6 @@ package sebak
 
 import (
 	"errors"
-	"fmt"
 	"sort"
 
 	"boscoin.io/sebak/lib/common"
@@ -128,6 +127,7 @@ type ISAACRound struct {
 	TransactionPoolHashes  []string // Transaction.GetHash()
 	RunningRounds          map[ /* Round.Hash() */ string]*RunningRound
 	LatestConsensusedBlock Block
+	LatestRound            Round
 
 	Boxes *BallotBoxes
 }
@@ -303,7 +303,6 @@ func (is *ISAACRound) CloseBallotConsensus(ballot Ballot) (err error) {
 	tx := message.(Transaction)
 	is.TransactionPool[tx.GetHash()] = tx
 	is.TransactionPoolHashes = append(is.TransactionPoolHashes, tx.GetHash())
-	fmt.Println(tx)
 
 	is.Boxes.WaitingBox.RemoveVotingResult(vr) // TODO detect error
 	is.Boxes.RemoveVotingResult(vr)            // TODO detect error
@@ -315,6 +314,24 @@ func (is *ISAACRound) SetLatestConsensusedBlock(block Block) {
 	is.LatestConsensusedBlock = block
 }
 
+func (is *ISAACRound) SetLatestRound(round Round) {
+	is.LatestRound = round
+}
+
 func (is *ISAACRound) IsAvailableRound(round Round) bool {
-	return round.BlockHeight == is.LatestConsensusedBlock.Height
+	if round.BlockHeight != is.LatestConsensusedBlock.Height {
+		return false
+	}
+
+	if is.LatestRound.BlockHash == "" {
+		return true
+	}
+
+	if round.BlockHeight == is.LatestRound.BlockHeight {
+		if round.Number <= is.LatestRound.Number {
+			return false
+		}
+	}
+
+	return true
 }

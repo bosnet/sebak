@@ -109,6 +109,10 @@ func (rb *RoundBallot) SetReason(reason *sebakerror.Error) {
 	rb.B.Reason = reason
 }
 
+func (rb *RoundBallot) TransactionsLength() int {
+	return len(rb.B.Proposed.Transactions)
+}
+
 func (rb *RoundBallot) SetValidTransactions(validTransactions []string) {
 	rb.B.Proposed.ValidTransactions = validTransactions
 }

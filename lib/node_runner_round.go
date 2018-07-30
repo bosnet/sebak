@@ -363,6 +363,7 @@ func (nr *NodeRunnerRound) StartRound() {
 	}
 
 	nr.consensus.SetLatestConsensusedBlock(latestBlock)
+	nr.consensus.SetLatestRound(Round{})
 
 	ticker := time.NewTicker(time.Millisecond * 5)
 	for _ = range ticker.C {
@@ -428,7 +429,7 @@ func (nr *NodeRunnerRound) proposeNewRoundBallot(roundNumber uint64) (err error)
 	}
 
 	// collect incoming transactions from `TransactionPool`
-	nr.log.Debug("TransactionPool", "transactions", nr.Consensus().TransactionPoolHashes)
+	nr.log.Debug("new round proposed", "round", round)
 
 	var roundBallot *RoundBallot
 	roundBallot, err = NewRoundBallot(
