@@ -168,6 +168,7 @@ var DefaultRoundHandleRoundBallotCheckerFuncs = []sebakcommon.CheckerFunc{
 	CheckNodeRunnerRoundHandleRoundBallotAlreadyFinished,
 	CheckNodeRunnerRoundHandleRoundBallotAlreadyVoted,
 	CheckNodeRunnerRoundHandleRoundBallotAddRunningRounds,
+	CheckNodeRunnerRoundHandleRoundBallotIsSameProposer,
 	CheckNodeRunnerRoundHandleRoundBallotValidateTransactions,
 	CheckNodeRunnerRoundHandleRoundBallotBroadcast,
 	CheckNodeRunnerRoundHandleRoundBallotStore,
@@ -257,7 +258,7 @@ func (nr *NodeRunnerRound) handleMessage() {
 				nr.log.Debug("consensus finished", "message", message.Head(50), "error", err)
 				continue
 			}
-			nr.log.Error("failed to handle sebaknetwork.Message", "message", message.Head(50), "error", err)
+			nr.log.Debug("failed to handle sebaknetwork.Message", "message", message.Head(50), "error", err)
 		}
 	}
 }
@@ -298,10 +299,10 @@ func (nr *NodeRunnerRound) handleBallotMessage(message sebaknetwork.Message) (er
 	}
 
 	if err = sebakcommon.RunChecker(checker, nr.handleBallotCheckerDeferFunc); err != nil {
-		if _, ok := err.(sebakcommon.CheckerErrorStop); !ok {
-			nr.log.Error("failed to handle ballot", "error", err)
-		} else {
+		if _, ok := err.(sebakcommon.CheckerErrorStop); ok {
 			nr.log.Debug("stop handling ballot", "reason", err)
+		} else {
+			nr.log.Debug("failed to handle ballot", "error", err)
 		}
 	}
 
@@ -345,9 +346,10 @@ func (nr *NodeRunnerRound) handleRoundBallotMessage(message sebaknetwork.Message
 	}
 	err = sebakcommon.RunChecker(checker, nr.handleRoundBallotCheckerDeferFunc)
 	if err != nil {
-		if _, ok := err.(sebakcommon.CheckerErrorStop); !ok {
-			nr.log.Error("stop handling round-ballot", "error", err)
-			return
+		if _, ok := err.(sebakcommon.CheckerErrorStop); ok {
+			nr.log.Debug("stop handling round-ballot", "reason", err)
+		} else {
+			nr.log.Debug("failed to handle round-ballot", "error", err)
 		}
 	}
 
@@ -396,12 +398,10 @@ func (nr *NodeRunnerRound) startRound() {
 }
 
 func (nr *NodeRunnerRound) StartNewRound(roundNumber uint64) {
-	candidates := nr.connectionManager.AllConnected()
-	candidates = append(candidates, nr.Node().Address())
-
+	candidates := nr.connectionManager.RoundCandidates()
 	proposer := nr.Consensus().CalculateProposer(
 		candidates,
-		nr.Consensus().LatestConsensusedBlock.Height,
+		nr.Consensus().LatestConfirmedBlock.Height,
 		roundNumber,
 	)
 	log.Debug("calculated proposer", "proposer", proposer, "candidates", candidates)
@@ -424,8 +424,8 @@ func (nr *NodeRunnerRound) proposeNewRoundBallot(roundNumber uint64) (err error)
 	// start new round
 	round := Round{
 		Number:      roundNumber,
-		BlockHeight: nr.Consensus().LatestConsensusedBlock.Height,
-		BlockHash:   nr.Consensus().LatestConsensusedBlock.Hash,
+		BlockHeight: nr.Consensus().LatestConfirmedBlock.Height,
+		BlockHash:   nr.Consensus().LatestConfirmedBlock.Hash,
 	}
 
 	// collect incoming transactions from `TransactionPool`
@@ -454,7 +454,7 @@ func (nr *NodeRunnerRound) proposeNewRoundBallot(roundNumber uint64) (err error)
 
 	nr.ConnectionManager().Broadcast(roundBallot)
 
-	runningRound := NewRunningRound(*roundBallot)
+	runningRound := NewRunningRound(nr.localNode.Address(), *roundBallot)
 	rr := nr.Consensus().RunningRounds
 	rr[round.Hash()] = runningRound
 

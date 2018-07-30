@@ -108,6 +108,10 @@ func (c *ConnectionManager) AllConnected() []string {
 	return connected
 }
 
+func (c *ConnectionManager) RoundCandidates() []string {
+	return append(c.AllConnected(), c.localNode.Address())
+}
+
 func (c *ConnectionManager) CountConnected() int {
 	return len(c.AllConnected())
 }
