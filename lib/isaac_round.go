@@ -1,6 +1,7 @@
 package sebak
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 
@@ -120,13 +121,13 @@ func (rr *RunningRound) Vote(rb RoundBallot) (isNew bool) {
 type ISAACRound struct {
 	sebakcommon.SafeLock
 
-	NetworkID             []byte
-	Node                  *sebaknode.LocalNode
-	VotingThresholdPolicy sebakcommon.VotingThresholdPolicy
-	TransactionPool       map[ /* Transaction.GetHash() */ string]Transaction
-	TransactionPoolHashes []string // Transaction.GetHash()
-	RunningRounds         map[ /* Round.Hash() */ string]*RunningRound
-	LatestRounds          map[ /* Round.Hash() */ string]Round
+	NetworkID              []byte
+	Node                   *sebaknode.LocalNode
+	VotingThresholdPolicy  sebakcommon.VotingThresholdPolicy
+	TransactionPool        map[ /* Transaction.GetHash() */ string]Transaction
+	TransactionPoolHashes  []string // Transaction.GetHash()
+	RunningRounds          map[ /* Round.Hash() */ string]*RunningRound
+	LatestConsensusedBlock Block
 
 	Boxes *BallotBoxes
 }
@@ -139,21 +140,20 @@ func NewISAACRound(networkID []byte, node *sebaknode.LocalNode, votingThresholdP
 		TransactionPool:       map[string]Transaction{},
 		RunningRounds:         map[string]*RunningRound{},
 		Boxes:                 NewBallotBoxes(),
-		LatestRounds:          map[string]Round{},
 	}
 
 	return
 }
 
-func (i *ISAACRound) CalculateProposer(connected []string, roundNumber uint64) string {
-	i.Lock()
-	defer i.Unlock()
+func (is *ISAACRound) CalculateProposer(connected []string, blockHeight uint64, roundNumber uint64) string {
+	is.Lock()
+	defer is.Unlock()
 
 	addresses := sort.StringSlice(connected)
 	addresses.Sort()
 
 	// TODO This is simple version to select proposer node.
-	return addresses[roundNumber%uint64(len(addresses))]
+	return addresses[(blockHeight+roundNumber)%uint64(len(addresses))]
 }
 
 func (is *ISAACRound) ReceiveMessage(m sebakcommon.Message) (ballot Ballot, err error) {
@@ -243,25 +243,29 @@ func (is *ISAACRound) receiveBallotStateINIT(ballot Ballot) (vs VotingStateStagi
 	return
 }
 
-func (is *ISAACRound) CloseRoundBallotConsensus(rb RoundBallot, vh VotingHole) (err error) {
+func (is *ISAACRound) CloseRoundBallotConsensus(proposer string, round Round, vh VotingHole) (err error) {
 	is.Lock()
 	defer is.Unlock()
 
-	roundHash := rb.B.Proposed.Round.Hash()
+	if vh == VotingNOTYET {
+		err = errors.New("invalid VotingHole, `VotingNOTYET`")
+		return
+	}
+
+	roundHash := round.Hash()
 	rr, found := is.RunningRounds[roundHash]
 	if !found {
 		return
 	}
-	is.LatestRounds[roundHash] = rb.B.Proposed.Round
 
 	if vh == VotingNO {
-		delete(rr.Transactions, rb.B.Proposed.Proposer)
-		delete(rr.Voted, rb.B.Proposed.Proposer)
+		delete(rr.Transactions, proposer)
+		delete(rr.Voted, proposer)
 
 		return
 	}
 
-	for _, txHash := range rr.Transactions[rb.B.Proposed.Proposer] {
+	for _, txHash := range rr.Transactions[proposer] {
 		var index int
 		var found bool
 		if index, found = sebakcommon.InStringArray(is.TransactionPoolHashes, txHash); !found {
@@ -272,6 +276,7 @@ func (is *ISAACRound) CloseRoundBallotConsensus(rb RoundBallot, vh VotingHole) (
 	}
 
 	delete(is.RunningRounds, roundHash)
+
 	return
 }
 
@@ -304,4 +309,12 @@ func (is *ISAACRound) CloseBallotConsensus(ballot Ballot) (err error) {
 	is.Boxes.RemoveVotingResult(vr)            // TODO detect error
 
 	return
+}
+
+func (is *ISAACRound) SetLatestConsensusedBlock(block Block) {
+	is.LatestConsensusedBlock = block
+}
+
+func (is *ISAACRound) IsAvailableRound(round Round) bool {
+	return round.BlockHeight == is.LatestConsensusedBlock.Height
 }

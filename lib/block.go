@@ -25,6 +25,28 @@ type Block struct {
 
 	Transactions []string /* []Transaction.GetHash() */
 	Proposer     string   /* Node.Address() */
+	Round        Round
+}
+
+func MakeGenesisBlock(st *sebakstorage.LevelDBBackend, account BlockAccount) Block {
+	proposer := "" // null proposer
+	round := Round{
+		Number:      0,
+		BlockHeight: 0,
+		BlockHash:   base58.Encode(sebakcommon.MustMakeObjectHash(account)),
+	}
+	transactions := []string{}
+	confirmed := ""
+
+	b := NewBlock(
+		proposer,
+		round,
+		transactions,
+		confirmed,
+	)
+	b.Save(st)
+
+	return b
 }
 
 func NewBlock(propser string, round Round, transactions []string, confirmed string) Block {
@@ -33,6 +55,7 @@ func NewBlock(propser string, round Round, transactions []string, confirmed stri
 		PreviousHash: round.BlockHash,
 		Transactions: transactions,
 		Proposer:     propser,
+		Round:        round,
 		Confirmed:    confirmed,
 	}
 
@@ -120,4 +143,18 @@ func GetBlocksByConfirmed(st *sebakstorage.LevelDBBackend, reverse bool) (
 	iterFunc, closeFunc := st.GetIterator(BlockPrefixConfirmed, reverse)
 
 	return LoadBlocksInsideIterator(st, iterFunc, closeFunc)
+}
+
+func GetLatestBlock(st *sebakstorage.LevelDBBackend) (b Block, err error) {
+	// get latest blocks
+	iterFunc, closeFunc := GetBlocksByConfirmed(st, true)
+	b, _ = iterFunc()
+	closeFunc()
+
+	if b.Hash == "" {
+		err = sebakerror.ErrorBlockNotFound
+		return
+	}
+
+	return
 }

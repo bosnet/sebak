@@ -37,7 +37,10 @@ func createNodeRunnerRounds(n int) []*NodeRunnerRound {
 		p.SetValidators(len(v.GetValidators()) + 1)
 		is, _ := NewISAACRound(networkID, v, p)
 		st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
-		nr := NewNodeRunnerRound(string(networkID), v, p, ns[i], is, st)
+		nr, err := NewNodeRunnerRound(string(networkID), v, p, ns[i], is, st)
+		if err != nil {
+			panic(err)
+		}
 		nodeRunners = append(nodeRunners, nr)
 	}
 
