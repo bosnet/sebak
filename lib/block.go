@@ -66,10 +66,10 @@ func NewBlock(propser string, round Round, transactions []string, confirmed stri
 
 func NewBlockFromRoundBallot(roundBallot RoundBallot) Block {
 	return NewBlock(
-		roundBallot.B.Proposed.Proposer,
-		roundBallot.B.Proposed.Round,
-		roundBallot.B.Proposed.Transactions,
-		roundBallot.B.Proposed.Confirmed,
+		roundBallot.Proposer(),
+		roundBallot.Round(),
+		roundBallot.ValidTransactions(),
+		roundBallot.ProposerConfirmed(),
 	)
 }
 

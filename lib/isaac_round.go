@@ -9,39 +9,9 @@ import (
 	"boscoin.io/sebak/lib/node"
 )
 
-type RunningRound struct {
-	sebakcommon.SafeLock
-
-	Round        Round
-	Transactions map[ /* Proposer */ string][]string /* Transaction.Hash */
-	Voted        map[ /* Proposer */ string]RoundVote
-}
-
-func NewRunningRound(rb RoundBallot) *RunningRound {
-	transactions := map[string][]string{
-		rb.B.Proposed.Proposer: rb.B.Proposed.Transactions,
-	}
-
-	voted := map[string]RoundVote{
-		rb.B.Proposed.Proposer: RoundVote{
-			rb.B.Source: rb.B.Vote,
-		},
-	}
-
-	if !rb.IsFromProposer() {
-		voted[rb.B.Proposed.Proposer][rb.B.Proposed.Proposer] = VotingYES
-	}
-
-	return &RunningRound{
-		Round:        rb.B.Proposed.Round,
-		Transactions: transactions,
-		Voted:        voted,
-	}
-}
-
 type RoundVote map[ /* Node.Address() */ string]VotingHole
 
-func (rv RoundVote) CanGetResult(policy sebakcommon.VotingThresholdPolicy) (VotingHole, bool) {
+func (rv RoundVote) CanGetVotingResult(policy sebakcommon.VotingThresholdPolicy) (VotingHole, bool) {
 	threshold := policy.Threshold(sebakcommon.BallotStateACCEPT)
 	if threshold < 1 {
 		return VotingNOTYET, false
@@ -84,6 +54,37 @@ func (rv RoundVote) CanGetResult(policy sebakcommon.VotingThresholdPolicy) (Voti
 	return VotingNOTYET, false
 }
 
+type RunningRound struct {
+	sebakcommon.SafeLock
+
+	Round        Round
+	Proposer     string                              // LocalNode's `Proposer`
+	Transactions map[ /* Proposer */ string][]string /* Transaction.Hash */
+	Voted        map[ /* Proposer */ string]RoundVote
+}
+
+func NewRunningRound(proposer string, rb RoundBallot) *RunningRound {
+	transactions := map[string][]string{
+		rb.Proposer(): rb.Transactions(),
+	}
+
+	voted := map[string]RoundVote{
+		rb.Proposer(): RoundVote{
+			rb.Source(): rb.Vote(),
+		},
+	}
+
+	if !rb.IsFromProposer() {
+		voted[rb.Proposer()][rb.Proposer()] = VotingYES
+	}
+
+	return &RunningRound{
+		Round:        rb.Round(),
+		Transactions: transactions,
+		Voted:        voted,
+	}
+}
+
 func (rr *RunningRound) RoundVote(proposer string) (rv RoundVote, err error) {
 	var found bool
 	rv, found = rr.Voted[proposer]
@@ -95,12 +96,12 @@ func (rr *RunningRound) RoundVote(proposer string) (rv RoundVote, err error) {
 }
 
 func (rr *RunningRound) IsVoted(rb RoundBallot) bool {
-	roundVote, err := rr.RoundVote(rb.B.Proposed.Proposer)
+	roundVote, err := rr.RoundVote(rb.Proposer())
 	if err != nil {
 		return false
 	}
 
-	_, voted := roundVote[rb.B.Source]
+	_, voted := roundVote[rb.Source()]
 	return voted
 }
 
@@ -108,26 +109,26 @@ func (rr *RunningRound) Vote(rb RoundBallot) (isNew bool) {
 	rr.Lock()
 	defer rr.Unlock()
 
-	if _, found := rr.Voted[rb.B.Proposed.Proposer]; !found {
-		rr.Voted[rb.B.Proposed.Proposer] = RoundVote{}
+	if _, found := rr.Voted[rb.Proposer()]; !found {
+		rr.Voted[rb.Proposer()] = RoundVote{}
 		isNew = true
 	}
 
-	rr.Voted[rb.B.Proposed.Proposer][rb.B.Source] = rb.B.Vote
+	rr.Voted[rb.Proposer()][rb.Source()] = rb.Vote()
 	return
 }
 
 type ISAACRound struct {
 	sebakcommon.SafeLock
 
-	NetworkID              []byte
-	Node                   *sebaknode.LocalNode
-	VotingThresholdPolicy  sebakcommon.VotingThresholdPolicy
-	TransactionPool        map[ /* Transaction.GetHash() */ string]Transaction
-	TransactionPoolHashes  []string // Transaction.GetHash()
-	RunningRounds          map[ /* Round.Hash() */ string]*RunningRound
-	LatestConsensusedBlock Block
-	LatestRound            Round
+	NetworkID             []byte
+	Node                  *sebaknode.LocalNode
+	VotingThresholdPolicy sebakcommon.VotingThresholdPolicy
+	TransactionPool       map[ /* Transaction.GetHash() */ string]Transaction
+	TransactionPoolHashes []string // Transaction.GetHash()
+	RunningRounds         map[ /* Round.Hash() */ string]*RunningRound
+	LatestConfirmedBlock  Block
+	LatestRound           Round
 
 	Boxes *BallotBoxes
 }
@@ -311,7 +312,7 @@ func (is *ISAACRound) CloseBallotConsensus(ballot Ballot) (err error) {
 }
 
 func (is *ISAACRound) SetLatestConsensusedBlock(block Block) {
-	is.LatestConsensusedBlock = block
+	is.LatestConfirmedBlock = block
 }
 
 func (is *ISAACRound) SetLatestRound(round Round) {
@@ -319,7 +320,7 @@ func (is *ISAACRound) SetLatestRound(round Round) {
 }
 
 func (is *ISAACRound) IsAvailableRound(round Round) bool {
-	if round.BlockHeight != is.LatestConsensusedBlock.Height {
+	if round.BlockHeight != is.LatestConfirmedBlock.Height {
 		return false
 	}
 
