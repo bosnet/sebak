@@ -295,7 +295,7 @@ func CheckNodeRunnerRoundHandleRoundBallotUnmarshal(c sebakcommon.Checker, args 
 func CheckNodeRunnerRoundHandleRoundBallotAlreadyFinished(c sebakcommon.Checker, args ...interface{}) (err error) {
 	checker := c.(*NodeRunnerRoundHandleRoundBallotChecker)
 
-	round := checker.RoundBallot.B.Proposed.Round
+	round := checker.RoundBallot.Round()
 	if !checker.NodeRunner.Consensus().IsAvailableRound(round) {
 		err = errors.New("round-ballot: already finished")
 		checker.NodeRunner.Log().Debug("round-ballot already finished", "round", round)
@@ -311,7 +311,7 @@ func CheckNodeRunnerRoundHandleRoundBallotAlreadyVoted(c sebakcommon.Checker, ar
 
 	var found bool
 	var runningRound *RunningRound
-	if runningRound, found = rr[checker.RoundBallot.B.Proposed.Round.Hash()]; !found {
+	if runningRound, found = rr[checker.RoundBallot.Round().Hash()]; !found {
 		return
 	}
 
@@ -325,7 +325,7 @@ func CheckNodeRunnerRoundHandleRoundBallotAlreadyVoted(c sebakcommon.Checker, ar
 func CheckNodeRunnerRoundHandleRoundBallotAddRunningRounds(c sebakcommon.Checker, args ...interface{}) (err error) {
 	checker := c.(*NodeRunnerRoundHandleRoundBallotChecker)
 
-	roundHash := checker.RoundBallot.B.Proposed.Round.Hash()
+	roundHash := checker.RoundBallot.Round().Hash()
 	rr := checker.NodeRunner.Consensus().RunningRounds
 
 	var isNew bool
@@ -340,7 +340,7 @@ func CheckNodeRunnerRoundHandleRoundBallotAddRunningRounds(c sebakcommon.Checker
 	}
 
 	checker.IsNew = isNew
-	checker.RoundVote, err = runningRound.RoundVote(checker.RoundBallot.B.Proposed.Proposer)
+	checker.RoundVote, err = runningRound.RoundVote(checker.RoundBallot.Proposer())
 	if err != nil {
 		return
 	}
@@ -371,13 +371,12 @@ func CheckNodeRunnerRoundHandleRoundBallotBroadcast(c sebakcommon.Checker, args 
 	}
 
 	newRoundBallot := checker.RoundBallot
-
 	newRoundBallot.SetSource(checker.LocalNode.Address())
 	newRoundBallot.SetVote(checker.VotingHole)
 	newRoundBallot.Sign(checker.LocalNode.Keypair(), checker.NetworkID)
 
 	rr := checker.NodeRunner.Consensus().RunningRounds
-	if runningRound, found := rr[checker.RoundBallot.B.Proposed.Round.Hash()]; !found {
+	if runningRound, found := rr[checker.RoundBallot.Round().Hash()]; !found {
 		err = errors.New("RunningRound not found")
 		return
 	} else {
@@ -393,13 +392,13 @@ func CheckNodeRunnerRoundHandleRoundBallotBroadcast(c sebakcommon.Checker, args 
 func CheckNodeRunnerRoundHandleRoundBallotStore(c sebakcommon.Checker, args ...interface{}) (err error) {
 	checker := c.(*NodeRunnerRoundHandleRoundBallotChecker)
 
-	result, ended := checker.RoundVote.CanGetResult(checker.NodeRunner.Consensus().VotingThresholdPolicy)
+	result, finished := checker.RoundVote.CanGetResult(checker.NodeRunner.Consensus().VotingThresholdPolicy)
 
-	if !ended {
+	if !finished {
 		return
 	}
 
-	checker.NodeRunner.Consensus().SetLatestRound(checker.RoundBallot.B.Proposed.Round)
+	checker.NodeRunner.Consensus().SetLatestRound(checker.RoundBallot.Round())
 
 	confirmed := result == VotingYES
 	if result == VotingYES {
@@ -407,13 +406,7 @@ func CheckNodeRunnerRoundHandleRoundBallotStore(c sebakcommon.Checker, args ...i
 			confirmed = false
 			checker.NodeRunner.Log().Debug("round-ballot was finished, but not stored because empty transactions")
 		} else {
-			// TODO store as `Block`
-			block := NewBlock(
-				checker.RoundBallot.B.Proposed.Proposer,
-				checker.RoundBallot.B.Proposed.Round,
-				checker.RoundBallot.B.Proposed.Transactions,
-				checker.RoundBallot.B.Proposed.Confirmed,
-			)
+			block := NewBlockFromRoundBallot(checker.RoundBallot)
 			if err = block.Save(checker.NodeRunner.Storage()); err != nil {
 				return
 			}
@@ -428,11 +421,11 @@ func CheckNodeRunnerRoundHandleRoundBallotStore(c sebakcommon.Checker, args ...i
 	}
 
 	checker.NodeRunner.Consensus().CloseRoundBallotConsensus(
-		checker.RoundBallot.B.Proposed.Proposer,
-		checker.RoundBallot.B.Proposed.Round,
+		checker.RoundBallot.Proposer(),
+		checker.RoundBallot.Round(),
 		result,
 	)
-	checker.NodeRunner.CloseConsensus(checker.RoundBallot.B.Proposed.Round, confirmed)
+	checker.NodeRunner.CloseConsensus(checker.RoundBallot.Round(), confirmed)
 
 	return
 }
