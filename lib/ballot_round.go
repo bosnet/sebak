@@ -65,6 +65,14 @@ func (rb RoundBallot) Source() string {
 	return rb.B.Source
 }
 
+func (rb RoundBallot) Round() Round {
+	return rb.B.Proposed.Round
+}
+
+func (rb RoundBallot) Proposer() string {
+	return rb.B.Proposed.Proposer
+}
+
 type RoundBallotHeader struct {
 	Hash              string `json:"hash"`               // hash of `RoundBallotBody`
 	Signature         string `json:"signature"`          // signed by node(sender) of <networkID> + `Hash`
