@@ -73,28 +73,47 @@ func (rb RoundBallot) Proposer() string {
 	return rb.B.Proposed.Proposer
 }
 
+func (rb RoundBallot) Transactions() []string {
+	return rb.B.Proposed.Transactions
+}
+
+func (rb RoundBallot) ValidTransactions() []string {
+	return rb.B.Proposed.ValidTransactions
+}
+
+func (rb RoundBallot) Confirmed() string {
+	return rb.B.Confirmed
+}
+
+func (rb RoundBallot) ProposerConfirmed() string {
+	return rb.B.Proposed.Confirmed
+}
+
+func (rb RoundBallot) Vote() VotingHole {
+	return rb.B.Vote
+}
+
 type RoundBallotHeader struct {
 	Hash              string `json:"hash"`               // hash of `RoundBallotBody`
-	Signature         string `json:"signature"`          // signed by node(sender) of <networkID> + `Hash`
+	Signature         string `json:"signature"`          // signed by source node of <networkID> + `Hash`
 	ProposerSignature string `json:"proposer-signature"` // signed by proposer of <networkID> + `Hash` of `RoundBallotBodyProposed`
 }
 
 type RoundBallotBodyProposed struct {
-	Confirmed         string   `json:"created"`  // created time, ISO8601
-	Proposer          string   `json:"proposer"` // `Node.Address`
+	Confirmed         string   `json:"confirmed"` // created time, ISO8601
+	Proposer          string   `json:"proposer"`
 	Round             Round    `json:"round"`
 	Transactions      []string `json:"transactions"`
 	ValidTransactions []string `json:"valid-transactions"`
 }
 
 type RoundBallotBody struct {
-	//State            `json:"state"` sebakcommon.BallotState
-	Created  string                  `json:"created"` // created time, ISO8601
-	Proposed RoundBallotBodyProposed `json:"proposed"`
-	Source   string                  `json:"node"` // `Node.Address`
+	Confirmed string                  `json:"confirmed"` // created time, ISO8601
+	Proposed  RoundBallotBodyProposed `json:"proposed"`
+	Source    string                  `json:"source"`
 
 	Vote   VotingHole        `json:"vote"`
-	Reason *sebakerror.Error `json:"reaons"`
+	Reason *sebakerror.Error `json:"reason"`
 }
 
 func (rbody RoundBallotBody) MakeHash() []byte {
@@ -117,8 +136,8 @@ func (rb *RoundBallot) SetReason(reason *sebakerror.Error) {
 	rb.B.Reason = reason
 }
 
-func (rb *RoundBallot) TransactionsLength() int {
-	return len(rb.B.Proposed.Transactions)
+func (rb *RoundBallot) ValidTransactionsLength() int {
+	return len(rb.B.Proposed.ValidTransactions)
 }
 
 func (rb *RoundBallot) SetValidTransactions(validTransactions []string) {
@@ -133,7 +152,7 @@ func (rb *RoundBallot) Sign(kp keypair.KP, networkID []byte) {
 		rb.H.ProposerSignature = base58.Encode(signature)
 	}
 
-	rb.B.Created = sebakcommon.NowISO8601()
+	rb.B.Confirmed = sebakcommon.NowISO8601()
 	rb.B.Source = kp.Address()
 	rb.H.Hash = rb.B.MakeHashString()
 	signature, _ := kp.Sign(append(networkID, []byte(rb.H.Hash)...))
