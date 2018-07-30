@@ -296,7 +296,7 @@ func CheckNodeRunnerRoundHandleRoundBallotAlreadyFinished(c sebakcommon.Checker,
 	checker := c.(*NodeRunnerRoundHandleRoundBallotChecker)
 
 	round := checker.RoundBallot.B.Proposed.Round
-	if _, found := checker.NodeRunner.Consensus().LatestRounds[round.Hash()]; found {
+	if !checker.NodeRunner.Consensus().IsAvailableRound(round) {
 		err = errors.New("round-ballot: already finished")
 		checker.NodeRunner.Log().Debug("round-ballot already finished", "round", round)
 		return
@@ -360,42 +360,12 @@ func CheckNodeRunnerRoundHandleRoundBallotValidateTransactions(c sebakcommon.Che
 	// TODO check transactions are valid or not
 	// TODO check the proposed ValidTransactions is valid
 
+	if len(checker.RoundBallot.B.Proposed.Transactions) < 1 {
+		checker.VotingHole = VotingNO
+		return
+	}
+
 	checker.VotingHole = VotingYES
-	return
-}
-
-func CheckNodeRunnerRoundHandleRoundBallotStore(c sebakcommon.Checker, args ...interface{}) (err error) {
-	checker := c.(*NodeRunnerRoundHandleRoundBallotChecker)
-	if checker.IsNew {
-		return
-	}
-
-	result, ended := checker.RoundVote.CanGetResult(checker.NodeRunner.Consensus().VotingThresholdPolicy)
-
-	if !ended {
-		return
-	}
-
-	if result == VotingYES {
-		// TODO store as `Block`
-		b := NewBlock(
-			checker.RoundBallot.B.Proposed.Proposer,
-			checker.RoundBallot.B.Proposed.Round,
-			checker.RoundBallot.B.Proposed.Transactions,
-			checker.RoundBallot.B.Proposed.Confirmed,
-		)
-		if err = b.Save(checker.NodeRunner.Storage()); err != nil {
-			return
-		}
-
-		checker.NodeRunner.Log().Debug("round-ballot was stored", "block", b)
-
-		err = sebakcommon.CheckerErrorStop{"round-ballot got consensus and will be stored"}
-	} else {
-		err = sebakcommon.CheckerErrorStop{"round-ballot got consensus"}
-	}
-
-	checker.NodeRunner.Consensus().CloseRoundBallotConsensus(checker.RoundBallot, result)
 	return
 }
 
@@ -411,7 +381,55 @@ func CheckNodeRunnerRoundHandleRoundBallotBroadcast(c sebakcommon.Checker, args 
 	newRoundBallot.SetVote(checker.VotingHole)
 	newRoundBallot.Sign(checker.LocalNode.Keypair(), checker.NetworkID)
 
+	rr := checker.NodeRunner.Consensus().RunningRounds
+	if runningRound, found := rr[checker.RoundBallot.B.Proposed.Round.Hash()]; !found {
+		err = errors.New("RunningRound not found")
+		return
+	} else {
+		runningRound.Vote(newRoundBallot)
+	}
+
 	checker.NodeRunner.ConnectionManager().Broadcast(newRoundBallot)
+	checker.NodeRunner.Log().Debug("round-ballot will be broadcasted", "round-ballot", newRoundBallot)
+
+	return
+}
+
+func CheckNodeRunnerRoundHandleRoundBallotStore(c sebakcommon.Checker, args ...interface{}) (err error) {
+	checker := c.(*NodeRunnerRoundHandleRoundBallotChecker)
+
+	result, ended := checker.RoundVote.CanGetResult(checker.NodeRunner.Consensus().VotingThresholdPolicy)
+
+	if !ended {
+		return
+	}
+
+	if result == VotingYES {
+		// TODO store as `Block`
+		block := NewBlock(
+			checker.RoundBallot.B.Proposed.Proposer,
+			checker.RoundBallot.B.Proposed.Round,
+			checker.RoundBallot.B.Proposed.Transactions,
+			checker.RoundBallot.B.Proposed.Confirmed,
+		)
+		if err = block.Save(checker.NodeRunner.Storage()); err != nil {
+			return
+		}
+
+		checker.NodeRunner.Consensus().SetLatestConsensusedBlock(block)
+		checker.NodeRunner.Log().Debug("round-ballot was stored", "block", block)
+
+		err = sebakcommon.CheckerErrorStop{"round-ballot got consensus and will be stored"}
+	} else {
+		err = sebakcommon.CheckerErrorStop{"round-ballot got consensus"}
+	}
+
+	checker.NodeRunner.Consensus().CloseRoundBallotConsensus(
+		checker.RoundBallot.B.Proposed.Proposer,
+		checker.RoundBallot.B.Proposed.Round,
+		result,
+	)
+	checker.NodeRunner.CloseConsensus(checker.RoundBallot.B.Proposed.Round, result == VotingYES)
 
 	return
 }
