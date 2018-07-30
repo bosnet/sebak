@@ -268,6 +268,10 @@ func (is *ISAACRound) SetLatestRound(round Round) {
 	is.LatestRound = round
 }
 
+func (is *ISAACRound) SetLatestRound(round Round) {
+	is.LatestRound = round
+}
+
 func (is *ISAACRound) IsAvailableRound(round Round) bool {
 	if round.BlockHeight != is.LatestConfirmedBlock.Height {
 		return false
