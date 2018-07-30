@@ -41,8 +41,8 @@ func NewNodeRunnerRound(
 	network sebaknetwork.Network,
 	consensus *ISAACRound,
 	storage *sebakstorage.LevelDBBackend,
-) *NodeRunnerRound {
-	nr := &NodeRunnerRound{
+) (nr *NodeRunnerRound, err error) {
+	nr = &NodeRunnerRound{
 		networkID: []byte(networkID),
 		localNode: localNode,
 		policy:    policy,
@@ -67,7 +67,7 @@ func NewNodeRunnerRound(
 	nr.SetHandleBallotFuncs(nil, nil, DefaultRoundHandleBallotCheckerFuncs...)
 	nr.SetHandleRoundBallotCheckerFuncs(nil, nil, DefaultRoundHandleRoundBallotCheckerFuncs...)
 
-	return nr
+	return
 }
 
 func (nr *NodeRunnerRound) Ready() {
@@ -169,8 +169,8 @@ var DefaultRoundHandleRoundBallotCheckerFuncs = []sebakcommon.CheckerFunc{
 	CheckNodeRunnerRoundHandleRoundBallotAlreadyVoted,
 	CheckNodeRunnerRoundHandleRoundBallotAddRunningRounds,
 	CheckNodeRunnerRoundHandleRoundBallotValidateTransactions,
-	CheckNodeRunnerRoundHandleRoundBallotStore,
 	CheckNodeRunnerRoundHandleRoundBallotBroadcast,
+	CheckNodeRunnerRoundHandleRoundBallotStore,
 }
 
 func (nr *NodeRunnerRound) SetHandleMessageFromClientCheckerFuncs(
@@ -349,15 +349,21 @@ func (nr *NodeRunnerRound) handleRoundBallotMessage(message sebaknetwork.Message
 			nr.log.Error("stop handling round-ballot", "error", err)
 			return
 		}
-
-		// start new round
-		go nr.startNewRound(0)
 	}
 
 	return
 }
 
 func (nr *NodeRunnerRound) StartRound() {
+	// get latest blocks
+	var err error
+	var latestBlock Block
+	if latestBlock, err = GetLatestBlock(nr.storage); err != nil {
+		panic(err)
+	}
+
+	nr.consensus.SetLatestConsensusedBlock(latestBlock)
+
 	ticker := time.NewTicker(time.Millisecond * 5)
 	for _ = range ticker.C {
 		var notFound bool
@@ -385,13 +391,18 @@ func (nr *NodeRunnerRound) startRound() {
 		return
 	}
 
-	nr.startNewRound(0)
+	nr.StartNewRound(0)
 }
 
-func (nr *NodeRunnerRound) startNewRound(roundNumber uint64) {
+func (nr *NodeRunnerRound) StartNewRound(roundNumber uint64) {
 	candidates := nr.connectionManager.AllConnected()
 	candidates = append(candidates, nr.Node().Address())
-	proposer := nr.Consensus().CalculateProposer(candidates, roundNumber)
+
+	proposer := nr.Consensus().CalculateProposer(
+		candidates,
+		nr.Consensus().LatestConsensusedBlock.Height,
+		roundNumber,
+	)
 	log.Debug("calculated proposer", "proposer", proposer, "candidates", candidates)
 
 	if proposer != nr.Node().Address() {
@@ -409,19 +420,11 @@ func (nr *NodeRunnerRound) startNewRound(roundNumber uint64) {
 }
 
 func (nr *NodeRunnerRound) proposeNewRoundBallot(roundNumber uint64) (err error) {
-	// get latest blocks
-	var latestBlock Block
-	iterFunc, closeFunc := GetBlocksByConfirmed(nr.storage, true)
-	latestBlock, _ = iterFunc()
-	closeFunc()
-
-	nr.log.Debug("get latest block", "block", latestBlock)
-
 	// start new round
 	round := Round{
 		Number:      roundNumber,
-		BlockHeight: latestBlock.Height,
-		BlockHash:   latestBlock.Hash,
+		BlockHeight: nr.Consensus().LatestConsensusedBlock.Height,
+		BlockHash:   nr.Consensus().LatestConsensusedBlock.Hash,
 	}
 
 	// collect incoming transactions from `TransactionPool`
@@ -457,4 +460,12 @@ func (nr *NodeRunnerRound) proposeNewRoundBallot(roundNumber uint64) (err error)
 	nr.Log().Debug("round-ballot broadcasted and voted", "runningRound", runningRound)
 
 	return
+}
+
+func (nr *NodeRunnerRound) CloseConsensus(round Round, confirmed bool) {
+	if confirmed {
+		go nr.StartNewRound(0)
+	} else {
+		go nr.StartNewRound(round.Number + 1)
+	}
 }

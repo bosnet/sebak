@@ -37,4 +37,5 @@ var (
 	ErrorBlockTransactionDoesNotExists    = NewError(134, "transaction does not exists in block")
 	ErrorBlockOperationDoesNotExists      = NewError(135, "operation does not exists in block")
 	ErrorRoundVoteNotFound                = NewError(136, "`RoundVote` not found")
+	ErrorBlockNotFound                    = NewError(137, "Block not found")
 )
