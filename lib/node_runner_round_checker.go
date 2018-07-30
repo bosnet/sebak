@@ -360,11 +360,6 @@ func CheckNodeRunnerRoundHandleRoundBallotValidateTransactions(c sebakcommon.Che
 	// TODO check transactions are valid or not
 	// TODO check the proposed ValidTransactions is valid
 
-	if len(checker.RoundBallot.B.Proposed.Transactions) < 1 {
-		checker.VotingHole = VotingNO
-		return
-	}
-
 	checker.VotingHole = VotingYES
 	return
 }
@@ -404,20 +399,28 @@ func CheckNodeRunnerRoundHandleRoundBallotStore(c sebakcommon.Checker, args ...i
 		return
 	}
 
-	if result == VotingYES {
-		// TODO store as `Block`
-		block := NewBlock(
-			checker.RoundBallot.B.Proposed.Proposer,
-			checker.RoundBallot.B.Proposed.Round,
-			checker.RoundBallot.B.Proposed.Transactions,
-			checker.RoundBallot.B.Proposed.Confirmed,
-		)
-		if err = block.Save(checker.NodeRunner.Storage()); err != nil {
-			return
-		}
+	checker.NodeRunner.Consensus().SetLatestRound(checker.RoundBallot.B.Proposed.Round)
 
-		checker.NodeRunner.Consensus().SetLatestConsensusedBlock(block)
-		checker.NodeRunner.Log().Debug("round-ballot was stored", "block", block)
+	confirmed := result == VotingYES
+	if result == VotingYES {
+		if checker.RoundBallot.TransactionsLength() < 1 {
+			confirmed = false
+			checker.NodeRunner.Log().Debug("round-ballot was finished, but not stored because empty transactions")
+		} else {
+			// TODO store as `Block`
+			block := NewBlock(
+				checker.RoundBallot.B.Proposed.Proposer,
+				checker.RoundBallot.B.Proposed.Round,
+				checker.RoundBallot.B.Proposed.Transactions,
+				checker.RoundBallot.B.Proposed.Confirmed,
+			)
+			if err = block.Save(checker.NodeRunner.Storage()); err != nil {
+				return
+			}
+
+			checker.NodeRunner.Consensus().SetLatestConsensusedBlock(block)
+			checker.NodeRunner.Log().Debug("round-ballot was stored", "block", block)
+		}
 
 		err = sebakcommon.CheckerErrorStop{"round-ballot got consensus and will be stored"}
 	} else {
@@ -429,7 +432,7 @@ func CheckNodeRunnerRoundHandleRoundBallotStore(c sebakcommon.Checker, args ...i
 		checker.RoundBallot.B.Proposed.Round,
 		result,
 	)
-	checker.NodeRunner.CloseConsensus(checker.RoundBallot.B.Proposed.Round, result == VotingYES)
+	checker.NodeRunner.CloseConsensus(checker.RoundBallot.B.Proposed.Round, confirmed)
 
 	return
 }
