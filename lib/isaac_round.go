@@ -141,7 +141,6 @@ func NewISAACRound(networkID []byte, node *sebaknode.LocalNode, votingThresholdP
 		TransactionPool:       map[string]Transaction{},
 		RunningRounds:         map[string]*RunningRound{},
 		Boxes:                 NewBallotBoxes(),
-		LatestRounds:          map[string]Round{},
 	}
 
 	return

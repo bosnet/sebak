@@ -400,6 +400,11 @@ func CheckNodeRunnerRoundHandleRoundBallotValidateTransactions(c sebakcommon.Che
 	// TODO check transactions are valid or not
 	// TODO check the proposed ValidTransactions is valid
 
+	if len(checker.RoundBallot.B.Proposed.Transactions) < 1 {
+		checker.VotingHole = VotingNO
+		return
+	}
+
 	checker.VotingHole = VotingYES
 	return
 }
