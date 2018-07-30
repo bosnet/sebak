@@ -64,6 +64,15 @@ func NewBlock(propser string, round Round, transactions []string, confirmed stri
 	return *b
 }
 
+func NewBlockFromRoundBallot(roundBallot RoundBallot) Block {
+	return NewBlock(
+		roundBallot.B.Proposed.Proposer,
+		roundBallot.B.Proposed.Round,
+		roundBallot.B.Proposed.Transactions,
+		roundBallot.B.Proposed.Confirmed,
+	)
+}
+
 func GetBlockKey(hash string) string {
 	return fmt.Sprintf("%s%s", BlockPrefixHash, hash)
 }
