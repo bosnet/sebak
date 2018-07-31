@@ -21,12 +21,10 @@ type Block struct {
 	Transactions []string /* []Transaction.GetHash() */
 	//PrevConsensusResult ConsensusResult
 
-	Height    uint64
+	Hash      string
 	Confirmed string
-
-	Transactions []string /* []Transaction.GetHash() */
-	Proposer     string   /* Node.Address() */
-	Round        Round
+	Proposer  string /* Node.Address() */
+	Round     Round
 }
 
 func MakeGenesisBlock(st *sebakstorage.LevelDBBackend, account BlockAccount) Block {
@@ -35,6 +33,7 @@ func MakeGenesisBlock(st *sebakstorage.LevelDBBackend, account BlockAccount) Blo
 		Number:      0,
 		BlockHeight: 0,
 		BlockHash:   base58.Encode(sebakcommon.MustMakeObjectHash(account)),
+		TotalTxs:    0,
 	}
 	transactions := []string{}
 	confirmed := ""
@@ -50,7 +49,7 @@ func MakeGenesisBlock(st *sebakstorage.LevelDBBackend, account BlockAccount) Blo
 	return b
 }
 
-func NewBlock(propser string, round Round, transactions []string, confirmed string) Block {
+func NewBlock(proposer string, round Round, transactions []string, confirmed string) Block {
 	b := &Block{
 		Header:       *NewBlockHeader(round.BlockHeight+1, round.BlockHash, round.TotalTxs, uint64(len(transactions)), getTransactionRoot(transactions)),
 		Transactions: transactions,
