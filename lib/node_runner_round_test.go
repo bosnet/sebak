@@ -130,8 +130,11 @@ func TestNodeRunnerRoundCreateAccount(t *testing.T) {
 	client := nr0.Network().GetClient(nr0.Node().Endpoint())
 
 	initialBalance := Amount(1)
+	kp, _ := keypair.Random()
 	tx := makeTransactionCreateAccount(kp, kpNewAccount.Address(), initialBalance)
-	tx.B.Checkpoint = account.Checkpoint
+
+	checkpoint := sebakcommon.MakeGenesisCheckpoint(networkID)
+	tx.B.Checkpoint = checkpoint
 	tx.Sign(kp, networkID)
 
 	client.SendMessage(tx)
