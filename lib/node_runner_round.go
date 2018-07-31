@@ -468,7 +468,6 @@ func (nr *NodeRunnerRound) proposeNewRoundBallot(roundNumber uint64) {
 		Number:      roundNumber,
 		BlockHeight: nr.Consensus().LatestConfirmedBlock.Height,
 		BlockHash:   nr.Consensus().LatestConfirmedBlock.Hash,
-		TotalTxs:    nr.Consensus().LatestConfirmedBlock.TotalTxs,
 	}
 
 	// collect incoming transactions from `TransactionPool`

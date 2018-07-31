@@ -1,20 +1,19 @@
 package sebak
 
 import (
+	"boscoin.io/sebak/lib/storage"
 	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/mux"
+	"github.com/stellar/go/keypair"
+	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"sync"
 	"testing"
-
-	"boscoin.io/sebak/lib/storage"
-	"github.com/gorilla/mux"
-	"github.com/stellar/go/keypair"
-	"github.com/stretchr/testify/assert"
 )
 
 func checkError(t *testing.T, err error) {

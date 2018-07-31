@@ -255,7 +255,8 @@ func (is *ISAACRound) CloseBallotConsensus(ballot Ballot) (err error) {
 	is.TransactionPool[tx.GetHash()] = tx
 	is.TransactionPoolHashes = append(is.TransactionPoolHashes, tx.GetHash())
 
-	is.Boxes.RemoveVotingResult(vr) // TODO detect error
+	is.Boxes.WaitingBox.RemoveVotingResult(vr) // TODO detect error
+	is.Boxes.RemoveVotingResult(vr)            // TODO detect error
 
 	return
 }
