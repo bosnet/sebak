@@ -11,7 +11,6 @@ type Header struct {
 	Timestamp               time.Time
 	Height                  uint64
 	TotalTxs                uint64
-	prevTotalTxs            uint64
 	prevConsensusResultHash string // [TODO] Uint256 type
 	// ConsensusPayloadHash    Uint256
 	// ConsensusPayload        Payload  // or []byte
