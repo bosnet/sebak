@@ -71,6 +71,10 @@ func NewBlock(proposer string, round Round, transactions []string, confirmed str
 // 	b.PrevConsensusResult = *result
 // }
 
+// func (b *Block) SetPrevTotalTxs(prevTotalTxs uint64) {
+//	b.prevTotalTxs = prevTotalTxs
+// }
+
 func NewBlockFromRoundBallot(roundBallot RoundBallot) Block {
 	return NewBlock(
 		roundBallot.Proposer(),
