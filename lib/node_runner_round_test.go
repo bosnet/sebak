@@ -9,6 +9,7 @@ import (
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/storage"
+
 	"github.com/stellar/go/keypair"
 )
 
@@ -30,13 +31,22 @@ func createNodeRunnerRounds(n int) []*NodeRunnerRound {
 		}
 	}
 
+	checkpoint := sebakcommon.MakeGenesisCheckpoint(networkID)
+	kp, _ := keypair.Random()
+	address := kp.Address()
+	balance := BaseFee.MustAdd(1)
+	account := NewBlockAccount(address, balance, checkpoint)
 	var nodeRunners []*NodeRunnerRound
 	for i := 0; i < n; i++ {
 		v := nodes[i]
-		p, _ := NewDefaultVotingThresholdPolicy(100, 30, 30)
+		p, _ := NewDefaultVotingThresholdPolicy(100, 66, 66)
 		p.SetValidators(len(v.GetValidators()) + 1)
 		is, _ := NewISAACRound(networkID, v, p)
 		st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
+
+		account.Save(st)
+		MakeGenesisBlock(st, *account)
+
 		nr, err := NewNodeRunnerRound(string(networkID), v, p, ns[i], is, st)
 		if err != nil {
 			panic(err)
@@ -86,7 +96,14 @@ func createNodeRunnerRoundsWithReady(n int) []*NodeRunnerRound {
 }
 
 func TestCreateNodeRunnerRounds(t *testing.T) {
-	nodeRunners := createNodeRunnerRoundsWithReady(3)
+	defer sebaknetwork.CleanUpMemoryNetwork()
+
+	numberOfNodes := 3
+	nodeRunners := createNodeRunnerRoundsWithReady(numberOfNodes)
+
+	for _, nr := range nodeRunners {
+		defer nr.Stop()
+	}
 
 	if len(nodeRunners) != 3 {
 		t.Error("failed to create `NodeRunnerRound`s")
@@ -98,50 +115,32 @@ func TestNodeRunnerRoundCreateAccount(t *testing.T) {
 
 	numberOfNodes := 3
 	nodeRunners := createNodeRunnerRoundsWithReady(numberOfNodes)
+	kpNewAccount, _ := keypair.Random()
+
 	for _, nr := range nodeRunners {
 		defer nr.Stop()
 	}
 
-	kp, _ := keypair.Random()
-	kpNewAccount, _ := keypair.Random()
-
-	// create new account in all nodes
-	var account *BlockAccount
-	checkpoint := sebakcommon.MakeGenesisCheckpoint(networkID)
-	for _, nr := range nodeRunners {
-		address := kp.Address()
-		balance := BaseFee.MustAdd(1)
-
-		account = NewBlockAccount(address, balance, checkpoint)
-		account.Save(nr.Storage())
-	}
-
 	var wg sync.WaitGroup
-
 	wg.Add(numberOfNodes)
 
-	var dones []VotingStateStaging
-	var finished []string
-	var deferFunc sebakcommon.CheckerDeferFunc = func(n int, c sebakcommon.Checker, err error) {
+	results := map[string]map[string]Transaction{}
+
+	var finishedFunc sebakcommon.CheckerDeferFunc = func(n int, c sebakcommon.Checker, err error) {
 		if err == nil {
 			return
 		}
 
-		if _, ok := err.(sebakcommon.CheckerErrorStop); ok {
-			return
-		}
+		checker := c.(*NodeRunnerRoundHandleBallotChecker)
 
-		checker := c.(*NodeRunnerHandleBallotChecker)
-		if _, found := sebakcommon.InStringArray(finished, checker.LocalNode.Alias()); found {
-			return
-		}
-		finished = append(finished, checker.LocalNode.Alias())
-		dones = append(dones, checker.VotingStateStaging)
+		results[checker.LocalNode.Address()] = checker.NodeRunner.Consensus().TransactionPool
 		wg.Done()
+
+		return
 	}
 
 	for _, nr := range nodeRunners {
-		nr.SetHandleBallotFuncs(deferFunc, nil)
+		nr.SetHandleBallotFuncs(nil, finishedFunc)
 	}
 
 	nr0 := nodeRunners[0]
@@ -149,11 +148,35 @@ func TestNodeRunnerRoundCreateAccount(t *testing.T) {
 	client := nr0.Network().GetClient(nr0.Node().Endpoint())
 
 	initialBalance := Amount(1)
+	kp, _ := keypair.Random()
 	tx := makeTransactionCreateAccount(kp, kpNewAccount.Address(), initialBalance)
-	tx.B.Checkpoint = account.Checkpoint
+
+	checkpoint := sebakcommon.MakeGenesisCheckpoint(networkID)
+	tx.B.Checkpoint = checkpoint
 	tx.Sign(kp, networkID)
 
 	client.SendMessage(tx)
 
 	wg.Wait()
+
+	for _, nr := range nodeRunners {
+		nr.Stop()
+	}
+
+	for _, nr := range nodeRunners {
+		txpool, found := results[nr.Node().Address()]
+		if !found {
+			t.Error("failed to broadcast message; `TransactionPool` is empty")
+			return
+		}
+		if len(txpool) != 1 {
+			t.Error("failed to broadcast message; `TransactionPool` is filled with other messages")
+			return
+		}
+
+		if _, found := txpool[tx.GetHash()]; !found {
+			t.Error("failed to broadcast message; tx not found in `TransactionPool`")
+			return
+		}
+	}
 }
