@@ -84,6 +84,31 @@ func makeBallot(kp *keypair.Full, m sebakcommon.Message, state sebakcommon.Ballo
 	return ballot
 }
 
+func TestNewISAAC(t *testing.T) {
+	policy, _ := NewDefaultVotingThresholdPolicy(100, 30, 30)
+	policy.SetValidators(1)
+
+	is, err := NewISAAC(networkID, NewRandomNode(), policy)
+	if err != nil {
+		t.Errorf("`NewISAAC` must not be failed: %v", err)
+		return
+	}
+
+	// check BallotBox is empty
+	if is.Boxes.WaitingBox.Len() > 0 {
+		t.Error("`WaitingBox` must be empty")
+		return
+	}
+	if is.Boxes.VotingBox.Len() > 0 {
+		t.Error("`VotingBox` must be empty")
+		return
+	}
+	if is.Boxes.ReservedBox.Len() > 0 {
+		t.Error("`ReservedBox` must be empty")
+		return
+	}
+}
+
 func TestISAACNewIncomingMessage(t *testing.T) {
 	is := makeISAAC(1)
 
@@ -99,6 +124,10 @@ func TestISAACNewIncomingMessage(t *testing.T) {
 			t.Error("failed to add message")
 			return
 		}
+		if !is.Boxes.WaitingBox.HasMessage(m) {
+			t.Error("failed to add message to `WaitingBox`")
+			return
+		}
 	}
 
 	// receive same message
@@ -111,6 +140,20 @@ func TestISAACNewIncomingMessage(t *testing.T) {
 		if !is.Boxes.HasMessage(m) {
 			t.Error("failed to find message")
 			return
+		}
+		if !is.Boxes.WaitingBox.HasMessage(m) {
+			t.Error("failed to find message to `WaitingBox`")
+			return
+		}
+
+		if is.Boxes.WaitingBox.Len() != 1 {
+			t.Error("`WaitingBox` has another `Message`")
+		}
+		if is.Boxes.VotingBox.Len() > 0 {
+			t.Error("`VotingBox` must be empty")
+		}
+		if is.Boxes.ReservedBox.Len() > 0 {
+			t.Error("`ReservedBox` must be empty")
 		}
 	}
 
@@ -128,6 +171,20 @@ func TestISAACNewIncomingMessage(t *testing.T) {
 		if !is.Boxes.HasMessage(another) {
 			t.Error("failed to find message")
 			return
+		}
+		if !is.Boxes.WaitingBox.HasMessage(another) {
+			t.Error("failed to find message to `WaitingBox`")
+			return
+		}
+
+		if is.Boxes.WaitingBox.Len() != 2 {
+			t.Error("`WaitingBox` failed to add another")
+		}
+		if is.Boxes.VotingBox.Len() > 0 {
+			t.Error("`VotingBox` must be empty")
+		}
+		if is.Boxes.ReservedBox.Len() > 0 {
+			t.Error("`ReservedBox` must be empty")
 		}
 	}
 
@@ -258,6 +315,10 @@ func TestISAACReceiveBallotStateINITAndVotingBox(t *testing.T) {
 		t.Error("failed to get result")
 		return
 	}
+
+	if is.Boxes.WaitingBox.HasMessageByHash(ballots[0].MessageHash()) {
+		t.Error("after `INIT`, the ballot must move to `VotingBox`")
+	}
 }
 
 func voteISAACReceiveBallot(is *ISAAC, ballots []Ballot, kps []*keypair.Full, state sebakcommon.BallotState) (vs VotingStateStaging, err error) {
@@ -311,6 +372,10 @@ func TestISAACReceiveBallotStateTransition(t *testing.T) {
 			return
 		}
 
+		if is.Boxes.WaitingBox.HasMessageByHash(ballots[0].MessageHash()) {
+			t.Error("after `INIT`, the ballot must move to `VotingBox`")
+		}
+
 		if vs.IsEmpty() {
 			err = errors.New("failed to get result")
 			return
@@ -320,6 +385,10 @@ func TestISAACReceiveBallotStateTransition(t *testing.T) {
 			return
 		}
 
+		if !is.Boxes.VotingBox.HasMessageByHash(ballots[0].MessageHash()) {
+			err = errors.New("after `INIT`, the ballot must move to `VotingBox`")
+			return
+		}
 	}
 
 	// SIGN -> ACCEPT
@@ -338,6 +407,11 @@ func TestISAACReceiveBallotStateTransition(t *testing.T) {
 			err = errors.New("`VotingResult.State` must be `BallotStateACCEPT`")
 			return
 		}
+
+		if !is.Boxes.VotingBox.HasMessageByHash(ballots[0].MessageHash()) {
+			err = errors.New("after `INIT`, the ballot must move to `VotingBox`")
+			return
+		}
 	}
 
 	// ACCEPT -> ALL-CONFIRM
@@ -353,6 +427,11 @@ func TestISAACReceiveBallotStateTransition(t *testing.T) {
 		}
 		if vs.State != sebakcommon.BallotStateALLCONFIRM {
 			err = errors.New("`VotingResult.State` must be `BallotStateALLCONFIRM`")
+			return
+		}
+
+		if !is.Boxes.VotingBox.HasMessageByHash(ballots[0].MessageHash()) {
+			err = errors.New("after `INIT`, the ballot must move to `VotingBox`")
 			return
 		}
 	}
@@ -383,6 +462,9 @@ func TestISAACReceiveSameBallotStates(t *testing.T) {
 			return
 		}
 
+		if is.Boxes.WaitingBox.HasMessageByHash(ballots[0].MessageHash()) {
+			t.Error("after `INIT`, the ballot must move to `VotingBox`")
+		}
 		if vs.IsEmpty() {
 			t.Error("failed to get result")
 			return
