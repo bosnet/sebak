@@ -168,7 +168,7 @@ func (is *ISAACRound) ReceiveMessage(m sebakcommon.Message) (ballot Ballot, err 
 	}
 
 	// self-sign; make new `Ballot` from `Message`
-	ballot.SetState(sebakcommon.BallotStateINIT)
+	ballot.SetState(sebakcommon.BallotStateTXSHARE)
 	ballot.Vote(VotingYES) // The initial ballot from client will have 'VotingYES'
 	ballot.Sign(is.Node.Keypair(), is.NetworkID)
 
@@ -176,23 +176,41 @@ func (is *ISAACRound) ReceiveMessage(m sebakcommon.Message) (ballot Ballot, err 
 		return
 	}
 
-	if _, err = is.Boxes.AddBallot(ballot); err != nil {
-		return
-	}
+	is.TransactionPool[ballot.MessageHash()] = ballot.Data().Data.(Transaction)
+	is.TransactionPoolHashes = append(is.TransactionPoolHashes, ballot.MessageHash())
 
 	return
 }
 
 func (is *ISAACRound) ReceiveBallot(ballot Ballot) (vs VotingStateStaging, err error) {
 	switch ballot.State() {
+	case sebakcommon.BallotStateTXSHARE:
+		vs, err = is.receiveBallotStateTXSHARE(ballot)
 	case sebakcommon.BallotStateINIT:
 		vs, err = is.receiveBallotStateINIT(ballot)
 	case sebakcommon.BallotStateALLCONFIRM:
 		err = sebakerror.ErrorBallotHasInvalidState
 	default:
 		err = sebakerror.ErrorBallotHasInvalidState
-		//vs, err = is.receiveBallotVotingStates(ballot)
 	}
+
+	return
+}
+
+func (is *ISAACRound) receiveBallotStateTXSHARE(ballot Ballot) (vs VotingStateStaging, err error) {
+	if is.Boxes.HasMessage(ballot) {
+		err = sebakerror.ErrorNewButKnownMessage
+		return
+	}
+
+	if err = ballot.IsWellFormed(is.NetworkID); err != nil {
+		return
+	}
+
+	is.TransactionPool[ballot.MessageHash()] = ballot.Data().Data.(Transaction)
+	is.TransactionPoolHashes = append(is.TransactionPoolHashes, ballot.MessageHash())
+
+	err = sebakcommon.CheckerErrorStop{"stop"}
 
 	return
 }
