@@ -101,6 +101,7 @@ type VotingResult struct {
 func NewVotingResult(ballot Ballot) (vr *VotingResult, err error) {
 	ballots := map[sebakcommon.BallotState]VotingResultBallots{
 		sebakcommon.BallotStateNONE:       VotingResultBallots{},
+		sebakcommon.BallotStateTXSHARE:    VotingResultBallots{},
 		sebakcommon.BallotStateINIT:       VotingResultBallots{},
 		sebakcommon.BallotStateSIGN:       VotingResultBallots{},
 		sebakcommon.BallotStateACCEPT:     VotingResultBallots{},

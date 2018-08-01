@@ -148,5 +148,4 @@ func TestNodeRunnerRoundCreateAccount(t *testing.T) {
 			t.Error("failed to broadcast message", "node", nr.Node(), "index", i)
 		}
 	}
-
 }

@@ -179,6 +179,8 @@ func (is *ISAACRound) CalculateProposer(connected []string, blockHeight uint64, 
 
 func (is *ISAACRound) ReceiveBallot(ballot Ballot) (vs VotingStateStaging, err error) {
 	switch ballot.State() {
+	case sebakcommon.BallotStateTXSHARE:
+		vs, err = is.receiveBallotStateTXSHARE(ballot)
 	case sebakcommon.BallotStateINIT:
 		vs, err = is.receiveBallotStateINIT(ballot)
 	case sebakcommon.BallotStateALLCONFIRM:
@@ -186,6 +188,24 @@ func (is *ISAACRound) ReceiveBallot(ballot Ballot) (vs VotingStateStaging, err e
 	default:
 		err = sebakerror.ErrorBallotHasInvalidState
 	}
+
+	return
+}
+
+func (is *ISAACRound) receiveBallotStateTXSHARE(ballot Ballot) (vs VotingStateStaging, err error) {
+	if is.Boxes.HasMessage(ballot) {
+		err = sebakerror.ErrorNewButKnownMessage
+		return
+	}
+
+	if err = ballot.IsWellFormed(is.NetworkID); err != nil {
+		return
+	}
+
+	is.TransactionPool[ballot.MessageHash()] = ballot.Data().Data.(Transaction)
+	is.TransactionPoolHashes = append(is.TransactionPoolHashes, ballot.MessageHash())
+
+	err = sebakcommon.CheckerErrorStop{"stop"}
 
 	return
 }
