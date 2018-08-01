@@ -130,11 +130,8 @@ func TestNodeRunnerRoundCreateAccount(t *testing.T) {
 	client := nr0.Network().GetClient(nr0.Node().Endpoint())
 
 	initialBalance := Amount(1)
-	kp, _ := keypair.Random()
 	tx := makeTransactionCreateAccount(kp, kpNewAccount.Address(), initialBalance)
-
-	checkpoint := sebakcommon.MakeGenesisCheckpoint(networkID)
-	tx.B.Checkpoint = checkpoint
+	tx.B.Checkpoint = account.Checkpoint
 	tx.Sign(kp, networkID)
 
 	client.SendMessage(tx)
@@ -151,4 +148,5 @@ func TestNodeRunnerRoundCreateAccount(t *testing.T) {
 			t.Error("failed to broadcast message", "node", nr.Node(), "index", i)
 		}
 	}
+
 }
