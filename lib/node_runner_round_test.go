@@ -13,6 +13,15 @@ import (
 	"github.com/stellar/go/keypair"
 )
 
+var (
+	kp      *keypair.Full
+	account *BlockAccount
+)
+
+func init() {
+	kp, _ = keypair.Random()
+}
+
 func createNodeRunnerRounds(n int) []*NodeRunnerRound {
 	var ns []*sebaknetwork.MemoryNetwork
 	var nodes []*sebaknode.LocalNode
@@ -32,10 +41,9 @@ func createNodeRunnerRounds(n int) []*NodeRunnerRound {
 	}
 
 	checkpoint := sebakcommon.MakeGenesisCheckpoint(networkID)
-	kp, _ := keypair.Random()
 	address := kp.Address()
 	balance := BaseFee.MustAdd(1)
-	account := NewBlockAccount(address, balance, checkpoint)
+	account = NewBlockAccount(address, balance, checkpoint)
 	var nodeRunners []*NodeRunnerRound
 	for i := 0; i < n; i++ {
 		v := nodes[i]
@@ -115,28 +123,18 @@ func TestNodeRunnerRoundCreateAccount(t *testing.T) {
 
 	numberOfNodes := 3
 	nodeRunners := createNodeRunnerRoundsWithReady(numberOfNodes)
-	kpNewAccount, _ := keypair.Random()
 
-	for _, nr := range nodeRunners {
-		defer nr.Stop()
-	}
+	kpNewAccount, _ := keypair.Random()
 
 	var wg sync.WaitGroup
 	wg.Add(numberOfNodes)
 
-	results := map[string]map[string]Transaction{}
-
+	finished := map[string]map[string]Transaction{}
 	var finishedFunc sebakcommon.CheckerDeferFunc = func(n int, c sebakcommon.Checker, err error) {
-		if err == nil {
-			return
-		}
+		defer wg.Done()
 
 		checker := c.(*NodeRunnerRoundHandleBallotChecker)
-
-		results[checker.LocalNode.Address()] = checker.NodeRunner.Consensus().TransactionPool
-		wg.Done()
-
-		return
+		finished[checker.LocalNode.Address()] = checker.NodeRunner.Consensus().TransactionPool
 	}
 
 	for _, nr := range nodeRunners {
@@ -148,11 +146,8 @@ func TestNodeRunnerRoundCreateAccount(t *testing.T) {
 	client := nr0.Network().GetClient(nr0.Node().Endpoint())
 
 	initialBalance := Amount(1)
-	kp, _ := keypair.Random()
 	tx := makeTransactionCreateAccount(kp, kpNewAccount.Address(), initialBalance)
-
-	checkpoint := sebakcommon.MakeGenesisCheckpoint(networkID)
-	tx.B.Checkpoint = checkpoint
+	tx.B.Checkpoint = account.Checkpoint
 	tx.Sign(kp, networkID)
 
 	client.SendMessage(tx)
@@ -164,19 +159,24 @@ func TestNodeRunnerRoundCreateAccount(t *testing.T) {
 	}
 
 	for _, nr := range nodeRunners {
-		txpool, found := results[nr.Node().Address()]
+		txpool, found := finished[nr.Node().Address()]
 		if !found {
-			t.Error("failed to broadcast message; `TransactionPool` is empty")
-			return
+			t.Error("failed to broadcast message; `TransactionPool` is nil")
+			continue
 		}
-		if len(txpool) != 1 {
+		if len(txpool) == 0 {
+			t.Error("failed to broadcast message; `TransactionPool` is empty")
+			continue
+		}
+		if len(txpool) > 1 {
 			t.Error("failed to broadcast message; `TransactionPool` is filled with other messages")
-			return
+			continue
 		}
 
 		if _, found := txpool[tx.GetHash()]; !found {
 			t.Error("failed to broadcast message; tx not found in `TransactionPool`")
-			return
+			continue
 		}
 	}
+
 }

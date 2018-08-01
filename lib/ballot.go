@@ -303,6 +303,15 @@ func (b *BallotBoxes) IsVoted(ballot Ballot) bool {
 	}
 }
 
+func (b *BallotBoxes) AddVotingResult(vr *VotingResult, ballot Ballot) (err error) {
+	b.Lock()
+	defer b.Unlock()
+
+	b.Results[vr.MessageHash] = vr
+
+	return
+}
+
 func (b *BallotBoxes) RemoveVotingResult(vr *VotingResult) (err error) {
 	if !b.HasMessageByHash(vr.MessageHash) {
 		err = sebakerror.ErrorVotingResultNotFound
@@ -340,6 +349,11 @@ func (b *BallotBoxes) AddBallot(ballot Ballot) (isNew bool, err error) {
 
 	if vr, err = NewVotingResult(ballot); err != nil {
 		return
+	}
+
+	if err = b.AddVotingResult(vr, ballot); err != nil {
+		log.Warn("failed to add VotingResult", "MessageHash", ballot.MessageHash(), "error", err)
+		err = nil
 	}
 
 	// if unknown ballot and it is in SIGN state,
