@@ -127,14 +127,10 @@ func TestNodeRunnerRoundCreateAccount(t *testing.T) {
 	kpNewAccount, _ := keypair.Random()
 
 	var wg sync.WaitGroup
-	wg.Add(numberOfNodes)
+	wg.Add(numberOfNodes - 1)
 
-	finished := map[string]map[string]Transaction{}
 	var finishedFunc sebakcommon.CheckerDeferFunc = func(n int, c sebakcommon.Checker, err error) {
-		defer wg.Done()
-
-		checker := c.(*NodeRunnerRoundHandleBallotChecker)
-		finished[checker.LocalNode.Address()] = checker.NodeRunner.Consensus().TransactionPool
+		wg.Done()
 	}
 
 	for _, nr := range nodeRunners {
@@ -158,25 +154,10 @@ func TestNodeRunnerRoundCreateAccount(t *testing.T) {
 		nr.Stop()
 	}
 
-	for _, nr := range nodeRunners {
-		txpool, found := finished[nr.Node().Address()]
+	for i, nr := range nodeRunners {
+		_, found := nr.Consensus().TransactionPool[tx.GetHash()]
 		if !found {
-			t.Error("failed to broadcast message; `TransactionPool` is nil")
-			continue
-		}
-		if len(txpool) == 0 {
-			t.Error("failed to broadcast message; `TransactionPool` is empty")
-			continue
-		}
-		if len(txpool) > 1 {
-			t.Error("failed to broadcast message; `TransactionPool` is filled with other messages")
-			continue
-		}
-
-		if _, found := txpool[tx.GetHash()]; !found {
-			t.Error("failed to broadcast message; tx not found in `TransactionPool`")
-			continue
+			t.Error("failed to broadcast message", "node", nr.Node(), "index", i)
 		}
 	}
-
 }
