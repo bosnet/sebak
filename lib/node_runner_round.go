@@ -12,6 +12,12 @@ import (
 	logging "github.com/inconshreveable/log15"
 )
 
+var (
+	TimeoutExpireRound           time.Duration = time.Second * 10
+	TimeoutProposeNewRoundBallot time.Duration = time.Second * 2
+	MaxTransactionsInRoundBallot int           = 1000
+)
+
 type NodeRunnerRound struct {
 	networkID         []byte
 	localNode         *sebaknode.LocalNode
@@ -32,6 +38,8 @@ type NodeRunnerRound struct {
 
 	ctx context.Context
 	log logging.Logger
+
+	timerExpireRound *time.Timer
 }
 
 func NewNodeRunnerRound(
@@ -398,6 +406,11 @@ func (nr *NodeRunnerRound) startRound() {
 }
 
 func (nr *NodeRunnerRound) StartNewRound(roundNumber uint64) {
+	if nr.timerExpireRound != nil {
+		nr.timerExpireRound.Stop()
+		nr.timerExpireRound = nil
+	}
+
 	candidates := nr.connectionManager.RoundCandidates()
 	proposer := nr.Consensus().CalculateProposer(
 		candidates,
@@ -407,20 +420,50 @@ func (nr *NodeRunnerRound) StartNewRound(roundNumber uint64) {
 	log.Debug("calculated proposer", "proposer", proposer, "candidates", candidates)
 
 	if proposer != nr.Node().Address() {
+		// wait for new RoundBallot from new proposer
+		nr.timerExpireRound = time.NewTimer(TimeoutExpireRound)
+		go func() {
+			for {
+				select {
+				case <-nr.timerExpireRound.C:
+					if !nr.Consensus().IsRunningRound(roundNumber) {
+						go nr.StartNewRound(roundNumber + 1)
+					}
+					goto end
+				}
+			}
+
+		end:
+			//
+		}()
+
 		return
 	}
 
-	timer := time.NewTimer(time.Second * 2)
+	nr.readyToProposeNewRoundBallot(roundNumber)
+
+	return
+}
+
+func (nr *NodeRunnerRound) readyToProposeNewRoundBallot(roundNumber uint64) {
+	// if incoming transaactions are over `MaxTransactionsInRoundBallot`, just
+	// start.
+	if len(nr.Consensus().TransactionPoolHashes) > MaxTransactionsInRoundBallot {
+		nr.proposeNewRoundBallot(roundNumber)
+		return
+	}
+
+	timer := time.NewTimer(TimeoutProposeNewRoundBallot)
 	go func() {
 		<-timer.C
 
-		if err := nr.proposeNewRoundBallot(roundNumber); err != nil {
-			nr.log.Error("failed to propse new RoundBallot", "error", err)
-		}
+		nr.proposeNewRoundBallot(roundNumber)
 	}()
+
+	return
 }
 
-func (nr *NodeRunnerRound) proposeNewRoundBallot(roundNumber uint64) (err error) {
+func (nr *NodeRunnerRound) proposeNewRoundBallot(roundNumber uint64) {
 	// start new round
 	round := Round{
 		Number:      roundNumber,
@@ -431,15 +474,11 @@ func (nr *NodeRunnerRound) proposeNewRoundBallot(roundNumber uint64) (err error)
 	// collect incoming transactions from `TransactionPool`
 	nr.log.Debug("new round proposed", "round", round)
 
-	var roundBallot *RoundBallot
-	roundBallot, err = NewRoundBallot(
+	roundBallot := NewRoundBallot(
 		nr.localNode,
 		round,
-		nr.Consensus().TransactionPoolHashes,
+		nr.Consensus().AvailableTransactions(),
 	)
-	if err != nil {
-		return
-	}
 
 	// TODO validate transactions
 	roundBallot.SetValidTransactions(nr.Consensus().TransactionPoolHashes)
@@ -447,10 +486,6 @@ func (nr *NodeRunnerRound) proposeNewRoundBallot(roundNumber uint64) (err error)
 	roundBallot.Sign(nr.localNode.Keypair(), nr.networkID)
 
 	nr.log.Debug("new RoundBallot created", "roundBallot", roundBallot)
-
-	if err = roundBallot.Verify(nr.NetworkID()); err != nil {
-		return
-	}
 
 	nr.ConnectionManager().Broadcast(roundBallot)
 
@@ -464,6 +499,8 @@ func (nr *NodeRunnerRound) proposeNewRoundBallot(roundNumber uint64) (err error)
 }
 
 func (nr *NodeRunnerRound) CloseConsensus(round Round, confirmed bool) {
+	nr.Consensus().SetLatestRound(round)
+
 	if confirmed {
 		go nr.StartNewRound(0)
 	} else {
