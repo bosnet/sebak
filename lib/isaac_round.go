@@ -165,7 +165,6 @@ func (is *ISAACRound) IsRunningRound(roundNumber uint64) bool {
 	return false
 }
 
-<<<<<<< HEAD
 func (is *ISAACRound) ReceiveMessage(m sebakcommon.Message) (ballot Ballot, err error) {
 	if is.Boxes.HasMessage(m) {
 		err = sebakerror.ErrorNewButKnownMessage
