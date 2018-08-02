@@ -10,6 +10,7 @@ import (
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
+	"boscoin.io/sebak/lib/storage"
 )
 
 type Round struct {
@@ -214,6 +215,59 @@ func NewRoundBallot(localNode *sebaknode.LocalNode, round Round, transactions []
 func NewRoundBallotFromJSON(data []byte) (rb RoundBallot, err error) {
 	if err = json.Unmarshal(data, &rb); err != nil {
 		return
+	}
+
+	return
+}
+
+func FinishRoundBallot(st *sebakstorage.LevelDBBackend, ballot RoundBallot, transactions map[string]Transaction) (block Block, err error) {
+	var ts *sebakstorage.LevelDBBackend
+	if ts, err = st.OpenTransaction(); err != nil {
+		return
+	}
+
+	for _, txHash := range ballot.B.Proposed.ValidTransactions {
+		tx := transactions[txHash]
+		raw, _ := json.Marshal(tx)
+
+		bt := NewBlockTransactionFromTransaction(tx, raw)
+		if err = bt.Save(ts); err != nil {
+			ts.Discard()
+			return
+		}
+		for _, op := range tx.B.Operations {
+			if err = FinishOperation(ts, tx, op); err != nil {
+				ts.Discard()
+				return
+			}
+		}
+
+		var baSource *BlockAccount
+		if baSource, err = GetBlockAccount(ts, tx.B.Source); err != nil {
+			err = sebakerror.ErrorBlockAccountDoesNotExists
+			ts.Discard()
+			return
+		}
+
+		if err = baSource.Withdraw(tx.TotalAmount(true), tx.NextSourceCheckpoint()); err != nil {
+			ts.Discard()
+			return
+		}
+
+		if err = baSource.Save(ts); err != nil {
+			ts.Discard()
+			return
+		}
+
+	}
+
+	block = NewBlockFromRoundBallot(ballot)
+	if err = block.Save(ts); err != nil {
+		return
+	}
+
+	if err = ts.Commit(); err != nil {
+		ts.Discard()
 	}
 
 	return

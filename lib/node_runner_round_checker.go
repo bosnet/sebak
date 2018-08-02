@@ -446,8 +446,13 @@ func CheckNodeRunnerRoundHandleRoundBallotStore(c sebakcommon.Checker, args ...i
 			willStore = false
 			checker.NodeRunner.Log().Debug("round-ballot was finished, but not stored because empty transactions")
 		} else {
-			block := NewBlockFromRoundBallot(checker.RoundBallot)
-			if err = block.Save(checker.NodeRunner.Storage()); err != nil {
+			var block Block
+			block, err = FinishRoundBallot(
+				checker.NodeRunner.Storage(),
+				checker.RoundBallot,
+				checker.NodeRunner.Consensus().TransactionPool,
+			)
+			if err != nil {
 				return
 			}
 
