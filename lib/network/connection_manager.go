@@ -179,6 +179,9 @@ func (c *ConnectionManager) Broadcast(message sebakcommon.Message) {
 				_, err = client.SendBallot(message)
 			} else if message.GetType() == RoundBallotMessage {
 				_, err = client.SendRoundBallot(message)
+			} else if message.GetType() == TransactionMessage {
+				_, err = client.SendMessage(message)
+
 			} else {
 				panic("invalid message")
 			}

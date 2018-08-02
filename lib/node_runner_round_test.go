@@ -1,7 +1,6 @@
 package sebak
 
 import (
-	"sync"
 	"testing"
 	"time"
 
@@ -126,17 +125,6 @@ func TestNodeRunnerRoundCreateAccount(t *testing.T) {
 
 	kpNewAccount, _ := keypair.Random()
 
-	var wg sync.WaitGroup
-	wg.Add(numberOfNodes - 1)
-
-	var finishedFunc sebakcommon.CheckerDeferFunc = func(n int, c sebakcommon.Checker, err error) {
-		wg.Done()
-	}
-
-	for _, nr := range nodeRunners {
-		nr.SetHandleBallotFuncs(nil, finishedFunc)
-	}
-
 	nr0 := nodeRunners[0]
 
 	client := nr0.Network().GetClient(nr0.Node().Endpoint())
@@ -148,7 +136,7 @@ func TestNodeRunnerRoundCreateAccount(t *testing.T) {
 
 	client.SendMessage(tx)
 
-	wg.Wait()
+	time.Sleep(time.Second)
 
 	for _, nr := range nodeRunners {
 		nr.Stop()

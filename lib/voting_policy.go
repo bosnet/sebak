@@ -8,7 +8,7 @@ import (
 )
 
 type ISAACVotingThresholdPolicy struct {
-	init   int // [TODO] Change to Percent type
+	init   int // TODO Change to Percent type
 	sign   int
 	accept int
 
