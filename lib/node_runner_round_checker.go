@@ -442,6 +442,9 @@ func CheckNodeRunnerRoundHandleRoundBallotStore(c sebakcommon.Checker, args ...i
 
 	willStore := voted == VotingYES
 	if voted == VotingYES {
+		// TODO If consensused RoundBallot is not for next waiting block, the node
+		// will go into **catchup** status.
+
 		if checker.RoundBallot.ValidTransactionsLength() < 1 {
 			willStore = false
 			checker.NodeRunner.Log().Debug("round-ballot was finished, but not stored because empty transactions")
