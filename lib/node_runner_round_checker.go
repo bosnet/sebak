@@ -332,8 +332,7 @@ func CheckNodeRunnerRoundHandleRoundBallotAddRunningRounds(c sebakcommon.Checker
 	var found bool
 	var runningRound *RunningRound
 	if runningRound, found = rr[roundHash]; !found {
-		proposer := checker.NodeRunner.Consensus().CalculateProposer(
-			checker.NodeRunner.ConnectionManager().RoundCandidates(),
+		proposer := checker.NodeRunner.CalculateProposer(
 			checker.RoundBallot.Round().BlockHeight,
 			checker.RoundBallot.Round().Number,
 		)

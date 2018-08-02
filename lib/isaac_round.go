@@ -2,7 +2,6 @@ package sebak
 
 import (
 	"errors"
-	"sort"
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
@@ -164,17 +163,6 @@ func (is *ISAACRound) IsRunningRound(roundNumber uint64) bool {
 		}
 	}
 	return false
-}
-
-func (is *ISAACRound) CalculateProposer(connected []string, blockHeight uint64, roundNumber uint64) string {
-	is.Lock()
-	defer is.Unlock()
-
-	addresses := sort.StringSlice(connected)
-	addresses.Sort()
-
-	// TODO This is simple version to select proposer node.
-	return addresses[(blockHeight+roundNumber)%uint64(len(addresses))]
 }
 
 func (is *ISAACRound) ReceiveMessage(m sebakcommon.Message) (ballot Ballot, err error) {
