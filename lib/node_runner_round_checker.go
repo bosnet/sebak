@@ -87,6 +87,8 @@ func CheckNodeRunnerRoundHandleMessageTransactionBroadcast(c sebakcommon.Checker
 	checker := c.(*NodeRunnerRoundHandleMessageChecker)
 
 	checker.NodeRunner.Log().Debug("transaction from client will be broadcasted", "transaction", checker.Transaction.GetHash())
+
+	// TODO sender should be excluded
 	checker.NodeRunner.ConnectionManager().Broadcast(checker.Transaction)
 
 	return
