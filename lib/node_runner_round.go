@@ -248,7 +248,7 @@ func (nr *NodeRunnerRound) handleMessage() {
 		}
 		switch message.Type {
 		case sebaknetwork.ConnectMessage:
-			nr.log.Debug("got connect", "message", message.Head(50))
+			//nr.log.Debug("got connect", "message", message.Head(50))
 			if _, err := sebaknode.NewValidatorFromString(message.Data); err != nil {
 				err = errors.New("invalid validator data was received")
 			}

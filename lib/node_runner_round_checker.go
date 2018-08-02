@@ -54,6 +54,12 @@ func CheckNodeRunnerRoundHandleMessageHasTransactionAlready(c sebakcommon.Checke
 func CheckNodeRunnerRoundHandleMessageHistory(c sebakcommon.Checker, args ...interface{}) (err error) {
 	checker := c.(*NodeRunnerRoundHandleMessageChecker)
 
+	if _, err = GetBlockTransactionHistory(checker.NodeRunner.Storage(), checker.Transaction.GetHash()); err == nil {
+		checker.NodeRunner.Log().Debug("found in history", "transction", checker.Transaction.GetHash())
+		err = sebakerror.ErrorNewButKnownMessage
+		return
+	}
+
 	bt := NewTransactionHistoryFromTransaction(checker.Transaction, checker.Message.Data)
 	if err = bt.Save(checker.NodeRunner.Storage()); err != nil {
 		return
