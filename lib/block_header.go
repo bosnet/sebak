@@ -19,7 +19,7 @@ type Header struct {
 }
 
 func NewBlockHeader(height uint64, prevBlockHash string, prevTotalTxs uint64, currentTxs uint64, txRoot string) *Header {
-	p := Header{
+	p := &Header{
 		PrevBlockHash:    prevBlockHash,
 		Timestamp:        time.Now(),
 		Height:           height,
@@ -27,7 +27,7 @@ func NewBlockHeader(height uint64, prevBlockHash string, prevTotalTxs uint64, cu
 		TransactionsRoot: txRoot,
 	}
 	p.fill()
-	return &p
+	return p
 }
 func (h *Header) fill() {
 	// TODO fill

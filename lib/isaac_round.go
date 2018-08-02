@@ -146,6 +146,26 @@ func NewISAACRound(networkID []byte, node *sebaknode.LocalNode, votingThresholdP
 	return
 }
 
+func (is *ISAACRound) AvailableTransactions() []string {
+	is.Lock()
+	defer is.Unlock()
+
+	if len(is.TransactionPoolHashes) <= MaxTransactionsInRoundBallot {
+		return is.TransactionPoolHashes
+	}
+
+	return is.TransactionPoolHashes[:MaxTransactionsInRoundBallot]
+}
+
+func (is *ISAACRound) IsRunningRound(roundNumber uint64) bool {
+	for _, runningRound := range is.RunningRounds {
+		if runningRound.Round.Number == roundNumber {
+			return true
+		}
+	}
+	return false
+}
+
 func (is *ISAACRound) CalculateProposer(connected []string, blockHeight uint64, roundNumber uint64) string {
 	is.Lock()
 	defer is.Unlock()

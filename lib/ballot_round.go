@@ -194,7 +194,7 @@ func (rb RoundBallot) IsFromProposer() bool {
 	return rb.B.Source == rb.B.Proposed.Proposer
 }
 
-func NewRoundBallot(localNode *sebaknode.LocalNode, round Round, transactions []string) (rb *RoundBallot, err error) {
+func NewRoundBallot(localNode *sebaknode.LocalNode, round Round, transactions []string) (rb *RoundBallot) {
 	body := RoundBallotBody{
 		Source: localNode.Address(),
 		Proposed: RoundBallotBodyProposed{
