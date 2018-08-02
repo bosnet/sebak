@@ -441,8 +441,6 @@ func CheckNodeRunnerRoundHandleRoundBallotStore(c sebakcommon.Checker, args ...i
 		return
 	}
 
-	checker.NodeRunner.Consensus().SetLatestRound(checker.RoundBallot.Round())
-
 	willStore := voted == VotingYES
 	if voted == VotingYES {
 		if checker.RoundBallot.ValidTransactionsLength() < 1 {
