@@ -179,11 +179,6 @@ func TestNodeRunnerConsensusSameSourceWillBeIgnored(t *testing.T) {
 		return
 	}
 
-	if !isaac.Boxes.VotingBox.HasMessage(firstTx) {
-		t.Error("ballot not in VotingBox")
-		return
-	}
-
 	var deferFunc sebakcommon.CheckerDeferFunc = func(n int, c sebakcommon.Checker, err error) {
 		if err == nil {
 			return
@@ -268,11 +263,6 @@ func TestNodeRunnerConsensusSameSourceWillNotIgnored(t *testing.T) {
 
 	if _, ok := isaac.Boxes.Results[firstTx.GetHash()]; !ok {
 		t.Error("VotingResult not found")
-		return
-	}
-
-	if !isaac.Boxes.WaitingBox.HasMessage(firstTx) {
-		t.Error("ballot not in WaitingBox")
 		return
 	}
 

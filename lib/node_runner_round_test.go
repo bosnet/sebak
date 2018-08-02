@@ -9,8 +9,18 @@ import (
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/storage"
+
 	"github.com/stellar/go/keypair"
 )
+
+var (
+	kp      *keypair.Full
+	account *BlockAccount
+)
+
+func init() {
+	kp, _ = keypair.Random()
+}
 
 func createNodeRunnerRounds(n int) []*NodeRunnerRound {
 	var ns []*sebaknetwork.MemoryNetwork
@@ -30,13 +40,21 @@ func createNodeRunnerRounds(n int) []*NodeRunnerRound {
 		}
 	}
 
+	checkpoint := sebakcommon.MakeGenesisCheckpoint(networkID)
+	address := kp.Address()
+	balance := BaseFee.MustAdd(1)
+	account = NewBlockAccount(address, balance, checkpoint)
 	var nodeRunners []*NodeRunnerRound
 	for i := 0; i < n; i++ {
 		v := nodes[i]
-		p, _ := NewDefaultVotingThresholdPolicy(100, 30, 30)
+		p, _ := NewDefaultVotingThresholdPolicy(100, 66, 66)
 		p.SetValidators(len(v.GetValidators()) + 1)
 		is, _ := NewISAACRound(networkID, v, p)
 		st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
+
+		account.Save(st)
+		MakeGenesisBlock(st, *account)
+
 		nr, err := NewNodeRunnerRound(string(networkID), v, p, ns[i], is, st)
 		if err != nil {
 			panic(err)
@@ -86,7 +104,14 @@ func createNodeRunnerRoundsWithReady(n int) []*NodeRunnerRound {
 }
 
 func TestCreateNodeRunnerRounds(t *testing.T) {
-	nodeRunners := createNodeRunnerRoundsWithReady(3)
+	defer sebaknetwork.CleanUpMemoryNetwork()
+
+	numberOfNodes := 3
+	nodeRunners := createNodeRunnerRoundsWithReady(numberOfNodes)
+
+	for _, nr := range nodeRunners {
+		defer nr.Stop()
+	}
 
 	if len(nodeRunners) != 3 {
 		t.Error("failed to create `NodeRunnerRound`s")
@@ -98,50 +123,18 @@ func TestNodeRunnerRoundCreateAccount(t *testing.T) {
 
 	numberOfNodes := 3
 	nodeRunners := createNodeRunnerRoundsWithReady(numberOfNodes)
-	for _, nr := range nodeRunners {
-		defer nr.Stop()
-	}
 
-	kp, _ := keypair.Random()
 	kpNewAccount, _ := keypair.Random()
 
-	// create new account in all nodes
-	var account *BlockAccount
-	checkpoint := sebakcommon.MakeGenesisCheckpoint(networkID)
-	for _, nr := range nodeRunners {
-		address := kp.Address()
-		balance := BaseFee.MustAdd(1)
-
-		account = NewBlockAccount(address, balance, checkpoint)
-		account.Save(nr.Storage())
-	}
-
 	var wg sync.WaitGroup
+	wg.Add(numberOfNodes - 1)
 
-	wg.Add(numberOfNodes)
-
-	var dones []VotingStateStaging
-	var finished []string
-	var deferFunc sebakcommon.CheckerDeferFunc = func(n int, c sebakcommon.Checker, err error) {
-		if err == nil {
-			return
-		}
-
-		if _, ok := err.(sebakcommon.CheckerErrorStop); ok {
-			return
-		}
-
-		checker := c.(*NodeRunnerHandleBallotChecker)
-		if _, found := sebakcommon.InStringArray(finished, checker.LocalNode.Alias()); found {
-			return
-		}
-		finished = append(finished, checker.LocalNode.Alias())
-		dones = append(dones, checker.VotingStateStaging)
+	var finishedFunc sebakcommon.CheckerDeferFunc = func(n int, c sebakcommon.Checker, err error) {
 		wg.Done()
 	}
 
 	for _, nr := range nodeRunners {
-		nr.SetHandleBallotFuncs(deferFunc, nil)
+		nr.SetHandleBallotFuncs(nil, finishedFunc)
 	}
 
 	nr0 := nodeRunners[0]
@@ -156,4 +149,15 @@ func TestNodeRunnerRoundCreateAccount(t *testing.T) {
 	client.SendMessage(tx)
 
 	wg.Wait()
+
+	for _, nr := range nodeRunners {
+		nr.Stop()
+	}
+
+	for i, nr := range nodeRunners {
+		_, found := nr.Consensus().TransactionPool[tx.GetHash()]
+		if !found {
+			t.Error("failed to broadcast message", "node", nr.Node(), "index", i)
+		}
+	}
 }

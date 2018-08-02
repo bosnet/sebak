@@ -17,15 +17,14 @@ const (
 )
 
 type Block struct {
-	Hash         string
-	PreviousHash string
+	Header
+	Transactions        []string /* []Transaction.GetHash() */
+	PrevConsensusResult ConsensusResult
 
-	Height    uint64
+	Hash      string
 	Confirmed string
-
-	Transactions []string /* []Transaction.GetHash() */
-	Proposer     string   /* Node.Address() */
-	Round        Round
+	Proposer  string /* Node.Address() */
+	Round     Round
 }
 
 func MakeGenesisBlock(st *sebakstorage.LevelDBBackend, account BlockAccount) Block {
@@ -34,6 +33,7 @@ func MakeGenesisBlock(st *sebakstorage.LevelDBBackend, account BlockAccount) Blo
 		Number:      0,
 		BlockHeight: 0,
 		BlockHash:   base58.Encode(sebakcommon.MustMakeObjectHash(account)),
+		TotalTxs:    0,
 	}
 	transactions := []string{}
 	confirmed := ""
@@ -49,19 +49,26 @@ func MakeGenesisBlock(st *sebakstorage.LevelDBBackend, account BlockAccount) Blo
 	return b
 }
 
-func NewBlock(propser string, round Round, transactions []string, confirmed string) Block {
+func NewBlock(proposer string, round Round, transactions []string, confirmed string) Block {
 	b := &Block{
-		Height:       round.BlockHeight + 1,
-		PreviousHash: round.BlockHash,
-		Transactions: transactions,
-		Proposer:     propser,
-		Round:        round,
-		Confirmed:    confirmed,
+		Header:              *NewBlockHeader(round.BlockHeight+1, round.BlockHash, round.TotalTxs, uint64(len(transactions)), getTransactionRoot(transactions)),
+		Transactions:        transactions,
+		PrevConsensusResult: ConsensusResult{},
+		Proposer:            proposer,
+		Round:               round,
+		Confirmed:           confirmed,
 	}
 
+	log.Debug("", "PrevTotalTxs", round.TotalTxs, "txs", uint64(len(transactions)), "TotalTxs", b.Header.TotalTxs)
+
 	b.Hash = base58.Encode(sebakcommon.MustMakeObjectHash(b))
+	b.Header.fill()
 
 	return *b
+}
+
+func (b *Block) SetPrevConsensusResult(result *ConsensusResult) {
+	b.PrevConsensusResult = *result
 }
 
 func NewBlockFromRoundBallot(roundBallot RoundBallot) Block {
@@ -71,6 +78,10 @@ func NewBlockFromRoundBallot(roundBallot RoundBallot) Block {
 		roundBallot.ValidTransactions(),
 		roundBallot.ProposerConfirmed(),
 	)
+}
+
+func getTransactionRoot(txs []string) string {
+	return sebakcommon.MustMakeObjectHashString(txs) // [TODO] make root
 }
 
 func GetBlockKey(hash string) string {
