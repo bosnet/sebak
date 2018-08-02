@@ -80,6 +80,7 @@ func NewRunningRound(proposer string, rb RoundBallot) *RunningRound {
 
 	return &RunningRound{
 		Round:        rb.Round(),
+		Proposer:     proposer,
 		Transactions: transactions,
 		Voted:        voted,
 	}
