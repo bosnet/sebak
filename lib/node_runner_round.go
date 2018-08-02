@@ -3,6 +3,8 @@ package sebak
 import (
 	"context"
 	"errors"
+	"fmt"
+	"sort"
 	"time"
 
 	"boscoin.io/sebak/lib/common"
@@ -404,19 +406,28 @@ func (nr *NodeRunnerRound) startRound() {
 	nr.StartNewRound(0)
 }
 
+func (nr *NodeRunnerRound) CalculateProposer(blockHeight uint64, roundNumber uint64) string {
+	candidates := sort.StringSlice(nr.connectionManager.RoundCandidates())
+	candidates.Sort()
+
+	var hashedNumber int
+	for _, i := range sebakcommon.MakeHash([]byte(fmt.Sprintf("%d+%d", blockHeight, roundNumber))) {
+		hashedNumber += int(i)
+	}
+	return candidates[hashedNumber%len(candidates)]
+}
+
 func (nr *NodeRunnerRound) StartNewRound(roundNumber uint64) {
 	if nr.timerExpireRound != nil {
 		nr.timerExpireRound.Stop()
 		nr.timerExpireRound = nil
 	}
 
-	candidates := nr.connectionManager.RoundCandidates()
-	proposer := nr.Consensus().CalculateProposer(
-		candidates,
+	proposer := nr.CalculateProposer(
 		nr.Consensus().LatestConfirmedBlock.Height,
 		roundNumber,
 	)
-	log.Debug("calculated proposer", "proposer", proposer, "candidates", candidates)
+	log.Debug("calculated proposer", "proposer", proposer)
 
 	if proposer != nr.Node().Address() {
 		// wait for new RoundBallot from new proposer
