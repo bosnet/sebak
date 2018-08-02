@@ -8,7 +8,6 @@ type BallotState uint
 
 const (
 	BallotStateNONE BallotState = iota
-	BallotStateTXSHARE
 	BallotStateINIT
 	BallotStateSIGN
 	BallotStateACCEPT
@@ -22,14 +21,12 @@ func (s BallotState) String() string {
 	case 0:
 		return "NONE"
 	case 1:
-		return "TXSHARE"
-	case 2:
 		return "INIT"
-	case 3:
+	case 2:
 		return "SIGN"
-	case 4:
+	case 3:
 		return "ACCEPT"
-	case 5:
+	case 4:
 		return "ALL-CONFIRM"
 	}
 
@@ -54,16 +51,14 @@ func (s *BallotState) UnmarshalJSON(b []byte) (err error) {
 	switch string(b[1 : len(b)-1]) {
 	case "NONE":
 		c = 0
-	case "TXSHARE":
-		c = 1
 	case "INIT":
-		c = 2
+		c = 1
 	case "SIGN":
-		c = 3
+		c = 2
 	case "ACCEPT":
-		c = 4
+		c = 3
 	case "ALL-CONFIRM":
-		c = 5
+		c = 4
 	}
 
 	*s = BallotState(c)

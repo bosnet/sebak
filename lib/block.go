@@ -59,7 +59,7 @@ func NewBlock(proposer string, round Round, transactions []string, confirmed str
 		Confirmed:           confirmed,
 	}
 
-	log.Debug("", "PrevTotalTxs", round.TotalTxs, "txs", uint64(len(transactions)), "TotalTxs", b.Header.TotalTxs)
+	log.Debug("NewBlock", "PrevTotalTxs", round.TotalTxs, "txs", uint64(len(transactions)), "TotalTxs", b.Header.TotalTxs)
 
 	b.Hash = base58.Encode(sebakcommon.MustMakeObjectHash(b))
 	b.Header.fill()
@@ -81,7 +81,7 @@ func NewBlockFromRoundBallot(roundBallot RoundBallot) Block {
 }
 
 func getTransactionRoot(txs []string) string {
-	return sebakcommon.MustMakeObjectHashString(txs) // [TODO] make root
+	return sebakcommon.MustMakeObjectHashString(txs) // TODO make root
 }
 
 func GetBlockKey(hash string) string {

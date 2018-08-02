@@ -146,10 +146,10 @@ func (nr *NodeRunnerRound) ConnectValidators() {
 
 var DefaultRoundHandleMessageFromClientCheckerFuncs = []sebakcommon.CheckerFunc{
 	CheckNodeRunnerRoundHandleMessageTransactionUnmarshal,
+	CheckNodeRunnerRoundHandleMessageHasTransactionAlready,
 	CheckNodeRunnerRoundHandleMessageHistory,
-	CheckNodeRunnerRoundHandleMessageISAACReceiveMessage,
-	CheckNodeRunnerRoundHandleMessageSignBallot,
-	CheckNodeRunnerRoundHandleMessageBroadcast,
+	CheckNodeRunnerRoundHandleMessagePushIntoTransactionPool,
+	CheckNodeRunnerRoundHandleMessageTransactionBroadcast,
 }
 
 var DefaultRoundHandleBallotCheckerFuncs = []sebakcommon.CheckerFunc{
@@ -157,7 +157,6 @@ var DefaultRoundHandleBallotCheckerFuncs = []sebakcommon.CheckerFunc{
 	CheckNodeRunnerRoundHandleBallotNotFromKnownValidators,
 	CheckNodeRunnerRoundHandleBallotCheckIsNew,
 	CheckNodeRunnerRoundHandleBallotReceiveBallot,
-	CheckNodeRunnerRoundHandleBallotReachedToSIGN,
 	CheckNodeRunnerRoundHandleBallotHistory,
 	CheckNodeRunnerRoundHandleBallotIsBroadcastable,
 	CheckNodeRunnerRoundHandleBallotBroadcast,
@@ -415,7 +414,7 @@ func (nr *NodeRunnerRound) StartNewRound(roundNumber uint64) {
 		<-timer.C
 
 		if err := nr.proposeNewRoundBallot(roundNumber); err != nil {
-			nr.log.Error("failed to propse new RoundBallot", "error", err)
+			nr.log.Error("failed to propose new RoundBallot", "error", err)
 		}
 	}()
 }
