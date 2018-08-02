@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
 )
@@ -38,6 +39,18 @@ func CheckNodeRunnerRoundHandleMessageTransactionUnmarshal(c sebakcommon.Checker
 	return
 }
 
+func CheckNodeRunnerRoundHandleMessageHasTransactionAlready(c sebakcommon.Checker, args ...interface{}) (err error) {
+	checker := c.(*NodeRunnerRoundHandleMessageChecker)
+
+	is := checker.NodeRunner.Consensus()
+	if _, ok := is.TransactionPool[checker.Transaction.GetHash()]; ok {
+		err = sebakerror.ErrorNewButKnownMessage
+		return
+	}
+
+	return
+}
+
 func CheckNodeRunnerRoundHandleMessageHistory(c sebakcommon.Checker, args ...interface{}) (err error) {
 	checker := c.(*NodeRunnerRoundHandleMessageChecker)
 
@@ -51,35 +64,24 @@ func CheckNodeRunnerRoundHandleMessageHistory(c sebakcommon.Checker, args ...int
 	return
 }
 
-func CheckNodeRunnerRoundHandleMessageISAACReceiveMessage(c sebakcommon.Checker, args ...interface{}) (err error) {
+func CheckNodeRunnerRoundHandleMessagePushIntoTransactionPool(c sebakcommon.Checker, args ...interface{}) (err error) {
 	checker := c.(*NodeRunnerRoundHandleMessageChecker)
 
-	var ballot Ballot
-	if ballot, err = checker.NodeRunner.Consensus().ReceiveMessage(checker.Transaction); err != nil {
-		return
-	}
+	tx := checker.Transaction
+	is := checker.NodeRunner.Consensus()
+	is.TransactionPool[tx.GetHash()] = tx
+	is.TransactionPoolHashes = append(is.TransactionPoolHashes, tx.GetHash())
 
-	checker.Ballot = ballot
+	checker.NodeRunner.Log().Debug("push transaction into transactionPool", "transaction", checker.Transaction.GetHash())
 
 	return
 }
 
-func CheckNodeRunnerRoundHandleMessageSignBallot(c sebakcommon.Checker, args ...interface{}) (err error) {
+func CheckNodeRunnerRoundHandleMessageTransactionBroadcast(c sebakcommon.Checker, args ...interface{}) (err error) {
 	checker := c.(*NodeRunnerRoundHandleMessageChecker)
 
-	// self-sign
-	checker.Ballot.Vote(VotingYES)
-	checker.Ballot.UpdateHash()
-	checker.Ballot.Sign(checker.LocalNode.Keypair(), checker.NetworkID)
-
-	return
-}
-
-func CheckNodeRunnerRoundHandleMessageBroadcast(c sebakcommon.Checker, args ...interface{}) (err error) {
-	checker := c.(*NodeRunnerRoundHandleMessageChecker)
-
-	checker.NodeRunner.Log().Debug("ballot from client will be broadcasted", "ballot", checker.Ballot.MessageHash())
-	checker.NodeRunner.ConnectionManager().Broadcast(checker.Ballot)
+	checker.NodeRunner.Log().Debug("transaction from client will be broadcasted", "transaction", checker.Transaction.GetHash())
+	checker.NodeRunner.ConnectionManager().Broadcast(checker.Transaction)
 
 	return
 }

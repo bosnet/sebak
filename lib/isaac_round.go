@@ -31,7 +31,7 @@ func (rv RoundVote) CanGetVotingResult(policy sebakcommon.VotingThresholdPolicy)
 	}
 
 	log.Debug(
-		"check threshold",
+		"check threshold in isaac round",
 		"threshold", threshold,
 		"yes", yes,
 		"no", no,
@@ -177,35 +177,8 @@ func (is *ISAACRound) CalculateProposer(connected []string, blockHeight uint64, 
 	return addresses[(blockHeight+roundNumber)%uint64(len(addresses))]
 }
 
-func (is *ISAACRound) ReceiveMessage(m sebakcommon.Message) (ballot Ballot, err error) {
-	if is.Boxes.HasMessage(m) {
-		err = sebakerror.ErrorNewButKnownMessage
-		return
-	}
-
-	if ballot, err = NewBallotFromMessage(is.Node.Address(), m); err != nil {
-		return
-	}
-
-	// self-sign; make new `Ballot` from `Message`
-	ballot.SetState(sebakcommon.BallotStateTXSHARE)
-	ballot.Vote(VotingYES) // The initial ballot from client will have 'VotingYES'
-	ballot.Sign(is.Node.Keypair(), is.NetworkID)
-
-	if err = ballot.IsWellFormed(is.NetworkID); err != nil {
-		return
-	}
-
-	is.TransactionPool[ballot.MessageHash()] = ballot.Data().Data.(Transaction)
-	is.TransactionPoolHashes = append(is.TransactionPoolHashes, ballot.MessageHash())
-
-	return
-}
-
 func (is *ISAACRound) ReceiveBallot(ballot Ballot) (vs VotingStateStaging, err error) {
 	switch ballot.State() {
-	case sebakcommon.BallotStateTXSHARE:
-		vs, err = is.receiveBallotStateTXSHARE(ballot)
 	case sebakcommon.BallotStateINIT:
 		vs, err = is.receiveBallotStateINIT(ballot)
 	case sebakcommon.BallotStateALLCONFIRM:
@@ -217,68 +190,7 @@ func (is *ISAACRound) ReceiveBallot(ballot Ballot) (vs VotingStateStaging, err e
 	return
 }
 
-func (is *ISAACRound) receiveBallotStateTXSHARE(ballot Ballot) (vs VotingStateStaging, err error) {
-	if is.Boxes.HasMessage(ballot) {
-		err = sebakerror.ErrorNewButKnownMessage
-		return
-	}
-
-	if err = ballot.IsWellFormed(is.NetworkID); err != nil {
-		return
-	}
-
-	is.TransactionPool[ballot.MessageHash()] = ballot.Data().Data.(Transaction)
-	is.TransactionPoolHashes = append(is.TransactionPoolHashes, ballot.MessageHash())
-
-	err = sebakcommon.CheckerErrorStop{"stop"}
-
-	return
-}
-
 func (is *ISAACRound) receiveBallotStateINIT(ballot Ballot) (vs VotingStateStaging, err error) {
-	var isNew bool
-
-	if isNew, err = is.Boxes.AddBallot(ballot); err != nil {
-		return
-	}
-
-	if isNew {
-		var newBallot Ballot
-		newBallot, err = NewBallotFromMessage(is.Node.Keypair().Address(), ballot.Data().Message())
-		if err != nil {
-			return
-		}
-
-		// self-sign
-		newBallot.SetState(sebakcommon.BallotStateINIT)
-		newBallot.Vote(VotingYES) // The BallotStateINIT ballot will have 'VotingYES'
-		newBallot.Sign(is.Node.Keypair(), is.NetworkID)
-
-		if err = newBallot.IsWellFormed(is.NetworkID); err != nil {
-			return
-		}
-
-		if _, err = is.Boxes.AddBallot(newBallot); err != nil {
-			return
-		}
-	}
-
-	vr, err := is.Boxes.VotingResult(ballot)
-	if err != nil {
-		return
-	}
-
-	if vr.IsClosed() || !vr.CanGetResult(is.VotingThresholdPolicy) {
-		return
-	}
-
-	votingHole, state, ended := vr.MakeResult(is.VotingThresholdPolicy)
-	if ended {
-		if vs, err = vr.ChangeState(votingHole, state); err != nil {
-			return
-		}
-	}
-
 	return
 }
 

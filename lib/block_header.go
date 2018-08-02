@@ -15,7 +15,7 @@ type Header struct {
 	// ConsensusPayloadHash    Uint256
 	// ConsensusPayload        Payload  // or []byte
 	// StateRoot types.Hash    // MPT of state
-	// [TODO] + smart contract fields
+	// TODO + smart contract fields
 }
 
 func NewBlockHeader(height uint64, prevBlockHash string, prevTotalTxs uint64, currentTxs uint64, txRoot string) *Header {

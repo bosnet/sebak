@@ -65,6 +65,7 @@ const (
 	MessageFromClient  MessageType = "message"
 	ConnectMessage                 = "connect"
 	BallotMessage                  = "ballot"
+	TransactionMessage             = "transaction"
 	RoundBallotMessage             = "round-ballot"
 	GetNodeInfoMessage             = "get-node-info"
 )

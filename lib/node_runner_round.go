@@ -154,10 +154,10 @@ func (nr *NodeRunnerRound) ConnectValidators() {
 
 var DefaultRoundHandleMessageFromClientCheckerFuncs = []sebakcommon.CheckerFunc{
 	CheckNodeRunnerRoundHandleMessageTransactionUnmarshal,
+	CheckNodeRunnerRoundHandleMessageHasTransactionAlready,
 	CheckNodeRunnerRoundHandleMessageHistory,
-	CheckNodeRunnerRoundHandleMessageISAACReceiveMessage,
-	CheckNodeRunnerRoundHandleMessageSignBallot,
-	CheckNodeRunnerRoundHandleMessageBroadcast,
+	CheckNodeRunnerRoundHandleMessagePushIntoTransactionPool,
+	CheckNodeRunnerRoundHandleMessageTransactionBroadcast,
 }
 
 var DefaultRoundHandleBallotCheckerFuncs = []sebakcommon.CheckerFunc{
@@ -165,7 +165,6 @@ var DefaultRoundHandleBallotCheckerFuncs = []sebakcommon.CheckerFunc{
 	CheckNodeRunnerRoundHandleBallotNotFromKnownValidators,
 	CheckNodeRunnerRoundHandleBallotCheckIsNew,
 	CheckNodeRunnerRoundHandleBallotReceiveBallot,
-	CheckNodeRunnerRoundHandleBallotReachedToSIGN,
 	CheckNodeRunnerRoundHandleBallotHistory,
 	CheckNodeRunnerRoundHandleBallotIsBroadcastable,
 	CheckNodeRunnerRoundHandleBallotBroadcast,
