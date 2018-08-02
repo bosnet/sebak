@@ -18,8 +18,8 @@ const (
 
 type Block struct {
 	Header
-	Transactions        []string /* []Transaction.GetHash() */
-	PrevConsensusResult ConsensusResult
+	Transactions []string /* []Transaction.GetHash() */
+	//PrevConsensusResult ConsensusResult
 
 	Hash      string
 	Confirmed string
@@ -51,25 +51,25 @@ func MakeGenesisBlock(st *sebakstorage.LevelDBBackend, account BlockAccount) Blo
 
 func NewBlock(proposer string, round Round, transactions []string, confirmed string) Block {
 	b := &Block{
-		Header:              *NewBlockHeader(round.BlockHeight+1, round.BlockHash, round.TotalTxs, uint64(len(transactions)), getTransactionRoot(transactions)),
-		Transactions:        transactions,
-		PrevConsensusResult: ConsensusResult{},
-		Proposer:            proposer,
-		Round:               round,
-		Confirmed:           confirmed,
+		Header:       *NewBlockHeader(round.BlockHeight+1, round.BlockHash, round.TotalTxs, uint64(len(transactions)), getTransactionRoot(transactions)),
+		Transactions: transactions,
+		//PrevConsensusResult: ConsensusResult{},
+		Proposer:  proposer,
+		Round:     round,
+		Confirmed: confirmed,
 	}
 
 	log.Debug("", "PrevTotalTxs", round.TotalTxs, "txs", uint64(len(transactions)), "TotalTxs", b.Header.TotalTxs)
 
 	b.Hash = base58.Encode(sebakcommon.MustMakeObjectHash(b))
-	b.Header.fill()
+	//b.Header.fill()
 
 	return *b
 }
 
-func (b *Block) SetPrevConsensusResult(result *ConsensusResult) {
-	b.PrevConsensusResult = *result
-}
+// func (b *Block) SetPrevConsensusResult(result *ConsensusResult) {
+// 	b.PrevConsensusResult = *result
+// }
 
 func NewBlockFromRoundBallot(roundBallot RoundBallot) Block {
 	return NewBlock(
