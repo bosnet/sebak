@@ -270,7 +270,7 @@ func runNode() {
 	policy, _ := sebak.NewDefaultVotingThresholdPolicy(100, signTh, acceptTh)
 	policy.SetValidators(len(localNode.GetValidators()) + 1) // including 'self'
 
-	isaac, err := sebak.NewISAAC([]byte(flagNetworkID), localNode, policy)
+	isaac, err := sebak.NewISAACRound([]byte(flagNetworkID), localNode, policy)
 	if err != nil {
 		log.Error("failed to launch consensus", "error", err)
 		return
@@ -286,7 +286,12 @@ func runNode() {
 	// Execution group.
 	var g run.Group
 	{
-		nr := sebak.NewNodeRunner(flagNetworkID, localNode, policy, nt, isaac, st)
+		nr, err := sebak.NewNodeRunnerRound(flagNetworkID, localNode, policy, nt, isaac, st)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "%v\n", err)
+			os.Exit(1)
+		}
+
 		g.Add(func() error {
 			if err := nr.Start(); err != nil {
 				log.Crit("failed to start node", "error", err)
