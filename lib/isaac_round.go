@@ -2,7 +2,6 @@ package sebak
 
 import (
 	"errors"
-	"sort"
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
@@ -245,15 +244,28 @@ func (is *ISAACRound) IsRunningRound(roundNumber uint64) bool {
 	return false
 }
 
-func (is *ISAACRound) CalculateProposer(connected []string, blockHeight uint64, roundNumber uint64) string {
-	is.Lock()
-	defer is.Unlock()
+func (is *ISAACRound) ReceiveMessage(m sebakcommon.Message) (ballot Ballot, err error) {
+	if is.TransactionPool.Has(m.GetHash()) {
+		err = sebakerror.ErrorNewButKnownMessage
+		return
+	}
 
-	addresses := sort.StringSlice(connected)
-	addresses.Sort()
+	if ballot, err = NewBallotFromMessage(is.Node.Address(), m); err != nil {
+		return
+	}
 
-	// TODO This is simple version to select proposer node.
-	return addresses[(blockHeight+roundNumber)%uint64(len(addresses))]
+	// self-sign; make new `Ballot` from `Message`
+	ballot.SetState(sebakcommon.BallotStateTXSHARE)
+	ballot.Vote(VotingYES) // The initial ballot from client will have 'VotingYES'
+	ballot.Sign(is.Node.Keypair(), is.NetworkID)
+
+	if err = ballot.IsWellFormed(is.NetworkID); err != nil {
+		return
+	}
+
+	is.TransactionPool.Add(ballot.Data().Data.(Transaction))
+
+	return
 }
 
 func (is *ISAACRound) ReceiveBallot(ballot Ballot) (vs VotingStateStaging, err error) {
@@ -281,8 +293,7 @@ func (is *ISAACRound) receiveBallotStateTXSHARE(ballot Ballot) (vs VotingStateSt
 		return
 	}
 
-	is.TransactionPool[ballot.MessageHash()] = ballot.Data().Data.(Transaction)
-	is.TransactionPoolHashes = append(is.TransactionPoolHashes, ballot.MessageHash())
+	is.TransactionPool.Add(ballot.Data().Data.(Transaction))
 
 	err = sebakcommon.CheckerErrorStop{"stop"}
 
@@ -360,10 +371,6 @@ func (is *ISAACRound) CloseBallotConsensus(ballot Ballot) (err error) {
 
 func (is *ISAACRound) SetLatestConsensusedBlock(block Block) {
 	is.LatestConfirmedBlock = block
-}
-
-func (is *ISAACRound) SetLatestRound(round Round) {
-	is.LatestRound = round
 }
 
 func (is *ISAACRound) SetLatestRound(round Round) {

@@ -53,27 +53,17 @@ func NewBlock(proposer string, round Round, transactions []string, confirmed str
 	b := &Block{
 		Header:       *NewBlockHeader(round.BlockHeight+1, round.BlockHash, round.TotalTxs, uint64(len(transactions)), getTransactionRoot(transactions)),
 		Transactions: transactions,
-		//PrevConsensusResult: ConsensusResult{},
-		Proposer:  proposer,
-		Round:     round,
-		Confirmed: confirmed,
+		Proposer:     proposer,
+		Round:        round,
+		Confirmed:    confirmed,
 	}
 
 	log.Debug("NewBlock", "PrevTotalTxs", round.TotalTxs, "txs", uint64(len(transactions)), "TotalTxs", b.Header.TotalTxs)
 
 	b.Hash = base58.Encode(sebakcommon.MustMakeObjectHash(b))
-	//b.Header.fill()
 
 	return *b
 }
-
-// func (b *Block) SetPrevConsensusResult(result *ConsensusResult) {
-// 	b.PrevConsensusResult = *result
-// }
-
-// func (b *Block) SetPrevTotalTxs(prevTotalTxs uint64) {
-//	b.prevTotalTxs = prevTotalTxs
-// }
 
 func NewBlockFromRoundBallot(roundBallot RoundBallot) Block {
 	return NewBlock(
