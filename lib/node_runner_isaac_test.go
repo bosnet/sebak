@@ -271,11 +271,6 @@ func TestNodeRunnerConsensusSameSourceWillNotIgnored(t *testing.T) {
 		return
 	}
 
-	if !isaac.Boxes.WaitingBox.HasMessage(firstTx) {
-		t.Error("ballot not in WaitingBox")
-		return
-	}
-
 	var finished []string
 	var dones []VotingStateStaging
 	var mutex = &sync.Mutex{}

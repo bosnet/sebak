@@ -13,6 +13,7 @@ const (
 	BallotStateSIGN
 	BallotStateACCEPT
 	BallotStateALLCONFIRM
+	BallotStateTXSHARE
 )
 
 var BallotInitState = BallotStateNONE
@@ -31,6 +32,8 @@ func (s BallotState) String() string {
 		return "ACCEPT"
 	case 5:
 		return "ALL-CONFIRM"
+	case 5:
+		return "TXSHARE"
 	}
 
 	return ""
