@@ -118,14 +118,103 @@ func (rr *RunningRound) Vote(rb RoundBallot) (isNew bool) {
 	return
 }
 
+type TransactionPool struct {
+	sebakcommon.SafeLock
+
+	Pool   map[ /* Transaction.GetHash() */ string]Transaction
+	Hashes []string // Transaction.GetHash()
+}
+
+func NewTransactionPool() *TransactionPool {
+	return &TransactionPool{
+		Pool:   map[string]Transaction{},
+		Hashes: []string{},
+	}
+}
+
+func (tp *TransactionPool) Len() int {
+	return len(tp.Hashes)
+}
+
+func (tp *TransactionPool) Has(hash string) bool {
+	_, found := tp.Pool[hash]
+	return found
+}
+
+func (tp *TransactionPool) Get(hash string) (tx Transaction, found bool) {
+	tx, found = tp.Pool[hash]
+	return
+}
+
+func (tp *TransactionPool) Add(tx Transaction) bool {
+	if _, found := tp.Pool[tx.GetHash()]; found {
+		return false
+	}
+
+	tp.Lock()
+	defer tp.Unlock()
+
+	tp.Pool[tx.GetHash()] = tx
+	tp.Hashes = append(tp.Hashes, tx.GetHash())
+
+	return true
+}
+
+func (tp *TransactionPool) Remove(hashes ...string) {
+	tp.Lock()
+	defer tp.Unlock()
+
+	indices := map[int]int{}
+	var max int
+	for _, hash := range hashes {
+		index, found := sebakcommon.InStringArray(tp.Hashes, hash)
+		if !found {
+			continue
+		}
+		indices[index] = 1
+		if index > max {
+			max = index
+		}
+	}
+
+	var newHashes []string
+	for i, hash := range tp.Hashes {
+		if i > max {
+			newHashes = append(newHashes, hash)
+			continue
+		}
+
+		if _, found := indices[i]; !found {
+			newHashes = append(newHashes, hash)
+			continue
+		}
+
+		delete(tp.Pool, hash)
+	}
+
+	tp.Hashes = newHashes
+
+	return
+}
+
+func (tp *TransactionPool) AvailableTransactions() []string {
+	tp.Lock()
+	defer tp.Unlock()
+
+	if tp.Len() <= MaxTransactionsInRoundBallot {
+		return tp.Hashes
+	}
+
+	return tp.Hashes[:MaxTransactionsInRoundBallot]
+}
+
 type ISAACRound struct {
 	sebakcommon.SafeLock
 
 	NetworkID             []byte
 	Node                  *sebaknode.LocalNode
 	VotingThresholdPolicy sebakcommon.VotingThresholdPolicy
-	TransactionPool       map[ /* Transaction.GetHash() */ string]Transaction
-	TransactionPoolHashes []string // Transaction.GetHash()
+	TransactionPool       *TransactionPool
 	RunningRounds         map[ /* Round.Hash() */ string]*RunningRound
 	LatestConfirmedBlock  Block
 	LatestRound           Round
@@ -138,23 +227,12 @@ func NewISAACRound(networkID []byte, node *sebaknode.LocalNode, votingThresholdP
 		NetworkID: networkID,
 		Node:      node,
 		VotingThresholdPolicy: votingThresholdPolicy,
-		TransactionPool:       map[string]Transaction{},
+		TransactionPool:       NewTransactionPool(),
 		RunningRounds:         map[string]*RunningRound{},
 		Boxes:                 NewBallotBoxes(),
 	}
 
 	return
-}
-
-func (is *ISAACRound) AvailableTransactions() []string {
-	is.Lock()
-	defer is.Unlock()
-
-	if len(is.TransactionPoolHashes) <= MaxTransactionsInRoundBallot {
-		return is.TransactionPoolHashes
-	}
-
-	return is.TransactionPoolHashes[:MaxTransactionsInRoundBallot]
 }
 
 func (is *ISAACRound) IsRunningRound(roundNumber uint64) bool {
@@ -167,7 +245,7 @@ func (is *ISAACRound) IsRunningRound(roundNumber uint64) bool {
 }
 
 func (is *ISAACRound) ReceiveMessage(m sebakcommon.Message) (ballot Ballot, err error) {
-	if is.Boxes.HasMessage(m) {
+	if is.TransactionPool.Has(m.GetHash()) {
 		err = sebakerror.ErrorNewButKnownMessage
 		return
 	}
@@ -185,8 +263,7 @@ func (is *ISAACRound) ReceiveMessage(m sebakcommon.Message) (ballot Ballot, err 
 		return
 	}
 
-	is.TransactionPool[ballot.MessageHash()] = ballot.Data().Data.(Transaction)
-	is.TransactionPoolHashes = append(is.TransactionPoolHashes, ballot.MessageHash())
+	is.TransactionPool.Add(ballot.Data().Data.(Transaction))
 
 	return
 }
@@ -230,17 +307,17 @@ func (is *ISAACRound) CloseRoundBallotConsensus(proposer string, round Round, vh
 		return
 	}
 
-	for _, txHash := range rr.Transactions[proposer] {
-		var index int
-		var found bool
-		if index, found = sebakcommon.InStringArray(is.TransactionPoolHashes, txHash); !found {
-			continue
-		}
-		is.TransactionPoolHashes = append(is.TransactionPoolHashes[:index], is.TransactionPoolHashes[index+1:]...)
-		delete(is.TransactionPool, txHash)
-	}
+	is.TransactionPool.Remove(rr.Transactions[proposer]...)
 
 	delete(is.RunningRounds, roundHash)
+
+	// remove all the same rounds
+	for hash, runningRound := range is.RunningRounds {
+		if runningRound.Round.BlockHeight > round.BlockHeight {
+			continue
+		}
+		delete(is.RunningRounds, hash)
+	}
 
 	return
 }
@@ -266,8 +343,7 @@ func (is *ISAACRound) CloseBallotConsensus(ballot Ballot) (err error) {
 	defer is.Unlock()
 
 	tx := message.(Transaction)
-	is.TransactionPool[tx.GetHash()] = tx
-	is.TransactionPoolHashes = append(is.TransactionPoolHashes, tx.GetHash())
+	is.TransactionPool.Add(tx)
 
 	is.Boxes.RemoveVotingResult(vr) // TODO detect error
 
