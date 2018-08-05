@@ -40,6 +40,7 @@ func ConnectHandler(ctx context.Context, t *HTTP2Network) HandlerFunc {
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			http.Error(w, "Error reading request body", http.StatusInternalServerError)
+			return
 		}
 
 		t.messageBroker.ReceiveMessage(t, Message{Type: ConnectMessage, Data: body})
@@ -65,6 +66,7 @@ func MessageHandler(ctx context.Context, t *HTTP2Network) HandlerFunc {
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			http.Error(w, "Error reading request body", http.StatusInternalServerError)
+			return
 		}
 
 		t.messageBroker.ReceiveMessage(t, Message{Type: MessageFromClient, Data: body})
@@ -88,6 +90,7 @@ func BallotHandler(ctx context.Context, t *HTTP2Network) HandlerFunc {
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			http.Error(w, "Error reading request body", http.StatusInternalServerError)
+			return
 		}
 
 		t.messageBroker.ReceiveMessage(t, Message{Type: BallotMessage, Data: body})
@@ -111,6 +114,7 @@ func RoundBallotHandler(ctx context.Context, t *HTTP2Network) HandlerFunc {
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			http.Error(w, "Error reading request body", http.StatusInternalServerError)
+			return
 		}
 
 		t.messageBroker.ReceiveMessage(t, Message{Type: RoundBallotMessage, Data: body})

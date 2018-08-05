@@ -3,18 +3,18 @@ package sebak
 import (
 	"net/http"
 
+	"fmt"
+
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/observer"
 	"boscoin.io/sebak/lib/storage"
-	"fmt"
 	"github.com/gorilla/mux"
 )
 
 const GetTransactionsHandlerPattern = "/transactions"
 
 func GetTransactionsHandler(storage *sebakstorage.LevelDBBackend) http.HandlerFunc {
-
 	return func(w http.ResponseWriter, r *http.Request) {
 		var err error
 
@@ -48,7 +48,6 @@ func GetTransactionsHandler(storage *sebakstorage.LevelDBBackend) http.HandlerFu
 			event += " " + fmt.Sprintf("iterate-%s", iterateId)
 			streaming(observer.BlockTransactionObserver, w, event, callBackFunc, readyChan)
 		default:
-
 			var s []byte
 			var btl []BlockTransaction
 			iterFunc, closeFunc := GetBlockTransactions(storage, false)
@@ -73,7 +72,6 @@ func GetTransactionsHandler(storage *sebakstorage.LevelDBBackend) http.HandlerFu
 const GetTransactionByHashHandlerPattern = "/transactions/{txid}"
 
 func GetTransactionByHashHandler(storage *sebakstorage.LevelDBBackend) http.HandlerFunc {
-
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		vars := mux.Vars(r)
