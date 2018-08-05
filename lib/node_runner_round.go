@@ -15,9 +15,10 @@ import (
 )
 
 var (
-	TimeoutExpireRound           time.Duration = time.Second * 10
-	TimeoutProposeNewRoundBallot time.Duration = time.Second * 2
-	MaxTransactionsInRoundBallot int           = 1000
+	TimeoutExpireRound               time.Duration = time.Second * 10
+	TimeoutProposeNewRoundBallot     time.Duration = time.Second * 2
+	TimeoutProposeNewRoundBallotFull time.Duration = time.Second * 1
+	MaxTransactionsInRoundBallot     int           = 1000
 )
 
 type NodeRunnerRound struct {
@@ -174,6 +175,7 @@ var DefaultRoundHandleBallotCheckerFuncs = []sebakcommon.CheckerFunc{
 
 var DefaultRoundHandleRoundBallotCheckerFuncs = []sebakcommon.CheckerFunc{
 	CheckNodeRunnerRoundHandleRoundBallotUnmarshal,
+	CheckNodeRunnerRoundHandleRoundBallotNotFromKnownValidators,
 	CheckNodeRunnerRoundHandleRoundBallotAlreadyFinished,
 	CheckNodeRunnerRoundHandleRoundBallotAlreadyVoted,
 	CheckNodeRunnerRoundHandleRoundBallotAddRunningRounds,
@@ -240,8 +242,9 @@ func (nr *NodeRunnerRound) SetHandleRoundBallotCheckerFuncs(
 }
 
 func (nr *NodeRunnerRound) handleMessage() {
-	var err error
 	for message := range nr.network.ReceiveMessage() {
+		var err error
+
 		if message.IsEmpty() {
 			nr.log.Error("got empty message`")
 			continue
@@ -249,7 +252,7 @@ func (nr *NodeRunnerRound) handleMessage() {
 		switch message.Type {
 		case sebaknetwork.ConnectMessage:
 			//nr.log.Debug("got connect", "message", message.Head(50))
-			if _, err := sebaknode.NewValidatorFromString(message.Data); err != nil {
+			if _, err = sebaknode.NewValidatorFromString(message.Data); err != nil {
 				err = errors.New("invalid validator data was received")
 			}
 		case sebaknetwork.MessageFromClient:
@@ -423,30 +426,28 @@ func (nr *NodeRunnerRound) StartNewRound(roundNumber uint64) {
 		nr.timerExpireRound = nil
 	}
 
-	proposer := nr.CalculateProposer(
-		nr.Consensus().LatestConfirmedBlock.Height,
-		roundNumber,
-	)
-	log.Debug("calculated proposer", "proposer", proposer)
-
-	if proposer != nr.Node().Address() {
+	go func() {
 		// wait for new RoundBallot from new proposer
 		nr.timerExpireRound = time.NewTimer(TimeoutExpireRound)
 		go func() {
 			for {
 				select {
 				case <-nr.timerExpireRound.C:
-					if !nr.Consensus().IsRunningRound(roundNumber) {
-						go nr.StartNewRound(roundNumber + 1)
-					}
-					goto end
+					go nr.StartNewRound(roundNumber + 1)
+					return
 				}
 			}
-
-		end:
-			//
 		}()
+	}()
 
+	proposer := nr.CalculateProposer(
+		nr.Consensus().LatestConfirmedBlock.Height,
+		roundNumber,
+	)
+
+	log.Debug("calculated proposer", "proposer", proposer)
+
+	if proposer != nr.Node().Address() {
 		return
 	}
 
@@ -456,14 +457,16 @@ func (nr *NodeRunnerRound) StartNewRound(roundNumber uint64) {
 }
 
 func (nr *NodeRunnerRound) readyToProposeNewRoundBallot(roundNumber uint64) {
+	var timeout time.Duration
 	// if incoming transaactions are over `MaxTransactionsInRoundBallot`, just
 	// start.
-	if len(nr.Consensus().TransactionPoolHashes) > MaxTransactionsInRoundBallot {
-		nr.proposeNewRoundBallot(roundNumber)
-		return
+	if nr.Consensus().TransactionPool.Len() > MaxTransactionsInRoundBallot {
+		timeout = TimeoutProposeNewRoundBallotFull
+	} else {
+		timeout = TimeoutProposeNewRoundBallot
 	}
 
-	timer := time.NewTimer(TimeoutProposeNewRoundBallot)
+	timer := time.NewTimer(timeout)
 	go func() {
 		<-timer.C
 
@@ -483,18 +486,44 @@ func (nr *NodeRunnerRound) proposeNewRoundBallot(roundNumber uint64) {
 	}
 
 	// collect incoming transactions from `TransactionPool`
-	nr.log.Debug("new round proposed", "round", round)
+	availableTransactions := nr.Consensus().TransactionPool.AvailableTransactions()
+	nr.log.Debug("new round proposed", "round", round, "transactions", availableTransactions)
 
 	roundBallot := NewRoundBallot(
 		nr.localNode,
 		round,
-		nr.Consensus().AvailableTransactions(),
+		availableTransactions,
 	)
 
+	transactionsChecker := &NodeRunnerRoundHandleTransactionChecker{
+		DefaultChecker:    sebakcommon.DefaultChecker{handleRoundBallotTransactionCheckerFuncs},
+		NodeRunner:        nr,
+		LocalNode:         nr.Node(),
+		NetworkID:         nr.NetworkID(),
+		RoundBallot:       *roundBallot,
+		ValidTransactions: []string{},
+		CheckAll:          true,
+		VotingHole:        VotingNOTYET,
+	}
+
+	{
+		err := sebakcommon.RunChecker(transactionsChecker, sebakcommon.DefaultDeferFunc)
+		if err != nil {
+			if _, ok := err.(sebakcommon.CheckerErrorStop); !ok {
+				transactionsChecker.VotingHole = VotingNO
+			}
+			err = nil
+		}
+
+		if transactionsChecker.VotingHole == VotingNOTYET {
+			transactionsChecker.VotingHole = VotingYES
+		}
+	}
+
 	// TODO validate transactions
-	roundBallot.SetValidTransactions(nr.Consensus().TransactionPoolHashes)
-	roundBallot.SetVote(VotingYES)
-	roundBallot.Sign(nr.localNode.Keypair(), nr.networkID)
+	roundBallot.SetValidTransactions(transactionsChecker.ValidTransactions)
+	roundBallot.SetVote(transactionsChecker.VotingHole)
+	roundBallot.Sign(nr.Node().Keypair(), nr.networkID)
 
 	nr.log.Debug("new RoundBallot created", "roundBallot", roundBallot)
 

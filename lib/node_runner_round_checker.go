@@ -43,7 +43,7 @@ func CheckNodeRunnerRoundHandleMessageHasTransactionAlready(c sebakcommon.Checke
 	checker := c.(*NodeRunnerRoundHandleMessageChecker)
 
 	is := checker.NodeRunner.Consensus()
-	if _, ok := is.TransactionPool[checker.Transaction.GetHash()]; ok {
+	if is.TransactionPool.Has(checker.Transaction.GetHash()) {
 		err = sebakerror.ErrorNewButKnownMessage
 		return
 	}
@@ -54,7 +54,8 @@ func CheckNodeRunnerRoundHandleMessageHasTransactionAlready(c sebakcommon.Checke
 func CheckNodeRunnerRoundHandleMessageHistory(c sebakcommon.Checker, args ...interface{}) (err error) {
 	checker := c.(*NodeRunnerRoundHandleMessageChecker)
 
-	if _, err = GetBlockTransactionHistory(checker.NodeRunner.Storage(), checker.Transaction.GetHash()); err == nil {
+	var found bool
+	if found, err = ExistsBlockTransactionHistory(checker.NodeRunner.Storage(), checker.Transaction.GetHash()); found && err == nil {
 		checker.NodeRunner.Log().Debug("found in history", "transction", checker.Transaction.GetHash())
 		err = sebakerror.ErrorNewButKnownMessage
 		return
@@ -75,8 +76,7 @@ func CheckNodeRunnerRoundHandleMessagePushIntoTransactionPool(c sebakcommon.Chec
 
 	tx := checker.Transaction
 	is := checker.NodeRunner.Consensus()
-	is.TransactionPool[tx.GetHash()] = tx
-	is.TransactionPoolHashes = append(is.TransactionPoolHashes, tx.GetHash())
+	is.TransactionPool.Add(tx)
 
 	checker.NodeRunner.Log().Debug("push transaction into transactionPool", "transaction", checker.Transaction.GetHash())
 
@@ -302,6 +302,24 @@ func CheckNodeRunnerRoundHandleRoundBallotUnmarshal(c sebakcommon.Checker, args 
 	return
 }
 
+func CheckNodeRunnerRoundHandleRoundBallotNotFromKnownValidators(c sebakcommon.Checker, args ...interface{}) (err error) {
+	checker := c.(*NodeRunnerRoundHandleRoundBallotChecker)
+
+	localNode := checker.LocalNode.(*sebaknode.LocalNode)
+	if localNode.HasValidators(checker.RoundBallot.Source()) {
+		return
+	}
+
+	checker.NodeRunner.Log().Debug(
+		"round-ballot from unknown validator",
+		"from", checker.RoundBallot.Source(),
+		"ballot", checker.RoundBallot.GetHash(),
+	)
+
+	err = sebakcommon.CheckerErrorStop{"ballot from unknown validator"}
+	return
+}
+
 func CheckNodeRunnerRoundHandleRoundBallotAlreadyFinished(c sebakcommon.Checker, args ...interface{}) (err error) {
 	checker := c.(*NodeRunnerRoundHandleRoundBallotChecker)
 
@@ -397,6 +415,13 @@ func CheckNodeRunnerRoundHandleRoundBallotIsSameProposer(c sebakcommon.Checker, 
 	return
 }
 
+var handleRoundBallotTransactionCheckerFuncs = []sebakcommon.CheckerFunc{
+	CheckNodeRunnerHandleTransactionsIsNew,
+	CheckNodeRunnerHandleTransactionsGetMissingTransaction,
+	CheckNodeRunnerHandleTransactionsSameSource,
+	CheckNodeRunnerHandleTransactionsSourceCheck,
+}
+
 func CheckNodeRunnerRoundHandleRoundBallotValidateTransactions(c sebakcommon.Checker, args ...interface{}) (err error) {
 	checker := c.(*NodeRunnerRoundHandleRoundBallotChecker)
 
@@ -408,10 +433,46 @@ func CheckNodeRunnerRoundHandleRoundBallotValidateTransactions(c sebakcommon.Che
 		return
 	}
 
-	// TODO check transactions are valid or not
-	// TODO check the proposed ValidTransactions is valid
+	if checker.RoundBallot.TransactionsLength() < 1 {
+		checker.VotingHole = VotingYES
+		return
+	}
 
-	checker.VotingHole = VotingYES
+	transactionsChecker := &NodeRunnerRoundHandleTransactionChecker{
+		DefaultChecker:    sebakcommon.DefaultChecker{handleRoundBallotTransactionCheckerFuncs},
+		NodeRunner:        checker.NodeRunner,
+		LocalNode:         checker.LocalNode,
+		NetworkID:         checker.NetworkID,
+		RoundBallot:       checker.RoundBallot,
+		ValidTransactions: []string{},
+		VotingHole:        VotingNOTYET,
+	}
+
+	err = sebakcommon.RunChecker(transactionsChecker, sebakcommon.DefaultDeferFunc)
+	if err != nil {
+		if _, ok := err.(sebakcommon.CheckerErrorStop); !ok {
+			err = nil
+			checker.VotingHole = VotingNO
+			checker.NodeRunner.Log().Debug("failed to handle transactions of round-ballot", "error", err)
+			return
+		}
+		err = nil
+	}
+	if transactionsChecker.VotingHole != VotingNO && !sebakcommon.IsStringArrayEqual(checker.RoundBallot.ValidTransactions(), transactionsChecker.ValidTransactions) {
+		transactionsChecker.VotingHole = VotingNO
+		checker.NodeRunner.Log().Debug(
+			"invalid transactions of round-ballot found",
+			"proposed", checker.RoundBallot.ValidTransactions(),
+			"validated", transactionsChecker.ValidTransactions,
+		)
+	}
+
+	if transactionsChecker.VotingHole == VotingNO {
+		checker.VotingHole = VotingNO
+	} else {
+		checker.VotingHole = VotingYES
+	}
+
 	return
 }
 

@@ -138,6 +138,10 @@ func (rb *RoundBallot) SetReason(reason *sebakerror.Error) {
 	rb.B.Reason = reason
 }
 
+func (rb *RoundBallot) TransactionsLength() int {
+	return len(rb.B.Proposed.Transactions)
+}
+
 func (rb *RoundBallot) ValidTransactionsLength() int {
 	return len(rb.B.Proposed.ValidTransactions)
 }
@@ -220,14 +224,24 @@ func NewRoundBallotFromJSON(data []byte) (rb RoundBallot, err error) {
 	return
 }
 
-func FinishRoundBallot(st *sebakstorage.LevelDBBackend, ballot RoundBallot, transactions map[string]Transaction) (block Block, err error) {
+func FinishRoundBallot(st *sebakstorage.LevelDBBackend, ballot RoundBallot, transactionPool *TransactionPool) (block Block, err error) {
 	var ts *sebakstorage.LevelDBBackend
 	if ts, err = st.OpenTransaction(); err != nil {
 		return
 	}
 
-	for _, txHash := range ballot.B.Proposed.ValidTransactions {
-		tx := transactions[txHash]
+	transactions := map[string]Transaction{}
+	for _, hash := range ballot.B.Proposed.ValidTransactions {
+		tx, found := transactionPool.Get(hash)
+		if !found {
+			err = sebakerror.ErrorTransactionNotFound
+			return
+		}
+		transactions[hash] = tx
+	}
+
+	for _, hash := range ballot.B.Proposed.ValidTransactions {
+		tx := transactions[hash]
 		raw, _ := json.Marshal(tx)
 
 		bt := NewBlockTransactionFromTransaction(tx, raw)
