@@ -298,12 +298,21 @@ func (is *ISAAC) SetLatestRound(round Round) {
 }
 
 func (is *ISAAC) IsAvailableRound(round Round) bool {
-	if round.BlockHeight != is.LatestConfirmedBlock.Height {
-		return false
-	}
-
+	// check current round is from InitRound
 	if is.LatestRound.BlockHash == "" {
 		return true
+	}
+
+	if round.BlockHeight < is.LatestConfirmedBlock.Height {
+		return false
+	} else if round.BlockHeight == is.LatestConfirmedBlock.Height {
+		if round.BlockHash != is.LatestConfirmedBlock.Hash {
+			return false
+		}
+	} else {
+		// TODO if incoming round.BlockHeight is bigger than
+		// LatestConfirmedBlock.Height and this round confirmed successfully,
+		// this node will get into catchup status
 	}
 
 	if round.BlockHeight == is.LatestRound.BlockHeight {
