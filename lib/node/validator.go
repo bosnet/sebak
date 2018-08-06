@@ -81,10 +81,6 @@ func (v *Validator) Address() string {
 	return v.address
 }
 
-func (v *Validator) Keypair() *keypair.Full {
-	return nil
-}
-
 func (v *Validator) Alias() string {
 	return v.alias
 }
