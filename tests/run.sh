@@ -23,6 +23,11 @@ NODE_DOCKER_IMAGE=$(docker build -q --build-arg BUILD_MODE='test' --build-arg BU
 # Build the integration test container
 TESTS_DOCKER_IMAGE=$(docker build -q . | cut -d: -f2)
 
+if [ -z ${NODE_DOCKER_IMAGE} ] || [ -z ${TESTS_DOCKER_IMAGE} ]; then
+    echo "Failed to build at least one docker image" >&2
+    exit 1
+fi
+
 for dir in ${TEST_DIRS}; do
     # Setup our test environment
     # We need to keep the container around after we stop it when we report coverage,

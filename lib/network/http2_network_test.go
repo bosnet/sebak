@@ -225,22 +225,3 @@ func TestHTTP2NetworkSendMessage(t *testing.T) {
 
 	assert.Equal(t, returnStr, sendMsg, "The sendMessage and the return should be the same.")
 }
-
-func TestHTTP2NetworkSendBallot(t *testing.T) {
-	_, s0, _ := createNewHTTP2Network(t)
-	s0.SetMessageBroker(TestMessageBroker{})
-	s0.Ready()
-	go s0.Start()
-	defer s0.Stop()
-
-	c0 := s0.GetClient(s0.Endpoint())
-	pingAndWait(t, c0)
-
-	msg := NewDummyMessage("findme")
-	returnMsg, _ := c0.SendBallot(msg)
-
-	returnStr := removeWhiteSpaces(string(returnMsg))
-	sendMsg := removeWhiteSpaces(msg.String())
-
-	assert.Equal(t, returnStr, sendMsg, "The sendBallot and the return should be the same.")
-}
