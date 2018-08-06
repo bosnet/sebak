@@ -241,17 +241,6 @@ func (is *ISAAC) IsRunningRound(roundNumber uint64) bool {
 	return false
 }
 
-func (is *ISAAC) ReceiveMessage(m sebakcommon.Message) (err error) {
-	if is.TransactionPool.Has(m.GetHash()) {
-		err = sebakerror.ErrorNewButKnownMessage
-		return
-	}
-
-	is.TransactionPool.Add(m.(Transaction))
-
-	return
-}
-
 func (is *ISAAC) CloseConsensus(proposer string, round Round, vh VotingHole) (err error) {
 	is.Lock()
 	defer is.Unlock()
