@@ -8,9 +8,7 @@ import (
 )
 
 type ISAACVotingThresholdPolicy struct {
-	init   int // TODO Change to Percent type
-	sign   int
-	accept int
+	threshold int
 
 	validators int
 	connected  int
@@ -18,9 +16,7 @@ type ISAACVotingThresholdPolicy struct {
 
 func (vt *ISAACVotingThresholdPolicy) String() string {
 	o := sebakcommon.MustJSONMarshal(map[string]interface{}{
-		"init":       vt.init,
-		"sign":       vt.sign,
-		"accept":     vt.accept,
+		"threshold":  vt.threshold,
 		"validators": vt.validators,
 	})
 
@@ -55,26 +51,12 @@ func (vt *ISAACVotingThresholdPolicy) SetConnected(n int) error {
 	return nil
 }
 
-func (vt *ISAACVotingThresholdPolicy) Threshold(state sebakcommon.BallotState) int {
-	var t int
-	var va int
-	switch state {
-	case sebakcommon.BallotStateINIT:
-		t = vt.init
-		va = vt.connected + 1
-	case sebakcommon.BallotStateSIGN:
-		t = vt.sign
-		va = vt.validators
-	case sebakcommon.BallotStateACCEPT:
-		t = vt.accept
-		va = vt.validators
-	}
-
-	v := float64(va) * (float64(t) / float64(100))
+func (vt *ISAACVotingThresholdPolicy) Threshold() int {
+	v := float64(vt.validators) * (float64(vt.threshold) / float64(100))
 	return int(math.Ceil(v))
 }
 
-func (vt *ISAACVotingThresholdPolicy) Reset(state sebakcommon.BallotState, threshold int) (err error) {
+func (vt *ISAACVotingThresholdPolicy) Reset(threshold int) (err error) {
 	if threshold <= 0 {
 		err = sebakerror.ErrorInvalidVotingThresholdPolicy
 		return
@@ -85,32 +67,23 @@ func (vt *ISAACVotingThresholdPolicy) Reset(state sebakcommon.BallotState, thres
 		return
 	}
 
-	switch state {
-	case sebakcommon.BallotStateINIT:
-		vt.init = threshold
-	case sebakcommon.BallotStateSIGN:
-		vt.sign = threshold
-	case sebakcommon.BallotStateACCEPT:
-		vt.accept = threshold
-	}
+	vt.threshold = threshold
 
 	return nil
 }
 
-func NewDefaultVotingThresholdPolicy(init, sign, accept int) (vt *ISAACVotingThresholdPolicy, err error) {
-	if init <= 0 || sign <= 0 || accept <= 0 {
+func NewDefaultVotingThresholdPolicy(threshold int) (vt *ISAACVotingThresholdPolicy, err error) {
+	if threshold <= 0 {
 		err = sebakerror.ErrorInvalidVotingThresholdPolicy
 		return
 	}
-	if init > 100 || sign > 100 || accept > 100 {
+	if threshold > 100 {
 		err = sebakerror.ErrorInvalidVotingThresholdPolicy
 		return
 	}
 
 	vt = &ISAACVotingThresholdPolicy{
-		init:       init,
-		sign:       sign,
-		accept:     accept,
+		threshold:  threshold,
 		validators: 0,
 	}
 

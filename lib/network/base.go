@@ -52,7 +52,6 @@ type NetworkClient interface {
 	GetNodeInfo() ([]byte, error)
 	SendMessage(sebakcommon.Serializable) ([]byte, error)
 	SendBallot(sebakcommon.Serializable) ([]byte, error)
-	SendRoundBallot(sebakcommon.Serializable) ([]byte, error)
 }
 
 type MessageType string
@@ -64,9 +63,8 @@ func (t MessageType) String() string {
 const (
 	MessageFromClient  MessageType = "message"
 	ConnectMessage                 = "connect"
-	BallotMessage                  = "ballot"
 	TransactionMessage             = "transaction"
-	RoundBallotMessage             = "round-ballot"
+	BallotMessage                  = "ballot"
 	GetNodeInfoMessage             = "get-node-info"
 )
 

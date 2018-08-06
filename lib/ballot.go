@@ -3,376 +3,271 @@ package sebak
 import (
 	"encoding/json"
 
-	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/error"
-	"boscoin.io/sebak/lib/storage"
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/stellar/go/keypair"
+
+	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/network"
+	"boscoin.io/sebak/lib/node"
+	"boscoin.io/sebak/lib/storage"
 )
 
-type BallotData struct {
-	Data interface{} `json:"data"` // if `BallotStateINIT` must have the original `Message`
-}
-
-func (bd BallotData) IsEmpty() bool {
-	return bd.Data == nil
-}
-
-func (bd BallotData) Message() sebakcommon.Message {
-	if bd.IsEmpty() {
-		return nil
-	}
-
-	return bd.Data.(sebakcommon.Message)
-}
-
-func (bd BallotData) Serialize() ([]byte, error) {
-	if bd.Data == nil {
-		return []byte{}, nil
-	}
-	return json.Marshal(bd.Data)
-}
-
-func (bd BallotData) String() string {
-	if bd.Data == nil {
-		return ""
-	}
-	encoded, _ := json.MarshalIndent(bd, "", "  ")
-	return string(encoded)
-}
-
-// TODO versioning
-
 type Ballot struct {
-	T string
 	H BallotHeader
 	B BallotBody
-	D BallotData
 }
 
-func (b Ballot) Clone() Ballot {
-	body := BallotBody{
-		Hash:       b.B.Hash,
-		NodeKey:    b.B.NodeKey,
-		State:      b.B.State,
-		VotingHole: b.B.VotingHole,
-	}
-	return Ballot{
-		T: b.T,
-		H: BallotHeader{
-			Hash:      b.H.Hash,
-			Signature: b.H.Signature,
-			Source:    b.H.Source,
-		},
-		B: body,
-		D: b.D,
-	}
+func (rb Ballot) GetType() string {
+	return sebaknetwork.BallotMessage
 }
 
-// NOTE(Ballot.Serialize): `Ballot.Serialize`: the original idea was this, every
-// time to transfer the ballot with tx message is waste of network, so the tx
-// message will be received at the first time(at BallotStateINIT), but if node
-// get consensus after BallotStateINIT, the node has no way to find the original
-// tx message.
-// TODO(Ballot.Serialize): `Ballot.Serialize`: find the way to reduce the ballot
-// size without message.
-
-func (b Ballot) IsEmpty() bool {
-	return len(b.GetType()) < 1
+func (rb Ballot) GetHash() string {
+	return rb.H.Hash
 }
 
-func (b Ballot) Serialize() (encoded []byte, err error) {
-	encoded, err = json.Marshal(b)
-
+func (rb Ballot) Serialize() (encoded []byte, err error) {
+	encoded, err = json.Marshal(rb)
 	return
 }
 
-func (b Ballot) String() string {
-	encoded, _ := json.MarshalIndent(b, "", "  ")
+func (rb Ballot) String() string {
+	encoded, _ := json.MarshalIndent(rb, "", "  ")
 	return string(encoded)
 }
 
-// NewBallotFromMessage creates `Ballot` from `Message`. It needs to be
-// `Ballot.IsWellFormed()` and `Ballot.Validate()`.
-func NewBallotFromMessage(nodeKey string, m sebakcommon.Message) (ballot Ballot, err error) {
-	body := BallotBody{
-		Hash:       m.GetHash(),
-		NodeKey:    nodeKey,
-		State:      sebakcommon.BallotInitState,
-		VotingHole: VotingNOTYET,
-	}
-	data := BallotData{
-		Data: m,
-	}
-	ballot = Ballot{
-		T: "ballot",
-		H: BallotHeader{
-			Hash:      base58.Encode(body.MakeHash()),
-			Signature: "",
-			Source:    m.Source(),
-		},
-		B: body,
-		D: data,
-	}
-
-	return
-}
-
-func NewBallotFromJSON(b []byte) (ballot Ballot, err error) {
-	if err = json.Unmarshal(b, &ballot); err != nil {
-		return
-	}
-
-	if ballot.Data().IsEmpty() {
-		return
-	}
-
-	a, _ := ballot.Data().Serialize()
-
-	// TODO BallotMessage should load message by it's `GetType()`
-	tx, _ := NewTransactionFromJSON(a)
-	ballot.SetData(tx)
-	//if err = ballot.IsWellFormed(); err != nil {
-	//	return
-	//}
-
-	return
-}
-
-var BallotWellFormedCheckerFuncs = []sebakcommon.CheckerFunc{
-	checkBallotEmptyNodeKey,
-	checkBallotEmptyHashMatch,
-	checkBallotVerifySignature,
-	checkBallotNoVoting,
-	checkBallotHasMessage,
-	checkBallotValidState,
-}
-
-func (b Ballot) IsWellFormed(networkID []byte) (err error) {
-	checker := &BallotChecker{
-		DefaultChecker: sebakcommon.DefaultChecker{BallotWellFormedCheckerFuncs},
-		Ballot:         b,
-		NetworkID:      networkID,
-	}
-	if err = sebakcommon.RunChecker(checker, sebakcommon.DefaultDeferFunc); err != nil {
+func (rb Ballot) IsWellFormed(networkID []byte) (err error) {
+	if err = rb.Verify(networkID); err != nil {
 		return
 	}
 
 	return
 }
 
-func (b Ballot) VerifySignature(networkID []byte) (err error) {
-	err = keypair.MustParse(b.B.NodeKey).Verify(
-		append(networkID, []byte(b.GetHash())...),
-		base58.Decode(b.H.Signature),
-	)
-	if err != nil {
-		return sebakerror.ErrorSignatureVerificationFailed
-	}
-
-	return
+func (rb Ballot) Equal(m sebakcommon.Message) bool {
+	return rb.H.Hash == m.GetHash()
 }
 
-func (b Ballot) Validate(st *sebakstorage.LevelDBBackend) (err error) {
-	return
+func (rb Ballot) Source() string {
+	return rb.B.Source
 }
 
-func (b Ballot) GetType() string {
-	return b.T
+func (rb Ballot) Round() Round {
+	return rb.B.Proposed.Round
 }
 
-func (b Ballot) Equal(m sebakcommon.Message) bool {
-	return b.H.Hash == m.GetHash()
+func (rb Ballot) Proposer() string {
+	return rb.B.Proposed.NewBallot
 }
 
-func (b Ballot) GetHash() string {
-	return b.H.Hash
+func (rb Ballot) Transactions() []string {
+	return rb.B.Proposed.Transactions
 }
 
-func (b Ballot) Source() string {
-	return b.H.Source
+func (rb Ballot) ValidTransactions() []string {
+	return rb.B.Proposed.ValidTransactions
 }
 
-func (b Ballot) MessageHash() string {
-	return b.B.Hash
+func (rb Ballot) Confirmed() string {
+	return rb.B.Confirmed
 }
 
-func (b Ballot) Data() BallotData {
-	return b.D
+func (rb Ballot) ProposerConfirmed() string {
+	return rb.B.Proposed.Confirmed
 }
 
-func (b *Ballot) SetData(m sebakcommon.Message) {
-	b.D.Data = m
-}
-
-func (b Ballot) State() sebakcommon.BallotState {
-	return b.B.State
-}
-
-func (b *Ballot) SetState(state sebakcommon.BallotState) {
-	b.B.State = state
-
-	return
-}
-
-func (b *Ballot) Sign(kp *keypair.Full, networkID []byte) {
-	if kp.Address() != b.B.NodeKey {
-		b.B.NodeKey = kp.Address()
-	}
-
-	b.UpdateHash()
-	signature, _ := kp.Sign(append(networkID, []byte(b.GetHash())...))
-
-	b.H.Signature = base58.Encode(signature)
-	return
-}
-
-func (b *Ballot) UpdateHash() {
-	b.H.Hash = base58.Encode(b.B.MakeHash())
-
-	return
-}
-
-func (b *Ballot) Vote(v VotingHole) {
-	b.B.VotingHole = v
-
-	return
+func (rb Ballot) Vote() VotingHole {
+	return rb.B.Vote
 }
 
 type BallotHeader struct {
-	Hash      string `json:"ballot_hash"`
-	Signature string `json:"signature"`
-	Source    string `json:source`
+	Hash              string `json:"hash"`               // hash of `BallotBody`
+	Signature         string `json:"signature"`          // signed by source node of <networkID> + `Hash`
+	ProposerSignature string `json:"proposer-signature"` // signed by proposer of <networkID> + `Hash` of `BallotBodyProposed`
+}
+
+type BallotBodyProposed struct {
+	Confirmed         string   `json:"confirmed"` // created time, ISO8601
+	NewBallot         string   `json:"proposer"`
+	Round             Round    `json:"round"`
+	Transactions      []string `json:"transactions"`
+	ValidTransactions []string `json:"valid-transactions"`
 }
 
 type BallotBody struct {
-	Hash       string                  `json:"hash"`
-	NodeKey    string                  `json:"node_key"` // validator's public address
-	State      sebakcommon.BallotState `json:"state"`
-	VotingHole VotingHole              `json:"voting_hole"`
-	Reason     string                  `json:"reason"`
+	Confirmed string             `json:"confirmed"` // created time, ISO8601
+	Proposed  BallotBodyProposed `json:"proposed"`
+	Source    string             `json:"source"`
+
+	Vote   VotingHole        `json:"vote"`
+	Reason *sebakerror.Error `json:"reason"`
 }
 
-func (bb BallotBody) MakeHash() []byte {
-	return sebakcommon.MustMakeObjectHash(bb)
+func (rbody BallotBody) MakeHash() []byte {
+	return sebakcommon.MustMakeObjectHash(rbody)
 }
 
-type BallotBoxes struct {
-	sebakcommon.SafeLock
-
-	Results map[ /* `Message.GetHash()`*/ string]*VotingResult
-
-	Messages map[ /* `Message.GetHash()`*/ string]sebakcommon.Message
-	Sources  map[ /* `Message.Source()` */ string]string /* `Message.GetHash()`*/
+func (rbody BallotBody) MakeHashString() string {
+	return base58.Encode(rbody.MakeHash())
 }
 
-func NewBallotBoxes() *BallotBoxes {
-	return &BallotBoxes{
-		Results:  map[string]*VotingResult{},
-		Messages: map[string]sebakcommon.Message{},
-		Sources:  map[string]string{},
+func (rb *Ballot) SetSource(source string) {
+	rb.B.Source = source
+}
+
+func (rb *Ballot) SetVote(vote VotingHole) {
+	rb.B.Vote = vote
+}
+
+func (rb *Ballot) SetReason(reason *sebakerror.Error) {
+	rb.B.Reason = reason
+}
+
+func (rb *Ballot) TransactionsLength() int {
+	return len(rb.B.Proposed.Transactions)
+}
+
+func (rb *Ballot) ValidTransactionsLength() int {
+	return len(rb.B.Proposed.ValidTransactions)
+}
+
+func (rb *Ballot) SetValidTransactions(validTransactions []string) {
+	rb.B.Proposed.ValidTransactions = validTransactions
+}
+
+func (rb *Ballot) Sign(kp keypair.KP, networkID []byte) {
+	if kp.Address() == rb.B.Proposed.NewBallot {
+		rb.B.Proposed.Confirmed = sebakcommon.NowISO8601()
+		hash := sebakcommon.MustMakeObjectHash(rb.B.Proposed)
+		signature, _ := kp.Sign(append(networkID, []byte(hash)...))
+		rb.H.ProposerSignature = base58.Encode(signature)
 	}
-}
 
-func (b *BallotBoxes) Len() int {
-	return len(b.Results)
-}
+	rb.B.Confirmed = sebakcommon.NowISO8601()
+	rb.B.Source = kp.Address()
+	rb.H.Hash = rb.B.MakeHashString()
+	signature, _ := kp.Sign(append(networkID, []byte(rb.H.Hash)...))
 
-func (b *BallotBoxes) HasMessage(m sebakcommon.Message) bool {
-	return b.HasMessageByHash(m.GetHash())
-}
-
-func (b *BallotBoxes) HasMessageByHash(hash string) bool {
-	_, ok := b.Results[hash]
-	return ok
-}
-
-func (b *BallotBoxes) VotingResult(ballot Ballot) (*VotingResult, error) {
-	if !b.HasMessageByHash(ballot.MessageHash()) {
-		return nil, sebakerror.ErrorVotingResultNotFound
-	}
-
-	return b.Results[ballot.MessageHash()], nil
-}
-
-func (b *BallotBoxes) IsVoted(ballot Ballot) bool {
-	if vr, err := b.VotingResult(ballot); err != nil {
-		return false
-	} else {
-		return vr.IsVoted(ballot)
-	}
-}
-
-func (b *BallotBoxes) AddVotingResult(vr *VotingResult, ballot Ballot) (err error) {
-	b.Lock()
-	defer b.Unlock()
-
-	b.Results[vr.MessageHash] = vr
+	rb.H.Signature = base58.Encode(signature)
 
 	return
 }
 
-func (b *BallotBoxes) RemoveVotingResult(vr *VotingResult) (err error) {
-	if !b.HasMessageByHash(vr.MessageHash) {
-		err = sebakerror.ErrorVotingResultNotFound
+func (rb Ballot) Verify(networkID []byte) (err error) {
+	var kp keypair.KP
+	if kp, err = keypair.Parse(rb.B.Proposed.NewBallot); err != nil {
+		return
+	}
+	err = kp.Verify(
+		append(networkID, sebakcommon.MustMakeObjectHash(rb.B.Proposed)...),
+		base58.Decode(rb.H.ProposerSignature),
+	)
+	if err != nil {
 		return
 	}
 
-	b.Lock()
-	defer b.Unlock()
-
-	delete(b.Results, vr.MessageHash)
-	delete(b.Messages, vr.MessageHash)
-	delete(b.Sources, vr.Source)
+	if kp, err = keypair.Parse(rb.B.Source); err != nil {
+		return
+	}
+	err = kp.Verify(
+		append(networkID, []byte(rb.H.Hash)...),
+		base58.Decode(rb.H.Signature),
+	)
+	if err != nil {
+		return
+	}
 
 	return
 }
 
-func (b *BallotBoxes) AddBallot(ballot Ballot) (isNew bool, err error) {
-	b.Lock()
-	defer b.Unlock()
+func (rb Ballot) IsFromProposer() bool {
+	return rb.B.Source == rb.B.Proposed.NewBallot
+}
 
-	var vr *VotingResult
+func NewBallot(localNode *sebaknode.LocalNode, round Round, transactions []string) (rb *Ballot) {
+	body := BallotBody{
+		Source: localNode.Address(),
+		Proposed: BallotBodyProposed{
+			NewBallot:    localNode.Address(),
+			Round:        round,
+			Transactions: transactions,
+		},
+	}
+	rb = &Ballot{
+		H: BallotHeader{},
+		B: body,
+	}
 
-	isNew = !b.HasMessageByHash(ballot.MessageHash())
+	return
+}
 
-	if !isNew {
-		if vr, err = b.VotingResult(ballot); err != nil {
+func NewBallotFromJSON(data []byte) (rb Ballot, err error) {
+	if err = json.Unmarshal(data, &rb); err != nil {
+		return
+	}
+
+	return
+}
+
+func FinishBallot(st *sebakstorage.LevelDBBackend, ballot Ballot, transactionPool *TransactionPool) (block Block, err error) {
+	var ts *sebakstorage.LevelDBBackend
+	if ts, err = st.OpenTransaction(); err != nil {
+		return
+	}
+
+	transactions := map[string]Transaction{}
+	for _, hash := range ballot.B.Proposed.ValidTransactions {
+		tx, found := transactionPool.Get(hash)
+		if !found {
+			err = sebakerror.ErrorTransactionNotFound
+			return
+		}
+		transactions[hash] = tx
+	}
+
+	for _, hash := range ballot.B.Proposed.ValidTransactions {
+		tx := transactions[hash]
+		raw, _ := json.Marshal(tx)
+
+		bt := NewBlockTransactionFromTransaction(tx, raw)
+		if err = bt.Save(ts); err != nil {
+			ts.Discard()
+			return
+		}
+		for _, op := range tx.B.Operations {
+			if err = FinishOperation(ts, tx, op); err != nil {
+				ts.Discard()
+				return
+			}
+		}
+
+		var baSource *BlockAccount
+		if baSource, err = GetBlockAccount(ts, tx.B.Source); err != nil {
+			err = sebakerror.ErrorBlockAccountDoesNotExists
+			ts.Discard()
 			return
 		}
 
-		if err = vr.Add(ballot); err != nil {
+		if err = baSource.Withdraw(tx.TotalAmount(true), tx.NextSourceCheckpoint()); err != nil {
+			ts.Discard()
 			return
 		}
+
+		if err = baSource.Save(ts); err != nil {
+			ts.Discard()
+			return
+		}
+
+	}
+
+	block = NewBlockFromBallot(ballot)
+	if err = block.Save(ts); err != nil {
 		return
 	}
 
-	if vr, err = NewVotingResult(ballot); err != nil {
-		return
-	}
-
-	if err = b.AddVotingResult(vr, ballot); err != nil {
-		log.Warn("failed to add VotingResult", "MessageHash", ballot.MessageHash(), "error", err)
-		err = nil
-	}
-
-	// if unknown ballot and it is in SIGN state,
-	if ballot.State() == sebakcommon.BallotStateSIGN {
-		b.AddSource(ballot)
-	}
-
-	if _, found := b.Messages[ballot.MessageHash()]; !found {
-		b.Messages[ballot.MessageHash()] = ballot.Data().Data.(sebakcommon.Message)
+	if err = ts.Commit(); err != nil {
+		ts.Discard()
 	}
 
 	return
-}
-
-func (b *BallotBoxes) AddSource(m sebakcommon.Message) {
-	b.Sources[m.Source()] = m.GetHash()
-}
-
-func (b *BallotBoxes) IsSameSourceUnderVoting(m sebakcommon.Message) bool {
-	existingHash, found := b.Sources[m.Source()]
-	return found && existingHash != m.GetHash()
 }

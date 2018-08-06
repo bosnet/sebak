@@ -21,7 +21,7 @@ func init() {
 	kp, _ = keypair.Random()
 }
 
-func createNodeRunnerRounds(n int) []*NodeRunnerRound {
+func createTestNodeRunner(n int) []*NodeRunner {
 	var ns []*sebaknetwork.MemoryNetwork
 	var nodes []*sebaknode.LocalNode
 	for i := 0; i < n; i++ {
@@ -43,18 +43,18 @@ func createNodeRunnerRounds(n int) []*NodeRunnerRound {
 	address := kp.Address()
 	balance := BaseFee.MustAdd(1)
 	account = NewBlockAccount(address, balance, checkpoint)
-	var nodeRunners []*NodeRunnerRound
+	var nodeRunners []*NodeRunner
 	for i := 0; i < n; i++ {
 		v := nodes[i]
-		p, _ := NewDefaultVotingThresholdPolicy(100, 66, 66)
+		p, _ := NewDefaultVotingThresholdPolicy(66)
 		p.SetValidators(len(v.GetValidators()) + 1)
-		is, _ := NewISAACRound(networkID, v, p)
+		is, _ := NewISAAC(networkID, v, p)
 		st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
 
 		account.Save(st)
 		MakeGenesisBlock(st, *account)
 
-		nr, err := NewNodeRunnerRound(string(networkID), v, p, ns[i], is, st)
+		nr, err := NewNodeRunner(string(networkID), v, p, ns[i], is, st)
 		if err != nil {
 			panic(err)
 		}
@@ -64,8 +64,8 @@ func createNodeRunnerRounds(n int) []*NodeRunnerRound {
 	return nodeRunners
 }
 
-func createNodeRunnerRoundsWithReady(n int) []*NodeRunnerRound {
-	nodeRunners := createNodeRunnerRounds(n)
+func createTestNodeRunnerWithReady(n int) []*NodeRunner {
+	nodeRunners := createTestNodeRunner(n)
 
 	for _, nr := range nodeRunners {
 		go nr.Start()
@@ -102,26 +102,26 @@ func createNodeRunnerRoundsWithReady(n int) []*NodeRunnerRound {
 	return nodeRunners
 }
 
-func TestCreateNodeRunnerRounds(t *testing.T) {
+func TestCreateNodeRunner(t *testing.T) {
 	defer sebaknetwork.CleanUpMemoryNetwork()
 
 	numberOfNodes := 3
-	nodeRunners := createNodeRunnerRoundsWithReady(numberOfNodes)
+	nodeRunners := createTestNodeRunnerWithReady(numberOfNodes)
 
 	for _, nr := range nodeRunners {
 		defer nr.Stop()
 	}
 
 	if len(nodeRunners) != 3 {
-		t.Error("failed to create `NodeRunnerRound`s")
+		t.Error("failed to create `NodeRunner`s")
 	}
 }
 
-func TestNodeRunnerRoundCreateAccount(t *testing.T) {
+func TestNodeRunnerCreateAccount(t *testing.T) {
 	defer sebaknetwork.CleanUpMemoryNetwork()
 
 	numberOfNodes := 3
-	nodeRunners := createNodeRunnerRoundsWithReady(numberOfNodes)
+	nodeRunners := createTestNodeRunnerWithReady(numberOfNodes)
 
 	kpNewAccount, _ := keypair.Random()
 

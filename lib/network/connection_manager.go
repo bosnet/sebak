@@ -177,8 +177,6 @@ func (c *ConnectionManager) Broadcast(message sebakcommon.Message) {
 			var err error
 			if message.GetType() == BallotMessage {
 				_, err = client.SendBallot(message)
-			} else if message.GetType() == RoundBallotMessage {
-				_, err = client.SendRoundBallot(message)
 			} else if message.GetType() == TransactionMessage {
 				_, err = client.SendMessage(message)
 
