@@ -95,7 +95,7 @@ func (nr *NodeRunner) Stop() {
 	nr.network.Stop()
 }
 
-func (nr *NodeRunner) Node() sebaknode.Node {
+func (nr *NodeRunner) Node() *sebaknode.LocalNode {
 	return nr.localNode
 }
 
