@@ -5,7 +5,10 @@ import (
 )
 
 func TestBallotStateNext(t *testing.T) {
-	if BallotStateNONE.Next() != BallotStateINIT {
+	if BallotStateNONE.Next() != BallotStateTXSHARE {
+		t.Error("next state must be `BallotStateTXSHARE`")
+	}
+	if BallotStateTXSHARE.Next() != BallotStateINIT {
 		t.Error("next state must be `BallotStateINIT`")
 	}
 	if BallotStateINIT.Next() != BallotStateSIGN {
