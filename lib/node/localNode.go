@@ -121,20 +121,6 @@ func (n *LocalNode) AddValidators(validators ...*Validator) error {
 	return nil
 }
 
-func (n *LocalNode) RemoveValidators(validators ...*Validator) error {
-	n.Lock()
-	defer n.Unlock()
-
-	for _, va := range validators {
-		if _, ok := n.validators[va.Address()]; !ok {
-			continue
-		}
-		delete(n.validators, va.Address())
-	}
-
-	return nil
-}
-
 func (n *LocalNode) MarshalJSON() ([]byte, error) {
 	return json.Marshal(map[string]interface{}{
 		"address":    n.Address(),

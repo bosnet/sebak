@@ -95,12 +95,6 @@ func (c *ConnectionManager) setConnected(v *sebaknode.Validator, connected bool)
 	return true
 }
 
-func (c *ConnectionManager) IsConnected(v *sebaknode.Validator) bool {
-	_, ok := c.connected[v.Address()]
-
-	return ok
-}
-
 func (c *ConnectionManager) AllConnected() []*sebaknode.Validator {
 	var connected []*sebaknode.Validator
 	for address := range c.connected {
