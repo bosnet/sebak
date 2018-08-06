@@ -15,8 +15,7 @@ import (
 
 func NewRandomNode() *sebaknode.LocalNode {
 	kp, _ := keypair.Random()
-	a, _ := sebaknode.NewLocalNode(kp.Address(), &sebakcommon.Endpoint{}, "")
-	a.SetKeypair(kp)
+	a, _ := sebaknode.NewLocalNode(kp, &sebakcommon.Endpoint{}, "")
 	return a
 }
 
