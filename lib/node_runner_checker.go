@@ -10,7 +10,7 @@ type NodeRunnerHandleMessageChecker struct {
 	sebakcommon.DefaultChecker
 
 	NodeRunner *NodeRunner
-	LocalNode  sebaknode.Node
+	LocalNode  *sebaknode.LocalNode
 	NetworkID  []byte
 	Message    sebaknetwork.Message
 
@@ -101,7 +101,7 @@ type NodeRunnerHandleBallotChecker struct {
 
 	GenesisBlockCheckpoint string
 	NodeRunner             *NodeRunner
-	LocalNode              sebaknode.Node
+	LocalNode              *sebaknode.LocalNode
 	NetworkID              []byte
 	Message                sebaknetwork.Message
 	Ballot                 Ballot
@@ -135,8 +135,7 @@ func CheckNodeRunnerHandleBallotIsWellformed(c sebakcommon.Checker, args ...inte
 
 func CheckNodeRunnerHandleBallotNotFromKnownValidators(c sebakcommon.Checker, args ...interface{}) (err error) {
 	checker := c.(*NodeRunnerHandleBallotChecker)
-	localNode := checker.LocalNode.(*sebaknode.LocalNode)
-	if localNode.HasValidators(checker.Ballot.B.NodeKey) {
+	if checker.LocalNode.HasValidators(checker.Ballot.B.NodeKey) {
 		return
 	}
 
