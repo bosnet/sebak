@@ -417,7 +417,7 @@ func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) {
 		LocalNode:         nr.localNode,
 		NetworkID:         nr.networkID,
 		Ballot:            *ballot,
-		ValidTransactions: []string{},
+		ValidTransactions: make(map[string]bool),
 		CheckAll:          true,
 		VotingHole:        VotingNOTYET,
 	}

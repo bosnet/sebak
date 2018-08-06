@@ -268,7 +268,7 @@ func CheckNodeRunnerHandleBallotValidateTransactions(c sebakcommon.Checker, args
 		LocalNode:         checker.LocalNode,
 		NetworkID:         checker.NetworkID,
 		Ballot:            checker.Ballot,
-		ValidTransactions: []string{},
+		ValidTransactions: make(map[string]bool),
 		VotingHole:        VotingNOTYET,
 	}
 
@@ -282,7 +282,10 @@ func CheckNodeRunnerHandleBallotValidateTransactions(c sebakcommon.Checker, args
 		}
 		err = nil
 	}
-	if transactionsChecker.VotingHole != VotingNO && !sebakcommon.IsStringArrayEqual(checker.Ballot.ValidTransactions(), transactionsChecker.ValidTransactions) {
+	if transactionsChecker.VotingHole != VotingNO &&
+		!sebakcommon.IsStringMapEqualWithHash(
+			checker.Ballot.ValidTransactions(),
+			transactionsChecker.ValidTransactions) {
 		transactionsChecker.VotingHole = VotingNO
 		checker.NodeRunner.Log().Debug(
 			"invalid transactions of ballot found",

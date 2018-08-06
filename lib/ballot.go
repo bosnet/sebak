@@ -64,8 +64,16 @@ func (rb Ballot) Transactions() []string {
 	return rb.B.Proposed.Transactions
 }
 
-func (rb Ballot) ValidTransactions() []string {
+func (rb Ballot) ValidTransactions() map[string]bool {
 	return rb.B.Proposed.ValidTransactions
+}
+
+func (rb Ballot) ValidTransactionSlice() []string {
+	slice := []string{}
+	for hash := range rb.B.Proposed.ValidTransactions {
+		slice = append(slice, hash)
+	}
+	return slice
 }
 
 func (rb Ballot) Confirmed() string {
@@ -87,11 +95,11 @@ type BallotHeader struct {
 }
 
 type BallotBodyProposed struct {
-	Confirmed         string   `json:"confirmed"` // created time, ISO8601
-	NewBallot         string   `json:"proposer"`
-	Round             Round    `json:"round"`
-	Transactions      []string `json:"transactions"`
-	ValidTransactions []string `json:"valid-transactions"`
+	Confirmed         string          `json:"confirmed"` // created time, ISO8601
+	NewBallot         string          `json:"proposer"`
+	Round             Round           `json:"round"`
+	Transactions      []string        `json:"transactions"`
+	ValidTransactions map[string]bool `json:"valid-transactions"`
 }
 
 type BallotBody struct {
@@ -131,7 +139,12 @@ func (rb *Ballot) ValidTransactionsLength() int {
 	return len(rb.B.Proposed.ValidTransactions)
 }
 
-func (rb *Ballot) SetValidTransactions(validTransactions []string) {
+func (rb *Ballot) IsValidTransaction(hash string) bool {
+	_, ok := rb.B.Proposed.ValidTransactions[hash]
+	return ok
+}
+
+func (rb *Ballot) SetValidTransactions(validTransactions map[string]bool) {
 	rb.B.Proposed.ValidTransactions = validTransactions
 }
 
@@ -216,7 +229,7 @@ func FinishBallot(st *sebakstorage.LevelDBBackend, ballot Ballot, transactionPoo
 	}
 
 	transactions := map[string]Transaction{}
-	for _, hash := range ballot.B.Proposed.ValidTransactions {
+	for hash, _ := range ballot.B.Proposed.ValidTransactions {
 		tx, found := transactionPool.Get(hash)
 		if !found {
 			err = sebakerror.ErrorTransactionNotFound
@@ -225,7 +238,7 @@ func FinishBallot(st *sebakstorage.LevelDBBackend, ballot Ballot, transactionPoo
 		transactions[hash] = tx
 	}
 
-	for _, hash := range ballot.B.Proposed.ValidTransactions {
+	for hash, _ := range ballot.B.Proposed.ValidTransactions {
 		tx := transactions[hash]
 		raw, _ := json.Marshal(tx)
 

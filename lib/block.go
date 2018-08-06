@@ -69,7 +69,7 @@ func NewBlockFromBallot(ballot Ballot) Block {
 	return NewBlock(
 		ballot.Proposer(),
 		ballot.Round(),
-		ballot.ValidTransactions(),
+		ballot.ValidTransactionSlice(),
 		ballot.ProposerConfirmed(),
 	)
 }
