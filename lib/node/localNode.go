@@ -10,14 +10,6 @@ import (
 	"github.com/stellar/go/keypair"
 )
 
-type LocalNodeFromJSON struct {
-	Alias      string                `json:"alias"`
-	Address    string                `json:"address"`
-	Endpoint   *sebakcommon.Endpoint `json:"endpoint"`
-	Validators map[string]*Validator `json:"Validators"`
-	State      NodeState             `json:"state"`
-}
-
 type LocalNode struct {
 	sync.Mutex
 
@@ -45,15 +37,6 @@ func NewLocalNode(kp *keypair.Full, endpoint *sebakcommon.Endpoint, alias string
 	}
 
 	return
-}
-
-func NewLocalNodeFromString(b []byte) (*LocalNode, error) {
-	var n LocalNode
-	if err := json.Unmarshal(b, &n); err != nil {
-		return nil, err
-	}
-
-	return &n, nil
 }
 
 func (n *LocalNode) String() string {
@@ -150,21 +133,6 @@ func (n *LocalNode) MarshalJSON() ([]byte, error) {
 		"state":      n.State().String(),
 		"validators": n.validators,
 	})
-}
-
-func (n *LocalNode) UnmarshalJSON(b []byte) error {
-	var va LocalNodeFromJSON
-	if err := json.Unmarshal(b, &va); err != nil {
-		return err
-	}
-
-	n.alias = va.Alias
-	n.address = va.Address
-	n.endpoint = va.Endpoint
-	n.validators = va.Validators
-	n.state = va.State
-
-	return nil
 }
 
 func (n *LocalNode) Serialize() ([]byte, error) {
