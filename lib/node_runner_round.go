@@ -501,7 +501,7 @@ func (nr *NodeRunnerRound) proposeNewRoundBallot(roundNumber uint64) {
 		LocalNode:         nr.Node(),
 		NetworkID:         nr.NetworkID(),
 		RoundBallot:       *roundBallot,
-		ValidTransactions: []string{},
+		ValidTransactions: make(map[string]bool),
 		CheckAll:          true,
 		VotingHole:        VotingNOTYET,
 	}
@@ -521,6 +521,7 @@ func (nr *NodeRunnerRound) proposeNewRoundBallot(roundNumber uint64) {
 	}
 
 	// TODO validate transactions
+	// roundBallot.SetValidTransactions(transactionsChecker.GetValidTransactionSlice())
 	roundBallot.SetValidTransactions(transactionsChecker.ValidTransactions)
 	roundBallot.SetVote(transactionsChecker.VotingHole)
 	roundBallot.Sign(nr.Node().Keypair(), nr.networkID)

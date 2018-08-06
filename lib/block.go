@@ -75,7 +75,7 @@ func NewBlockFromRoundBallot(roundBallot RoundBallot) Block {
 	return NewBlock(
 		roundBallot.Proposer(),
 		roundBallot.Round(),
-		roundBallot.ValidTransactions(),
+		roundBallot.ValidTransactionSlice(),
 		roundBallot.ProposerConfirmed(),
 	)
 }

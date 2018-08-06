@@ -79,8 +79,9 @@ func (rb RoundBallot) Transactions() []string {
 	return rb.B.Proposed.Transactions
 }
 
-func (rb RoundBallot) ValidTransactions() []string {
-	return rb.B.Proposed.ValidTransactions
+func (rb RoundBallot) IsValidTransaction(hash string) bool {
+	_, ok := rb.B.Proposed.ValidTransactions[hash]
+	return ok
 }
 
 func (rb RoundBallot) Confirmed() string {
@@ -102,11 +103,11 @@ type RoundBallotHeader struct {
 }
 
 type RoundBallotBodyProposed struct {
-	Confirmed         string   `json:"confirmed"` // created time, ISO8601
-	Proposer          string   `json:"proposer"`
-	Round             Round    `json:"round"`
-	Transactions      []string `json:"transactions"`
-	ValidTransactions []string `json:"valid-transactions"`
+	Confirmed         string          `json:"confirmed"` // created time, ISO8601
+	Proposer          string          `json:"proposer"`
+	Round             Round           `json:"round"`
+	Transactions      []string        `json:"transactions"`
+	ValidTransactions map[string]bool `json:"valid-transactions"`
 }
 
 type RoundBallotBody struct {
@@ -146,8 +147,20 @@ func (rb *RoundBallot) ValidTransactionsLength() int {
 	return len(rb.B.Proposed.ValidTransactions)
 }
 
-func (rb *RoundBallot) SetValidTransactions(validTransactions []string) {
+func (rb *RoundBallot) SetValidTransactions(validTransactions map[string]bool) {
 	rb.B.Proposed.ValidTransactions = validTransactions
+}
+
+func (rb *RoundBallot) ValidTransactions() map[string]bool {
+	return rb.B.Proposed.ValidTransactions
+}
+
+func (rb *RoundBallot) ValidTransactionSlice() []string {
+	slice := []string{}
+	for hash := range rb.B.Proposed.ValidTransactions {
+		slice = append(slice, hash)
+	}
+	return slice
 }
 
 func (rb *RoundBallot) Sign(kp keypair.KP, networkID []byte) {
@@ -231,7 +244,7 @@ func FinishRoundBallot(st *sebakstorage.LevelDBBackend, ballot RoundBallot, tran
 	}
 
 	transactions := map[string]Transaction{}
-	for _, hash := range ballot.B.Proposed.ValidTransactions {
+	for hash, _ := range ballot.B.Proposed.ValidTransactions {
 		tx, found := transactionPool.Get(hash)
 		if !found {
 			err = sebakerror.ErrorTransactionNotFound
@@ -240,7 +253,7 @@ func FinishRoundBallot(st *sebakstorage.LevelDBBackend, ballot RoundBallot, tran
 		transactions[hash] = tx
 	}
 
-	for _, hash := range ballot.B.Proposed.ValidTransactions {
+	for hash, _ := range ballot.B.Proposed.ValidTransactions {
 		tx := transactions[hash]
 		raw, _ := json.Marshal(tx)
 

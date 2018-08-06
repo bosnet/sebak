@@ -1,6 +1,7 @@
 package sebakcommon
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -94,6 +95,11 @@ func InStringArray(a []string, s string) (index int, found bool) {
 	return
 }
 
+func InStringMap(a map[string]bool, s string) (found bool) {
+	_, found = a[s]
+	return
+}
+
 func MustJSONMarshal(o interface{}) []byte {
 	b, _ := json.Marshal(o)
 	return b
@@ -164,4 +170,27 @@ func IsStringArrayEqual(a, b []string) bool {
 	}
 
 	return true
+}
+
+func IsStringMapEqual(a, b map[string]bool) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for hash := range a {
+		if _, ok := b[hash]; !ok {
+			return false
+		}
+	}
+
+	return true
+}
+
+func IsStringMapEqualWithHash(a, b map[string]bool) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	aHash := MustMakeObjectHash(a)
+	bHash := MustMakeObjectHash(b)
+
+	return bytes.Equal(aHash, bHash)
 }

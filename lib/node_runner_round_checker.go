@@ -444,7 +444,7 @@ func CheckNodeRunnerRoundHandleRoundBallotValidateTransactions(c sebakcommon.Che
 		LocalNode:         checker.LocalNode,
 		NetworkID:         checker.NetworkID,
 		RoundBallot:       checker.RoundBallot,
-		ValidTransactions: []string{},
+		ValidTransactions: make(map[string]bool),
 		VotingHole:        VotingNOTYET,
 	}
 
@@ -458,7 +458,8 @@ func CheckNodeRunnerRoundHandleRoundBallotValidateTransactions(c sebakcommon.Che
 		}
 		err = nil
 	}
-	if transactionsChecker.VotingHole != VotingNO && !sebakcommon.IsStringArrayEqual(checker.RoundBallot.ValidTransactions(), transactionsChecker.ValidTransactions) {
+	if transactionsChecker.VotingHole != VotingNO && !sebakcommon.IsStringMapEqualWithHash(
+		checker.RoundBallot.ValidTransactions(), transactionsChecker.ValidTransactions) {
 		transactionsChecker.VotingHole = VotingNO
 		checker.NodeRunner.Log().Debug(
 			"invalid transactions of round-ballot found",
