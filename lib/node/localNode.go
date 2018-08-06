@@ -17,7 +17,6 @@ type LocalNode struct {
 
 	state      NodeState
 	alias      string
-	address    string
 	endpoint   *sebakcommon.Endpoint
 	validators map[ /* Node.Address() */ string]*Validator
 }
@@ -31,7 +30,6 @@ func NewLocalNode(kp *keypair.Full, endpoint *sebakcommon.Endpoint, alias string
 		keypair:    kp,
 		state:      NodeStateNONE,
 		alias:      alias,
-		address:    kp.Address(),
 		endpoint:   endpoint,
 		validators: map[string]*Validator{},
 	}
@@ -83,7 +81,7 @@ func (n *LocalNode) SetTerminating() {
 }
 
 func (n *LocalNode) Address() string {
-	return n.address
+	return n.keypair.Address()
 }
 
 func (n *LocalNode) Keypair() *keypair.Full {
