@@ -2,13 +2,10 @@ package sebaknode
 
 import (
 	"boscoin.io/sebak/lib/common"
-
-	"github.com/stellar/go/keypair"
 )
 
 type Node interface {
 	Address() string
-	Keypair() *keypair.Full
 	Alias() string
 	SetAlias(string)
 	Endpoint() *sebakcommon.Endpoint
