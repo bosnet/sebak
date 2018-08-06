@@ -1,3 +1,9 @@
+//
+// Defines the `Validator` type of Node, which is a remote node
+//
+// A `Validator` is a remote node as seen by the other type of node (`LocalNode`).
+// It provides any information which is node-specific and relevant to us / consensus.
+//
 package sebaknode
 
 import (

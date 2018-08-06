@@ -1,3 +1,11 @@
+//
+// Defines the `LocalNode` type of Node, which is our node
+//
+// A `LocalNode` is the local node, as opposed to a `Validator`
+// which is the remote nodes this `LocalNode` sees.
+//
+// There should only be one `LocalNode` per program.
+//
 package sebaknode
 
 import (
