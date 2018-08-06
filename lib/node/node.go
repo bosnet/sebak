@@ -9,7 +9,6 @@ import (
 type Node interface {
 	Address() string
 	Keypair() *keypair.Full
-	SetKeypair(*keypair.Full)
 	Alias() string
 	SetAlias(string)
 	Endpoint() *sebakcommon.Endpoint

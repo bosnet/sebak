@@ -81,10 +81,6 @@ func (v *Validator) Keypair() *keypair.Full {
 	return nil
 }
 
-func (v *Validator) SetKeypair(kp *keypair.Full) {
-	return
-}
-
 func (v *Validator) Alias() string {
 	return v.alias
 }

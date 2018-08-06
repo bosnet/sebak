@@ -16,7 +16,7 @@ func TestNodeStateChange(t *testing.T) {
 	endpoint, err := sebakcommon.NewEndpointFromString(fmt.Sprintf("https://localhost:5000?NodeName=n1"))
 	assert.Equal(t, nil, err)
 
-	node, _ := NewLocalNode(kp.Address(), endpoint, "")
+	node, _ := NewLocalNode(kp, endpoint, "")
 
 	assert.Equal(t, NodeStateNONE, node.State())
 
@@ -39,7 +39,7 @@ func TestNodeMarshalJSON(t *testing.T) {
 	endpoint, err := sebakcommon.NewEndpointFromString(fmt.Sprintf("https://localhost:5000?NodeName=n1"))
 	assert.Equal(t, nil, err)
 
-	marshalNode, _ := NewLocalNode(kp.Address(), endpoint, "")
+	marshalNode, _ := NewLocalNode(kp, endpoint, "")
 	tmpByte, err := marshalNode.MarshalJSON()
 	assert.Equal(t, nil, err)
 
@@ -86,7 +86,7 @@ func TestNodeMarshalJSONWithValidator(t *testing.T) {
 	validator1, _ := NewValidator(kp2.Address(), endpoint2, "v1")
 	validator2, _ := NewValidator(kp3.Address(), endpoint3, "v2")
 
-	localNode, _ := NewLocalNode(kp.Address(), endpoint, "node")
+	localNode, _ := NewLocalNode(kp, endpoint, "node")
 
 	localNode.AddValidators(validator1, validator2)
 
@@ -104,7 +104,7 @@ func TestNodeUnmarshalJSON(t *testing.T) {
 	endpoint, err := sebakcommon.NewEndpointFromString(fmt.Sprintf("https://localhost:5000?NodeName=n1"))
 	assert.Equal(t, nil, err)
 
-	unmarshalNode, _ := NewLocalNode(kp.Address(), endpoint, "")
+	unmarshalNode, _ := NewLocalNode(kp, endpoint, "")
 	jsonStr := "{\"address\":\"GCSDFPEBQJ7FWAPTZDXNVDYPDDBSAPFZU5MKKM6I35JXJPYD3TFRST7F\",\"alias\":\"GCSD.3TFR\",\"endpoint\":\"https://localhost:5000\",\"state\":\"%s\"}"
 	unmarshalNode.UnmarshalJSON([]byte(fmt.Sprintf(jsonStr, "NONE")))
 
@@ -132,7 +132,7 @@ func TestNodeUnMarshalJSONWithValidator(t *testing.T) {
 	endpoint, err := sebakcommon.NewEndpointFromString(fmt.Sprintf("https://localhost:5000?NodeName=n1"))
 	assert.Equal(t, nil, err)
 
-	localNode, _ := NewLocalNode(kp.Address(), endpoint, "node")
+	localNode, _ := NewLocalNode(kp, endpoint, "node")
 
 	localNode.UnmarshalJSON([]byte(
 		`{

@@ -106,8 +106,7 @@ func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, mn *HTTP2Network, lo
 	mn = NewHTTP2Network(config)
 
 	kp, _ = keypair.Random()
-	localNode, _ = sebaknode.NewLocalNode(kp.Address(), mn.Endpoint(), "")
-	localNode.SetKeypair(kp)
+	localNode, _ = sebaknode.NewLocalNode(kp, mn.Endpoint(), "")
 
 	mn.SetContext(context.WithValue(context.Background(), "localNode", localNode))
 
