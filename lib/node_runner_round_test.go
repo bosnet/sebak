@@ -143,8 +143,7 @@ func TestNodeRunnerRoundCreateAccount(t *testing.T) {
 	}
 
 	for i, nr := range nodeRunners {
-		_, found := nr.Consensus().TransactionPool[tx.GetHash()]
-		if !found {
+		if !nr.Consensus().TransactionPool.Has(tx.GetHash()) {
 			t.Error("failed to broadcast message", "node", nr.Node(), "index", i)
 		}
 	}
