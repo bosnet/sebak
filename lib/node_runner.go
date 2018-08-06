@@ -1,3 +1,10 @@
+//
+// Struct that bridges together components of a node
+//
+// NodeRunner bridges together the connection, storage and `LocalNode`.
+// In this regard, it can be seen as a single node, and is used as such
+// in unit tests.
+//
 package sebak
 
 import (
