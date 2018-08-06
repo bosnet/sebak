@@ -22,8 +22,6 @@ type ValidatorFromJSON struct {
 type Validator struct {
 	sync.Mutex
 
-	keypair *keypair.Full
-
 	state    NodeState
 	alias    string
 	address  string
