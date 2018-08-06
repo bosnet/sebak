@@ -65,12 +65,12 @@ func NewBlock(proposer string, round Round, transactions []string, confirmed str
 	return *b
 }
 
-func NewBlockFromRoundBallot(roundBallot RoundBallot) Block {
+func NewBlockFromBallot(ballot Ballot) Block {
 	return NewBlock(
-		roundBallot.Proposer(),
-		roundBallot.Round(),
-		roundBallot.ValidTransactions(),
-		roundBallot.ProposerConfirmed(),
+		ballot.Proposer(),
+		ballot.Round(),
+		ballot.ValidTransactions(),
+		ballot.ProposerConfirmed(),
 	)
 }
 

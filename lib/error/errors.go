@@ -39,6 +39,6 @@ var (
 	ErrorRoundVoteNotFound                = NewError(136, "`RoundVote` not found")
 	ErrorBlockNotFound                    = NewError(137, "Block not found")
 	ErrorTransactionExcessAbilityToPay    = NewError(138, "Transaction requests over abiltiy to pay")
-	ErrorTransactionSameSource            = NewError(139, "Same transaction source found in RoundBallot")
+	ErrorTransactionSameSource            = NewError(139, "Same transaction source found in ballot")
 	ErrorTransactionNotFound              = NewError(140, "Transaction not found")
 )

@@ -9,9 +9,9 @@ type Consensus interface {
 	GetNode() *sebaknode.LocalNode
 	HasMessage(sebakcommon.Message) bool
 	HasMessageByHash(string) bool
-	ReceiveMessage(sebakcommon.Message) (Ballot, error)
-	ReceiveBallot(Ballot) (VotingStateStaging, error)
+	ReceiveMessage(sebakcommon.Message) error
+	//ReceiveBallot(Ballot) (VotingStateStaging, error)
 
-	AddBallot(Ballot) error
-	CloseConsensus(Ballot) error
+	//AddBallot(Ballot) error
+	//CloseConsensus(Ballot) error
 }
