@@ -4,20 +4,22 @@ import (
 	"boscoin.io/sebak/lib/contract/context"
 	"boscoin.io/sebak/lib/contract/payload"
 	"boscoin.io/sebak/lib/contract/value"
+
 	"github.com/go-interpreter/wagon/exec"
-	"os"
-	"github.com/go-interpreter/wagon/wasm"
 	"github.com/go-interpreter/wagon/validate"
+	"github.com/go-interpreter/wagon/wasm"
+
+	"os"
 )
 
 type ExecFunc func(e *WasmExecutor, code *payload.ExecCode) (*value.Value, error)
 
 type WasmExecutor struct {
-	Context *context.Context
+	Context context.Context
 	//Engine  *exec.ExecutionEngine
 }
 
-func NewWasmExecutor(ctx *context.Context) *WasmExecutor {
+func NewWasmExecutor(ctx context.Context) *WasmExecutor {
 	ex := &WasmExecutor{
 		Context: ctx,
 	}

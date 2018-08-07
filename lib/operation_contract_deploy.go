@@ -6,27 +6,25 @@ import (
 
 	"github.com/stellar/go/keypair"
 
+	sebakcommon "boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/contract/payload"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/storage"
-	"boscoin.io/sebak/lib/contract/payload"
-	"boscoin.io/sebak/lib/contract/context"
-	"boscoin.io/sebak/lib/store/statestore"
-	"boscoin.io/sebak/lib/contract"
 )
 
 type OperationBodyContractDeploy struct {
-	Target string `json:"target"`
-	Amount Amount `json:"amount"`
-	CodeType int `json:"codeType"`
-	Code   string `json:"code"`
+	Target   string             `json:"target"`
+	Amount   sebakcommon.Amount `json:"amount"`
+	CodeType int                `json:"codeType"`
+	Code     string             `json:"code"`
 }
 
-func NewOperationBodyContractDeploy(target string, amount Amount, codeType int, code string) OperationBodyContractDeploy {
+func NewOperationBodyContractDeploy(target string, amount sebakcommon.Amount, codeType int, code string) OperationBodyContractDeploy {
 	return OperationBodyContractDeploy{
-		Target: target,
-		Amount: amount,
+		Target:   target,
+		Amount:   amount,
 		CodeType: codeType,
-		Code: code,
+		Code:     code,
 	}
 }
 
@@ -60,25 +58,19 @@ func (o OperationBodyContractDeploy) TargetAddress() string {
 	return o.Target
 }
 
-func (o OperationBodyContractDeploy) GetAmount() Amount {
+func (o OperationBodyContractDeploy) GetAmount() sebakcommon.Amount {
 	return o.Amount
 }
 
-func FinishOperationBodyContractDeploy (st *sebakstorage.LevelDBBackend, tx Transaction, op Operation) (err error) {
+func FinishOperationBodyContractDeploy(st sebakstorage.DBBackend, tx Transaction, op Operation) (err error) {
 	var baSource *BlockAccount
 	if baSource, err = GetBlockAccount(st, tx.B.Source); err != nil {
 		err = sebakerror.ErrorBlockAccountDoesNotExists
 		return
 	}
-	stateStore := statestore.NewStateStore(st)
-	stateClone := statestore.NewStateClone(stateStore)
-	ctx := &context.Context{
-		SenderAccount: baSource,
-		StateStore:    stateStore,
-		StateClone:    stateClone,
-	}
 
+	ctx := NewContractContext(baSource, st)
 
-	err = contract.Deploy(ctx, payload.CodeType(op.B.(OperationBodyContractDeploy).CodeType), []byte(op.B.(OperationBodyContractDeploy).Code)) //TODO: Where to pass the return value?
+	err = DeployContract(ctx, payload.CodeType(op.B.(OperationBodyContractDeploy).CodeType), []byte(op.B.(OperationBodyContractDeploy).Code)) //TODO: Where to pass the return value?
 	return
 }
