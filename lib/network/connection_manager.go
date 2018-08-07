@@ -95,15 +95,6 @@ func (c *ConnectionManager) setConnected(v *sebaknode.Validator, connected bool)
 	return true
 }
 
-func (c *ConnectionManager) AllConnected() []*sebaknode.Validator {
-	var connected []*sebaknode.Validator
-	for address := range c.connected {
-		connected = append(connected, c.validators[address])
-	}
-
-	return connected
-}
-
 func (c *ConnectionManager) CountConnected() int {
 	return len(c.connected)
 }
@@ -164,12 +155,16 @@ func (c *ConnectionManager) ConnectionWatcher(t Network, conn net.Conn, state ht
 }
 
 func (c *ConnectionManager) Broadcast(message sebakcommon.Message) {
-	for _, validator := range c.AllConnected() {
+	for addr, _ := range c.connected {
 		go func(v *sebaknode.Validator) {
+			if v == nil {
+				panic("Validator connected but not registered")
+			}
+
 			client := c.GetConnection(v.Address())
 			if _, err := client.SendBallot(message); err != nil {
 				c.log.Error("failed to SendBallot", "error", err, "validator", v)
 			}
-		}(validator)
+		}(c.validators[addr])
 	}
 }
