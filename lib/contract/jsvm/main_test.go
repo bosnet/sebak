@@ -14,8 +14,8 @@ var (
 	testStateStore     *statestore.StateStore
 	testStateClone     *statestore.StateClone
 	testLevelDBBackend *sebakstorage.LevelDBBackend
-	testAddress = "testaddress"
-	testCode = `
+	testAddress        = "testaddress"
+	testCode           = `
 function Hello(helloarg){
     return HelloWorld(helloarg)
 }

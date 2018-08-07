@@ -1,9 +1,9 @@
 package value
 
 import (
-	"io"
-	"github.com/robertkrimen/otto"
 	"encoding/binary"
+	"github.com/robertkrimen/otto"
+	"io"
 )
 
 type Type int
@@ -43,7 +43,7 @@ func ToValue(ottoValue otto.Value) (*Value, error) {
 	//ottoValue.Export()
 	var v = new(Value)
 	var err error
-	if ottoValue.IsNumber(){
+	if ottoValue.IsNumber() {
 		var intValue int64
 		intValue, err = ottoValue.ToInteger()
 		v.Type = Int

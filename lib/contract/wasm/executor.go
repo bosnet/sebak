@@ -2,22 +2,22 @@ package wasm
 
 import (
 	"boscoin.io/sebak/lib/contract/context"
-	"encoding/binary"
-	"github.com/ontio/ontology-wasm/exec"
 	"boscoin.io/sebak/lib/contract/payload"
 	"boscoin.io/sebak/lib/contract/value"
+	"encoding/binary"
+	"github.com/ontio/ontology-wasm/exec"
 )
 
 type ExecFunc func(e *WasmExecutor, code *payload.ExecCode) (*value.Value, error)
 
 type WasmExecutor struct {
-	Context    *context.Context
-	Engine     *exec.ExecutionEngine
+	Context *context.Context
+	Engine  *exec.ExecutionEngine
 }
 
 func NewWasmExecutor(ctx *context.Context) *WasmExecutor {
 	ex := &WasmExecutor{
-		Context:    ctx,
+		Context: ctx,
 	}
 
 	return ex

@@ -5,9 +5,9 @@ import (
 
 	"boscoin.io/sebak/lib/contract/api"
 	"boscoin.io/sebak/lib/contract/context"
-	"github.com/robertkrimen/otto"
 	"boscoin.io/sebak/lib/contract/payload"
 	"boscoin.io/sebak/lib/contract/value"
+	"github.com/robertkrimen/otto"
 )
 
 var r, _ = regexp.Compile("^[A-Z]")

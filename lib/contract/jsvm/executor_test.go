@@ -6,16 +6,16 @@ import (
 
 	"github.com/magiconair/properties/assert"
 
+	"boscoin.io/sebak/lib/contract/api"
 	"boscoin.io/sebak/lib/contract/context"
 	"boscoin.io/sebak/lib/contract/payload"
-	"boscoin.io/sebak/lib/contract/api"
 )
 
 func TestExecutor(t *testing.T) {
 	deployCode := &payload.DeployCode{
 		ContractAddress: testAddress,
-		Code: []byte(testCode),
-		Type: payload.JavaScript,
+		Code:            []byte(testCode),
+		Type:            payload.JavaScript,
 	}
 	testStateClone.PutDeployCode(deployCode)
 
