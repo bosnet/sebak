@@ -6,6 +6,7 @@ const (
 	Native CodeType = iota
 	JavaScript
 	WASM
+	NONE
 )
 
 type DeployCode struct {

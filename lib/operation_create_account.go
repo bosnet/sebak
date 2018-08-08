@@ -47,6 +47,10 @@ func (o OperationBodyCreateAccount) TargetAddress() string {
 func (o OperationBodyCreateAccount) GetAmount() Amount {
 	return o.Amount
 }
+func (o OperationBodyCreateAccount) Do(st *sebakstorage.LevelDBBackend, tx Transaction) (err error) {
+	//TODO change FinishOperationCreateAccount to this
+	return
+}
 
 func FinishOperationCreateAccount(st *sebakstorage.LevelDBBackend, tx Transaction, op Operation) (err error) {
 	var baSource, baTarget *BlockAccount

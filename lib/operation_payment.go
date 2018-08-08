@@ -55,6 +55,11 @@ func (o OperationBodyPayment) GetAmount() Amount {
 	return o.Amount
 }
 
+func (o OperationBodyPayment) Do(st *sebakstorage.LevelDBBackend, tx Transaction) (err error) {
+	//TODO change FinishOperationPayment to this
+	return
+}
+
 func FinishOperationPayment(st *sebakstorage.LevelDBBackend, tx Transaction, op Operation) (err error) {
 	var baSource, baTarget *BlockAccount
 	if baSource, err = GetBlockAccount(st, tx.B.Source); err != nil {
