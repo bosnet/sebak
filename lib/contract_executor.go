@@ -1,11 +1,9 @@
-package contract
+package sebak
 
 import (
 	"errors"
 	"fmt"
 
-	"boscoin.io/sebak/lib/contract/api"
-	"boscoin.io/sebak/lib/contract/context"
 	"boscoin.io/sebak/lib/contract/jsvm"
 	"boscoin.io/sebak/lib/contract/native"
 	"boscoin.io/sebak/lib/contract/payload"
@@ -13,14 +11,14 @@ import (
 	"boscoin.io/sebak/lib/contract/wasm"
 )
 
-type Executor interface {
+type ContractExecutor interface {
 	Execute(*payload.ExecCode) (*value.Value, error)
 }
 
-func NewExecutor(ctx *context.Context, execCode *payload.ExecCode) (Executor, error) {
-	var ex Executor
+func NewContractExecutor(ctx *ContractContext, execCode *payload.ExecCode) (ContractExecutor, error) {
+	var ex ContractExecutor
 	contractAddress := execCode.ContractAddress
-	api := api.NewAPI(ctx, contractAddress, Execute)
+	api := NewContractAPI(ctx, contractAddress)
 
 	if native.HasContract(contractAddress) {
 		ex = native.NewNativeExecutor(ctx, api)
@@ -41,8 +39,8 @@ func NewExecutor(ctx *context.Context, execCode *payload.ExecCode) (Executor, er
 	return ex, nil
 }
 
-func Execute(ctx *context.Context, execCode *payload.ExecCode) (*value.Value, error) {
-	ex, err := NewExecutor(ctx, execCode)
+func ContractExecute(ctx *ContractContext, execCode *payload.ExecCode) (*value.Value, error) {
+	ex, err := NewContractExecutor(ctx, execCode)
 	if err != nil {
 		return nil, fmt.Errorf("not found")
 	}

@@ -1,12 +1,12 @@
-package statestore
+package sebak
 
 import (
 	"fmt"
 	"sort"
 
-	sebak "boscoin.io/sebak/lib"
 	sebakcommon "boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/contract/payload"
+	"boscoin.io/sebak/lib/contract/storage"
 	sebakstorage "boscoin.io/sebak/lib/storage"
 
 	"github.com/btcsuite/btcutil/base58"
@@ -16,7 +16,7 @@ type StateClone struct {
 	db    *sebakstorage.LevelDBBackend
 	store *StateStore
 
-	accounts map[string]*sebak.BlockAccount
+	accounts map[string]*BlockAccount
 	objects  map[string]*StateObject
 }
 
@@ -25,7 +25,7 @@ func NewStateClone(store *StateStore) *StateClone {
 	s := &StateClone{
 		db:       store.DBBackend(),
 		store:    store,
-		accounts: make(map[string]*sebak.BlockAccount),
+		accounts: make(map[string]*BlockAccount),
 		objects:  make(map[string]*StateObject),
 	}
 
@@ -133,7 +133,7 @@ func (s *StateClone) MakeHashString() (string, error) {
 	return base58.Encode(h), nil
 }
 
-func (s *StateClone) GetAccount(addr string) (*sebak.BlockAccount, error) {
+func (s *StateClone) GetAccount(addr string) (*BlockAccount, error) {
 	if a, ok := s.accounts[addr]; ok {
 		return a, nil
 	}
@@ -145,7 +145,7 @@ func (s *StateClone) GetAccount(addr string) (*sebak.BlockAccount, error) {
 	return a, nil
 }
 
-func (s *StateClone) AccountWithdraw(addr string, fund sebak.Amount, checkpoint string) error {
+func (s *StateClone) AccountWithdraw(addr string, fund Amount, checkpoint string) error {
 	a, err := s.GetAccount(addr)
 	if err != nil {
 		return err
@@ -187,14 +187,14 @@ func (s *StateClone) GetDeployCode(addr string) (*payload.DeployCode, error) {
 	return s.store.GetDeployCode(addr)
 }
 
-func (s *StateClone) GetStorageItem(addr, key string) (*StorageItem, error) {
+func (s *StateClone) GetStorageItem(addr, key string) (*storage.StorageItem, error) {
 	itemKey := getContractStorageItemKey(addr, key)
 	if s.isStateDeleted(itemKey) {
 		return nil, nil
 	}
 
 	if obj, ok := s.objects[itemKey]; ok {
-		item := obj.Value.(*StorageItem)
+		item := obj.Value.(*storage.StorageItem)
 		return item, nil
 	}
 
@@ -206,7 +206,7 @@ func (s *StateClone) GetStorageItem(addr, key string) (*StorageItem, error) {
 	return item, nil
 }
 
-func (s *StateClone) PutStorageItem(addr, key string, item *StorageItem) error {
+func (s *StateClone) PutStorageItem(addr, key string, item *storage.StorageItem) error {
 	itemKey := getContractStorageItemKey(addr, key)
 
 	s.objects[itemKey] = &StateObject{

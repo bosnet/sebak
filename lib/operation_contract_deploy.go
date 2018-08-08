@@ -6,27 +6,24 @@ import (
 
 	"github.com/stellar/go/keypair"
 
+	"boscoin.io/sebak/lib/contract/payload"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/storage"
-	"boscoin.io/sebak/lib/contract/payload"
-	"boscoin.io/sebak/lib/contract/context"
-	"boscoin.io/sebak/lib/store/statestore"
-	"boscoin.io/sebak/lib/contract"
 )
 
 type OperationBodyContractDeploy struct {
-	Target string `json:"target"`
-	Amount Amount `json:"amount"`
-	CodeType int `json:"codeType"`
-	Code   string `json:"code"`
+	Target   string `json:"target"`
+	Amount   Amount `json:"amount"`
+	CodeType int    `json:"codeType"`
+	Code     string `json:"code"`
 }
 
 func NewOperationBodyContractDeploy(target string, amount Amount, codeType int, code string) OperationBodyContractDeploy {
 	return OperationBodyContractDeploy{
-		Target: target,
-		Amount: amount,
+		Target:   target,
+		Amount:   amount,
 		CodeType: codeType,
-		Code: code,
+		Code:     code,
 	}
 }
 
@@ -64,21 +61,20 @@ func (o OperationBodyContractDeploy) GetAmount() Amount {
 	return o.Amount
 }
 
-func FinishOperationBodyContractDeploy (st *sebakstorage.LevelDBBackend, tx Transaction, op Operation) (err error) {
+func FinishOperationBodyContractDeploy(st *sebakstorage.LevelDBBackend, tx Transaction, op Operation) (err error) {
 	var baSource *BlockAccount
 	if baSource, err = GetBlockAccount(st, tx.B.Source); err != nil {
 		err = sebakerror.ErrorBlockAccountDoesNotExists
 		return
 	}
-	stateStore := statestore.NewStateStore(st)
-	stateClone := statestore.NewStateClone(stateStore)
-	ctx := &context.Context{
+	stateStore := NewStateStore(st)
+	stateClone := NewStateClone(stateStore)
+	ctx := &ContractContext{
 		SenderAccount: baSource,
 		StateStore:    stateStore,
 		StateClone:    stateClone,
 	}
 
-
-	err = contract.Deploy(ctx, payload.CodeType(op.B.(OperationBodyContractDeploy).CodeType), []byte(op.B.(OperationBodyContractDeploy).Code)) //TODO: Where to pass the return value?
+	err = Deploy(ctx, payload.CodeType(op.B.(OperationBodyContractDeploy).CodeType), []byte(op.B.(OperationBodyContractDeploy).Code)) //TODO: Where to pass the return value?
 	return
 }
