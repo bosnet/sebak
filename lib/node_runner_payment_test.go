@@ -39,51 +39,12 @@ func TestNodeRunnerPayment(t *testing.T) {
 		}
 	}
 
-	var wg sync.WaitGroup
-
-	wg.Add(numberOfNodes)
-
-	var dones []VotingStateStaging
-	var finished []string
-	var mutex = &sync.Mutex{}
-	var deferFunc sebakcommon.CheckerDeferFunc = func(n int, c sebakcommon.Checker, err error) {
-		if err == nil {
-			return
-		}
-
-		if _, ok := err.(sebakcommon.CheckerErrorStop); ok {
-			return
-		}
-
-		mutex.Lock()
-		defer mutex.Unlock()
-
-		checker := c.(*NodeRunnerHandleBallotChecker)
-		if _, found := sebakcommon.InStringArray(finished, checker.LocalNode.Alias()); found {
-			return
-		}
-		finished = append(finished, checker.LocalNode.Alias())
-		dones = append(dones, checker.VotingStateStaging)
-		wg.Done()
-	}
-
-	for _, nr := range nodeRunners {
-		nr.SetHandleBallotCheckerFuncs(deferFunc)
-	}
-
-	nr0 := nodeRunners[0]
-
-	client := nr0.Network().GetClient(nr0.Node().Endpoint())
-
 	amount := Amount(1)
 	tx := makeTransactionPayment(kpSource, kpTarget.Address(), amount)
 	tx.B.Checkpoint = accountSource.Checkpoint
 	tx.Sign(kpSource, networkID)
 
-	client.SendMessage(tx)
-
-	wg.Wait()
-
+	dones := doConsensus(nodeRunners, tx)
 	for _, done := range dones {
 		if done.State != sebakcommon.BallotStateALLCONFIRM {
 			t.Error("failed to get consensus")
@@ -94,6 +55,8 @@ func TestNodeRunnerPayment(t *testing.T) {
 			return
 		}
 	}
+
+	nr0 := nodeRunners[0]
 
 	// check balance
 	baSource, err := GetBlockAccount(nr0.Storage(), kpSource.Address())
