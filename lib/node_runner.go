@@ -245,13 +245,12 @@ func (nr *NodeRunner) handleMessage() {
 			nr.log.Debug("got ballot", "message", message.Head(50))
 
 			checker := &NodeRunnerHandleBallotChecker{
-				GenesisBlockCheckpoint: sebakcommon.MakeGenesisCheckpoint(nr.networkID),
-				DefaultChecker:         sebakcommon.DefaultChecker{nr.handleBallotCheckerFuncs},
-				NodeRunner:             nr,
-				LocalNode:              nr.localNode,
-				NetworkID:              nr.networkID,
-				Message:                message,
-				VotingHole:             VotingNOTYET,
+				DefaultChecker: sebakcommon.DefaultChecker{nr.handleBallotCheckerFuncs},
+				NodeRunner:     nr,
+				LocalNode:      nr.localNode,
+				NetworkID:      nr.networkID,
+				Message:        message,
+				VotingHole:     VotingNOTYET,
 			}
 			if err = sebakcommon.RunChecker(checker, nr.handleBallotCheckerDeferFunc); err != nil {
 				if _, ok := err.(sebakcommon.CheckerErrorStop); !ok {

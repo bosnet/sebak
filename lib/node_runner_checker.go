@@ -99,16 +99,15 @@ func CheckNodeRunnerHandleMessageBroadcast(c sebakcommon.Checker, args ...interf
 type NodeRunnerHandleBallotChecker struct {
 	sebakcommon.DefaultChecker
 
-	GenesisBlockCheckpoint string
-	NodeRunner             *NodeRunner
-	LocalNode              *sebaknode.LocalNode
-	NetworkID              []byte
-	Message                sebaknetwork.Message
-	Ballot                 Ballot
-	IsNew                  bool
-	VotingStateStaging     VotingStateStaging
-	VotingHole             VotingHole
-	WillBroadcast          bool
+	NodeRunner         *NodeRunner
+	LocalNode          *sebaknode.LocalNode
+	NetworkID          []byte
+	Message            sebaknetwork.Message
+	Ballot             Ballot
+	IsNew              bool
+	VotingStateStaging VotingStateStaging
+	VotingHole         VotingHole
+	WillBroadcast      bool
 }
 
 func (c *NodeRunnerHandleBallotChecker) GetTransaction() (tx Transaction) {
