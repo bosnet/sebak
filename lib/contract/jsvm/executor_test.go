@@ -1,7 +1,6 @@
 package jsvm
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/magiconair/properties/assert"
@@ -22,14 +21,15 @@ func TestExecutor(t *testing.T) {
 	context := &context.Context{
 		StateStore: testStateStore,
 	}
-	ex := NewOttoExecutor(context, deployCode)
+	api := api.NewAPI(context, testAddress, nil)
+	ex := NewOttoExecutor(context, api, deployCode)
 	excode := &payload.ExecCode{
 		ContractAddress: testAddress,
 		Method:          "Hello",
 		Args:            []string{"boscoin"},
 	}
 	ret, _ := ex.Execute(excode)
-	want, _ := api.NewAPI(context).Helloworld("boscoin")
+	want, _ := api.Helloworld("boscoin")
 	assert.Equal(t, string(ret.Contents), want)
-	fmt.Println(string(ret.Contents))
+	t.Log(string(ret.Contents))
 }

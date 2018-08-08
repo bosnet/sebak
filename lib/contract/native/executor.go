@@ -18,10 +18,10 @@ type NativeExecutor struct {
 	execFuncs map[string]ExecFunc
 }
 
-func NewNativeExecutor(ctx *context.Context) *NativeExecutor {
+func NewNativeExecutor(ctx *context.Context, api *api.API) *NativeExecutor {
 	ex := &NativeExecutor{
 		Context:   ctx,
-		api:       api.NewAPI(ctx),
+		api:       api,
 		execFuncs: map[string]ExecFunc{},
 	}
 
