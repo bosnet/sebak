@@ -152,7 +152,6 @@ type OperationBody interface {
 	IsWellFormed([]byte) error
 	TargetAddress() string
 	GetAmount() Amount
-	Do(*sebakstorage.LevelDBBackend, Transaction) error
 }
 
 // FinishOperation do finish the task after consensus by the type of each operation.

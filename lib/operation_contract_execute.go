@@ -64,34 +64,6 @@ func (o OperationBodyContractExecute) GetAmount() Amount {
 	return o.Amount
 }
 
-func (o OperationBodyContractExecute) Do(st *sebakstorage.LevelDBBackend, tx Transaction) (err error) {
-	var baSource, baTarget *BlockAccount
-	if baSource, err = GetBlockAccount(st, tx.B.Source); err != nil {
-		err = sebakerror.ErrorBlockAccountDoesNotExists
-		return
-	}
-	if baTarget, err = GetBlockAccount(st, o.TargetAddress()); err != nil {
-		err = sebakerror.ErrorBlockAccountDoesNotExists
-		return
-	}
-	stateStore := statestore.NewStateStore(st)
-	stateClone := statestore.NewStateClone(stateStore)
-	ctx := &context.Context{
-		SenderAccount: baSource,
-		StateStore:    stateStore,
-		StateClone:    stateClone,
-	}
-
-	exCode := &payload.ExecCode{
-		ContractAddress: baTarget.Address,
-		Method:          o.Method,
-		Args:            o.Args,
-	}
-
-	_, err = contract.Execute(ctx, exCode) //TODO: Where to pass the return value?
-	return
-}
-
 func FinishOperationBodyContractExecute (st *sebakstorage.LevelDBBackend, tx Transaction, op Operation) (err error) {
 	var baSource, baTarget *BlockAccount
 	if baSource, err = GetBlockAccount(st, tx.B.Source); err != nil {
