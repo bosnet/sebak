@@ -1,7 +1,6 @@
 package sebak
 
 import (
-	"sync"
 	"testing"
 
 	"github.com/stellar/go/keypair"
@@ -117,58 +116,6 @@ func TestNodeRunnerPayment(t *testing.T) {
 		t.Error("failed to subtract the transfered amount from source")
 		return
 	}
-}
-
-func doConsensus(nodeRunners []*NodeRunner, tx Transaction) []VotingStateStaging {
-	var wg sync.WaitGroup
-	wg.Add(len(nodeRunners))
-
-	var messageDeferFunc sebakcommon.CheckerDeferFunc = func(n int, c sebakcommon.Checker, err error) {
-		if err == nil {
-			return
-		}
-
-		return
-	}
-
-	var dones []VotingStateStaging
-	var finished []string
-	var mutex = &sync.Mutex{}
-	var ballotDeferFunc sebakcommon.CheckerDeferFunc = func(n int, c sebakcommon.Checker, err error) {
-		if err == nil {
-			return
-		}
-
-		if _, ok := err.(sebakcommon.CheckerErrorStop); ok {
-			return
-		}
-
-		mutex.Lock()
-		defer mutex.Unlock()
-
-		checker := c.(*NodeRunnerHandleBallotChecker)
-		if _, found := sebakcommon.InStringArray(finished, checker.LocalNode.Alias()); found {
-			return
-		}
-		finished = append(finished, checker.LocalNode.Alias())
-		dones = append(dones, checker.VotingStateStaging)
-		wg.Done()
-	}
-
-	for _, nr := range nodeRunners {
-		nr.SetHandleMessageFromClientCheckerFuncs(messageDeferFunc)
-		nr.SetHandleBallotCheckerFuncs(ballotDeferFunc)
-	}
-
-	nr0 := nodeRunners[0]
-
-	client := nr0.Network().GetClient(nr0.Node().Endpoint())
-
-	client.SendMessage(tx)
-
-	wg.Wait()
-
-	return dones
 }
 
 func TestNodeRunnerSerializedPayment(t *testing.T) {
