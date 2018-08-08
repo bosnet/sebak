@@ -2,8 +2,8 @@ package value
 
 import (
 	"encoding/binary"
-	"github.com/robertkrimen/otto"
 	"errors"
+	"github.com/robertkrimen/otto"
 )
 
 type Type int
@@ -17,7 +17,7 @@ const (
 )
 
 const (
-	True = 0x01
+	True  = 0x01
 	False = 0x00
 )
 
@@ -32,8 +32,8 @@ func StringValue(s string) *Value {
 	return v
 }
 
-func (v* Value) Encode(iv interface{}) (err error){
-	switch iv.(type){
+func (v *Value) Encode(iv interface{}) (err error) {
+	switch iv.(type) {
 	case nil:
 		v.Type = Nil
 		v.Contents = []byte{}
@@ -94,8 +94,8 @@ func (v* Value) Encode(iv interface{}) (err error){
 	}
 	return
 }
-func (v* Value) Decode() (iv interface{}, err error){
-	switch v.Type{
+func (v *Value) Decode() (iv interface{}, err error) {
+	switch v.Type {
 	case Nil:
 		iv = nil
 	case String:

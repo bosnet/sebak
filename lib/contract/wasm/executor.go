@@ -5,9 +5,9 @@ import (
 	"boscoin.io/sebak/lib/contract/payload"
 	"boscoin.io/sebak/lib/contract/value"
 	"github.com/go-interpreter/wagon/exec"
-	"os"
-	"github.com/go-interpreter/wagon/wasm"
 	"github.com/go-interpreter/wagon/validate"
+	"github.com/go-interpreter/wagon/wasm"
+	"os"
 )
 
 type ExecFunc func(e *WasmExecutor, code *payload.ExecCode) (*value.Value, error)
