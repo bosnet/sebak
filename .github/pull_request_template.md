@@ -1,6 +1,6 @@
 ### Github Issue
 <!--
-    Add the github issue number if exists(ex. Fixes #1, Closes #1 or Resolves #1).
+    Add the Github issue number if one exists, prefixed by one of Github's keywords, ex. `Fixes #1`, `Closes #1` or `Resolves #1`.
 -->
 
 ### Background
