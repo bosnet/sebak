@@ -4,11 +4,10 @@ import (
 	"fmt"
 	"math/rand"
 
-	"github.com/btcsuite/btcutil/base58"
+	"boscoin.io/sebak/lib/common"
+
 	"github.com/google/uuid"
 	"github.com/stellar/go/keypair"
-
-	"boscoin.io/sebak/lib/common"
 )
 
 func testMakeBlockAccount() *BlockAccount {
@@ -98,7 +97,7 @@ func TestMakeTransaction(networkID []byte, n int) (kp *keypair.Full, tx Transact
 }
 
 func TestGenerateNewCheckpoint() string {
-	return base58.Encode([]byte(uuid.New().String()))
+	return uuid.New().String()
 }
 
 func TestMakeTransactionWithKeypair(networkID []byte, n int, srcKp *keypair.Full, targetKps ...*keypair.Full) (tx Transaction) {
