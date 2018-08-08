@@ -66,7 +66,11 @@ func (b *BlockAccount) Save(st *sebakstorage.LevelDBBackend) (err error) {
 		observer.BlockAccountObserver.Trigger(event, b)
 	}
 
-	bac := NewBlockAccountCheckpoint(b, b.Checkpoint)
+	bac := BlockAccountCheckpoint{
+		Checkpoint: b.Checkpoint,
+		Address:    b.Address,
+		Balance:    b.Balance,
+	}
 	err = bac.Save(st)
 
 	return
@@ -180,14 +184,6 @@ type BlockAccountCheckpoint struct {
 	Checkpoint string
 	Address    string
 	Balance    string
-}
-
-func NewBlockAccountCheckpoint(ba *BlockAccount, checkpoint string) BlockAccountCheckpoint {
-	return BlockAccountCheckpoint{
-		Checkpoint: checkpoint,
-		Address:    ba.Address,
-		Balance:    ba.Balance,
-	}
 }
 
 func GetBlockAccountCheckpointKey(address, checkpoint string) string {
