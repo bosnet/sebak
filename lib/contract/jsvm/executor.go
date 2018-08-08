@@ -7,6 +7,7 @@ import (
 	"boscoin.io/sebak/lib/contract/context"
 	"boscoin.io/sebak/lib/contract/payload"
 	"boscoin.io/sebak/lib/contract/value"
+
 	"github.com/robertkrimen/otto"
 )
 
@@ -37,7 +38,7 @@ type OttoExecutor struct {
 	VM        *otto.Otto
 }
 
-func NewOttoExecutor(ctx *context.Context, deployCode *payload.DeployCode) *OttoExecutor {
+func NewOttoExecutor(ctx *context.Context, api *api.API, deployCode *payload.DeployCode) *OttoExecutor {
 
 	vm := otto.New()
 	vm.Run(deployCode.Code)
@@ -51,7 +52,7 @@ func NewOttoExecutor(ctx *context.Context, deployCode *payload.DeployCode) *Otto
 
 	ex := &OttoExecutor{
 		Context:   ctx,
-		api:       api.NewAPI(ctx),
+		api:       api,
 		functions: functions,
 		VM:        vm,
 	}

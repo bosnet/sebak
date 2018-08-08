@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"boscoin.io/sebak/lib/contract/api"
 	"boscoin.io/sebak/lib/contract/context"
 	"boscoin.io/sebak/lib/contract/jsvm"
 	"boscoin.io/sebak/lib/contract/native"
@@ -18,9 +19,11 @@ type Executor interface {
 
 func NewExecutor(ctx *context.Context, execCode *payload.ExecCode) (Executor, error) {
 	var ex Executor
+	contractAddress := execCode.ContractAddress
+	api := api.NewAPI(ctx, contractAddress, Execute)
 
-	if native.HasContract(execCode.ContractAddress) {
-		ex = native.NewNativeExecutor(ctx)
+	if native.HasContract(contractAddress) {
+		ex = native.NewNativeExecutor(ctx, api)
 	} else {
 		deployCode, err := ctx.StateStore.GetDeployCode(execCode.ContractAddress)
 		if err != nil {
@@ -28,7 +31,7 @@ func NewExecutor(ctx *context.Context, execCode *payload.ExecCode) (Executor, er
 		}
 		switch deployCode.Type {
 		case payload.JavaScript:
-			ex = jsvm.NewOttoExecutor(ctx, deployCode)
+			ex = jsvm.NewOttoExecutor(ctx, api, deployCode)
 		case payload.WASM:
 			ex = wasm.NewWasmExecutor(ctx)
 		default:
