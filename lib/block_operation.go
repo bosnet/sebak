@@ -125,7 +125,7 @@ func GetBlockOperationKeyPrefixTarget(target string) string {
 }
 
 func GetBlockOperationKeyPrefixCheckpoint(checkpoint string) string {
-	return fmt.Sprintf("%s%s-", BlockOperationPrefixTarget, checkpoint)
+	return fmt.Sprintf("%s%s-", BlockOperationPrefixCheckpoint, checkpoint)
 }
 
 func GetBlockOperationKeyPrefixPeers(one, two string) string {
@@ -159,7 +159,7 @@ func (bo BlockOperation) NewBlockOperationTargetKey() string {
 func (bo BlockOperation) NewBlockOperationCheckpoint() string {
 	return fmt.Sprintf(
 		"%s%s",
-		GetBlockOperationKeyPrefixTarget(bo.transaction.B.Checkpoint),
+		GetBlockOperationKeyPrefixCheckpoint(bo.transaction.B.Checkpoint),
 		sebakcommon.GetUniqueIDFromUUID(),
 	)
 }
