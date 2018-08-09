@@ -50,7 +50,7 @@ func (a *ContractAPI) GetBalance() (string, error) {
 
 // Call another contract
 func (a *ContractAPI) CallContract(execCode *payload.ExecCode) (v *value.Value, err error) {
-	v, err = ContractExecute(a.ctx, execCode)
+	v, err = ExecuteContract(a.ctx, execCode)
 	return
 }
 

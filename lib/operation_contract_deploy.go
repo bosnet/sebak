@@ -75,6 +75,6 @@ func FinishOperationBodyContractDeploy(st *sebakstorage.LevelDBBackend, tx Trans
 		StateClone:    stateClone,
 	}
 
-	err = Deploy(ctx, payload.CodeType(op.B.(OperationBodyContractDeploy).CodeType), []byte(op.B.(OperationBodyContractDeploy).Code)) //TODO: Where to pass the return value?
+	err = DeployContract(ctx, payload.CodeType(op.B.(OperationBodyContractDeploy).CodeType), []byte(op.B.(OperationBodyContractDeploy).Code)) //TODO: Where to pass the return value?
 	return
 }

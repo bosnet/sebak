@@ -39,7 +39,7 @@ func NewContractExecutor(ctx *ContractContext, execCode *payload.ExecCode) (Cont
 	return ex, nil
 }
 
-func ContractExecute(ctx *ContractContext, execCode *payload.ExecCode) (*value.Value, error) {
+func ExecuteContract(ctx *ContractContext, execCode *payload.ExecCode) (*value.Value, error) {
 	ex, err := NewContractExecutor(ctx, execCode)
 	if err != nil {
 		return nil, fmt.Errorf("not found")

@@ -5,26 +5,26 @@ import (
 	"boscoin.io/sebak/lib/contract/payload"
 )
 
-type Deployer interface {
+type ContractDeployer interface {
 	Deploy(code []byte) error
 }
 
-func NewDeployer(ctx *ContractContext, codeType payload.CodeType) Deployer {
+func NewContractDeployer(ctx *ContractContext, codeType payload.CodeType) ContractDeployer {
 
-	var de Deployer
+	var cd ContractDeployer
 
 	switch codeType {
 	case payload.JavaScript:
-		de = jsvm.NewDeployer(ctx)
+		cd = jsvm.NewDeployer(ctx)
 	default:
 		panic("not yet supported")
 	}
-	return de
+	return cd
 
 }
 
-func Deploy(ctx *ContractContext, codeType payload.CodeType, code []byte) (err error) {
-	deployer := NewDeployer(ctx, codeType)
-	err = deployer.Deploy(code)
+func DeployContract(ctx *ContractContext, codeType payload.CodeType, code []byte) (err error) {
+	cd := NewContractDeployer(ctx, codeType)
+	err = cd.Deploy(code)
 	return
 }

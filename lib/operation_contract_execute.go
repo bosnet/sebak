@@ -85,6 +85,6 @@ func FinishOperationBodyContractExecute(st *sebakstorage.LevelDBBackend, tx Tran
 		Args:            op.B.(OperationBodyContractExecute).Args,
 	}
 
-	_, err = ContractExecute(ctx, exCode) //TODO: Where to pass the return value?
+	_, err = ExecuteContract(ctx, exCode) //TODO: Where to pass the return value?
 	return
 }
