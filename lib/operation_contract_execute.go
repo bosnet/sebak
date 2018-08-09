@@ -6,18 +6,15 @@ import (
 
 	"github.com/stellar/go/keypair"
 
+	"boscoin.io/sebak/lib/contract/payload"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/storage"
-	"boscoin.io/sebak/lib/contract/payload"
-	"boscoin.io/sebak/lib/contract/context"
-	"boscoin.io/sebak/lib/store/statestore"
-	"boscoin.io/sebak/lib/contract"
 )
 
 type OperationBodyContractExecute struct {
-	Target string `json:"target"`
-	Amount Amount `json:"amount"`
-	Method string `json:"method"`
+	Target string   `json:"target"`
+	Amount Amount   `json:"amount"`
+	Method string   `json:"method"`
 	Args   []string `json:"args"`
 }
 
@@ -26,7 +23,7 @@ func NewOperationBodyContractExecute(target string, amount Amount, method string
 		Target: target,
 		Amount: amount,
 		Method: method,
-		Args: args,
+		Args:   args,
 	}
 }
 
@@ -64,7 +61,7 @@ func (o OperationBodyContractExecute) GetAmount() Amount {
 	return o.Amount
 }
 
-func FinishOperationBodyContractExecute (st *sebakstorage.LevelDBBackend, tx Transaction, op Operation) (err error) {
+func FinishOperationBodyContractExecute(st *sebakstorage.LevelDBBackend, tx Transaction, op Operation) (err error) {
 	var baSource, baTarget *BlockAccount
 	if baSource, err = GetBlockAccount(st, tx.B.Source); err != nil {
 		err = sebakerror.ErrorBlockAccountDoesNotExists
@@ -74,9 +71,9 @@ func FinishOperationBodyContractExecute (st *sebakstorage.LevelDBBackend, tx Tra
 		err = sebakerror.ErrorBlockAccountDoesNotExists
 		return
 	}
-	stateStore := statestore.NewStateStore(st)
-	stateClone := statestore.NewStateClone(stateStore)
-	ctx := &context.Context{
+	stateStore := NewStateStore(st)
+	stateClone := NewStateClone(stateStore)
+	ctx := &ContractContext{
 		SenderAccount: baSource,
 		StateStore:    stateStore,
 		StateClone:    stateClone,
@@ -88,6 +85,6 @@ func FinishOperationBodyContractExecute (st *sebakstorage.LevelDBBackend, tx Tra
 		Args:            op.B.(OperationBodyContractExecute).Args,
 	}
 
-	_, err = contract.Execute(ctx, exCode) //TODO: Where to pass the return value?
+	_, err = ExecuteContract(ctx, exCode) //TODO: Where to pass the return value?
 	return
 }
