@@ -1,4 +1,4 @@
-package statestore
+package storage
 
 // Storage is a storage for contract
 

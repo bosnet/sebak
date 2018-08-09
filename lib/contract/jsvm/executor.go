@@ -32,13 +32,13 @@ var intrinsicFunctions = []string{
 }
 
 type OttoExecutor struct {
-	Context   *context.Context
-	api       *api.API
+	Context   context.Context
+	api       api.API
 	functions map[string]otto.Value
 	VM        *otto.Otto
 }
 
-func NewOttoExecutor(ctx *context.Context, api *api.API, deployCode *payload.DeployCode) *OttoExecutor {
+func NewOttoExecutor(ctx context.Context, api api.API, deployCode *payload.DeployCode) *OttoExecutor {
 
 	vm := otto.New()
 	vm.Run(deployCode.Code)

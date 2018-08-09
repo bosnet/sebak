@@ -1,4 +1,4 @@
-package statestore
+package sebak
 
 import "strings"
 
