@@ -5,8 +5,8 @@ import (
 
 	"boscoin.io/sebak/lib/contract/native"
 	"boscoin.io/sebak/lib/contract/payload"
+	"boscoin.io/sebak/lib/contract/storage"
 	"boscoin.io/sebak/lib/contract/value"
-	"boscoin.io/sebak/lib/store/statestore"
 )
 
 var HelloWorldAddress = "HELLOWORLDADDRESS"
@@ -23,14 +23,14 @@ func hello(ex *native.NativeExecutor, execCode *payload.ExecCode) (*value.Value,
 	api := ex.API()
 	senderAddr := ex.Context.SenderAddress()
 
-	item, err := api.GetStorageItem(HelloWorldAddress, "greeters")
+	item, err := api.GetStorageItem("greeters")
 	if err != nil {
 		return nil, err
 	}
 
 	var greeters []string // sebak.BlockAccount.Address is string so..
 	if item == nil {
-		item = &statestore.StorageItem{}
+		item = &storage.StorageItem{}
 	} else {
 		err := json.Unmarshal(item.Value, greeters)
 		if err != nil {
@@ -48,7 +48,7 @@ func hello(ex *native.NativeExecutor, execCode *payload.ExecCode) (*value.Value,
 		item.Value = b
 	}
 
-	if err := api.PutStorageItem(HelloWorldAddress, "greeters", item); err != nil {
+	if err := api.PutStorageItem("greeters", item); err != nil {
 		return nil, err
 	}
 
