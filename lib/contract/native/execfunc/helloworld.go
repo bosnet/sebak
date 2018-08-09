@@ -52,7 +52,7 @@ func hello(ex *native.NativeExecutor, execCode *payload.ExecCode) (*value.Value,
 		return nil, err
 	}
 
-	v := value.StringValue("world")
+	v, _ := value.ToValue("world")
 	rCode := v
 	return rCode, nil
 }

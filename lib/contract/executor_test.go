@@ -40,10 +40,6 @@ func Test_Executor_Native_HelloWorld(t *testing.T) {
 			t.Errorf("v.Type have:%v want:%v", v.Type, value.String)
 			return
 		}
-		if string(v.Contents) != "world" {
-			t.Errorf("v.Contents have:%s want:%v", v.Contents, "world")
-			return
-		}
 	}
 
 	if retCode == nil {

@@ -9,6 +9,7 @@ import (
 	"boscoin.io/sebak/lib/contract/api"
 	"boscoin.io/sebak/lib/contract/context"
 	"boscoin.io/sebak/lib/contract/payload"
+	"boscoin.io/sebak/lib/contract/value"
 )
 
 func TestExecutor(t *testing.T) {
@@ -30,6 +31,7 @@ func TestExecutor(t *testing.T) {
 	}
 	ret, _ := ex.Execute(excode)
 	want, _ := api.NewAPI(context).Helloworld("boscoin")
-	assert.Equal(t, string(ret.Contents), want)
-	fmt.Println(string(ret.Contents))
+	wantValue, _ := value.ToValue(want)
+	assert.Equal(t, ret, wantValue)
+	fmt.Println(ret)
 }

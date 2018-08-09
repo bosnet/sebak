@@ -3,6 +3,7 @@ package value
 import (
 	"github.com/magiconair/properties/assert"
 	"testing"
+	"github.com/robertkrimen/otto"
 )
 
 const (
@@ -33,119 +34,74 @@ const (
 )
 
 func TestValue(t *testing.T) {
-	//Boolean
-	{
-		{
-			var v = new(Value)
-			var native = true
-			v.Encode(native)
-			decodedValue, _ := v.Decode()
-			assert.Equal(t, decodedValue, native)
-		}
-		{
-			var v = new(Value)
-			var native = false
-			v.Encode(native)
-			decodedValue, _ := v.Decode()
-			assert.Equal(t, decodedValue, native)
-		}
-	}
-	//Nil
-	{
-		{
-			var v = new(Value)
-			var native interface{} = nil
-			v.Encode(native)
-			decodedValue, _ := v.Decode()
-			assert.Equal(t, decodedValue, native)
-		}
-	}
-	//String
-	{
-		{
-			var v = new(Value)
-			var native = "GAZUA BOSCOIN"
-			v.Encode(native)
-			decodedValue, _ := v.Decode()
-			assert.Equal(t, decodedValue, native)
-		}
+
+	testValues := []interface{}{
+		true,
+		false,
+
+		"BOSCOIN",
+
+		MaxUint,
+		MinUint,
+		MaxInt,
+		MinInt,
+
+		MaxUint8,
+		MinUint8,
+		MaxInt8,
+		MinInt8,
+
+		MaxUint16,
+		MinUint16,
+		MaxInt16,
+		MinInt16,
+
+		MaxUint32,
+		MinUint32,
+		MaxInt32,
+		MinInt32,
+
+		MaxUint64,
+		MinUint64,
+		MaxInt64,
+		MinInt64,
 	}
 
-	//Signed Integer
-	{
-		{
-			var v = new(Value)
-			var native = MaxInt
-			v.Encode(native)
-			decodedValue, _ := v.Decode()
-			assert.Equal(t, decodedValue, int64(native))
+	for _, testValue := range testValues {
+		v1, err := ToValue(testValue)
+		if err != nil {
+			panic(err)
 		}
-		{
-			var v = new(Value)
-			var native = MaxInt8
-			v.Encode(native)
-			decodedValue, _ := v.Decode()
-			assert.Equal(t, decodedValue, int64(native))
+		encoded, err := v1.Serialize()
+		if err != nil {
+			panic(err)
 		}
-		{
-			var v = new(Value)
-			var native = MaxInt16
-			v.Encode(native)
-			decodedValue, _ := v.Decode()
-			assert.Equal(t, decodedValue, int64(native))
+		v2, err := ToValue(encoded)
+		if err != nil {
+			panic(err)
 		}
-		{
-			var v = new(Value)
-			var native = MaxInt32
-			v.Encode(native)
-			decodedValue, _ := v.Decode()
-			assert.Equal(t, decodedValue, int64(native))
-		}
-		{
-			var v = new(Value)
-			var native = MaxInt64
-			v.Encode(native)
-			decodedValue, _ := v.Decode()
-			assert.Equal(t, decodedValue, int64(native))
-		}
+		assert.Equal(t, v1, v2)
 	}
 
-	//Unsigned Integer
-	{
-		{
-			var v = new(Value)
-			var native = MaxUint
-			v.Encode(native)
-			decodedValue, _ := v.Decode()
-			assert.Equal(t, decodedValue, uint64(native))
+	var ottoValues []interface{}
+	for _, native := range testValues {
+		ottoValue, _ := otto.ToValue(native)
+		ottoValues = append(ottoValues, ottoValue)
+	}
+
+	for _, testValue := range testValues {
+		v1, err := ToValue(testValue)
+		if err != nil {
+			panic(err)
 		}
-		{
-			var v = new(Value)
-			var native = MaxUint8
-			v.Encode(native)
-			decodedValue, _ := v.Decode()
-			assert.Equal(t, decodedValue, uint64(native))
+		encoded, err := v1.Serialize()
+		if err != nil {
+			panic(err)
 		}
-		{
-			var v = new(Value)
-			var native = MaxUint16
-			v.Encode(native)
-			decodedValue, _ := v.Decode()
-			assert.Equal(t, decodedValue, uint64(native))
+		v2, err := ToValue(encoded)
+		if err != nil {
+			panic(err)
 		}
-		{
-			var v = new(Value)
-			var native = MaxUint32
-			v.Encode(native)
-			decodedValue, _ := v.Decode()
-			assert.Equal(t, decodedValue, uint64(native))
-		}
-		{
-			var v = new(Value)
-			var native = MaxUint64
-			v.Encode(native)
-			decodedValue, _ := v.Decode()
-			assert.Equal(t, decodedValue, uint64(native))
-		}
+		assert.Equal(t, v1, v2)
 	}
 }

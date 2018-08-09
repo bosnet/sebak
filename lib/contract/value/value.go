@@ -6,14 +6,14 @@ import (
 	"github.com/robertkrimen/otto"
 )
 
-type Type int
+type Type byte
 
 const (
-	Nil Type = iota
-	SInt
-	UInt
-	String
-	Boolean
+	Nil Type = 0x00
+	SInt     = 0x01
+	UInt     = 0x02
+	String   = 0x03
+	Boolean  = 0x04
 )
 
 const (
@@ -22,106 +22,111 @@ const (
 )
 
 type Value struct {
-	Type     Type
-	Contents []byte
+	Type    Type
+	value   interface{}
 }
 
-func StringValue(s string) *Value {
-	var v = new(Value)
-	v.Encode(s)
-	return v
-}
+func ToValue(iv interface{}) (v *Value, err error) {
+	v = &Value{}
 
-func (v *Value) Encode(iv interface{}) (err error) {
+	switch iv.(type) {
+	case otto.Value:
+		iv, err = iv.(otto.Value).Export()
+	case []byte:
+		encoded := iv.([]byte)[1:]
+		switch Type(iv.([]byte)[0]) {
+		case Nil:
+			iv = nil
+		case String:
+			iv = string(encoded)
+		case SInt:
+			iv = int64(binary.LittleEndian.Uint64(encoded))
+		case UInt:
+			iv = binary.LittleEndian.Uint64(encoded)
+		case Boolean:
+			if encoded[0] == True {
+				iv = true
+			} else {
+				iv = false
+			}
+		default:
+			iv = nil
+		}
+	default:
+		// iv = iv
+	}
+
+	v.value = iv
+
 	switch iv.(type) {
 	case nil:
 		v.Type = Nil
-		v.Contents = []byte{}
 	case string:
 		v.Type = String
-		v.Contents = []byte(iv.(string))
 	case bool:
 		v.Type = Boolean
-		if iv.(bool) {
-			v.Contents = []byte{True}
-		} else {
-			v.Contents = []byte{False}
-		}
 	case int:
 		v.Type = SInt
-		v.Contents = make([]byte, 8)
-		binary.LittleEndian.PutUint64(v.Contents, uint64(iv.(int)))
+		v.value = int64(v.value.(int))
 	case int8:
 		v.Type = SInt
-		v.Contents = make([]byte, 8)
-		binary.LittleEndian.PutUint64(v.Contents, uint64(iv.(int8)))
+		v.value = int64(v.value.(int8))
 	case int16:
 		v.Type = SInt
-		v.Contents = make([]byte, 8)
-		binary.LittleEndian.PutUint64(v.Contents, uint64(iv.(int16)))
+		v.value = int64(v.value.(int16))
 	case int32:
 		v.Type = SInt
-		v.Contents = make([]byte, 8)
-		binary.LittleEndian.PutUint64(v.Contents, uint64(iv.(int32)))
+		v.value = int64(v.value.(int32))
 	case int64:
 		v.Type = SInt
-		v.Contents = make([]byte, 8)
-		binary.LittleEndian.PutUint64(v.Contents, uint64(iv.(int64)))
+		v.value = int64(v.value.(int64))
 	case uint:
 		v.Type = UInt
-		v.Contents = make([]byte, 8)
-		binary.LittleEndian.PutUint64(v.Contents, uint64(iv.(uint)))
+		v.value = uint64(v.value.(uint))
 	case uint8:
 		v.Type = UInt
-		v.Contents = make([]byte, 8)
-		binary.LittleEndian.PutUint64(v.Contents, uint64(iv.(uint8)))
+		v.value = uint64(v.value.(uint8))
 	case uint16:
 		v.Type = UInt
-		v.Contents = make([]byte, 8)
-		binary.LittleEndian.PutUint64(v.Contents, uint64(iv.(uint16)))
+		v.value = uint64(v.value.(uint16))
 	case uint32:
 		v.Type = UInt
-		v.Contents = make([]byte, 8)
-		binary.LittleEndian.PutUint64(v.Contents, uint64(iv.(uint32)))
+		v.value = uint64(v.value.(uint32))
 	case uint64:
 		v.Type = UInt
-		v.Contents = make([]byte, 8)
-		binary.LittleEndian.PutUint64(v.Contents, uint64(iv.(uint64)))
+		v.value = uint64(v.value.(uint64))
 	case float32, float64:
+		v.Type = Nil
 		err = errors.New("not yet supported type")
 	default:
+		v.Type = Nil
 		err = errors.New("not yet supported type")
-	}
-	return
-}
-func (v *Value) Decode() (iv interface{}, err error) {
-	switch v.Type {
-	case Nil:
-		iv = nil
-	case String:
-		iv = string(v.Contents)
-	case SInt:
-		iv = int64(binary.LittleEndian.Uint64(v.Contents))
-	case UInt:
-		iv = binary.LittleEndian.Uint64(v.Contents)
-	case Boolean:
-		if v.Contents[0] == True {
-			iv = true
-		} else {
-			iv = false
-		}
-	default:
-		iv = nil
 	}
 	return
 }
 
-func ToValue(ottoValue otto.Value) (v *Value, err error) {
-	v = new(Value)
-	valueInterface, err := ottoValue.Export()
-	if err != nil {
-		return
+func (v *Value) Serialize() (encoded []byte, err error) {
+
+	switch v.Type {
+	case Nil:
+		encoded = []byte{}
+	case SInt:
+		encoded = make([]byte, 8)
+		binary.LittleEndian.PutUint64(encoded, uint64(v.value.(int64)))
+	case UInt:
+		encoded = make([]byte, 8)
+		binary.LittleEndian.PutUint64(encoded, uint64(v.value.(uint64)))
+	case String:
+		encoded = []byte(v.value.(string))
+	case Boolean:
+		if v.value.(bool) {
+			encoded = []byte{True}
+		} else {
+			encoded = []byte{False}
+		}
 	}
-	err = v.Encode(valueInterface)
-	return v, err
+
+	encoded = append([]byte{byte(v.Type)}, encoded...)
+
+	return
 }
