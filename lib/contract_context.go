@@ -1,6 +1,8 @@
 package sebak
 
-import "boscoin.io/sebak/lib/contract/payload"
+import (
+	"boscoin.io/sebak/lib/contract/payload"
+)
 
 type ContractContext struct {
 	SenderAccount *BlockAccount // Transaction.Source.

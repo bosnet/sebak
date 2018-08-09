@@ -50,3 +50,7 @@ func (ex *NativeExecutor) loadFuncs(addr string) {
 		r(ex)
 	}
 }
+
+func (ex *NativeExecutor) API() api.API {
+	return ex.api
+}

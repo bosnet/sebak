@@ -20,10 +20,10 @@ func RegisterHelloWorld(ex *native.NativeExecutor) {
 }
 
 func hello(ex *native.NativeExecutor, execCode *payload.ExecCode) (*value.Value, error) {
-	stateClone := ex.Context.StateClone
-	sender := ex.Context.SenderAccount
+	api := ex.API()
+	senderAddr := ex.Context.SenderAddress()
 
-	item, err := stateClone.GetStorageItem(HelloWorldAddress, "greeters")
+	item, err := api.GetStorageItem(HelloWorldAddress, "greeters")
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +38,7 @@ func hello(ex *native.NativeExecutor, execCode *payload.ExecCode) (*value.Value,
 		}
 	}
 
-	greeters = append(greeters, sender.Address)
+	greeters = append(greeters, senderAddr)
 
 	{
 		b, err := json.Marshal(greeters)
@@ -48,7 +48,7 @@ func hello(ex *native.NativeExecutor, execCode *payload.ExecCode) (*value.Value,
 		item.Value = b
 	}
 
-	if err := stateClone.PutStorageItem(HelloWorldAddress, "greeters", item); err != nil {
+	if err := api.PutStorageItem(HelloWorldAddress, "greeters", item); err != nil {
 		return nil, err
 	}
 
