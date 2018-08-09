@@ -200,6 +200,21 @@ func (st *LevelDBBackend) Set(k string, v interface{}) (err error) {
 	return
 }
 
+func (st *LevelDBBackend) put(k string, v interface{}) (err error) {
+	var encoded []byte
+	serializable, ok := v.(sebakcommon.Serializable)
+	if ok {
+		encoded, err = serializable.Serialize()
+	} else {
+		encoded, err = sebakcommon.EncodeJSONValue(v)
+	}
+	if err != nil {
+		return
+	}
+	err = st.core.Put(st.makeKey(k), encoded, nil)
+	return
+}
+
 func (st *LevelDBBackend) Sets(vs ...Item) (err error) {
 	if len(vs) < 1 {
 		err = errors.New("empty values")
