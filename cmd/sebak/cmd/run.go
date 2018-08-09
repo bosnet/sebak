@@ -44,8 +44,7 @@ var (
 	flagTLSCertFile         string = sebakcommon.GetENVValue("SEBAK_TLS_CERT", "sebak.crt")
 	flagTLSKeyFile          string = sebakcommon.GetENVValue("SEBAK_TLS_KEY", "sebak.key")
 	flagValidators          string = sebakcommon.GetENVValue("SEBAK_VALIDATORS", "")
-	flagSignThreshold       string = sebakcommon.GetENVValue("SEBAK_SIGN_THRESHOLD", "60")
-	flagAcceptThreshold     string = sebakcommon.GetENVValue("SEBAK_ACCEPT_THRESHOLD", "60")
+	flagThreshold           string = sebakcommon.GetENVValue("SEBAK_THRESHOLD", "66")
 )
 
 var (
@@ -55,6 +54,7 @@ var (
 	nodeEndpoint  *sebakcommon.Endpoint
 	storageConfig *sebakstorage.Config
 	validators    []*sebaknode.Validator
+	threshold     int
 	logLevel      logging.Lvl
 	log           logging.Logger
 )
@@ -113,8 +113,7 @@ func init() {
 	nodeCmd.Flags().StringVar(&flagTLSCertFile, "tls-cert", flagTLSCertFile, "tls certificate file")
 	nodeCmd.Flags().StringVar(&flagTLSKeyFile, "tls-key", flagTLSKeyFile, "tls key file")
 	nodeCmd.Flags().StringVar(&flagValidators, "validators", flagValidators, "set validator: <endpoint url>?address=<public address>[&alias=<alias>] [ <validator>...]")
-	nodeCmd.Flags().StringVar(&flagSignThreshold, "sign-threshold", flagSignThreshold, "sign threshold")
-	nodeCmd.Flags().StringVar(&flagAcceptThreshold, "accept-threshold", flagAcceptThreshold, "accept threshold")
+	nodeCmd.Flags().StringVar(&flagThreshold, "threshold", flagThreshold, "threshold")
 
 	rootCmd.AddCommand(nodeCmd)
 }
@@ -195,6 +194,10 @@ func parseFlagsNode() {
 		common.PrintFlagsError(nodeCmd, "--storage", err)
 	}
 
+	if threshold, err = strconv.Atoi(flagThreshold); err != nil {
+		common.PrintFlagsError(nodeCmd, "--threshold", err)
+	}
+
 	if logLevel, err = logging.LvlFromString(flagLogLevel); err != nil {
 		common.PrintFlagsError(nodeCmd, "--log-level", err)
 	}
@@ -227,8 +230,7 @@ func parseFlagsNode() {
 	parsedFlags = append(parsedFlags, "\n\ttls-key", flagTLSKeyFile)
 	parsedFlags = append(parsedFlags, "\n\tlog-level", flagLogLevel)
 	parsedFlags = append(parsedFlags, "\n\tlog-output", flagLogOutput)
-	parsedFlags = append(parsedFlags, "\n\tsign-threshold", flagSignThreshold)
-	parsedFlags = append(parsedFlags, "\n\taccept-threshold", flagAcceptThreshold)
+	parsedFlags = append(parsedFlags, "\n\tthreshold", flagThreshold)
 
 	var vl []interface{}
 	for i, v := range validators {
@@ -264,9 +266,7 @@ func runNode() {
 		os.Exit(1)
 	}
 
-	signTh, err := strconv.Atoi(flagSignThreshold)
-	acceptTh, err := strconv.Atoi(flagAcceptThreshold)
-	policy, _ := sebak.NewDefaultVotingThresholdPolicy(100, signTh, acceptTh)
+	policy, _ := sebak.NewDefaultVotingThresholdPolicy(threshold)
 	policy.SetValidators(len(localNode.GetValidators()) + 1) // including 'self'
 
 	isaac, err := sebak.NewISAAC([]byte(flagNetworkID), localNode, policy)
@@ -285,7 +285,12 @@ func runNode() {
 	// Execution group.
 	var g run.Group
 	{
-		nr := sebak.NewNodeRunner(flagNetworkID, localNode, policy, nt, isaac, st)
+		nr, err := sebak.NewNodeRunner(flagNetworkID, localNode, policy, nt, isaac, st)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "%v\n", err)
+			os.Exit(1)
+		}
+
 		g.Add(func() error {
 			if err := nr.Start(); err != nil {
 				log.Crit("failed to start node", "error", err)

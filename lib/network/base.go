@@ -63,6 +63,7 @@ func (t MessageType) String() string {
 const (
 	MessageFromClient  MessageType = "message"
 	ConnectMessage                 = "connect"
+	TransactionMessage             = "transaction"
 	BallotMessage                  = "ballot"
 	GetNodeInfoMessage             = "get-node-info"
 )
