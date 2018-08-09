@@ -5,16 +5,17 @@ import (
 
 	"github.com/stellar/go/keypair"
 
+	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/storage"
 )
 
 type OperationBodyCreateAccount struct {
-	Target string `json:"target"`
-	Amount Amount `json:"amount"`
+	Target string             `json:"target"`
+	Amount sebakcommon.Amount `json:"amount"`
 }
 
-func NewOperationBodyCreateAccount(target string, amount Amount) OperationBodyCreateAccount {
+func NewOperationBodyCreateAccount(target string, amount sebakcommon.Amount) OperationBodyCreateAccount {
 	return OperationBodyCreateAccount{
 		Target: target,
 		Amount: amount,
@@ -44,7 +45,7 @@ func (o OperationBodyCreateAccount) TargetAddress() string {
 	return o.Target
 }
 
-func (o OperationBodyCreateAccount) GetAmount() Amount {
+func (o OperationBodyCreateAccount) GetAmount() sebakcommon.Amount {
 	return o.Amount
 }
 

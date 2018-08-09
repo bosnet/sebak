@@ -33,7 +33,7 @@ func TestNodeRunnerCreateAccount(t *testing.T) {
 		account.Save(nr.Storage())
 	}
 
-	initialBalance := Amount(1)
+	initialBalance := sebakcommon.Amount(1)
 	tx := makeTransactionCreateAccount(kp, kpNewAccount.Address(), initialBalance)
 	tx.B.Checkpoint = account.Checkpoint
 	tx.Sign(kp, networkID)
@@ -91,13 +91,13 @@ func TestNodeRunnerCreateAccountInvalidCheckpoint(t *testing.T) {
 	checkpoint := sebakcommon.MakeGenesisCheckpoint(networkID) // set initial checkpoint
 	for _, nr := range nodeRunners {
 		address := kp.Address()
-		balance := Amount(2000)
+		balance := sebakcommon.Amount(2000)
 
 		account = NewBlockAccount(address, balance, checkpoint)
 		account.Save(nr.Storage())
 	}
 
-	initialBalance := Amount(100)
+	initialBalance := sebakcommon.Amount(100)
 	tx := makeTransactionCreateAccount(kp, kpNewAccount.Address(), initialBalance)
 	// set invalid checkpoint
 	tx.B.Checkpoint = uuid.New().String()
@@ -154,7 +154,7 @@ func TestNodeRunnerCreateAccountSufficient(t *testing.T) {
 		account.Save(nr.Storage())
 	}
 
-	initialBalance := MustAmountFromString(account.Balance).MustSub(BaseFee)
+	initialBalance := sebakcommon.MustAmountFromString(account.Balance).MustSub(BaseFee)
 	tx := makeTransactionCreateAccount(kp, kpNewAccount.Address(), initialBalance)
 	tx.B.Checkpoint = checkpoint
 	tx.Sign(kp, networkID)
@@ -181,12 +181,12 @@ func TestNodeRunnerCreateAccountSufficient(t *testing.T) {
 	}
 
 	baSource, _ := GetBlockAccount(nr0.Storage(), kp.Address())
-	if Amount(initialBalance) != Amount(baTarget.GetBalance()) {
+	if sebakcommon.Amount(initialBalance) != sebakcommon.Amount(baTarget.GetBalance()) {
 		t.Error("amount was not paid to target")
 		return
 	}
-	if Amount(account.GetBalance())-tx.TotalAmount(true) != Amount(baSource.GetBalance()) {
-		t.Error("amount was paid from source", Amount(account.GetBalance())-tx.TotalAmount(true), Amount(baSource.GetBalance()))
+	if sebakcommon.Amount(account.GetBalance())-tx.TotalAmount(true) != sebakcommon.Amount(baSource.GetBalance()) {
+		t.Error("amount was paid from source", sebakcommon.Amount(account.GetBalance())-tx.TotalAmount(true), sebakcommon.Amount(baSource.GetBalance()))
 		return
 	}
 }
@@ -208,13 +208,14 @@ func TestNodeRunnerCreateAccountInsufficient(t *testing.T) {
 	checkpoint := uuid.New().String() // set initial checkpoint
 	for _, nr := range nodeRunners {
 		address := kp.Address()
-		balance := Amount(2000)
+		balance := sebakcommon.Amount(2000)
 
 		account = NewBlockAccount(address, balance, checkpoint)
 		account.Save(nr.Storage())
 	}
 
-	initialBalance := MustAmountFromString(account.Balance)
+	initialBalance := sebakcommon.MustAmountFromString(account.Balance)
+
 	tx := makeTransactionCreateAccount(kp, kpNewAccount.Address(), initialBalance)
 	tx.B.Checkpoint = checkpoint
 	tx.Sign(kp, networkID)

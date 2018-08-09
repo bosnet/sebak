@@ -31,7 +31,7 @@ type BlockAccount struct {
 	Checkpoint string
 }
 
-func NewBlockAccount(address string, balance Amount, checkpoint string) *BlockAccount {
+func NewBlockAccount(address string, balance sebakcommon.Amount, checkpoint string) *BlockAccount {
 	return &BlockAccount{
 		Address:    address,
 		Balance:    balance.String(),
@@ -140,15 +140,15 @@ func GetBlockAccountsByCreated(st *sebakstorage.LevelDBBackend, reverse bool) (f
 		})
 }
 
-func (b *BlockAccount) GetBalance() Amount {
-	return MustAmountFromString(b.Balance)
+func (b *BlockAccount) GetBalance() sebakcommon.Amount {
+	return sebakcommon.MustAmountFromString(b.Balance)
 }
 
 // Add fund to an account
 //
 // If the amount would make the account overflow over the full supply of coin,
 // an `error` is returned.
-func (b *BlockAccount) Deposit(fund Amount, checkpoint string) error {
+func (b *BlockAccount) Deposit(fund sebakcommon.Amount, checkpoint string) error {
 	if val, err := b.GetBalance().Add(fund); err != nil {
 		return err
 	} else {
@@ -161,7 +161,7 @@ func (b *BlockAccount) Deposit(fund Amount, checkpoint string) error {
 // Remove fund from an account
 //
 // If the amount would make the account go negative, an `error` is returned.
-func (b *BlockAccount) Withdraw(fund Amount, checkpoint string) error {
+func (b *BlockAccount) Withdraw(fund sebakcommon.Amount, checkpoint string) error {
 	if val, err := b.GetBalance().Sub(fund); err != nil {
 		return err
 	} else {

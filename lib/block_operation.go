@@ -34,7 +34,7 @@ type BlockOperation struct {
 	Type   OperationType
 	Source string
 	Target string
-	Amount Amount
+	Amount sebakcommon.Amount
 
 	// transaction will be used only for `Save` time.
 	transaction Transaction

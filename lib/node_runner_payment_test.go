@@ -33,13 +33,13 @@ func TestNodeRunnerPayment(t *testing.T) {
 		}
 
 		{
-			balance := Amount(2000)
+			balance := sebakcommon.Amount(2000)
 			accountTarget = NewBlockAccount(kpTarget.Address(), balance, checkpoint)
 			accountTarget.Save(nr.Storage())
 		}
 	}
 
-	amount := Amount(1)
+	amount := sebakcommon.Amount(1)
 	tx := makeTransactionPayment(kpSource, kpTarget.Address(), amount)
 	tx.B.Checkpoint = accountSource.Checkpoint
 	tx.Sign(kpSource, networkID)
@@ -107,7 +107,7 @@ func TestNodeRunnerSerializedPayment(t *testing.T) {
 		sourceAccount0, _ := GetBlockAccount(nr0.Storage(), sourceKP.Address())
 		targetAccount0, _ := GetBlockAccount(nr0.Storage(), targetKP.Address())
 
-		tx := makeTransactionPayment(sourceKP, targetKP.Address(), Amount(1))
+		tx := makeTransactionPayment(sourceKP, targetKP.Address(), sebakcommon.Amount(1))
 		tx.B.Checkpoint = checkpoint
 		tx.Sign(sourceKP, networkID)
 
@@ -135,7 +135,7 @@ func TestNodeRunnerSerializedPayment(t *testing.T) {
 	{
 		sourceAccount0, _ := GetBlockAccount(nr0.Storage(), sourceKP.Address())
 		targetAccount0, _ := GetBlockAccount(nr0.Storage(), targetKP.Address())
-		tx := makeTransactionPayment(sourceKP, targetKP.Address(), Amount(1))
+		tx := makeTransactionPayment(sourceKP, targetKP.Address(), sebakcommon.Amount(1))
 		tx.B.Checkpoint = sourceAccount0.Checkpoint
 		tx.Sign(sourceKP, networkID)
 

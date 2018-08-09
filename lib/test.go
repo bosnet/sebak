@@ -14,7 +14,7 @@ import (
 func testMakeBlockAccount() *BlockAccount {
 	kp, _ := keypair.Random()
 	address := kp.Address()
-	balance := Amount(2000)
+	balance := sebakcommon.Amount(2000)
 	checkpoint := TestGenerateNewCheckpoint()
 
 	return NewBlockAccount(address, balance, checkpoint)
@@ -52,7 +52,7 @@ func TestMakeOperationBodyPayment(amount int, addressList ...string) OperationBo
 
 	return OperationBodyPayment{
 		Target: address,
-		Amount: Amount(amount),
+		Amount: sebakcommon.Amount(amount),
 	}
 }
 

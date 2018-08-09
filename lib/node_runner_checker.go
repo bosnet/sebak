@@ -274,16 +274,16 @@ func CheckNodeRunnerHandleBallotVotingHole(c sebakcommon.Checker, args ...interf
 
 	totalAmount := tx.TotalAmount(true)
 	// check, have enough balance at checkpoint
-	if MustAmountFromString(bac.Balance) < totalAmount {
+	if sebakcommon.MustAmountFromString(bac.Balance) < totalAmount {
 		return
 	}
 
 	// check, have enough balance now
-	if MustAmountFromString(ba.Balance) < totalAmount {
+	if sebakcommon.MustAmountFromString(ba.Balance) < totalAmount {
 		checker.NodeRunner.Log().Debug(
 			"VotingNO: tx.TotalAmount(true) > MustAmountFromString(ba.Balance)",
 			"tx.TotalAmount(true)", totalAmount,
-			"MustAmountFromString(ba.Balance)", MustAmountFromString(ba.Balance),
+			"MustAmountFromString(ba.Balance)", sebakcommon.MustAmountFromString(ba.Balance),
 		)
 		return
 	}
