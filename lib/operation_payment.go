@@ -12,11 +12,11 @@ import (
 )
 
 type OperationBodyPayment struct {
-	Target string `json:"target"`
-	Amount Amount `json:"amount"`
+	Target string             `json:"target"`
+	Amount sebakcommon.Amount `json:"amount"`
 }
 
-func NewOperationBodyPayment(target string, amount Amount) OperationBodyPayment {
+func NewOperationBodyPayment(target string, amount sebakcommon.Amount) OperationBodyPayment {
 	return OperationBodyPayment{
 		Target: target,
 		Amount: amount,
@@ -51,7 +51,7 @@ func (o OperationBodyPayment) TargetAddress() string {
 	return o.Target
 }
 
-func (o OperationBodyPayment) GetAmount() Amount {
+func (o OperationBodyPayment) GetAmount() sebakcommon.Amount {
 	return o.Amount
 }
 

@@ -1,7 +1,6 @@
 package sebak
 
 import (
-	"sync"
 	"testing"
 
 	"github.com/google/uuid"
@@ -34,51 +33,12 @@ func TestNodeRunnerCreateAccount(t *testing.T) {
 		account.Save(nr.Storage())
 	}
 
-	var wg sync.WaitGroup
-
-	wg.Add(numberOfNodes)
-
-	var dones []VotingStateStaging
-	var finished []string
-	var mutex = &sync.Mutex{}
-	var deferFunc sebakcommon.CheckerDeferFunc = func(n int, c sebakcommon.Checker, err error) {
-		if err == nil {
-			return
-		}
-
-		if _, ok := err.(sebakcommon.CheckerErrorStop); ok {
-			return
-		}
-
-		mutex.Lock()
-		defer mutex.Unlock()
-
-		checker := c.(*NodeRunnerHandleBallotChecker)
-		if _, found := sebakcommon.InStringArray(finished, checker.LocalNode.Alias()); found {
-			return
-		}
-		finished = append(finished, checker.LocalNode.Alias())
-		dones = append(dones, checker.VotingStateStaging)
-		wg.Done()
-	}
-
-	for _, nr := range nodeRunners {
-		nr.SetHandleBallotCheckerFuncs(deferFunc)
-	}
-
-	nr0 := nodeRunners[0]
-
-	client := nr0.Network().GetClient(nr0.Node().Endpoint())
-
-	initialBalance := Amount(1)
+	initialBalance := sebakcommon.Amount(1)
 	tx := makeTransactionCreateAccount(kp, kpNewAccount.Address(), initialBalance)
 	tx.B.Checkpoint = account.Checkpoint
 	tx.Sign(kp, networkID)
 
-	client.SendMessage(tx)
-
-	wg.Wait()
-
+	dones := doConsensus(nodeRunners, tx)
 	for _, done := range dones {
 		if done.State != sebakcommon.BallotStateALLCONFIRM {
 			t.Error("failed to get consensus")
@@ -89,6 +49,8 @@ func TestNodeRunnerCreateAccount(t *testing.T) {
 			return
 		}
 	}
+
+	nr0 := nodeRunners[0]
 
 	// check balance
 	baSource, err := GetBlockAccount(nr0.Storage(), kp.Address())
@@ -129,59 +91,19 @@ func TestNodeRunnerCreateAccountInvalidCheckpoint(t *testing.T) {
 	checkpoint := sebakcommon.MakeGenesisCheckpoint(networkID) // set initial checkpoint
 	for _, nr := range nodeRunners {
 		address := kp.Address()
-		balance := Amount(2000)
+		balance := sebakcommon.Amount(2000)
 
 		account = NewBlockAccount(address, balance, checkpoint)
 		account.Save(nr.Storage())
 	}
 
-	var wg sync.WaitGroup
-
-	wg.Add(numberOfNodes)
-
-	var dones []VotingStateStaging
-	var finished []string
-	var mutex = &sync.Mutex{}
-	var deferFunc sebakcommon.CheckerDeferFunc = func(n int, c sebakcommon.Checker, err error) {
-		if err == nil {
-			return
-		}
-
-		if _, ok := err.(sebakcommon.CheckerErrorStop); ok {
-			return
-		}
-
-		mutex.Lock()
-		defer mutex.Unlock()
-
-		checker := c.(*NodeRunnerHandleBallotChecker)
-		if _, found := sebakcommon.InStringArray(finished, checker.LocalNode.Alias()); found {
-			return
-		}
-		finished = append(finished, checker.LocalNode.Alias())
-		dones = append(dones, checker.VotingStateStaging)
-		wg.Done()
-	}
-
-	for _, nr := range nodeRunners {
-		nr.SetHandleBallotCheckerFuncs(deferFunc)
-	}
-
-	nr0 := nodeRunners[0]
-
-	client := nr0.Network().GetClient(nr0.Node().Endpoint())
-
-	initialBalance := Amount(100)
+	initialBalance := sebakcommon.Amount(100)
 	tx := makeTransactionCreateAccount(kp, kpNewAccount.Address(), initialBalance)
-
 	// set invalid checkpoint
 	tx.B.Checkpoint = uuid.New().String()
 	tx.Sign(kp, networkID)
 
-	client.SendMessage(tx)
-
-	wg.Wait()
-
+	dones := doConsensus(nodeRunners, tx)
 	for _, done := range dones {
 		if done.State != sebakcommon.BallotStateSIGN {
 			t.Errorf("consensus must be failed; got invalid state, %v", done.State)
@@ -192,6 +114,8 @@ func TestNodeRunnerCreateAccountInvalidCheckpoint(t *testing.T) {
 			return
 		}
 	}
+
+	nr0 := nodeRunners[0]
 
 	// check balance
 	_, err := GetBlockAccount(nr0.Storage(), kpNewAccount.Address())
@@ -230,51 +154,12 @@ func TestNodeRunnerCreateAccountSufficient(t *testing.T) {
 		account.Save(nr.Storage())
 	}
 
-	var wg sync.WaitGroup
-
-	wg.Add(numberOfNodes)
-
-	var dones []VotingStateStaging
-	var finished []string
-	var mutex = &sync.Mutex{}
-	var deferFunc sebakcommon.CheckerDeferFunc = func(n int, c sebakcommon.Checker, err error) {
-		if err == nil {
-			return
-		}
-
-		if _, ok := err.(sebakcommon.CheckerErrorStop); ok {
-			return
-		}
-
-		mutex.Lock()
-		defer mutex.Unlock()
-
-		checker := c.(*NodeRunnerHandleBallotChecker)
-		if _, found := sebakcommon.InStringArray(finished, checker.LocalNode.Alias()); found {
-			return
-		}
-		finished = append(finished, checker.LocalNode.Alias())
-		dones = append(dones, checker.VotingStateStaging)
-		wg.Done()
-	}
-
-	for _, nr := range nodeRunners {
-		nr.SetHandleBallotCheckerFuncs(deferFunc)
-	}
-
-	nr0 := nodeRunners[0]
-
-	client := nr0.Network().GetClient(nr0.Node().Endpoint())
-
-	initialBalance := MustAmountFromString(account.Balance).MustSub(BaseFee)
+	initialBalance := sebakcommon.MustAmountFromString(account.Balance).MustSub(BaseFee)
 	tx := makeTransactionCreateAccount(kp, kpNewAccount.Address(), initialBalance)
 	tx.B.Checkpoint = checkpoint
 	tx.Sign(kp, networkID)
 
-	client.SendMessage(tx)
-
-	wg.Wait()
-
+	dones := doConsensus(nodeRunners, tx)
 	for _, done := range dones {
 		if done.State != sebakcommon.BallotStateALLCONFIRM {
 			t.Error("failed to get consensus")
@@ -286,6 +171,8 @@ func TestNodeRunnerCreateAccountSufficient(t *testing.T) {
 		}
 	}
 
+	nr0 := nodeRunners[0]
+
 	// check balance
 	baTarget, err := GetBlockAccount(nr0.Storage(), kpNewAccount.Address())
 	if err != nil {
@@ -294,12 +181,12 @@ func TestNodeRunnerCreateAccountSufficient(t *testing.T) {
 	}
 
 	baSource, _ := GetBlockAccount(nr0.Storage(), kp.Address())
-	if Amount(initialBalance) != Amount(baTarget.GetBalance()) {
+	if sebakcommon.Amount(initialBalance) != sebakcommon.Amount(baTarget.GetBalance()) {
 		t.Error("amount was not paid to target")
 		return
 	}
-	if Amount(account.GetBalance())-tx.TotalAmount(true) != Amount(baSource.GetBalance()) {
-		t.Error("amount was paid from source", Amount(account.GetBalance())-tx.TotalAmount(true), Amount(baSource.GetBalance()))
+	if sebakcommon.Amount(account.GetBalance())-tx.TotalAmount(true) != sebakcommon.Amount(baSource.GetBalance()) {
+		t.Error("amount was paid from source", sebakcommon.Amount(account.GetBalance())-tx.TotalAmount(true), sebakcommon.Amount(baSource.GetBalance()))
 		return
 	}
 }
@@ -321,57 +208,18 @@ func TestNodeRunnerCreateAccountInsufficient(t *testing.T) {
 	checkpoint := uuid.New().String() // set initial checkpoint
 	for _, nr := range nodeRunners {
 		address := kp.Address()
-		balance := Amount(2000)
+		balance := sebakcommon.Amount(2000)
 
 		account = NewBlockAccount(address, balance, checkpoint)
 		account.Save(nr.Storage())
 	}
 
-	var wg sync.WaitGroup
-
-	wg.Add(numberOfNodes)
-
-	var dones []VotingStateStaging
-	var finished []string
-	var mutex = &sync.Mutex{}
-	var deferFunc sebakcommon.CheckerDeferFunc = func(n int, c sebakcommon.Checker, err error) {
-		if err == nil {
-			return
-		}
-
-		if _, ok := err.(sebakcommon.CheckerErrorStop); ok {
-			return
-		}
-
-		mutex.Lock()
-		defer mutex.Unlock()
-
-		checker := c.(*NodeRunnerHandleBallotChecker)
-		if _, found := sebakcommon.InStringArray(finished, checker.LocalNode.Alias()); found {
-			return
-		}
-		finished = append(finished, checker.LocalNode.Alias())
-		dones = append(dones, checker.VotingStateStaging)
-		wg.Done()
-	}
-
-	for _, nr := range nodeRunners {
-		nr.SetHandleBallotCheckerFuncs(deferFunc)
-	}
-
-	nr0 := nodeRunners[0]
-
-	client := nr0.Network().GetClient(nr0.Node().Endpoint())
-
-	initialBalance := MustAmountFromString(account.Balance)
+	initialBalance := sebakcommon.MustAmountFromString(account.Balance)
 	tx := makeTransactionCreateAccount(kp, kpNewAccount.Address(), initialBalance)
 	tx.B.Checkpoint = checkpoint
 	tx.Sign(kp, networkID)
 
-	client.SendMessage(tx)
-
-	wg.Wait()
-
+	dones := doConsensus(nodeRunners, tx)
 	for _, done := range dones {
 		if done.State != sebakcommon.BallotStateSIGN {
 			t.Errorf("consensus must be failed; got invalid state, %v", done.State)
@@ -382,6 +230,8 @@ func TestNodeRunnerCreateAccountInsufficient(t *testing.T) {
 			return
 		}
 	}
+
+	nr0 := nodeRunners[0]
 
 	// check balance
 	_, err := GetBlockAccount(nr0.Storage(), kpNewAccount.Address())

@@ -69,7 +69,7 @@ func init() {
 //   Note that only one needs be non-`nil` for it to be considered an error.
 //
 func MakeGenesisBlock(addressStr, networkID, balanceStr, storage string) (string, error) {
-	var balance sebak.Amount
+	var balance sebakcommon.Amount
 	var err error
 	var kp keypair.KP
 	var storageConfig *sebakstorage.Config

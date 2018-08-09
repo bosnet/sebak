@@ -32,8 +32,8 @@ func init() {
 		Args:  cobra.ExactArgs(3),
 		Run: func(c *cobra.Command, args []string) {
 			var err error
-			var amount sebak.Amount
-			var newBalance sebak.Amount
+			var amount sebakcommon.Amount
+			var newBalance sebakcommon.Amount
 			var sender keypair.KP
 			var receiver keypair.KP
 			var endpoint *sebakcommon.Endpoint
@@ -92,7 +92,7 @@ func init() {
 
 			// Check that account's balance is enough before sending the transaction
 			{
-				newBalance, err = sebak.MustAmountFromString(senderAccount.Balance).Sub(amount)
+				newBalance, err = sebakcommon.MustAmountFromString(senderAccount.Balance).Sub(amount)
 				if err == nil {
 					newBalance, err = newBalance.Sub(sebak.BaseFee)
 				}
@@ -156,7 +156,7 @@ func init() {
 /// Returns:
 ///   `sebak.Transaction` = The generated `Transaction` creating the account
 ///
-func makeTransactionCreateAccount(kpSource keypair.KP, kpDest keypair.KP, amount sebak.Amount, chkp string) sebak.Transaction {
+func makeTransactionCreateAccount(kpSource keypair.KP, kpDest keypair.KP, amount sebakcommon.Amount, chkp string) sebak.Transaction {
 	opb := sebak.NewOperationBodyCreateAccount(kpDest.Address(), amount)
 
 	op := sebak.Operation{
@@ -200,7 +200,7 @@ func makeTransactionCreateAccount(kpSource keypair.KP, kpDest keypair.KP, amount
 /// Returns:
 ///  `sebak.Transaction` = The generated `Transaction` to do a payment
 ///
-func makeTransactionPayment(kpSource keypair.KP, kpDest keypair.KP, amount sebak.Amount, chkp string) sebak.Transaction {
+func makeTransactionPayment(kpSource keypair.KP, kpDest keypair.KP, amount sebakcommon.Amount, chkp string) sebak.Transaction {
 	opb := sebak.NewOperationBodyPayment(kpDest.Address(), amount)
 
 	op := sebak.Operation{
@@ -212,7 +212,7 @@ func makeTransactionPayment(kpSource keypair.KP, kpDest keypair.KP, amount sebak
 
 	txBody := sebak.TransactionBody{
 		Source:     kpSource.Address(),
-		Fee:        sebak.Amount(sebak.BaseFee),
+		Fee:        sebakcommon.Amount(sebak.BaseFee),
 		Checkpoint: chkp,
 		Operations: []sebak.Operation{op},
 	}

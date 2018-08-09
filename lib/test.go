@@ -3,18 +3,18 @@ package sebak
 import (
 	"fmt"
 	"math/rand"
-
-	"github.com/btcsuite/btcutil/base58"
-	"github.com/google/uuid"
-	"github.com/stellar/go/keypair"
+	"sync"
 
 	"boscoin.io/sebak/lib/common"
+
+	"github.com/google/uuid"
+	"github.com/stellar/go/keypair"
 )
 
 func testMakeBlockAccount() *BlockAccount {
 	kp, _ := keypair.Random()
 	address := kp.Address()
-	balance := Amount(2000)
+	balance := sebakcommon.Amount(2000)
 	checkpoint := TestGenerateNewCheckpoint()
 
 	return NewBlockAccount(address, balance, checkpoint)
@@ -52,7 +52,7 @@ func TestMakeOperationBodyPayment(amount int, addressList ...string) OperationBo
 
 	return OperationBodyPayment{
 		Target: address,
-		Amount: Amount(amount),
+		Amount: sebakcommon.Amount(amount),
 	}
 }
 
@@ -98,7 +98,7 @@ func TestMakeTransaction(networkID []byte, n int) (kp *keypair.Full, tx Transact
 }
 
 func TestGenerateNewCheckpoint() string {
-	return base58.Encode([]byte(uuid.New().String()))
+	return uuid.New().String()
 }
 
 func TestMakeTransactionWithKeypair(networkID []byte, n int, srcKp *keypair.Full, targetKps ...*keypair.Full) (tx Transaction) {
@@ -121,4 +121,53 @@ func TestMakeTransactionWithKeypair(networkID []byte, n int, srcKp *keypair.Full
 	tx.Sign(srcKp, networkID)
 
 	return
+}
+
+//
+// Send a transaction to the network and wait indefinitely for consensus to be achieved
+//
+func doConsensus(nodeRunners []*NodeRunner, tx Transaction) []VotingStateStaging {
+	var wg sync.WaitGroup
+	wg.Add(len(nodeRunners))
+
+	var messageDeferFunc sebakcommon.CheckerDeferFunc = func(n int, c sebakcommon.Checker, err error) {
+		if err == nil {
+			return
+		}
+		return
+	}
+
+	var dones []VotingStateStaging
+	var finished []string
+	var mutex = &sync.Mutex{}
+	var ballotDeferFunc sebakcommon.CheckerDeferFunc = func(n int, c sebakcommon.Checker, err error) {
+		if err == nil {
+			return
+		}
+		if _, ok := err.(sebakcommon.CheckerErrorStop); ok {
+			return
+		}
+
+		mutex.Lock()
+		defer mutex.Unlock()
+
+		checker := c.(*NodeRunnerHandleBallotChecker)
+		if _, found := sebakcommon.InStringArray(finished, checker.LocalNode.Alias()); found {
+			return
+		}
+		finished = append(finished, checker.LocalNode.Alias())
+		dones = append(dones, checker.VotingStateStaging)
+		wg.Done()
+	}
+
+	for _, nr := range nodeRunners {
+		nr.SetHandleMessageFromClientCheckerFuncs(messageDeferFunc)
+		nr.SetHandleBallotCheckerFuncs(ballotDeferFunc)
+	}
+
+	nr0 := nodeRunners[0]
+	client := nr0.Network().GetClient(nr0.Node().Endpoint())
+	client.SendMessage(tx)
+	wg.Wait()
+	return dones
 }
