@@ -3,8 +3,9 @@ package jsvm
 import (
 	"testing"
 
-	sebak "boscoin.io/sebak/lib"
+	"boscoin.io/sebak/lib/contract/context"
 	"boscoin.io/sebak/lib/contract/payload"
+	"boscoin.io/sebak/lib/contract/test"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -16,26 +17,18 @@ function Hello(helloarg){
 }
 `
 
-	st, err := sebakstorage.NewTestMemoryLevelDBBackend()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	store := sebak.NewStateStore(st)
-	clone := sebak.NewStateClone(store)
-
 	deployCode := &payload.DeployCode{
 		ContractAddress: testAddress,
 		Code:            []byte(testCode),
 		Type:            payload.JavaScript,
 	}
 
-	ctx := &sebak.ContractContext{
-		StateStore: store,
-		StateClone: clone,
-	}
+	ctx := test.NewMockContext(testAddress, nil)
+	api := test.NewMockAPI(ctx, testAddress)
+	api.SetHelloworldFunc(func(ctx context.Context, greeting string) (string, error) {
+		return greeting + " WORLD!!", nil
+	})
 
-	api := sebak.NewContractAPI(ctx, testAddress)
 	ex := NewOttoExecutor(ctx, api, deployCode)
 	excode := &payload.ExecCode{
 		ContractAddress: testAddress,
