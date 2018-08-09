@@ -7,10 +7,10 @@ import (
 )
 
 type JsDeployer struct {
-	Context *context.Context
+	Context context.Context
 }
 
-func NewDeployer(context *context.Context) *JsDeployer {
+func NewDeployer(context context.Context) *JsDeployer {
 
 	de := &JsDeployer{
 		Context: context,
@@ -21,7 +21,7 @@ func NewDeployer(context *context.Context) *JsDeployer {
 func (jd *JsDeployer) Deploy(codeByte []byte) (err error) {
 
 	var deployCode = new(payload.DeployCode)
-	deployCode.ContractAddress = jd.Context.SenderAccount.Address
+	deployCode.ContractAddress = jd.Context.SenderAddress()
 	deployCode.Code = codeByte
 	deployCode.Type = payload.JavaScript
 
@@ -29,7 +29,7 @@ func (jd *JsDeployer) Deploy(codeByte []byte) (err error) {
 		return
 	}
 
-	jd.Context.StateClone.PutDeployCode(deployCode)
+	jd.Context.PutDeployCode(deployCode)
 	return nil
 }
 

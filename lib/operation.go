@@ -14,10 +14,10 @@ import (
 type OperationType string
 
 const (
-	OperationCreateAccount OperationType = "create-account"
-	OperationPayment                     = "payment"
-	OperationContractDeploy              = "contract-deploy"
-	OperationContractExecute             = "contract-execute"
+	OperationCreateAccount   OperationType = "create-account"
+	OperationPayment                       = "payment"
+	OperationContractDeploy                = "contract-deploy"
+	OperationContractExecute               = "contract-execute"
 )
 
 type Operation struct {

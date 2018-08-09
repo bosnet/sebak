@@ -15,11 +15,11 @@ import (
 type ExecFunc func(e *WasmExecutor, code *payload.ExecCode) (*value.Value, error)
 
 type WasmExecutor struct {
-	Context *context.Context
+	Context context.Context
 	//Engine  *exec.ExecutionEngine
 }
 
-func NewWasmExecutor(ctx *context.Context) *WasmExecutor {
+func NewWasmExecutor(ctx context.Context) *WasmExecutor {
 	ex := &WasmExecutor{
 		Context: ctx,
 	}

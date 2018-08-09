@@ -1,8 +1,8 @@
-package statestore
+package sebak
 
 import (
-	"boscoin.io/sebak/lib"
 	"boscoin.io/sebak/lib/contract/payload"
+	"boscoin.io/sebak/lib/contract/storage"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/storage"
 )
@@ -24,8 +24,8 @@ func (s *StateStore) DBBackend() *sebakstorage.LevelDBBackend {
 	return s.db
 }
 
-func (s *StateStore) GetAccount(addr string) (*sebak.BlockAccount, error) {
-	ba, err := sebak.GetBlockAccount(s.db, addr)
+func (s *StateStore) GetAccount(addr string) (*BlockAccount, error) {
+	ba, err := GetBlockAccount(s.db, addr)
 	if err != nil {
 		return nil, err
 	}
@@ -33,10 +33,10 @@ func (s *StateStore) GetAccount(addr string) (*sebak.BlockAccount, error) {
 	return ba, nil
 }
 
-func (s *StateStore) GetStorageItem(addr, key string) (*StorageItem, error) {
+func (s *StateStore) GetStorageItem(addr, key string) (*storage.StorageItem, error) {
 	itemKey := getContractStorageItemKey(addr, key)
 
-	var item *StorageItem
+	var item *storage.StorageItem
 	if err := s.db.Get(itemKey, &item); err != nil {
 		if err == sebakerror.ErrorStorageRecordDoesNotExist {
 			return nil, nil
