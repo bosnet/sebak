@@ -215,6 +215,7 @@ func TestNodeRunnerCreateAccountInsufficient(t *testing.T) {
 	}
 
 	initialBalance := sebakcommon.MustAmountFromString(account.Balance)
+
 	tx := makeTransactionCreateAccount(kp, kpNewAccount.Address(), initialBalance)
 	tx.B.Checkpoint = checkpoint
 	tx.Sign(kp, networkID)
