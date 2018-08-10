@@ -9,14 +9,14 @@ import (
 
 type StateDB struct {
 	levelDB     *LevelDBBackend
-	changedkeys map[string]bool
+	changedkeys map[string]struct{}
 }
 
 func NewStateDB(st *LevelDBBackend) *StateDB {
 	db := &StateDB{
 		levelDB: st,
 		// If we need thread safety, we should use sync.Map insteads map
-		changedkeys: make(map[string]bool),
+		changedkeys: make(map[string]struct{}),
 	}
 	return db
 }
@@ -30,17 +30,17 @@ func (s *StateDB) Get(k string, i interface{}) error {
 }
 
 func (s *StateDB) New(k string, i interface{}) error {
-	s.changedkeys[k] = true
+	s.changedkeys[k] = struct{}{}
 	return s.levelDB.New(k, i)
 }
 
 func (s *StateDB) Set(k string, i interface{}) error {
-	s.changedkeys[k] = true
+	s.changedkeys[k] = struct{}{}
 	return s.levelDB.Set(k, i)
 }
 
 func (s *StateDB) Remove(k string) error {
-	s.changedkeys[k] = true
+	s.changedkeys[k] = struct{}{}
 	return s.levelDB.Remove(k)
 }
 
@@ -50,7 +50,7 @@ func (s *StateDB) GetIterator(prefix string, reverse bool) (func() (IterItem, bo
 
 func (s *StateDB) News(vs ...Item) error {
 	for _, v := range vs {
-		s.changedkeys[v.Key] = true
+		s.changedkeys[v.Key] = struct{}{}
 	}
 
 	return s.levelDB.News(vs...)
@@ -58,7 +58,7 @@ func (s *StateDB) News(vs ...Item) error {
 
 func (s *StateDB) Sets(vs ...Item) error {
 	for _, v := range vs {
-		s.changedkeys[v.Key] = true
+		s.changedkeys[v.Key] = struct{}{}
 	}
 
 	return s.levelDB.Sets(vs...)
@@ -75,10 +75,7 @@ func (s *StateDB) Discard() error {
 func (s *StateDB) MakeHash() ([]byte, error) {
 	ks := make([]string, 0, len(s.changedkeys))
 
-	for k, v := range s.changedkeys {
-		if !v {
-			continue
-		}
+	for k, _ := range s.changedkeys {
 		ks = append(ks, k)
 	}
 	sort.Strings(ks)
