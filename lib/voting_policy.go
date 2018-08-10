@@ -8,7 +8,8 @@ import (
 )
 
 type ISAACVotingThresholdPolicy struct {
-	threshold int
+	sign   int
+	accept int
 
 	validators int
 	connected  int
@@ -16,7 +17,8 @@ type ISAACVotingThresholdPolicy struct {
 
 func (vt *ISAACVotingThresholdPolicy) String() string {
 	o := sebakcommon.MustJSONMarshal(map[string]interface{}{
-		"threshold":  vt.threshold,
+		"sign":       vt.sign,
+		"accept":     vt.accept,
 		"validators": vt.validators,
 	})
 
@@ -51,39 +53,43 @@ func (vt *ISAACVotingThresholdPolicy) SetConnected(n int) error {
 	return nil
 }
 
-func (vt *ISAACVotingThresholdPolicy) Threshold() int {
-	v := float64(vt.validators) * (float64(vt.threshold) / float64(100))
-	return int(math.Ceil(v))
+func (vt *ISAACVotingThresholdPolicy) Threshold(state sebakcommon.BallotState) int {
+	var t int
+	switch state {
+	case sebakcommon.BallotStateSIGN:
+		t = vt.sign
+	case sebakcommon.BallotStateACCEPT:
+		t = vt.accept
+	}
+
+	v := float64(vt.validators) * (float64(t) / float64(100))
+	threshold := int(math.Ceil(v))
+
+	// in SIGN state, proposer assumes to say VotingYES
+	if state == sebakcommon.BallotStateSIGN {
+		threshold = threshold - 1
+	}
+
+	if threshold > 0 {
+		return threshold
+	}
+
+	return 0
 }
 
-func (vt *ISAACVotingThresholdPolicy) Reset(threshold int) (err error) {
-	if threshold <= 0 {
+func NewDefaultVotingThresholdPolicy(sign, accept int) (vt *ISAACVotingThresholdPolicy, err error) {
+	if sign <= 0 || accept <= 0 {
 		err = sebakerror.ErrorInvalidVotingThresholdPolicy
 		return
 	}
-
-	if threshold > 100 {
-		err = sebakerror.ErrorInvalidVotingThresholdPolicy
-		return
-	}
-
-	vt.threshold = threshold
-
-	return nil
-}
-
-func NewDefaultVotingThresholdPolicy(threshold int) (vt *ISAACVotingThresholdPolicy, err error) {
-	if threshold <= 0 {
-		err = sebakerror.ErrorInvalidVotingThresholdPolicy
-		return
-	}
-	if threshold > 100 {
+	if sign > 100 || accept > 100 {
 		err = sebakerror.ErrorInvalidVotingThresholdPolicy
 		return
 	}
 
 	vt = &ISAACVotingThresholdPolicy{
-		threshold:  threshold,
+		sign:       sign,
+		accept:     accept,
 		validators: 0,
 	}
 

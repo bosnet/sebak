@@ -58,7 +58,7 @@ func NewBlock(proposer string, round Round, transactions []string, confirmed str
 		Confirmed:    confirmed,
 	}
 
-	log.Debug("NewBlock", "PrevTotalTxs", round.TotalTxs, "txs", uint64(len(transactions)), "TotalTxs", b.Header.TotalTxs)
+	log.Debug("NewBlock created", "PrevTotalTxs", round.TotalTxs, "txs", uint64(len(transactions)), "TotalTxs", b.Header.TotalTxs)
 
 	b.Hash = base58.Encode(sebakcommon.MustMakeObjectHash(b))
 
@@ -69,7 +69,7 @@ func NewBlockFromBallot(ballot Ballot) Block {
 	return NewBlock(
 		ballot.Proposer(),
 		ballot.Round(),
-		ballot.ValidTransactionSlice(),
+		ballot.Transactions(),
 		ballot.ProposerConfirmed(),
 	)
 }

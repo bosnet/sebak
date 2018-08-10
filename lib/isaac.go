@@ -8,20 +8,79 @@ import (
 	"boscoin.io/sebak/lib/node"
 )
 
-type RoundVote map[ /* Node.Address() */ string]VotingHole
+type RoundVoteResult map[ /* Node.Address() */ string]VotingHole
 
-func (rv RoundVote) CanGetVotingResult(policy sebakcommon.VotingThresholdPolicy) (VotingHole, bool) {
-	threshold := policy.Threshold()
-	if threshold < 1 {
-		return VotingNOTYET, false
+type RoundVote struct {
+	SIGN   RoundVoteResult
+	ACCEPT RoundVoteResult
+}
+
+func NewRoundVote(ballot Ballot) (rv *RoundVote) {
+	rv = &RoundVote{
+		SIGN:   RoundVoteResult{},
+		ACCEPT: RoundVoteResult{},
 	}
-	if len(rv) < int(threshold) {
-		return VotingNOTYET, false
+
+	rv.Vote(ballot)
+
+	return rv
+}
+
+func (rv *RoundVote) IsVoted(ballot Ballot) bool {
+	result := rv.GetResult(ballot.State())
+
+	_, found := result[ballot.Source()]
+	return found
+}
+
+func (rv *RoundVote) IsVotedByNode(state sebakcommon.BallotState, node string) bool {
+	result := rv.GetResult(state)
+
+	_, found := result[node]
+	return found
+}
+
+func (rv *RoundVote) Vote(ballot Ballot) (isNew bool, err error) {
+	if ballot.IsFromProposer() {
+		return
+	}
+
+	result := rv.GetResult(ballot.State())
+	_, isNew = result[ballot.Source()]
+	result[ballot.Source()] = ballot.Vote()
+
+	return
+}
+
+func (rv *RoundVote) GetResult(state sebakcommon.BallotState) (result RoundVoteResult) {
+	if !state.IsValidForVote() {
+		return
+	}
+
+	switch state {
+	case sebakcommon.BallotStateSIGN:
+		result = rv.SIGN
+	case sebakcommon.BallotStateACCEPT:
+		result = rv.ACCEPT
+	}
+
+	return result
+}
+
+func (rv *RoundVote) CanGetVotingResult(policy sebakcommon.VotingThresholdPolicy, state sebakcommon.BallotState) (RoundVoteResult, VotingHole, bool) {
+	threshold := policy.Threshold(state)
+	if threshold < 1 {
+		return RoundVoteResult{}, VotingNOTYET, false
+	}
+
+	result := rv.GetResult(state)
+	if len(result) < int(threshold) {
+		return result, VotingNOTYET, false
 	}
 
 	var yes int
 	var no int
-	for _, vh := range rv {
+	for _, vh := range result {
 		if vh == VotingYES {
 			yes++
 		} else if vh == VotingNO {
@@ -35,22 +94,23 @@ func (rv RoundVote) CanGetVotingResult(policy sebakcommon.VotingThresholdPolicy)
 		"yes", yes,
 		"no", no,
 		"policy", policy,
+		"state", state,
 	)
 
 	if yes >= threshold {
-		return VotingYES, true
+		return result, VotingYES, true
 	} else if no >= threshold {
-		return VotingNO, true
+		return result, VotingNO, true
 	}
 
 	// check draw!
 	total := policy.Validators()
 	voted := yes + no
 	if total-voted < threshold-yes && total-voted < threshold-no { // draw
-		return VotingNO, true
+		return result, VotingNO, true
 	}
 
-	return VotingNOTYET, false
+	return result, VotingNOTYET, false
 }
 
 type RunningRound struct {
@@ -59,33 +119,28 @@ type RunningRound struct {
 	Round        Round
 	Proposer     string                              // LocalNode's `Proposer`
 	Transactions map[ /* Proposer */ string][]string /* Transaction.Hash */
-	Voted        map[ /* Proposer */ string]RoundVote
+	Voted        map[ /* Proposer */ string]*RoundVote
 }
 
-func NewRunningRound(proposer string, rb Ballot) *RunningRound {
+func NewRunningRound(proposer string, ballot Ballot) (*RunningRound, error) {
 	transactions := map[string][]string{
-		rb.Proposer(): rb.Transactions(),
+		ballot.Proposer(): ballot.Transactions(),
 	}
 
-	voted := map[string]RoundVote{
-		rb.Proposer(): RoundVote{
-			rb.Source(): rb.Vote(),
-		},
-	}
-
-	if !rb.IsFromProposer() {
-		voted[rb.Proposer()][rb.Proposer()] = VotingYES
+	roundVote := NewRoundVote(ballot)
+	voted := map[string]*RoundVote{
+		ballot.Proposer(): roundVote,
 	}
 
 	return &RunningRound{
-		Round:        rb.Round(),
+		Round:        ballot.Round(),
 		Proposer:     proposer,
 		Transactions: transactions,
 		Voted:        voted,
-	}
+	}, nil
 }
 
-func (rr *RunningRound) RoundVote(proposer string) (rv RoundVote, err error) {
+func (rr *RunningRound) RoundVote(proposer string) (rv *RoundVote, err error) {
 	var found bool
 	rv, found = rr.Voted[proposer]
 	if !found {
@@ -95,27 +150,24 @@ func (rr *RunningRound) RoundVote(proposer string) (rv RoundVote, err error) {
 	return
 }
 
-func (rr *RunningRound) IsVoted(rb Ballot) bool {
-	roundVote, err := rr.RoundVote(rb.Proposer())
+func (rr *RunningRound) IsVoted(ballot Ballot) bool {
+	roundVote, err := rr.RoundVote(ballot.Proposer())
 	if err != nil {
 		return false
 	}
 
-	_, voted := roundVote[rb.Source()]
-	return voted
+	return roundVote.IsVoted(ballot)
 }
 
-func (rr *RunningRound) Vote(rb Ballot) (isNew bool) {
+func (rr *RunningRound) Vote(ballot Ballot) {
 	rr.Lock()
 	defer rr.Unlock()
 
-	if _, found := rr.Voted[rb.Proposer()]; !found {
-		rr.Voted[rb.Proposer()] = RoundVote{}
-		isNew = true
+	if _, found := rr.Voted[ballot.Proposer()]; !found {
+		rr.Voted[ballot.Proposer()] = NewRoundVote(ballot)
+	} else {
+		rr.Voted[ballot.Proposer()].Vote(ballot)
 	}
-
-	rr.Voted[rb.Proposer()][rb.Source()] = rb.Vote()
-	return
 }
 
 type TransactionPool struct {

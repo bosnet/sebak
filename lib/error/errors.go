@@ -41,4 +41,7 @@ var (
 	ErrorTransactionExcessAbilityToPay    = NewError(138, "Transaction requests over abiltiy to pay")
 	ErrorTransactionSameSource            = NewError(139, "Same transaction source found in ballot")
 	ErrorTransactionNotFound              = NewError(140, "Transaction not found")
+	ErrorBallotFromUnknownValidator       = NewError(141, "ballot from unknown validator")
+	ErrorBallotAlreadyFinished            = NewError(142, "ballot already finished")
+	ErrorBallotAlreadyVoted               = NewError(143, "ballot already voted")
 )
