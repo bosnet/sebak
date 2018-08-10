@@ -121,8 +121,6 @@ func (c *ConnectionManager) connectValidators() {
 	for _, v := range c.validators {
 		go c.connectingValidator(v)
 	}
-
-	select {}
 }
 
 func (c *ConnectionManager) connectingValidator(v *sebaknode.Validator) {

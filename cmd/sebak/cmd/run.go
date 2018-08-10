@@ -251,12 +251,11 @@ func parseFlagsNode() {
 
 func runNode() {
 	// create current Node
-	localNode, err := sebaknode.NewLocalNode(kp.Address(), nodeEndpoint, "")
+	localNode, err := sebaknode.NewLocalNode(kp, nodeEndpoint, "")
 	if err != nil {
 		log.Error("failed to launch main node", "error", err)
 		return
 	}
-	localNode.SetKeypair(kp)
 	localNode.AddValidators(validators...)
 
 	// create network

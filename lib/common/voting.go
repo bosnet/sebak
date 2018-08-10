@@ -1,7 +1,7 @@
 package sebakcommon
 
 type VotingThresholdPolicy interface {
-	Threshold(BallotState) int
+	Threshold() int
 	Validators() int
 	SetValidators(int) error
 	Connected() int
