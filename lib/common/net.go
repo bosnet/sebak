@@ -55,10 +55,6 @@ func (e *Endpoint) String() string {
 	}).String()
 }
 
-func (e *Endpoint) IsRemote() bool {
-	return e.Scheme != "memory"
-}
-
 func (e *Endpoint) Query() url.Values {
 	return (*url.URL)(e).Query()
 }
