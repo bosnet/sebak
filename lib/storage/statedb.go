@@ -4,6 +4,8 @@ import (
 	"sort"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/error"
+
 	"github.com/btcsuite/btcutil/base58"
 )
 
@@ -83,7 +85,9 @@ func (s *StateDB) MakeHash() ([]byte, error) {
 	hashes := make([][]byte, 0, len(ks))
 	for _, k := range ks {
 		bs, err := s.levelDB.GetRaw(k)
-		if err != nil {
+		if err == sebakerror.ErrorStorageRecordDoesNotExist {
+			bs = nil
+		} else if err != nil {
 			return nil, err
 		}
 		h := sebakcommon.MakeHash(bs)

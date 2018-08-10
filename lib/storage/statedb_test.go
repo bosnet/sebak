@@ -38,10 +38,16 @@ func TestStateDBNewCommit(t *testing.T) {
 
 	a := &Account{"address"}
 
-	sdb.New("a1", a)
+	if err := sdb.New("b1", a); err != nil {
+		t.Fatal(err)
+	}
 
-	if len(sdb.changedkeys) != 1 {
-		t.Fatal("statedb.changedkeys != 1")
+	if err := sdb.New("a1", a); err != nil {
+		t.Fatal(err)
+	}
+
+	if len(sdb.changedkeys) != 2 {
+		t.Fatal("statedb.changedkeys != 2")
 	}
 
 	hash, err := sdb.MakeHashString()
@@ -49,12 +55,14 @@ func TestStateDBNewCommit(t *testing.T) {
 		t.Fatal(err)
 	}
 	if hash == "" {
-		t.Fatal("hash == ''")
+		t.Error("hash == ''")
 	}
 
 	a.Address = "changed_address"
 
-	sdb.Set("a1", a)
+	if err := sdb.Set("a1", a); err != nil {
+		t.Fatal(err)
+	}
 
 	hash2, err := sdb.MakeHashString()
 	if err != nil {
@@ -70,6 +78,16 @@ func TestStateDBNewCommit(t *testing.T) {
 		t.Fatal(err)
 	} else if ok {
 		t.Fatal("a1 exists in db!")
+	}
+
+	if err := sdb.Remove("b1"); err != nil {
+		t.Fatal(err)
+	}
+
+	if hash3, err := sdb.MakeHashString(); err != nil {
+		t.Fatal(err)
+	} else if hash == hash3 {
+		t.Error("hash == hash3")
 	}
 
 	if err := sdb.Commit(); err != nil {
@@ -90,9 +108,8 @@ func TestStateDBNewCommit(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		t.Logf("a1.Addr:%v", a1.Address)
-
 		if a1.Address != a.Address {
+			t.Logf("a1.Addr:%v", a1.Address)
 			t.Error("a1.Address != a.Address")
 		}
 	}
