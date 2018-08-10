@@ -23,3 +23,7 @@ func Execute() {
 		common.PrintFlagsError(rootCmd, "", err)
 	}
 }
+
+func SetArgs(s []string) {
+	rootCmd.SetArgs(s)
+}

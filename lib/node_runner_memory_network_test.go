@@ -19,8 +19,7 @@ func createNetMemoryNetwork() (*sebaknetwork.MemoryNetwork, *sebaknode.LocalNode
 	mn := sebaknetwork.NewMemoryNetwork()
 
 	kp, _ := keypair.Random()
-	localNode, _ := sebaknode.NewLocalNode(kp.Address(), mn.Endpoint(), "")
-	localNode.SetKeypair(kp)
+	localNode, _ := sebaknode.NewLocalNode(kp, mn.Endpoint(), "")
 
 	mn.SetContext(context.WithValue(context.Background(), "localNode", localNode))
 
@@ -51,7 +50,7 @@ func makeTransaction(kp *keypair.Full) (tx Transaction) {
 	return
 }
 
-func makeTransactionPayment(kpSource *keypair.Full, target string, amount Amount) (tx Transaction) {
+func makeTransactionPayment(kpSource *keypair.Full, target string, amount sebakcommon.Amount) (tx Transaction) {
 	opb := NewOperationBodyPayment(target, amount)
 
 	op := Operation{
@@ -81,8 +80,8 @@ func makeTransactionPayment(kpSource *keypair.Full, target string, amount Amount
 	return
 }
 
-func makeTransactionCreateAccount(kpSource *keypair.Full, target string, amount Amount) (tx Transaction) {
-	opb := NewOperationBodyCreateAccount(target, Amount(amount))
+func makeTransactionCreateAccount(kpSource *keypair.Full, target string, amount sebakcommon.Amount) (tx Transaction) {
+	opb := NewOperationBodyCreateAccount(target, sebakcommon.Amount(amount))
 
 	op := Operation{
 		H: OperationHeader{
@@ -148,7 +147,6 @@ func createNodeRunnersWithReady(n int) []*NodeRunner {
 
 	for _, nr := range nodeRunners {
 		go nr.Start()
-		//defer nr.Stop()
 	}
 
 	T := time.NewTicker(100 * time.Millisecond)
@@ -376,7 +374,10 @@ func TestMemoryNetworkHandleMessageCheckHasMessage(t *testing.T) {
 		},
 	}
 
+	var mutex = &sync.Mutex{}
 	var deferFunc sebakcommon.CheckerDeferFunc = func(n int, c sebakcommon.Checker, err error) {
+		mutex.Lock()
+		defer mutex.Unlock()
 		if n == 1 {
 			defer wg.Done()
 		}
@@ -446,7 +447,10 @@ func TestMemoryNetworkHandleMessageAddBallot(t *testing.T) {
 		},
 	}
 
+	var mutex = &sync.Mutex{}
 	var deferFunc sebakcommon.CheckerDeferFunc = func(n int, c sebakcommon.Checker, err error) {
+		mutex.Lock()
+		defer mutex.Unlock()
 		if n == 1 {
 			defer wg.Done()
 		}

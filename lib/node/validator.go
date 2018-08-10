@@ -1,3 +1,9 @@
+//
+// Defines the `Validator` type of Node, which is a remote node
+//
+// A `Validator` is a remote node as seen by the other type of node (`LocalNode`).
+// It provides any information which is node-specific and relevant to us / consensus.
+//
 package sebaknode
 
 import (
@@ -21,8 +27,6 @@ type ValidatorFromJSON struct {
 
 type Validator struct {
 	sync.Mutex
-
-	keypair *keypair.Full
 
 	state    NodeState
 	alias    string
@@ -75,14 +79,6 @@ func (v *Validator) SetTerminating() {
 
 func (v *Validator) Address() string {
 	return v.address
-}
-
-func (v *Validator) Keypair() *keypair.Full {
-	return nil
-}
-
-func (v *Validator) SetKeypair(kp *keypair.Full) {
-	return
 }
 
 func (v *Validator) Alias() string {

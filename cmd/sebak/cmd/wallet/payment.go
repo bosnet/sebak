@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"boscoin.io/sebak/cmd/sebak/common"
 	"boscoin.io/sebak/lib"
@@ -20,6 +21,8 @@ var (
 	PaymentCmd        *cobra.Command
 	flagEndpoint      string
 	flagCreateAccount bool
+	flagDry           bool
+	flagVerbose       bool
 )
 
 func init() {
@@ -29,7 +32,8 @@ func init() {
 		Args:  cobra.ExactArgs(3),
 		Run: func(c *cobra.Command, args []string) {
 			var err error
-			var amount sebak.Amount
+			var amount sebakcommon.Amount
+			var newBalance sebakcommon.Amount
 			var sender keypair.KP
 			var receiver keypair.KP
 			var endpoint *sebakcommon.Endpoint
@@ -82,6 +86,25 @@ func init() {
 				os.Exit(1)
 			}
 
+			if flagVerbose == true {
+				fmt.Println("Account before transaction: ", senderAccount)
+			}
+
+			// Check that account's balance is enough before sending the transaction
+			{
+				newBalance, err = sebakcommon.MustAmountFromString(senderAccount.Balance).Sub(amount)
+				if err == nil {
+					newBalance, err = newBalance.Sub(sebak.BaseFee)
+				}
+
+				if err != nil {
+					fmt.Printf("Attempting to draft %v GON (+ %v fees), but sender account only have %v GON\n",
+						amount, sebak.BaseFee, senderAccount.Balance)
+					os.Exit(1)
+				}
+			}
+
+			// TODO: Validate that the account doesn't already exists
 			if flagCreateAccount {
 				tx = makeTransactionCreateAccount(sender, receiver, amount, senderAccount.Checkpoint)
 			} else {
@@ -92,15 +115,30 @@ func init() {
 
 			// Send request
 			var retbody []byte
-			if retbody, err = client.SendMessage(tx); err != nil {
-				log.Fatal("Network error: ", err, " body: ", retbody)
-				os.Exit(1)
+			if flagDry == true || flagVerbose == true {
+				fmt.Println(tx)
+			}
+			if flagDry == false {
+				if retbody, err = client.SendMessage(tx); err != nil {
+					log.Fatal("Network error: ", err, " body: ", retbody)
+					os.Exit(1)
+				}
+			}
+			if flagVerbose == true {
+				time.Sleep(5 * time.Second)
+				if recv, err := getSenderDetails(client, receiver); err != nil {
+					fmt.Println("Account ", receiver.Address(), " did not appear after 5 seconds")
+				} else {
+					fmt.Println("Receiver account after 5 seconds: ", recv)
+				}
 			}
 		},
 	}
 	PaymentCmd.Flags().StringVar(&flagEndpoint, "endpoint", flagEndpoint, "endpoint to send the transaction to (https / memory address)")
 	PaymentCmd.Flags().StringVar(&flagNetworkID, "network-id", flagNetworkID, "network id")
 	PaymentCmd.Flags().BoolVar(&flagCreateAccount, "create", flagCreateAccount, "Whether or not the account should be created")
+	PaymentCmd.Flags().BoolVar(&flagDry, "dry-run", flagDry, "Print the transaction instead of sending it")
+	PaymentCmd.Flags().BoolVar(&flagVerbose, "verbose", flagVerbose, "Print extra data (transaction sent, before/after balance...)")
 }
 
 ///
@@ -118,7 +156,7 @@ func init() {
 /// Returns:
 ///   `sebak.Transaction` = The generated `Transaction` creating the account
 ///
-func makeTransactionCreateAccount(kpSource keypair.KP, kpDest keypair.KP, amount sebak.Amount, chkp string) sebak.Transaction {
+func makeTransactionCreateAccount(kpSource keypair.KP, kpDest keypair.KP, amount sebakcommon.Amount, chkp string) sebak.Transaction {
 	opb := sebak.NewOperationBodyCreateAccount(kpDest.Address(), amount)
 
 	op := sebak.Operation{
@@ -162,7 +200,7 @@ func makeTransactionCreateAccount(kpSource keypair.KP, kpDest keypair.KP, amount
 /// Returns:
 ///  `sebak.Transaction` = The generated `Transaction` to do a payment
 ///
-func makeTransactionPayment(kpSource keypair.KP, kpDest keypair.KP, amount sebak.Amount, chkp string) sebak.Transaction {
+func makeTransactionPayment(kpSource keypair.KP, kpDest keypair.KP, amount sebakcommon.Amount, chkp string) sebak.Transaction {
 	opb := sebak.NewOperationBodyPayment(kpDest.Address(), amount)
 
 	op := sebak.Operation{
@@ -174,7 +212,7 @@ func makeTransactionPayment(kpSource keypair.KP, kpDest keypair.KP, amount sebak
 
 	txBody := sebak.TransactionBody{
 		Source:     kpSource.Address(),
-		Fee:        sebak.Amount(sebak.BaseFee),
+		Fee:        sebakcommon.Amount(sebak.BaseFee),
 		Checkpoint: chkp,
 		Operations: []sebak.Operation{op},
 	}

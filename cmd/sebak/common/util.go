@@ -7,7 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"boscoin.io/sebak/lib"
+	"boscoin.io/sebak/lib/common"
 )
 
 /**
@@ -35,9 +35,9 @@ func PrintFlagsError(cmd *cobra.Command, flagName string, err error) {
 // Returns:
 //   sebak.Amount: the value represented by `input`
 //   error: an `error`, if any happened
-func ParseAmountFromString(input string) (sebak.Amount, error) {
+func ParseAmountFromString(input string) (sebakcommon.Amount, error) {
 	amountStr := strings.Replace(input, ",", "", -1)
 	amountStr = strings.Replace(amountStr, ".", "", -1)
 	amountStr = strings.Replace(amountStr, "_", "", -1)
-	return sebak.AmountFromString(amountStr)
+	return sebakcommon.AmountFromString(amountStr)
 }

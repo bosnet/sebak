@@ -3,6 +3,7 @@ package sebak
 import (
 	"testing"
 
+	"boscoin.io/sebak/lib/common"
 	"github.com/stellar/go/keypair"
 )
 
@@ -11,7 +12,7 @@ func TestMakeHashOfOperationBodyPayment(t *testing.T) {
 
 	opb := OperationBodyPayment{
 		Target: kp.Address(),
-		Amount: Amount(100),
+		Amount: sebakcommon.Amount(100),
 	}
 	op := Operation{
 		H: OperationHeader{Type: OperationPayment},

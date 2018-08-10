@@ -61,11 +61,30 @@ var (
 
 func init() {
 	var err error
+	var flagGenesis string
 
 	nodeCmd = &cobra.Command{
 		Use:   "node",
 		Short: "Run sebak node",
 		Run: func(c *cobra.Command, args []string) {
+			// If `--genesis` was provided, perfom `sebak genesis` before starting the node
+			// This allows one-step startup from scratch, quite useful for testing
+			if len(flagGenesis) != 0 {
+				var balanceStr string
+				csv := strings.Split(flagGenesis, ",")
+				if len(csv) > 2 {
+					common.PrintFlagsError(nodeCmd, "--genesis",
+						errors.New("--genesis expects address[,balance], but more than 2 commas detected"))
+				}
+				if len(csv) == 2 {
+					balanceStr = csv[1]
+				}
+				flagName, err := MakeGenesisBlock(csv[0], flagNetworkID, balanceStr, flagStorageConfigString)
+				if len(flagName) != 0 || err != nil {
+					common.PrintFlagsError(c, flagName, err)
+				}
+			}
+
 			parseFlagsNode()
 
 			runNode()
@@ -83,6 +102,7 @@ func init() {
 	}
 	flagStorageConfigString = sebakcommon.GetENVValue("SEBAK_STORAGE", fmt.Sprintf("file://%s/db", currentDirectory))
 
+	nodeCmd.Flags().StringVar(&flagGenesis, "genesis", flagGenesis, "performs the 'genesis' command before running node. Syntax: key[,balance]")
 	nodeCmd.Flags().StringVar(&flagKPSecretSeed, "secret-seed", flagKPSecretSeed, "secret seed of this node")
 	nodeCmd.Flags().StringVar(&flagNetworkID, "network-id", flagNetworkID, "network id")
 	nodeCmd.Flags().StringVar(&flagLogLevel, "log-level", flagLogLevel, "log level, {crit, error, warn, info, debug}")
@@ -229,12 +249,11 @@ func parseFlagsNode() {
 
 func runNode() {
 	// create current Node
-	localNode, err := sebaknode.NewLocalNode(kp.Address(), nodeEndpoint, "")
+	localNode, err := sebaknode.NewLocalNode(kp, nodeEndpoint, "")
 	if err != nil {
 		log.Error("failed to launch main node", "error", err)
 		return
 	}
-	localNode.SetKeypair(kp)
 	localNode.AddValidators(validators...)
 
 	// create network

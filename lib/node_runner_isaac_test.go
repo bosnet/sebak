@@ -129,7 +129,7 @@ func TestNodeRunnerConsensusSameSourceWillBeIgnored(t *testing.T) {
 	nr0 := nodeRunners[0]
 	firstTx := makeTransaction(nr0.Node().Keypair())
 	secondTx := makeTransaction(nr0.Node().Keypair())
-
+	var mutex = &sync.Mutex{}
 	var handleBallotCheckerFuncs = []sebakcommon.CheckerFunc{
 		CheckNodeRunnerHandleBallotIsWellformed,
 		CheckNodeRunnerHandleBallotCheckIsNew,
@@ -144,6 +144,9 @@ func TestNodeRunnerConsensusSameSourceWillBeIgnored(t *testing.T) {
 			}
 
 			if checker.VotingStateStaging.State == sebakcommon.BallotStateSIGN {
+				mutex.Lock()
+				defer mutex.Unlock()
+
 				err = sebakcommon.CheckerErrorStop{"stop consensus, because it is in SIGN state"}
 				wg.Done()
 				return
@@ -164,7 +167,7 @@ func TestNodeRunnerConsensusSameSourceWillBeIgnored(t *testing.T) {
 
 	client := nr0.Network().GetClient(nr0.Node().Endpoint())
 
-	wg.Add(3)
+	wg.Add(numberOfNodes)
 	client.SendMessage(firstTx)
 	wg.Wait()
 
@@ -190,6 +193,8 @@ func TestNodeRunnerConsensusSameSourceWillBeIgnored(t *testing.T) {
 		}
 
 		if _, ok := err.(sebakcommon.CheckerErrorStop); ok {
+			mutex.Lock()
+			defer mutex.Unlock()
 			wg.Done()
 			return
 		}
@@ -276,7 +281,9 @@ func TestNodeRunnerConsensusSameSourceWillNotIgnored(t *testing.T) {
 		return
 	}
 
-	var lastVotingStateStaging []VotingStateStaging
+	var finished []string
+	var dones []VotingStateStaging
+	var mutex = &sync.Mutex{}
 	var deferFunc sebakcommon.CheckerDeferFunc = func(n int, c sebakcommon.Checker, err error) {
 		if err == nil {
 			return
@@ -295,7 +302,14 @@ func TestNodeRunnerConsensusSameSourceWillNotIgnored(t *testing.T) {
 			return
 		}
 
-		lastVotingStateStaging = append(lastVotingStateStaging, checker.VotingStateStaging)
+		mutex.Lock()
+		defer mutex.Unlock()
+
+		if _, found := sebakcommon.InStringArray(finished, checker.LocalNode.Alias()); found {
+			return
+		}
+		finished = append(finished, checker.LocalNode.Alias())
+		dones = append(dones, checker.VotingStateStaging)
 		wg.Done()
 	}
 
@@ -309,7 +323,6 @@ func TestNodeRunnerConsensusSameSourceWillNotIgnored(t *testing.T) {
 		// instead of `CheckNodeRunnerHandleBallotVotingHole`
 		func(c sebakcommon.Checker, args ...interface{}) (err error) {
 			checker := c.(*NodeRunnerHandleBallotChecker)
-
 			checker.VotingHole = VotingYES
 
 			return
@@ -322,16 +335,16 @@ func TestNodeRunnerConsensusSameSourceWillNotIgnored(t *testing.T) {
 	}
 
 	wg = sync.WaitGroup{}
-	wg.Add(3)
+	wg.Add(numberOfNodes)
 	client.SendMessage(secondTx)
 	wg.Wait()
 
-	if len(lastVotingStateStaging) != 3 {
+	if len(dones) != numberOfNodes {
 		t.Error("failed to get consensus")
 		return
 	}
 
-	for _, vs := range lastVotingStateStaging {
+	for _, vs := range dones {
 		if !vs.IsClosed() {
 			t.Error("failed to close consensus")
 			return

@@ -10,7 +10,7 @@ type NodeRunnerHandleMessageChecker struct {
 	sebakcommon.DefaultChecker
 
 	NodeRunner *NodeRunner
-	LocalNode  sebaknode.Node
+	LocalNode  *sebaknode.LocalNode
 	NetworkID  []byte
 	Message    sebaknetwork.Message
 
@@ -99,16 +99,15 @@ func CheckNodeRunnerHandleMessageBroadcast(c sebakcommon.Checker, args ...interf
 type NodeRunnerHandleBallotChecker struct {
 	sebakcommon.DefaultChecker
 
-	GenesisBlockCheckpoint string
-	NodeRunner             *NodeRunner
-	LocalNode              sebaknode.Node
-	NetworkID              []byte
-	Message                sebaknetwork.Message
-	Ballot                 Ballot
-	IsNew                  bool
-	VotingStateStaging     VotingStateStaging
-	VotingHole             VotingHole
-	WillBroadcast          bool
+	NodeRunner         *NodeRunner
+	LocalNode          *sebaknode.LocalNode
+	NetworkID          []byte
+	Message            sebaknetwork.Message
+	Ballot             Ballot
+	IsNew              bool
+	VotingStateStaging VotingStateStaging
+	VotingHole         VotingHole
+	WillBroadcast      bool
 }
 
 func (c *NodeRunnerHandleBallotChecker) GetTransaction() (tx Transaction) {
@@ -135,8 +134,7 @@ func CheckNodeRunnerHandleBallotIsWellformed(c sebakcommon.Checker, args ...inte
 
 func CheckNodeRunnerHandleBallotNotFromKnownValidators(c sebakcommon.Checker, args ...interface{}) (err error) {
 	checker := c.(*NodeRunnerHandleBallotChecker)
-	localNode := checker.LocalNode.(*sebaknode.LocalNode)
-	if localNode.HasValidators(checker.Ballot.B.NodeKey) {
+	if checker.LocalNode.HasValidators(checker.Ballot.B.NodeKey) {
 		return
 	}
 
@@ -276,16 +274,16 @@ func CheckNodeRunnerHandleBallotVotingHole(c sebakcommon.Checker, args ...interf
 
 	totalAmount := tx.TotalAmount(true)
 	// check, have enough balance at checkpoint
-	if MustAmountFromString(bac.Balance) < totalAmount {
+	if sebakcommon.MustAmountFromString(bac.Balance) < totalAmount {
 		return
 	}
 
 	// check, have enough balance now
-	if MustAmountFromString(ba.Balance) < totalAmount {
+	if sebakcommon.MustAmountFromString(ba.Balance) < totalAmount {
 		checker.NodeRunner.Log().Debug(
 			"VotingNO: tx.TotalAmount(true) > MustAmountFromString(ba.Balance)",
 			"tx.TotalAmount(true)", totalAmount,
-			"MustAmountFromString(ba.Balance)", MustAmountFromString(ba.Balance),
+			"MustAmountFromString(ba.Balance)", sebakcommon.MustAmountFromString(ba.Balance),
 		)
 		return
 	}

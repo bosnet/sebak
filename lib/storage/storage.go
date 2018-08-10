@@ -64,10 +64,6 @@ func (e *Config) String() string {
 	}).String()
 }
 
-func (e *Config) IsRemote() bool {
-	return e.Scheme != "memory"
-}
-
 func (e *Config) Query() url.Values {
 	return (*url.URL)(e).Query()
 }

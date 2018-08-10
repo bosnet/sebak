@@ -36,9 +36,9 @@ type BlockTransaction struct {
 	TargetCheckpoint   string
 	Signature          string
 	Source             string
-	Fee                Amount
+	Fee                sebakcommon.Amount
 	Operations         []string
-	Amount             Amount
+	Amount             sebakcommon.Amount
 
 	Confirmed string
 	Created   string

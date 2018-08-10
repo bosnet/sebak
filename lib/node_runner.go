@@ -1,3 +1,10 @@
+//
+// Struct that bridges together components of a node
+//
+// NodeRunner bridges together the connection, storage and `LocalNode`.
+// In this regard, it can be seen as a single node, and is used as such
+// in unit tests.
+//
 package sebak
 
 import (
@@ -88,7 +95,7 @@ func (nr *NodeRunner) Stop() {
 	nr.network.Stop()
 }
 
-func (nr *NodeRunner) Node() sebaknode.Node {
+func (nr *NodeRunner) Node() *sebaknode.LocalNode {
 	return nr.localNode
 }
 
@@ -238,13 +245,12 @@ func (nr *NodeRunner) handleMessage() {
 			nr.log.Debug("got ballot", "message", message.Head(50))
 
 			checker := &NodeRunnerHandleBallotChecker{
-				GenesisBlockCheckpoint: sebakcommon.MakeGenesisCheckpoint(nr.networkID),
-				DefaultChecker:         sebakcommon.DefaultChecker{nr.handleBallotCheckerFuncs},
-				NodeRunner:             nr,
-				LocalNode:              nr.localNode,
-				NetworkID:              nr.networkID,
-				Message:                message,
-				VotingHole:             VotingNOTYET,
+				DefaultChecker: sebakcommon.DefaultChecker{nr.handleBallotCheckerFuncs},
+				NodeRunner:     nr,
+				LocalNode:      nr.localNode,
+				NetworkID:      nr.networkID,
+				Message:        message,
+				VotingHole:     VotingNOTYET,
 			}
 			if err = sebakcommon.RunChecker(checker, nr.handleBallotCheckerDeferFunc); err != nil {
 				if _, ok := err.(sebakcommon.CheckerErrorStop); !ok {
