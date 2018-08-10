@@ -6,19 +6,20 @@ import (
 
 	"github.com/stellar/go/keypair"
 
+	sebakcommon "boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/contract/payload"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/storage"
 )
 
 type OperationBodyContractDeploy struct {
-	Target   string `json:"target"`
-	Amount   Amount `json:"amount"`
-	CodeType int    `json:"codeType"`
-	Code     string `json:"code"`
+	Target   string             `json:"target"`
+	Amount   sebakcommon.Amount `json:"amount"`
+	CodeType int                `json:"codeType"`
+	Code     string             `json:"code"`
 }
 
-func NewOperationBodyContractDeploy(target string, amount Amount, codeType int, code string) OperationBodyContractDeploy {
+func NewOperationBodyContractDeploy(target string, amount sebakcommon.Amount, codeType int, code string) OperationBodyContractDeploy {
 	return OperationBodyContractDeploy{
 		Target:   target,
 		Amount:   amount,
@@ -57,7 +58,7 @@ func (o OperationBodyContractDeploy) TargetAddress() string {
 	return o.Target
 }
 
-func (o OperationBodyContractDeploy) GetAmount() Amount {
+func (o OperationBodyContractDeploy) GetAmount() sebakcommon.Amount {
 	return o.Amount
 }
 
