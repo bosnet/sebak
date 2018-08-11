@@ -108,11 +108,51 @@ func (tx Transaction) IsWellFormed(networkID []byte) (err error) {
 	return
 }
 
+// checkTransactionSourceCheck checks,
+// * source account exists
+// * checkpoint is valid
+// * source has enough balance to pay
+// * and it's `Operations`
 func (tx Transaction) Validate(st *sebakstorage.LevelDBBackend) (err error) {
-	// TODO check whether `Checkpoint` is in `Block Transaction` and is latest
-	// `Checkpoint`
-	// TODO check whether `Source` is in `Block Account`
-	// TODO check whether the balance of `Source` is greater than `totalAmount`
+	// check, source exists
+	var ba *BlockAccount
+	if ba, err = GetBlockAccount(st, tx.B.Source); err != nil {
+		err = sebakerror.ErrorBlockAccountDoesNotExists
+		return
+	}
+
+	// check, checkpoint is based on latest checkpoint
+	if !tx.IsValidCheckpoint(ba.Checkpoint) {
+		err = sebakerror.ErrorTransactionInvalidCheckpoint
+		return
+	}
+
+	// get the balance at checkpoint
+	var bac BlockAccountCheckpoint
+	bac, err = GetBlockAccountCheckpoint(st, tx.B.Source, tx.B.Checkpoint)
+	if err != nil {
+		return
+	}
+
+	totalAmount := tx.TotalAmount(true)
+
+	// check, have enough balance at checkpoint
+	if MustAmountFromString(bac.Balance) < totalAmount {
+		err = sebakerror.ErrorTransactionExcessAbilityToPay
+		return
+	}
+
+	// check, have enough balance now
+	if MustAmountFromString(ba.Balance) < totalAmount {
+		err = sebakerror.ErrorTransactionExcessAbilityToPay
+		return
+	}
+
+	for _, op := range tx.B.Operations {
+		if err = op.Validate(st); err != nil {
+			return
+		}
+	}
 
 	return
 }

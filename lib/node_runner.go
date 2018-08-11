@@ -183,7 +183,7 @@ var DefaultHandleBaseBallotCheckerFuncs = []sebakcommon.CheckerFunc{
 
 var DefaultHandleINITBallotCheckerFuncs = []sebakcommon.CheckerFunc{
 	CheckNodeRunnerHandleBallotAlreadyVoted,
-	CheckNodeRunnerHandleBallotAddRunningRounds,
+	CheckNodeRunnerHandleBallotVote,
 	CheckNodeRunnerHandleBallotIsSameProposer,
 	CheckNodeRunnerHandleINITBallotValidateTransactions,
 	CheckNodeRunnerHandleINITBallotBroadcast,
@@ -191,7 +191,7 @@ var DefaultHandleINITBallotCheckerFuncs = []sebakcommon.CheckerFunc{
 
 var DefaultHandleSIGNBallotCheckerFuncs = []sebakcommon.CheckerFunc{
 	CheckNodeRunnerHandleBallotAlreadyVoted,
-	CheckNodeRunnerHandleBallotAddRunningRounds,
+	CheckNodeRunnerHandleBallotVote,
 	CheckNodeRunnerHandleBallotIsSameProposer,
 	CheckNodeRunnerHandleBallotCheckResult,
 	CheckNodeRunnerHandleSIGNBallotBroadcast,
@@ -199,9 +199,8 @@ var DefaultHandleSIGNBallotCheckerFuncs = []sebakcommon.CheckerFunc{
 
 var DefaultHandleACCEPTBallotCheckerFuncs = []sebakcommon.CheckerFunc{
 	CheckNodeRunnerHandleBallotAlreadyVoted,
-	CheckNodeRunnerHandleBallotAddRunningRounds,
+	CheckNodeRunnerHandleBallotVote,
 	CheckNodeRunnerHandleBallotIsSameProposer,
-	CheckNodeRunnerHandleACCEPTBallotValidateResult,
 	CheckNodeRunnerHandleBallotCheckResult,
 	CheckNodeRunnerHandleACCEPTBallotStore,
 }
