@@ -72,13 +72,8 @@ func FinishOperationBodyContractExecute(st *sebakstorage.LevelDBBackend, tx Tran
 		err = sebakerror.ErrorBlockAccountDoesNotExists
 		return
 	}
-	stateStore := NewStateStore(st)
-	stateClone := NewStateClone(stateStore)
-	ctx := &ContractContext{
-		SenderAccount: baSource,
-		StateStore:    stateStore,
-		StateClone:    stateClone,
-	}
+
+	ctx := NewContractContext(baSource, st) // st as statedb
 
 	exCode := &payload.ExecCode{
 		ContractAddress: baTarget.Address,

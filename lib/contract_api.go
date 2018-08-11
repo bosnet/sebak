@@ -6,6 +6,7 @@ import (
 	"boscoin.io/sebak/lib/contract/payload"
 	"boscoin.io/sebak/lib/contract/storage"
 	"boscoin.io/sebak/lib/contract/value"
+	"boscoin.io/sebak/lib/storage"
 )
 
 //TODO: For prototype testing
@@ -17,31 +18,33 @@ func (a *ContractAPI) Helloworld(greeting string) (string, error) {
 type ContractAPI struct {
 	contractAddress string // the current contract address
 	ctx             *ContractContext
-	stateClone      *StateClone
+	stateDB         sebakstorage.DBBackend
 }
 
 func NewContractAPI(ctx *ContractContext, contractAddr string) *ContractAPI {
 	api := &ContractAPI{
 		contractAddress: contractAddr,
 		ctx:             ctx,
-		stateClone:      ctx.StateClone,
+		stateDB:         ctx.db,
 	}
 	return api
 }
 
 // Read a item of a key from this contract own storage
 func (a *ContractAPI) GetStorageItem(key string) (*storage.StorageItem, error) {
-	return a.stateClone.GetStorageItem(a.contractAddress, key)
+	return storage.GetStorageItem(a.stateDB, a.contractAddress, key)
 }
 
 // Write a item to this contract's own storage
 func (a *ContractAPI) PutStorageItem(key string, item *storage.StorageItem) error {
-	return a.stateClone.PutStorageItem(a.contractAddress, key, item)
+	item.Address = a.contractAddress
+	item.Key = key
+	return item.Save(a.stateDB)
 }
 
 // Get this contract's balance
 func (a *ContractAPI) GetBalance() (string, error) {
-	ba, err := a.stateClone.GetAccount(a.contractAddress)
+	ba, err := GetBlockAccount(a.stateDB, a.contractAddress)
 	if err != nil {
 		return "0", err
 	}

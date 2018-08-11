@@ -9,21 +9,21 @@ import (
 	sebakstorage "boscoin.io/sebak/lib/storage"
 )
 
-func Test_ContractExecutor_NativeHelloworld(t *testing.T) {
+func TestContractExecutorNativeHelloworld(t *testing.T) {
 	st, err := sebakstorage.NewTestMemoryLevelDBBackend()
 	if err != nil {
 		t.Fatal(err)
 	}
-	stateStore := NewStateStore(st)
-	stateClone := NewStateClone(stateStore)
 
-	senderAccount := testMakeBlockAccount()
-	ctx := &ContractContext{
-		SenderAccount: senderAccount,
-		StateStore:    stateStore,
-		StateClone:    stateClone,
+	ts, err := st.OpenTransaction()
+	if err != nil {
+		t.Fatal(err)
 	}
 
+	sdb := sebakstorage.NewStateDB(ts)
+
+	senderAccount := testMakeBlockAccount()
+	ctx := NewContractContext(senderAccount, sdb)
 	exCode := &payload.ExecCode{
 		ContractAddress: execfunc.HelloWorldAddress,
 		Method:          "hello",
