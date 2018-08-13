@@ -21,13 +21,6 @@ import (
 	"boscoin.io/sebak/lib/storage"
 )
 
-var (
-	TimeoutExpireRound          time.Duration = time.Second * 10
-	TimeoutProposeNewBallot     time.Duration = time.Second * 2
-	TimeoutProposeNewBallotFull time.Duration = time.Second * 1
-	MaxTransactionsInBallot     int           = 1000
-)
-
 var DefaultHandleMessageFromClientCheckerFuncs = []sebakcommon.CheckerFunc{
 	TransactionUnmarshal,
 	HasTransaction,
