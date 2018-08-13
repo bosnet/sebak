@@ -46,6 +46,7 @@ func (o OperationBodyPayment) Validate(st *sebakstorage.LevelDBBackend) (err err
 	var exists bool
 	if exists, err = block.ExistBlockAccount(st, o.Target); err == nil && !exists {
 		err = sebakerror.ErrorBlockAccountDoesNotExists
+		return
 	}
 
 	return
