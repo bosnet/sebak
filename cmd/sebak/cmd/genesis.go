@@ -129,6 +129,9 @@ func MakeGenesisBlock(addressStr, networkID, balanceStr, storage string) (string
 		sebakcommon.MakeGenesisCheckpoint([]byte(flagNetworkID)),
 	)
 	account.Save(st)
+
+	sebak.MakeGenesisBlock(st, *account)
+
 	st.Close()
 	return "", nil
 }

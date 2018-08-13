@@ -1,208 +1,366 @@
 package sebak
 
 import (
+	"errors"
+
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/node"
 )
 
+type RoundVoteResult map[ /* Node.Address() */ string]VotingHole
+
+type RoundVote struct {
+	SIGN   RoundVoteResult
+	ACCEPT RoundVoteResult
+}
+
+func NewRoundVote(ballot Ballot) (rv *RoundVote) {
+	rv = &RoundVote{
+		SIGN:   RoundVoteResult{},
+		ACCEPT: RoundVoteResult{},
+	}
+
+	rv.Vote(ballot)
+
+	return rv
+}
+
+func (rv *RoundVote) IsVoted(ballot Ballot) bool {
+	result := rv.GetResult(ballot.State())
+
+	_, found := result[ballot.Source()]
+	return found
+}
+
+func (rv *RoundVote) IsVotedByNode(state sebakcommon.BallotState, node string) bool {
+	result := rv.GetResult(state)
+
+	_, found := result[node]
+	return found
+}
+
+func (rv *RoundVote) Vote(ballot Ballot) (isNew bool, err error) {
+	if ballot.IsFromProposer() {
+		return
+	}
+
+	result := rv.GetResult(ballot.State())
+	_, isNew = result[ballot.Source()]
+	result[ballot.Source()] = ballot.Vote()
+
+	return
+}
+
+func (rv *RoundVote) GetResult(state sebakcommon.BallotState) (result RoundVoteResult) {
+	if !state.IsValidForVote() {
+		return
+	}
+
+	switch state {
+	case sebakcommon.BallotStateSIGN:
+		result = rv.SIGN
+	case sebakcommon.BallotStateACCEPT:
+		result = rv.ACCEPT
+	}
+
+	return result
+}
+
+func (rv *RoundVote) CanGetVotingResult(policy sebakcommon.VotingThresholdPolicy, state sebakcommon.BallotState) (RoundVoteResult, VotingHole, bool) {
+	threshold := policy.Threshold(state)
+	if threshold < 1 {
+		return RoundVoteResult{}, VotingNOTYET, false
+	}
+
+	result := rv.GetResult(state)
+	if len(result) < int(threshold) {
+		return result, VotingNOTYET, false
+	}
+
+	var yes int
+	var no int
+	for _, vh := range result {
+		if vh == VotingYES {
+			yes++
+		} else if vh == VotingNO {
+			no++
+		}
+	}
+
+	log.Debug(
+		"check threshold in isaac",
+		"threshold", threshold,
+		"yes", yes,
+		"no", no,
+		"policy", policy,
+		"state", state,
+	)
+
+	if yes >= threshold {
+		return result, VotingYES, true
+	} else if no >= threshold {
+		return result, VotingNO, true
+	}
+
+	// check draw!
+	total := policy.Validators()
+	voted := yes + no
+	if total-voted < threshold-yes && total-voted < threshold-no { // draw
+		return result, VotingNO, true
+	}
+
+	return result, VotingNOTYET, false
+}
+
+type RunningRound struct {
+	sebakcommon.SafeLock
+
+	Round        Round
+	Proposer     string                              // LocalNode's `Proposer`
+	Transactions map[ /* Proposer */ string][]string /* Transaction.Hash */
+	Voted        map[ /* Proposer */ string]*RoundVote
+}
+
+func NewRunningRound(proposer string, ballot Ballot) (*RunningRound, error) {
+	transactions := map[string][]string{
+		ballot.Proposer(): ballot.Transactions(),
+	}
+
+	roundVote := NewRoundVote(ballot)
+	voted := map[string]*RoundVote{
+		ballot.Proposer(): roundVote,
+	}
+
+	return &RunningRound{
+		Round:        ballot.Round(),
+		Proposer:     proposer,
+		Transactions: transactions,
+		Voted:        voted,
+	}, nil
+}
+
+func (rr *RunningRound) RoundVote(proposer string) (rv *RoundVote, err error) {
+	var found bool
+	rv, found = rr.Voted[proposer]
+	if !found {
+		err = sebakerror.ErrorRoundVoteNotFound
+		return
+	}
+	return
+}
+
+func (rr *RunningRound) IsVoted(ballot Ballot) bool {
+	roundVote, err := rr.RoundVote(ballot.Proposer())
+	if err != nil {
+		return false
+	}
+
+	return roundVote.IsVoted(ballot)
+}
+
+func (rr *RunningRound) Vote(ballot Ballot) {
+	rr.Lock()
+	defer rr.Unlock()
+
+	if _, found := rr.Voted[ballot.Proposer()]; !found {
+		rr.Voted[ballot.Proposer()] = NewRoundVote(ballot)
+	} else {
+		rr.Voted[ballot.Proposer()].Vote(ballot)
+	}
+}
+
+type TransactionPool struct {
+	sebakcommon.SafeLock
+
+	Pool   map[ /* Transaction.GetHash() */ string]Transaction
+	Hashes []string // Transaction.GetHash()
+}
+
+func NewTransactionPool() *TransactionPool {
+	return &TransactionPool{
+		Pool:   map[string]Transaction{},
+		Hashes: []string{},
+	}
+}
+
+func (tp *TransactionPool) Len() int {
+	return len(tp.Hashes)
+}
+
+func (tp *TransactionPool) Has(hash string) bool {
+	_, found := tp.Pool[hash]
+	return found
+}
+
+func (tp *TransactionPool) Get(hash string) (tx Transaction, found bool) {
+	tx, found = tp.Pool[hash]
+	return
+}
+
+func (tp *TransactionPool) Add(tx Transaction) bool {
+	if _, found := tp.Pool[tx.GetHash()]; found {
+		return false
+	}
+
+	tp.Lock()
+	defer tp.Unlock()
+
+	tp.Pool[tx.GetHash()] = tx
+	tp.Hashes = append(tp.Hashes, tx.GetHash())
+
+	return true
+}
+
+func (tp *TransactionPool) Remove(hashes ...string) {
+	tp.Lock()
+	defer tp.Unlock()
+
+	indices := map[int]int{}
+	var max int
+	for _, hash := range hashes {
+		index, found := sebakcommon.InStringArray(tp.Hashes, hash)
+		if !found {
+			continue
+		}
+		indices[index] = 1
+		if index > max {
+			max = index
+		}
+	}
+
+	var newHashes []string
+	for i, hash := range tp.Hashes {
+		if i > max {
+			newHashes = append(newHashes, hash)
+			continue
+		}
+
+		if _, found := indices[i]; !found {
+			newHashes = append(newHashes, hash)
+			continue
+		}
+
+		delete(tp.Pool, hash)
+	}
+
+	tp.Hashes = newHashes
+
+	return
+}
+
+func (tp *TransactionPool) AvailableTransactions() []string {
+	tp.Lock()
+	defer tp.Unlock()
+
+	if tp.Len() <= MaxTransactionsInBallot {
+		return tp.Hashes
+	}
+
+	return tp.Hashes[:MaxTransactionsInBallot]
+}
+
 type ISAAC struct {
 	sebakcommon.SafeLock
 
-	networkID             []byte
+	NetworkID             []byte
 	Node                  *sebaknode.LocalNode
 	VotingThresholdPolicy sebakcommon.VotingThresholdPolicy
-
-	Boxes *BallotBoxes
+	TransactionPool       *TransactionPool
+	RunningRounds         map[ /* Round.Hash() */ string]*RunningRound
+	LatestConfirmedBlock  Block
+	LatestRound           Round
 }
 
 func NewISAAC(networkID []byte, node *sebaknode.LocalNode, votingThresholdPolicy sebakcommon.VotingThresholdPolicy) (is *ISAAC, err error) {
 	is = &ISAAC{
-		networkID: networkID,
+		NetworkID: networkID,
 		Node:      node,
 		VotingThresholdPolicy: votingThresholdPolicy,
-		Boxes: NewBallotBoxes(),
+		TransactionPool:       NewTransactionPool(),
+		RunningRounds:         map[string]*RunningRound{},
 	}
 
 	return
 }
 
-func (is *ISAAC) NetworkID() []byte {
-	return is.networkID
-}
-
-func (is *ISAAC) GetNode() *sebaknode.LocalNode {
-	return is.Node
-}
-
-func (is *ISAAC) HasMessage(message sebakcommon.Message) bool {
-	return is.Boxes.HasMessage(message)
-}
-
-func (is *ISAAC) HasMessageByHash(h string) bool {
-	return is.Boxes.HasMessageByHash(h)
-}
-
-func (is *ISAAC) ReceiveMessage(m sebakcommon.Message) (ballot Ballot, err error) {
-	/*
-		Previously the new incoming Message must be checked,
-			- TODO `Message` must be saved in `BlockTransactionHistory`
-			- TODO check already in BlockTransaction
-			- TODO check already in BlockTransactionHistory
-	*/
-
-	if is.Boxes.HasMessage(m) {
-		err = sebakerror.ErrorNewButKnownMessage
-		return
-	}
-
-	if ballot, err = NewBallotFromMessage(is.Node.Address(), m); err != nil {
-		return
-	}
-
-	// self-sign; make new `Ballot` from `Message`
-	ballot.SetState(sebakcommon.BallotStateINIT)
-	ballot.Vote(VotingYES) // The initial ballot from client will have 'VotingYES'
-	ballot.Sign(is.Node.Keypair(), is.networkID)
-
-	if err = ballot.IsWellFormed(is.networkID); err != nil {
-		return
-	}
-
-	if _, err = is.Boxes.AddBallot(ballot); err != nil {
-		return
-	}
-
-	return
-}
-
-func (is *ISAAC) ReceiveBallot(ballot Ballot) (vs VotingStateStaging, err error) {
-	switch ballot.State() {
-	case sebakcommon.BallotStateINIT:
-		vs, err = is.receiveBallotStateINIT(ballot)
-	case sebakcommon.BallotStateALLCONFIRM:
-		err = sebakerror.ErrorBallotHasInvalidState
-	default:
-		vs, err = is.receiveBallotVotingStates(ballot)
-	}
-
-	return
-}
-
-func (is *ISAAC) receiveBallotStateINIT(ballot Ballot) (vs VotingStateStaging, err error) {
-	var isNew bool
-
-	if isNew, err = is.Boxes.AddBallot(ballot); err != nil {
-		return
-	}
-
-	if isNew {
-		var newBallot Ballot
-		newBallot, err = NewBallotFromMessage(is.Node.Keypair().Address(), ballot.Data().Message())
-		if err != nil {
-			return
+func (is *ISAAC) IsRunningRound(roundNumber uint64) bool {
+	for _, runningRound := range is.RunningRounds {
+		if runningRound.Round.Number == roundNumber {
+			return true
 		}
+	}
+	return false
+}
 
-		// self-sign
-		newBallot.SetState(sebakcommon.BallotStateINIT)
-		newBallot.Vote(VotingYES) // The BallotStateINIT ballot will have 'VotingYES'
-		newBallot.Sign(is.Node.Keypair(), is.networkID)
+func (is *ISAAC) CloseConsensus(proposer string, round Round, vh VotingHole) (err error) {
+	is.Lock()
+	defer is.Unlock()
 
-		if err = newBallot.IsWellFormed(is.networkID); err != nil {
-			return
+	if vh == VotingNOTYET {
+		err = errors.New("invalid VotingHole, `VotingNOTYET`")
+		return
+	}
+
+	roundHash := round.Hash()
+	rr, found := is.RunningRounds[roundHash]
+	if !found {
+		return
+	}
+
+	if vh == VotingNO {
+		delete(rr.Transactions, proposer)
+		delete(rr.Voted, proposer)
+
+		return
+	}
+
+	is.TransactionPool.Remove(rr.Transactions[proposer]...)
+
+	delete(is.RunningRounds, roundHash)
+
+	// remove all the same rounds
+	for hash, runningRound := range is.RunningRounds {
+		if runningRound.Round.BlockHeight > round.BlockHeight {
+			continue
 		}
+		delete(is.RunningRounds, hash)
+	}
 
-		if _, err = is.Boxes.AddBallot(newBallot); err != nil {
-			return
+	return
+}
+
+func (is *ISAAC) SetLatestConsensusedBlock(block Block) {
+	is.LatestConfirmedBlock = block
+}
+
+func (is *ISAAC) SetLatestRound(round Round) {
+	is.LatestRound = round
+}
+
+func (is *ISAAC) IsAvailableRound(round Round) bool {
+	// check current round is from InitRound
+	if is.LatestRound.BlockHash == "" {
+		return true
+	}
+
+	if round.BlockHeight < is.LatestConfirmedBlock.Height {
+		return false
+	} else if round.BlockHeight == is.LatestConfirmedBlock.Height {
+		if round.BlockHash != is.LatestConfirmedBlock.Hash {
+			return false
+		}
+	} else {
+		// TODO if incoming round.BlockHeight is bigger than
+		// LatestConfirmedBlock.Height and this round confirmed successfully,
+		// this node will get into catchup status
+	}
+
+	if round.BlockHeight == is.LatestRound.BlockHeight {
+		if round.Number <= is.LatestRound.Number {
+			return false
 		}
 	}
 
-	vr, err := is.Boxes.VotingResult(ballot)
-	if err != nil {
-		return
-	}
-
-	if vr.IsClosed() || !vr.CanGetResult(is.VotingThresholdPolicy) {
-		return
-	}
-
-	votingHole, state, ended := vr.MakeResult(is.VotingThresholdPolicy)
-	if ended {
-		if vs, err = vr.ChangeState(votingHole, state); err != nil {
-			return
-		}
-
-		is.Boxes.WaitingBox.RemoveVotingResult(vr) // TODO detect error
-		if !vs.IsClosed() {
-			is.Boxes.VotingBox.AddVotingResult(vr) // TODO detect error
-			is.Boxes.AddSource(ballot)
-		}
-	}
-
-	return
-}
-
-// AddBallot
-//
-// NOTE(ISSAC.AddBallot): `ISSAC.AddBallot()` only for self-signed Ballot
-func (is *ISAAC) AddBallot(ballot Ballot) (err error) {
-	vr, err := is.Boxes.VotingResult(ballot)
-	if err != nil {
-		return
-	}
-	if vr.IsVoted(ballot) {
-		return nil
-	}
-	_, err = is.Boxes.AddBallot(ballot)
-	return
-}
-
-func (is *ISAAC) CloseConsensus(ballot Ballot) (err error) {
-	log.Debug("consensus of this ballot will be closed", "ballot", ballot.MessageHash())
-	if !is.HasMessageByHash(ballot.MessageHash()) {
-		return sebakerror.ErrorVotingResultNotInBox
-	}
-
-	vr, err := is.Boxes.VotingResult(ballot)
-	if err != nil {
-		return
-	}
-
-	is.Boxes.WaitingBox.RemoveVotingResult(vr)  // TODO detect error
-	is.Boxes.VotingBox.RemoveVotingResult(vr)   // TODO detect error
-	is.Boxes.ReservedBox.RemoveVotingResult(vr) // TODO detect error
-	is.Boxes.RemoveVotingResult(vr)             // TODO detect error
-
-	return
-}
-
-func (is *ISAAC) receiveBallotVotingStates(ballot Ballot) (vs VotingStateStaging, err error) {
-	if _, err = is.Boxes.AddBallot(ballot); err != nil {
-		return
-	}
-
-	if !is.Boxes.VotingBox.HasMessageByHash(ballot.MessageHash()) {
-		is.Boxes.AddSource(ballot)
-	}
-
-	var vr *VotingResult
-
-	if vr, err = is.Boxes.VotingResult(ballot); err != nil {
-		return
-	}
-
-	if vr.IsClosed() || !vr.CanGetResult(is.VotingThresholdPolicy) {
-		return
-	}
-
-	votingHole, state, ended := vr.MakeResult(is.VotingThresholdPolicy)
-	if !ended {
-		return
-	}
-
-	if vs, err = vr.ChangeState(votingHole, state); err != nil {
-		return
-	}
-
-	return
+	return true
 }

@@ -83,6 +83,10 @@ func GetBlockTransactionHistory(st *sebakstorage.LevelDBBackend, hash string) (b
 	return
 }
 
+func ExistsBlockTransactionHistory(st *sebakstorage.LevelDBBackend, hash string) (bool, error) {
+	return st.Has(GetBlockTransactionHistoryKey(hash))
+}
+
 // BlockTransactionError stores all the non-confirmed transactions and it's reason.
 // the storage should support,
 //  * find by `Hash`

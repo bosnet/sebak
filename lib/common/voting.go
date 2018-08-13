@@ -7,6 +7,5 @@ type VotingThresholdPolicy interface {
 	Connected() int
 	SetConnected(int) error
 
-	Reset(BallotState, int) error
 	String() string
 }
