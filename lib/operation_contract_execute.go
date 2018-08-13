@@ -6,19 +6,20 @@ import (
 
 	"github.com/stellar/go/keypair"
 
+	sebakcommon "boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/contract/payload"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/storage"
 )
 
 type OperationBodyContractExecute struct {
-	Target string   `json:"target"`
-	Amount Amount   `json:"amount"`
-	Method string   `json:"method"`
-	Args   []string `json:"args"`
+	Target string             `json:"target"`
+	Amount sebakcommon.Amount `json:"amount"`
+	Method string             `json:"method"`
+	Args   []string           `json:"args"`
 }
 
-func NewOperationBodyContractExecute(target string, amount Amount, method string, args []string) OperationBodyContractExecute {
+func NewOperationBodyContractExecute(target string, amount sebakcommon.Amount, method string, args []string) OperationBodyContractExecute {
 	return OperationBodyContractExecute{
 		Target: target,
 		Amount: amount,
@@ -57,7 +58,7 @@ func (o OperationBodyContractExecute) TargetAddress() string {
 	return o.Target
 }
 
-func (o OperationBodyContractExecute) GetAmount() Amount {
+func (o OperationBodyContractExecute) GetAmount() sebakcommon.Amount {
 	return o.Amount
 }
 
@@ -71,13 +72,8 @@ func FinishOperationBodyContractExecute(st *sebakstorage.LevelDBBackend, tx Tran
 		err = sebakerror.ErrorBlockAccountDoesNotExists
 		return
 	}
-	stateStore := NewStateStore(st)
-	stateClone := NewStateClone(stateStore)
-	ctx := &ContractContext{
-		SenderAccount: baSource,
-		StateStore:    stateStore,
-		StateClone:    stateClone,
-	}
+
+	ctx := NewContractContext(baSource, st) // st as statedb
 
 	exCode := &payload.ExecCode{
 		ContractAddress: baTarget.Address,

@@ -1,5 +1,11 @@
 package payload
 
+import (
+	"boscoin.io/sebak/lib/storage"
+
+	"fmt"
+)
+
 type CodeType int
 
 const (
@@ -9,10 +15,18 @@ const (
 	NONE
 )
 
+const (
+	DeployCodePrefixAddress string = "tc-address-"
+)
+
 type DeployCode struct {
 	ContractAddress string
 	Type            CodeType // wasm,otto,...
 	Code            []byte
+}
+
+func (dc *DeployCode) Save(st sebakstorage.DBBackend) error {
+	return st.New(GetDeployCodeDBKey(dc.ContractAddress), dc)
 }
 
 func (dc *DeployCode) Serialize() (encoded []byte, err error) {
@@ -26,4 +40,17 @@ func (dc *DeployCode) Deserialize(encoded []byte) (err error) {
 	}
 	err = DecodeJSONValue(encoded, dc)
 	return
+}
+
+func GetDeployCodeDBKey(address string) string {
+	return fmt.Sprintf("%s%s", DeployCodePrefixAddress, address)
+}
+
+func GetDeployCode(st sebakstorage.DBBackend, addr string) (*DeployCode, error) {
+	var dc *DeployCode
+	if err := st.Get(GetDeployCodeDBKey(addr), &dc); err != nil {
+		return nil, err
+	}
+	return dc, nil
+
 }

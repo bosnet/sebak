@@ -23,7 +23,7 @@ func NewContractExecutor(ctx *ContractContext, execCode *payload.ExecCode) (Cont
 	if native.HasContract(contractAddress) {
 		ex = native.NewNativeExecutor(ctx, api)
 	} else {
-		deployCode, err := ctx.StateStore.GetDeployCode(execCode.ContractAddress)
+		deployCode, err := ctx.GetDeployCode(execCode.ContractAddress)
 		if err != nil {
 			return nil, err
 		}
