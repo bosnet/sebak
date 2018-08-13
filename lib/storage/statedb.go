@@ -1,73 +1,146 @@
 package sebakstorage
 
 import (
+	"fmt"
+	"reflect"
 	"sort"
 
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/error"
 
 	"github.com/btcsuite/btcutil/base58"
+	"github.com/syndtr/goleveldb/leveldb"
 )
 
+type StateObjectState byte
+
+const (
+	StateObjectChanged StateObjectState = iota
+	StateObjectDeleted
+)
+
+type StateObject struct {
+	Key   string
+	Value interface{}
+	State StateObjectState
+}
+
+func NewStateObject(k string, i interface{}, s StateObjectState) *StateObject {
+	obj := &StateObject{
+		Key:   k,
+		Value: i,
+		State: s,
+	}
+	return obj
+}
+
+func (o *StateObject) MakeHash() ([]byte, error) {
+	h, err := sebakcommon.MakeObjectHash(o)
+	if err != nil {
+		return nil, err
+	}
+	return h, err
+}
+
+func (o *StateObject) MakeHashString() (string, error) {
+	h, err := o.MakeHash()
+	if err != nil {
+		return "", err
+	}
+	return base58.Encode(h), nil
+}
+
 type StateDB struct {
-	levelDB     *LevelDBBackend
-	changedkeys map[string]struct{}
+	levelDB *LevelDBBackend
+	objects map[string]*StateObject
 }
 
 func NewStateDB(st *LevelDBBackend) *StateDB {
 	db := &StateDB{
 		levelDB: st,
 		// If we need thread safety, we should use sync.Map insteads map
-		changedkeys: make(map[string]struct{}),
+		objects: make(map[string]*StateObject),
 	}
 	return db
 }
 
 func (s *StateDB) Has(k string) (bool, error) {
+	if _, ok := s.objects[k]; ok {
+		return true, nil
+	}
 	return s.levelDB.Has(k)
 }
 
 func (s *StateDB) Get(k string, i interface{}) error {
+	if obj, ok := s.objects[k]; ok {
+		reflect.ValueOf(i).Elem().Set(reflect.ValueOf(obj.Value))
+		return nil
+	}
+
 	return s.levelDB.Get(k, i)
 }
 
 func (s *StateDB) New(k string, i interface{}) error {
-	s.changedkeys[k] = struct{}{}
-	return s.levelDB.New(k, i)
+	s.objects[k] = NewStateObject(k, i, StateObjectChanged)
+	return nil
 }
 
 func (s *StateDB) Set(k string, i interface{}) error {
-	s.changedkeys[k] = struct{}{}
-	return s.levelDB.Set(k, i)
+	s.objects[k] = NewStateObject(k, i, StateObjectChanged)
+	return nil
 }
 
 func (s *StateDB) Remove(k string) error {
-	s.changedkeys[k] = struct{}{}
-	return s.levelDB.Remove(k)
+	s.objects[k] = NewStateObject(k, nil, StateObjectDeleted)
+	return nil
 }
 
 func (s *StateDB) GetIterator(prefix string, reverse bool) (func() (IterItem, bool), func()) {
-	return s.levelDB.GetIterator(prefix, reverse)
+	//TODO: support GetIterator
+	panic("Not not support GetIterator in StateDB")
 }
 
 func (s *StateDB) News(vs ...Item) error {
 	for _, v := range vs {
-		s.changedkeys[v.Key] = struct{}{}
+		s.New(v.Key, v.Value)
 	}
-
-	return s.levelDB.News(vs...)
+	return nil
 }
 
 func (s *StateDB) Sets(vs ...Item) error {
 	for _, v := range vs {
-		s.changedkeys[v.Key] = struct{}{}
+		s.Set(v.Key, v.Value)
+	}
+	return nil
+}
+
+func (s *StateDB) BatchWrite() error {
+	batch := new(leveldb.Batch)
+	for k, v := range s.objects {
+		switch v.State {
+		case StateObjectChanged:
+			enc, err := s.levelDB.Encode(v.Value)
+			if err != nil {
+				return err
+			}
+			batch.Put(s.levelDB.makeKey(k), enc)
+		case StateObjectDeleted:
+			batch.Delete(s.levelDB.makeKey(k))
+		}
 	}
 
-	return s.levelDB.Sets(vs...)
+	if err := s.levelDB.core.Write(batch, nil); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (s *StateDB) Commit() error {
 	return s.levelDB.Commit()
+}
+
+func (s *StateDB) Clean() error {
+	s.objects = make(map[string]*StateObject)
+	return nil
 }
 
 func (s *StateDB) Discard() error {
@@ -75,23 +148,23 @@ func (s *StateDB) Discard() error {
 }
 
 func (s *StateDB) MakeHash() ([]byte, error) {
-	ks := make([]string, 0, len(s.changedkeys))
+	ks := make([]string, 0, len(s.objects))
 
-	for k, _ := range s.changedkeys {
+	for k, _ := range s.objects {
 		ks = append(ks, k)
 	}
 	sort.Strings(ks)
 
-	hashes := make([][]byte, 0, len(ks)*2)
+	hashes := make([][]byte, 0, len(ks))
 	for _, k := range ks {
-		bs, err := s.levelDB.GetRaw(k)
-		if err == sebakerror.ErrorStorageRecordDoesNotExist {
-			bs = nil
-		} else if err != nil {
+		obj, ok := s.objects[k]
+		if !ok {
+			return nil, fmt.Errorf("Missing state key:%v", k)
+		}
+		h, err := obj.MakeHash()
+		if err != nil {
 			return nil, err
 		}
-		hashes = append(hashes, sebakcommon.MakeHash([]byte(k)))
-		h := sebakcommon.MakeHash(bs)
 		hashes = append(hashes, h)
 	}
 

@@ -46,7 +46,7 @@ func TestStateDBNewCommit(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if len(sdb.changedkeys) != 2 {
+	if len(sdb.objects) != 2 {
 		t.Fatal("statedb.changedkeys != 2")
 	}
 
@@ -90,6 +90,10 @@ func TestStateDBNewCommit(t *testing.T) {
 		t.Error("hash == hash3")
 	}
 
+	if err := sdb.BatchWrite(); err != nil {
+		t.Fatal(err)
+	}
+
 	if err := sdb.Commit(); err != nil {
 		t.Fatal(err)
 	}
@@ -103,14 +107,21 @@ func TestStateDBNewCommit(t *testing.T) {
 	{
 		var (
 			a1 *Account
+			a2 *Account
 		)
 		if err := st.Get("a1", &a1); err != nil {
+			t.Fatal(err)
+		}
+		if err := sdb.Get("a1", &a2); err != nil {
 			t.Fatal(err)
 		}
 
 		if a1.Address != a.Address {
 			t.Logf("a1.Addr:%v", a1.Address)
 			t.Error("a1.Address != a.Address")
+		}
+		if a1.Address != a2.Address {
+			t.Error("a1.Address != a2.Address")
 		}
 	}
 }

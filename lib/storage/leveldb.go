@@ -246,6 +246,16 @@ func (st *LevelDBBackend) Sets(vs ...Item) (err error) {
 	return
 }
 
+func (st *LevelDBBackend) Encode(v interface{}) (enc []byte, err error) {
+	serializable, ok := v.(sebakcommon.Serializable)
+	if ok {
+		enc, err = serializable.Serialize()
+		return
+	}
+	enc, err = sebakcommon.EncodeJSONValue(v)
+	return
+}
+
 func (st *LevelDBBackend) Remove(k string) (err error) {
 	var exists bool
 	if exists, err = st.Has(k); !exists || err != nil {
