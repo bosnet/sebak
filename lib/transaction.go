@@ -143,6 +143,12 @@ func (tx Transaction) Validate(st *sebakstorage.LevelDBBackend) (err error) {
 		return
 	}
 
+	// check, have enough balance now
+	if sebakcommon.MustAmountFromString(ba.Balance) < totalAmount {
+		err = sebakerror.ErrorTransactionExcessAbilityToPay
+		return
+	}
+
 	for _, op := range tx.B.Operations {
 		if err = op.Validate(st); err != nil {
 			return
