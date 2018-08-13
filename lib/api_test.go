@@ -1,6 +1,7 @@
 package sebak
 
 import (
+	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/storage"
 	"bufio"
 	"bytes"
@@ -54,7 +55,7 @@ func TestGetAccountHandler(t *testing.T) {
 
 	// Do stream Request to the Server
 	go func() {
-		var n Amount
+		var n sebakcommon.Amount
 		for n = 0; n < 10; n++ {
 			line, err := reader.ReadBytes('\n')
 			checkError(t, err)
@@ -71,7 +72,7 @@ func TestGetAccountHandler(t *testing.T) {
 	go func() {
 		// Makes Some Events
 		for n := 1; n < 20; n++ {
-			newBalance, err := ba.GetBalance().Add(Amount(n))
+			newBalance, err := ba.GetBalance().Add(sebakcommon.Amount(n))
 			checkError(t, err)
 			ba.Balance = newBalance.String()
 
@@ -140,7 +141,7 @@ func TestGetAccountTransactionsHandler(t *testing.T) {
 
 	// Do stream Request to the Server
 	go func() {
-		var n Amount
+		var n sebakcommon.Amount
 		for n = 0; n < 10; n++ {
 			line, err := reader.ReadBytes('\n')
 			checkError(t, err)
@@ -234,7 +235,7 @@ func TestGetAccountOperationsHandler(t *testing.T) {
 
 	// Do stream Request to the Server
 	go func() {
-		var n Amount
+		var n sebakcommon.Amount
 		for n = 0; n < 10; n++ {
 			line, err := reader.ReadBytes('\n')
 			checkError(t, err)

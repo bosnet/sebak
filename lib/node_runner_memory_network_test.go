@@ -50,7 +50,7 @@ func makeTransaction(kp *keypair.Full) (tx Transaction) {
 	return
 }
 
-func makeTransactionPayment(kpSource *keypair.Full, target string, amount Amount) (tx Transaction) {
+func makeTransactionPayment(kpSource *keypair.Full, target string, amount sebakcommon.Amount) (tx Transaction) {
 	opb := NewOperationBodyPayment(target, amount)
 
 	op := Operation{
@@ -80,8 +80,8 @@ func makeTransactionPayment(kpSource *keypair.Full, target string, amount Amount
 	return
 }
 
-func makeTransactionCreateAccount(kpSource *keypair.Full, target string, amount Amount) (tx Transaction) {
-	opb := NewOperationBodyCreateAccount(target, Amount(amount))
+func makeTransactionCreateAccount(kpSource *keypair.Full, target string, amount sebakcommon.Amount) (tx Transaction) {
+	opb := NewOperationBodyCreateAccount(target, sebakcommon.Amount(amount))
 
 	op := Operation{
 		H: OperationHeader{

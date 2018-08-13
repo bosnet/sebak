@@ -27,7 +27,7 @@ type TransactionFromJSON struct {
 
 type TransactionBodyFromJSON struct {
 	Source     string              `json:"source"`
-	Fee        Amount              `json:"fee"`
+	Fee        sebakcommon.Amount  `json:"fee"`
 	Checkpoint string              `json:"checkpoint"`
 	Operations []OperationFromJSON `json:"operations"`
 }
@@ -159,10 +159,10 @@ func (tx Transaction) Source() string {
 // Params:
 //   withFee = If fee should be included in the total
 //
-func (tx Transaction) TotalAmount(withFee bool) Amount {
+func (tx Transaction) TotalAmount(withFee bool) sebakcommon.Amount {
 	// Note that the transaction shouldn't be constructed invalid
 	// (the sum of its Operations should not exceed the maximum supply)
-	var amount Amount
+	var amount sebakcommon.Amount
 	for _, op := range tx.B.Operations {
 		amount = amount.MustAdd(op.B.GetAmount())
 	}
@@ -217,10 +217,10 @@ type TransactionHeader struct {
 }
 
 type TransactionBody struct {
-	Source     string      `json:"source"`
-	Fee        Amount      `json:"fee"`
-	Checkpoint string      `json:"checkpoint"`
-	Operations []Operation `json:"operations"`
+	Source     string             `json:"source"`
+	Fee        sebakcommon.Amount `json:"fee"`
+	Checkpoint string             `json:"checkpoint"`
+	Operations []Operation        `json:"operations"`
 }
 
 func (tb TransactionBody) MakeHash() []byte {

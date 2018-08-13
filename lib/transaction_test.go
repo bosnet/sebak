@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/storage"
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/stellar/go/keypair"
@@ -59,7 +60,7 @@ func TestIsWellFormedTransactionWithLowerFee(t *testing.T) {
 		t.Errorf("transaction must be failed for fee: %d", BaseFee-1)
 	}
 
-	tx.B.Fee = Amount(0)
+	tx.B.Fee = sebakcommon.Amount(0)
 	tx.H.Hash = tx.B.MakeHashString()
 	tx.Sign(kp, networkID)
 	if err = tx.IsWellFormed(networkID); err == nil {

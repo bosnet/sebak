@@ -3,6 +3,7 @@ package sebak
 import (
 	"testing"
 
+	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/observer"
 	"boscoin.io/sebak/lib/storage"
 	"fmt"
@@ -37,7 +38,7 @@ func TestSaveExistingBlockAccount(t *testing.T) {
 	b := testMakeBlockAccount()
 	b.Save(st)
 
-	if err := b.Deposit(Amount(100), "fake-checkpoint"); err != nil {
+	if err := b.Deposit(sebakcommon.Amount(100), "fake-checkpoint"); err != nil {
 		panic(err)
 	}
 	if err := b.Save(st); err != nil {
