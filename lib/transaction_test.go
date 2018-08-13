@@ -38,12 +38,11 @@ func TestIsWellFormedTransaction(t *testing.T) {
 func TestIsWellFormedTransactionWithLowerFee(t *testing.T) {
 	var err error
 
-	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
 	kp, tx := TestMakeTransaction(networkID, 1)
 	tx.B.Fee = BaseFee
 	tx.H.Hash = tx.B.MakeHashString()
 	tx.Sign(kp, networkID)
-	if err = tx.Validate(st); err != nil {
+	if err = tx.IsWellFormed(networkID); err != nil {
 		t.Errorf("transaction must not be failed for fee: %d: %v", BaseFee, err)
 	}
 	tx.B.Fee = BaseFee.MustAdd(1)
