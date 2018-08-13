@@ -82,7 +82,7 @@ func (s *StateDB) MakeHash() ([]byte, error) {
 	}
 	sort.Strings(ks)
 
-	hashes := make([][]byte, 0, len(ks))
+	hashes := make([][]byte, 0, len(ks)*2)
 	for _, k := range ks {
 		bs, err := s.levelDB.GetRaw(k)
 		if err == sebakerror.ErrorStorageRecordDoesNotExist {
@@ -90,6 +90,7 @@ func (s *StateDB) MakeHash() ([]byte, error) {
 		} else if err != nil {
 			return nil, err
 		}
+		hashes = append(hashes, sebakcommon.MakeHash([]byte(k)))
 		h := sebakcommon.MakeHash(bs)
 		hashes = append(hashes, h)
 	}

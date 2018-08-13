@@ -97,15 +97,15 @@ func NewOperationFromInterface(oj OperationFromJSON) (op Operation, err error) {
 		}
 		op.B = NewOperationBodyPayment(body["target"].(string), amount)
 	case OperationContractExecute:
-		var amount Amount
-		amount, err = AmountFromString(fmt.Sprintf("%v", body["amount"]))
+		var amount sebakcommon.Amount
+		amount, err = sebakcommon.AmountFromString(fmt.Sprintf("%v", body["amount"]))
 		if err != nil {
 			return
 		}
 		op.B = NewOperationBodyContractExecute(body["target"].(string), amount, body["method"].(string), body["args"].([]string))
 	case OperationContractDeploy:
-		var amount Amount
-		amount, err = AmountFromString(fmt.Sprintf("%v", body["amount"]))
+		var amount sebakcommon.Amount
+		amount, err = sebakcommon.AmountFromString(fmt.Sprintf("%v", body["amount"]))
 		if err != nil {
 			return
 		}
