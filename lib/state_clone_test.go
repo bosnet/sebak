@@ -6,6 +6,7 @@ import (
 
 	"boscoin.io/sebak/lib/contract/storage"
 	sebakstorage "boscoin.io/sebak/lib/storage"
+	"boscoin.io/sebak/lib/common"
 )
 
 func Test_StateClone_CommitAccount(t *testing.T) {
@@ -23,7 +24,7 @@ func Test_StateClone_CommitAccount(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	am := Amount(100)
+	am := sebakcommon.Amount(100)
 	if err := clone.AccountWithdraw(ba.Address, am, "tx1-tx1"); err != nil {
 		t.Fatal(err)
 	}

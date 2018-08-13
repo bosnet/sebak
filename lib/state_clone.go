@@ -145,7 +145,7 @@ func (s *StateClone) GetAccount(addr string) (*BlockAccount, error) {
 	return a, nil
 }
 
-func (s *StateClone) AccountWithdraw(addr string, fund Amount, checkpoint string) error {
+func (s *StateClone) AccountWithdraw(addr string, fund sebakcommon.Amount, checkpoint string) error {
 	a, err := s.GetAccount(addr)
 	if err != nil {
 		return err
