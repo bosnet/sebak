@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"testing"
 
+	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/contract/storage"
 	sebakstorage "boscoin.io/sebak/lib/storage"
-	"boscoin.io/sebak/lib/common"
 )
 
 func Test_StateClone_CommitAccount(t *testing.T) {
