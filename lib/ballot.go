@@ -70,6 +70,11 @@ func (b Ballot) String() string {
 }
 
 func (b Ballot) IsWellFormed(networkID []byte) (err error) {
+	if b.TransactionsLength() > MaxTransactionsInBallot {
+		err = sebakerror.ErrorBallotHasOverMaxTransactionsInBallot
+		return
+	}
+
 	if !b.B.State.IsValid() {
 		err = sebakerror.ErrorInvalidState
 		return

@@ -50,6 +50,15 @@ func CheckTransactionBaseFee(c sebakcommon.Checker, args ...interface{}) (err er
 func CheckTransactionOperation(c sebakcommon.Checker, args ...interface{}) (err error) {
 	checker := c.(*TransactionChecker)
 
+	if len(checker.Transaction.B.Operations) < 1 {
+		err = sebakerror.ErrorTransactionEmptyOperations
+		return
+	}
+	if len(checker.Transaction.B.Operations) > MaxOperationsInTransaction {
+		err = sebakerror.ErrorTooManyOperations
+		return
+	}
+
 	var hashes []string
 	for _, op := range checker.Transaction.B.Operations {
 		if checker.Transaction.B.Source == op.B.TargetAddress() {
