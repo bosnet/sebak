@@ -326,28 +326,20 @@ func ACCEPTBallotStore(c sebakcommon.Checker, args ...interface{}) (err error) {
 		return
 	}
 
-	willStore := checker.FinishedVotingHole == sebakcommon.VotingYES
-	if checker.FinishedVotingHole == sebakcommon.VotingYES {
-		// TODO If consensused ballot is not for next waiting block, the node
-		// will go into **catchup** status.
-
-		if checker.Ballot.TransactionsLength() < 1 {
-			willStore = false
-			checker.Log.Debug("ballot was finished, but not stored because empty transactions")
-		} else {
-			var block Block
-			block, err = FinishBallot(
-				checker.NodeRunner.Storage(),
-				checker.Ballot,
-				checker.NodeRunner.Consensus().TransactionPool,
-			)
-			if err != nil {
-				return
-			}
-
-			checker.NodeRunner.Consensus().SetLatestConsensusedBlock(block)
-			checker.Log.Debug("ballot was stored", "block", block)
+	willStore := checker.FinishedVotingHole == VotingYES
+	if checker.FinishedVotingHole == VotingYES {
+		var block Block
+		block, err = FinishBallot(
+			checker.NodeRunner.Storage(),
+			checker.Ballot,
+			checker.NodeRunner.Consensus().TransactionPool,
+		)
+		if err != nil {
+			return
 		}
+
+		checker.NodeRunner.Consensus().SetLatestConsensusedBlock(block)
+		checker.Log.Debug("ballot was stored", "block", block)
 
 		err = sebakcommon.CheckerErrorStop{"ballot got consensus and will be stored"}
 	} else {
