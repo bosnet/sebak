@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/storage"
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/stellar/go/keypair"
 )
@@ -26,11 +25,10 @@ func TestLoadTransactionFromJSON(t *testing.T) {
 }
 
 func TestIsWellFormedTransaction(t *testing.T) {
-	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
 	_, tx := TestMakeTransaction(networkID, 1)
 
 	var err error
-	if err = tx.Validate(st); err != nil {
+	if err = tx.IsWellFormed(networkID); err != nil {
 		t.Errorf("failed to validate transaction: %v", err)
 	}
 }
