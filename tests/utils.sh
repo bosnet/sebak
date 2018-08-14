@@ -29,11 +29,7 @@ function getAccountWithBalance () # u16 port, string addr and expected balance
     balance=0
     for i in $(seq 30)
     do
-	    balance=$(curl --insecure \
-                  --request GET \
-                  --header "Accept: application/json" \
-                  https://127.0.0.1:${1}/api/account/${2} \
-                  2>/dev/null | jq ".Balance" | sed 's/"//g')
+	    balance=$(getAccount $1 $2 | jq ".Balance" | sed 's/"//g')
 	    if [ "$balance" == "$3" ];then
 		    return 0
 	    fi
