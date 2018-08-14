@@ -40,7 +40,7 @@ func IsNew(c sebakcommon.Checker, args ...interface{}) (err error) {
 	}
 
 	err = nil
-	checker.ValidTransactions = validTransactions
+	checker.setValidTransactions(validTransactions)
 
 	return
 }
@@ -51,7 +51,7 @@ func GetMissingTransaction(c sebakcommon.Checker, args ...interface{}) (err erro
 	checker := c.(*BallotTransactionChecker)
 
 	var validTransactions []string
-	for _, hash := range checker.ValidTransactions {
+	for _, hash := range checker.validTransactions {
 		if !checker.NodeRunner.Consensus().TransactionPool.Has(hash) {
 			// TODO get transaction from proposer and check
 			// `Transaction.IsWellFormed()`
@@ -60,7 +60,7 @@ func GetMissingTransaction(c sebakcommon.Checker, args ...interface{}) (err erro
 		validTransactions = append(validTransactions, hash)
 	}
 
-	checker.ValidTransactions = validTransactions
+	checker.setValidTransactions(validTransactions)
 
 	return
 }
@@ -72,7 +72,7 @@ func SameSource(c sebakcommon.Checker, args ...interface{}) (err error) {
 
 	var validTransactions []string
 	sources := map[string]bool{}
-	for _, hash := range checker.ValidTransactions {
+	for _, hash := range checker.validTransactions {
 		tx, _ := checker.NodeRunner.Consensus().TransactionPool.Get(hash)
 		if found := sebakcommon.InStringMap(sources, tx.B.Source); found {
 			if !checker.CheckAll {
@@ -86,7 +86,7 @@ func SameSource(c sebakcommon.Checker, args ...interface{}) (err error) {
 		validTransactions = append(validTransactions, hash)
 	}
 	err = nil
-	checker.ValidTransactions = validTransactions
+	checker.setValidTransactions(validTransactions)
 
 	return
 }
@@ -96,7 +96,7 @@ func SourceCheck(c sebakcommon.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotTransactionChecker)
 
 	var validTransactions []string
-	for _, hash := range checker.ValidTransactions {
+	for _, hash := range checker.validTransactions {
 		tx, _ := checker.NodeRunner.Consensus().TransactionPool.Get(hash)
 
 		if err = tx.Validate(checker.NodeRunner.Storage()); err != nil {
@@ -109,7 +109,7 @@ func SourceCheck(c sebakcommon.Checker, args ...interface{}) (err error) {
 	}
 
 	err = nil
-	checker.ValidTransactions = validTransactions
+	checker.setValidTransactions(validTransactions)
 
 	return
 }

@@ -478,20 +478,12 @@ func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) error {
 		VotingHole:     sebakcommon.VotingNOTYET,
 	}
 
-	err := sebakcommon.RunChecker(transactionsChecker, sebakcommon.DefaultDeferFunc)
-	if err != nil {
+	if err := sebakcommon.RunChecker(transactionsChecker, sebakcommon.DefaultDeferFunc); err != nil {
 		return err
 	}
 
 	// remove invalid transactions
-	var invalidTransactions []string
-	for _, hash := range availableTransactions {
-		if _, found := sebakcommon.InStringArray(transactionsChecker.ValidTransactions, hash); found {
-			continue
-		}
-		invalidTransactions = append(invalidTransactions, hash)
-	}
-	nr.Consensus().TransactionPool.Remove(invalidTransactions...)
+	nr.Consensus().TransactionPool.Remove(transactionsChecker.InvalidTransactions()...)
 
 	ballot := NewBallot(nr.localNode, round, transactionsChecker.ValidTransactions)
 	ballot.SetVote(sebakcommon.BallotStateINIT, sebakcommon.VotingYES)
