@@ -266,7 +266,7 @@ func runNode() {
 		os.Exit(1)
 	}
 
-	policy, _ := sebak.NewDefaultVotingThresholdPolicy(threshold)
+	policy, _ := sebak.NewDefaultVotingThresholdPolicy(threshold, threshold)
 	policy.SetValidators(len(localNode.GetValidators()) + 1) // including 'self'
 
 	isaac, err := sebak.NewISAAC([]byte(flagNetworkID), localNode, policy)
