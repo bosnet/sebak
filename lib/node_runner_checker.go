@@ -96,7 +96,7 @@ func CheckNodeRunnerHandleMessagePushIntoTransactionPool(c sebakcommon.Checker, 
 func CheckNodeRunnerHandleMessageTransactionBroadcast(c sebakcommon.Checker, args ...interface{}) (err error) {
 	checker := c.(*NodeRunnerHandleMessageChecker)
 
-	checker.NodeRunner.Log().Debug("transaction from client will be broadcasted", "transaction", checker.Transaction.GetHash())
+	checker.NodeRunner.Log().Debug("transaction will be broadcasted", "transaction", checker.Transaction.GetHash())
 
 	// TODO sender should be excluded
 	checker.NodeRunner.ConnectionManager().Broadcast(checker.Transaction)

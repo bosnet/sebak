@@ -19,6 +19,10 @@ func (c *DefaultChecker) GetFuncs() []CheckerFunc {
 }
 
 func RunChecker(checker Checker, deferFunc CheckerDeferFunc, args ...interface{}) error {
+	if deferFunc == nil {
+		deferFunc = DefaultDeferFunc
+	}
+
 	var err error
 	for i, f := range checker.GetFuncs() {
 		if err = f(checker, args...); err != nil {
