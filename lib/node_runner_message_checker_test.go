@@ -14,7 +14,7 @@ import (
 )
 
 func MakeNodeRunner() (*NodeRunner, *sebaknode.LocalNode) {
-	kp, _ = keypair.Random()
+	kp, _ := keypair.Random()
 
 	nodeEndpoint := &sebakcommon.Endpoint{Scheme: "https", Host: "https://locahost:5000"}
 	localNode, _ := sebaknode.NewLocalNode(kp, nodeEndpoint, "")
