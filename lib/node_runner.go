@@ -256,7 +256,7 @@ func (nr *NodeRunner) handleMessage() {
 		var err error
 
 		if message.IsEmpty() {
-			nr.log.Error("got empty message`")
+			nr.log.Debug("got empty message`")
 			continue
 		}
 		switch message.Type {
