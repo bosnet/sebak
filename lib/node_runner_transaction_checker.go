@@ -109,13 +109,13 @@ func checkTransactionSourceCheck(checker *NodeRunnerHandleTransactionChecker, tx
 	totalAmount := tx.TotalAmount(true)
 
 	// check, have enough balance at checkpoint
-	if MustAmountFromString(bac.Balance) < totalAmount {
+	if sebakcommon.MustAmountFromString(bac.Balance) < totalAmount {
 		err = sebakerror.ErrorTransactionExcessAbilityToPay
 		return
 	}
 
 	// check, have enough balance now
-	if MustAmountFromString(ba.Balance) < totalAmount {
+	if sebakcommon.MustAmountFromString(ba.Balance) < totalAmount {
 		err = sebakerror.ErrorTransactionExcessAbilityToPay
 		return
 	}

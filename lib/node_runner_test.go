@@ -47,7 +47,7 @@ func createTestNodeRunner(n int) []*NodeRunner {
 	var nodeRunners []*NodeRunner
 	for i := 0; i < n; i++ {
 		v := nodes[i]
-		p, _ := NewDefaultVotingThresholdPolicy(66)
+		p, _ := NewDefaultVotingThresholdPolicy(66, 66)
 		p.SetValidators(len(v.GetValidators()) + 1)
 		is, _ := NewISAAC(networkID, v, p)
 		st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
@@ -130,7 +130,7 @@ func TestNodeRunnerCreateAccount(t *testing.T) {
 
 	client := nr0.Network().GetClient(nr0.Node().Endpoint())
 
-	initialBalance := Amount(1)
+	initialBalance := sebakcommon.Amount(1)
 	tx := makeTransactionCreateAccount(kp, kpNewAccount.Address(), initialBalance)
 	tx.B.Checkpoint = account.Checkpoint
 	tx.Sign(kp, networkID)
