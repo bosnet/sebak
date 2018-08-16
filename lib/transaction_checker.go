@@ -27,13 +27,8 @@ func CheckTransactionSource(c common.Checker, args ...interface{}) (err error) {
 	return
 }
 
-func CheckTransactionCheckpoint(c common.Checker, args ...interface{}) (err error) {
-	checker := c.(*TransactionChecker)
-	if _, err = common.ParseCheckpoint(checker.Transaction.B.Checkpoint); err != nil {
-		err = errors.ErrorTransactionInvalidCheckpoint
-		return
-	}
-
+func CheckTransactionSequenceID(c common.Checker, args ...interface{}) (err error) {
+	//checker := c.(*TransactionChecker)
 	return
 }
 

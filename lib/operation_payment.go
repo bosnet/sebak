@@ -70,11 +70,8 @@ func FinishOperationPayment(st *storage.LevelDBBackend, tx Transaction, op Opera
 		err = errors.ErrorBlockAccountDoesNotExists
 		return
 	}
-	current, err := common.ParseCheckpoint(baTarget.Checkpoint)
-	next, err := common.ParseCheckpoint(tx.NextTargetCheckpoint())
-	newCheckPoint := common.MakeCheckpoint(current[0], next[1])
 
-	if err = baTarget.Deposit(op.B.GetAmount(), newCheckPoint); err != nil {
+	if err = baTarget.Deposit(op.B.GetAmount()); err != nil {
 		return
 	}
 	if err = baTarget.Save(st); err != nil {

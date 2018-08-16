@@ -18,7 +18,7 @@ func TestNewBlockTransaction(t *testing.T) {
 	bt := NewBlockTransactionFromTransaction(block.Hash, tx, a)
 
 	require.Equal(t, bt.Hash, tx.H.Hash)
-	require.Equal(t, bt.PreviousCheckpoint, tx.B.Checkpoint)
+	require.Equal(t, bt.SequenceID, tx.B.SequenceID)
 	require.Equal(t, bt.Signature, tx.H.Signature)
 	require.Equal(t, bt.Source, tx.B.Source)
 	require.Equal(t, bt.Fee, tx.B.Fee)
@@ -46,7 +46,7 @@ func TestBlockTransactionSaveAndGet(t *testing.T) {
 	require.Nil(t, err)
 
 	require.Equal(t, bt.Hash, fetched.Hash)
-	require.Equal(t, bt.PreviousCheckpoint, fetched.PreviousCheckpoint)
+	require.Equal(t, bt.SequenceID, fetched.SequenceID)
 	require.Equal(t, bt.Signature, fetched.Signature)
 	require.Equal(t, bt.Source, fetched.Source)
 	require.Equal(t, bt.Fee, fetched.Fee)
@@ -72,21 +72,21 @@ func TestBlockTransactionSaveExisting(t *testing.T) {
 }
 
 /*
-func TestGetSortedBlockTransactionsByCheckpoint(t *testing.T) {
+func TestGetSortedBlockTransactionsBySequenceID(t *testing.T) {
 	st, _ := storage.NewTestMemoryLevelDBBackend()
 
 	// create 30 `BlockOperation`
 	var createdOrder []string
 
-	checkpoint := uuid.New().String()
+	sequenceID := uuid.New().String()
 	for i := 0; i < 10; i++ {
 		bt := TestMakeNewBlockTransaction(1)
-		bt.Checkpoint = checkpoint
+		bt.SequenceID = sequenceID
 		createdOrder = append(createdOrder, bt.Hash)
 	}
 
 	var saved []BlockTransaction
-	iterFunc, closeFunc := GetBlockTransactionsByCheckpoint(st, checkpoint, false)
+	iterFunc, closeFunc := GetBlockTransactionsBySequenceID(st, sequenceID, false)
 	for {
 		bo, hasNext := iterFunc()
 		if !hasNext {
@@ -268,26 +268,6 @@ func TestBlockTransactionMultipleSave(t *testing.T) {
 			return
 		}
 	}
-}
-
-func TestBlockTransactionGetByCheckpoint(t *testing.T) {
-	st, _ := storage.NewTestMemoryLevelDBBackend()
-
-	bt := TestMakeNewBlockTransaction(networkID, 1)
-	err := bt.Save(st)
-	require.Nil(t, err)
-
-	fetched, err := GetBlockTransactionByCheckpoint(st, bt.SourceCheckpoint)
-	require.Nil(t, err)
-
-	require.Equal(t, bt.Hash, fetched.Hash)
-	require.Equal(t, bt.PreviousCheckpoint, fetched.PreviousCheckpoint)
-	require.Equal(t, bt.Signature, fetched.Signature)
-	require.Equal(t, bt.Source, fetched.Source)
-	require.Equal(t, bt.Fee, fetched.Fee)
-	require.Equal(t, bt.Created, fetched.Created)
-	require.Equal(t, bt.Operations, fetched.Operations)
-	require.Equal(t, len(fetched.Confirmed) > 0, true)
 }
 
 func TestMultipleBlockTransactionGetByAccount(t *testing.T) {

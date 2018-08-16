@@ -48,16 +48,16 @@ const (
 
 type APIResourceAccount struct {
 	accountId  string
-	checkpoint string
+	sequenceID uint64
 	balance    string
 }
 
 func (aa APIResourceAccount) GetMap() hal.Entry {
 	return hal.Entry{
-		"id":         aa.accountId,
-		"account_id": aa.accountId,
-		"checkpoint": aa.checkpoint,
-		"balance":    aa.balance,
+		"id":          aa.accountId,
+		"account_id":  aa.accountId,
+		"sequence_id": aa.sequenceID,
+		"balance":     aa.balance,
 	}
 }
 
@@ -77,28 +77,25 @@ func (aa APIResourceAccount) Serialize() (encoded []byte, err error) {
 }
 
 type APIResourceTransaction struct {
-	hash               string
-	previousCheckpoint string
-	sourceCheckpoint   string
-	targetCheckpoint   string
-	signature          string
-	source             string
-	fee                string
-	amount             string
-	created            string
-	operations         []string
+	hash       string
+	sequenceID uint64
+	signature  string
+	source     string
+	fee        string
+	amount     string
+	created    string
+	operations []string
 }
 
 func (at APIResourceTransaction) GetMap() hal.Entry {
 	return hal.Entry{
-		"id":                at.hash,
-		"hash":              at.hash,
-		"account":           at.source,
-		"fee_paid":          at.fee,
-		"source_checkpoint": at.sourceCheckpoint,
-		"target_checkpoint": at.targetCheckpoint,
-		"created_at":        at.created,
-		"operation_count":   len(at.operations),
+		"id":              at.hash,
+		"hash":            at.hash,
+		"account":         at.source,
+		"fee_paid":        at.fee,
+		"sequence_id":     at.sequenceID,
+		"created_at":      at.created,
+		"operation_count": len(at.operations),
 	}
 }
 func (at APIResourceTransaction) Resource() *hal.Resource {

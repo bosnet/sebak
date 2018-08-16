@@ -1,11 +1,9 @@
 package sebak
 
 import (
-	"fmt"
 	"math/rand"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
 
@@ -129,7 +127,7 @@ func TestMakeTransaction(networkID []byte, n int) (kp *keypair.Full, tx Transact
 	txBody := TransactionBody{
 		Source:     kp.Address(),
 		Fee:        BaseFee,
-		Checkpoint: uuid.New().String(),
+		SequenceID: 0,
 		Operations: ops,
 	}
 
@@ -146,8 +144,8 @@ func TestMakeTransaction(networkID []byte, n int) (kp *keypair.Full, tx Transact
 	return
 }
 
-func TestGenerateNewCheckpoint() string {
-	return uuid.New().String()
+func TestGenerateNewSequenceID() uint64 {
+	return 0
 }
 
 func TestMakeTransactionWithKeypair(networkID []byte, n int, srcKp *keypair.Full, targetKps ...*keypair.Full) (tx Transaction) {
@@ -164,7 +162,7 @@ func TestMakeTransactionWithKeypair(networkID []byte, n int, srcKp *keypair.Full
 
 	tx, _ = NewTransaction(
 		srcKp.Address(),
-		fmt.Sprintf("%s-%s", TestGenerateNewCheckpoint(), TestGenerateNewCheckpoint()),
+		TestGenerateNewSequenceID(),
 		ops...,
 	)
 	tx.Sign(srcKp, networkID)
@@ -212,7 +210,7 @@ func GetTransaction(t *testing.T) (tx Transaction, txByte []byte) {
 	kpNewAccount, _ := keypair.Random()
 
 	tx = makeTransactionCreateAccount(kp, kpNewAccount.Address(), initialBalance)
-	tx.B.Checkpoint = account.Checkpoint
+	tx.B.SequenceID = account.SequenceID
 	tx.Sign(kp, networkID)
 
 	var err error
@@ -236,7 +234,7 @@ func makeTransactionCreateAccount(kpSource *keypair.Full, target string, amount 
 	txBody := TransactionBody{
 		Source:     kpSource.Address(),
 		Fee:        BaseFee,
-		Checkpoint: uuid.New().String(),
+		SequenceID: rand.Uint64(),
 		Operations: []Operation{op},
 	}
 

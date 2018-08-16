@@ -49,10 +49,9 @@ func createTestNodeRunner(n int) []*NodeRunner {
 		}
 	}
 
-	checkpoint := common.MakeGenesisCheckpoint(networkID)
 	address := kp.Address()
 	balance := BaseFee.MustAdd(1)
-	account = block.NewBlockAccount(address, balance, checkpoint)
+	account = block.NewBlockAccount(address, balance)
 	var nodeRunners []*NodeRunner
 	for i := 0; i < n; i++ {
 		v := nodes[i]
@@ -147,7 +146,6 @@ func createTestNodeRunnersHTTP2Network(n int) (nodeRunners []*NodeRunner, rootKP
 	genesisAccount := block.NewBlockAccount(
 		rootKP.Address(),
 		10000000000000,
-		common.MakeGenesisCheckpoint(networkID),
 	)
 	for _, node := range nodes {
 		vth, _ := NewDefaultVotingThresholdPolicy(66, 66)
@@ -237,7 +235,7 @@ func TestNodeRunnerCreateAccount(t *testing.T) {
 
 	initialBalance := common.Amount(1)
 	tx := makeTransactionCreateAccount(kp, kpNewAccount.Address(), initialBalance)
-	tx.B.Checkpoint = account.Checkpoint
+	tx.B.SequenceID = account.SequenceID
 	tx.Sign(kp, networkID)
 
 	client.SendMessage(tx)

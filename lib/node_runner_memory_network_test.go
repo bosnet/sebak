@@ -3,7 +3,6 @@ package sebak
 import (
 	"boscoin.io/sebak/lib/common"
 
-	"github.com/google/uuid"
 	"github.com/stellar/go/keypair"
 )
 
@@ -14,7 +13,7 @@ func makeTransaction(kp *keypair.Full) (tx Transaction) {
 	txBody := TransactionBody{
 		Source:     kp.Address(),
 		Fee:        BaseFee,
-		Checkpoint: uuid.New().String(),
+		SequenceID: 0,
 		Operations: ops,
 	}
 
@@ -44,7 +43,7 @@ func makeTransactionPayment(kpSource *keypair.Full, target string, amount common
 	txBody := TransactionBody{
 		Source:     kpSource.Address(),
 		Fee:        BaseFee,
-		Checkpoint: uuid.New().String(),
+		SequenceID: 0,
 		Operations: []Operation{op},
 	}
 

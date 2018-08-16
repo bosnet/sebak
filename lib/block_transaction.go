@@ -13,19 +13,18 @@ import (
 // BlockTransaction is `Transaction` data for block. the storage should support,
 //  * find by `Hash`
 //
-//  * get list by `Checkpoint` and created order
+//  * get list by `SequenceID` and created order
 //  * get list by `Source` and created order
 //  * get list by `Confirmed` order
 //  * get list by `Account` and created order
 //  * get list by `Block` and created order
 
 const (
-	BlockTransactionPrefixHash       string = "bt-hash-"       // bt-hash-<BlockTransaction.Hash>
-	BlockTransactionPrefixCheckpoint string = "bt-checkpoint-" // bt-checkpoint-<BlockTransaction.SourceCheckpoint>,<BlockTransaction.TargetCheckpoint>
-	BlockTransactionPrefixSource     string = "bt-source-"     // bt-source-<BlockTransaction.Source>
-	BlockTransactionPrefixConfirmed  string = "bt-confirmed-"  // bt-confirmed-<BlockTransaction.Confirmed>
-	BlockTransactionPrefixAccount    string = "bt-account-"    // bt-account-<BlockTransaction.Source>,<BlockTransaction.Operations.Target>
-	BlockTransactionPrefixBlock      string = "bt-block-"      // bt-block-<BlockTransaction.Block>
+	BlockTransactionPrefixHash      string = "bt-hash-"      // bt-hash-<BlockTransaction.Hash>
+	BlockTransactionPrefixSource    string = "bt-source-"    // bt-source-<BlockTransaction.Source>
+	BlockTransactionPrefixConfirmed string = "bt-confirmed-" // bt-confirmed-<BlockTransaction.Confirmed>
+	BlockTransactionPrefixAccount   string = "bt-account-"   // bt-account-<BlockTransaction.Source>,<BlockTransaction.Operations.Target>
+	BlockTransactionPrefixBlock     string = "bt-block-"     // bt-block-<BlockTransaction.Block>
 )
 
 // TODO(BlockTransaction): support counting
@@ -34,14 +33,12 @@ type BlockTransaction struct {
 	Hash  string
 	Block string /* `Block.Hash` */
 
-	PreviousCheckpoint string
-	SourceCheckpoint   string
-	TargetCheckpoint   string
-	Signature          string
-	Source             string
-	Fee                common.Amount
-	Operations         []string
-	Amount             common.Amount
+	SequenceID uint64
+	Signature  string
+	Source     string
+	Fee        common.Amount
+	Operations []string
+	Amount     common.Amount
 
 	Confirmed string
 	Created   string
@@ -58,26 +55,20 @@ func NewBlockTransactionFromTransaction(blockHash string, tx Transaction, messag
 	}
 
 	return BlockTransaction{
-		Hash:               tx.H.Hash,
-		Block:              blockHash,
-		PreviousCheckpoint: tx.B.Checkpoint,
-		SourceCheckpoint:   tx.NextSourceCheckpoint(),
-		TargetCheckpoint:   tx.NextTargetCheckpoint(),
-		Signature:          tx.H.Signature,
-		Source:             tx.B.Source,
-		Fee:                tx.B.Fee,
-		Operations:         opHashes,
-		Amount:             tx.TotalAmount(true),
+		Hash:       tx.H.Hash,
+		Block:      blockHash,
+		SequenceID: tx.B.SequenceID,
+		Signature:  tx.H.Signature,
+		Source:     tx.B.Source,
+		Fee:        tx.B.Fee,
+		Operations: opHashes,
+		Amount:     tx.TotalAmount(true),
 
 		Created: tx.H.Created,
 		Message: message,
 
 		transaction: tx,
 	}
-}
-
-func GetBlockTransactionKeyCheckpoint(checkpoint string) string {
-	return fmt.Sprintf("%s%s", BlockTransactionPrefixCheckpoint, checkpoint)
 }
 
 func (bt BlockTransaction) NewBlockTransactionKeySource() string {
@@ -129,12 +120,6 @@ func (bt *BlockTransaction) Save(st *storage.LevelDBBackend) (err error) {
 
 	bt.Confirmed = common.NowISO8601()
 	if err = st.New(GetBlockTransactionKey(bt.Hash), bt); err != nil {
-		return
-	}
-	if err = st.New(GetBlockTransactionKeyCheckpoint(bt.SourceCheckpoint), bt.Hash); err != nil {
-		return
-	}
-	if err = st.New(GetBlockTransactionKeyCheckpoint(bt.TargetCheckpoint), bt.Hash); err != nil {
 		return
 	}
 	if err = st.New(bt.NewBlockTransactionKeySource(), bt.Hash); err != nil {
@@ -245,16 +230,6 @@ func LoadBlockTransactionsInsideIterator(
 		}), (func() {
 			closeFunc()
 		})
-}
-
-func GetBlockTransactionByCheckpoint(st *storage.LevelDBBackend, checkpoint string) (bt BlockTransaction, err error) {
-	var hash string
-	if err = st.Get(GetBlockTransactionKeyCheckpoint(checkpoint), &hash); err != nil {
-		return
-	}
-	bt, err = GetBlockTransaction(st, hash)
-
-	return
 }
 
 func GetBlockTransactionsBySource(st *storage.LevelDBBackend, source string, reverse bool) (

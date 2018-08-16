@@ -2,6 +2,7 @@ package block
 
 import (
 	"fmt"
+	"math/rand"
 	"sync"
 	"testing"
 
@@ -9,7 +10,6 @@ import (
 	"boscoin.io/sebak/lib/observer"
 	"boscoin.io/sebak/lib/storage"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -31,7 +31,7 @@ func TestSaveExistingBlockAccount(t *testing.T) {
 	b := TestMakeBlockAccount()
 	b.Save(st)
 
-	err := b.Deposit(common.Amount(100), "fake-checkpoint")
+	err := b.Deposit(common.Amount(100))
 	require.Nil(t, err)
 
 	err = b.Save(st)
@@ -97,7 +97,7 @@ func TestGetSortedBlockAccounts(t *testing.T) {
 	}
 }
 
-func TestBlockAccountSaveBlockAccountCheckpoints(t *testing.T) {
+func TestBlockAccountSaveBlockAccountSequenceIDs(t *testing.T) {
 	st, _ := storage.NewTestMemoryLevelDBBackend()
 
 	b := TestMakeBlockAccount()
@@ -106,14 +106,14 @@ func TestBlockAccountSaveBlockAccountCheckpoints(t *testing.T) {
 	var saved []BlockAccount
 	saved = append(saved, *b)
 	for i := 0; i < 10; i++ {
-		b.Checkpoint = uuid.New().String()
+		b.SequenceID = rand.Uint64()
 		b.Save(st)
 
 		saved = append(saved, *b)
 	}
 
-	var fetched []BlockAccountCheckpoint
-	iterFunc, closeFunc := GetBlockAccountCheckpointByAddress(st, b.Address, false)
+	var fetched []BlockAccountSequenceID
+	iterFunc, closeFunc := GetBlockAccountSequenceIDByAddress(st, b.Address, false)
 	for {
 		bac, hasNext := iterFunc()
 		if !hasNext {
@@ -126,7 +126,7 @@ func TestBlockAccountSaveBlockAccountCheckpoints(t *testing.T) {
 	for i := 0; i < len(saved); i++ {
 		require.Equal(t, saved[i].Address, fetched[i].Address)
 		require.Equal(t, saved[i].Balance, fetched[i].Balance)
-		require.Equal(t, saved[i].Checkpoint, fetched[i].Checkpoint)
+		require.Equal(t, saved[i].SequenceID, fetched[i].SequenceID)
 	}
 }
 func TestBlockAccountObserver(t *testing.T) {
@@ -151,5 +151,5 @@ func TestBlockAccountObserver(t *testing.T) {
 
 	require.Equal(t, b.Address, triggered.Address)
 	require.Equal(t, b.Balance, triggered.Balance)
-	require.Equal(t, b.Checkpoint, triggered.Checkpoint)
+	require.Equal(t, b.SequenceID, triggered.SequenceID)
 }

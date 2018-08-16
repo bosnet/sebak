@@ -31,7 +31,7 @@ func TestAPIStreamRun(t *testing.T) {
 				return es
 			},
 			func(ob *observable.Observable) {
-				ob.Trigger("test1", block.NewBlockAccount("hello", 100, "tx1-tx1"))
+				ob.Trigger("test1", block.NewBlockAccount("hello", 100))
 			},
 			func(t testing.TB, res *http.Response) {
 				s := bufio.NewScanner(res.Body)
@@ -40,7 +40,7 @@ func TestAPIStreamRun(t *testing.T) {
 				var ba block.BlockAccount
 				require.Nil(t, json.Unmarshal(s.Bytes(), &ba))
 				require.Nil(t, s.Err())
-				require.Equal(t, ba, *block.NewBlockAccount("hello", 100, "tx1-tx1"))
+				require.Equal(t, ba, *block.NewBlockAccount("hello", 100))
 			},
 		},
 		{
@@ -62,7 +62,7 @@ func TestAPIStreamRun(t *testing.T) {
 				return es
 			},
 			func(ob *observable.Observable) {
-				ob.Trigger("test1", block.NewBlockAccount("hello", 100, "tx1-tx1"))
+				ob.Trigger("test1", block.NewBlockAccount("hello", 100))
 			},
 			func(t testing.TB, res *http.Response) {
 				s := bufio.NewScanner(res.Body)
@@ -71,7 +71,7 @@ func TestAPIStreamRun(t *testing.T) {
 				var ba block.BlockAccount
 				require.Nil(t, json.Unmarshal(s.Bytes(), &ba))
 				require.Nil(t, s.Err())
-				require.Equal(t, ba, *block.NewBlockAccount("hello", 100, "tx1-tx1"))
+				require.Equal(t, ba, *block.NewBlockAccount("hello", 100))
 			},
 		},
 		{
@@ -79,7 +79,7 @@ func TestAPIStreamRun(t *testing.T) {
 			[]string{"test1"},
 			func(w http.ResponseWriter, r *http.Request) *EventStream {
 				es := NewDefaultEventStream(w, r)
-				es.Render(block.NewBlockAccount("hello", 100, "tx1-tx1"))
+				es.Render(block.NewBlockAccount("hello", 100))
 				return es
 			},
 			nil, // no trigger
@@ -90,7 +90,7 @@ func TestAPIStreamRun(t *testing.T) {
 				var ba block.BlockAccount
 				require.Nil(t, json.Unmarshal(s.Bytes(), &ba))
 				require.Nil(t, s.Err())
-				require.Equal(t, ba, *block.NewBlockAccount("hello", 100, "tx1-tx1"))
+				require.Equal(t, ba, *block.NewBlockAccount("hello", 100))
 			},
 		},
 	}

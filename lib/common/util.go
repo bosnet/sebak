@@ -3,16 +3,12 @@ package common
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
-	"fmt"
 	"io"
 	"net/url"
 	"os"
-	"strings"
 	"sync"
 	"sync/atomic"
 
-	"github.com/btcsuite/btcutil/base58"
 	uuid "github.com/satori/go.uuid"
 	"github.com/stellar/go/keypair"
 )
@@ -126,25 +122,6 @@ func IsEmpty(path string) (bool, error) {
 		return true, nil
 	}
 	return false, err // Either not empty or error, suits both cases
-}
-
-func MakeCheckpoint(a, b string) string {
-	return fmt.Sprintf("%s-%s", a, b)
-}
-
-func ParseCheckpoint(a string) (p [2]string, err error) {
-	s := strings.SplitN(a, "-", 2)
-	if len(s) != 2 {
-		err = errors.New("invalid checkpoint")
-		return
-	}
-	p = [2]string{s[0], s[1]}
-	return
-}
-
-func MakeGenesisCheckpoint(networkID []byte) string {
-	h := base58.Encode(networkID)
-	return MakeCheckpoint(h, h)
 }
 
 func IsStringArrayEqual(a, b []string) bool {

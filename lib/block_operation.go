@@ -19,12 +19,11 @@ import (
 //  * get list by `Target` and created order
 
 const (
-	BlockOperationPrefixHash       string = "bo-hash-"       // bo-hash-<BlockOperation.Hash>
-	BlockOperationPrefixTxHash     string = "bo-txhash-"     // bo-txhash-<BlockOperation.TxHash>-<created>
-	BlockOperationPrefixSource     string = "bo-source-"     // bo-source-<BlockOperation.Source>-<created>
-	BlockOperationPrefixTarget     string = "bo-target-"     // bo-target-<BlockOperation.Target>-<created>
-	BlockOperationPrefixPeers      string = "bo-peers-"      // bo-target-<Address0>-<Address1>-<created>
-	BlockOperationPrefixCheckpoint string = "bo-checkpoint-" // bo-checkpoint-<Transaction.B.Checkpoint>-<created>
+	BlockOperationPrefixHash   string = "bo-hash-"   // bo-hash-<BlockOperation.Hash>
+	BlockOperationPrefixTxHash string = "bo-txhash-" // bo-txhash-<BlockOperation.TxHash>-<created>
+	BlockOperationPrefixSource string = "bo-source-" // bo-source-<BlockOperation.Source>-<created>
+	BlockOperationPrefixTarget string = "bo-target-" // bo-target-<BlockOperation.Target>-<created>
+	BlockOperationPrefixPeers  string = "bo-peers-"  // bo-target-<Address0>-<Address1>-<created>
 )
 
 type BlockOperation struct {
@@ -85,10 +84,6 @@ func (bo *BlockOperation) Save(st *storage.LevelDBBackend) (err error) {
 	if err = st.New(bo.NewBlockOperationTargetKey(), bo.Hash); err != nil {
 		return
 	}
-	if err = st.New(bo.NewBlockOperationCheckpoint(), bo.Hash); err != nil {
-		return
-	}
-
 	bo.isSaved = true
 
 	event := "saved"
@@ -125,10 +120,6 @@ func GetBlockOperationKeyPrefixTarget(target string) string {
 	return fmt.Sprintf("%s%s-", BlockOperationPrefixTarget, target)
 }
 
-func GetBlockOperationKeyPrefixCheckpoint(checkpoint string) string {
-	return fmt.Sprintf("%s%s-", BlockOperationPrefixCheckpoint, checkpoint)
-}
-
 func GetBlockOperationKeyPrefixPeers(one, two string) string {
 	return fmt.Sprintf("%s%s%s-", BlockOperationPrefixPeers, one, two)
 }
@@ -153,14 +144,6 @@ func (bo BlockOperation) NewBlockOperationTargetKey() string {
 	return fmt.Sprintf(
 		"%s%s",
 		GetBlockOperationKeyPrefixTarget(bo.Target),
-		common.GetUniqueIDFromUUID(),
-	)
-}
-
-func (bo BlockOperation) NewBlockOperationCheckpoint() string {
-	return fmt.Sprintf(
-		"%s%s",
-		GetBlockOperationKeyPrefixCheckpoint(bo.transaction.B.Checkpoint),
 		common.GetUniqueIDFromUUID(),
 	)
 }
@@ -240,15 +223,6 @@ func GetBlockOperationsByTarget(st *storage.LevelDBBackend, target string, rever
 	func(),
 ) {
 	iterFunc, closeFunc := st.GetIterator(GetBlockOperationKeyPrefixTarget(target), reverse)
-
-	return LoadBlockOperationsInsideIterator(st, iterFunc, closeFunc)
-}
-
-func GetBlockOperationsByCheckpoint(st *storage.LevelDBBackend, checkpoint string, reverse bool) (
-	func() (BlockOperation, bool),
-	func(),
-) {
-	iterFunc, closeFunc := st.GetIterator(GetBlockOperationKeyPrefixCheckpoint(checkpoint), reverse)
 
 	return LoadBlockOperationsInsideIterator(st, iterFunc, closeFunc)
 }

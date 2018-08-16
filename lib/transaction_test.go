@@ -1,8 +1,6 @@
 package sebak
 
 import (
-	"fmt"
-	"strings"
 	"testing"
 
 	"boscoin.io/sebak/lib/common"
@@ -88,16 +86,4 @@ func TestIsWellFormedTransactionWithInvalidSignature(t *testing.T) {
 
 	err = tx.IsWellFormed(networkID)
 	require.NotNil(t, err)
-}
-
-func TestTransactionIsValidCheckpoint(t *testing.T) {
-	networkID := []byte("hehe")
-	kpSource, _ := keypair.Random()
-
-	tx := TestMakeTransactionWithKeypair(networkID, 1, kpSource)
-	l := strings.SplitN(tx.B.Checkpoint, "-", 2)
-
-	newCheckpoint := fmt.Sprintf("%s-%s", l[0], TestGenerateNewCheckpoint())
-	require.Equal(t, tx.IsValidCheckpoint(tx.B.Checkpoint), true)
-	require.Equal(t, tx.IsValidCheckpoint(newCheckpoint), true)
 }
