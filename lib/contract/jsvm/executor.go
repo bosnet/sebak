@@ -1,6 +1,7 @@
 package jsvm
 
 import (
+	"log"
 	"regexp"
 
 	"boscoin.io/sebak/lib/contract/api"
@@ -62,12 +63,22 @@ func NewOttoExecutor(ctx context.Context, api api.API, deployCode *payload.Deplo
 	return ex
 }
 
-func (ex *OttoExecutor) Execute(c *payload.ExecCode) (retCode *value.Value, err error) {
+func (ex *OttoExecutor) Execute(c *payload.ExecCode) (*value.Value, error) {
 
 	function := ex.functions[c.Method]
-	ivalue, _ := function.Call(function, c.Args)
-	retCode, err = value.ToValue(ivalue)
-	return
+	ivalue, err := function.Call(function, c.Args)
+	if err != nil {
+		if ottoError, ok := err.(*otto.Error); ok {
+			log.Println(ottoError.String()) // line number from: https://github.com/robertkrimen/otto/issues/265
+		}
+		return nil, err
+	}
+
+	retCode, err := value.ToValue(ivalue)
+	if err != nil {
+		return nil, err
+	}
+	return retCode, nil
 }
 
 func (ex *OttoExecutor) RegisterFuncs() {
