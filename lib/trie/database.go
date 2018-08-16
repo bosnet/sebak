@@ -19,15 +19,15 @@ func NewEthDatabase(ldb *sebakstorage.LevelDBBackend) *EthDatabase {
 }
 
 func (db *EthDatabase) Put(key []byte, value []byte) error {
-	return db.ldbBackend.DB.Put(key, value, nil)
+	return db.ldbBackend.Core.Put(key, value, nil)
 }
 
 func (db *EthDatabase) Has(key []byte) (bool, error) {
-	return db.ldbBackend.DB.Has(key, nil)
+	return db.ldbBackend.Core.Has(key, nil)
 }
 
 func (db *EthDatabase) Get(key []byte) ([]byte, error) {
-	dat, err := db.ldbBackend.DB.Get(key, nil)
+	dat, err := db.ldbBackend.Core.Get(key, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -35,7 +35,7 @@ func (db *EthDatabase) Get(key []byte) ([]byte, error) {
 }
 
 func (db *EthDatabase) Delete(key []byte) error {
-	return db.ldbBackend.DB.Delete(key, nil)
+	return db.ldbBackend.Core.Delete(key, nil)
 }
 
 func (db *EthDatabase) Close() {
@@ -45,11 +45,15 @@ func (db *EthDatabase) Close() {
 }
 
 func (db *EthDatabase) NewBatch() ethdb.Batch {
-	return &ldbBatch{db: db.ldbBackend.DB, b: new(leveldb.Batch)}
+	return &ldbBatch{db: db.ldbBackend, b: new(leveldb.Batch)}
+}
+
+func (db *EthDatabase) BackEnd() *sebakstorage.LevelDBBackend {
+	return db.ldbBackend
 }
 
 type ldbBatch struct {
-	db   *leveldb.DB
+	db   *sebakstorage.LevelDBBackend
 	b    *leveldb.Batch
 	size int
 }
@@ -60,8 +64,14 @@ func (b *ldbBatch) Put(key, value []byte) error {
 	return nil
 }
 
+func (b *ldbBatch) Delete(key []byte) error {
+	b.b.Delete(key)
+	b.size += 1
+	return nil
+}
+
 func (b *ldbBatch) Write() error {
-	return b.db.Write(b.b, nil)
+	return b.db.Core.Write(b.b, nil)
 }
 
 func (b *ldbBatch) ValueSize() int {

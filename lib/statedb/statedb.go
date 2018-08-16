@@ -1,6 +1,7 @@
 package statedb
 
 import (
+	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/trie"
 	"fmt"
@@ -29,12 +30,34 @@ func (stateDB *StateDB) MarkStateObjectDirty(addr string) {
 	stateDB.stateObjectsDirty[addr] = struct{}{}
 }
 
+func (stateDB *StateDB) ExistAccount(addr string) bool {
+	if stateDB.getStateObject(addr) != nil {
+		return true
+	}
+	return false
+}
+
 func (stateDB *StateDB) GetOrNewStateObject(addr string) *stateObject {
 	stateObject := stateDB.getStateObject(addr)
 	if stateObject == nil {
 		stateObject = stateDB.createObject(addr)
 	}
 	return stateObject
+}
+
+func (stateDB *StateDB) GetCheckPoint(addr string) string {
+	stateObject := stateDB.getStateObject(addr)
+	if stateObject != nil {
+		return stateObject.Checkpoint()
+	}
+	return ""
+}
+func (stateDB *StateDB) GetBalance(addr string) string {
+	stateObject := stateDB.getStateObject(addr)
+	if stateObject != nil {
+		return stateObject.Balance()
+	}
+	return "0"
 }
 
 func (stateDB *StateDB) GetCode(addr string) []byte {
@@ -65,6 +88,13 @@ func (stateDB *StateDB) CreateAccount(addr string) {
 	stateDB.createObject(addr)
 }
 
+func (stateDB *StateDB) SetCheckpoint(addr string, checkpoint string) {
+	stateObject := stateDB.GetOrNewStateObject(addr)
+	if stateObject != nil {
+		stateObject.SetCheckpoint(checkpoint)
+	}
+}
+
 func (stateDB *StateDB) AddBalance(addr string, amount sebakcommon.Amount) {
 	stateObject := stateDB.GetOrNewStateObject(addr)
 	if stateObject != nil {
@@ -72,10 +102,24 @@ func (stateDB *StateDB) AddBalance(addr string, amount sebakcommon.Amount) {
 	}
 }
 
+func (stateDB *StateDB) AddBalanceWithCheckpoint(addr string, amount sebakcommon.Amount, checkpoint string) {
+	stateObject := stateDB.GetOrNewStateObject(addr)
+	if stateObject != nil {
+		stateObject.AddBalanceWithCheckpoint(amount, checkpoint)
+	}
+}
+
 func (stateDB *StateDB) SubBalance(addr string, amount sebakcommon.Amount) {
 	stateObject := stateDB.GetOrNewStateObject(addr)
 	if stateObject != nil {
 		stateObject.SubBalance(amount)
+	}
+}
+
+func (stateDB *StateDB) SubBalanceWithCheckpoint(addr string, amount sebakcommon.Amount, checkpoint string) {
+	stateObject := stateDB.GetOrNewStateObject(addr)
+	if stateObject != nil {
+		stateObject.SubBalanceWithCheckpoint(amount, checkpoint)
 	}
 }
 
@@ -104,8 +148,9 @@ func (stateDB *StateDB) getStateObject(addr string) (stateObject *stateObject) {
 	if len(enc) == 0 {
 		return nil
 	}
-	var data Account
-	if err := trie.DecodeBytes(enc, &data); err != nil {
+	var data block.BlockAccount
+
+	if err := data.Deserialize(enc); err != nil {
 		return nil
 	}
 	obj := newObject(addr, data, stateDB.db, stateDB.MarkStateObjectDirty)
@@ -118,7 +163,7 @@ func (stateDB *StateDB) setStateObject(object *stateObject) {
 }
 
 func (stateDB *StateDB) createObject(addr string) (newobj *stateObject) {
-	newobj = newObject(addr, Account{}, stateDB.db, stateDB.MarkStateObjectDirty)
+	newobj = newObject(addr, block.BlockAccount{Address: addr, Balance: "0"}, stateDB.db, stateDB.MarkStateObjectDirty)
 	stateDB.setStateObject(newobj)
 	return newobj
 }
@@ -130,6 +175,8 @@ func (stateDB *StateDB) updateStateObject(stateObject *stateObject) {
 		panic(fmt.Errorf("can't encode object at %x: %v", addr[:], err))
 	}
 	stateDB.trie.TryUpdate([]byte(addr), data)
+	//TODO: store the data into db with prefixes
+
 }
 
 func (stateDB *StateDB) CommitTrie() (root sebakcommon.Hash, err error) {
@@ -137,7 +184,6 @@ func (stateDB *StateDB) CommitTrie() (root sebakcommon.Hash, err error) {
 	for addr, stateObject := range stateDB.stateObjects {
 		if _, isDirty := stateDB.stateObjectsDirty[addr]; isDirty {
 			if _, err = stateObject.CommitTrie(); err != nil {
-				stateObject.CommitDB(stateObject.data.RootHash)
 				return sebakcommon.Hash{}, err
 			}
 			stateDB.updateStateObject(stateObject)
@@ -149,12 +195,14 @@ func (stateDB *StateDB) CommitTrie() (root sebakcommon.Hash, err error) {
 	return
 }
 
-func (stateDB *StateDB) CommitDB(root sebakcommon.Hash) {
+func (stateDB *StateDB) CommitDB(root sebakcommon.Hash) (err error) {
 	for addr, stateObject := range stateDB.stateObjects {
 		if _, isDirty := stateDB.stateObjectsCommitDirty[addr]; isDirty {
-			stateObject.CommitDB(stateObject.data.RootHash)
+			if err = stateObject.CommitDB(stateObject.data.RootHash); err != nil {
+				return
+			}
 			delete(stateDB.stateObjectsCommitDirty, addr)
 		}
 	}
-	stateDB.trie.CommitDB(root)
+	return stateDB.trie.CommitDB(root)
 }

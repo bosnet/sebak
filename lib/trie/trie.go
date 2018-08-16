@@ -23,6 +23,6 @@ func NewTrie(root sebakcommon.Hash, db *EthDatabase) *Trie {
 	}
 }
 
-func (t *Trie) CommitDB(root sebakcommon.Hash) {
-	t.DB.Commit(root, false)
+func (t *Trie) CommitDB(root sebakcommon.Hash) (err error) {
+	return t.DB.Commit(root, false)
 }
