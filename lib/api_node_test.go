@@ -92,10 +92,9 @@ func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, mn *network.HTTP2Net
 	st, _ := storage.NewTestMemoryLevelDBBackend()
 	// Make the latest block
 	{
-		checkpoint := common.MakeGenesisCheckpoint(networkID)
 		address := kp.Address()
 		balance := BaseFee.MustAdd(BaseFee)
-		account := block.NewBlockAccount(address, balance, checkpoint)
+		account := block.NewBlockAccount(address, balance)
 		account.Save(st)
 		MakeGenesisBlock(st, *account)
 	}

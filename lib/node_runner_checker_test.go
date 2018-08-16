@@ -20,7 +20,7 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 
 	TestMakeBlockAccount := func(balance common.Amount) (account *block.BlockAccount, kp *keypair.Full) {
 		kp, _ = keypair.Random()
-		account = block.NewBlockAccount(kp.Address(), balance, TestGenerateNewCheckpoint())
+		account = block.NewBlockAccount(kp.Address(), balance)
 
 		return
 	}
@@ -48,7 +48,7 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 		targetAccount.Save(nodeRunner.Storage())
 
 		tx := TestMakeTransactionWithKeypair(networkID, 1, rootKP, targetKP)
-		tx.B.Checkpoint = rootAccount.Checkpoint
+		tx.B.SequenceID = rootAccount.SequenceID
 		tx.Sign(rootKP, networkID)
 
 		runChecker(tx, nil)
@@ -61,7 +61,7 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 		targetAccount.Save(nodeRunner.Storage())
 
 		tx := TestMakeTransactionWithKeypair(networkID, 1, rootKP, targetKP)
-		tx.B.Checkpoint = rootAccount.Checkpoint
+		tx.B.SequenceID = rootAccount.SequenceID
 		tx.Sign(rootKP, networkID)
 
 		runChecker(tx, errors.ErrorTransactionSameSource)
@@ -95,7 +95,7 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 		sourceAccount.Save(nodeRunner.Storage())
 
 		tx := TestMakeTransactionWithKeypair(networkID, 1, sourceKP, targetKP)
-		tx.B.Checkpoint = sourceAccount.Checkpoint
+		tx.B.SequenceID = sourceAccount.SequenceID
 		tx.Sign(sourceKP, networkID)
 
 		runChecker(tx, errors.ErrorBlockAccountDoesNotExists)

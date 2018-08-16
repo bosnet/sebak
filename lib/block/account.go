@@ -22,22 +22,22 @@ import (
 
 const BlockAccountPrefixAddress string = "ba-address-"
 const BlockAccountPrefixCreated string = "ba-created-"
-const BlockAccountCheckpointPrefix string = "bac-ac-"
-const BlockAccountCheckpointByAddressPrefix string = "bac-aa-"
+const BlockAccountSequenceIDPrefix string = "bac-ac-"
+const BlockAccountSequenceIDByAddressPrefix string = "bac-aa-"
 
 type BlockAccount struct {
 	Address    string
 	Balance    string
-	Checkpoint string
+	SequenceID uint64
 	CodeHash   []byte
 	RootHash   common.Hash
 }
 
-func NewBlockAccount(address string, balance common.Amount, checkpoint string) *BlockAccount {
+func NewBlockAccount(address string, balance common.Amount) *BlockAccount {
 	return &BlockAccount{
 		Address:    address,
 		Balance:    balance.String(),
-		Checkpoint: checkpoint,
+		SequenceID: 0,
 	}
 }
 
@@ -68,8 +68,8 @@ func (b *BlockAccount) Save(st *storage.LevelDBBackend) (err error) {
 		observer.BlockAccountObserver.Trigger(event, b)
 	}
 
-	bac := BlockAccountCheckpoint{
-		Checkpoint: b.Checkpoint,
+	bac := BlockAccountSequenceID{
+		SequenceID: b.SequenceID,
 		Address:    b.Address,
 		Balance:    b.Balance,
 	}
@@ -153,12 +153,11 @@ func (b *BlockAccount) GetBalance() common.Amount {
 //
 // If the amount would make the account overflow over the full supply of coin,
 // an `error` is returned.
-func (b *BlockAccount) Deposit(fund common.Amount, checkpoint string) error {
+func (b *BlockAccount) Deposit(fund common.Amount) error {
 	if val, err := b.GetBalance().Add(fund); err != nil {
 		return err
 	} else {
 		b.Balance = val.String()
-		b.Checkpoint = checkpoint
 	}
 	return nil
 }
@@ -166,49 +165,49 @@ func (b *BlockAccount) Deposit(fund common.Amount, checkpoint string) error {
 // Remove fund from an account
 //
 // If the amount would make the account go negative, an `error` is returned.
-func (b *BlockAccount) Withdraw(fund common.Amount, checkpoint string) error {
+func (b *BlockAccount) Withdraw(fund common.Amount, sequenceID uint64) error {
 	if val, err := b.GetBalance().Sub(fund); err != nil {
 		return err
 	} else {
 		b.Balance = val.String()
-		b.Checkpoint = checkpoint
+		b.SequenceID = sequenceID
 	}
 	return nil
 }
 
-// BlockAccountCheckpoint is the one-and-one model of account and checkpoint in
+// BlockAccountSequenceID is the one-and-one model of account and sequenceID in
 // block. the storage should support,
 //  * find by `Address`:
-// 	- key: "`Address`-`Checkpoint`": value: `ID` of BlockAccountCheckpoint
+// 	- key: "`Address`-`SequenceID`": value: `ID` of BlockAccountSequenceID
 //  * get list by created order:
 //
 // models
-//  * 'address' and 'checkpoint'
-// 	- 'bac-<BlockAccountCheckpoint.Address>-<BlockAccountCheckpoint.Checkpoint>': `BlockAccountCheckpoint`
-type BlockAccountCheckpoint struct {
-	Checkpoint string
+//  * 'address' and 'sequenceID'
+// 	- 'bac-<BlockAccountSequenceID.Address>-<BlockAccountSequenceID.SequenceID>': `BlockAccountSequenceID`
+type BlockAccountSequenceID struct {
+	SequenceID uint64
 	Address    string
 	Balance    string
 }
 
-func GetBlockAccountCheckpointKey(address, checkpoint string) string {
-	return fmt.Sprintf("%s%s-%s", BlockAccountCheckpointPrefix, address, checkpoint)
+func GetBlockAccountSequenceIDKey(address string, sequenceID uint64) string {
+	return fmt.Sprintf("%s%s-%v", BlockAccountSequenceIDPrefix, address, sequenceID)
 }
 
-func GetBlockAccountCheckpointByAddressKey(address string) string {
-	return fmt.Sprintf("%s%s-%s", BlockAccountCheckpointByAddressPrefix, address, common.GetUniqueIDFromUUID())
+func GetBlockAccountSequenceIDByAddressKey(address string) string {
+	return fmt.Sprintf("%s%s-%s", BlockAccountSequenceIDByAddressPrefix, address, common.GetUniqueIDFromUUID())
 }
 
-func GetBlockAccountCheckpointByAddressKeyPrefix(address string) string {
-	return fmt.Sprintf("%s%s-", BlockAccountCheckpointByAddressPrefix, address)
+func GetBlockAccountSequenceIDByAddressKeyPrefix(address string) string {
+	return fmt.Sprintf("%s%s-", BlockAccountSequenceIDByAddressPrefix, address)
 }
 
-func (b *BlockAccountCheckpoint) String() string {
+func (b *BlockAccountSequenceID) String() string {
 	return string(common.MustJSONMarshal(b))
 }
 
-func (b *BlockAccountCheckpoint) Save(st *storage.LevelDBBackend) (err error) {
-	key := GetBlockAccountCheckpointKey(b.Address, b.Checkpoint)
+func (b *BlockAccountSequenceID) Save(st *storage.LevelDBBackend) (err error) {
+	key := GetBlockAccountSequenceIDKey(b.Address, b.SequenceID)
 
 	var exists bool
 	exists, err = st.Has(key)
@@ -224,37 +223,37 @@ func (b *BlockAccountCheckpoint) Save(st *storage.LevelDBBackend) (err error) {
 	}
 
 	if !exists {
-		keyByAddress := GetBlockAccountCheckpointByAddressKey(b.Address)
+		keyByAddress := GetBlockAccountSequenceIDByAddressKey(b.Address)
 		err = st.New(keyByAddress, key)
 	}
 
 	return
 }
 
-func GetBlockAccountCheckpoint(st *storage.LevelDBBackend, address, checkpoint string) (b BlockAccountCheckpoint, err error) {
-	if err = st.Get(GetBlockAccountCheckpointKey(address, checkpoint), &b); err != nil {
+func GetBlockAccountSequenceID(st *storage.LevelDBBackend, address string, sequenceID uint64) (b BlockAccountSequenceID, err error) {
+	if err = st.Get(GetBlockAccountSequenceIDKey(address, sequenceID), &b); err != nil {
 		return
 	}
 
 	return
 }
 
-func GetBlockAccountCheckpointByAddress(st *storage.LevelDBBackend, address string, reverse bool) (func() (BlockAccountCheckpoint, bool), func()) {
-	prefix := GetBlockAccountCheckpointByAddressKeyPrefix(address)
+func GetBlockAccountSequenceIDByAddress(st *storage.LevelDBBackend, address string, reverse bool) (func() (BlockAccountSequenceID, bool), func()) {
+	prefix := GetBlockAccountSequenceIDByAddressKeyPrefix(address)
 	iterFunc, closeFunc := st.GetIterator(prefix, reverse)
 
-	return (func() (BlockAccountCheckpoint, bool) {
+	return (func() (BlockAccountSequenceID, bool) {
 			item, hasNext := iterFunc()
 			if !hasNext {
-				return BlockAccountCheckpoint{}, false
+				return BlockAccountSequenceID{}, false
 			}
 
 			var key string
 			json.Unmarshal(item.Value, &key)
 
-			var bac BlockAccountCheckpoint
+			var bac BlockAccountSequenceID
 			if err := st.Get(key, &bac); err != nil {
-				return BlockAccountCheckpoint{}, false
+				return BlockAccountSequenceID{}, false
 			}
 			return bac, hasNext
 		}), (func() {

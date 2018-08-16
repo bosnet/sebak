@@ -45,12 +45,12 @@ func (stateDB *StateDB) GetOrNewStateObject(addr string) *stateObject {
 	return stateObject
 }
 
-func (stateDB *StateDB) GetCheckPoint(addr string) string {
+func (stateDB *StateDB) GetCheckPoint(addr string) uint64 {
 	stateObject := stateDB.getStateObject(addr)
 	if stateObject != nil {
-		return stateObject.Checkpoint()
+		return stateObject.SequenceID()
 	}
-	return ""
+	panic("No such sequenceID")
 }
 func (stateDB *StateDB) GetBalance(addr string) string {
 	stateObject := stateDB.getStateObject(addr)
@@ -88,10 +88,10 @@ func (stateDB *StateDB) CreateAccount(addr string) {
 	stateDB.createObject(addr)
 }
 
-func (stateDB *StateDB) SetCheckpoint(addr string, checkpoint string) {
+func (stateDB *StateDB) SetSequenceID(addr string, sequenceID uint64) {
 	stateObject := stateDB.GetOrNewStateObject(addr)
 	if stateObject != nil {
-		stateObject.SetCheckpoint(checkpoint)
+		stateObject.SetSequenceID(sequenceID)
 	}
 }
 
@@ -102,10 +102,10 @@ func (stateDB *StateDB) AddBalance(addr string, amount common.Amount) {
 	}
 }
 
-func (stateDB *StateDB) AddBalanceWithCheckpoint(addr string, amount common.Amount, checkpoint string) {
+func (stateDB *StateDB) AddBalanceWithSequenceID(addr string, amount common.Amount, sequenceID uint64) {
 	stateObject := stateDB.GetOrNewStateObject(addr)
 	if stateObject != nil {
-		stateObject.AddBalanceWithCheckpoint(amount, checkpoint)
+		stateObject.AddBalanceWithSequenceID(amount, sequenceID)
 	}
 }
 
@@ -116,10 +116,10 @@ func (stateDB *StateDB) SubBalance(addr string, amount common.Amount) {
 	}
 }
 
-func (stateDB *StateDB) SubBalanceWithCheckpoint(addr string, amount common.Amount, checkpoint string) {
+func (stateDB *StateDB) SubBalanceWithSequenceID(addr string, amount common.Amount, sequenceID uint64) {
 	stateObject := stateDB.GetOrNewStateObject(addr)
 	if stateObject != nil {
-		stateObject.SubBalanceWithCheckpoint(amount, checkpoint)
+		stateObject.SubBalanceWithSequenceID(amount, sequenceID)
 	}
 }
 

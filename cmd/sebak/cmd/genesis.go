@@ -56,7 +56,7 @@ func init() {
 //
 // Params:
 //   address   = public address of the account owning the genesis block
-//   networkID = `--network-id` argument, used for the block's checkpoint
+//   networkID = `--network-id` argument, used for signing
 //   balanceStr = Amount of coins to put in the account
 //                If not provided, `flagBalance`, which is the value set in the env
 //                when called from another module, will be used
@@ -123,11 +123,9 @@ func MakeGenesisBlock(addressStr, networkID, balanceStr, storageUri string) (str
 		return "<public key>", errors.New("account is already created")
 	}
 
-	// checkpoint of genesis block is created by `--network-id`
 	account := block.NewBlockAccount(
 		kp.Address(),
 		balance,
-		common.MakeGenesisCheckpoint([]byte(flagNetworkID)),
 	)
 	account.Save(st)
 

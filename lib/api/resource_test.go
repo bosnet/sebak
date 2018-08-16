@@ -22,7 +22,7 @@ func TestAPIResourceAccount(t *testing.T) {
 		ba.Save(storage)
 		ra := &APIResourceAccount{
 			accountId:  ba.Address,
-			checkpoint: ba.Checkpoint,
+			sequenceID: ba.SequenceID,
 			balance:    ba.Balance,
 		}
 		r := ra.Resource()
@@ -35,7 +35,7 @@ func TestAPIResourceAccount(t *testing.T) {
 			m := f.(map[string]interface{})
 			require.Equal(t, ba.Address, m["account_id"])
 			require.Equal(t, ba.Address, m["id"])
-			require.Equal(t, ba.Checkpoint, m["checkpoint"])
+			require.Equal(t, ba.SequenceID, uint64(m["sequence_id"].(float64)))
 			require.Equal(t, ba.Balance, m["balance"])
 
 			l := m["_links"].(map[string]interface{})
@@ -52,16 +52,14 @@ func TestAPIResourceAccount(t *testing.T) {
 		bt.Save(storage)
 
 		rt := &APIResourceTransaction{
-			hash:               bt.Hash,
-			previousCheckpoint: bt.PreviousCheckpoint,
-			sourceCheckpoint:   bt.SourceCheckpoint,
-			targetCheckpoint:   bt.TargetCheckpoint,
-			signature:          bt.Signature,
-			source:             bt.Source,
-			fee:                bt.Fee.String(),
-			amount:             bt.Amount.String(),
-			created:            bt.Created,
-			operations:         bt.Operations,
+			hash:       bt.Hash,
+			sequenceID: bt.SequenceID,
+			signature:  bt.Signature,
+			source:     bt.Source,
+			fee:        bt.Fee.String(),
+			amount:     bt.Amount.String(),
+			created:    bt.Created,
+			operations: bt.Operations,
 		}
 		r := rt.Resource()
 		j, _ := json.MarshalIndent(r, "", " ")
@@ -75,8 +73,6 @@ func TestAPIResourceAccount(t *testing.T) {
 			require.Equal(t, bt.Hash, m["hash"])
 			require.Equal(t, bt.Source, m["account"])
 			require.Equal(t, bt.Fee.String(), m["fee_paid"])
-			require.Equal(t, bt.SourceCheckpoint, m["source_checkpoint"])
-			require.Equal(t, bt.TargetCheckpoint, m["target_checkpoint"])
 			require.Equal(t, bt.Created, m["created_at"])
 			require.Equal(t, float64(len(bt.Operations)), m["operation_count"])
 

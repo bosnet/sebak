@@ -107,9 +107,9 @@ func init() {
 
 			// TODO: Validate that the account doesn't already exists
 			if flagCreateAccount {
-				tx = makeTransactionCreateAccount(sender, receiver, amount, senderAccount.Checkpoint)
+				tx = makeTransactionCreateAccount(sender, receiver, amount, senderAccount.SequenceID)
 			} else {
-				tx = makeTransactionPayment(sender, receiver, amount, senderAccount.Checkpoint)
+				tx = makeTransactionPayment(sender, receiver, amount, senderAccount.SequenceID)
 			}
 
 			tx.Sign(sender, []byte(flagNetworkID))
@@ -152,12 +152,12 @@ func init() {
 ///   kpSource = Sender's keypair.Full seed/address
 ///   kpDest   = Newly created account's address
 ///   amount   = Amount to send as initial value
-///   chkp     = Checkpoint of the last transaction
+///   seqid    = SequenceID of the last transaction
 ///
 /// Returns:
 ///   `sebak.Transaction` = The generated `Transaction` creating the account
 ///
-func makeTransactionCreateAccount(kpSource keypair.KP, kpDest keypair.KP, amount common.Amount, chkp string) sebak.Transaction {
+func makeTransactionCreateAccount(kpSource keypair.KP, kpDest keypair.KP, amount common.Amount, seqid uint64) sebak.Transaction {
 	opb := sebak.NewOperationBodyCreateAccount(kpDest.Address(), amount)
 
 	op := sebak.Operation{
@@ -170,7 +170,7 @@ func makeTransactionCreateAccount(kpSource keypair.KP, kpDest keypair.KP, amount
 	txBody := sebak.TransactionBody{
 		Source:     kpSource.Address(),
 		Fee:        sebak.BaseFee,
-		Checkpoint: chkp,
+		SequenceID: seqid,
 		Operations: []sebak.Operation{op},
 	}
 
@@ -196,12 +196,12 @@ func makeTransactionCreateAccount(kpSource keypair.KP, kpDest keypair.KP, amount
 ///   kpSource = Sender's keypair.Full seed/address
 ///   kpDest   = Receiver's keypair.FromAddress address
 ///   amount   = Amount to send as initial value
-///   chkp     = Checkpoint of the last transaction
+///   seqid    = SequenceID of the last transaction
 ///
 /// Returns:
 ///  `sebak.Transaction` = The generated `Transaction` to do a payment
 ///
-func makeTransactionPayment(kpSource keypair.KP, kpDest keypair.KP, amount common.Amount, chkp string) sebak.Transaction {
+func makeTransactionPayment(kpSource keypair.KP, kpDest keypair.KP, amount common.Amount, seqid uint64) sebak.Transaction {
 	opb := sebak.NewOperationBodyPayment(kpDest.Address(), amount)
 
 	op := sebak.Operation{
@@ -214,7 +214,7 @@ func makeTransactionPayment(kpSource keypair.KP, kpDest keypair.KP, amount commo
 	txBody := sebak.TransactionBody{
 		Source:     kpSource.Address(),
 		Fee:        common.Amount(sebak.BaseFee),
-		Checkpoint: chkp,
+		SequenceID: seqid,
 		Operations: []sebak.Operation{op},
 	}
 

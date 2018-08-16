@@ -78,8 +78,8 @@ func (so *stateObject) Code() []byte {
 	}
 }
 
-func (so *stateObject) Checkpoint() string {
-	return so.data.Checkpoint
+func (so *stateObject) SequenceID() uint64 {
+	return so.data.SequenceID
 }
 
 func (so *stateObject) GetState(key common.Hash) common.Hash {
@@ -123,8 +123,8 @@ func (so *stateObject) AddBalance(amount common.Amount) (err error) {
 	return
 }
 
-func (so *stateObject) AddBalanceWithCheckpoint(amount common.Amount, checkpoint string) (err error) {
-	so.data.Checkpoint = checkpoint
+func (so *stateObject) AddBalanceWithSequenceID(amount common.Amount, sequenceID uint64) (err error) {
+	so.data.SequenceID = sequenceID
 	so.AddBalance(amount)
 	return
 }
@@ -140,14 +140,14 @@ func (so *stateObject) SubBalance(amount common.Amount) (err error) {
 	return
 }
 
-func (so *stateObject) SubBalanceWithCheckpoint(amount common.Amount, checkpoint string) (err error) {
-	so.data.Checkpoint = checkpoint
+func (so *stateObject) SubBalanceWithSequenceID(amount common.Amount, sequenceID uint64) (err error) {
+	so.data.SequenceID = sequenceID
 	so.SubBalance(amount)
 	return
 }
 
-func (so *stateObject) SetCheckpoint(checkpoint string) {
-	so.data.Checkpoint = checkpoint
+func (so *stateObject) SetSequenceID(sequenceID uint64) {
+	so.data.SequenceID = sequenceID
 	if so.onDirty != nil {
 		so.onDirty(so.Address())
 		so.onDirty = nil
@@ -218,8 +218,8 @@ func (so *stateObject) Save() (err error) {
 		observer.BlockAccountObserver.Trigger(event, &so.data)
 	}
 
-	bac := block.BlockAccountCheckpoint{
-		Checkpoint: so.data.Checkpoint,
+	bac := block.BlockAccountSequenceID{
+		SequenceID: so.data.SequenceID,
 		Address:    so.Address(),
 		Balance:    so.data.Balance,
 	}

@@ -70,7 +70,6 @@ func FinishOperationCreateAccount(st *storage.LevelDBBackend, tx Transaction, op
 	baTarget = block.NewBlockAccount(
 		op.B.TargetAddress(),
 		op.B.GetAmount(),
-		tx.NextTargetCheckpoint(),
 	)
 	if err = baTarget.Save(st); err != nil {
 		return

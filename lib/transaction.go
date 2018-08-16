@@ -29,7 +29,7 @@ type TransactionFromJSON struct {
 type TransactionBodyFromJSON struct {
 	Source     string              `json:"source"`
 	Fee        common.Amount       `json:"fee"`
-	Checkpoint string              `json:"checkpoint"`
+	SequenceID uint64              `json:"sequenceid"`
 	Operations []OperationFromJSON `json:"operations"`
 }
 
@@ -53,14 +53,14 @@ func NewTransactionFromJSON(b []byte) (tx Transaction, err error) {
 	tx.B = TransactionBody{
 		Source:     txt.B.Source,
 		Fee:        txt.B.Fee,
-		Checkpoint: txt.B.Checkpoint,
+		SequenceID: txt.B.SequenceID,
 		Operations: operations,
 	}
 
 	return
 }
 
-func NewTransaction(source, checkpoint string, ops ...Operation) (tx Transaction, err error) {
+func NewTransaction(source string, sequenceID uint64, ops ...Operation) (tx Transaction, err error) {
 	if len(ops) < 1 {
 		err = errors.ErrorTransactionEmptyOperations
 		return
@@ -69,7 +69,7 @@ func NewTransaction(source, checkpoint string, ops ...Operation) (tx Transaction
 	txBody := TransactionBody{
 		Source:     source,
 		Fee:        BaseFee,
-		Checkpoint: checkpoint,
+		SequenceID: sequenceID,
 		Operations: ops,
 	}
 
@@ -86,7 +86,7 @@ func NewTransaction(source, checkpoint string, ops ...Operation) (tx Transaction
 }
 
 var TransactionWellFormedCheckerFuncs = []common.CheckerFunc{
-	CheckTransactionCheckpoint,
+	CheckTransactionSequenceID,
 	CheckTransactionSource,
 	CheckTransactionBaseFee,
 	CheckTransactionOperation,
@@ -111,7 +111,7 @@ func (tx Transaction) IsWellFormed(networkID []byte) (err error) {
 
 // Validate checks,
 // * source account exists
-// * checkpoint is valid
+// * sequenceID is valid
 // * source has enough balance to pay
 // * and it's `Operations`
 func (tx Transaction) Validate(st *storage.LevelDBBackend) (err error) {
@@ -122,22 +122,22 @@ func (tx Transaction) Validate(st *storage.LevelDBBackend) (err error) {
 		return
 	}
 
-	// check, checkpoint is based on latest checkpoint
-	if !tx.IsValidCheckpoint(ba.Checkpoint) {
-		err = errors.ErrorTransactionInvalidCheckpoint
+	// check, sequenceID is based on latest sequenceID
+	if !tx.IsValidSequenceID(ba.SequenceID) {
+		err = errors.ErrorTransactionInvalidSequenceID
 		return
 	}
 
-	// get the balance at checkpoint
-	var bac block.BlockAccountCheckpoint
-	bac, err = block.GetBlockAccountCheckpoint(st, tx.B.Source, tx.B.Checkpoint)
+	// get the balance at sequenceID
+	var bac block.BlockAccountSequenceID
+	bac, err = block.GetBlockAccountSequenceID(st, tx.B.Source, tx.B.SequenceID)
 	if err != nil {
 		return
 	}
 
 	totalAmount := tx.TotalAmount(true)
 
-	// check, have enough balance at checkpoint
+	// check, have enough balance at sequenceID
 	if common.MustAmountFromString(bac.Balance) < totalAmount {
 		err = errors.ErrorTransactionExcessAbilityToPay
 		return
@@ -160,21 +160,8 @@ func (tx Transaction) Equal(m common.Message) bool {
 	return tx.H.Hash == m.GetHash()
 }
 
-func (tx Transaction) IsValidCheckpoint(checkpoint string) bool {
-	if tx.B.Checkpoint == checkpoint {
-		return true
-	}
-
-	var err error
-	var inputCheckpoint, currentCheckpoint [2]string
-	if inputCheckpoint, err = common.ParseCheckpoint(checkpoint); err != nil {
-		return false
-	}
-	if currentCheckpoint, err = common.ParseCheckpoint(tx.B.Checkpoint); err != nil {
-		return false
-	}
-
-	return inputCheckpoint[0] == currentCheckpoint[0]
+func (tx Transaction) IsValidSequenceID(sequenceID uint64) bool {
+	return tx.B.SequenceID == sequenceID
 }
 
 func (tx Transaction) GetHash() string {
@@ -229,19 +216,12 @@ func (tx *Transaction) Sign(kp keypair.KP, networkID []byte) {
 	return
 }
 
-// NextSourceCheckpoint generate new checkpoint from current Transaction. It has
-// 2 part, "<subtracted>-<added>".
+// NextSourceSequenceID returns the next sequenceID from the current Transaction.
 //
-// <subtracted>: hash of last paid transaction, it means balance is subtracted
-// <added>: hash of last added transaction, it means balance is added
-func (tx Transaction) NextSourceCheckpoint() string {
-	return common.MakeCheckpoint(tx.GetHash(), tx.GetHash())
-}
-
-func (tx Transaction) NextTargetCheckpoint() string {
-	parsed, _ := common.ParseCheckpoint(tx.B.Checkpoint)
-
-	return common.MakeCheckpoint(parsed[0], tx.GetHash())
+// The sequenceID is simply the hash of the last paid transaction.
+// It is present to prevent replay attacks.
+func (tx Transaction) NextSequenceID() uint64 {
+	return tx.B.SequenceID + 1
 }
 
 type TransactionHeader struct {
@@ -254,7 +234,7 @@ type TransactionHeader struct {
 type TransactionBody struct {
 	Source     string        `json:"source"`
 	Fee        common.Amount `json:"fee"`
-	Checkpoint string        `json:"checkpoint"`
+	SequenceID uint64        `json:"sequenceID"`
 	Operations []Operation   `json:"operations"`
 }
 
