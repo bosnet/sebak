@@ -60,7 +60,7 @@ func CheckNodeRunnerHandleTransactionsGetMissingTransaction(c sebakcommon.Checke
               tx, _ := checker.NodeRunner.Consensus().TransactionPool.Get(hash)
 				// where is the proposer?
                var proposer = tx.B.Source
-			   log.Panicln("proposer's addr;",proposer)
+			   log.Println("proposer's addr;",proposer)
                var connection *sebakcommon.HTTP2Client
 			   if connection, err = sebakcommon.NewHTTP2Client(0,0,true) ; err != nil {
 				   log.Fatal("Error ; Can not connect to Proposer")
