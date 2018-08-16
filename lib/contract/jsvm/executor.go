@@ -84,6 +84,7 @@ func (ex *OttoExecutor) Execute(c *payload.ExecCode) (*value.Value, error) {
 func (ex *OttoExecutor) RegisterFuncs() {
 	ex.VM.Set("HelloWorld", HelloWorldFunc(ex.api))
 	ex.VM.Set("CallContract", CallContractFunc(ex.api))
+	ex.VM.Set("GetBalance", GetBalanceFunc(ex.api))
 }
 
 func contains(slice []string, item string) bool {

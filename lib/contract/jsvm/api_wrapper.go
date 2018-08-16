@@ -25,6 +25,22 @@ func HelloWorldFunc(api api.API) func(otto.FunctionCall) otto.Value {
 	}
 }
 
+func GetBalanceFunc(api api.API) func(otto.FunctionCall) otto.Value {
+	return func(call otto.FunctionCall) otto.Value {
+		amount, err := api.GetBalance()
+		if err != nil {
+			panic(err)
+		}
+
+		ret, err := otto.ToValue(amount)
+		if err != nil {
+			panic(err)
+		}
+
+		return ret
+	}
+}
+
 func CallContractFunc(api api.API) func(otto.FunctionCall) otto.Value {
 	return func(call otto.FunctionCall) otto.Value {
 		address, err := call.Argument(0).ToString()
