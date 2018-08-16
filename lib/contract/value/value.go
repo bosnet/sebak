@@ -2,8 +2,9 @@ package value
 
 import (
 	"encoding/binary"
-	"github.com/robertkrimen/otto"
 	"io"
+
+	"github.com/robertkrimen/otto"
 )
 
 type Type int

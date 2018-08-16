@@ -64,7 +64,7 @@ func (a *MockAPI) SetPutStorageItemFunc(f PutStorageItemFunc) {
 	a.putStorageItemFunc = f
 }
 
-func (a *MockAPI) SetCallContractfunc(f CallContractFunc) {
+func (a *MockAPI) SetCallContractFunc(f CallContractFunc) {
 	a.callContractFunc = f
 }
 

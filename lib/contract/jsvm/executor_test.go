@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_JSVM_Executor(t *testing.T) {
+func TestJSVMExecutor(t *testing.T) {
 	testAddress := "testadress"
 	testCode := `
 function Hello(helloarg){
