@@ -252,7 +252,7 @@ func (nr *NodeRunner) handleMessage() {
 			if _, ok := err.(sebakcommon.CheckerErrorStop); ok {
 				continue
 			}
-			nr.log.Debug("stop handling sebaknetwork.Message", "message", message.Head(50), "error", err)
+			nr.log.Error("failed to handle sebaknetwork.Message", "message", message.Head(50), "error", err)
 		}
 	}
 }
@@ -269,8 +269,8 @@ func (nr *NodeRunner) handleMessageFromClient(message sebaknetwork.Message) (err
 	}
 
 	if err = sebakcommon.RunChecker(checker, nr.handleMessageCheckerDeferFunc); err != nil {
-		if _, ok := err.(sebakcommon.CheckerErrorStop); ok {
-			return
+		if _, ok := err.(sebakcommon.CheckerErrorStop); !ok {
+			nr.log.Error("failed to handle message from client", "error", err)
 		}
 		return
 	}
@@ -293,6 +293,7 @@ func (nr *NodeRunner) handleBallotMessage(message sebaknetwork.Message) (err err
 	err = sebakcommon.RunChecker(baseChecker, nr.handleMessageCheckerDeferFunc)
 	if err != nil {
 		if _, ok := err.(sebakcommon.CheckerErrorStop); !ok {
+			nr.log.Error("failed to handle ballot", "error", err, "state", "base")
 			return
 		}
 	}
@@ -322,6 +323,7 @@ func (nr *NodeRunner) handleBallotMessage(message sebaknetwork.Message) (err err
 	err = sebakcommon.RunChecker(checker, nr.handleMessageCheckerDeferFunc)
 	if err != nil {
 		if _, ok := err.(sebakcommon.CheckerErrorStop); !ok {
+			nr.log.Error("failed to handle ballot", "error", err, "state", baseChecker.Ballot.State())
 			return
 		}
 	}
@@ -356,7 +358,7 @@ func (nr *NodeRunner) InitRound() {
 		}
 	}
 
-	nr.log.Debug("connectivity checked")
+	nr.log.Debug("caught up with network and connected to all validators")
 
 	go nr.startRound()
 }
