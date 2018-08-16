@@ -26,13 +26,9 @@ func TestNodeRunnerLimitIncomingBallotsFromUnknownValidator(t *testing.T) {
 	kpNewAccount, _ := keypair.Random()
 
 	// create new account in all nodes
-	var account *BlockAccount
 	checkpoint := uuid.New().String() // set initial checkpoint
+	account := NewBlockAccount(kp.Address(), BaseFee.MustAdd(1), checkpoint)
 	for _, nr := range nodeRunners {
-		address := kp.Address()
-		balance := BaseFee.MustAdd(1)
-
-		account = NewBlockAccount(address, balance, checkpoint)
 		account.Save(nr.Storage())
 	}
 

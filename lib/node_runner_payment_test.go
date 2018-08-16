@@ -22,21 +22,11 @@ func TestNodeRunnerPayment(t *testing.T) {
 	kpTarget, _ := keypair.Random()
 
 	checkpoint := sebakcommon.MakeGenesisCheckpoint(networkID)
-	var accountSource, accountTarget *BlockAccount
+	accountSource := NewBlockAccount(kpSource.Address(), BaseFee.MustAdd(1), checkpoint)
+	accountTarget := NewBlockAccount(kpTarget.Address(), sebakcommon.Amount(2000), checkpoint)
 	for _, nr := range nodeRunners {
-		{
-			address := kpSource.Address()
-			balance := BaseFee.MustAdd(1)
-
-			accountSource = NewBlockAccount(address, balance, checkpoint)
-			accountSource.Save(nr.Storage())
-		}
-
-		{
-			balance := sebakcommon.Amount(2000)
-			accountTarget = NewBlockAccount(kpTarget.Address(), balance, checkpoint)
-			accountTarget.Save(nr.Storage())
-		}
+		accountSource.Save(nr.Storage())
+		accountTarget.Save(nr.Storage())
 	}
 
 	amount := sebakcommon.Amount(1)
@@ -91,14 +81,12 @@ func TestNodeRunnerSerializedPayment(t *testing.T) {
 	targetKP, _ := keypair.Random()
 
 	checkpoint := sebakcommon.MakeGenesisCheckpoint(networkID)
-	var sourceAccount, targetAccount *BlockAccount
+	balance := BaseFee.MustAdd(1).MustAdd(BaseFee.MustAdd(1))
+	sourceAccount := NewBlockAccount(sourceKP.Address(), balance, checkpoint)
+	targetAccount := NewBlockAccount(targetKP.Address(), balance, checkpoint)
+
 	for _, nr := range nodeRunners {
-		balance := BaseFee.MustAdd(1).MustAdd(BaseFee.MustAdd(1))
-
-		sourceAccount = NewBlockAccount(sourceKP.Address(), balance, checkpoint)
 		sourceAccount.Save(nr.Storage())
-
-		targetAccount = NewBlockAccount(targetKP.Address(), balance, checkpoint)
 		targetAccount.Save(nr.Storage())
 	}
 
