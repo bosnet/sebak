@@ -3,6 +3,7 @@ package test
 import (
 	"fmt"
 
+	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/contract/context"
 	"boscoin.io/sebak/lib/contract/payload"
 	"boscoin.io/sebak/lib/contract/storage"
@@ -14,15 +15,18 @@ type (
 	GetStorageItemFunc func(context.Context, string) (*storage.StorageItem, error)
 	PutStorageItemFunc func(context.Context, string, *storage.StorageItem) error
 	CallContractFunc   func(context.Context, *payload.ExecCode) (*value.Value, error)
+	GetBalanceFunc     func(context.Context) (sebakcommon.Amount, error)
 )
 
 type MockAPI struct {
-	Address            string
-	ctx                context.Context
+	Address string
+	ctx     context.Context
+
 	helloworldFunc     HelloworldFunc
 	getStorageItemFunc GetStorageItemFunc
 	putStorageItemFunc PutStorageItemFunc
 	callContractFunc   CallContractFunc
+	getBalanceFunc     GetBalanceFunc
 }
 
 func NewMockAPI(ctx context.Context, address string) *MockAPI {
@@ -45,6 +49,8 @@ func (a *MockAPI) SetFunc(f interface{}) (err error) {
 		a.putStorageItemFunc = f.(PutStorageItemFunc)
 	case CallContractFunc:
 		a.callContractFunc = f.(CallContractFunc)
+	case GetBalanceFunc:
+		a.getBalanceFunc = f.(GetBalanceFunc)
 	default:
 		err = fmt.Errorf("this func doesn't match for mock api")
 	}
@@ -64,8 +70,12 @@ func (a *MockAPI) SetPutStorageItemFunc(f PutStorageItemFunc) {
 	a.putStorageItemFunc = f
 }
 
-func (a *MockAPI) SetCallContractfunc(f CallContractFunc) {
+func (a *MockAPI) SetCallContractFunc(f CallContractFunc) {
 	a.callContractFunc = f
+}
+
+func (a *MockAPI) SetGetBalanceFunc(f GetBalanceFunc) {
+	a.getBalanceFunc = f
 }
 
 func (a *MockAPI) Helloworld(msg string) (string, error) {
@@ -86,6 +96,11 @@ func (a *MockAPI) PutStorageItem(key string, item *storage.StorageItem) error {
 func (a *MockAPI) CallContract(code *payload.ExecCode) (*value.Value, error) {
 	a.checkFunc(a.callContractFunc)
 	return a.callContractFunc(a.ctx, code)
+}
+
+func (a *MockAPI) GetBalance() (sebakcommon.Amount, error) {
+	a.checkFunc(a.getBalanceFunc)
+	return a.getBalanceFunc(a.ctx)
 }
 
 func (a *MockAPI) GetBlockHeight() int64 {

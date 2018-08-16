@@ -3,6 +3,7 @@ package sebak
 import (
 	"time"
 
+	sebakcommon "boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/contract/payload"
 	"boscoin.io/sebak/lib/contract/storage"
 	"boscoin.io/sebak/lib/contract/value"
@@ -43,12 +44,12 @@ func (a *ContractAPI) PutStorageItem(key string, item *storage.StorageItem) erro
 }
 
 // Get this contract's balance
-func (a *ContractAPI) GetBalance() (string, error) {
+func (a *ContractAPI) GetBalance() (sebakcommon.Amount, error) {
 	ba, err := GetBlockAccount(a.stateDB, a.contractAddress)
 	if err != nil {
-		return "0", err
+		return 0, err
 	}
-	return ba.Balance, nil
+	return sebakcommon.AmountFromString(ba.Balance)
 }
 
 // Call another contract

@@ -2,8 +2,9 @@ package value
 
 import (
 	"encoding/binary"
-	"github.com/robertkrimen/otto"
 	"io"
+
+	"github.com/robertkrimen/otto"
 )
 
 type Type int
@@ -42,20 +43,27 @@ func StringValue(s string) *Value {
 func ToValue(ottoValue otto.Value) (*Value, error) {
 	//ottoValue.Export()
 	var v = new(Value)
-	var err error
 	if ottoValue.IsNumber() {
-		var intValue int64
-		intValue, err = ottoValue.ToInteger()
+		intValue, err := ottoValue.ToInteger()
+		if err != nil {
+			return nil, err
+		}
+
 		v.Type = Int
-		v.Contents = make([]byte, 4)
+		v.Contents = make([]byte, 8)
 		binary.LittleEndian.PutUint64(v.Contents, uint64(intValue))
+
 	} else if ottoValue.IsString() {
-		var strValue string
-		strValue, err = ottoValue.ToString()
+		strValue, err := ottoValue.ToString()
+		if err != nil {
+			return nil, err
+		}
+
 		v.Type = String
 		v.Contents = []byte(strValue)
+
 	} else {
-		panic("not yet supported type")
+		panic("value.ToValue: not yet supported type")
 	}
-	return v, err
+	return v, nil
 }
