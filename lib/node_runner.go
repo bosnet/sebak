@@ -446,7 +446,7 @@ func (nr *NodeRunner) readyToProposeNewBallot(roundNumber uint64) {
 	go func() {
 		<-timer.C
 
-		if err := nr.proposeNewBallot(roundNumber); err != nil {
+		if err := nr.ProposeNewBallot(roundNumber); err != nil {
 			nr.log.Error("failed to proposeNewBallot", "round", roundNumber, "error", err)
 			go nr.StartNewRound(roundNumber)
 		}
@@ -455,7 +455,7 @@ func (nr *NodeRunner) readyToProposeNewBallot(roundNumber uint64) {
 	return
 }
 
-func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) error {
+func (nr *NodeRunner) ProposeNewBallot(roundNumber uint64) error {
 	// start new round
 	round := Round{
 		Number:      roundNumber,
