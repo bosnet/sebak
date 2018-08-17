@@ -41,9 +41,12 @@ func (o OperationBodyPayment) IsWellFormed([]byte) (err error) {
 	return
 }
 
-func (o OperationBodyPayment) Validate(st sebakstorage.LevelDBBackend) (err error) {
-	// TODO check whether `Target` is in `Block Account`
-	// TODO check over minimum balance
+func (o OperationBodyPayment) Validate(st *sebakstorage.LevelDBBackend) (err error) {
+	var exists bool
+	if exists, err = ExistBlockAccount(st, o.Target); err == nil && !exists {
+		err = sebakerror.ErrorBlockAccountDoesNotExists
+	}
+
 	return
 }
 

@@ -4,18 +4,17 @@ set -xe
 export TEST_NAME=${BASH_SOURCE[0]}
 source $(dirname ${BASH_SOURCE[0]})/../utils.sh
 
-sleep 5
-
 EXPECTED1="9999999979999980000"
 EXPECTED2="20000000000"
 
 for ((port=2821;port<=2823;port++)); do
-    BA1=$(getAccount $port "GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ" | jq ".Balance" | sed 's/"//g')
-    if [ -z ${BA1} ] || [ ${BA1} != ${EXPECTED1} ]; then
-        die "Expected balance to be ${EXPECTED1}, not ${BA1}"
+    checkedBalance=$(getAccountWithBalance $port "GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ" ${EXPECTED1})
+    if [ $? -ne 0 ]; then
+        die "Expected balance to be ${EXPECTED1}, not ${checkedBalance}"
     fi
-    BA2=$(getAccount $port "GDTEPFWEITKFHSUO44NQABY2XHRBBH2UBVGJ2ZJPDREIOL2F6RAEBJE4" | jq ".Balance" | sed 's/"//g')
-    if [ -z ${BA2} ] || [ ${BA2} != ${EXPECTED2} ]; then
-        die "Expected balance to be ${EXPECTED2}, not ${BA2}"
+
+    checkedBalance=$(getAccountWithBalance $port "GDTEPFWEITKFHSUO44NQABY2XHRBBH2UBVGJ2ZJPDREIOL2F6RAEBJE4" ${EXPECTED2})
+    if [ $? -ne 0 ]; then
+        die "Expected balance to be ${EXPECTED2}, not ${checkedBalance}"
     fi
 done

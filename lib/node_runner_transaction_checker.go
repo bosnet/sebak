@@ -20,6 +20,8 @@ type NodeRunnerHandleTransactionChecker struct {
 	CheckAll             bool
 }
 
+// CheckNodeRunnerHandleTransactionsIsNew checks the incoming transaction is
+// already stored or not.
 func CheckNodeRunnerHandleTransactionsIsNew(c sebakcommon.Checker, args ...interface{}) (err error) {
 	checker := c.(*NodeRunnerHandleTransactionChecker)
 
@@ -43,6 +45,8 @@ func CheckNodeRunnerHandleTransactionsIsNew(c sebakcommon.Checker, args ...inter
 	return
 }
 
+// CheckNodeRunnerHandleTransactionsGetMissingTransaction will get the missing
+// tranactions, that is, not in `TransactionPool` from proposer.
 func CheckNodeRunnerHandleTransactionsGetMissingTransaction(c sebakcommon.Checker, args ...interface{}) (err error) {
 	checker := c.(*NodeRunnerHandleTransactionChecker)
 
@@ -61,6 +65,8 @@ func CheckNodeRunnerHandleTransactionsGetMissingTransaction(c sebakcommon.Checke
 	return
 }
 
+// CheckNodeRunnerHandleTransactionsSameSource checks there are transactions
+// which has same source in the `Transactions`.
 func CheckNodeRunnerHandleTransactionsSameSource(c sebakcommon.Checker, args ...interface{}) (err error) {
 	checker := c.(*NodeRunnerHandleTransactionChecker)
 
@@ -85,44 +91,7 @@ func CheckNodeRunnerHandleTransactionsSameSource(c sebakcommon.Checker, args ...
 	return
 }
 
-func checkTransactionSourceCheck(checker *NodeRunnerHandleTransactionChecker, tx Transaction) (err error) {
-	// check, source exists
-	var ba *BlockAccount
-	if ba, err = GetBlockAccount(checker.NodeRunner.Storage(), tx.B.Source); err != nil {
-		err = sebakerror.ErrorBlockAccountDoesNotExists
-		return
-	}
-
-	// check, checkpoint is based on latest checkpoint
-	if !tx.IsValidCheckpoint(ba.Checkpoint) {
-		err = sebakerror.ErrorTransactionInvalidCheckpoint
-		return
-	}
-
-	// get the balance at checkpoint
-	var bac BlockAccountCheckpoint
-	bac, err = GetBlockAccountCheckpoint(checker.NodeRunner.Storage(), tx.B.Source, tx.B.Checkpoint)
-	if err != nil {
-		return
-	}
-
-	totalAmount := tx.TotalAmount(true)
-
-	// check, have enough balance at checkpoint
-	if MustAmountFromString(bac.Balance) < totalAmount {
-		err = sebakerror.ErrorTransactionExcessAbilityToPay
-		return
-	}
-
-	// check, have enough balance now
-	if MustAmountFromString(ba.Balance) < totalAmount {
-		err = sebakerror.ErrorTransactionExcessAbilityToPay
-		return
-	}
-
-	return
-}
-
+// CheckNodeRunnerHandleTransactionsSourceCheck calls `Transaction.Validate()`.
 func CheckNodeRunnerHandleTransactionsSourceCheck(c sebakcommon.Checker, args ...interface{}) (err error) {
 	checker := c.(*NodeRunnerHandleTransactionChecker)
 
@@ -130,7 +99,7 @@ func CheckNodeRunnerHandleTransactionsSourceCheck(c sebakcommon.Checker, args ..
 	for _, hash := range checker.ValidTransactions {
 		tx, _ := checker.NodeRunner.Consensus().TransactionPool.Get(hash)
 
-		if err = checkTransactionSourceCheck(checker, tx); err != nil {
+		if err = tx.Validate(checker.NodeRunner.Storage()); err != nil {
 			if !checker.CheckAll {
 				return
 			}

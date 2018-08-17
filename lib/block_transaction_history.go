@@ -19,6 +19,8 @@ const (
 )
 
 // TODO Is it correct to save raw `message` in BlockTransactionHistory?
+// TODO Do `BlockTransactionHistory` purge the old transactions? That is, it
+// just keep the recent transactions
 
 type BlockTransactionHistory struct {
 	Hash   string
