@@ -5,6 +5,7 @@ import (
 
 	"github.com/stellar/go/keypair"
 
+	"boscoin.io/sebak/lib/block_account"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/network"
 )
@@ -22,8 +23,8 @@ func TestNodeRunnerPayment(t *testing.T) {
 	kpTarget, _ := keypair.Random()
 
 	checkpoint := sebakcommon.MakeGenesisCheckpoint(networkID)
-	accountSource := NewBlockAccount(kpSource.Address(), BaseFee.MustAdd(1), checkpoint)
-	accountTarget := NewBlockAccount(kpTarget.Address(), sebakcommon.Amount(2000), checkpoint)
+	accountSource := block.NewBlockAccount(kpSource.Address(), BaseFee.MustAdd(1), checkpoint)
+	accountTarget := block.NewBlockAccount(kpTarget.Address(), sebakcommon.Amount(2000), checkpoint)
 	for _, nr := range nodeRunners {
 		accountSource.Save(nr.Storage())
 		accountTarget.Save(nr.Storage())
@@ -49,12 +50,12 @@ func TestNodeRunnerPayment(t *testing.T) {
 	nr0 := nodeRunners[0]
 
 	// check balance
-	baSource, err := GetBlockAccount(nr0.Storage(), kpSource.Address())
+	baSource, err := block.GetBlockAccount(nr0.Storage(), kpSource.Address())
 	if err != nil {
 		t.Error("failed to get source account")
 		return
 	}
-	baTarget, err := GetBlockAccount(nr0.Storage(), kpTarget.Address())
+	baTarget, err := block.GetBlockAccount(nr0.Storage(), kpTarget.Address())
 	if err != nil {
 		t.Error("failed to get target account")
 		return
@@ -82,8 +83,8 @@ func TestNodeRunnerSerializedPayment(t *testing.T) {
 
 	checkpoint := sebakcommon.MakeGenesisCheckpoint(networkID)
 	balance := BaseFee.MustAdd(1).MustAdd(BaseFee.MustAdd(1))
-	sourceAccount := NewBlockAccount(sourceKP.Address(), balance, checkpoint)
-	targetAccount := NewBlockAccount(targetKP.Address(), balance, checkpoint)
+	sourceAccount := block.NewBlockAccount(sourceKP.Address(), balance, checkpoint)
+	targetAccount := block.NewBlockAccount(targetKP.Address(), balance, checkpoint)
 
 	for _, nr := range nodeRunners {
 		sourceAccount.Save(nr.Storage())
@@ -92,8 +93,8 @@ func TestNodeRunnerSerializedPayment(t *testing.T) {
 
 	nr0 := nodeRunners[0]
 	{
-		sourceAccount0, _ := GetBlockAccount(nr0.Storage(), sourceKP.Address())
-		targetAccount0, _ := GetBlockAccount(nr0.Storage(), targetKP.Address())
+		sourceAccount0, _ := block.GetBlockAccount(nr0.Storage(), sourceKP.Address())
+		targetAccount0, _ := block.GetBlockAccount(nr0.Storage(), targetKP.Address())
 
 		tx := makeTransactionPayment(sourceKP, targetKP.Address(), sebakcommon.Amount(1))
 		tx.B.Checkpoint = checkpoint
@@ -107,8 +108,8 @@ func TestNodeRunnerSerializedPayment(t *testing.T) {
 			}
 		}
 
-		sourceAccount1, _ := GetBlockAccount(nr0.Storage(), sourceKP.Address())
-		targetAccount1, _ := GetBlockAccount(nr0.Storage(), targetKP.Address())
+		sourceAccount1, _ := block.GetBlockAccount(nr0.Storage(), sourceKP.Address())
+		targetAccount1, _ := block.GetBlockAccount(nr0.Storage(), targetKP.Address())
 
 		if val := sourceAccount0.GetBalance().MustSub(tx.TotalAmount(true)); val != sourceAccount1.GetBalance() {
 			t.Errorf("payment failed: %d != %d", val, sourceAccount1.GetBalance())
@@ -121,8 +122,8 @@ func TestNodeRunnerSerializedPayment(t *testing.T) {
 	}
 
 	{
-		sourceAccount0, _ := GetBlockAccount(nr0.Storage(), sourceKP.Address())
-		targetAccount0, _ := GetBlockAccount(nr0.Storage(), targetKP.Address())
+		sourceAccount0, _ := block.GetBlockAccount(nr0.Storage(), sourceKP.Address())
+		targetAccount0, _ := block.GetBlockAccount(nr0.Storage(), targetKP.Address())
 		tx := makeTransactionPayment(sourceKP, targetKP.Address(), sebakcommon.Amount(1))
 		tx.B.Checkpoint = sourceAccount0.Checkpoint
 		tx.Sign(sourceKP, networkID)
@@ -135,8 +136,8 @@ func TestNodeRunnerSerializedPayment(t *testing.T) {
 			}
 		}
 
-		sourceAccount1, _ := GetBlockAccount(nr0.Storage(), sourceKP.Address())
-		targetAccount1, _ := GetBlockAccount(nr0.Storage(), targetKP.Address())
+		sourceAccount1, _ := block.GetBlockAccount(nr0.Storage(), sourceKP.Address())
+		targetAccount1, _ := block.GetBlockAccount(nr0.Storage(), targetKP.Address())
 
 		if val := sourceAccount0.GetBalance().MustSub(tx.TotalAmount(true)); val != sourceAccount1.GetBalance() {
 			t.Errorf("payment failed: %d != %d", val, sourceAccount1.GetBalance())

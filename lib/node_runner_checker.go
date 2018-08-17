@@ -1,6 +1,7 @@
 package sebak
 
 import (
+	"boscoin.io/sebak/lib/block_account"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
@@ -255,8 +256,8 @@ func CheckNodeRunnerHandleBallotVotingHole(c sebakcommon.Checker, args ...interf
 	}
 
 	// check, source exists
-	var ba *BlockAccount
-	if ba, err = GetBlockAccount(checker.NodeRunner.Storage(), tx.B.Source); err != nil {
+	var ba *block.BlockAccount
+	if ba, err = block.GetBlockAccount(checker.NodeRunner.Storage(), tx.B.Source); err != nil {
 		return
 	}
 
@@ -266,8 +267,8 @@ func CheckNodeRunnerHandleBallotVotingHole(c sebakcommon.Checker, args ...interf
 	}
 
 	// get the balance at checkpoint
-	var bac BlockAccountCheckpoint
-	bac, err = GetBlockAccountCheckpoint(checker.NodeRunner.Storage(), tx.B.Source, tx.B.Checkpoint)
+	var bac block.BlockAccountCheckpoint
+	bac, err = block.GetBlockAccountCheckpoint(checker.NodeRunner.Storage(), tx.B.Source, tx.B.Checkpoint)
 	if err != nil {
 		return
 	}

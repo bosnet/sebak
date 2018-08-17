@@ -6,6 +6,7 @@ import (
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/stellar/go/keypair"
 
+	"boscoin.io/sebak/lib/block_account"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/storage"
@@ -266,8 +267,8 @@ func FinishTransaction(st *sebakstorage.LevelDBBackend, ballot Ballot, tx Transa
 		}
 	}
 
-	var baSource *BlockAccount
-	if baSource, err = GetBlockAccount(ts, tx.B.Source); err != nil {
+	var baSource *block.BlockAccount
+	if baSource, err = block.GetBlockAccount(ts, tx.B.Source); err != nil {
 		err = sebakerror.ErrorBlockAccountDoesNotExists
 		ts.Discard()
 		return

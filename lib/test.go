@@ -11,15 +11,6 @@ import (
 	"github.com/stellar/go/keypair"
 )
 
-func testMakeBlockAccount() *BlockAccount {
-	kp, _ := keypair.Random()
-	address := kp.Address()
-	balance := sebakcommon.Amount(2000)
-	checkpoint := TestGenerateNewCheckpoint()
-
-	return NewBlockAccount(address, balance, checkpoint)
-}
-
 func TestMakeNewBlockOperation(networkID []byte, n int) (bos []BlockOperation) {
 	_, tx := TestMakeTransaction(networkID, n)
 
