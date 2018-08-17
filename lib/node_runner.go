@@ -373,7 +373,7 @@ func (nr *NodeRunner) startRound() {
 }
 
 func (nr *NodeRunner) CalculateProposer(blockHeight uint64, roundNumber uint64) string {
-	candidates := sort.StringSlice(nr.connectionManager.RoundCandidates())
+	candidates := sort.StringSlice(nr.connectionManager.AllValidators())
 	candidates.Sort()
 
 	var hashedNumber int
