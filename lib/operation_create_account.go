@@ -5,7 +5,7 @@ import (
 
 	"github.com/stellar/go/keypair"
 
-	"boscoin.io/sebak/lib/block_account"
+	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/storage"

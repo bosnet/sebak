@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"boscoin.io/sebak/lib/block_account"
+	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/observer"

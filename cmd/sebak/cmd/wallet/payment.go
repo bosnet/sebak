@@ -12,7 +12,7 @@ import (
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/network"
 
-	"boscoin.io/sebak/lib/block_account"
+	"boscoin.io/sebak/lib/block"
 	"github.com/spf13/cobra"
 	"github.com/stellar/go/keypair"
 )
