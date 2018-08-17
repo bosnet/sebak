@@ -99,8 +99,14 @@ func (c *ConnectionManager) AllConnected() []string {
 	return connected
 }
 
-func (c *ConnectionManager) RoundCandidates() []string {
-	return append(c.AllConnected(), c.localNode.Address())
+// Returns:
+//   A list of all validators, including self
+func (c *ConnectionManager) AllValidators() []string {
+	var validators []string
+	for address := range c.validators {
+		validators = append(validators, address)
+	}
+	return append(validators, c.localNode.Address())
 }
 
 func (c *ConnectionManager) CountConnected() int {
