@@ -54,8 +54,9 @@ func TestMakeNewBlockOperation(networkID []byte, n int) (bos []BlockOperation) {
 func TestMakeNewBlockTransaction(networkID []byte, n int) BlockTransaction {
 	_, tx := TestMakeTransaction(networkID, n)
 
+	block := testMakeNewBlock([]string{tx.GetHash()})
 	a, _ := tx.Serialize()
-	return NewBlockTransactionFromTransaction(tx, a)
+	return NewBlockTransactionFromTransaction(block, tx, a)
 }
 
 func TestMakeOperationBodyPayment(amount int, addressList ...string) OperationBodyPayment {

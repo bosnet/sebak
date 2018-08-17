@@ -17,19 +17,22 @@ import (
 //  * get list by `Source` and created order
 //  * get list by `Confirmed` order
 //  * get list by `Account` and created order
+//  * get list by `Block` and created order
 
 const (
 	BlockTransactionPrefixHash       string = "bt-hash-"       // bt-hash-<BlockTransaction.Hash>
-	BlockTransactionPrefixCheckpoint string = "bt-checkpoint-" // bt-hash-<BlockTransaction.PreviousCheckpoint>,bt-hash-<BlockTransaction.SourceCheckpoint>,  bt-hash-<BlockTransaction.TargetCheckpoint>,
-	BlockTransactionPrefixSource     string = "bt-source-"     // bt-hash-<BlockTransaction.Source>
-	BlockTransactionPrefixConfirmed  string = "bt-confirmed-"  // bt-hash-<BlockTransaction.Confirmed>
-	BlockTransactionPrefixAccount    string = "bt-account-"    //bt-hash-<BlockTransaction.Source>,<BlockTransaction.Operations.Target>
+	BlockTransactionPrefixCheckpoint string = "bt-checkpoint-" // bt-checkpoint-<BlockTransaction.SourceCheckpoint>,<BlockTransaction.TargetCheckpoint>
+	BlockTransactionPrefixSource     string = "bt-source-"     // bt-source-<BlockTransaction.Source>
+	BlockTransactionPrefixConfirmed  string = "bt-confirmed-"  // bt-confirmed-<BlockTransaction.Confirmed>
+	BlockTransactionPrefixAccount    string = "bt-account-"    // bt-account-<BlockTransaction.Source>,<BlockTransaction.Operations.Target>
+	BlockTransactionPrefixBlock      string = "bt-block-"      // bt-block-<BlockTransaction.Block>
 )
 
 // TODO(BlockTransaction): support counting
 
 type BlockTransaction struct {
-	Hash string
+	Hash  string
+	Block string /* `Block.Hash` */
 
 	PreviousCheckpoint string
 	SourceCheckpoint   string
@@ -48,7 +51,7 @@ type BlockTransaction struct {
 	isSaved     bool
 }
 
-func NewBlockTransactionFromTransaction(tx Transaction, message []byte) BlockTransaction {
+func NewBlockTransactionFromTransaction(block Block, tx Transaction, message []byte) BlockTransaction {
 	var opHashes []string
 	for _, op := range tx.B.Operations {
 		opHashes = append(opHashes, NewBlockOperationKey(op, tx))
@@ -56,6 +59,7 @@ func NewBlockTransactionFromTransaction(tx Transaction, message []byte) BlockTra
 
 	return BlockTransaction{
 		Hash:               tx.H.Hash,
+		Block:              block.Hash,
 		PreviousCheckpoint: tx.B.Checkpoint,
 		SourceCheckpoint:   tx.NextSourceCheckpoint(),
 		TargetCheckpoint:   tx.NextTargetCheckpoint(),
@@ -100,6 +104,14 @@ func (bt BlockTransaction) NewBlockTransactionKeyByAccount(accountAddress string
 	)
 }
 
+func (bt BlockTransaction) NewBlockTransactionKeyByBlock(hash string) string {
+	return fmt.Sprintf(
+		"%s%s",
+		GetBlockTransactionKeyPrefixBlock(hash),
+		sebakcommon.GetUniqueIDFromUUID(),
+	)
+}
+
 func (bt *BlockTransaction) Save(st *sebakstorage.LevelDBBackend) (err error) {
 	if bt.isSaved {
 		return sebakerror.ErrorAlreadySaved
@@ -132,6 +144,9 @@ func (bt *BlockTransaction) Save(st *sebakstorage.LevelDBBackend) (err error) {
 		return
 	}
 	if err = st.New(bt.NewBlockTransactionKeyByAccount(bt.Source), bt.Hash); err != nil {
+		return
+	}
+	if err = st.New(bt.NewBlockTransactionKeyByBlock(bt.Block), bt.Hash); err != nil {
 		return
 	}
 	for _, op := range bt.transaction.B.Operations {
@@ -178,6 +193,10 @@ func GetBlockTransactionKeyPrefixConfirmed(confirmed string) string {
 
 func GetBlockTransactionKeyPrefixAccount(accountAddress string) string {
 	return fmt.Sprintf("%s%s-", BlockTransactionPrefixAccount, accountAddress)
+}
+
+func GetBlockTransactionKeyPrefixBlock(hash string) string {
+	return fmt.Sprintf("%s%s-", BlockTransactionPrefixBlock, hash)
 }
 
 func GetBlockTransactionKey(hash string) string {
@@ -259,6 +278,14 @@ func GetBlockTransactionsByAccount(st *sebakstorage.LevelDBBackend, accountAddre
 	func(),
 ) {
 	iterFunc, closeFunc := st.GetIterator(GetBlockTransactionKeyPrefixAccount(accountAddress), reverse)
+	return LoadBlockTransactionsInsideIterator(st, iterFunc, closeFunc)
+}
+
+func GetBlockTransactionsByBlock(st *sebakstorage.LevelDBBackend, hash string, reverse bool) (
+	func() (BlockTransaction, bool),
+	func(),
+) {
+	iterFunc, closeFunc := st.GetIterator(GetBlockTransactionKeyPrefixBlock(hash), reverse)
 	return LoadBlockTransactionsInsideIterator(st, iterFunc, closeFunc)
 }
 
