@@ -34,7 +34,7 @@ func TestIsaacSimulationProposer(t *testing.T) {
 
 	// Generate proposed ballot in nodeRunner
 	roundNumber := uint64(0)
-	err = nodeRunner.ProposeNewBallot(roundNumber)
+	err = nodeRunner.proposeNewBallot(roundNumber)
 	assert.Nil(t, err)
 	round := Round{
 		Number:      roundNumber,
