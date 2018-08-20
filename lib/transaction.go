@@ -6,10 +6,11 @@ import (
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/stellar/go/keypair"
 
-	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/statedb"
 	"boscoin.io/sebak/lib/storage"
+	"boscoin.io/sebak/lib/trie"
 )
 
 // TODO versioning
@@ -232,18 +233,7 @@ func (tb TransactionBody) MakeHashString() string {
 	return base58.Encode(tb.MakeHash())
 }
 
-///
-/// Apply this transaction (`tx`) to the storage, externalizing it
-///
-/// Params:
-///   st = Storage backend
-///   ballot = the ballot that triggered consensus
-///   tx = `Transaction` to externalize
-///
-/// Returns:
-///   err = If the `Transaction` could not be externalized
-///
-func FinishTransaction(st *sebakstorage.LevelDBBackend, ballot Ballot, tx Transaction) (err error) {
+func FinishTransactionWithStateDB(rootHash sebakcommon.Hash, st *sebakstorage.LevelDBBackend, ballot Ballot, tx Transaction) (err error, retRootHash sebakcommon.Hash) {
 	var raw []byte
 	raw, err = ballot.Data().Serialize()
 	if err != nil {
@@ -260,26 +250,26 @@ func FinishTransaction(st *sebakstorage.LevelDBBackend, ballot Ballot, tx Transa
 		ts.Discard()
 		return
 	}
+	sdb := statedb.New(rootHash, trie.NewEthDatabase(ts))
 	for _, op := range tx.B.Operations {
-		if err = FinishOperation(ts, tx, op); err != nil {
+		if err = FinishOperationWithStateDB(sdb, tx, op); err != nil {
 			ts.Discard()
 			return
 		}
 	}
 
-	var baSource *block.BlockAccount
-	if baSource, err = block.GetBlockAccount(ts, tx.B.Source); err != nil {
+	var sourceAddr = tx.B.Source
+
+	if sdb.ExistAccount(sourceAddr) == false {
 		err = sebakerror.ErrorBlockAccountDoesNotExists
 		ts.Discard()
 		return
 	}
 
-	if err = baSource.Withdraw(tx.TotalAmount(true), tx.NextSourceCheckpoint()); err != nil {
-		ts.Discard()
-		return
-	}
+	sdb.SubBalanceWithCheckpoint(sourceAddr, tx.TotalAmount(true), tx.NextSourceCheckpoint())
 
-	if err = baSource.Save(ts); err != nil {
+	rootHash, err = sdb.CommitTrie()
+	if err = sdb.CommitDB(rootHash); err != nil {
 		ts.Discard()
 		return
 	}
@@ -287,6 +277,8 @@ func FinishTransaction(st *sebakstorage.LevelDBBackend, ballot Ballot, tx Transa
 	if err = ts.Commit(); err != nil {
 		ts.Discard()
 	}
+
+	retRootHash = rootHash
 
 	return
 }

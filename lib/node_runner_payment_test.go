@@ -3,36 +3,19 @@ package sebak
 import (
 	"testing"
 
-	"github.com/stellar/go/keypair"
-
-	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/network"
+	"boscoin.io/sebak/lib/statedb"
+	"boscoin.io/sebak/lib/trie"
 )
 
 func TestNodeRunnerPayment(t *testing.T) {
 	defer sebaknetwork.CleanUpMemoryNetwork()
-
-	numberOfNodes := 3
-	nodeRunners := createNodeRunnersWithReady(numberOfNodes)
-	for _, nr := range nodeRunners {
-		defer nr.Stop()
-	}
-
-	kpSource, _ := keypair.Random()
-	kpTarget, _ := keypair.Random()
-
-	checkpoint := sebakcommon.MakeGenesisCheckpoint(networkID)
-	accountSource := block.NewBlockAccount(kpSource.Address(), BaseFee.MustAdd(1), checkpoint)
-	accountTarget := block.NewBlockAccount(kpTarget.Address(), sebakcommon.Amount(2000), checkpoint)
-	for _, nr := range nodeRunners {
-		accountSource.Save(nr.Storage())
-		accountTarget.Save(nr.Storage())
-	}
+	kpSource, kpTarget, balance, checkpoint, nodeRunners := testPrepareTwoAccount()
 
 	amount := sebakcommon.Amount(1)
 	tx := makeTransactionPayment(kpSource, kpTarget.Address(), amount)
-	tx.B.Checkpoint = accountSource.Checkpoint
+	tx.B.Checkpoint = checkpoint
 	tx.Sign(kpSource, networkID)
 
 	dones := doConsensus(nodeRunners, tx)
@@ -49,25 +32,22 @@ func TestNodeRunnerPayment(t *testing.T) {
 
 	nr0 := nodeRunners[0]
 
-	// check balance
-	baSource, err := block.GetBlockAccount(nr0.Storage(), kpSource.Address())
-	if err != nil {
+	sdb := statedb.New(nr0.RootHash(), trie.NewEthDatabase(nr0.Storage()))
+	if sdb.ExistAccount(kpSource.Address()) == false {
 		t.Error("failed to get source account")
 		return
 	}
-	baTarget, err := block.GetBlockAccount(nr0.Storage(), kpTarget.Address())
-	if err != nil {
+	if sdb.ExistAccount(kpTarget.Address()) == false {
 		t.Error("failed to get target account")
 		return
 	}
 
-	expectedTargetAmount := accountTarget.GetBalance().MustAdd(amount)
-	if baTarget.GetBalance() != expectedTargetAmount {
-		t.Errorf("failed to transfer the initial amount to target; %d != %d", baTarget.GetBalance(), amount)
+	if sebakcommon.MustAmountFromString(sdb.GetBalance(kpTarget.Address())) != balance.MustAdd(amount) {
+		t.Errorf("failed to transfer the initial amount to target; %d != %d", sebakcommon.MustAmountFromString(sdb.GetBalance(kpTarget.Address())), balance.MustAdd(amount))
 		return
 	}
-	if accountSource.GetBalance().MustSub(tx.TotalAmount(true)) != baSource.GetBalance() {
-		t.Error("failed to subtract the transfered amount from source")
+	if sebakcommon.MustAmountFromString(sdb.GetBalance(kpSource.Address())) != balance.MustSub(tx.TotalAmount(true)) {
+		t.Errorf("failed to transfer the initial amount to source; %d != %d", sebakcommon.MustAmountFromString(sdb.GetBalance(kpSource.Address())), balance.MustSub(tx.TotalAmount(true)))
 		return
 	}
 }
@@ -75,30 +55,19 @@ func TestNodeRunnerPayment(t *testing.T) {
 func TestNodeRunnerSerializedPayment(t *testing.T) {
 	defer sebaknetwork.CleanUpMemoryNetwork()
 
-	numberOfNodes := 3
-	nodeRunners := createNodeRunnersWithReady(numberOfNodes)
-
-	sourceKP, _ := keypair.Random()
-	targetKP, _ := keypair.Random()
-
-	checkpoint := sebakcommon.MakeGenesisCheckpoint(networkID)
-	balance := BaseFee.MustAdd(1).MustAdd(BaseFee.MustAdd(1))
-	sourceAccount := block.NewBlockAccount(sourceKP.Address(), balance, checkpoint)
-	targetAccount := block.NewBlockAccount(targetKP.Address(), balance, checkpoint)
-
-	for _, nr := range nodeRunners {
-		sourceAccount.Save(nr.Storage())
-		targetAccount.Save(nr.Storage())
-	}
+	kpSource, kpTarget, _, checkpoint, nodeRunners := testPrepareTwoAccount()
 
 	nr0 := nodeRunners[0]
 	{
-		sourceAccount0, _ := block.GetBlockAccount(nr0.Storage(), sourceKP.Address())
-		targetAccount0, _ := block.GetBlockAccount(nr0.Storage(), targetKP.Address())
 
-		tx := makeTransactionPayment(sourceKP, targetKP.Address(), sebakcommon.Amount(1))
+		sdb := statedb.New(nr0.RootHash(), trie.NewEthDatabase(nr0.Storage()))
+		sourceBalance0 := sdb.GetBalance(kpSource.Address())
+		targetBalance0 := sdb.GetBalance(kpTarget.Address())
+
+		amount := sebakcommon.Amount(1)
+		tx := makeTransactionPayment(kpSource, kpTarget.Address(), amount)
 		tx.B.Checkpoint = checkpoint
-		tx.Sign(sourceKP, networkID)
+		tx.Sign(kpSource, networkID)
 
 		dones := doConsensus(nodeRunners, tx)
 		for _, vs := range dones {
@@ -108,25 +77,28 @@ func TestNodeRunnerSerializedPayment(t *testing.T) {
 			}
 		}
 
-		sourceAccount1, _ := block.GetBlockAccount(nr0.Storage(), sourceKP.Address())
-		targetAccount1, _ := block.GetBlockAccount(nr0.Storage(), targetKP.Address())
+		sdb = statedb.New(nr0.RootHash(), trie.NewEthDatabase(nr0.Storage()))
+		sourceBalance1 := sdb.GetBalance(kpSource.Address())
+		targetBalance1 := sdb.GetBalance(kpTarget.Address())
 
-		if val := sourceAccount0.GetBalance().MustSub(tx.TotalAmount(true)); val != sourceAccount1.GetBalance() {
-			t.Errorf("payment failed: %d != %d", val, sourceAccount1.GetBalance())
+		if val := sebakcommon.MustAmountFromString(sourceBalance0).MustSub(tx.TotalAmount(true)); val != sebakcommon.MustAmountFromString(sourceBalance1) {
+			t.Errorf("payment failed: %d != %d", val, sebakcommon.MustAmountFromString(sourceBalance1))
 			return
 		}
-		if val := targetAccount0.GetBalance().MustAdd(tx.B.Operations[0].B.GetAmount()); val != targetAccount1.GetBalance() {
-			t.Errorf("payment failed: %d != %d", val, targetAccount1.GetBalance())
+		if val := sebakcommon.MustAmountFromString(targetBalance0).MustAdd(amount); val != sebakcommon.MustAmountFromString(targetBalance1) {
+			t.Errorf("payment failed: %d != %d", val, sebakcommon.MustAmountFromString(targetBalance1))
 			return
 		}
 	}
-
 	{
-		sourceAccount0, _ := block.GetBlockAccount(nr0.Storage(), sourceKP.Address())
-		targetAccount0, _ := block.GetBlockAccount(nr0.Storage(), targetKP.Address())
-		tx := makeTransactionPayment(sourceKP, targetKP.Address(), sebakcommon.Amount(1))
-		tx.B.Checkpoint = sourceAccount0.Checkpoint
-		tx.Sign(sourceKP, networkID)
+		sdb := statedb.New(nr0.RootHash(), trie.NewEthDatabase(nr0.Storage()))
+		sourceBalance0 := sdb.GetBalance(kpSource.Address())
+		targetBalance0 := sdb.GetBalance(kpTarget.Address())
+
+		amount := sebakcommon.Amount(1)
+		tx := makeTransactionPayment(kpSource, kpTarget.Address(), amount)
+		tx.B.Checkpoint = sdb.GetCheckPoint(kpSource.Address())
+		tx.Sign(kpSource, networkID)
 
 		dones := doConsensus(nodeRunners, tx)
 		for _, vs := range dones {
@@ -136,15 +108,16 @@ func TestNodeRunnerSerializedPayment(t *testing.T) {
 			}
 		}
 
-		sourceAccount1, _ := block.GetBlockAccount(nr0.Storage(), sourceKP.Address())
-		targetAccount1, _ := block.GetBlockAccount(nr0.Storage(), targetKP.Address())
+		sdb = statedb.New(nr0.RootHash(), trie.NewEthDatabase(nr0.Storage()))
+		sourceBalance1 := sdb.GetBalance(kpSource.Address())
+		targetBalance1 := sdb.GetBalance(kpTarget.Address())
 
-		if val := sourceAccount0.GetBalance().MustSub(tx.TotalAmount(true)); val != sourceAccount1.GetBalance() {
-			t.Errorf("payment failed: %d != %d", val, sourceAccount1.GetBalance())
+		if val := sebakcommon.MustAmountFromString(sourceBalance0).MustSub(tx.TotalAmount(true)); val != sebakcommon.MustAmountFromString(sourceBalance1) {
+			t.Errorf("payment failed: %d != %d", val, sebakcommon.MustAmountFromString(sourceBalance1))
 			return
 		}
-		if val := targetAccount0.GetBalance().MustAdd(tx.B.Operations[0].B.GetAmount()); val != targetAccount1.GetBalance() {
-			t.Errorf("payment failed: %d != %d", val, targetAccount1.GetBalance())
+		if val := sebakcommon.MustAmountFromString(targetBalance0).MustAdd(amount); val != sebakcommon.MustAmountFromString(targetBalance1) {
+			t.Errorf("payment failed: %d != %d", val, sebakcommon.MustAmountFromString(targetBalance1))
 			return
 		}
 	}

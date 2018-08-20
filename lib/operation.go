@@ -8,6 +8,7 @@ import (
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/statedb"
 	"boscoin.io/sebak/lib/storage"
 )
 
@@ -139,12 +140,12 @@ type OperationBody interface {
 }
 
 // FinishOperation do finish the task after consensus by the type of each operation.
-func FinishOperation(st *sebakstorage.LevelDBBackend, tx Transaction, op Operation) (err error) {
+func FinishOperationWithStateDB(sdb *statedb.StateDB, tx Transaction, op Operation) (err error) {
 	switch op.H.Type {
 	case OperationCreateAccount:
-		return FinishOperationCreateAccount(st, tx, op)
+		return FinishOperationCreateAccountWithStateDB(sdb, tx, op)
 	case OperationPayment:
-		return FinishOperationPayment(st, tx, op)
+		return FinishOperationPaymentWithStateDB(sdb, tx, op)
 	default:
 		err = sebakerror.ErrorUnknownOperationType
 		return

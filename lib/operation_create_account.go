@@ -5,9 +5,9 @@ import (
 
 	"github.com/stellar/go/keypair"
 
-	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/statedb"
 	"boscoin.io/sebak/lib/storage"
 )
 
@@ -50,29 +50,22 @@ func (o OperationBodyCreateAccount) GetAmount() sebakcommon.Amount {
 	return o.Amount
 }
 
-func FinishOperationCreateAccount(st *sebakstorage.LevelDBBackend, tx Transaction, op Operation) (err error) {
-	var baSource, baTarget *block.BlockAccount
-	if baSource, err = block.GetBlockAccount(st, tx.B.Source); err != nil {
+func FinishOperationCreateAccountWithStateDB(sdb *statedb.StateDB, tx Transaction, op Operation) (err error) {
+	var sourceAddr, targetAddr string
+	sourceAddr = tx.B.Source
+	targetAddr = op.B.TargetAddress()
+
+	if sdb.ExistAccount(sourceAddr) == false {
 		err = sebakerror.ErrorBlockAccountDoesNotExists
 		return
 	}
-	if baTarget, err = block.GetBlockAccount(st, op.B.TargetAddress()); err == nil {
+	if sdb.ExistAccount(targetAddr) == true {
 		err = sebakerror.ErrorBlockAccountAlreadyExists
 		return
-	} else {
-		err = nil
 	}
+	sdb.AddBalanceWithCheckpoint(targetAddr, op.B.GetAmount(), tx.NextTargetCheckpoint())
 
-	baTarget = block.NewBlockAccount(
-		op.B.TargetAddress(),
-		op.B.GetAmount(),
-		tx.NextTargetCheckpoint(),
-	)
-	if err = baTarget.Save(st); err != nil {
-		return
-	}
-
-	log.Debug("new account created", "source", baSource, "target", baTarget)
+	log.Debug("new account created", "source", sourceAddr, "target", targetAddr)
 
 	return
 }

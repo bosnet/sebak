@@ -6,9 +6,9 @@ import (
 
 	"github.com/stellar/go/keypair"
 
-	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/statedb"
 	"boscoin.io/sebak/lib/storage"
 )
 
@@ -56,28 +56,27 @@ func (o OperationBodyPayment) GetAmount() sebakcommon.Amount {
 	return o.Amount
 }
 
-func FinishOperationPayment(st *sebakstorage.LevelDBBackend, tx Transaction, op Operation) (err error) {
-	var baSource, baTarget *block.BlockAccount
-	if baSource, err = block.GetBlockAccount(st, tx.B.Source); err != nil {
+func FinishOperationPaymentWithStateDB(sdb *statedb.StateDB, tx Transaction, op Operation) (err error) {
+	var sourceAddr, targetAddr string
+	sourceAddr = tx.B.Source
+	targetAddr = op.B.TargetAddress()
+
+	if sdb.ExistAccount(sourceAddr) == false {
 		err = sebakerror.ErrorBlockAccountDoesNotExists
 		return
 	}
-	if baTarget, err = block.GetBlockAccount(st, op.B.TargetAddress()); err != nil {
+	if sdb.ExistAccount(targetAddr) == false {
 		err = sebakerror.ErrorBlockAccountDoesNotExists
 		return
 	}
-	current, err := sebakcommon.ParseCheckpoint(baTarget.Checkpoint)
+
+	current, err := sebakcommon.ParseCheckpoint(sdb.GetCheckPoint(targetAddr))
 	next, err := sebakcommon.ParseCheckpoint(tx.NextTargetCheckpoint())
 	newCheckPoint := sebakcommon.MakeCheckpoint(current[0], next[1])
 
-	if err = baTarget.Deposit(op.B.GetAmount(), newCheckPoint); err != nil {
-		return
-	}
-	if err = baTarget.Save(st); err != nil {
-		return
-	}
+	sdb.AddBalanceWithCheckpoint(targetAddr, op.B.GetAmount(), newCheckPoint)
 
-	log.Debug("payment done", "source", baSource, "target", baTarget, "amount", op.B.GetAmount())
+	log.Debug("payment done", "source", sourceAddr, "target", targetAddr, "amount", op.B.GetAmount())
 
 	return
 }
