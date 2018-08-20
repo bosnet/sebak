@@ -9,11 +9,11 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/stellar/go/keypair"
 
-	"boscoin.io/sebak/lib"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/storage"
 
 	"boscoin.io/sebak/cmd/sebak/common"
+	"boscoin.io/sebak/lib/block"
 )
 
 const (
@@ -118,12 +118,12 @@ func MakeGenesisBlock(addressStr, networkID, balanceStr, storage string) (string
 	}
 
 	// check account does not exists
-	if _, err = sebak.GetBlockAccount(st, kp.Address()); err == nil {
+	if _, err = block.GetBlockAccount(st, kp.Address()); err == nil {
 		return "<public key>", errors.New("account is already created")
 	}
 
 	// checkpoint of genesis block is created by `--network-id`
-	account := sebak.NewBlockAccount(
+	account := block.NewBlockAccount(
 		kp.Address(),
 		balance,
 		sebakcommon.MakeGenesisCheckpoint([]byte(flagNetworkID)),

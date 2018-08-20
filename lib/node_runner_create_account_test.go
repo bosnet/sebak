@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stellar/go/keypair"
 
+	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/network"
 )
@@ -24,7 +25,7 @@ func TestNodeRunnerCreateAccount(t *testing.T) {
 
 	// create new account in all nodes
 	checkpoint := sebakcommon.MakeGenesisCheckpoint(networkID)
-	account := NewBlockAccount(kp.Address(), BaseFee.MustAdd(1), checkpoint)
+	account := block.NewBlockAccount(kp.Address(), BaseFee.MustAdd(1), checkpoint)
 	for _, nr := range nodeRunners {
 		account.Save(nr.Storage())
 	}
@@ -49,12 +50,12 @@ func TestNodeRunnerCreateAccount(t *testing.T) {
 	nr0 := nodeRunners[0]
 
 	// check balance
-	baSource, err := GetBlockAccount(nr0.Storage(), kp.Address())
+	baSource, err := block.GetBlockAccount(nr0.Storage(), kp.Address())
 	if err != nil {
 		t.Error("failed to get source account")
 		return
 	}
-	baTarget, err := GetBlockAccount(nr0.Storage(), kpNewAccount.Address())
+	baTarget, err := block.GetBlockAccount(nr0.Storage(), kpNewAccount.Address())
 	if err != nil {
 		t.Error("failed to get target account")
 		return
@@ -84,7 +85,7 @@ func TestNodeRunnerCreateAccountInvalidCheckpoint(t *testing.T) {
 
 	// create new account in all nodes
 	checkpoint := sebakcommon.MakeGenesisCheckpoint(networkID) // set initial checkpoint
-	account := NewBlockAccount(kp.Address(), sebakcommon.Amount(2000), checkpoint)
+	account := block.NewBlockAccount(kp.Address(), sebakcommon.Amount(2000), checkpoint)
 	for _, nr := range nodeRunners {
 		account.Save(nr.Storage())
 	}
@@ -110,13 +111,13 @@ func TestNodeRunnerCreateAccountInvalidCheckpoint(t *testing.T) {
 	nr0 := nodeRunners[0]
 
 	// check balance
-	_, err := GetBlockAccount(nr0.Storage(), kpNewAccount.Address())
+	_, err := block.GetBlockAccount(nr0.Storage(), kpNewAccount.Address())
 	if err == nil {
 		t.Error("target account must not be created")
 		return
 	}
 
-	baSource, _ := GetBlockAccount(nr0.Storage(), kp.Address())
+	baSource, _ := block.GetBlockAccount(nr0.Storage(), kp.Address())
 	if account.GetBalance() != baSource.GetBalance() {
 		t.Error("amount was paid from source")
 		return
@@ -137,7 +138,7 @@ func TestNodeRunnerCreateAccountSufficient(t *testing.T) {
 
 	// create new account in all nodes
 	checkpoint := sebakcommon.MakeGenesisCheckpoint(networkID) // set initial checkpoint
-	account := NewBlockAccount(kp.Address(), BaseFee.MustAdd(1), checkpoint)
+	account := block.NewBlockAccount(kp.Address(), BaseFee.MustAdd(1), checkpoint)
 	for _, nr := range nodeRunners {
 		account.Save(nr.Storage())
 	}
@@ -162,13 +163,13 @@ func TestNodeRunnerCreateAccountSufficient(t *testing.T) {
 	nr0 := nodeRunners[0]
 
 	// check balance
-	baTarget, err := GetBlockAccount(nr0.Storage(), kpNewAccount.Address())
+	baTarget, err := block.GetBlockAccount(nr0.Storage(), kpNewAccount.Address())
 	if err != nil {
 		t.Error("failed to get target account")
 		return
 	}
 
-	baSource, _ := GetBlockAccount(nr0.Storage(), kp.Address())
+	baSource, _ := block.GetBlockAccount(nr0.Storage(), kp.Address())
 	if sebakcommon.Amount(initialBalance) != sebakcommon.Amount(baTarget.GetBalance()) {
 		t.Error("amount was not paid to target")
 		return
@@ -193,7 +194,7 @@ func TestNodeRunnerCreateAccountInsufficient(t *testing.T) {
 
 	// create new account in all nodes
 	checkpoint := uuid.New().String() // set initial checkpoint
-	account := NewBlockAccount(kp.Address(), sebakcommon.Amount(2000), checkpoint)
+	account := block.NewBlockAccount(kp.Address(), sebakcommon.Amount(2000), checkpoint)
 	for _, nr := range nodeRunners {
 		account.Save(nr.Storage())
 	}
@@ -219,13 +220,13 @@ func TestNodeRunnerCreateAccountInsufficient(t *testing.T) {
 	nr0 := nodeRunners[0]
 
 	// check balance
-	_, err := GetBlockAccount(nr0.Storage(), kpNewAccount.Address())
+	_, err := block.GetBlockAccount(nr0.Storage(), kpNewAccount.Address())
 	if err == nil {
 		t.Error("target account must not be created")
 		return
 	}
 
-	baSource, _ := GetBlockAccount(nr0.Storage(), kp.Address())
+	baSource, _ := block.GetBlockAccount(nr0.Storage(), kp.Address())
 	if account.GetBalance() != baSource.GetBalance() {
 		t.Error("amount was paid from source")
 		return

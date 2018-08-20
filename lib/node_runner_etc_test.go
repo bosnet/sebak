@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stellar/go/keypair"
 
+	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/network"
 )
@@ -27,7 +28,7 @@ func TestNodeRunnerLimitIncomingBallotsFromUnknownValidator(t *testing.T) {
 
 	// create new account in all nodes
 	checkpoint := uuid.New().String() // set initial checkpoint
-	account := NewBlockAccount(kp.Address(), BaseFee.MustAdd(1), checkpoint)
+	account := block.NewBlockAccount(kp.Address(), BaseFee.MustAdd(1), checkpoint)
 	for _, nr := range nodeRunners {
 		account.Save(nr.Storage())
 	}
