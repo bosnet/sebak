@@ -6,6 +6,7 @@ import (
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/stellar/go/keypair"
 
+	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/network"
@@ -206,10 +207,11 @@ func (rb BallotBody) MakeHashString() string {
 	return base58.Encode(rb.MakeHash())
 }
 
-func FinishBallot(st *sebakstorage.LevelDBBackend, ballot Ballot, transactionPool *TransactionPool) (block Block, err error) {
+func FinishBallot(st *sebakstorage.LevelDBBackend, ballot Ballot, transactionPool *TransactionPool) (Block, error) {
+	var err error
 	var ts *sebakstorage.LevelDBBackend
 	if ts, err = st.OpenTransaction(); err != nil {
-		return
+		return Block{}, err
 	}
 
 	transactions := map[string]Transaction{}
@@ -217,7 +219,7 @@ func FinishBallot(st *sebakstorage.LevelDBBackend, ballot Ballot, transactionPoo
 		tx, found := transactionPool.Get(hash)
 		if !found {
 			err = sebakerror.ErrorTransactionNotFound
-			return
+			return Block{}, err
 		}
 		transactions[hash] = tx
 	}
@@ -229,42 +231,42 @@ func FinishBallot(st *sebakstorage.LevelDBBackend, ballot Ballot, transactionPoo
 		bt := NewBlockTransactionFromTransaction(tx, raw)
 		if err = bt.Save(ts); err != nil {
 			ts.Discard()
-			return
+			return Block{}, err
 		}
 		for _, op := range tx.B.Operations {
 			if err = FinishOperation(ts, tx, op); err != nil {
 				ts.Discard()
-				return
+				return Block{}, err
 			}
 		}
 
-		var baSource *BlockAccount
-		if baSource, err = GetBlockAccount(ts, tx.B.Source); err != nil {
+		var baSource *block.BlockAccount
+		if baSource, err = block.GetBlockAccount(ts, tx.B.Source); err != nil {
 			err = sebakerror.ErrorBlockAccountDoesNotExists
 			ts.Discard()
-			return
+			return Block{}, err
 		}
 
 		if err = baSource.Withdraw(tx.TotalAmount(true), tx.NextSourceCheckpoint()); err != nil {
 			ts.Discard()
-			return
+			return Block{}, err
 		}
 
 		if err = baSource.Save(ts); err != nil {
 			ts.Discard()
-			return
+			return Block{}, err
 		}
 
 	}
 
-	block = NewBlockFromBallot(ballot)
-	if err = block.Save(ts); err != nil {
-		return
+	retBlock := NewBlockFromBallot(ballot)
+	if err = retBlock.Save(ts); err != nil {
+		return Block{}, err
 	}
 
 	if err = ts.Commit(); err != nil {
 		ts.Discard()
 	}
 
-	return
+	return retBlock, err
 }

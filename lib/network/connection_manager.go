@@ -165,23 +165,24 @@ func (c *ConnectionManager) ConnectionWatcher(t Network, conn net.Conn, state ht
 }
 
 func (c *ConnectionManager) Broadcast(message sebakcommon.Message) {
-	for _, address := range c.AllConnected() {
-		go func(v string) {
-			client := c.GetConnection(v)
+	for address, connected := range c.connected {
+		if connected {
+			go func(v string) {
+				client := c.GetConnection(v)
 
-			var err error
-			if message.GetType() == BallotMessage {
-				_, err = client.SendBallot(message)
-			} else if message.GetType() == TransactionMessage {
-				_, err = client.SendMessage(message)
+				var err error
+				if message.GetType() == BallotMessage {
+					_, err = client.SendBallot(message)
+				} else if message.GetType() == TransactionMessage {
+					_, err = client.SendMessage(message)
+				} else {
+					panic("invalid message")
+				}
 
-			} else {
-				panic("invalid message")
-			}
-
-			if err != nil {
-				c.log.Error("failed to SendBallot", "error", err, "validator", v)
-			}
-		}(address)
+				if err != nil {
+					c.log.Error("failed to SendBallot", "error", err, "validator", v)
+				}
+			}(address)
+		}
 	}
 }

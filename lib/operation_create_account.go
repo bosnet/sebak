@@ -5,6 +5,7 @@ import (
 
 	"github.com/stellar/go/keypair"
 
+	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/storage"
@@ -37,7 +38,7 @@ func (o OperationBodyCreateAccount) IsWellFormed([]byte) (err error) {
 
 func (o OperationBodyCreateAccount) Validate(st *sebakstorage.LevelDBBackend) (err error) {
 	var exists bool
-	if exists, err = ExistBlockAccount(st, o.Target); err == nil && exists {
+	if exists, err = block.ExistBlockAccount(st, o.Target); err == nil && exists {
 		err = sebakerror.ErrorBlockAccountAlreadyExists
 	}
 
@@ -53,19 +54,19 @@ func (o OperationBodyCreateAccount) GetAmount() sebakcommon.Amount {
 }
 
 func FinishOperationCreateAccount(st *sebakstorage.LevelDBBackend, tx Transaction, op Operation) (err error) {
-	var baSource, baTarget *BlockAccount
-	if baSource, err = GetBlockAccount(st, tx.B.Source); err != nil {
+	var baSource, baTarget *block.BlockAccount
+	if baSource, err = block.GetBlockAccount(st, tx.B.Source); err != nil {
 		err = sebakerror.ErrorBlockAccountDoesNotExists
 		return
 	}
-	if baTarget, err = GetBlockAccount(st, op.B.TargetAddress()); err == nil {
+	if baTarget, err = block.GetBlockAccount(st, op.B.TargetAddress()); err == nil {
 		err = sebakerror.ErrorBlockAccountAlreadyExists
 		return
 	} else {
 		err = nil
 	}
 
-	baTarget = NewBlockAccount(
+	baTarget = block.NewBlockAccount(
 		op.B.TargetAddress(),
 		op.B.GetAmount(),
 		tx.NextTargetCheckpoint(),

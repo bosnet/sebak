@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/observer"
@@ -19,7 +20,7 @@ func GetAccountHandler(storage *sebakstorage.LevelDBBackend) http.HandlerFunc {
 
 		vars := mux.Vars(r)
 		address := vars["address"]
-		if found, err := ExistBlockAccount(storage, address); err != nil {
+		if found, err := block.ExistBlockAccount(storage, address); err != nil {
 			http.Error(w, "Error reading request body", http.StatusInternalServerError)
 			return
 		} else if !found {
@@ -28,7 +29,7 @@ func GetAccountHandler(storage *sebakstorage.LevelDBBackend) http.HandlerFunc {
 		}
 
 		var err error
-		var ba *BlockAccount
+		var ba *block.BlockAccount
 
 		switch r.Header.Get("Accept") {
 		case "text/event-stream":
@@ -39,7 +40,7 @@ func GetAccountHandler(storage *sebakstorage.LevelDBBackend) http.HandlerFunc {
 			iterateId := sebakcommon.GetUniqueIDFromUUID()
 			go func() {
 				<-readyChan
-				if ba, err = GetBlockAccount(storage, address); err != nil {
+				if ba, err = block.GetBlockAccount(storage, address); err != nil {
 					http.Error(w, "Error reading request body", http.StatusInternalServerError)
 					return
 				}
@@ -47,7 +48,7 @@ func GetAccountHandler(storage *sebakstorage.LevelDBBackend) http.HandlerFunc {
 			}()
 
 			callBackFunc := func(args ...interface{}) (account []byte, err error) {
-				ba := args[1].(*BlockAccount)
+				ba := args[1].(*block.BlockAccount)
 				if account, err = ba.Serialize(); err != nil {
 					return []byte{}, sebakerror.ErrorBlockAccountDoesNotExists
 				}
@@ -58,7 +59,7 @@ func GetAccountHandler(storage *sebakstorage.LevelDBBackend) http.HandlerFunc {
 			event += " " + fmt.Sprintf("address-%s", address)
 			streaming(observer.BlockAccountObserver, w, event, callBackFunc, readyChan)
 		default:
-			if ba, err = GetBlockAccount(storage, address); err != nil {
+			if ba, err = block.GetBlockAccount(storage, address); err != nil {
 				http.Error(w, "Error reading request body", http.StatusInternalServerError)
 				return
 			}

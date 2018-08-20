@@ -6,6 +6,7 @@ import (
 
 	"github.com/btcsuite/btcutil/base58"
 
+	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/storage"
@@ -27,7 +28,7 @@ type Block struct {
 	Round     Round
 }
 
-func MakeGenesisBlock(st *sebakstorage.LevelDBBackend, account BlockAccount) Block {
+func MakeGenesisBlock(st *sebakstorage.LevelDBBackend, account block.BlockAccount) Block {
 	proposer := "" // null proposer
 	round := Round{
 		Number:      0,
