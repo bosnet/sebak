@@ -38,29 +38,6 @@ func getPort() string {
 	return testPort
 }
 
-func ExampleHttp2NetworkConfigCreateWithNonTLS() {
-
-	var config HTTP2NetworkConfig
-	endpoint, err := sebakcommon.NewEndpointFromString("https://localhost:5000?NodeName=n1")
-	if err != nil {
-		fmt.Print("Error in NewEndpointFromString")
-	}
-	queries := endpoint.Query()
-	queries.Add("TLSCertFile", "")
-	queries.Add("TLSKeyFile", "")
-	endpoint.RawQuery = queries.Encode()
-
-	config, err = NewHTTP2NetworkConfigFromEndpoint(endpoint)
-	if err != nil {
-		fmt.Print("Error in NewHTTP2NetworkConfigFromEndpoint")
-	}
-	fmt.Println(config.NodeName)
-	fmt.Println(config.Addr)
-
-	// Output: n1
-	// localhost:5000
-}
-
 const (
 	dirPath  = "tmp"
 	certPath = "cert.pem"
