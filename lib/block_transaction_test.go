@@ -8,6 +8,8 @@ import (
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/storage"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewBlockTransaction(t *testing.T) {
@@ -15,123 +17,58 @@ func TestNewBlockTransaction(t *testing.T) {
 	a, _ := tx.Serialize()
 	bt := NewBlockTransactionFromTransaction(tx, a)
 
-	if bt.Hash != tx.H.Hash {
-		t.Error("`BlockTransaction.Hash mismatch`")
-		return
-	}
-	if bt.PreviousCheckpoint != tx.B.Checkpoint {
-		t.Error("`BlockTransaction.PreviousCheckpoint mismatch`")
-		return
-	}
-	if bt.Signature != tx.H.Signature {
-		t.Error("`BlockTransaction.Signature mismatch`")
-		return
-	}
-	if bt.Source != tx.B.Source {
-		t.Error("`BlockTransaction.Source mismatch`")
-		return
-	}
-	if bt.Fee != tx.B.Fee {
-		t.Error("`BlockTransaction.Fee mismatch`")
-		return
-	}
-	if bt.Created != tx.H.Created {
-		t.Error("`BlockTransaction.Created mismatch`")
-		return
-	}
+	require.Equal(t, bt.Hash, tx.H.Hash)
+	require.Equal(t, bt.PreviousCheckpoint, tx.B.Checkpoint)
+	require.Equal(t, bt.Signature, tx.H.Signature)
+	require.Equal(t, bt.Source, tx.B.Source)
+	require.Equal(t, bt.Fee, tx.B.Fee)
+	require.Equal(t, bt.Created, tx.H.Created)
+
 	var opHashes []string
 	for _, op := range tx.B.Operations {
 		opHashes = append(opHashes, NewBlockOperationKey(op, tx))
 	}
 	for i, opHash := range bt.Operations {
-		if opHash != opHashes[i] {
-			t.Error("`BlockTransaction.Operations mismatch`")
-		}
+		require.Equal(t, opHash, opHashes[i])
 	}
-	if bt.Amount != tx.TotalAmount(true) {
-		t.Error("`BlockTransaction.Amount mismatch`")
-		return
-	}
-	if string(bt.Message) != string(a) {
-		t.Error("`BlockTransaction.Message mismatch`")
-		return
-	}
+	require.Equal(t, bt.Amount, tx.TotalAmount(true))
+	require.Equal(t, bt.Message, a)
 }
 
 func TestBlockTransactionSaveAndGet(t *testing.T) {
 	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
 
 	bt := TestMakeNewBlockTransaction(networkID, 1)
-	if err := bt.Save(st); err != nil {
-		t.Error(err)
-		return
-	}
+	err := bt.Save(st)
+	require.Nil(t, err)
 
 	fetched, err := GetBlockTransaction(st, bt.Hash)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if bt.Hash != fetched.Hash {
-		t.Error("mismatch `Hash`")
-		return
-	}
-	if bt.PreviousCheckpoint != fetched.PreviousCheckpoint {
-		t.Error("mismatch `Checkpoint`")
-		return
-	}
-	if bt.Signature != fetched.Signature {
-		t.Error("mismatch `Signature`")
-		return
-	}
-	if bt.Source != fetched.Source {
-		t.Error("mismatch `Source`")
-		return
-	}
-	if bt.Fee != fetched.Fee {
-		t.Error("mismatch `Fee`")
-		return
-	}
-	for i, opHash := range fetched.Operations {
-		if opHash != bt.Operations[i] {
-			t.Error("mismatch Operation Hashes`")
-		}
-	}
-	if bt.Amount != fetched.Amount {
-		t.Error("mismatch `Amount`")
-		return
-	}
-	if bt.Created != fetched.Created {
-		t.Error("mismatch `Created`")
-		return
-	}
-	if len(fetched.Confirmed) < 1 {
-		t.Error("`Confirmed` missing")
-		return
-	}
+	require.Nil(t, err)
+
+	require.Equal(t, bt.Hash, fetched.Hash)
+	require.Equal(t, bt.PreviousCheckpoint, fetched.PreviousCheckpoint)
+	require.Equal(t, bt.Signature, fetched.Signature)
+	require.Equal(t, bt.Source, fetched.Source)
+	require.Equal(t, bt.Fee, fetched.Fee)
+	require.Equal(t, bt.Created, fetched.Created)
+	require.Equal(t, bt.Operations, fetched.Operations)
+	require.Equal(t, len(fetched.Confirmed) > 0, true)
 }
 
 func TestBlockTransactionSaveExisting(t *testing.T) {
 	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
 
 	bt := TestMakeNewBlockTransaction(networkID, 1)
-	bt.Save(st)
+	err := bt.Save(st)
+	require.Nil(t, err)
 
-	if exists, err := ExistBlockTransaction(st, bt.Hash); err != nil {
-		t.Error(err)
-		return
-	} else if !exists {
-		t.Error("not found")
-		return
-	}
+	exists, err := ExistBlockTransaction(st, bt.Hash)
+	require.Nil(t, err)
+	require.Equal(t, exists, true)
 
-	if err := bt.Save(st); err == nil {
-		t.Error("`ErrorBlockAlreayExists` Errors must be occurred")
-		return
-	} else if err != sebakerror.ErrorAlreadySaved {
-		t.Error("`ErrorAlreadySaved` Errors must be occurred")
-		return
-	}
+	err = bt.Save(st)
+	require.NotNil(t, err)
+	require.Equal(t, err, sebakerror.ErrorAlreadySaved)
 }
 
 /*
@@ -186,10 +123,7 @@ func TestMultipleBlockTransactionSource(t *testing.T) {
 		a, _ := tx.Serialize()
 		bt := NewBlockTransactionFromTransaction(tx, a)
 		err := bt.Save(st)
-		if err != nil {
-			t.Error(err)
-			return
-		}
+		require.Nil(t, err)
 	}
 
 	// create txs from another keypair
@@ -198,10 +132,7 @@ func TestMultipleBlockTransactionSource(t *testing.T) {
 		a, _ := tx.Serialize()
 		bt := NewBlockTransactionFromTransaction(tx, a)
 		err := bt.Save(st)
-		if err != nil {
-			t.Error(err)
-			return
-		}
+		require.Nil(t, err)
 	}
 
 	{
@@ -217,15 +148,9 @@ func TestMultipleBlockTransactionSource(t *testing.T) {
 		}
 		closeFunc()
 
-		if len(saved) != len(createdOrder) {
-			t.Error("fetched records insufficient")
-			return
-		}
+		require.Equal(t, len(saved), len(createdOrder))
 		for i, bt := range saved {
-			if bt.Hash != createdOrder[i] {
-				t.Error("order mismatch")
-				return
-			}
+			require.Equal(t, createdOrder[i], bt.Hash)
 		}
 	}
 
@@ -243,17 +168,11 @@ func TestMultipleBlockTransactionSource(t *testing.T) {
 		}
 		closeFunc()
 
-		if len(saved) != len(createdOrder) {
-			t.Error("fetched records insufficient")
-			return
-		}
 		reverseCreatedOrder := sebakcommon.ReverseStringSlice(createdOrder)
 
+		require.Equal(t, len(saved), len(createdOrder))
 		for i, bt := range saved {
-			if bt.Hash != reverseCreatedOrder[i] {
-				t.Error("reverse order mismatch")
-				return
-			}
+			require.Equal(t, reverseCreatedOrder[i], bt.Hash)
 		}
 	}
 }
@@ -271,10 +190,7 @@ func TestMultipleBlockTransactionConfirmed(t *testing.T) {
 		a, _ := tx.Serialize()
 		bt := NewBlockTransactionFromTransaction(tx, a)
 		err := bt.Save(st)
-		if err != nil {
-			t.Error(err)
-			return
-		}
+		require.Nil(t, err)
 	}
 
 	var saved []BlockTransaction
@@ -289,15 +205,9 @@ func TestMultipleBlockTransactionConfirmed(t *testing.T) {
 	}
 	closeFunc()
 
-	if len(saved) != len(createdOrder) {
-		t.Errorf("fetched records insufficient: %d != %d", len(saved), len(createdOrder))
-		return
-	}
+	require.Equal(t, len(saved), len(createdOrder))
 	for i, bt := range saved {
-		if bt.Hash != createdOrder[i] {
-			t.Error("order mismatch")
-			return
-		}
+		require.Equal(t, createdOrder[i], bt.Hash)
 	}
 
 	{
@@ -314,17 +224,11 @@ func TestMultipleBlockTransactionConfirmed(t *testing.T) {
 		}
 		closeFunc()
 
-		if len(saved) != len(createdOrder) {
-			t.Error("fetched records insufficient")
-			return
-		}
 		reverseCreatedOrder := sebakcommon.ReverseStringSlice(createdOrder)
 
+		require.Equal(t, len(saved), len(createdOrder))
 		for i, bt := range saved {
-			if bt.Hash != reverseCreatedOrder[i] {
-				t.Error("reverse order mismatch")
-				return
-			}
+			require.Equal(t, reverseCreatedOrder[i], bt.Hash)
 		}
 	}
 }
@@ -333,71 +237,35 @@ func TestBlockTransactionMultipleSave(t *testing.T) {
 	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
 
 	bt := TestMakeNewBlockTransaction(networkID, 1)
-	if err := bt.Save(st); err != nil {
-		t.Error(err)
-		return
-	}
+	err := bt.Save(st)
+	require.Nil(t, err)
 
-	if err := bt.Save(st); err != nil {
+	if err = bt.Save(st); err != nil {
 		if err != sebakerror.ErrorAlreadySaved {
 			t.Errorf("mutiple saving will occur error, 'ErrorAlreadySaved': %v", err)
 			return
 		}
 	}
-
 }
 
 func TestBlockTransactionGetByCheckpoint(t *testing.T) {
 	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
 
 	bt := TestMakeNewBlockTransaction(networkID, 1)
-	if err := bt.Save(st); err != nil {
-		t.Error(err)
-		return
-	}
+	err := bt.Save(st)
+	require.Nil(t, err)
 
 	fetched, err := GetBlockTransactionByCheckpoint(st, bt.SourceCheckpoint)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if bt.Hash != fetched.Hash {
-		t.Error("mismatch `Hash`")
-		return
-	}
-	if bt.PreviousCheckpoint != fetched.PreviousCheckpoint {
-		t.Error("mismatch `Checkpoint`")
-		return
-	}
-	if bt.Signature != fetched.Signature {
-		t.Error("mismatch `Signature`")
-		return
-	}
-	if bt.Source != fetched.Source {
-		t.Error("mismatch `Source`")
-		return
-	}
-	if bt.Fee != fetched.Fee {
-		t.Error("mismatch `Fee`")
-		return
-	}
-	for i, opHash := range fetched.Operations {
-		if opHash != bt.Operations[i] {
-			t.Error("mismatch Operation Hashes`")
-		}
-	}
-	if bt.Amount != fetched.Amount {
-		t.Error("mismatch `Amount`")
-		return
-	}
-	if bt.Created != fetched.Created {
-		t.Error("mismatch `Created`")
-		return
-	}
-	if len(fetched.Confirmed) < 1 {
-		t.Error("`Confirmed` missing")
-		return
-	}
+	require.Nil(t, err)
+
+	require.Equal(t, bt.Hash, fetched.Hash)
+	require.Equal(t, bt.PreviousCheckpoint, fetched.PreviousCheckpoint)
+	require.Equal(t, bt.Signature, fetched.Signature)
+	require.Equal(t, bt.Source, fetched.Source)
+	require.Equal(t, bt.Fee, fetched.Fee)
+	require.Equal(t, bt.Created, fetched.Created)
+	require.Equal(t, bt.Operations, fetched.Operations)
+	require.Equal(t, len(fetched.Confirmed) > 0, true)
 }
 
 func TestMultipleBlockTransactionGetByAccount(t *testing.T) {
@@ -418,10 +286,7 @@ func TestMultipleBlockTransactionGetByAccount(t *testing.T) {
 		a, _ := tx.Serialize()
 		bt := NewBlockTransactionFromTransaction(tx, a)
 		err := bt.Save(st)
-		if err != nil {
-			t.Error(err)
-			return
-		}
+		require.Nil(t, err)
 	}
 
 	// create txs from another keypair source but target is this keypair
@@ -433,10 +298,7 @@ func TestMultipleBlockTransactionGetByAccount(t *testing.T) {
 		a, _ := tx.Serialize()
 		bt := NewBlockTransactionFromTransaction(tx, a)
 		err := bt.Save(st)
-		if err != nil {
-			t.Error(err)
-			return
-		}
+		require.Nil(t, err)
 	}
 
 	// create txs from another keypair
@@ -445,10 +307,7 @@ func TestMultipleBlockTransactionGetByAccount(t *testing.T) {
 		a, _ := tx.Serialize()
 		bt := NewBlockTransactionFromTransaction(tx, a)
 		err := bt.Save(st)
-		if err != nil {
-			t.Error(err)
-			return
-		}
+		require.Nil(t, err)
 	}
 
 	{
@@ -464,15 +323,9 @@ func TestMultipleBlockTransactionGetByAccount(t *testing.T) {
 		}
 		closeFunc()
 
-		if len(saved) != len(createdOrder) {
-			t.Error("fetched records insufficient")
-		}
+		require.Equal(t, len(saved), len(createdOrder))
 		for i, bt := range saved {
-			if bt.Hash != createdOrder[i] {
-				t.Error("order mismatch")
-				return
-			}
+			require.Equal(t, bt.Hash, createdOrder[i])
 		}
-
 	}
 }
