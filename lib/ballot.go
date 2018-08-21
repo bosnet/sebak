@@ -175,7 +175,7 @@ var BallotWellFormedCheckerFuncs = []sebakcommon.CheckerFunc{
 
 func (b Ballot) IsWellFormed(networkID []byte) (err error) {
 	checker := &BallotChecker{
-		DefaultChecker: sebakcommon.DefaultChecker{BallotWellFormedCheckerFuncs},
+		DefaultChecker: sebakcommon.DefaultChecker{Funcs: BallotWellFormedCheckerFuncs},
 		Ballot:         b,
 		NetworkID:      networkID,
 	}

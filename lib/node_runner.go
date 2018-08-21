@@ -223,7 +223,7 @@ func (nr *NodeRunner) handleMessage() {
 			nr.log.Debug("got message from client`", "message", message.Head(50))
 
 			checker := &NodeRunnerHandleMessageChecker{
-				DefaultChecker: sebakcommon.DefaultChecker{nr.handleMessageFromClientCheckerFuncs},
+				DefaultChecker: sebakcommon.DefaultChecker{Funcs: nr.handleMessageFromClientCheckerFuncs},
 				NodeRunner:     nr,
 				LocalNode:      nr.localNode,
 				NetworkID:      nr.networkID,
@@ -245,7 +245,7 @@ func (nr *NodeRunner) handleMessage() {
 			nr.log.Debug("got ballot", "message", message.Head(50))
 
 			checker := &NodeRunnerHandleBallotChecker{
-				DefaultChecker: sebakcommon.DefaultChecker{nr.handleBallotCheckerFuncs},
+				DefaultChecker: sebakcommon.DefaultChecker{Funcs: nr.handleBallotCheckerFuncs},
 				NodeRunner:     nr,
 				LocalNode:      nr.localNode,
 				NetworkID:      nr.networkID,

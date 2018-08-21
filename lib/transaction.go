@@ -98,7 +98,7 @@ func (tx Transaction) IsWellFormed(networkID []byte) (err error) {
 	// TODO check `Version` format with SemVer
 
 	checker := &TransactionChecker{
-		DefaultChecker: sebakcommon.DefaultChecker{TransactionWellFormedCheckerFuncs},
+		DefaultChecker: sebakcommon.DefaultChecker{Funcs: TransactionWellFormedCheckerFuncs},
 		NetworkID:      networkID,
 		Transaction:    tx,
 	}

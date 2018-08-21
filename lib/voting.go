@@ -177,7 +177,7 @@ func (vr *VotingResult) Add(ballot Ballot) (err error) {
 	defer vr.Unlock()
 
 	checker := &VotingResultChecker{
-		DefaultChecker: sebakcommon.DefaultChecker{VotingResultCheckerFuns},
+		DefaultChecker: sebakcommon.DefaultChecker{Funcs: VotingResultCheckerFuns},
 		VotingResult:   vr,
 		Ballot:         ballot,
 	}
