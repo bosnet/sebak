@@ -149,6 +149,4 @@ func FinishOperation(st *sebakstorage.LevelDBBackend, tx Transaction, op Operati
 		err = sebakerror.ErrorUnknownOperationType
 		return
 	}
-
-	return
 }
