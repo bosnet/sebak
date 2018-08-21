@@ -267,7 +267,7 @@ func (b *Ballot) Vote(v VotingHole) {
 type BallotHeader struct {
 	Hash      string `json:"ballot_hash"`
 	Signature string `json:"signature"`
-	Source    string `json:source`
+	Source    string `json:"source"`
 }
 
 type BallotBody struct {
