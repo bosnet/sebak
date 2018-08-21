@@ -6,6 +6,8 @@ import (
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/storage"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewBlockOperationFromOperation(t *testing.T) {
@@ -14,26 +16,11 @@ func TestNewBlockOperationFromOperation(t *testing.T) {
 	op := tx.B.Operations[0]
 	bo := NewBlockOperationFromOperation(op, tx)
 
-	if bo.Type != op.H.Type {
-		t.Error("mismatch `Type`")
-		return
-	}
-	if bo.TxHash != tx.H.Hash {
-		t.Error("mismatch `TxHash`")
-		return
-	}
-	if bo.Source != tx.B.Source {
-		t.Error("mismatch `Source`")
-		return
-	}
-	if bo.Target != op.B.TargetAddress() {
-		t.Error("mismatch `Target`")
-		return
-	}
-	if bo.Amount != op.B.GetAmount() {
-		t.Error("mismatch `Type`")
-		return
-	}
+	require.Equal(t, bo.Type, op.H.Type)
+	require.Equal(t, bo.TxHash, tx.H.Hash)
+	require.Equal(t, bo.Source, tx.B.Source)
+	require.Equal(t, bo.Target, op.B.TargetAddress())
+	require.Equal(t, bo.Amount, op.B.GetAmount())
 }
 
 func TestBlockOperationSaveAndGet(t *testing.T) {
@@ -47,35 +34,13 @@ func TestBlockOperationSaveAndGet(t *testing.T) {
 
 	bo := bos[0]
 	fetched, err := GetBlockOperation(st, bo.Hash)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	require.Nil(t, err)
 
-	if bo.Hash != fetched.Hash {
-		t.Error("mismatch `Hash`")
-		return
-	}
-	if bo.Type != fetched.Type {
-		t.Error("mismatch `Type`")
-		return
-	}
-	if bo.TxHash != fetched.TxHash {
-		t.Error("mismatch `TxHash`")
-		return
-	}
-	if bo.Source != fetched.Source {
-		t.Error("mismatch `Source`")
-		return
-	}
-	if bo.Target != fetched.Target {
-		t.Error("mismatch `Target`")
-		return
-	}
-	if bo.Amount != fetched.Amount {
-		t.Error("mismatch `Amount`")
-		return
-	}
+	require.Equal(t, bo.Type, fetched.Type)
+	require.Equal(t, bo.Hash, fetched.Hash)
+	require.Equal(t, bo.Source, fetched.Source)
+	require.Equal(t, bo.Target, fetched.Target)
+	require.Equal(t, bo.Amount, fetched.Amount)
 }
 
 func TestBlockOperationSaveExisting(t *testing.T) {
@@ -85,21 +50,13 @@ func TestBlockOperationSaveExisting(t *testing.T) {
 	bo := bos[0]
 	bo.Save(st)
 
-	if exists, err := ExistBlockOperation(st, bos[0].Hash); err != nil {
-		t.Error(err)
-		return
-	} else if !exists {
-		t.Error("not found")
-		return
-	}
+	exists, err := ExistBlockOperation(st, bos[0].Hash)
+	require.Nil(t, err)
+	require.Equal(t, exists, true)
 
-	if err := bo.Save(st); err == nil {
-		t.Error("`ErrorBlockAlreayExists` Errors must be occurred")
-		return
-	} else if err != sebakerror.ErrorAlreadySaved {
-		t.Error("`ErrorAlreadySaved` Errors must be occurred")
-		return
-	}
+	err = bo.Save(st)
+	require.NotNil(t, err, "An error should have been returned")
+	require.Equal(t, err, sebakerror.ErrorAlreadySaved)
 }
 
 func TestGetSortedBlockOperationsByTxHash(t *testing.T) {
@@ -133,10 +90,7 @@ func TestGetSortedBlockOperationsByTxHash(t *testing.T) {
 		closeFunc()
 
 		for i, bo := range saved {
-			if bo.Hash != createdOrder[bo.TxHash][i] {
-				t.Error("order mismatch")
-				break
-			}
+			require.Equal(t, bo.Hash, createdOrder[bo.TxHash][i])
 		}
 	}
 }
@@ -146,10 +100,8 @@ func TestBlockOperationSaveByTransacton(t *testing.T) {
 
 	_, tx := TestMakeTransaction(networkID, 10)
 	bt := NewBlockTransactionFromTransaction(tx, sebakcommon.MustJSONMarshal(tx))
-	if err := bt.Save(st); err != nil {
-		t.Error(err)
-		return
-	}
+	err := bt.Save(st)
+	require.Nil(t, err)
 
 	var saved []BlockOperation
 	iterFunc, closeFunc := GetBlockOperationsByTxHash(st, tx.GetHash(), false)
@@ -165,26 +117,11 @@ func TestBlockOperationSaveByTransacton(t *testing.T) {
 
 	for i, bo := range saved {
 		op := tx.B.Operations[i]
-		if bo.Type != op.H.Type {
-			t.Error("mismatch `Type`")
-			return
-		}
-		if bo.TxHash != tx.H.Hash {
-			t.Error("mismatch `TxHash`")
-			return
-		}
-		if bo.Source != tx.B.Source {
-			t.Error("mismatch `Source`")
-			return
-		}
-		if bo.Target != op.B.TargetAddress() {
-			t.Error("mismatch `Target`")
-			return
-		}
-		if bo.Amount != op.B.GetAmount() {
-			t.Error("mismatch `Type`")
-			return
-		}
+		require.Equal(t, bo.Type, op.H.Type)
+		require.Equal(t, bo.TxHash, tx.H.Hash)
+		require.Equal(t, bo.Source, tx.B.Source)
+		require.Equal(t, bo.Target, op.B.TargetAddress())
+		require.Equal(t, bo.Amount, op.B.GetAmount())
 	}
 }
 
@@ -193,18 +130,14 @@ func TestBlockOperationGetSortedByCheckpoint(t *testing.T) {
 
 	_, tx := TestMakeTransaction(networkID, 10)
 	bt := NewBlockTransactionFromTransaction(tx, sebakcommon.MustJSONMarshal(tx))
-	if err := bt.Save(st); err != nil {
-		t.Error(err)
-		return
-	}
+	err := bt.Save(st)
+	require.Nil(t, err)
 
 	{
 		_, txAnother := TestMakeTransaction(networkID, 10)
 		btAnother := NewBlockTransactionFromTransaction(txAnother, sebakcommon.MustJSONMarshal(tx))
-		if err := btAnother.Save(st); err != nil {
-			t.Error(err)
-			return
-		}
+		err_ := btAnother.Save(st)
+		require.Nil(t, err_)
 	}
 
 	var saved []BlockOperation
@@ -221,25 +154,10 @@ func TestBlockOperationGetSortedByCheckpoint(t *testing.T) {
 
 	for i, bo := range saved {
 		op := tx.B.Operations[i]
-		if bo.Type != op.H.Type {
-			t.Error("mismatch `Type`")
-			return
-		}
-		if bo.TxHash != tx.H.Hash {
-			t.Error("mismatch `TxHash`")
-			return
-		}
-		if bo.Source != tx.B.Source {
-			t.Error("mismatch `Source`")
-			return
-		}
-		if bo.Target != op.B.TargetAddress() {
-			t.Error("mismatch `Target`")
-			return
-		}
-		if bo.Amount != op.B.GetAmount() {
-			t.Error("mismatch `Type`")
-			return
-		}
+		require.Equal(t, bo.Type, op.H.Type)
+		require.Equal(t, bo.TxHash, tx.H.Hash)
+		require.Equal(t, bo.Source, tx.B.Source)
+		require.Equal(t, bo.Target, op.B.TargetAddress())
+		require.Equal(t, bo.Amount, op.B.GetAmount())
 	}
 }

@@ -4,7 +4,9 @@ import (
 	"testing"
 
 	"boscoin.io/sebak/lib/common"
+
 	"github.com/stellar/go/keypair"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMakeHashOfOperationBodyPayment(t *testing.T) {
@@ -21,36 +23,27 @@ func TestMakeHashOfOperationBodyPayment(t *testing.T) {
 	hashed := op.MakeHashString()
 
 	expected := "8AALKhfgCu2w3ZtbESXHG5ko93Jb1L1yCmFopoJubQh9"
-	if hashed != expected {
-		t.Errorf("hased != <expected>: '%s' != '%s'", hashed, expected)
-	}
+	require.Equal(t, hashed, expected)
 }
 
 func TestIsWellFormedOperation(t *testing.T) {
 	op := TestMakeOperation(-1)
-	if err := op.IsWellFormed(networkID); err != nil {
-		t.Errorf("failed to check `Operation.IsWellFormed`: %v", err)
-	}
+	err := op.IsWellFormed(networkID)
+	require.Nil(t, err)
 }
 
 func TestIsWellFormedOperationLowerAmount(t *testing.T) {
 	obp := TestMakeOperationBodyPayment(0)
-	if err := obp.IsWellFormed(networkID); err == nil {
-		t.Errorf("failed to `Operation.IsWellFormed`: `Amount` must occur error")
-	}
+	err := obp.IsWellFormed(networkID)
+	require.NotNil(t, err)
 }
 
 func TestSerializeOperation(t *testing.T) {
 	op := TestMakeOperation(-1)
-	var b []byte
-	var err error
-	if b, err = op.Serialize(); err != nil {
-		t.Errorf("failed to serialize: %v", err)
-	} else if len(b) < 1 {
-		t.Error("failed to serialize: empty output")
-	}
+	b, err := op.Serialize()
+	require.Nil(t, err)
+	require.Equal(t, len(b) > 0, true)
 
-	if _, err = NewOperationFromBytes(b); err != nil {
-		t.Errorf("failed to unserialize operation data: %v", err)
-	}
+	_, err = NewOperationFromBytes(b)
+	require.Nil(t, err)
 }

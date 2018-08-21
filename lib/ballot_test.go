@@ -3,7 +3,7 @@ package sebak
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/stellar/go/keypair"
 
@@ -123,22 +123,22 @@ func TestBallotNewBallotFromMessageWithTransaction(t *testing.T) {
 
 func TestBallotCanFitVotingBox(t *testing.T) {
 	_, _, ballot := makeNewBallot(sebakcommon.BallotStateNONE, VotingYES)
-	assert.Equal(t, false, ballot.CanFitInVotingBox())
-	assert.Equal(t, false, ballot.CanFitInWaitingBox())
+	require.Equal(t, false, ballot.CanFitInVotingBox())
+	require.Equal(t, false, ballot.CanFitInWaitingBox())
 
 	ballot.SetState(sebakcommon.BallotStateINIT)
-	assert.Equal(t, false, ballot.CanFitInVotingBox())
-	assert.Equal(t, true, ballot.CanFitInWaitingBox())
+	require.Equal(t, false, ballot.CanFitInVotingBox())
+	require.Equal(t, true, ballot.CanFitInWaitingBox())
 
 	ballot.SetState(sebakcommon.BallotStateSIGN)
-	assert.Equal(t, true, ballot.CanFitInVotingBox())
-	assert.Equal(t, false, ballot.CanFitInWaitingBox())
+	require.Equal(t, true, ballot.CanFitInVotingBox())
+	require.Equal(t, false, ballot.CanFitInWaitingBox())
 
 	ballot.SetState(sebakcommon.BallotStateACCEPT)
-	assert.Equal(t, true, ballot.CanFitInVotingBox())
-	assert.Equal(t, false, ballot.CanFitInWaitingBox())
+	require.Equal(t, true, ballot.CanFitInVotingBox())
+	require.Equal(t, false, ballot.CanFitInWaitingBox())
 
 	ballot.SetState(sebakcommon.BallotStateALLCONFIRM)
-	assert.Equal(t, false, ballot.CanFitInVotingBox())
-	assert.Equal(t, false, ballot.CanFitInWaitingBox())
+	require.Equal(t, false, ballot.CanFitInVotingBox())
+	require.Equal(t, false, ballot.CanFitInWaitingBox())
 }
