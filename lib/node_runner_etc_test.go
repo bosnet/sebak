@@ -37,7 +37,7 @@ func TestNodeRunnerLimitIncomingBallotsFromUnknownValidator(t *testing.T) {
 
 	wg.Add(1)
 
-	expectedError := sebakcommon.CheckerErrorStop{"ballot from unknown validator"}
+	expectedError := sebakcommon.CheckerErrorStop{Message: "ballot from unknown validator"}
 
 	var handleBallotCheckerFuncs = []sebakcommon.CheckerFunc{
 		CheckNodeRunnerHandleBallotIsWellformed,

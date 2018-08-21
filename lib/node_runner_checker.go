@@ -44,7 +44,7 @@ func CheckNodeRunnerHandleMessageTransactionHasSameSource(c sebakcommon.Checker,
 	isaac := checker.NodeRunner.Consensus().(*ISAAC)
 
 	if isaac.Boxes.IsSameSourceUnderVoting(incomingTx) {
-		err = sebakcommon.CheckerErrorStop{"stop consensus, because same source transaction already in progress"}
+		err = sebakcommon.CheckerErrorStop{Message: "stop consensus, because same source transaction already in progress"}
 		return
 	}
 
@@ -145,7 +145,7 @@ func CheckNodeRunnerHandleBallotNotFromKnownValidators(c sebakcommon.Checker, ar
 		"ballot", checker.Ballot.MessageHash(),
 	)
 
-	err = sebakcommon.CheckerErrorStop{"ballot from unknown validator"}
+	err = sebakcommon.CheckerErrorStop{Message: "ballot from unknown validator"}
 	return
 }
 
@@ -210,7 +210,7 @@ func CheckNodeRunnerHandleBallotStore(c sebakcommon.Checker, args ...interface{}
 		"votingResultStaging", checker.VotingStateStaging,
 	)
 
-	err = sebakcommon.CheckerErrorStop{"got consensus"}
+	err = sebakcommon.CheckerErrorStop{Message: "got consensus"}
 
 	return
 }
@@ -219,7 +219,7 @@ func CheckNodeRunnerHandleBallotIsBroadcastable(c sebakcommon.Checker, args ...i
 	checker := c.(*NodeRunnerHandleBallotChecker)
 
 	if checker.VotingStateStaging.IsClosed() {
-		err = sebakcommon.CheckerErrorStop{"VotingResult is already closed"}
+		err = sebakcommon.CheckerErrorStop{Message: "VotingResult is already closed"}
 		return
 	}
 
@@ -301,7 +301,7 @@ func CheckNodeRunnerHandleBallotBroadcast(c sebakcommon.Checker, args ...interfa
 		if err := checker.NodeRunner.Consensus().CloseConsensus(checker.Ballot); err != nil {
 			checker.NodeRunner.Log().Error("failed to close consensus", "error", err)
 		}
-		err = sebakcommon.CheckerErrorStop{"VotingResult is already closed"}
+		err = sebakcommon.CheckerErrorStop{Message: "VotingResult is already closed"}
 		return
 	}
 

@@ -147,7 +147,7 @@ func TestNodeRunnerConsensusSameSourceWillBeIgnored(t *testing.T) {
 				mutex.Lock()
 				defer mutex.Unlock()
 
-				err = sebakcommon.CheckerErrorStop{"stop consensus, because it is in SIGN state"}
+				err = sebakcommon.CheckerErrorStop{Message: "stop consensus, because it is in SIGN state"}
 				wg.Done()
 				return
 			}
@@ -237,7 +237,7 @@ func TestNodeRunnerConsensusSameSourceWillNotIgnored(t *testing.T) {
 
 		// stop consensus when reached 'INIT'
 		func(c sebakcommon.Checker, args ...interface{}) (err error) {
-			err = sebakcommon.CheckerErrorStop{"stop consensus, because it is in INIT state"}
+			err = sebakcommon.CheckerErrorStop{Message: "stop consensus, because it is in INIT state"}
 			defer wg.Done()
 			return
 		},
