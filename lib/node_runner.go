@@ -206,9 +206,8 @@ func (nr *NodeRunner) Log() logging.Logger {
 
 func (nr *NodeRunner) ConnectValidators() {
 	ticker := time.NewTicker(time.Millisecond * 5)
-	for t := range ticker.C {
+	for _ = range ticker.C {
 		if !nr.network.IsReady() {
-			nr.log.Debug("current network is not ready: %v", t)
 			continue
 		}
 
@@ -251,7 +250,7 @@ func (nr *NodeRunner) handleMessage() {
 		var err error
 
 		if message.IsEmpty() {
-			nr.log.Debug("got empty message`")
+			nr.log.Error("got empty message`")
 			continue
 		}
 		switch message.Type {
@@ -402,18 +401,14 @@ func (nr *NodeRunner) StartNewRound(roundNumber uint64) {
 		nr.timerExpireRound = nil
 	}
 
+	// wait for new ballot from new proposer
+	nr.timerExpireRound = time.NewTimer(TimeoutExpireRound)
 	go func() {
-		// wait for new ballot from new proposer
-		nr.timerExpireRound = time.NewTimer(TimeoutExpireRound)
-		go func() {
-			for {
-				select {
-				case <-nr.timerExpireRound.C:
-					go nr.StartNewRound(roundNumber + 1)
-					return
-				}
-			}
-		}()
+		select {
+		case <-nr.timerExpireRound.C:
+			go nr.StartNewRound(roundNumber + 1)
+			return
+		}
 	}()
 
 	proposer := nr.CalculateProposer(

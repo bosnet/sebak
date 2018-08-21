@@ -7,13 +7,33 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 )
 
 var DefaultEndpoint int = 12345
 
 func CheckPortInUse(port int) error {
-	_, err := net.DialTimeout("tcp", net.JoinHostPort("", strconv.FormatInt(int64(port), 10)), 10)
+	if port < 1 {
+		return errors.New("0 port is not available")
+	}
+	_, err := net.DialTimeout(
+		"tcp",
+		net.JoinHostPort("", strconv.FormatInt(int64(port), 10)),
+		100*time.Millisecond,
+	)
 	return err
+}
+
+func GetFreePort() (port int) {
+	for i := 1024; i < 10000; i++ {
+		if err := CheckPortInUse(i); err == nil {
+			continue
+		}
+		port = i
+		break
+	}
+
+	return
 }
 
 func CheckBindString(b string) error {
