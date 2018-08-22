@@ -69,6 +69,11 @@ func (so *stateObject) Code() []byte {
 	} else if bytes.Equal(so.CodeHash(), emptyCodeHash) {
 		return nil
 	} else {
+		code, err := so.db.Get(so.CodeHash())
+		if err != nil {
+			return nil
+		}
+		so.code = code
 		return so.code
 	}
 }
