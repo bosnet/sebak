@@ -1,5 +1,7 @@
 package payload
 
+import "boscoin.io/sebak/lib/common"
+
 type ExecCode struct {
 	ContractAddress string
 	Method          string
@@ -7,7 +9,7 @@ type ExecCode struct {
 }
 
 func (ec *ExecCode) Serialize() (encoded []byte, err error) {
-	encoded, err = EncodeJSONValue(ec)
+	encoded, err = sebakcommon.EncodeJSONValue(ec)
 	return
 }
 
@@ -15,6 +17,6 @@ func (ec *ExecCode) Deserialize(encoded []byte) (err error) {
 	if ec == nil {
 		ec = new(ExecCode)
 	}
-	err = DecodeJSONValue(encoded, ec)
+	err = sebakcommon.DecodeJSONValue(encoded, ec)
 	return
 }

@@ -1,8 +1,9 @@
-package sebak
+package contract
 
 import (
 	"testing"
 
+	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/contract/payload"
 	sebakstorage "boscoin.io/sebak/lib/storage"
 	"github.com/stretchr/testify/assert"
@@ -21,7 +22,7 @@ function Hello(helloarg){
 		t.Fatal(err)
 	}
 
-	ba := NewBlockAccount(testAddress, 1000000000000, "")
+	ba := block.NewBlockAccount(testAddress, 1000000000000, "")
 	if err := ba.Save(st); err != nil {
 		t.Fatal(err)
 	}

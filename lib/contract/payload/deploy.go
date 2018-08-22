@@ -3,6 +3,7 @@ package payload
 import (
 	"boscoin.io/sebak/lib/storage"
 
+	"boscoin.io/sebak/lib/common"
 	"fmt"
 )
 
@@ -30,7 +31,7 @@ func (dc *DeployCode) Save(st sebakstorage.DBBackend) error {
 }
 
 func (dc *DeployCode) Serialize() (encoded []byte, err error) {
-	encoded, err = EncodeJSONValue(dc)
+	encoded, err = sebakcommon.EncodeJSONValue(dc)
 	return
 }
 
@@ -38,7 +39,7 @@ func (dc *DeployCode) Deserialize(encoded []byte) (err error) {
 	if dc == nil {
 		dc = new(DeployCode)
 	}
-	err = DecodeJSONValue(encoded, dc)
+	err = sebakcommon.DecodeJSONValue(encoded, dc)
 	return
 }
 

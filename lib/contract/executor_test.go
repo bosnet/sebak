@@ -1,8 +1,9 @@
-package sebak
+package contract
 
 import (
 	"testing"
 
+	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/contract/native/execfunc"
 	"boscoin.io/sebak/lib/contract/payload"
 	"boscoin.io/sebak/lib/contract/value"
@@ -22,7 +23,7 @@ func TestContractExecutorNativeHelloworld(t *testing.T) {
 
 	sdb := sebakstorage.NewStateDB(ts)
 
-	senderAccount := testMakeBlockAccount()
+	senderAccount := block.TestMakeBlockAccount()
 	ctx := NewContractContext(senderAccount, sdb)
 	exCode := &payload.ExecCode{
 		ContractAddress: execfunc.HelloWorldAddress,
