@@ -15,10 +15,23 @@ import (
 
 	"github.com/btcsuite/btcutil/base58"
 	uuid "github.com/satori/go.uuid"
+	"github.com/stellar/go/keypair"
 )
 
+var (
+	TIMEFORMAT_ISO8601 string = "2006-01-02T15:04:05.000000000Z07:00"
+)
+
+func FormatISO8601(t time.Time) string {
+	return t.Format(TIMEFORMAT_ISO8601)
+}
+
 func NowISO8601() string {
-	return time.Now().Format("2006-01-02T15:04:05.000000000Z07:00")
+	return FormatISO8601(time.Now())
+}
+
+func ParseISO8601(s string) (time.Time, error) {
+	return time.Parse(TIMEFORMAT_ISO8601, s)
 }
 
 func GetUniqueIDFromUUID() string {
@@ -185,4 +198,9 @@ func IsStringMapEqualWithHash(a, b map[string]bool) bool {
 	bHash := MustMakeObjectHash(b)
 
 	return bytes.Equal(aHash, bHash)
+}
+
+// MakeSignature makes signature from given hash string
+func MakeSignature(kp keypair.KP, networkID []byte, hash string) ([]byte, error) {
+	return kp.Sign(append(networkID, []byte(hash)...))
 }
