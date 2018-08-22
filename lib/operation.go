@@ -14,8 +14,10 @@ import (
 type OperationType string
 
 const (
-	OperationCreateAccount OperationType = "create-account"
-	OperationPayment                     = "payment"
+	OperationCreateAccount   OperationType = "create-account"
+	OperationPayment                       = "payment"
+	OperationContractDeploy                = "contract-deploy"
+	OperationContractExecute               = "contract-execute"
 )
 
 type Operation struct {
@@ -94,6 +96,20 @@ func NewOperationFromInterface(oj OperationFromJSON) (op Operation, err error) {
 			return
 		}
 		op.B = NewOperationBodyPayment(body["target"].(string), amount)
+	case OperationContractExecute:
+		var amount sebakcommon.Amount
+		amount, err = sebakcommon.AmountFromString(fmt.Sprintf("%v", body["amount"]))
+		if err != nil {
+			return
+		}
+		op.B = NewOperationBodyContractExecute(body["target"].(string), amount, body["method"].(string), body["args"].([]string))
+	case OperationContractDeploy:
+		var amount sebakcommon.Amount
+		amount, err = sebakcommon.AmountFromString(fmt.Sprintf("%v", body["amount"]))
+		if err != nil {
+			return
+		}
+		op.B = NewOperationBodyContractDeploy(body["target"].(string), amount, body["codeType"].(int), body["code"].(string))
 	}
 
 	return
@@ -145,6 +161,8 @@ func FinishOperation(st *sebakstorage.LevelDBBackend, tx Transaction, op Operati
 		return FinishOperationCreateAccount(st, tx, op)
 	case OperationPayment:
 		return FinishOperationPayment(st, tx, op)
+	case OperationContractExecute:
+		return FinishOperationBodyContractDeploy(st, tx, op)
 	default:
 		err = sebakerror.ErrorUnknownOperationType
 		return
