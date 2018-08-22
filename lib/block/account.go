@@ -86,7 +86,6 @@ func (b *BlockAccount) Deserialize(encoded []byte) (err error) {
 	return sebakcommon.DecodeJSONValue(encoded, b)
 }
 
-
 func GetBlockAccountKey(address string) string {
 	return fmt.Sprintf("%s%s", BlockAccountPrefixAddress, address)
 }
