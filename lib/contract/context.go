@@ -1,18 +1,19 @@
-package sebak
+package contract
 
 import (
+	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/contract/payload"
 	sebakstorage "boscoin.io/sebak/lib/storage"
 )
 
 type ContractContext struct {
-	senderAccount *BlockAccount // Transaction.Source.
+	senderAccount *block.BlockAccount // Transaction.Source.
 	db            sebakstorage.DBBackend
 
 	//APICallCounter int // Simple version of PC
 }
 
-func NewContractContext(sender *BlockAccount, db sebakstorage.DBBackend) *ContractContext {
+func NewContractContext(sender *block.BlockAccount, db sebakstorage.DBBackend) *ContractContext {
 	ctx := &ContractContext{
 		senderAccount: sender,
 		db:            db,

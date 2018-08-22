@@ -1,8 +1,9 @@
-package sebak
+package contract
 
 import (
 	"time"
 
+	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/contract/payload"
 	"boscoin.io/sebak/lib/contract/storage"
 	"boscoin.io/sebak/lib/contract/value"
@@ -44,7 +45,7 @@ func (a *ContractAPI) PutStorageItem(key string, item *storage.StorageItem) erro
 
 // Get this contract's balance
 func (a *ContractAPI) GetBalance() (string, error) {
-	ba, err := GetBlockAccount(a.stateDB, a.contractAddress)
+	ba, err := block.GetBlockAccount(a.stateDB, a.contractAddress)
 	if err != nil {
 		return "0", err
 	}

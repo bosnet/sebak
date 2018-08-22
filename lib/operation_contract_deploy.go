@@ -6,7 +6,9 @@ import (
 
 	"github.com/stellar/go/keypair"
 
+	"boscoin.io/sebak/lib/block"
 	sebakcommon "boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/contract"
 	"boscoin.io/sebak/lib/contract/payload"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/storage"
@@ -63,14 +65,14 @@ func (o OperationBodyContractDeploy) GetAmount() sebakcommon.Amount {
 }
 
 func FinishOperationBodyContractDeploy(st sebakstorage.DBBackend, tx Transaction, op Operation) (err error) {
-	var baSource *BlockAccount
-	if baSource, err = GetBlockAccount(st, tx.B.Source); err != nil {
+	var baSource *block.BlockAccount
+	if baSource, err = block.GetBlockAccount(st, tx.B.Source); err != nil {
 		err = sebakerror.ErrorBlockAccountDoesNotExists
 		return
 	}
 
-	ctx := NewContractContext(baSource, st)
+	ctx := contract.NewContractContext(baSource, st)
 
-	err = DeployContract(ctx, payload.CodeType(op.B.(OperationBodyContractDeploy).CodeType), []byte(op.B.(OperationBodyContractDeploy).Code)) //TODO: Where to pass the return value?
+	err = contract.DeployContract(ctx, payload.CodeType(op.B.(OperationBodyContractDeploy).CodeType), []byte(op.B.(OperationBodyContractDeploy).Code)) //TODO: Where to pass the return value?
 	return
 }

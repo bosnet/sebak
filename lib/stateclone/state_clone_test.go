@@ -1,9 +1,10 @@
-package sebak
+package stateclone
 
 import (
 	"bytes"
 	"testing"
 
+	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/contract/storage"
 	sebakstorage "boscoin.io/sebak/lib/storage"
@@ -18,7 +19,7 @@ func Test_StateClone_CommitAccount(t *testing.T) {
 	store := NewStateStore(st)
 	clone := NewStateClone(store)
 
-	ba := testMakeBlockAccount()
+	ba := block.TestMakeBlockAccount()
 	ba.Balance = "1000"
 	if err := ba.Save(st); err != nil {
 		t.Fatal(err)
@@ -56,7 +57,7 @@ func Test_StateClone_CommitAccount(t *testing.T) {
 	}
 
 	{
-		ba3, err := GetBlockAccount(st, ba.Address)
+		ba3, err := block.GetBlockAccount(st, ba.Address)
 		if err != nil {
 			t.Fatal(err)
 		}

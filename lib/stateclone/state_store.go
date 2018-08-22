@@ -1,6 +1,7 @@
-package sebak
+package stateclone
 
 import (
+	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/contract/payload"
 	"boscoin.io/sebak/lib/contract/storage"
 	"boscoin.io/sebak/lib/error"
@@ -24,8 +25,8 @@ func (s *StateStore) DBBackend() *sebakstorage.LevelDBBackend {
 	return s.db
 }
 
-func (s *StateStore) GetAccount(addr string) (*BlockAccount, error) {
-	ba, err := GetBlockAccount(s.db, addr)
+func (s *StateStore) GetAccount(addr string) (*block.BlockAccount, error) {
+	ba, err := block.GetBlockAccount(s.db, addr)
 	if err != nil {
 		return nil, err
 	}

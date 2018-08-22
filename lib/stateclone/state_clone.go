@@ -1,4 +1,4 @@
-package sebak
+package stateclone
 
 import (
 	"fmt"
@@ -9,6 +9,7 @@ import (
 	"boscoin.io/sebak/lib/contract/storage"
 	sebakstorage "boscoin.io/sebak/lib/storage"
 
+	"boscoin.io/sebak/lib/block"
 	"github.com/btcsuite/btcutil/base58"
 )
 
@@ -16,7 +17,7 @@ type StateClone struct {
 	db    *sebakstorage.LevelDBBackend
 	store *StateStore
 
-	accounts map[string]*BlockAccount
+	accounts map[string]*block.BlockAccount
 	objects  map[string]*StateObject
 }
 
@@ -25,7 +26,7 @@ func NewStateClone(store *StateStore) *StateClone {
 	s := &StateClone{
 		db:       store.DBBackend(),
 		store:    store,
-		accounts: make(map[string]*BlockAccount),
+		accounts: make(map[string]*block.BlockAccount),
 		objects:  make(map[string]*StateObject),
 	}
 
@@ -133,7 +134,7 @@ func (s *StateClone) MakeHashString() (string, error) {
 	return base58.Encode(h), nil
 }
 
-func (s *StateClone) GetAccount(addr string) (*BlockAccount, error) {
+func (s *StateClone) GetAccount(addr string) (*block.BlockAccount, error) {
 	if a, ok := s.accounts[addr]; ok {
 		return a, nil
 	}

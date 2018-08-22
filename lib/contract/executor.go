@@ -1,4 +1,4 @@
-package sebak
+package contract
 
 import (
 	"errors"
