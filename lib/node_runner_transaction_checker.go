@@ -55,7 +55,8 @@ func CheckNodeRunnerHandleTransactionsGetMissingTransaction(c sebakcommon.Checke
 		if !checker.NodeRunner.Consensus().TransactionPool.Has(hash) {
 			// TODO get transaction from proposer and check
 			// `Transaction.IsWellFormed()`
-			continue
+
+			// continue
 		}
 		validTransactions = append(validTransactions, hash)
 	}

@@ -13,7 +13,7 @@ import (
 	"strconv"
 	"time"
 
-	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib"
 	"boscoin.io/sebak/lib/node"
 
 	"github.com/stellar/go/keypair"
@@ -83,36 +83,6 @@ func pingAndWait(t *testing.T, c0 NetworkClient) {
 	}
 }
 
-func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, mn *HTTP2Network, localNode *sebaknode.LocalNode) {
-	g := NewKeyGenerator(dirPath, certPath, keyPath)
-
-	var config HTTP2NetworkConfig
-	endpoint, err := sebakcommon.NewEndpointFromString(fmt.Sprintf("https://localhost:%s?NodeName=n1", getPort()))
-	if err != nil {
-		t.Error(err)
-		return
-	}
-
-	queries := endpoint.Query()
-	queries.Add("TLSCertFile", g.GetCertPath())
-	queries.Add("TLSKeyFile", g.GetKeyPath())
-	endpoint.RawQuery = queries.Encode()
-
-	config, err = NewHTTP2NetworkConfigFromEndpoint(endpoint)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	mn = NewHTTP2Network(config)
-
-	kp, _ = keypair.Random()
-	localNode, _ = sebaknode.NewLocalNode(kp, mn.Endpoint(), "")
-
-	mn.SetContext(context.WithValue(context.Background(), "localNode", localNode))
-
-	return
-}
-
 type TestMessageBroker struct{}
 
 func (r TestMessageBroker) ResponseMessage(w http.ResponseWriter, o string) {
@@ -168,22 +138,6 @@ func (r StringResponseMessageBroker) ResponseMessage(w http.ResponseWriter, _ st
 }
 
 func (r StringResponseMessageBroker) ReceiveMessage(*HTTP2Network, Message) {}
-
-func TestHTTP2NetworkMessageBrokerResponseMessage(t *testing.T) {
-	_, s0, localNode := createNewHTTP2Network(t)
-	s0.SetMessageBroker(StringResponseMessageBroker{"ResponseMessage"})
-	s0.Ready()
-
-	go s0.Start()
-	defer s0.Stop()
-
-	c0 := s0.GetClient(s0.Endpoint())
-	pingAndWait(t, c0)
-
-	returnMsg, _ := c0.Connect(localNode)
-
-	assert.Equal(t, string(returnMsg), "ResponseMessage", "The connectNode and the return should be the same.")
-}
 
 func TestHTTP2NetworkConnect(t *testing.T) {
 	_, s0, localNode := createNewHTTP2Network(t)

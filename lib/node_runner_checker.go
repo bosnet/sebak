@@ -361,7 +361,7 @@ func CheckNodeRunnerHandleINITBallotBroadcast(c sebakcommon.Checker, args ...int
 	if !checker.IsNew {
 		return
 	}
-
+    
 	newBallot := checker.Ballot
 	newBallot.SetSource(checker.LocalNode.Address())
 	newBallot.SetVote(sebakcommon.BallotStateSIGN, checker.VotingHole)

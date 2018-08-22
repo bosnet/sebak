@@ -159,6 +159,7 @@ func GetAccountOperationsHandler(storage *sebakstorage.LevelDBBackend) http.Hand
 			var readyChan = make(chan struct{})
 			iterateId := sebakcommon.GetUniqueIDFromUUID()
 			go func() {
+
 				<-readyChan
 				count := maxNumberOfExistingData
 				iterFunc, closeFunc := GetBlockOperationsBySource(storage, address, false)
@@ -167,6 +168,7 @@ func GetAccountOperationsHandler(storage *sebakstorage.LevelDBBackend) http.Hand
 					count--
 					if !hasNext || count < 0 {
 						break
+						 
 					}
 					observer.BlockOperationObserver.Trigger(fmt.Sprintf("iterate-%s", iterateId), &bo)
 				}

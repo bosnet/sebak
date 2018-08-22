@@ -9,6 +9,7 @@ package sebak
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"sort"
@@ -244,6 +245,8 @@ func (nr *NodeRunner) handleMessage() {
 			err = nr.handleMessageFromClient(message)
 		case sebaknetwork.BallotMessage:
 			err = nr.handleBallotMessage(message)
+		case sebaknetwork.TransactionsMessage:
+			err = nr.handleTransactionsMessage(message)
 		default:
 			err = errors.New("got unknown message")
 		}
@@ -325,6 +328,24 @@ func (nr *NodeRunner) handleBallotMessage(message sebaknetwork.Message) (err err
 		if _, ok := err.(sebakcommon.CheckerErrorStop); !ok {
 			nr.log.Error("failed to handle ballot", "error", err, "state", baseChecker.Ballot.State())
 			return
+		}
+	}
+
+	return
+}
+
+func (nr *NodeRunner) handleTransactionsMessage(message sebaknetwork.Message) (err error) {
+	nr.log.Debug("got transactions", "message", message.Head(50))
+	var txHash []string
+
+	sendResult := make(map[string]Transaction)
+
+	json.Unmarshal(message.Data, &txHash)
+
+	for _, hash := range txHash {
+
+		if tx, found := nr.Consensus().TransactionPool.Get(hash); found {
+			sendResult[hash] = tx
 		}
 	}
 
