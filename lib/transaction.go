@@ -6,6 +6,7 @@ import (
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/stellar/go/keypair"
 
+	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/storage"
@@ -115,8 +116,8 @@ func (tx Transaction) IsWellFormed(networkID []byte) (err error) {
 // * and it's `Operations`
 func (tx Transaction) Validate(st *sebakstorage.LevelDBBackend) (err error) {
 	// check, source exists
-	var ba *BlockAccount
-	if ba, err = GetBlockAccount(st, tx.B.Source); err != nil {
+	var ba *block.BlockAccount
+	if ba, err = block.GetBlockAccount(st, tx.B.Source); err != nil {
 		err = sebakerror.ErrorBlockAccountDoesNotExists
 		return
 	}
@@ -128,8 +129,8 @@ func (tx Transaction) Validate(st *sebakstorage.LevelDBBackend) (err error) {
 	}
 
 	// get the balance at checkpoint
-	var bac BlockAccountCheckpoint
-	bac, err = GetBlockAccountCheckpoint(st, tx.B.Source, tx.B.Checkpoint)
+	var bac block.BlockAccountCheckpoint
+	bac, err = block.GetBlockAccountCheckpoint(st, tx.B.Source, tx.B.Checkpoint)
 	if err != nil {
 		return
 	}

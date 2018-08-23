@@ -6,6 +6,7 @@ import (
 
 	"github.com/stellar/go/keypair"
 
+	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/storage"
@@ -43,7 +44,7 @@ func (o OperationBodyPayment) IsWellFormed([]byte) (err error) {
 
 func (o OperationBodyPayment) Validate(st *sebakstorage.LevelDBBackend) (err error) {
 	var exists bool
-	if exists, err = ExistBlockAccount(st, o.Target); err == nil && !exists {
+	if exists, err = block.ExistBlockAccount(st, o.Target); err == nil && !exists {
 		err = sebakerror.ErrorBlockAccountDoesNotExists
 	}
 
@@ -59,12 +60,12 @@ func (o OperationBodyPayment) GetAmount() sebakcommon.Amount {
 }
 
 func FinishOperationPayment(st *sebakstorage.LevelDBBackend, tx Transaction, op Operation) (err error) {
-	var baSource, baTarget *BlockAccount
-	if baSource, err = GetBlockAccount(st, tx.B.Source); err != nil {
+	var baSource, baTarget *block.BlockAccount
+	if baSource, err = block.GetBlockAccount(st, tx.B.Source); err != nil {
 		err = sebakerror.ErrorBlockAccountDoesNotExists
 		return
 	}
-	if baTarget, err = GetBlockAccount(st, op.B.TargetAddress()); err != nil {
+	if baTarget, err = block.GetBlockAccount(st, op.B.TargetAddress()); err != nil {
 		err = sebakerror.ErrorBlockAccountDoesNotExists
 		return
 	}

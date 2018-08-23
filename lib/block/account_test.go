@@ -1,4 +1,4 @@
-package sebak
+package block
 
 import (
 	"testing"
@@ -7,13 +7,14 @@ import (
 	"boscoin.io/sebak/lib/observer"
 	"boscoin.io/sebak/lib/storage"
 	"fmt"
+	"github.com/google/uuid"
 	"sync"
 )
 
 func TestSaveNewBlockAccount(t *testing.T) {
 	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
 
-	b := testMakeBlockAccount()
+	b := TestMakeBlockAccount()
 	err := b.Save(st)
 	if err != nil {
 		t.Errorf("failed to save BlockAccount, %v", err)
@@ -35,7 +36,7 @@ func TestSaveNewBlockAccount(t *testing.T) {
 func TestSaveExistingBlockAccount(t *testing.T) {
 	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
 
-	b := testMakeBlockAccount()
+	b := TestMakeBlockAccount()
 	b.Save(st)
 
 	if err := b.Deposit(sebakcommon.Amount(100), "fake-checkpoint"); err != nil {
@@ -57,7 +58,7 @@ func TestSortMultipleBlockAccount(t *testing.T) {
 
 	var createdOrder []string
 	for i := 0; i < 50; i++ {
-		b := testMakeBlockAccount()
+		b := TestMakeBlockAccount()
 		b.Save(st)
 
 		createdOrder = append(createdOrder, b.Address)
@@ -88,7 +89,7 @@ func TestGetSortedBlockAccounts(t *testing.T) {
 
 	var createdOrder []string
 	for i := 0; i < 50; i++ {
-		b := testMakeBlockAccount()
+		b := TestMakeBlockAccount()
 		b.Save(st)
 
 		createdOrder = append(createdOrder, b.Address)
@@ -117,13 +118,13 @@ func TestGetSortedBlockAccounts(t *testing.T) {
 func TestBlockAccountSaveBlockAccountCheckpoints(t *testing.T) {
 	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
 
-	b := testMakeBlockAccount()
+	b := TestMakeBlockAccount()
 	b.Save(st)
 
 	var saved []BlockAccount
 	saved = append(saved, *b)
 	for i := 0; i < 10; i++ {
-		b.Checkpoint = TestGenerateNewCheckpoint()
+		b.Checkpoint = uuid.New().String()
 		b.Save(st)
 
 		saved = append(saved, *b)
@@ -159,7 +160,7 @@ func TestBlockAccountObserver(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 
-	b := testMakeBlockAccount()
+	b := TestMakeBlockAccount()
 
 	var triggered *BlockAccount
 	ObserverFunc := func(args ...interface{}) {

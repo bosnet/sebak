@@ -12,6 +12,7 @@ import (
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/network"
 
+	"boscoin.io/sebak/lib/block"
 	"github.com/spf13/cobra"
 	"github.com/stellar/go/keypair"
 )
@@ -72,7 +73,7 @@ func init() {
 			// 1 operation == 1 transaction
 			var tx sebak.Transaction
 			var connection *sebakcommon.HTTP2Client
-			var senderAccount sebak.BlockAccount
+			var senderAccount block.BlockAccount
 
 			// Keep-alive ignores timeout/idle timeout
 			if connection, err = sebakcommon.NewHTTP2Client(0, 0, true); err != nil {
@@ -243,8 +244,8 @@ func makeTransactionPayment(kpSource keypair.KP, kpDest keypair.KP, amount sebak
 ///   sebak.BlockAccount = The deserialized block account, or a default-initialized one if an error occured
 ///   error = `nil` or the error that occured (either network or deserialization)
 ///
-func getSenderDetails(conn *sebaknetwork.HTTP2NetworkClient, sender keypair.KP) (sebak.BlockAccount, error) {
-	var ba sebak.BlockAccount
+func getSenderDetails(conn *sebaknetwork.HTTP2NetworkClient, sender keypair.KP) (block.BlockAccount, error) {
+	var ba block.BlockAccount
 	var err error
 	var retBody []byte
 

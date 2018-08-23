@@ -1,6 +1,7 @@
 package sebak
 
 import (
+	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"bufio"
 	"bytes"
@@ -41,7 +42,7 @@ func TestGetAccountHandler(t *testing.T) {
 	defer ts.Close()
 
 	// Make Dummy BlockAccount
-	ba := testMakeBlockAccount()
+	ba := block.TestMakeBlockAccount()
 	ba.Save(storage)
 	prev := ba.GetBalance()
 
@@ -60,7 +61,7 @@ func TestGetAccountHandler(t *testing.T) {
 		for n = 0; n < 10; n++ {
 			line, err := reader.ReadBytes('\n')
 			checkError(t, err)
-			var cba = &BlockAccount{}
+			var cba = &block.BlockAccount{}
 			json.Unmarshal(line, cba)
 			assert.Equal(t, ba.Address, cba.Address, "not equal")
 			assert.Equal(t, prev+n, cba.GetBalance(), "not equal")
@@ -93,7 +94,7 @@ func TestGetAccountHandler(t *testing.T) {
 	reader = bufio.NewReader(resp.Body)
 	readByte, err := ioutil.ReadAll(reader)
 	checkError(t, err)
-	var cba = &BlockAccount{}
+	var cba = &block.BlockAccount{}
 	json.Unmarshal(readByte, cba)
 	assert.Equal(t, ba.Address, cba.Address, "not equal")
 	assert.Equal(t, ba.GetBalance(), cba.GetBalance(), "not equal")

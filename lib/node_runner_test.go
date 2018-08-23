@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
@@ -15,7 +16,7 @@ import (
 
 var (
 	kp      *keypair.Full
-	account *BlockAccount
+	account *block.BlockAccount
 )
 
 func init() {
@@ -43,7 +44,7 @@ func createTestNodeRunner(n int) []*NodeRunner {
 	checkpoint := sebakcommon.MakeGenesisCheckpoint(networkID)
 	address := kp.Address()
 	balance := BaseFee.MustAdd(1)
-	account = NewBlockAccount(address, balance, checkpoint)
+	account = block.NewBlockAccount(address, balance, checkpoint)
 	var nodeRunners []*NodeRunner
 	for i := 0; i < n; i++ {
 		v := nodes[i]
