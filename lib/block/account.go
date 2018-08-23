@@ -43,39 +43,6 @@ func (b *BlockAccount) String() string {
 	return string(sebakcommon.MustJSONMarshal(b))
 }
 
-func (b *BlockAccount) Save(st *sebakstorage.LevelDBBackend) (err error) {
-	key := GetBlockAccountKey(b.Address)
-
-	var exists bool
-	exists, err = st.Has(key)
-	if err != nil {
-		return
-	}
-
-	if exists {
-		err = st.Set(key, b)
-	} else {
-		// TODO consider to use, [`Transaction`](https://godoc.org/github.com/syndtr/goleveldb/leveldb#DB.OpenTransaction)
-		err = st.New(key, b)
-		createdKey := GetBlockAccountCreatedKey(sebakcommon.GetUniqueIDFromUUID())
-		err = st.New(createdKey, b.Address)
-	}
-	if err == nil {
-		event := "saved"
-		event += " " + fmt.Sprintf("address-%s", b.Address)
-		observer.BlockAccountObserver.Trigger(event, b)
-	}
-
-	bac := BlockAccountCheckpoint{
-		Checkpoint: b.Checkpoint,
-		Address:    b.Address,
-		Balance:    b.Balance,
-	}
-	err = bac.Save(st)
-
-	return
-}
-
 func (b *BlockAccount) Serialize() (encoded []byte, err error) {
 	encoded, err = sebakcommon.EncodeJSONValue(b)
 	return
