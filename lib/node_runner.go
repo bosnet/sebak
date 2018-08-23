@@ -26,6 +26,7 @@ type NodeRunner struct {
 	consensus         Consensus
 	connectionManager *sebaknetwork.ConnectionManager
 	storage           *sebakstorage.LevelDBBackend
+	rootHash          sebakcommon.Hash
 
 	handleMessageFromClientCheckerFuncs []sebakcommon.CheckerFunc
 	handleBallotCheckerFuncs            []sebakcommon.CheckerFunc
@@ -68,6 +69,10 @@ func NewNodeRunner(
 
 	nr.SetHandleMessageFromClientCheckerFuncs(nil, DefaultHandleMessageFromClientCheckerFuncs...)
 	nr.SetHandleBallotCheckerFuncs(nil, DefaultHandleBallotCheckerFuncs...)
+
+	//FIXME: statedb should be located in RunningRound
+	//FIXME: the RootHash should be retrived by the last block
+	nr.rootHash = sebakcommon.Hash{}
 
 	return nr
 }
@@ -117,6 +122,11 @@ func (nr *NodeRunner) ConnectionManager() *sebaknetwork.ConnectionManager {
 
 func (nr *NodeRunner) Storage() *sebakstorage.LevelDBBackend {
 	return nr.storage
+}
+
+//FIXME: this should be located in running round
+func (nr *NodeRunner) RootHash() sebakcommon.Hash {
+	return nr.rootHash
 }
 
 func (nr *NodeRunner) Policy() sebakcommon.VotingThresholdPolicy {

@@ -227,32 +227,3 @@ func (so *stateObject) Save() (err error) {
 
 	return
 }
-
-/*
-func (so *stateObject) GetValue(key string, value interface{}) (err error) {
-	encKey, err := trie.EncodeToBytes(key)
-	hashedKey := sebakcommon.MakeHash(encKey)
-	hashedVal := so.GetState(sebakcommon.BytesToHash(hashedKey))
-	encVal, err := so.db.Get(hashedVal[:])
-	err = trie.DecodeBytes(encVal, value)
-	return
-}
-func (so *stateObject) SetValue(key string, value interface{}) (err error) {
-	encKey, err := trie.EncodeToBytes(key)
-	if err != nil {
-		return
-	}
-	encVal, err := trie.EncodeToBytes(value)
-	if err != nil {
-		return
-	}
-	hashedKey := sebakcommon.MakeHash(encKey)
-	hashedVal := sebakcommon.MakeHash(encVal)
-	err = so.db.Put(hashedVal[:], encVal)
-	if err != nil {
-		return
-	}
-	so.SetState(sebakcommon.BytesToHash(hashedKey), sebakcommon.BytesToHash(hashedVal))
-	return
-}
-*/

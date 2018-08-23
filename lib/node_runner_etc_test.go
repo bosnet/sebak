@@ -4,12 +4,9 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/google/uuid"
-	"github.com/stellar/go/keypair"
-
-	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/network"
+	"github.com/stellar/go/keypair"
 )
 
 // TestNodeRunnerLimitIncomingBallotsFromUnknownValidator checks, the incoming
@@ -17,22 +14,8 @@ import (
 func TestNodeRunnerLimitIncomingBallotsFromUnknownValidator(t *testing.T) {
 	defer sebaknetwork.CleanUpMemoryNetwork()
 
-	numberOfNodes := 3
-	nodeRunners := createNodeRunnersWithReady(numberOfNodes)
-	for _, nr := range nodeRunners {
-		defer nr.Stop()
-	}
-
-	kp, _ := keypair.Random()
+	kp, _, checkpoint, nodeRunners := testPrepareOneAccount()
 	kpNewAccount, _ := keypair.Random()
-
-	// create new account in all nodes
-	checkpoint := uuid.New().String() // set initial checkpoint
-	account := block.NewBlockAccount(kp.Address(), BaseFee.MustAdd(1), checkpoint)
-	for _, nr := range nodeRunners {
-		account.Save(nr.Storage())
-	}
-
 	var wg sync.WaitGroup
 
 	wg.Add(1)

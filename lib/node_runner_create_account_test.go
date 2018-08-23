@@ -6,33 +6,74 @@ import (
 	"github.com/google/uuid"
 	"github.com/stellar/go/keypair"
 
-	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/network"
+	"boscoin.io/sebak/lib/statedb"
+	"boscoin.io/sebak/lib/trie"
 )
 
-func TestNodeRunnerCreateAccount(t *testing.T) {
-	defer sebaknetwork.CleanUpMemoryNetwork()
-
+func testPrepareOneAccount() (kp *keypair.Full, balance sebakcommon.Amount, checkpoint string, nodeRunners []*NodeRunner) {
 	numberOfNodes := 3
-	nodeRunners := createNodeRunnersWithReady(numberOfNodes)
+	nodeRunners = createNodeRunnersWithReady(numberOfNodes)
 	for _, nr := range nodeRunners {
 		defer nr.Stop()
 	}
 
-	kp, _ := keypair.Random()
-	kpNewAccount, _ := keypair.Random()
+	kp, _ = keypair.Random()
 
 	// create new account in all nodes
-	checkpoint := sebakcommon.MakeGenesisCheckpoint(networkID)
-	account := block.NewBlockAccount(kp.Address(), BaseFee.MustAdd(1), checkpoint)
+	checkpoint = sebakcommon.MakeGenesisCheckpoint(networkID)
+	balance = BaseFee.MustAdd(1000)
 	for _, nr := range nodeRunners {
-		account.Save(nr.Storage())
+		sdb := statedb.New(nr.RootHash(), trie.NewEthDatabase(nr.Storage()))
+		sdb.CreateAccount(kp.Address())
+		sdb.AddBalanceWithCheckpoint(kp.Address(), balance, checkpoint)
+		root, _ := sdb.CommitTrie()
+		sdb.CommitDB(root)
+		nr.rootHash = root
 	}
 
-	initialBalance := sebakcommon.Amount(1)
+	return
+}
+
+func testPrepareTwoAccount() (kp1, kp2 *keypair.Full, balance sebakcommon.Amount, checkpoint string, nodeRunners []*NodeRunner) {
+	numberOfNodes := 3
+	nodeRunners = createNodeRunnersWithReady(numberOfNodes)
+	for _, nr := range nodeRunners {
+		defer nr.Stop()
+	}
+
+	kp1, _ = keypair.Random()
+	kp2, _ = keypair.Random()
+
+	// create new account in all nodes
+	checkpoint = sebakcommon.MakeGenesisCheckpoint(networkID)
+	balance = BaseFee.MustAdd(100000000)
+	for _, nr := range nodeRunners {
+		sdb := statedb.New(nr.RootHash(), trie.NewEthDatabase(nr.Storage()))
+
+		sdb.CreateAccount(kp1.Address())
+		sdb.AddBalanceWithCheckpoint(kp1.Address(), balance, checkpoint)
+		sdb.CreateAccount(kp2.Address())
+		sdb.AddBalanceWithCheckpoint(kp2.Address(), balance, checkpoint)
+
+		root, _ := sdb.CommitTrie()
+		sdb.CommitDB(root)
+		nr.rootHash = root
+	}
+
+	return
+}
+
+func TestNodeRunnerCreateAccount(t *testing.T) {
+	defer sebaknetwork.CleanUpMemoryNetwork()
+
+	kp, balance, checkpoint, nodeRunners := testPrepareOneAccount()
+
+	kpNewAccount, _ := keypair.Random()
+	initialBalance := sebakcommon.Amount(100)
 	tx := makeTransactionCreateAccount(kp, kpNewAccount.Address(), initialBalance)
-	tx.B.Checkpoint = account.Checkpoint
+	tx.B.Checkpoint = checkpoint
 	tx.Sign(kp, networkID)
 
 	dones := doConsensus(nodeRunners, tx)
@@ -49,23 +90,13 @@ func TestNodeRunnerCreateAccount(t *testing.T) {
 
 	nr0 := nodeRunners[0]
 
-	// check balance
-	baSource, err := block.GetBlockAccount(nr0.Storage(), kp.Address())
-	if err != nil {
-		t.Error("failed to get source account")
-		return
-	}
-	baTarget, err := block.GetBlockAccount(nr0.Storage(), kpNewAccount.Address())
-	if err != nil {
-		t.Error("failed to get target account")
-		return
-	}
+	sdb := statedb.New(nr0.RootHash(), trie.NewEthDatabase(nr0.Storage()))
 
-	if baTarget.GetBalance() != initialBalance {
+	if sebakcommon.MustAmountFromString(sdb.GetBalance(kpNewAccount.Address())) != initialBalance {
 		t.Error("failed to transfer the initial amount to target")
 		return
 	}
-	if account.GetBalance().MustSub(tx.TotalAmount(true)) != baSource.GetBalance() {
+	if balance.MustSub(tx.TotalAmount(true)) != sebakcommon.MustAmountFromString(sdb.GetBalance(kp.Address())) {
 		t.Error("failed to subtract the transfered amount from source")
 		return
 	}
@@ -74,21 +105,11 @@ func TestNodeRunnerCreateAccount(t *testing.T) {
 func TestNodeRunnerCreateAccountInvalidCheckpoint(t *testing.T) {
 	defer sebaknetwork.CleanUpMemoryNetwork()
 
-	numberOfNodes := 3
-	nodeRunners := createNodeRunnersWithReady(numberOfNodes)
-	for _, nr := range nodeRunners {
-		defer nr.Stop()
-	}
+	kp, balance, _, nodeRunners := testPrepareOneAccount()
 
-	kp, _ := keypair.Random()
 	kpNewAccount, _ := keypair.Random()
 
 	// create new account in all nodes
-	checkpoint := sebakcommon.MakeGenesisCheckpoint(networkID) // set initial checkpoint
-	account := block.NewBlockAccount(kp.Address(), sebakcommon.Amount(2000), checkpoint)
-	for _, nr := range nodeRunners {
-		account.Save(nr.Storage())
-	}
 
 	initialBalance := sebakcommon.Amount(100)
 	tx := makeTransactionCreateAccount(kp, kpNewAccount.Address(), initialBalance)
@@ -111,14 +132,13 @@ func TestNodeRunnerCreateAccountInvalidCheckpoint(t *testing.T) {
 	nr0 := nodeRunners[0]
 
 	// check balance
-	_, err := block.GetBlockAccount(nr0.Storage(), kpNewAccount.Address())
-	if err == nil {
+	sdb := statedb.New(nr0.RootHash(), trie.NewEthDatabase(nr0.Storage()))
+	if sdb.ExistAccount(kpNewAccount.Address()) {
 		t.Error("target account must not be created")
 		return
 	}
 
-	baSource, _ := block.GetBlockAccount(nr0.Storage(), kp.Address())
-	if account.GetBalance() != baSource.GetBalance() {
+	if balance != sebakcommon.MustAmountFromString(sdb.GetBalance(kp.Address())) {
 		t.Error("amount was paid from source")
 		return
 	}
@@ -127,23 +147,10 @@ func TestNodeRunnerCreateAccountInvalidCheckpoint(t *testing.T) {
 func TestNodeRunnerCreateAccountSufficient(t *testing.T) {
 	defer sebaknetwork.CleanUpMemoryNetwork()
 
-	numberOfNodes := 3
-	nodeRunners := createNodeRunnersWithReady(numberOfNodes)
-	for _, nr := range nodeRunners {
-		defer nr.Stop()
-	}
-
-	kp, _ := keypair.Random()
+	kp, balance, checkpoint, nodeRunners := testPrepareOneAccount()
 	kpNewAccount, _ := keypair.Random()
 
-	// create new account in all nodes
-	checkpoint := sebakcommon.MakeGenesisCheckpoint(networkID) // set initial checkpoint
-	account := block.NewBlockAccount(kp.Address(), BaseFee.MustAdd(1), checkpoint)
-	for _, nr := range nodeRunners {
-		account.Save(nr.Storage())
-	}
-
-	initialBalance := sebakcommon.MustAmountFromString(account.Balance).MustSub(BaseFee)
+	initialBalance := balance.MustSub(BaseFee)
 	tx := makeTransactionCreateAccount(kp, kpNewAccount.Address(), initialBalance)
 	tx.B.Checkpoint = checkpoint
 	tx.Sign(kp, networkID)
@@ -163,19 +170,18 @@ func TestNodeRunnerCreateAccountSufficient(t *testing.T) {
 	nr0 := nodeRunners[0]
 
 	// check balance
-	baTarget, err := block.GetBlockAccount(nr0.Storage(), kpNewAccount.Address())
-	if err != nil {
+	sdb := statedb.New(nr0.RootHash(), trie.NewEthDatabase(nr0.Storage()))
+	if sdb.ExistAccount(kpNewAccount.Address()) == false {
 		t.Error("failed to get target account")
 		return
 	}
 
-	baSource, _ := block.GetBlockAccount(nr0.Storage(), kp.Address())
-	if sebakcommon.Amount(initialBalance) != sebakcommon.Amount(baTarget.GetBalance()) {
+	if initialBalance != sebakcommon.MustAmountFromString(sdb.GetBalance(kpNewAccount.Address())) {
 		t.Error("amount was not paid to target")
 		return
 	}
-	if sebakcommon.Amount(account.GetBalance())-tx.TotalAmount(true) != sebakcommon.Amount(baSource.GetBalance()) {
-		t.Error("amount was paid from source", sebakcommon.Amount(account.GetBalance())-tx.TotalAmount(true), sebakcommon.Amount(baSource.GetBalance()))
+	if balance-tx.TotalAmount(true) != sebakcommon.MustAmountFromString(sdb.GetBalance(kp.Address())) {
+		t.Error("amount was paid from source", balance-tx.TotalAmount(true), sebakcommon.MustAmountFromString(sdb.GetBalance(kp.Address())))
 		return
 	}
 }
@@ -183,24 +189,10 @@ func TestNodeRunnerCreateAccountSufficient(t *testing.T) {
 func TestNodeRunnerCreateAccountInsufficient(t *testing.T) {
 	defer sebaknetwork.CleanUpMemoryNetwork()
 
-	numberOfNodes := 3
-	nodeRunners := createNodeRunnersWithReady(numberOfNodes)
-	for _, nr := range nodeRunners {
-		defer nr.Stop()
-	}
-
-	kp, _ := keypair.Random()
+	kp, balance, checkpoint, nodeRunners := testPrepareOneAccount()
 	kpNewAccount, _ := keypair.Random()
 
-	// create new account in all nodes
-	checkpoint := uuid.New().String() // set initial checkpoint
-	account := block.NewBlockAccount(kp.Address(), sebakcommon.Amount(2000), checkpoint)
-	for _, nr := range nodeRunners {
-		account.Save(nr.Storage())
-	}
-
-	initialBalance := sebakcommon.MustAmountFromString(account.Balance)
-
+	initialBalance := balance
 	tx := makeTransactionCreateAccount(kp, kpNewAccount.Address(), initialBalance)
 	tx.B.Checkpoint = checkpoint
 	tx.Sign(kp, networkID)
@@ -220,14 +212,13 @@ func TestNodeRunnerCreateAccountInsufficient(t *testing.T) {
 	nr0 := nodeRunners[0]
 
 	// check balance
-	_, err := block.GetBlockAccount(nr0.Storage(), kpNewAccount.Address())
-	if err == nil {
+	sdb := statedb.New(nr0.RootHash(), trie.NewEthDatabase(nr0.Storage()))
+	if sdb.ExistAccount(kpNewAccount.Address()) {
 		t.Error("target account must not be created")
 		return
 	}
 
-	baSource, _ := block.GetBlockAccount(nr0.Storage(), kp.Address())
-	if account.GetBalance() != baSource.GetBalance() {
+	if balance != sebakcommon.MustAmountFromString(sdb.GetBalance(kp.Address())) {
 		t.Error("amount was paid from source")
 		return
 	}

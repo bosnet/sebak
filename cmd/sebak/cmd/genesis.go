@@ -13,7 +13,8 @@ import (
 	"boscoin.io/sebak/lib/storage"
 
 	"boscoin.io/sebak/cmd/sebak/common"
-	"boscoin.io/sebak/lib/block"
+	"boscoin.io/sebak/lib/statedb"
+	"boscoin.io/sebak/lib/trie"
 )
 
 const (
@@ -117,18 +118,15 @@ func MakeGenesisBlock(addressStr, networkID, balanceStr, storage string) (string
 		return "--storage", fmt.Errorf("failed to initialize storage: %v", err)
 	}
 
+	statedb := statedb.New(sebakcommon.Hash{}, trie.NewEthDatabase(st))
 	// check account does not exists
-	if _, err = block.GetBlockAccount(st, kp.Address()); err == nil {
+	if statedb.ExistAccount(kp.Address()) {
 		return "<public key>", errors.New("account is already created")
 	}
 
-	// checkpoint of genesis block is created by `--network-id`
-	account := block.NewBlockAccount(
-		kp.Address(),
-		balance,
-		sebakcommon.MakeGenesisCheckpoint([]byte(flagNetworkID)),
-	)
-	account.Save(st)
+	statedb.AddBalanceWithCheckpoint(kp.Address(), balance, sebakcommon.MakeGenesisCheckpoint([]byte(flagNetworkID)))
+	rootHash, _ := statedb.CommitTrie()
+	statedb.CommitDB(rootHash)
 	st.Close()
 	return "", nil
 }
