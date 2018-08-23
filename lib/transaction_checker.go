@@ -54,10 +54,6 @@ func CheckTransactionOperation(c sebakcommon.Checker, args ...interface{}) (err 
 		err = sebakerror.ErrorTransactionEmptyOperations
 		return
 	}
-	if len(checker.Transaction.B.Operations) > MaxOperationsInTransaction {
-		err = sebakerror.ErrorTooManyOperations
-		return
-	}
 
 	var hashes []string
 	for _, op := range checker.Transaction.B.Operations {

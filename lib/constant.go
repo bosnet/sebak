@@ -30,8 +30,4 @@ var (
 	// MaxTransactionsInBallot limits the maximum number of `Transaction`s in
 	// one proposed `Ballot`.
 	MaxTransactionsInBallot int = 1000
-
-	// MaxOperationsInTransaction limits the maximum number of `Operation`s in
-	// one `Transaction`.
-	MaxOperationsInTransaction int = 200
 )

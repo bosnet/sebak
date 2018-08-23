@@ -9,7 +9,6 @@ import (
 	"github.com/stellar/go/keypair"
 
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/error"
 )
 
 func TestLoadTransactionFromJSON(t *testing.T) {
@@ -117,37 +116,6 @@ func TestTransactionIsValidCheckpoint(t *testing.T) {
 	}
 	if !tx.IsValidCheckpoint(newCheckpoint) {
 		t.Error("checkpoint has same head with tx")
-		return
-	}
-}
-
-func TestTransactionMaxOperationsInTransaction(t *testing.T) {
-	var err error
-
-	// well-formed
-	_, tx := TestMakeTransaction(networkID, MaxOperationsInTransaction-1)
-	if err = tx.IsWellFormed(networkID); err != nil {
-		t.Error(err)
-		return
-	}
-
-	// over `MaxOperationsInTransaction`
-	kp, tx = TestMakeTransaction(networkID, MaxOperationsInTransaction+1)
-	if err = tx.IsWellFormed(networkID); err == nil {
-		t.Error("over `MaxOperationsInTransaction` should be error")
-		return
-	} else if err != sebakerror.ErrorTooManyOperations {
-		t.Error("over `MaxOperationsInTransaction` should be `ErrorTooManyOperations`")
-		return
-	}
-
-	// empty `Operation`
-	txNew := &tx
-	txNew.B.Operations = []Operation{}
-	txNew.Sign(kp, networkID)
-
-	if err = txNew.IsWellFormed(networkID); err == nil {
-		t.Error("0 operation should be `ErrorTransactionEmptyOperations`")
 		return
 	}
 }
