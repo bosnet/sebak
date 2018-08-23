@@ -2,6 +2,10 @@ package sebak
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/require"
+
+	"boscoin.io/sebak/lib/error"
 )
 
 func TestErrorBallotHasOverMaxTransactionsInBallot(t *testing.T) {
@@ -32,8 +36,6 @@ func TestErrorBallotHasOverMaxTransactionsInBallot(t *testing.T) {
 	ballot = NewBallot(node, round, txs)
 	ballot.Sign(node.Keypair(), networkID)
 
-	if err := ballot.IsWellFormed(networkID); err == nil {
-		t.Error("`sebakerror.ErrorBallotHasOverMaxTransactionsInBallot` must be occurred")
-		return
-	}
+	err := ballot.IsWellFormed(networkID)
+	require.Error(t, err, sebakerror.ErrorBallotHasOverMaxTransactionsInBallot)
 }
