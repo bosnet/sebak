@@ -2,8 +2,8 @@ package value
 
 import (
 	"github.com/magiconair/properties/assert"
-	"testing"
 	"github.com/robertkrimen/otto"
+	"testing"
 )
 
 const (

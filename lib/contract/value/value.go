@@ -9,11 +9,11 @@ import (
 type Type byte
 
 const (
-	Nil Type = 0x00
-	SInt     = 0x01
-	UInt     = 0x02
-	String   = 0x03
-	Boolean  = 0x04
+	Nil     Type = 0x00
+	SInt         = 0x01
+	UInt         = 0x02
+	String       = 0x03
+	Boolean      = 0x04
 )
 
 const (
@@ -22,8 +22,8 @@ const (
 )
 
 type Value struct {
-	Type    Type
-	value   interface{}
+	Type  Type
+	value interface{}
 }
 
 func ToValue(iv interface{}) (v *Value, err error) {
