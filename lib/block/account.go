@@ -29,6 +29,8 @@ type BlockAccount struct {
 	Address    string
 	Balance    string
 	Checkpoint string
+	CodeHash   []byte
+	RootHash   sebakcommon.Hash
 }
 
 func NewBlockAccount(address string, balance sebakcommon.Amount, checkpoint string) *BlockAccount {
@@ -79,6 +81,9 @@ func (b *BlockAccount) Save(st *sebakstorage.LevelDBBackend) (err error) {
 func (b *BlockAccount) Serialize() (encoded []byte, err error) {
 	encoded, err = sebakcommon.EncodeJSONValue(b)
 	return
+}
+func (b *BlockAccount) Deserialize(encoded []byte) (err error) {
+	return sebakcommon.DecodeJSONValue(encoded, b)
 }
 
 func GetBlockAccountKey(address string) string {

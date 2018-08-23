@@ -27,7 +27,7 @@ type LevelDBCore interface {
 type LevelDBBackend struct {
 	DB *leveldb.DB
 
-	core LevelDBCore
+	Core LevelDBCore
 }
 
 func (st *LevelDBBackend) Init(config *Config) (err error) {
@@ -45,7 +45,7 @@ func (st *LevelDBBackend) Init(config *Config) (err error) {
 	}
 
 	st.DB = db
-	st.core = db
+	st.Core = db
 
 	return
 }
@@ -55,24 +55,24 @@ func (st *LevelDBBackend) Close() error {
 }
 
 func (st *LevelDBBackend) OpenTransaction() (*LevelDBBackend, error) {
-	_, ok := st.core.(*leveldb.Transaction)
+	_, ok := st.Core.(*leveldb.Transaction)
 	if ok {
 		return nil, errors.New("this is already *leveldb.Transaction")
 	}
 
-	transaction, err := st.core.(*leveldb.DB).OpenTransaction()
+	transaction, err := st.Core.(*leveldb.DB).OpenTransaction()
 	if err != nil {
 		return nil, err
 	}
 
 	return &LevelDBBackend{
 		DB:   st.DB,
-		core: transaction,
+		Core: transaction,
 	}, nil
 }
 
 func (st *LevelDBBackend) Discard() error {
-	ts, ok := st.core.(*leveldb.Transaction)
+	ts, ok := st.Core.(*leveldb.Transaction)
 	if !ok {
 		return errors.New("this is not *leveldb.Transaction")
 	}
@@ -82,7 +82,7 @@ func (st *LevelDBBackend) Discard() error {
 }
 
 func (st *LevelDBBackend) Commit() error {
-	ts, ok := st.core.(*leveldb.Transaction)
+	ts, ok := st.Core.(*leveldb.Transaction)
 	if !ok {
 		return errors.New("this is not *leveldb.Transaction")
 	}
@@ -95,7 +95,7 @@ func (st *LevelDBBackend) makeKey(key string) []byte {
 }
 
 func (st *LevelDBBackend) Has(k string) (bool, error) {
-	return st.core.Has(st.makeKey(k), nil)
+	return st.Core.Has(st.makeKey(k), nil)
 }
 
 func (st *LevelDBBackend) GetRaw(k string) (b []byte, err error) {
@@ -107,7 +107,7 @@ func (st *LevelDBBackend) GetRaw(k string) (b []byte, err error) {
 		return
 	}
 
-	b, err = st.core.Get(st.makeKey(k), nil)
+	b, err = st.Core.Get(st.makeKey(k), nil)
 
 	return
 }
@@ -145,7 +145,7 @@ func (st *LevelDBBackend) New(k string, v interface{}) (err error) {
 		return
 	}
 
-	err = st.core.Put(st.makeKey(k), encoded, nil)
+	err = st.Core.Put(st.makeKey(k), encoded, nil)
 
 	return
 }
@@ -176,7 +176,7 @@ func (st *LevelDBBackend) News(vs ...Item) (err error) {
 		batch.Put(st.makeKey(v.Key), encoded)
 	}
 
-	err = st.core.Write(batch, nil)
+	err = st.Core.Write(batch, nil)
 
 	return
 }
@@ -195,7 +195,7 @@ func (st *LevelDBBackend) Set(k string, v interface{}) (err error) {
 		return
 	}
 
-	err = st.core.Put(st.makeKey(k), encoded, nil)
+	err = st.Core.Put(st.makeKey(k), encoded, nil)
 
 	return
 }
@@ -211,7 +211,7 @@ func (st *LevelDBBackend) put(k string, v interface{}) (err error) {
 	if err != nil {
 		return
 	}
-	err = st.core.Put(st.makeKey(k), encoded, nil)
+	err = st.Core.Put(st.makeKey(k), encoded, nil)
 	return
 }
 
@@ -241,7 +241,7 @@ func (st *LevelDBBackend) Sets(vs ...Item) (err error) {
 		batch.Put(st.makeKey(v.Key), encoded)
 	}
 
-	err = st.core.Write(batch, nil)
+	err = st.Core.Write(batch, nil)
 
 	return
 }
@@ -255,7 +255,7 @@ func (st *LevelDBBackend) Remove(k string) (err error) {
 		return
 	}
 
-	err = st.core.Delete(st.makeKey(k), nil)
+	err = st.Core.Delete(st.makeKey(k), nil)
 
 	return
 }
@@ -266,7 +266,7 @@ func (st *LevelDBBackend) GetIterator(prefix string, reverse bool) (func() (Iter
 		dbRange = leveldbUtil.BytesPrefix(st.makeKey(prefix))
 	}
 
-	iter := st.core.NewIterator(dbRange, nil)
+	iter := st.Core.NewIterator(dbRange, nil)
 
 	var funcNext func() bool
 	var hasUnsent bool
