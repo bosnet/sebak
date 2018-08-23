@@ -48,6 +48,7 @@ func TestGetAccountHandler(t *testing.T) {
 	req.Header.Set("Accept", "text/event-stream")
 	resp, err := ts.Client().Do(req)
 	require.Nil(t, err)
+	defer resp.Body.Close()
 	reader := bufio.NewReader(resp.Body)
 
 	// Do stream Request to the Server
@@ -62,7 +63,6 @@ func TestGetAccountHandler(t *testing.T) {
 			require.Equal(t, prev+n, cba.GetBalance())
 			prev = cba.GetBalance()
 		}
-		resp.Body.Close()
 		wg.Done()
 	}()
 
@@ -86,6 +86,7 @@ func TestGetAccountHandler(t *testing.T) {
 	require.Nil(t, err)
 	resp, err = ts.Client().Do(req)
 	require.Nil(t, err)
+	defer resp.Body.Close()
 	reader = bufio.NewReader(resp.Body)
 	readByte, err := ioutil.ReadAll(reader)
 	require.Nil(t, err)
@@ -134,6 +135,7 @@ func TestGetAccountTransactionsHandler(t *testing.T) {
 	req.Header.Set("Accept", "text/event-stream")
 	resp, err := ts.Client().Do(req)
 	require.Nil(t, err)
+	defer resp.Body.Close()
 	reader := bufio.NewReader(resp.Body)
 
 	// Do stream Request to the Server
@@ -147,7 +149,6 @@ func TestGetAccountTransactionsHandler(t *testing.T) {
 			require.Nil(t, err)
 			require.Equal(t, txS, line)
 		}
-		resp.Body.Close()
 		wg.Done()
 	}()
 
@@ -170,6 +171,7 @@ func TestGetAccountTransactionsHandler(t *testing.T) {
 	require.Nil(t, err)
 	resp, err = ts.Client().Do(req)
 	require.Nil(t, err)
+	defer resp.Body.Close()
 	reader = bufio.NewReader(resp.Body)
 	readByte, err := ioutil.ReadAll(reader)
 	require.Nil(t, err)
@@ -226,6 +228,7 @@ func TestGetAccountOperationsHandler(t *testing.T) {
 	req.Header.Set("Accept", "text/event-stream")
 	resp, err := ts.Client().Do(req)
 	require.Nil(t, err)
+	defer resp.Body.Close()
 	reader := bufio.NewReader(resp.Body)
 
 	// Do stream Request to the Server
@@ -264,9 +267,10 @@ func TestGetAccountOperationsHandler(t *testing.T) {
 	// No streaming
 	req, err = http.NewRequest("GET", url, nil)
 	require.Nil(t, err)
-	resp, err = ts.Client().Do(req)
+	resp2, err := ts.Client().Do(req)
 	require.Nil(t, err)
-	reader = bufio.NewReader(resp.Body)
+	defer resp2.Body.Close()
+	reader = bufio.NewReader(resp2.Body)
 	readByte, err := ioutil.ReadAll(reader)
 	require.Nil(t, err)
 	var receivedBos []BlockOperation
@@ -337,6 +341,7 @@ func TestGetTransactionByHashHandler(t *testing.T) {
 	require.Nil(t, err)
 	resp, err := ts.Client().Do(req)
 	require.Nil(t, err)
+	defer resp.Body.Close()
 	reader := bufio.NewReader(resp.Body)
 	readByte, err := ioutil.ReadAll(reader)
 	require.Nil(t, err)
@@ -381,6 +386,7 @@ func TestGetTransactionsHandler(t *testing.T) {
 	req.Header.Set("Accept", "text/event-stream")
 	resp, err := ts.Client().Do(req)
 	require.Nil(t, err)
+	defer resp.Body.Close()
 	reader := bufio.NewReader(resp.Body)
 
 	// Do stream Request to the Server
@@ -394,7 +400,6 @@ func TestGetTransactionsHandler(t *testing.T) {
 			require.Equal(t, txS, line)
 		}
 
-		resp.Body.Close()
 		wg.Done()
 	}()
 
@@ -414,9 +419,10 @@ func TestGetTransactionsHandler(t *testing.T) {
 	// No streaming
 	req, err = http.NewRequest("GET", url, nil)
 	require.Nil(t, err)
-	resp, err = ts.Client().Do(req)
+	resp2, err := ts.Client().Do(req)
 	require.Nil(t, err)
-	reader = bufio.NewReader(resp.Body)
+	defer resp2.Body.Close()
+	reader = bufio.NewReader(resp2.Body)
 	readByte, err := ioutil.ReadAll(reader)
 	require.Nil(t, err)
 	var receivedBts []BlockTransaction
