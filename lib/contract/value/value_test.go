@@ -104,4 +104,32 @@ func TestValue(t *testing.T) {
 		}
 		assert.Equal(t, v1, v2)
 	}
+	for _, testValue := range testValues {
+		v1, err := ToValue(testValue)
+		if err != nil {
+			panic(err)
+		}
+		v2, err := ToValue(testValue)
+		if err != nil {
+			panic(err)
+		}
+
+		if v1.Equal(v2) != true {
+			t.Error("not equal")
+		}
+	}
+	{
+		v1, err := ToValue(testValues[0])
+		if err != nil {
+			panic(err)
+		}
+		v2, err := ToValue(testValues[1])
+		if err != nil {
+			panic(err)
+		}
+
+		if v1.Equal(v2) == true {
+			t.Error("equal")
+		}
+	}
 }

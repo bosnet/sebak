@@ -45,6 +45,6 @@ function Hello(helloarg){
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, string(ret.Contents), want)
-	t.Log(string(ret.Contents))
+	assert.Equal(t, ret.String(), want)
+	t.Log(ret)
 }

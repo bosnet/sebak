@@ -3,6 +3,7 @@ package value
 import (
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"github.com/robertkrimen/otto"
 )
 
@@ -24,6 +25,27 @@ const (
 type Value struct {
 	Type  Type
 	value interface{}
+}
+
+func (v *Value) Equal(t *Value) bool {
+	if v.Type != t.Type {
+		return false
+	}
+	if v.value != t.value {
+		return false
+	}
+	return true
+}
+
+func (v *Value) EqualNative(i interface{}) bool {
+	if v.value != i {
+		return false
+	}
+	return true
+}
+
+func (v *Value) String() string {
+	return fmt.Sprint(v.value)
 }
 
 func ToValue(iv interface{}) (v *Value, err error) {
