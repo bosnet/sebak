@@ -3,29 +3,12 @@ package sebak
 import (
 	"testing"
 
-	"github.com/stellar/go/keypair"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/network"
-	"boscoin.io/sebak/lib/node"
-	"boscoin.io/sebak/lib/storage"
 )
-
-func MakeNodeRunner() (*NodeRunner, *sebaknode.LocalNode) {
-	kp, _ := keypair.Random()
-
-	nodeEndpoint := &sebakcommon.Endpoint{Scheme: "https", Host: "https://locahost:5000"}
-	localNode, _ := sebaknode.NewLocalNode(kp, nodeEndpoint, "")
-
-	vth, _ := NewDefaultVotingThresholdPolicy(66, 66)
-	is, _ := NewISAAC(networkID, localNode, vth)
-	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
-	network, _ := createNetMemoryNetwork()
-	nodeRunner, _ := NewNodeRunner(string(networkID), localNode, vth, network, is, st)
-	return nodeRunner, localNode
-}
 
 func TestMessageChecker(t *testing.T) {
 	_, validTx := TestMakeTransaction(networkID, 1)
@@ -38,7 +21,7 @@ func TestMessageChecker(t *testing.T) {
 
 	validMessage := sebaknetwork.Message{Type: "message", Data: b}
 	nodeRunner, localNode := MakeNodeRunner()
-	checker := &NodeRunnerHandleMessageChecker{
+	checker := &MessageChecker{
 		DefaultChecker: sebakcommon.DefaultChecker{},
 		NodeRunner:     nodeRunner,
 		LocalNode:      localNode,
@@ -46,45 +29,45 @@ func TestMessageChecker(t *testing.T) {
 		Message:        validMessage,
 	}
 
-	err = CheckNodeRunnerHandleMessageTransactionUnmarshal(checker)
-	assert.Nil(t, err)
-	assert.Equal(t, checker.Transaction, validTx)
+	err = TransactionUnmarshal(checker)
+	require.Nil(t, err)
+	require.Equal(t, checker.Transaction, validTx)
 
-	err = CheckNodeRunnerHandleMessageHasTransactionAlready(checker)
-	assert.Nil(t, err)
+	err = HasTransactionAlready(checker)
+	require.Nil(t, err)
 
-	err = CheckNodeRunnerHandleMessageHistory(checker)
-	assert.Nil(t, err)
+	err = SaveTransactionHistory(checker)
+	require.Nil(t, err)
 	var found bool
 	found, err = ExistsBlockTransactionHistory(checker.NodeRunner.Storage(), checker.Transaction.GetHash())
-	assert.True(t, found)
+	require.True(t, found)
 
-	err = CheckNodeRunnerHandleMessagePushIntoTransactionPool(checker)
-	assert.Nil(t, err)
-	assert.True(t, checker.NodeRunner.Consensus().TransactionPool.Has(validTx.GetHash()))
+	err = PushIntoTransactionPool(checker)
+	require.Nil(t, err)
+	require.True(t, checker.NodeRunner.Consensus().TransactionPool.Has(validTx.GetHash()))
 
-	// CheckNodeRunnerHandleMessageTransactionBroadcast(checker) is not suitable in unittest
+	// TransactionBroadcast(checker) is not suitable in unittest
 
-	err = CheckNodeRunnerHandleMessageHasTransactionAlready(checker)
-	assert.Equal(t, err, sebakerror.ErrorNewButKnownMessage)
+	err = HasTransactionAlready(checker)
+	require.Equal(t, err, sebakerror.ErrorNewButKnownMessage)
 
-	err = CheckNodeRunnerHandleMessageHistory(checker)
-	assert.Equal(t, err, sebakerror.ErrorNewButKnownMessage)
+	err = SaveTransactionHistory(checker)
+	require.Equal(t, err, sebakerror.ErrorNewButKnownMessage)
 
-	err = CheckNodeRunnerHandleMessagePushIntoTransactionPool(checker)
-	assert.Nil(t, err)
+	err = PushIntoTransactionPool(checker)
+	require.Nil(t, err)
 
 	var CheckerFuncs = []sebakcommon.CheckerFunc{
-		CheckNodeRunnerHandleMessageTransactionUnmarshal,
-		CheckNodeRunnerHandleMessageHasTransactionAlready,
-		CheckNodeRunnerHandleMessageHistory,
-		CheckNodeRunnerHandleMessagePushIntoTransactionPool,
+		TransactionUnmarshal,
+		HasTransactionAlready,
+		SaveTransactionHistory,
+		PushIntoTransactionPool,
 	}
 
 	checker.DefaultChecker = sebakcommon.DefaultChecker{CheckerFuncs}
 
 	err = sebakcommon.RunChecker(checker, sebakcommon.DefaultDeferFunc)
-	assert.Equal(t, err, sebakerror.ErrorNewButKnownMessage)
+	require.Equal(t, err, sebakerror.ErrorNewButKnownMessage)
 }
 
 func TestMessageCheckerWithInvalidMessage(t *testing.T) {
@@ -100,19 +83,19 @@ func TestMessageCheckerWithInvalidMessage(t *testing.T) {
 
 	invalidMessage := sebaknetwork.Message{Type: "message", Data: b}
 	nodeRunner, localNode := MakeNodeRunner()
-	checker := &NodeRunnerHandleMessageChecker{
+	checker := &MessageChecker{
 		NodeRunner: nodeRunner,
 		LocalNode:  localNode,
 		NetworkID:  networkID,
 		Message:    invalidMessage,
 	}
 
-	err = CheckNodeRunnerHandleMessageTransactionUnmarshal(checker)
-	assert.EqualError(t, err, sebakerror.ErrorSignatureVerificationFailed.Message)
+	err = TransactionUnmarshal(checker)
+	require.EqualError(t, err, sebakerror.ErrorSignatureVerificationFailed.Message)
 
 	checker.Message.Data = []byte{}
-	err = CheckNodeRunnerHandleMessageTransactionUnmarshal(checker)
-	assert.EqualError(t, err, "unexpected end of JSON input")
-	assert.NotEqual(t, checker.Transaction, invalidTx)
+	err = TransactionUnmarshal(checker)
+	require.EqualError(t, err, "unexpected end of JSON input")
+	require.NotEqual(t, checker.Transaction, invalidTx)
 
 }

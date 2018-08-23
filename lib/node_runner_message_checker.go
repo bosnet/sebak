@@ -1,3 +1,15 @@
+/*
+	This file contains features that, define the actions that a node should do when it receives a message.
+	The MessageChecker struct is a data structure that is shared while the checker methods are running.
+	Checker methods are called sequentially by the RunChecker() method in the handleMessageFromClient method of node_runner.go.
+	The process is as follows :
+	1. TransactionUnmarshal: Unmarshal the received message in transaction
+	2. HasTransactionAlready: The transaction that already exists does not proceed anymore
+	3. History: Save History
+	4. PushIntoTransactionPool: Insert into transaction pool
+	5. TransactionBroadcast: Passing a transaction to all known Validators.
+*/
+
 package sebak
 
 import (
@@ -7,7 +19,7 @@ import (
 	"boscoin.io/sebak/lib/node"
 )
 
-type NodeRunnerHandleMessageChecker struct {
+type MessageChecker struct {
 	sebakcommon.DefaultChecker
 
 	NodeRunner *NodeRunner
@@ -18,10 +30,10 @@ type NodeRunnerHandleMessageChecker struct {
 	Transaction Transaction
 }
 
-// CheckNodeRunnerHandleMessageTransactionUnmarshal makes `Transaction` from
+// TransactionUnmarshal makes `Transaction` from
 // incoming `sebaknetwork.Message`.
-func CheckNodeRunnerHandleMessageTransactionUnmarshal(c sebakcommon.Checker, args ...interface{}) (err error) {
-	checker := c.(*NodeRunnerHandleMessageChecker)
+func TransactionUnmarshal(c sebakcommon.Checker, args ...interface{}) (err error) {
+	checker := c.(*MessageChecker)
 
 	var tx Transaction
 	if tx, err = NewTransactionFromJSON(checker.Message.Data); err != nil {
@@ -38,13 +50,13 @@ func CheckNodeRunnerHandleMessageTransactionUnmarshal(c sebakcommon.Checker, arg
 	return
 }
 
-// CheckNodeRunnerHandleMessageHasTransactionAlready checks transaction is in
+// HasTransactionAlready checks transaction is in
 // `TransactionPool`.
-func CheckNodeRunnerHandleMessageHasTransactionAlready(c sebakcommon.Checker, args ...interface{}) (err error) {
-	checker := c.(*NodeRunnerHandleMessageChecker)
+func HasTransactionAlready(c sebakcommon.Checker, args ...interface{}) (err error) {
+	checker := c.(*MessageChecker)
 
-	is := checker.NodeRunner.Consensus()
-	if is.TransactionPool.Has(checker.Transaction.GetHash()) {
+	consensus := checker.NodeRunner.Consensus()
+	if consensus.TransactionPool.Has(checker.Transaction.GetHash()) {
 		err = sebakerror.ErrorNewButKnownMessage
 		return
 	}
@@ -52,10 +64,10 @@ func CheckNodeRunnerHandleMessageHasTransactionAlready(c sebakcommon.Checker, ar
 	return
 }
 
-// CheckNodeRunnerHandleMessageHistory checks transaction is in
+// SaveTransactionHistory checks transaction is in
 // `BlockTransactionHistory`, which has the received transaction recently.
-func CheckNodeRunnerHandleMessageHistory(c sebakcommon.Checker, args ...interface{}) (err error) {
-	checker := c.(*NodeRunnerHandleMessageChecker)
+func SaveTransactionHistory(c sebakcommon.Checker, args ...interface{}) (err error) {
+	checker := c.(*MessageChecker)
 
 	var found bool
 	if found, err = ExistsBlockTransactionHistory(checker.NodeRunner.Storage(), checker.Transaction.GetHash()); found && err == nil {
@@ -74,10 +86,10 @@ func CheckNodeRunnerHandleMessageHistory(c sebakcommon.Checker, args ...interfac
 	return
 }
 
-// CheckNodeRunnerHandleMessagePushIntoTransactionPool add the incoming
+// PushIntoTransactionPool add the incoming
 // transactions into `TransactionPool`.
-func CheckNodeRunnerHandleMessagePushIntoTransactionPool(c sebakcommon.Checker, args ...interface{}) (err error) {
-	checker := c.(*NodeRunnerHandleMessageChecker)
+func PushIntoTransactionPool(c sebakcommon.Checker, args ...interface{}) (err error) {
+	checker := c.(*MessageChecker)
 
 	tx := checker.Transaction
 	is := checker.NodeRunner.Consensus()
@@ -88,10 +100,10 @@ func CheckNodeRunnerHandleMessagePushIntoTransactionPool(c sebakcommon.Checker, 
 	return
 }
 
-// CheckNodeRunnerHandleMessageTransactionBroadcast broadcasts the incoming
+// TransactionBroadcast broadcasts the incoming
 // transaction to the other nodes.
-func CheckNodeRunnerHandleMessageTransactionBroadcast(c sebakcommon.Checker, args ...interface{}) (err error) {
-	checker := c.(*NodeRunnerHandleMessageChecker)
+func TransactionBroadcast(c sebakcommon.Checker, args ...interface{}) (err error) {
+	checker := c.(*MessageChecker)
 
 	checker.NodeRunner.Log().Debug("transaction from client will be broadcasted", "transaction", checker.Transaction.GetHash())
 

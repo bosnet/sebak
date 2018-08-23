@@ -6,8 +6,6 @@ import (
 	"boscoin.io/sebak/lib/common/test"
 )
 
-var networkID []byte = []byte("sebak-test-network")
-
 func init() {
 	SetLogging(logging.LvlDebug, test.LogHandler())
 }

@@ -1,25 +1,10 @@
 package sebak
 
 import (
-	"context"
-
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/network"
-	"boscoin.io/sebak/lib/node"
 	"github.com/google/uuid"
 	"github.com/stellar/go/keypair"
 )
-
-func createNetMemoryNetwork() (*sebaknetwork.MemoryNetwork, *sebaknode.LocalNode) {
-	mn := sebaknetwork.NewMemoryNetwork()
-
-	kp, _ := keypair.Random()
-	localNode, _ := sebaknode.NewLocalNode(kp, mn.Endpoint(), "")
-
-	mn.SetContext(context.WithValue(context.Background(), "localNode", localNode))
-
-	return mn, localNode
-}
 
 func makeTransaction(kp *keypair.Full) (tx Transaction) {
 	var ops []Operation
