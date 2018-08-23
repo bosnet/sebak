@@ -24,8 +24,19 @@ func CheckPortInUse(port int) error {
 	return err
 }
 
-func GetFreePort() (port int) {
+func GetFreePort(excludes ...int) (port int) {
 	for i := 1024; i < 10000; i++ {
+		var found bool
+		for _, e := range excludes {
+			if i == e {
+				found = true
+				break
+			}
+		}
+		if found {
+			continue
+		}
+
 		if err := CheckPortInUse(i); err == nil {
 			continue
 		}

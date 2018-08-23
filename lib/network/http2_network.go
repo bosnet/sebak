@@ -132,7 +132,15 @@ func (t *HTTP2Network) GetClient(endpoint *sebakcommon.Endpoint) NetworkClient {
 
 func (t *HTTP2Network) Endpoint() *sebakcommon.Endpoint {
 	host, port, _ := net.SplitHostPort(t.server.Addr)
-	return &sebakcommon.Endpoint{Scheme: "https", Host: fmt.Sprintf("%s:%s", host, port)}
+
+	var scheme string
+	if t.config.IsHTTPS() {
+		scheme = "https"
+	} else {
+		scheme = "http"
+	}
+
+	return &sebakcommon.Endpoint{Scheme: scheme, Host: fmt.Sprintf("%s:%s", host, port)}
 }
 
 func (t *HTTP2Network) AddWatcher(f func(Network, net.Conn, http.ConnState)) {
@@ -204,7 +212,11 @@ func (t *HTTP2Network) Start() (err error) {
 		close(t.receiveChannel)
 	}()
 
-	return t.server.ListenAndServeTLS(t.tlsCertFile, t.tlsKeyFile)
+	if t.config.IsHTTPS() {
+		return t.server.ListenAndServeTLS(t.tlsCertFile, t.tlsKeyFile)
+	} else {
+		return t.server.ListenAndServe()
+	}
 }
 
 func (t *HTTP2Network) Stop() {

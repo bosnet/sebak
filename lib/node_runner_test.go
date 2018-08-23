@@ -2,6 +2,7 @@ package sebak
 
 import (
 	"fmt"
+	"io/ioutil"
 	"reflect"
 	"testing"
 	"time"
@@ -14,6 +15,23 @@ import (
 
 	"github.com/stellar/go/keypair"
 )
+
+var (
+	kp      *keypair.Full
+	account *block.BlockAccount
+	tlsKey  *sebaknetwork.KeyGenerator
+)
+
+func init() {
+	kp, _ = keypair.Random()
+
+	dir, err := ioutil.TempDir("/tmp/", "sebak-test")
+	if err != nil {
+		panic(err)
+	}
+
+	tlsKey = sebaknetwork.NewKeyGenerator(dir, "sebak-test.crt", "sebak-test.key")
+}
 
 func createTestNodeRunner(n int) []*NodeRunner {
 	var ns []*sebaknetwork.MemoryNetwork
@@ -41,7 +59,6 @@ func createTestNodeRunner(n int) []*NodeRunner {
 	for i := 0; i < n; i++ {
 		v := nodes[i]
 		p, _ := NewDefaultVotingThresholdPolicy(66, 66)
-		p.SetValidators(len(v.GetValidators()) + 1)
 		is, _ := NewISAAC(networkID, v, p)
 		st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
 
@@ -98,17 +115,23 @@ func createTestNodeRunnerWithReady(n int) []*NodeRunner {
 
 func createTestNodeRunnersHTTP2Network(n int) (nodeRunners []*NodeRunner, rootKP *keypair.Full) {
 	var nodes []*sebaknode.LocalNode
+	var ports []int
 	for i := 0; i < n; i++ {
 		kp, _ := keypair.Random()
-		port := sebakcommon.GetFreePort()
+		port := sebakcommon.GetFreePort(ports...)
 		if port < 1 {
 			panic("failed to find free port")
 		}
+		ports = append(ports, port)
 
-		endpoint := &sebakcommon.Endpoint{
-			Scheme: "https",
-			Host:   fmt.Sprintf("https://locahost:%d", port),
-		}
+		endpoint, _ := sebakcommon.NewEndpointFromString(
+			fmt.Sprintf(
+				"http://localhost:%d?NodeName=%s&HTTP2LogOutput=%s",
+				port,
+				kp.Address(),
+				"/dev/null",
+			),
+		)
 		node, _ := sebaknode.NewLocalNode(kp, endpoint, "")
 		nodes = append(nodes, node)
 	}
@@ -149,8 +172,14 @@ func createTestNodeRunnersHTTP2NetworkWithReady(n int) (nodeRunners []*NodeRunne
 	nodeRunners, rootKP = createTestNodeRunnersHTTP2Network(n)
 
 	for _, nr := range nodeRunners {
-		go nr.Start()
+		go func(nodeRunner *NodeRunner) {
+			if err := nodeRunner.Start(); err != nil {
+				panic(err)
+			}
+		}(nr)
 	}
+
+	return
 
 	T := time.NewTicker(100 * time.Millisecond)
 	stopTimer := make(chan bool)
