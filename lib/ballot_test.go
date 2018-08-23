@@ -77,10 +77,8 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 		ballot := NewBallot(node, round, []string{})
 		ballot.Sign(kp, networkID)
 
-		if err := ballot.IsWellFormed(networkID); err != nil {
-			t.Error(err)
-			return
-		}
+		err := ballot.IsWellFormed(networkID)
+		require.Nil(t, err)
 	}
 
 	{ // bad `Ballot.B.Confirmed` time; too ahead
@@ -93,10 +91,8 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 		signature, _ := sebakcommon.MakeSignature(kp, networkID, ballot.H.Hash)
 		ballot.H.Signature = base58.Encode(signature)
 
-		if err := ballot.IsWellFormed(networkID); err == nil {
-			t.Error("ErrorIncorrectTime must be occurred")
-			return
-		}
+		err := ballot.IsWellFormed(networkID)
+		require.Error(t, err, sebakerror.ErrorMessageHasIncorrectTime)
 	}
 
 	{ // bad `Ballot.B.Confirmed` time; too behind
@@ -109,10 +105,8 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 		signature, _ := sebakcommon.MakeSignature(kp, networkID, ballot.H.Hash)
 		ballot.H.Signature = base58.Encode(signature)
 
-		if err := ballot.IsWellFormed(networkID); err == nil {
-			t.Error("ErrorIncorrectTime must be occurred")
-			return
-		}
+		err := ballot.IsWellFormed(networkID)
+		require.Error(t, err, sebakerror.ErrorMessageHasIncorrectTime)
 	}
 
 	{ // bad `Ballot.B.Proposed.Confirmed` time; too ahead
@@ -126,10 +120,8 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 		signature, _ := sebakcommon.MakeSignature(kp, networkID, ballot.H.Hash)
 		ballot.H.Signature = base58.Encode(signature)
 
-		if err := ballot.IsWellFormed(networkID); err == nil {
-			t.Error("ErrorIncorrectTime must be occurred")
-			return
-		}
+		err := ballot.IsWellFormed(networkID)
+		require.Error(t, err, sebakerror.ErrorMessageHasIncorrectTime)
 	}
 
 	{ // bad `Ballot.B.Proposed.Confirmed` time; too behind
@@ -142,9 +134,7 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 		signature, _ := sebakcommon.MakeSignature(kp, networkID, ballot.H.Hash)
 		ballot.H.Signature = base58.Encode(signature)
 
-		if err := ballot.IsWellFormed(networkID); err == nil {
-			t.Error("ErrorIncorrectTime must be occurred")
-			return
-		}
+		err := ballot.IsWellFormed(networkID)
+		require.Error(t, err, sebakerror.ErrorMessageHasIncorrectTime)
 	}
 }
