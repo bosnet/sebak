@@ -232,7 +232,7 @@ func FinishBallot(st *sebakstorage.LevelDBBackend, ballot Ballot, transactionPoo
 		tx := transactions[hash]
 		raw, _ := json.Marshal(tx)
 
-		bt := NewBlockTransactionFromTransaction(blk, tx, raw)
+		bt := NewBlockTransactionFromTransaction(blk.Hash, tx, raw)
 		if err = bt.Save(ts); err != nil {
 			ts.Discard()
 			return

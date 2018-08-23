@@ -51,7 +51,7 @@ type BlockTransaction struct {
 	isSaved     bool
 }
 
-func NewBlockTransactionFromTransaction(block Block, tx Transaction, message []byte) BlockTransaction {
+func NewBlockTransactionFromTransaction(blockHash string, tx Transaction, message []byte) BlockTransaction {
 	var opHashes []string
 	for _, op := range tx.B.Operations {
 		opHashes = append(opHashes, NewBlockOperationKey(op, tx))
@@ -59,7 +59,7 @@ func NewBlockTransactionFromTransaction(block Block, tx Transaction, message []b
 
 	return BlockTransaction{
 		Hash:               tx.H.Hash,
-		Block:              block.Hash,
+		Block:              blockHash,
 		PreviousCheckpoint: tx.B.Checkpoint,
 		SourceCheckpoint:   tx.NextSourceCheckpoint(),
 		TargetCheckpoint:   tx.NextTargetCheckpoint(),

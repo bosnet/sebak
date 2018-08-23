@@ -134,7 +134,7 @@ func TestGetAccountTransactionsHandler(t *testing.T) {
 	for _, tx := range txs {
 		a, err := tx.Serialize()
 		checkError(t, err)
-		bt := NewBlockTransactionFromTransaction(block, tx, a)
+		bt := NewBlockTransactionFromTransaction(block.Hash, tx, a)
 		err = bt.Save(storage)
 		checkError(t, err)
 		bts = append(bts, bt)
@@ -179,7 +179,7 @@ func TestGetAccountTransactionsHandler(t *testing.T) {
 	for _, tx := range txs {
 		a, err := tx.Serialize()
 		checkError(t, err)
-		bt := NewBlockTransactionFromTransaction(block, tx, a)
+		bt := NewBlockTransactionFromTransaction(block.Hash, tx, a)
 		err = bt.Save(storage)
 		checkError(t, err)
 		bts = append(bts, bt)
@@ -239,7 +239,7 @@ func TestGetAccountOperationsHandler(t *testing.T) {
 	for _, tx := range txs {
 		a, err := tx.Serialize()
 		checkError(t, err)
-		bt := NewBlockTransactionFromTransaction(block, tx, a)
+		bt := NewBlockTransactionFromTransaction(block.Hash, tx, a)
 		bt.Save(storage)
 
 		for _, boHash := range bt.Operations {
@@ -288,7 +288,7 @@ func TestGetAccountOperationsHandler(t *testing.T) {
 	for _, tx := range txs {
 		a, err := tx.Serialize()
 		checkError(t, err)
-		bt := NewBlockTransactionFromTransaction(block, tx, a)
+		bt := NewBlockTransactionFromTransaction(block.Hash, tx, a)
 		bt.Save(storage)
 
 		for _, boHash := range bt.Operations {
@@ -345,7 +345,7 @@ func TestGetTransactionByHashHandler(t *testing.T) {
 	checkError(t, err)
 
 	block := testMakeNewBlock([]string{tx.GetHash()})
-	bt := NewBlockTransactionFromTransaction(block, tx, a)
+	bt := NewBlockTransactionFromTransaction(block.Hash, tx, a)
 
 	// Do a Request
 	url := ts.URL + fmt.Sprintf("/transactions/%s", bt.Hash)
@@ -419,7 +419,7 @@ func TestGetTransactionsHandler(t *testing.T) {
 	for _, tx := range txs {
 		a, err := tx.Serialize()
 		checkError(t, err)
-		bt := NewBlockTransactionFromTransaction(block, tx, a)
+		bt := NewBlockTransactionFromTransaction(block.Hash, tx, a)
 		err = bt.Save(storage)
 		checkError(t, err)
 		bts = append(bts, bt)
@@ -463,7 +463,7 @@ func TestGetTransactionsHandler(t *testing.T) {
 	for _, tx := range txs {
 		a, err := tx.Serialize()
 		checkError(t, err)
-		bt := NewBlockTransactionFromTransaction(block, tx, a)
+		bt := NewBlockTransactionFromTransaction(block.Hash, tx, a)
 		err = bt.Save(storage)
 		checkError(t, err)
 		bts = append(bts, bt)

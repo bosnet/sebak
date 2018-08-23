@@ -14,7 +14,7 @@ func TestNewBlockTransaction(t *testing.T) {
 	_, tx := TestMakeTransaction(networkID, 1)
 	a, _ := tx.Serialize()
 	block := testMakeNewBlock([]string{tx.GetHash()})
-	bt := NewBlockTransactionFromTransaction(block, tx, a)
+	bt := NewBlockTransactionFromTransaction(block.Hash, tx, a)
 
 	if bt.Hash != tx.H.Hash {
 		t.Error("`BlockTransaction.Hash mismatch`")
@@ -191,7 +191,7 @@ func TestMultipleBlockTransactionSource(t *testing.T) {
 	block := testMakeNewBlock(txHashes)
 	for _, tx := range txs {
 		a, _ := tx.Serialize()
-		bt := NewBlockTransactionFromTransaction(block, tx, a)
+		bt := NewBlockTransactionFromTransaction(block.Hash, tx, a)
 		err := bt.Save(st)
 		if err != nil {
 			t.Error(err)
@@ -211,7 +211,7 @@ func TestMultipleBlockTransactionSource(t *testing.T) {
 	block = testMakeNewBlock(txHashes)
 	for _, tx := range txs {
 		a, _ := tx.Serialize()
-		bt := NewBlockTransactionFromTransaction(block, tx, a)
+		bt := NewBlockTransactionFromTransaction(block.Hash, tx, a)
 		err := bt.Save(st)
 		if err != nil {
 			t.Error(err)
@@ -292,7 +292,7 @@ func TestMultipleBlockTransactionConfirmed(t *testing.T) {
 	block := testMakeNewBlock(txHashes)
 	for _, tx := range txs {
 		a, _ := tx.Serialize()
-		bt := NewBlockTransactionFromTransaction(block, tx, a)
+		bt := NewBlockTransactionFromTransaction(block.Hash, tx, a)
 		err := bt.Save(st)
 		if err != nil {
 			t.Error(err)
@@ -443,7 +443,7 @@ func TestMultipleBlockTransactionGetByAccount(t *testing.T) {
 	block := testMakeNewBlock(txHashes)
 	for _, tx := range txs {
 		a, _ := tx.Serialize()
-		bt := NewBlockTransactionFromTransaction(block, tx, a)
+		bt := NewBlockTransactionFromTransaction(block.Hash, tx, a)
 		err := bt.Save(st)
 		if err != nil {
 			t.Error(err)
@@ -464,7 +464,7 @@ func TestMultipleBlockTransactionGetByAccount(t *testing.T) {
 	block = testMakeNewBlock(txHashes)
 	for _, tx := range txs {
 		a, _ := tx.Serialize()
-		bt := NewBlockTransactionFromTransaction(block, tx, a)
+		bt := NewBlockTransactionFromTransaction(block.Hash, tx, a)
 		err := bt.Save(st)
 		if err != nil {
 			t.Error(err)
@@ -484,7 +484,7 @@ func TestMultipleBlockTransactionGetByAccount(t *testing.T) {
 	block = testMakeNewBlock(txHashes)
 	for _, tx := range txs {
 		a, _ := tx.Serialize()
-		bt := NewBlockTransactionFromTransaction(block, tx, a)
+		bt := NewBlockTransactionFromTransaction(block.Hash, tx, a)
 		err := bt.Save(st)
 		if err != nil {
 			t.Error(err)
@@ -537,7 +537,7 @@ func TestMultipleBlockTransactionGetByBlock(t *testing.T) {
 	block0 := testMakeNewBlock(txHashes0)
 	for _, tx := range txs0 {
 		a, _ := tx.Serialize()
-		bt := NewBlockTransactionFromTransaction(block0, tx, a)
+		bt := NewBlockTransactionFromTransaction(block0.Hash, tx, a)
 		err := bt.Save(st)
 		if err != nil {
 			t.Error(err)
@@ -558,7 +558,7 @@ func TestMultipleBlockTransactionGetByBlock(t *testing.T) {
 	block1 := testMakeNewBlock(txHashes1)
 	for _, tx := range txs1 {
 		a, _ := tx.Serialize()
-		bt := NewBlockTransactionFromTransaction(block1, tx, a)
+		bt := NewBlockTransactionFromTransaction(block1.Hash, tx, a)
 		err := bt.Save(st)
 		if err != nil {
 			t.Error(err)
