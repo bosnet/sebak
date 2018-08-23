@@ -4,9 +4,9 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/stellar/go/keypair"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/network"
+	"github.com/stellar/go/keypair"
 )
 
 // TestNodeRunnerLimitIncomingBallotsFromUnknownValidator checks, the incoming

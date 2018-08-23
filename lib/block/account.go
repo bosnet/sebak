@@ -173,4 +173,3 @@ func (b *BlockAccount) Withdraw(fund sebakcommon.Amount, checkpoint string) erro
 	}
 	return nil
 }
-
