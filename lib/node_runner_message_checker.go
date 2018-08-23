@@ -7,7 +7,7 @@
 	2. HasTransactionAlready: The transaction that already exists does not proceed anymore
 	3. History: Save History
 	4. PushIntoTransactionPool: Insert into transaction pool
-	5. TransactionBroadcast: Passing a transaction to all known Validators.
+	5. BroadcastTransaction: Passing a transaction to all known Validators.
 */
 
 package sebak
@@ -100,9 +100,9 @@ func PushIntoTransactionPool(c sebakcommon.Checker, args ...interface{}) (err er
 	return
 }
 
-// TransactionBroadcast broadcasts the incoming
+// BroadcastTransaction broadcasts the incoming
 // transaction to the other nodes.
-func TransactionBroadcast(c sebakcommon.Checker, args ...interface{}) (err error) {
+func BroadcastTransaction(c sebakcommon.Checker, args ...interface{}) (err error) {
 	checker := c.(*MessageChecker)
 
 	checker.NodeRunner.Log().Debug("transaction from client will be broadcasted", "transaction", checker.Transaction.GetHash())
