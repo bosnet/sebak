@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stellar/go/keypair"
+	"github.com/stretchr/testify/require"
 
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
@@ -36,12 +37,8 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 		}
 
 		if err := sebakcommon.RunChecker(checker, nil); err != nil {
-			if _, ok := err.(sebakcommon.CheckerErrorStop); !ok {
-				if expectedError != nil && err != expectedError {
-					t.Error("error must be", expectedError, "but found", err)
-					return
-				}
-				log.Error("failed to handle message", "error", err)
+			if _, ok := err.(sebakcommon.CheckerErrorStop); !ok && expectedError != nil {
+				require.Error(t, err, expectedError)
 			}
 		}
 	}
@@ -56,10 +53,7 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 
 		runChecker(tx, nil)
 
-		if !nodeRunner.Consensus().TransactionPool.Has(tx.GetHash()) {
-			t.Error("valid transaction must be in `TransactionPool`")
-			return
-		}
+		require.True(t, nodeRunner.Consensus().TransactionPool.Has(tx.GetHash()), "valid transaction must be in `TransactionPool`")
 	}
 
 	{ // invalid transaction: same source already in TransactionPool
@@ -72,10 +66,11 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 
 		runChecker(tx, sebakerror.ErrorTransactionSameSource)
 
-		if nodeRunner.Consensus().TransactionPool.Has(tx.GetHash()) {
-			t.Error("invalid transaction must be in `TransactionPool`: same source already in `TransactionPool`")
-			return
-		}
+		require.False(
+			t,
+			nodeRunner.Consensus().TransactionPool.Has(tx.GetHash()),
+			"invalid transaction must not be in `TransactionPool`: same source already in `TransactionPool`",
+		)
 	}
 
 	{ // invalid transaction: source account does not exists
@@ -87,10 +82,11 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 
 		runChecker(tx, sebakerror.ErrorBlockAccountDoesNotExists)
 
-		if nodeRunner.Consensus().TransactionPool.Has(tx.GetHash()) {
-			t.Error("invalid transaction must be in `TransactionPool`: source account does not exists")
-			return
-		}
+		require.False(
+			t,
+			nodeRunner.Consensus().TransactionPool.Has(tx.GetHash()),
+			"invalid transaction must not be in `TransactionPool`: source account does not exists",
+		)
 	}
 
 	{ // invalid transaction: target account does not exists
@@ -104,9 +100,10 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 
 		runChecker(tx, sebakerror.ErrorBlockAccountDoesNotExists)
 
-		if nodeRunner.Consensus().TransactionPool.Has(tx.GetHash()) {
-			t.Error("invalid transaction must be in `TransactionPool`: target account does not exists")
-			return
-		}
+		require.False(
+			t,
+			nodeRunner.Consensus().TransactionPool.Has(tx.GetHash()),
+			"invalid transaction must be in `TransactionPool`: target account does not exists",
+		)
 	}
 }
