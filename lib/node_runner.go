@@ -8,8 +8,9 @@
 package sebak
 
 import (
+	"boscoin.io/sebak/lib/network"
 	"context"
-	"encoding/json"
+	// "encoding/json"
 	"errors"
 	"fmt"
 	"sort"
@@ -18,7 +19,7 @@ import (
 	logging "github.com/inconshreveable/log15"
 
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/network"
+	// "boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/storage"
 )
@@ -245,8 +246,8 @@ func (nr *NodeRunner) handleMessage() {
 			err = nr.handleMessageFromClient(message)
 		case sebaknetwork.BallotMessage:
 			err = nr.handleBallotMessage(message)
-		case sebaknetwork.TransactionsMessage:
-			err = nr.handleTransactionsMessage(message)
+		// case sebaknetwork.TransactionsMessage:
+		// 	err = nr.handleTransactionsMessage(message)
 		default:
 			err = errors.New("got unknown message")
 		}
@@ -334,23 +335,39 @@ func (nr *NodeRunner) handleBallotMessage(message sebaknetwork.Message) (err err
 	return
 }
 
-func (nr *NodeRunner) handleTransactionsMessage(message sebaknetwork.Message) (err error) {
-	nr.log.Debug("got transactions", "message", message.Head(50))
-	var txHash []string
+// func (nr *NodeRunner) handleTransactionsMessage(message sebaknetwork.Message) (err error) {
+// 	nr.log.Debug("got transactions", "message", message.Head(50))
+// 	var txHash []string
+// 	sendResult := make(map[string]Transaction)
 
-	sendResult := make(map[string]Transaction)
+// 	json.Unmarshal(message.Data, &txHash)
 
-	json.Unmarshal(message.Data, &txHash)
+// 	for _, hash := range txHash {
 
-	for _, hash := range txHash {
+// 		if tx, found := nr.Consensus().TransactionPool.Get(hash); found {
+// 			sendResult[hash] = tx
 
-		if tx, found := nr.Consensus().TransactionPool.Get(hash); found {
-			sendResult[hash] = tx
-		}
-	}
+// 			return
+// 		} else {
+// 			// find hash in block.
+// 			var bt BlockTransaction
+// 			if bt, err = GetBlockTransaction(nr.storage, hash); err != nil {
+// 				//TODO
+// 				return
+// 			}
+// 			sendResult[hash] = bt.transaction
 
-	return
-}
+// 		}
+
+// 	}
+// 	mtxs := MissingTransactions{
+// 		MissingTxs: sendResult,
+// 	}
+// 	serialized_mtx, err := mtxs.Serialize()
+// 	nr.network.
+
+// 	return
+// }
 
 func (nr *NodeRunner) InitRound() {
 	// get latest blocks

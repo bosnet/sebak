@@ -2,14 +2,13 @@ package sebak
 
 import (
 	"encoding/json"
-	"fmt"
+	//"fmt"
 	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/assert"
-	"net/http"
+	//"net/http"
 	"testing"
 
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/network"
 )
 
 func TestTransactionSerializeDeserializeClient(t *testing.T) {
@@ -90,23 +89,22 @@ func generateTransactionsSlice(t *testing.T, n int) (txs []string) {
 }
 
 func TestHTTP2NetworkGetTransactions(t *testing.T) {
-	var transactions []byte
-	_, s0, _ := sebaknetwork.CreateNewHTTP2Network(t)
-	s0.SetMessageBroker(sebaknetwork.TestMessageBroker{})
-	s0.Ready()
+	// var transactions []byte
+	//_, s0, _ := sebaknetwork.CreateNewHTTP2Network(t)
+	//s0.SetMessageBroker(sebaknetwork.TestMessageBroker{})
+	// s0.Ready()
 
-	go s0.Start()
-	defer s0.Stop()
+	// go s0.Start()
+	// defer s0.Stop()
 
-	c0 := s0.GetClient(s0.Endpoint())
-	sebaknetwork.PingAndWait(t, c0)
+	// c0 := s0.GetClient(s0.Endpoint())
+	// //sebaknetwork.PingAndWait(t, c0)
 
 	// returnMsg, _ := GetTransactions(transactions)
 
 	// assert.Equal(t, returnStr, sendMsg, "The sendMessage and the return should be the same.")
 }
 
-// 서버 사이드에서
 func GetTransactions() {
-
+	return
 }
