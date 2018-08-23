@@ -54,6 +54,7 @@ type MessageBroker interface {
 type HandlerFunc func(w http.ResponseWriter, r *http.Request)
 
 func NewHTTP2Network(config HTTP2NetworkConfig) (h2n *HTTP2Network) {
+	log.Debug("new HTTP2Network created", "config", config)
 	server := &http.Server{
 		Addr:              config.Addr,
 		ReadTimeout:       config.ReadTimeout,

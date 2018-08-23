@@ -19,13 +19,23 @@ const (
 
 type Block struct {
 	Header
-	Transactions []string /* []Transaction.GetHash() */
+	Transactions []string `json:"transactions"` /* []Transaction.GetHash() */
 	//PrevConsensusResult ConsensusResult
 
-	Hash      string
-	Confirmed string
-	Proposer  string /* Node.Address() */
-	Round     Round
+	Hash      string `json:"hash"`
+	Confirmed string `json:"confirmed"`
+	Proposer  string `json:"proposer"` /* Node.Address() */
+	Round     Round  `json:"round"`
+}
+
+func (bck Block) Serialize() (encoded []byte, err error) {
+	encoded, err = json.Marshal(bck)
+	return
+}
+
+func (bck Block) String() string {
+	encoded, _ := json.MarshalIndent(bck, "", "  ")
+	return string(encoded)
 }
 
 func MakeGenesisBlock(st *sebakstorage.LevelDBBackend, account block.BlockAccount) Block {

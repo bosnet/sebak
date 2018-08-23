@@ -33,14 +33,6 @@ func GetUniqueIDFromDate() string {
 	return NowISO8601()
 }
 
-type CheckerErrorStop struct {
-	Message string
-}
-
-func (c CheckerErrorStop) Error() string {
-	return fmt.Sprintf("stop checker and return: %s", c.Message)
-}
-
 type SafeLock struct {
 	lock  sync.Mutex
 	locks int64
