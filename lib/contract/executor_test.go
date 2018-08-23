@@ -47,7 +47,7 @@ func TestContractExecutorNativeHelloworld(t *testing.T) {
 	if retCode.Type != value.String {
 		t.Fatalf("retCode.Type have:%v want:%v", retCode.Type, value.String)
 	}
-	if string(retCode.Contents) != "world" {
-		t.Fatalf("retcode.Contents have:%v want:%v", retCode.Contents, "world")
+	if retCode.EqualNative("world") == false {
+		t.Fatalf("retcode.Contents have:%v want:%v", retCode, "world")
 	}
 }
