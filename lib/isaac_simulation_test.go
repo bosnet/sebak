@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stellar/go/keypair"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/network"
@@ -29,13 +29,13 @@ func TestIsaacSimulationProposer(t *testing.T) {
 	var err error
 	err = nodeRunner.handleMessageFromClient(message)
 
-	assert.Nil(t, err)
-	assert.True(t, nodeRunner.Consensus().TransactionPool.Has(tx.GetHash()))
+	require.Nil(t, err)
+	require.True(t, nodeRunner.Consensus().TransactionPool.Has(tx.GetHash()))
 
 	// Generate proposed ballot in nodeRunner
 	roundNumber := uint64(0)
 	err = nodeRunner.proposeNewBallot(roundNumber)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 	round := Round{
 		Number:      roundNumber,
 		BlockHeight: nodeRunner.Consensus().LatestConfirmedBlock.Height,
@@ -47,48 +47,48 @@ func TestIsaacSimulationProposer(t *testing.T) {
 	// Check that the transaction is in RunningRounds
 	rr := runningRounds[round.Hash()]
 	txHashs := rr.Transactions[proposer.Address()]
-	assert.Equal(t, tx.GetHash(), txHashs[0])
+	require.Equal(t, tx.GetHash(), txHashs[0])
 
 	ballotSIGN1 := generateBallot(t, proposer, round, tx, sebakcommon.BallotStateSIGN, nodeRunners[1].localNode)
 	err = receiveBallot(t, nodeRunner, ballotSIGN1)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	ballotSIGN2 := generateBallot(t, proposer, round, tx, sebakcommon.BallotStateSIGN, nodeRunners[2].localNode)
 	err = receiveBallot(t, nodeRunner, ballotSIGN2)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	ballotSIGN3 := generateBallot(t, proposer, round, tx, sebakcommon.BallotStateSIGN, nodeRunners[3].localNode)
 	err = receiveBallot(t, nodeRunner, ballotSIGN3)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	ballotSIGN4 := generateBallot(t, proposer, round, tx, sebakcommon.BallotStateSIGN, nodeRunners[4].localNode)
 	err = receiveBallot(t, nodeRunner, ballotSIGN4)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
-	assert.Equal(t, 4, len(rr.Voted[proposer.Address()].GetResult(sebakcommon.BallotStateSIGN)))
+	require.Equal(t, 4, len(rr.Voted[proposer.Address()].GetResult(sebakcommon.BallotStateSIGN)))
 
 	ballotACCEPT1 := generateBallot(t, proposer, round, tx, sebakcommon.BallotStateACCEPT, nodeRunners[1].localNode)
 	err = receiveBallot(t, nodeRunner, ballotACCEPT1)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	ballotACCEPT2 := generateBallot(t, proposer, round, tx, sebakcommon.BallotStateACCEPT, nodeRunners[2].localNode)
 	err = receiveBallot(t, nodeRunner, ballotACCEPT2)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	ballotACCEPT3 := generateBallot(t, proposer, round, tx, sebakcommon.BallotStateACCEPT, nodeRunners[3].localNode)
 	err = receiveBallot(t, nodeRunner, ballotACCEPT3)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	ballotACCEPT4 := generateBallot(t, proposer, round, tx, sebakcommon.BallotStateACCEPT, nodeRunners[4].localNode)
 	err = receiveBallot(t, nodeRunner, ballotACCEPT4)
-	assert.EqualError(t, err, "stop checker and return: ballot got consensus and will be stored")
+	require.EqualError(t, err, "stop checker and return: ballot got consensus and will be stored")
 
-	assert.Equal(t, 4, len(rr.Voted[proposer.Address()].GetResult(sebakcommon.BallotStateACCEPT)))
+	require.Equal(t, 4, len(rr.Voted[proposer.Address()].GetResult(sebakcommon.BallotStateACCEPT)))
 
 	block := nodeRunner.Consensus().LatestConfirmedBlock
-	assert.Equal(t, proposer.Address(), block.Proposer)
-	assert.Equal(t, 1, len(block.Transactions))
-	assert.Equal(t, tx.GetHash(), block.Transactions[0])
+	require.Equal(t, proposer.Address(), block.Proposer)
+	require.Equal(t, 1, len(block.Transactions))
+	require.Equal(t, tx.GetHash(), block.Transactions[0])
 }
 
 func getTransaction(t *testing.T) (tx Transaction, txByte []byte) {
@@ -102,7 +102,7 @@ func getTransaction(t *testing.T) (tx Transaction, txByte []byte) {
 	var err error
 
 	txByte, err = tx.Serialize()
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	return
 }
@@ -117,14 +117,14 @@ func generateBallot(t *testing.T, proposer *sebaknode.LocalNode, round Round, tx
 	ballot.Sign(sender.Keypair(), networkID)
 
 	err := ballot.IsWellFormed(networkID)
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	return ballot
 }
 
 func receiveBallot(t *testing.T, nodeRunner *NodeRunner, ballot *Ballot) error {
 	data, err := ballot.Serialize()
-	assert.Nil(t, err)
+	require.Nil(t, err)
 
 	ballotMessage := sebaknetwork.Message{Type: sebaknetwork.BallotMessage, Data: data}
 	err = nodeRunner.handleBallotMessage(ballotMessage)
