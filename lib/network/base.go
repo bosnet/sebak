@@ -1,7 +1,6 @@
 package sebaknetwork
 
 import (
-	"context"
 	"encoding/json"
 	"math"
 	"net"
@@ -17,8 +16,7 @@ type Network interface {
 	Endpoint() *sebakcommon.Endpoint
 	GetClient(endpoint *sebakcommon.Endpoint) NetworkClient
 	AddWatcher(func(Network, net.Conn, http.ConnState))
-	AddHandler(context.Context, interface{}) error
-	AddHandler0(string, interface{}) *mux.Route
+	AddHandler(string, http.HandlerFunc) *mux.Route
 
 	Start() error
 	Stop()

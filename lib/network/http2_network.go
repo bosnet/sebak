@@ -1,7 +1,6 @@
 package sebaknetwork
 
 import (
-	"context"
 	"fmt"
 	"net"
 	"net/http"
@@ -148,26 +147,24 @@ func (t *HTTP2Network) setNotReadyHandler() {
 	t.server.Handler = handlers.CombinedLoggingHandler(t.config.HTTP2LogOutput, t.router)
 }
 
-func (t *HTTP2Network) AddHandler(ctx context.Context, handler interface{}) (err error) {
-	addAPIFunc := handler.(func(context.Context, *HTTP2Network))
-	addAPIFunc(ctx, t)
-	return
-}
-
-func (t *HTTP2Network) AddHandler0(pattern string, handler interface{}) (router *mux.Route) {
+func (t *HTTP2Network) AddHandler(pattern string, handler http.HandlerFunc) (router *mux.Route) {
 	var routerName string
+	var prefix string
 	switch {
 	case strings.HasPrefix(pattern, UrlPathPrefixNode):
 		routerName = RouterNameNode
+		prefix = pattern[len(UrlPathPrefixNode):]
 	case strings.HasPrefix(pattern, UrlPathPrefixAPI):
 		routerName = RouterNameAPI
+		prefix = pattern[len(UrlPathPrefixAPI):]
 	default:
-		routerName = RouterNameAPI
+		// if unknown pattern, it will be attached to base router
+		return t.router.HandleFunc(pattern, handler)
 	}
 
 	r, _ := t.routers[routerName]
 
-	return r.HandleFunc(pattern[len(routerName)+1:], handler.(http.HandlerFunc))
+	return r.HandleFunc(prefix, handler)
 }
 
 func (t *HTTP2Network) SetMessageBroker(mb MessageBroker) {

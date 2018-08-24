@@ -1,7 +1,6 @@
 package sebaknetwork
 
 import (
-	"context"
 	"net"
 	"net/http"
 
@@ -31,6 +30,7 @@ func getMemoryNetwork(endpoint *sebakcommon.Endpoint) *MemoryNetwork {
 }
 
 type MemoryNetwork struct {
+	localNode  sebakcommon.Serializable
 	endpoint   *sebakcommon.Endpoint
 	connWriter chan Message
 	close      chan bool
@@ -81,6 +81,10 @@ func (p *MemoryNetwork) IsReady() bool {
 	return true
 }
 
+func (p *MemoryNetwork) GetNodeInfo() []byte {
+	o, _ := p.localNode.Serialize()
+	return o
+}
 func (p *MemoryNetwork) Send(mt MessageType, b []byte) (err error) {
 	p.connWriter <- NewMessage(mt, b)
 
@@ -106,6 +110,10 @@ func (p *MemoryNetwork) receiveMessage() {
 	}
 }
 
+func (p *MemoryNetwork) SetLocalNode(localNode sebakcommon.Serializable) {
+	p.localNode = localNode
+}
+
 func CreateNewMemoryEndpoint() *sebakcommon.Endpoint {
 	return &sebakcommon.Endpoint{Scheme: "memory", Host: uuid.New().String()}
 }
@@ -123,10 +131,6 @@ func NewMemoryNetwork() *MemoryNetwork {
 	return n
 }
 
-func (p *MemoryNetwork) AddHandler(context.Context, interface{}) error {
-	return nil
-}
-
-func (p *MemoryNetwork) AddHandler0(string, interface{}) *mux.Route {
+func (p *MemoryNetwork) AddHandler(string, http.HandlerFunc) *mux.Route {
 	return &mux.Route{}
 }

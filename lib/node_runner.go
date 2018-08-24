@@ -73,10 +73,10 @@ func (nr *NodeRunner) Ready() {
 		network:   nr.network,
 	}
 
-	nr.network.AddHandler0("/node/", nodeHandler.NodeInfoHandler())
-	nr.network.AddHandler0("/node/connect", nodeHandler.ConnectHandler())
-	nr.network.AddHandler0("/node/message", nodeHandler.MessageHandler())
-	nr.network.AddHandler0("/node/ballot", nodeHandler.BallotHandler())
+	nr.network.AddHandler(sebaknetwork.UrlPathPrefixNode+"/", nodeHandler.NodeInfoHandler())
+	nr.network.AddHandler(sebaknetwork.UrlPathPrefixNode+"/connect", nodeHandler.ConnectHandler())
+	nr.network.AddHandler(sebaknetwork.UrlPathPrefixNode+"/message", nodeHandler.MessageHandler())
+	nr.network.AddHandler(sebaknetwork.UrlPathPrefixNode+"/ballot", nodeHandler.BallotHandler())
 
 	apiHandler := NetworkHandlerAPI{
 		localNode: nr.localNode,
@@ -84,10 +84,10 @@ func (nr *NodeRunner) Ready() {
 		storage:   nr.storage,
 	}
 
-	nr.network.AddHandler0("/api/account/{address}", apiHandler.GetAccountHandler()).Methods("GET")
-	nr.network.AddHandler0("/api/account/{address}/transactions", apiHandler.GetAccountTransactionsHandler()).Methods("GET")
-	nr.network.AddHandler0("/api/account/{address}/operations", apiHandler.GetAccountOperationsHandler()).Methods("GET")
-	nr.network.AddHandler0("/api/transactions/{txid}", apiHandler.GetTransactionByHashHandler()).Methods("GET")
+	nr.network.AddHandler(sebaknetwork.UrlPathPrefixAPI+"/account/{address}", apiHandler.GetAccountHandler()).Methods("GET")
+	nr.network.AddHandler(sebaknetwork.UrlPathPrefixAPI+"/account/{address}/transactions", apiHandler.GetAccountTransactionsHandler()).Methods("GET")
+	nr.network.AddHandler(sebaknetwork.UrlPathPrefixAPI+"/account/{address}/operations", apiHandler.GetAccountOperationsHandler()).Methods("GET")
+	nr.network.AddHandler(sebaknetwork.UrlPathPrefixAPI+"/transactions/{txid}", apiHandler.GetTransactionByHashHandler()).Methods("GET")
 
 	nr.network.Ready()
 }

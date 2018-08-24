@@ -20,6 +20,8 @@ func createNetMemoryNetwork() (*sebaknetwork.MemoryNetwork, *sebaknode.LocalNode
 	kp, _ := keypair.Random()
 	localNode, _ := sebaknode.NewLocalNode(kp, mn.Endpoint(), "")
 
+	mn.SetLocalNode(localNode)
+
 	return mn, localNode
 }
 
