@@ -41,6 +41,20 @@ func MakeNodeRunner() (*NodeRunner, *sebaknode.LocalNode) {
 	return nodeRunner, localNode
 }
 
+func testMakeNewBlock(transactions []string) Block {
+	kp, _ := keypair.Random()
+
+	return NewBlock(
+		kp.Address(),
+		Round{
+			BlockHeight: 0,
+			BlockHash:   "",
+		},
+		transactions,
+		sebakcommon.NowISO8601(),
+	)
+}
+
 func TestMakeNewBlockOperation(networkID []byte, n int) (bos []BlockOperation) {
 	_, tx := TestMakeTransaction(networkID, n)
 
@@ -54,8 +68,9 @@ func TestMakeNewBlockOperation(networkID []byte, n int) (bos []BlockOperation) {
 func TestMakeNewBlockTransaction(networkID []byte, n int) BlockTransaction {
 	_, tx := TestMakeTransaction(networkID, n)
 
+	block := testMakeNewBlock([]string{tx.GetHash()})
 	a, _ := tx.Serialize()
-	return NewBlockTransactionFromTransaction(tx, a)
+	return NewBlockTransactionFromTransaction(block.Hash, tx, a)
 }
 
 func TestMakeOperationBodyPayment(amount int, addressList ...string) OperationBodyPayment {

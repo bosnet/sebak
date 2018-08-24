@@ -145,7 +145,8 @@ func TestBlockOperationSaveByTransacton(t *testing.T) {
 	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
 
 	_, tx := TestMakeTransaction(networkID, 10)
-	bt := NewBlockTransactionFromTransaction(tx, sebakcommon.MustJSONMarshal(tx))
+	block := testMakeNewBlock([]string{tx.GetHash()})
+	bt := NewBlockTransactionFromTransaction(block.Hash, tx, sebakcommon.MustJSONMarshal(tx))
 	if err := bt.Save(st); err != nil {
 		t.Error(err)
 		return
@@ -192,7 +193,8 @@ func TestBlockOperationGetSortedByCheckpoint(t *testing.T) {
 	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
 
 	_, tx := TestMakeTransaction(networkID, 10)
-	bt := NewBlockTransactionFromTransaction(tx, sebakcommon.MustJSONMarshal(tx))
+	block := testMakeNewBlock([]string{tx.GetHash()})
+	bt := NewBlockTransactionFromTransaction(block.Hash, tx, sebakcommon.MustJSONMarshal(tx))
 	if err := bt.Save(st); err != nil {
 		t.Error(err)
 		return
@@ -200,7 +202,8 @@ func TestBlockOperationGetSortedByCheckpoint(t *testing.T) {
 
 	{
 		_, txAnother := TestMakeTransaction(networkID, 10)
-		btAnother := NewBlockTransactionFromTransaction(txAnother, sebakcommon.MustJSONMarshal(tx))
+		block := testMakeNewBlock([]string{txAnother.GetHash()})
+		btAnother := NewBlockTransactionFromTransaction(block.Hash, txAnother, sebakcommon.MustJSONMarshal(tx))
 		if err := btAnother.Save(st); err != nil {
 			t.Error(err)
 			return
