@@ -11,14 +11,14 @@ import (
 	"boscoin.io/sebak/lib/contract/wasm"
 )
 
-type ContractExecutor interface {
+type Executor interface {
 	Execute(*payload.ExecCode) (*value.Value, error)
 }
 
-func NewContractExecutor(ctx *ContractContext, execCode *payload.ExecCode) (ContractExecutor, error) {
-	var ex ContractExecutor
+func NewExecutor(ctx *Context, execCode *payload.ExecCode) (Executor, error) {
+	var ex Executor
 	contractAddress := execCode.ContractAddress
-	api := NewContractAPI(ctx, contractAddress)
+	api := NewAPI(ctx, contractAddress)
 
 	if native.HasContract(contractAddress) {
 		ex = native.NewNativeExecutor(ctx, api)
@@ -39,8 +39,8 @@ func NewContractExecutor(ctx *ContractContext, execCode *payload.ExecCode) (Cont
 	return ex, nil
 }
 
-func ExecuteContract(ctx *ContractContext, execCode *payload.ExecCode) (*value.Value, error) {
-	ex, err := NewContractExecutor(ctx, execCode)
+func Execute(ctx *Context, execCode *payload.ExecCode) (*value.Value, error) {
+	ex, err := NewExecutor(ctx, execCode)
 	if err != nil {
 		return nil, fmt.Errorf("not found")
 	}

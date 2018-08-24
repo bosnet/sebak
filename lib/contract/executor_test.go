@@ -24,13 +24,13 @@ func TestContractExecutorNativeHelloworld(t *testing.T) {
 	sdb := sebakstorage.NewStateDB(ts)
 
 	senderAccount := block.TestMakeBlockAccount()
-	ctx := NewContractContext(senderAccount, sdb)
+	ctx := NewContext(senderAccount, sdb)
 	exCode := &payload.ExecCode{
 		ContractAddress: execfunc.HelloWorldAddress,
 		Method:          "hello",
 	}
 
-	ex, err := NewContractExecutor(ctx, exCode)
+	ex, err := NewExecutor(ctx, exCode)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -6,28 +6,28 @@ import (
 	sebakstorage "boscoin.io/sebak/lib/storage"
 )
 
-type ContractContext struct {
+type Context struct {
 	senderAccount *block.BlockAccount // Transaction.Source.
 	db            sebakstorage.DBBackend
 
 	//APICallCounter int // Simple version of PC
 }
 
-func NewContractContext(sender *block.BlockAccount, db sebakstorage.DBBackend) *ContractContext {
-	ctx := &ContractContext{
+func NewContext(sender *block.BlockAccount, db sebakstorage.DBBackend) *Context {
+	ctx := &Context{
 		senderAccount: sender,
 		db:            db,
 	}
 	return ctx
 }
 
-func (c *ContractContext) SenderAddress() string {
+func (c *Context) SenderAddress() string {
 	return c.senderAccount.Address
 }
 
-func (c *ContractContext) PutDeployCode(code *payload.DeployCode) error {
+func (c *Context) PutDeployCode(code *payload.DeployCode) error {
 	return code.Save(c.db)
 }
-func (c *ContractContext) GetDeployCode(address string) (*payload.DeployCode, error) {
+func (c *Context) GetDeployCode(address string) (*payload.DeployCode, error) {
 	return payload.GetDeployCode(c.db, address)
 }
