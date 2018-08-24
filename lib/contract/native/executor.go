@@ -12,13 +12,13 @@ import (
 type ExecFunc func(e *NativeExecutor, code *payload.ExecCode) (*value.Value, error)
 
 type NativeExecutor struct {
-	Context context.Context
-	api     api.API
+	Context *context.Context
+	api     *api.API
 
 	execFuncs map[string]ExecFunc
 }
 
-func NewNativeExecutor(ctx context.Context, api api.API) *NativeExecutor {
+func NewNativeExecutor(ctx *context.Context, api *api.API) *NativeExecutor {
 	ex := &NativeExecutor{
 		Context:   ctx,
 		api:       api,
@@ -51,6 +51,6 @@ func (ex *NativeExecutor) loadFuncs(addr string) {
 	}
 }
 
-func (ex *NativeExecutor) API() api.API {
+func (ex *NativeExecutor) API() *api.API {
 	return ex.api
 }

@@ -1,6 +1,7 @@
 package value
 
 import (
+	"bytes"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -127,7 +128,7 @@ func ToValue(iv interface{}) (v *Value, err error) {
 	return
 }
 
-func (v *Value) Serialize() (encoded []byte, err error) {
+func (v *Value) Serialize() (encoded []byte) {
 
 	switch v.Type {
 	case Nil:
@@ -150,5 +151,32 @@ func (v *Value) Serialize() (encoded []byte, err error) {
 
 	encoded = append([]byte{byte(v.Type)}, encoded...)
 
+	return
+}
+
+func (v *Value) Deserialize(encoded []byte) {
+
+	if v == nil {
+		v = new(Value)
+	}
+	v.Type = Type(encoded[0])
+	encoded = encoded[1:]
+
+	switch v.Type {
+	case Nil:
+		v.value = nil
+	case SInt:
+		v.value = int64(binary.LittleEndian.Uint64(encoded))
+	case UInt:
+		v.value = binary.LittleEndian.Uint64(encoded)
+	case String:
+		v.value = string(encoded)
+	case Boolean:
+		if bytes.Compare(encoded, []byte{True}) == 0 {
+			v.value = true
+		} else {
+			v.value = false
+		}
+	}
 	return
 }

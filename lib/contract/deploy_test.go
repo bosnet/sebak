@@ -3,10 +3,13 @@ package contract
 import (
 	"testing"
 
-	"boscoin.io/sebak/lib/block"
+	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/contract/context"
 	"boscoin.io/sebak/lib/contract/payload"
+	"boscoin.io/sebak/lib/statedb"
 	sebakstorage "boscoin.io/sebak/lib/storage"
-	"github.com/stretchr/testify/assert"
+	"boscoin.io/sebak/lib/trie"
+	"github.com/stretchr/testify/require"
 )
 
 func TestContractJSVMDeploy(t *testing.T) {
@@ -16,34 +19,31 @@ function Hello(helloarg){
     return HelloWorld(helloarg)
 }
 `
+	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
+	Root := sebakcommon.Hash{}
+	{
+		sdb := statedb.New(Root, trie.NewEthDatabase(st))
 
-	st, err := sebakstorage.NewTestMemoryLevelDBBackend()
-	if err != nil {
-		t.Fatal(err)
+		sdb.CreateAccount(testAddress)
+
+		ctx := context.NewContext(testAddress, sdb)
+
+		if err := Deploy(ctx, payload.JavaScript, []byte(testCode)); err != nil {
+			t.Fatal(err)
+		}
+		Root, _ = sdb.CommitTrie()
+		sdb.CommitDB(Root)
 	}
+	{
+		sdb := statedb.New(Root, trie.NewEthDatabase(st))
+		ctx := context.NewContext(testAddress, sdb)
+		deployCode, err := ctx.GetDeployCode(testAddress)
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	ba := block.NewBlockAccount(testAddress, 1000000000000, "")
-	if err := ba.Save(st); err != nil {
-		t.Fatal(err)
+		require.Equal(t, deployCode.Code, []byte(testCode))
+		require.Equal(t, deployCode.ContractAddress, testAddress)
+		require.Equal(t, deployCode.Type, payload.JavaScript)
 	}
-
-	ts, err := st.OpenTransaction()
-	if err != nil {
-		t.Fatal(err)
-	}
-	sdb := sebakstorage.NewStateDB(ts)
-	ctx := NewContext(ba, sdb)
-
-	if err := Deploy(ctx, payload.JavaScript, []byte(testCode)); err != nil {
-		t.Fatal(err)
-	}
-
-	deployCode, err := payload.GetDeployCode(sdb, testAddress)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	assert.Equal(t, deployCode.Code, []byte(testCode))
-	assert.Equal(t, deployCode.ContractAddress, testAddress)
-	assert.Equal(t, deployCode.Type, payload.JavaScript)
 }

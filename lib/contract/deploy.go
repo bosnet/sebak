@@ -1,6 +1,7 @@
 package contract
 
 import (
+	"boscoin.io/sebak/lib/contract/context"
 	"boscoin.io/sebak/lib/contract/jsvm"
 	"boscoin.io/sebak/lib/contract/payload"
 )
@@ -9,7 +10,7 @@ type Deployer interface {
 	Deploy(code []byte) error
 }
 
-func NewDeployer(ctx *Context, codeType payload.CodeType) Deployer {
+func NewDeployer(ctx *context.Context, codeType payload.CodeType) Deployer {
 
 	var cd Deployer
 
@@ -23,7 +24,7 @@ func NewDeployer(ctx *Context, codeType payload.CodeType) Deployer {
 
 }
 
-func Deploy(ctx *Context, codeType payload.CodeType, code []byte) (err error) {
+func Deploy(ctx *context.Context, codeType payload.CodeType, code []byte) (err error) {
 	cd := NewDeployer(ctx, codeType)
 	err = cd.Deploy(code)
 	return

@@ -9,7 +9,7 @@ import (
 	"fmt"
 )
 
-type Storage map[sebakcommon.Hash]sebakcommon.Hash
+type Storage map[sebakcommon.Hash][]byte
 
 type Code []byte
 
@@ -82,26 +82,23 @@ func (so *stateObject) Checkpoint() string {
 	return so.data.Checkpoint
 }
 
-func (so *stateObject) GetState(key sebakcommon.Hash) sebakcommon.Hash {
+func (so *stateObject) GetState(key sebakcommon.Hash) []byte {
 	value, exists := so.cachedStorage[key]
 	if exists {
 		return value
 	}
-	enc, err := so.storageTrie.TryGet(key[:])
+	value, err := so.storageTrie.TryGet(key[:])
 	if err != nil {
-		return sebakcommon.Hash{}
+		return []byte{}
 	}
-	if len(enc) > 0 {
-		value.SetBytes(enc)
-	}
-	if (value != sebakcommon.Hash{}) {
+	if bytes.Compare(value, []byte{}) == 0 {
 		so.cachedStorage[key] = value
 	}
 	return value
 }
 
 /* SETTERS */
-func (so *stateObject) SetState(key, value sebakcommon.Hash) {
+func (so *stateObject) SetState(key sebakcommon.Hash, value []byte) {
 	so.cachedStorage[key] = value
 	so.dirtyStorage[key] = value
 
@@ -168,7 +165,7 @@ func (so *stateObject) SetCode(codeHash, code []byte) {
 func (so *stateObject) updateTrie() {
 	for key, value := range so.dirtyStorage {
 		delete(so.dirtyStorage, key)
-		if (value == sebakcommon.Hash{}) {
+		if bytes.Compare(value, []byte{}) == 0 {
 			continue
 		}
 		so.storageTrie.TryUpdate(key[:], value[:])
@@ -185,6 +182,12 @@ func (so *stateObject) CommitTrie() (root sebakcommon.Hash, err error) {
 }
 
 func (so *stateObject) CommitDB(root sebakcommon.Hash) (err error) {
+
+	if so.dirtyCode == true {
+		so.db.Put(so.data.CodeHash, so.code)
+		so.dirtyCode = false
+	}
+
 	if err = so.Save(); err != nil {
 		return
 	}

@@ -1,5 +1,8 @@
 package test
 
+import "fmt"
+
+/*
 import (
 	"fmt"
 
@@ -99,3 +102,4 @@ func (a *MockAPI) checkFunc(f interface{}) {
 	}
 
 }
+*/
