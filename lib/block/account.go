@@ -45,7 +45,7 @@ func (b *BlockAccount) String() string {
 	return string(sebakcommon.MustJSONMarshal(b))
 }
 
-func (b *BlockAccount) Save(st *sebakstorage.LevelDBBackend) (err error) {
+func (b *BlockAccount) Save(st sebakstorage.DBBackend) (err error) {
 	key := GetBlockAccountKey(b.Address)
 
 	var exists bool
@@ -98,7 +98,7 @@ func ExistBlockAccount(st *sebakstorage.LevelDBBackend, address string) (exists 
 	return st.Has(GetBlockAccountKey(address))
 }
 
-func GetBlockAccount(st *sebakstorage.LevelDBBackend, address string) (b *BlockAccount, err error) {
+func GetBlockAccount(st sebakstorage.DBBackend, address string) (b *BlockAccount, err error) {
 	if err = st.Get(GetBlockAccountKey(address), &b); err != nil {
 		return
 	}
@@ -207,7 +207,7 @@ func (b *BlockAccountCheckpoint) String() string {
 	return string(sebakcommon.MustJSONMarshal(b))
 }
 
-func (b *BlockAccountCheckpoint) Save(st *sebakstorage.LevelDBBackend) (err error) {
+func (b *BlockAccountCheckpoint) Save(st sebakstorage.DBBackend) (err error) {
 	key := GetBlockAccountCheckpointKey(b.Address, b.Checkpoint)
 
 	var exists bool
