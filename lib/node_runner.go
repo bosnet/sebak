@@ -8,7 +8,6 @@
 package sebak
 
 import (
-	"context"
 	"time"
 
 	"boscoin.io/sebak/lib/common"
@@ -33,7 +32,6 @@ type NodeRunner struct {
 	handleMessageFromClientCheckerDeferFunc sebakcommon.CheckerDeferFunc
 	handleBallotCheckerDeferFunc            sebakcommon.CheckerDeferFunc
 
-	ctx context.Context
 	log logging.Logger
 }
 
@@ -54,9 +52,6 @@ func NewNodeRunner(
 		storage:   storage,
 		log:       log.New(logging.Ctx{"node": localNode.Alias()}),
 	}
-	nr.ctx = context.WithValue(context.Background(), "localNode", localNode)
-	nr.ctx = context.WithValue(nr.ctx, "networkID", nr.networkID)
-	nr.ctx = context.WithValue(nr.ctx, "storage", nr.storage)
 
 	nr.connectionManager = sebaknetwork.NewConnectionManager(
 		nr.localNode,
@@ -73,8 +68,27 @@ func NewNodeRunner(
 }
 
 func (nr *NodeRunner) Ready() {
-	nr.network.SetContext(nr.ctx)
-	nr.network.AddHandler(nr.ctx, AddAPIHandlers(nr.storage))
+	nodeHandler := NetworkHandlerNode{
+		localNode: nr.localNode,
+		network:   nr.network,
+	}
+
+	nr.network.AddHandler0("/node/", nodeHandler.NodeInfoHandler())
+	nr.network.AddHandler0("/node/connect", nodeHandler.ConnectHandler())
+	nr.network.AddHandler0("/node/message", nodeHandler.MessageHandler())
+	nr.network.AddHandler0("/node/ballot", nodeHandler.BallotHandler())
+
+	apiHandler := NetworkHandlerAPI{
+		localNode: nr.localNode,
+		network:   nr.network,
+		storage:   nr.storage,
+	}
+
+	nr.network.AddHandler0("/api/account/{address}", apiHandler.GetAccountHandler()).Methods("GET")
+	nr.network.AddHandler0("/api/account/{address}/transactions", apiHandler.GetAccountTransactionsHandler()).Methods("GET")
+	nr.network.AddHandler0("/api/account/{address}/operations", apiHandler.GetAccountOperationsHandler()).Methods("GET")
+	nr.network.AddHandler0("/api/transactions/{txid}", apiHandler.GetTransactionByHashHandler()).Methods("GET")
+
 	nr.network.Ready()
 }
 

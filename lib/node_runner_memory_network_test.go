@@ -1,7 +1,6 @@
 package sebak
 
 import (
-	"context"
 	"sync"
 	"testing"
 	"time"
@@ -20,8 +19,6 @@ func createNetMemoryNetwork() (*sebaknetwork.MemoryNetwork, *sebaknode.LocalNode
 
 	kp, _ := keypair.Random()
 	localNode, _ := sebaknode.NewLocalNode(kp, mn.Endpoint(), "")
-
-	mn.SetContext(context.WithValue(context.Background(), "localNode", localNode))
 
 	return mn, localNode
 }

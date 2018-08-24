@@ -8,20 +8,19 @@ import (
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/observer"
-	"boscoin.io/sebak/lib/storage"
 	"github.com/gorilla/mux"
 )
 
 const GetAccountHandlerPattern = "/account/{address}"
 
-func GetAccountHandler(storage *sebakstorage.LevelDBBackend) http.HandlerFunc {
+func (api NetworkHandlerAPI) GetAccountHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var blk *block.BlockAccount
 		var err error
 		vars := mux.Vars(r)
 		address := vars["address"]
-		if blk, err = block.GetBlockAccount(storage, address); err != nil {
-			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		if blk, err = block.GetBlockAccount(api.storage, address); err != nil {
+			http.Error(w, "Error reading request body", http.StatusInternalServerError)
 			return
 		}
 
@@ -36,8 +35,8 @@ func GetAccountHandler(storage *sebakstorage.LevelDBBackend) http.HandlerFunc {
 			}()
 
 			callBackFunc := func(args ...interface{}) (account []byte, err error) {
-				ba := args[1].(*block.BlockAccount)
-				if account, err = ba.Serialize(); err != nil {
+				blk := args[1].(*block.BlockAccount)
+				if account, err = blk.Serialize(); err != nil {
 					return []byte{}, sebakerror.ErrorBlockAccountDoesNotExists
 				}
 				return account, nil
@@ -62,8 +61,7 @@ func GetAccountHandler(storage *sebakstorage.LevelDBBackend) http.HandlerFunc {
 
 const GetAccountTransactionsHandlerPattern = "/account/{address}/transactions"
 
-func GetAccountTransactionsHandler(storage *sebakstorage.LevelDBBackend) http.HandlerFunc {
-
+func (api NetworkHandlerAPI) GetAccountTransactionsHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		vars := mux.Vars(r)
@@ -79,7 +77,7 @@ func GetAccountTransactionsHandler(storage *sebakstorage.LevelDBBackend) http.Ha
 			go func() {
 				<-readyChan
 				count := maxNumberOfExistingData
-				iterFunc, closeFunc := GetBlockTransactionsByAccount(storage, address, false)
+				iterFunc, closeFunc := GetBlockTransactionsByAccount(api.storage, address, false)
 				for {
 					bt, hasNext := iterFunc()
 					count--
@@ -105,7 +103,7 @@ func GetAccountTransactionsHandler(storage *sebakstorage.LevelDBBackend) http.Ha
 		default:
 
 			var btl []BlockTransaction
-			iterFunc, closeFunc := GetBlockTransactionsByAccount(storage, address, false)
+			iterFunc, closeFunc := GetBlockTransactionsByAccount(api.storage, address, false)
 			for {
 				bt, hasNext := iterFunc()
 				if !hasNext {
@@ -127,10 +125,8 @@ func GetAccountTransactionsHandler(storage *sebakstorage.LevelDBBackend) http.Ha
 
 const GetAccountOperationsHandlerPattern = "/account/{address}/operations"
 
-func GetAccountOperationsHandler(storage *sebakstorage.LevelDBBackend) http.HandlerFunc {
-
+func (api NetworkHandlerAPI) GetAccountOperationsHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		vars := mux.Vars(r)
 		address := vars["address"]
 
@@ -144,7 +140,7 @@ func GetAccountOperationsHandler(storage *sebakstorage.LevelDBBackend) http.Hand
 			go func() {
 				<-readyChan
 				count := maxNumberOfExistingData
-				iterFunc, closeFunc := GetBlockOperationsBySource(storage, address, false)
+				iterFunc, closeFunc := GetBlockOperationsBySource(api.storage, address, false)
 				for {
 					bo, hasNext := iterFunc()
 					count--
@@ -169,7 +165,7 @@ func GetAccountOperationsHandler(storage *sebakstorage.LevelDBBackend) http.Hand
 		default:
 
 			var bol []BlockOperation
-			iterFunc, closeFunc := GetBlockOperationsBySource(storage, address, false)
+			iterFunc, closeFunc := GetBlockOperationsBySource(api.storage, address, false)
 			for {
 				bo, hasNext := iterFunc()
 				if !hasNext {

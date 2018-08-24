@@ -3,17 +3,17 @@ package sebak
 import (
 	"net/http"
 
+	"fmt"
+
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/observer"
-	"boscoin.io/sebak/lib/storage"
-	"fmt"
 	"github.com/gorilla/mux"
 )
 
 const GetTransactionsHandlerPattern = "/transactions"
 
-func GetTransactionsHandler(storage *sebakstorage.LevelDBBackend) http.HandlerFunc {
+func (api NetworkHandlerAPI) GetTransactionsHandler() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		var err error
@@ -25,7 +25,7 @@ func GetTransactionsHandler(storage *sebakstorage.LevelDBBackend) http.HandlerFu
 			go func() {
 				<-readyChan
 				count := maxNumberOfExistingData
-				iterFunc, closeFunc := GetBlockTransactions(storage, false)
+				iterFunc, closeFunc := GetBlockTransactions(api.storage, false)
 				for {
 					bt, hasNext := iterFunc()
 					count--
@@ -51,7 +51,7 @@ func GetTransactionsHandler(storage *sebakstorage.LevelDBBackend) http.HandlerFu
 
 			var s []byte
 			var btl []BlockTransaction
-			iterFunc, closeFunc := GetBlockTransactions(storage, false)
+			iterFunc, closeFunc := GetBlockTransactions(api.storage, false)
 			for {
 				bt, hasNext := iterFunc()
 				if !hasNext {
@@ -72,7 +72,7 @@ func GetTransactionsHandler(storage *sebakstorage.LevelDBBackend) http.HandlerFu
 
 const GetTransactionByHashHandlerPattern = "/transactions/{txid}"
 
-func GetTransactionByHashHandler(storage *sebakstorage.LevelDBBackend) http.HandlerFunc {
+func (api NetworkHandlerAPI) GetTransactionByHashHandler() http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
@@ -88,7 +88,7 @@ func GetTransactionByHashHandler(storage *sebakstorage.LevelDBBackend) http.Hand
 			go func() {
 				<-readyChan
 				var bt BlockTransaction
-				if bt, err = GetBlockTransaction(storage, key); err != nil {
+				if bt, err = GetBlockTransaction(api.storage, key); err != nil {
 					http.Error(w, "Error reading request body", http.StatusInternalServerError)
 					return
 				}
@@ -109,12 +109,12 @@ func GetTransactionByHashHandler(storage *sebakstorage.LevelDBBackend) http.Hand
 		default:
 
 			var s []byte
-			if found, err := ExistBlockTransaction(storage, key); err != nil {
+			if found, err := ExistBlockTransaction(api.storage, key); err != nil {
 				http.Error(w, "Error reading request body", http.StatusInternalServerError)
 				return
 			} else if found {
 				var bt BlockTransaction
-				if bt, err = GetBlockTransaction(storage, key); err != nil {
+				if bt, err = GetBlockTransaction(api.storage, key); err != nil {
 					http.Error(w, "Error reading request body", http.StatusInternalServerError)
 					return
 				}
@@ -124,7 +124,7 @@ func GetTransactionByHashHandler(storage *sebakstorage.LevelDBBackend) http.Hand
 				}
 			} else {
 				var bth BlockTransactionHistory
-				if bth, err = GetBlockTransactionHistory(storage, key); err != nil {
+				if bth, err = GetBlockTransactionHistory(api.storage, key); err != nil {
 					http.Error(w, "Error reading request body", http.StatusInternalServerError)
 					return
 				}

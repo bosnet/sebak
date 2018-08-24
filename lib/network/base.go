@@ -7,21 +7,23 @@ import (
 	"net"
 	"net/http"
 
+	"github.com/gorilla/mux"
+
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/node"
 )
 
 type Network interface {
 	Endpoint() *sebakcommon.Endpoint
-	Context() context.Context
-	SetContext(context.Context)
 	GetClient(endpoint *sebakcommon.Endpoint) NetworkClient
 	AddWatcher(func(Network, net.Conn, http.ConnState))
-	AddHandler(context.Context, ...interface{}) error
+	AddHandler(context.Context, interface{}) error
+	AddHandler0(string, interface{}) *mux.Route
 
 	Start() error
 	Stop()
 	SetMessageBroker(MessageBroker)
+	MessageBroker() MessageBroker
 	Ready() error
 	IsReady() bool
 

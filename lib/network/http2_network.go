@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"strings"
 	"time"
 
 	"boscoin.io/sebak/lib/common"
 	"github.com/gorilla/handlers"
 
 	"github.com/gorilla/mux"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"golang.org/x/net/http2"
 )
 
@@ -28,7 +28,6 @@ var (
 )
 
 type HTTP2Network struct {
-	ctx         context.Context
 	tlsCertFile string
 	tlsKeyFile  string
 
@@ -49,7 +48,7 @@ type HTTP2Network struct {
 
 type MessageBroker interface {
 	ResponseMessage(http.ResponseWriter, string)
-	ReceiveMessage(*HTTP2Network, Message)
+	ReceiveMessage(Network, Message)
 }
 
 type HandlerFunc func(w http.ResponseWriter, r *http.Request)
@@ -106,16 +105,8 @@ func (r Http2MessageBroker) ResponseMessage(w http.ResponseWriter, o string) {
 	fmt.Fprintf(w, o)
 }
 
-func (r Http2MessageBroker) ReceiveMessage(t *HTTP2Network, msg Message) {
+func (r Http2MessageBroker) ReceiveMessage(t Network, msg Message) {
 	t.ReceiveChannel() <- msg
-}
-
-func (t *HTTP2Network) Context() context.Context {
-	return t.ctx
-}
-
-func (t *HTTP2Network) SetContext(ctx context.Context) {
-	t.ctx = ctx
 }
 
 // GetClient creates new keep-alive HTTP2 client
@@ -157,28 +148,37 @@ func (t *HTTP2Network) setNotReadyHandler() {
 	t.server.Handler = handlers.CombinedLoggingHandler(t.config.HTTP2LogOutput, t.router)
 }
 
-func (t *HTTP2Network) AddHandler(ctx context.Context, args ...interface{}) (err error) {
-	addAPIFunc := args[0].(func(context.Context, *HTTP2Network))
+func (t *HTTP2Network) AddHandler(ctx context.Context, handler interface{}) (err error) {
+	addAPIFunc := handler.(func(context.Context, *HTTP2Network))
 	addAPIFunc(ctx, t)
 	return
 }
-func (t *HTTP2Network) AddAPIHandler(pattern string, handlerFunc http.HandlerFunc) (router *mux.Route) {
-	apiRouter := t.routers[RouterNameAPI]
-	return apiRouter.HandleFunc(pattern, handlerFunc)
+
+func (t *HTTP2Network) AddHandler0(pattern string, handler interface{}) (router *mux.Route) {
+	var routerName string
+	switch {
+	case strings.HasPrefix(pattern, UrlPathPrefixNode):
+		routerName = RouterNameNode
+	case strings.HasPrefix(pattern, UrlPathPrefixAPI):
+		routerName = RouterNameAPI
+	default:
+		routerName = RouterNameAPI
+	}
+
+	r, _ := t.routers[routerName]
+
+	return r.HandleFunc(pattern[len(routerName)+1:], handler.(http.HandlerFunc))
 }
 
 func (t *HTTP2Network) SetMessageBroker(mb MessageBroker) {
 	t.messageBroker = mb
 }
 
-func (t *HTTP2Network) Ready() error {
-	nodeRouter := t.routers[RouterNameNode]
-	nodeRouter.HandleFunc("/", NodeInfoHandler(t.Context(), t))
-	nodeRouter.HandleFunc("/connect", ConnectHandler(t.Context(), t)).Methods("POST")
-	nodeRouter.HandleFunc("/message", MessageHandler(t.Context(), t)).Methods("POST")
-	nodeRouter.HandleFunc("/ballot", BallotHandler(t.Context(), t)).Methods("POST")
-	nodeRouter.HandleFunc("/metrics", promhttp.Handler().ServeHTTP)
+func (t *HTTP2Network) MessageBroker() MessageBroker {
+	return t.messageBroker
+}
 
+func (t *HTTP2Network) Ready() error {
 	t.server.Handler = handlers.CombinedLoggingHandler(t.config.HTTP2LogOutput, t.router)
 
 	t.ready = true

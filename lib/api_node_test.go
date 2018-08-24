@@ -1,7 +1,6 @@
-package sebaknetwork
+package sebak
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -13,11 +12,13 @@ import (
 	"strconv"
 	"time"
 
-	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/node"
-
 	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
+
+	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/network"
+	"boscoin.io/sebak/lib/node"
+	"boscoin.io/sebak/lib/storage"
 )
 
 func getPort() string {
@@ -45,7 +46,7 @@ const (
 )
 
 // Waiting until the server is ready
-func pingAndWait(t *testing.T, c0 NetworkClient) {
+func pingAndWait(t *testing.T, c0 sebaknetwork.NetworkClient) {
 	waitCount := 0
 	for {
 		if b, err := c0.GetNodeInfo(); len(b) != 0 && err == nil {
@@ -60,10 +61,10 @@ func pingAndWait(t *testing.T, c0 NetworkClient) {
 	}
 }
 
-func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, mn *HTTP2Network, localNode *sebaknode.LocalNode) {
-	g := NewKeyGenerator(dirPath, certPath, keyPath)
+func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, mn *sebaknetwork.HTTP2Network, nodeRunner *NodeRunner) {
+	g := sebaknetwork.NewKeyGenerator(dirPath, certPath, keyPath)
 
-	var config HTTP2NetworkConfig
+	var config sebaknetwork.HTTP2NetworkConfig
 	endpoint, err := sebakcommon.NewEndpointFromString(fmt.Sprintf("https://localhost:%s?NodeName=n1", getPort()))
 	if err != nil {
 		t.Error(err)
@@ -75,17 +76,20 @@ func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, mn *HTTP2Network, lo
 	queries.Add("TLSKeyFile", g.GetKeyPath())
 	endpoint.RawQuery = queries.Encode()
 
-	config, err = NewHTTP2NetworkConfigFromEndpoint(endpoint)
+	config, err = sebaknetwork.NewHTTP2NetworkConfigFromEndpoint(endpoint)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	mn = NewHTTP2Network(config)
+	mn = sebaknetwork.NewHTTP2Network(config)
 
 	kp, _ = keypair.Random()
-	localNode, _ = sebaknode.NewLocalNode(kp, mn.Endpoint(), "")
+	localNode, _ := sebaknode.NewLocalNode(kp, mn.Endpoint(), "")
 
-	mn.SetContext(context.WithValue(context.Background(), "localNode", localNode))
+	p, _ := NewDefaultVotingThresholdPolicy(100, 30, 30)
+	is, _ := NewISAAC(networkID, localNode, p)
+	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
+	nodeRunner = NewNodeRunner(string(networkID), localNode, p, mn, is, st)
 
 	return
 }
@@ -96,7 +100,7 @@ func (r TestMessageBroker) ResponseMessage(w http.ResponseWriter, o string) {
 	fmt.Fprintf(w, o)
 }
 
-func (r TestMessageBroker) ReceiveMessage(*HTTP2Network, Message) {}
+func (r TestMessageBroker) ReceiveMessage(sebaknetwork.Network, sebaknetwork.Message) {}
 
 func removeWhiteSpaces(str string) string {
 	return strings.Map(func(r rune) rune {
@@ -108,12 +112,12 @@ func removeWhiteSpaces(str string) string {
 }
 
 func TestHTTP2NetworkGetNodeInfo(t *testing.T) {
-	_, s0, localNode := createNewHTTP2Network(t)
+	_, s0, nodeRunner := createNewHTTP2Network(t)
 	s0.SetMessageBroker(TestMessageBroker{})
-	s0.Ready()
+	nodeRunner.Ready()
 
-	go s0.Start()
-	defer s0.Stop()
+	go nodeRunner.Start()
+	defer nodeRunner.Stop()
 
 	c0 := s0.GetClient(s0.Endpoint())
 	pingAndWait(t, c0)
@@ -129,11 +133,11 @@ func TestHTTP2NetworkGetNodeInfo(t *testing.T) {
 		return
 	}
 
-	server := localNode.Endpoint().String()
+	server := nodeRunner.Node().Endpoint().String()
 	client := v.Endpoint().String()
 
 	require.Equal(t, server, client, "Server endpoint and received endpoint should be the same.")
-	require.Equal(t, localNode.Address(), v.Address(), "Server address and received address should be the same.")
+	require.Equal(t, nodeRunner.Node().Address(), v.Address(), "Server address and received address should be the same.")
 }
 
 type StringResponseMessageBroker struct {
@@ -144,51 +148,51 @@ func (r StringResponseMessageBroker) ResponseMessage(w http.ResponseWriter, _ st
 	fmt.Fprintf(w, r.msg)
 }
 
-func (r StringResponseMessageBroker) ReceiveMessage(*HTTP2Network, Message) {}
+func (r StringResponseMessageBroker) ReceiveMessage(sebaknetwork.Network, sebaknetwork.Message) {}
 
 func TestHTTP2NetworkMessageBrokerResponseMessage(t *testing.T) {
-	_, s0, localNode := createNewHTTP2Network(t)
+	_, s0, nodeRunner := createNewHTTP2Network(t)
 	s0.SetMessageBroker(StringResponseMessageBroker{"ResponseMessage"})
-	s0.Ready()
+	nodeRunner.Ready()
 
-	go s0.Start()
-	defer s0.Stop()
+	go nodeRunner.Start()
+	defer nodeRunner.Stop()
 
 	c0 := s0.GetClient(s0.Endpoint())
 	pingAndWait(t, c0)
 
-	returnMsg, _ := c0.Connect(localNode)
+	returnMsg, _ := c0.Connect(nodeRunner.Node())
 
 	require.Equal(t, string(returnMsg), "ResponseMessage", "The connectNode and the return should be the same.")
 }
 
 func TestHTTP2NetworkConnect(t *testing.T) {
-	_, s0, localNode := createNewHTTP2Network(t)
+	_, s0, nodeRunner := createNewHTTP2Network(t)
 	s0.SetMessageBroker(TestMessageBroker{})
-	s0.Ready()
+	nodeRunner.Ready()
 
-	go s0.Start()
-	defer s0.Stop()
+	go nodeRunner.Start()
+	defer nodeRunner.Stop()
 
 	c0 := s0.GetClient(s0.Endpoint())
 	pingAndWait(t, c0)
 
-	o, _ := localNode.Serialize()
+	o, _ := nodeRunner.Node().Serialize()
 	nodeStr := removeWhiteSpaces(string(o))
 
-	returnMsg, _ := c0.Connect(localNode)
+	returnMsg, _ := c0.Connect(nodeRunner.Node())
 	returnStr := removeWhiteSpaces(string(returnMsg))
 
 	require.Equal(t, returnStr, nodeStr, "The connectNode and the return should be the same.")
 }
 
 func TestHTTP2NetworkSendMessage(t *testing.T) {
-	_, s0, _ := createNewHTTP2Network(t)
+	_, s0, nodeRunner := createNewHTTP2Network(t)
 	s0.SetMessageBroker(TestMessageBroker{})
-	s0.Ready()
+	nodeRunner.Ready()
 
-	go s0.Start()
-	defer s0.Stop()
+	go nodeRunner.Start()
+	defer nodeRunner.Stop()
 
 	c0 := s0.GetClient(s0.Endpoint())
 	pingAndWait(t, c0)
@@ -203,11 +207,12 @@ func TestHTTP2NetworkSendMessage(t *testing.T) {
 }
 
 func TestHTTP2NetworkSendBallot(t *testing.T) {
-	_, s0, _ := createNewHTTP2Network(t)
+	_, s0, nodeRunner := createNewHTTP2Network(t)
 	s0.SetMessageBroker(TestMessageBroker{})
-	s0.Ready()
-	go s0.Start()
-	defer s0.Stop()
+	nodeRunner.Ready()
+
+	go nodeRunner.Start()
+	defer nodeRunner.Stop()
 
 	c0 := s0.GetClient(s0.Endpoint())
 	pingAndWait(t, c0)

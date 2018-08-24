@@ -26,8 +26,10 @@ func TestGetAccountHandler(t *testing.T) {
 	require.Nil(t, err)
 	defer storage.Close()
 
+	apiHandler := NetworkHandlerAPI{storage: storage}
+
 	router := mux.NewRouter()
-	router.HandleFunc(GetAccountHandlerPattern, GetAccountHandler(storage)).Methods("GET")
+	router.HandleFunc(GetAccountHandlerPattern, apiHandler.GetAccountHandler()).Methods("GET")
 
 	ts := httptest.NewServer(router)
 	defer ts.Close()
@@ -127,8 +129,10 @@ func TestGetAccountTransactionsHandler(t *testing.T) {
 	require.Nil(t, err)
 	defer storage.Close()
 
+	apiHandler := NetworkHandlerAPI{storage: storage}
+
 	router := mux.NewRouter()
-	router.HandleFunc(GetAccountTransactionsHandlerPattern, GetAccountTransactionsHandler(storage)).Methods("GET")
+	router.HandleFunc(GetAccountTransactionsHandlerPattern, apiHandler.GetAccountTransactionsHandler()).Methods("GET")
 
 	ts := httptest.NewServer(router)
 	defer ts.Close()
@@ -222,8 +226,10 @@ func TestGetAccountOperationsHandler(t *testing.T) {
 	require.Nil(t, err)
 	defer storage.Close()
 
+	apiHandler := NetworkHandlerAPI{storage: storage}
+
 	router := mux.NewRouter()
-	router.HandleFunc(GetAccountOperationsHandlerPattern, GetAccountOperationsHandler(storage)).Methods("GET")
+	router.HandleFunc(GetAccountOperationsHandlerPattern, apiHandler.GetAccountOperationsHandler()).Methods("GET")
 
 	ts := httptest.NewServer(router)
 	defer ts.Close()
@@ -324,8 +330,10 @@ func TestGetTransactionByHashHandler(t *testing.T) {
 	require.Nil(t, err)
 	defer storage.Close()
 
+	apiHandler := NetworkHandlerAPI{storage: storage}
+
 	router := mux.NewRouter()
-	router.HandleFunc(GetTransactionByHashHandlerPattern, GetTransactionByHashHandler(storage)).Methods("GET")
+	router.HandleFunc(GetTransactionByHashHandlerPattern, apiHandler.GetTransactionByHashHandler()).Methods("GET")
 
 	ts := httptest.NewServer(router)
 	defer ts.Close()
@@ -382,8 +390,10 @@ func TestGetTransactionsHandler(t *testing.T) {
 	require.Nil(t, err)
 	defer storage.Close()
 
+	apiHandler := NetworkHandlerAPI{storage: storage}
+
 	router := mux.NewRouter()
-	router.HandleFunc(GetTransactionsHandlerPattern, GetTransactionsHandler(storage)).Methods("GET")
+	router.HandleFunc(GetTransactionsHandlerPattern, apiHandler.GetTransactionsHandler()).Methods("GET")
 
 	ts := httptest.NewServer(router)
 	defer ts.Close()

@@ -1,7 +1,6 @@
 package sebaknetwork
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"testing"
@@ -84,8 +83,6 @@ func createNewMemoryNetwork() (*keypair.Full, *MemoryNetwork, *sebaknode.LocalNo
 
 	kp, _ := keypair.Random()
 	localNode, _ := sebaknode.NewLocalNode(kp, mn.Endpoint(), "")
-
-	mn.SetContext(context.WithValue(context.Background(), "localNode", localNode))
 
 	return kp, mn, localNode
 }
