@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"testing"
 
 	"github.com/google/uuid"
 	"github.com/stellar/go/keypair"
+	"github.com/stretchr/testify/require"
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/network"
@@ -157,4 +159,44 @@ func TestMakeTransactionWithKeypair(networkID []byte, n int, srcKp *keypair.Full
 	tx.Sign(srcKp, networkID)
 
 	return
+}
+
+func GetTransaction(t *testing.T) (tx Transaction, txByte []byte) {
+	initialBalance := sebakcommon.Amount(1)
+	kpNewAccount, _ := keypair.Random()
+
+	tx = makeTransactionCreateAccount(kp, kpNewAccount.Address(), initialBalance)
+	tx.B.Checkpoint = account.Checkpoint
+	tx.Sign(kp, networkID)
+
+	var err error
+
+	txByte, err = tx.Serialize()
+	require.Nil(t, err)
+
+	return
+}
+
+func GenerateBallot(t *testing.T, proposer *sebaknode.LocalNode, round Round, tx Transaction, ballotState sebakcommon.BallotState, sender *sebaknode.LocalNode) *Ballot {
+	ballot := NewBallot(proposer, round, []string{tx.GetHash()})
+	ballot.SetVote(sebakcommon.BallotStateINIT, VotingYES)
+	ballot.Sign(proposer.Keypair(), networkID)
+
+	ballot.SetSource(sender.Address())
+	ballot.SetVote(ballotState, VotingYES)
+	ballot.Sign(sender.Keypair(), networkID)
+
+	err := ballot.IsWellFormed(networkID)
+	require.Nil(t, err)
+
+	return ballot
+}
+
+func ReceiveBallot(t *testing.T, nodeRunner *NodeRunner, ballot *Ballot) error {
+	data, err := ballot.Serialize()
+	require.Nil(t, err)
+
+	ballotMessage := sebaknetwork.Message{Type: sebaknetwork.BallotMessage, Data: data}
+	err = nodeRunner.handleBallotMessage(ballotMessage)
+	return err
 }
