@@ -41,6 +41,20 @@ func MakeNodeRunner() (*NodeRunner, *sebaknode.LocalNode) {
 	return nodeRunner, localNode
 }
 
+func testMakeNewBlock(transactions []string) Block {
+	kp, _ := keypair.Random()
+
+	return NewBlock(
+		kp.Address(),
+		Round{
+			BlockHeight: 0,
+			BlockHash:   "",
+		},
+		transactions,
+		sebakcommon.NowISO8601(),
+	)
+}
+
 func TestMakeNewBlockOperation(networkID []byte, n int) (bos []BlockOperation) {
 	_, tx := TestMakeTransaction(networkID, n)
 
