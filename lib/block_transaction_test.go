@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stellar/go/keypair"
+	"github.com/stretchr/testify/require"
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
@@ -538,11 +539,7 @@ func TestMultipleBlockTransactionGetByBlock(t *testing.T) {
 	for _, tx := range txs0 {
 		a, _ := tx.Serialize()
 		bt := NewBlockTransactionFromTransaction(block0.Hash, tx, a)
-		err := bt.Save(st)
-		if err != nil {
-			t.Error(err)
-			return
-		}
+		require.Nil(t, bt.Save(st))
 	}
 
 	var txs1 []Transaction
@@ -559,11 +556,7 @@ func TestMultipleBlockTransactionGetByBlock(t *testing.T) {
 	for _, tx := range txs1 {
 		a, _ := tx.Serialize()
 		bt := NewBlockTransactionFromTransaction(block1.Hash, tx, a)
-		err := bt.Save(st)
-		if err != nil {
-			t.Error(err)
-			return
-		}
+		require.Nil(t, bt.Save(st))
 	}
 
 	{
@@ -579,16 +572,10 @@ func TestMultipleBlockTransactionGetByBlock(t *testing.T) {
 		}
 		closeFunc()
 
-		if len(saved) != len(createdOrder0) {
-			t.Error("fetched records insufficient")
-		}
+		require.Equal(t, len(saved), len(createdOrder0), "fetched records insufficient")
 		for i, bt := range saved {
-			if bt.Hash != createdOrder0[i] {
-				t.Error("order mismatch")
-				return
-			}
+			require.Equal(t, bt.Hash, createdOrder0[i], "order mismatch")
 		}
-
 	}
 
 	{
@@ -604,15 +591,9 @@ func TestMultipleBlockTransactionGetByBlock(t *testing.T) {
 		}
 		closeFunc()
 
-		if len(saved) != len(createdOrder1) {
-			t.Error("fetched records insufficient")
-		}
+		require.Equal(t, len(saved), len(createdOrder1), "fetched records insufficient")
 		for i, bt := range saved {
-			if bt.Hash != createdOrder1[i] {
-				t.Error("order mismatch")
-				return
-			}
+			require.Equal(t, bt.Hash, createdOrder1[i], "order mismatch")
 		}
-
 	}
 }
