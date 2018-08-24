@@ -5,13 +5,13 @@ import (
 	"boscoin.io/sebak/lib/contract/payload"
 )
 
-type ContractDeployer interface {
+type Deployer interface {
 	Deploy(code []byte) error
 }
 
-func NewContractDeployer(ctx *ContractContext, codeType payload.CodeType) ContractDeployer {
+func NewDeployer(ctx *Context, codeType payload.CodeType) Deployer {
 
-	var cd ContractDeployer
+	var cd Deployer
 
 	switch codeType {
 	case payload.JavaScript:
@@ -23,8 +23,8 @@ func NewContractDeployer(ctx *ContractContext, codeType payload.CodeType) Contra
 
 }
 
-func DeployContract(ctx *ContractContext, codeType payload.CodeType, code []byte) (err error) {
-	cd := NewContractDeployer(ctx, codeType)
+func Deploy(ctx *Context, codeType payload.CodeType, code []byte) (err error) {
+	cd := NewDeployer(ctx, codeType)
 	err = cd.Deploy(code)
 	return
 }

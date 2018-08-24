@@ -11,19 +11,19 @@ import (
 )
 
 //TODO: For prototype testing
-func (a *ContractAPI) Helloworld(greeting string) (string, error) {
+func (a *API) Helloworld(greeting string) (string, error) {
 	return greeting + " WORLD!!", nil
 }
 
 // Contract API is used to executors
-type ContractAPI struct {
+type API struct {
 	contractAddress string // the current contract address
-	ctx             *ContractContext
+	ctx             *Context
 	stateDB         sebakstorage.DBBackend
 }
 
-func NewContractAPI(ctx *ContractContext, contractAddr string) *ContractAPI {
-	api := &ContractAPI{
+func NewAPI(ctx *Context, contractAddr string) *API {
+	api := &API{
 		contractAddress: contractAddr,
 		ctx:             ctx,
 		stateDB:         ctx.db,
@@ -32,19 +32,19 @@ func NewContractAPI(ctx *ContractContext, contractAddr string) *ContractAPI {
 }
 
 // Read a item of a key from this contract own storage
-func (a *ContractAPI) GetStorageItem(key string) (*storage.StorageItem, error) {
+func (a *API) GetStorageItem(key string) (*storage.StorageItem, error) {
 	return storage.GetStorageItem(a.stateDB, a.contractAddress, key)
 }
 
 // Write a item to this contract's own storage
-func (a *ContractAPI) PutStorageItem(key string, item *storage.StorageItem) error {
+func (a *API) PutStorageItem(key string, item *storage.StorageItem) error {
 	item.Address = a.contractAddress
 	item.Key = key
 	return item.Save(a.stateDB)
 }
 
 // Get this contract's balance
-func (a *ContractAPI) GetBalance() (string, error) {
+func (a *API) GetBalance() (string, error) {
 	ba, err := block.GetBlockAccount(a.stateDB, a.contractAddress)
 	if err != nil {
 		return "0", err
@@ -53,17 +53,17 @@ func (a *ContractAPI) GetBalance() (string, error) {
 }
 
 // Call another contract
-func (a *ContractAPI) CallContract(execCode *payload.ExecCode) (v *value.Value, err error) {
-	v, err = ExecuteContract(a.ctx, execCode)
+func (a *API) CallContract(execCode *payload.ExecCode) (v *value.Value, err error) {
+	v, err = Execute(a.ctx, execCode)
 	return
 }
 
 // Return block height
-func (a *ContractAPI) GetBlockHeight() int64 {
+func (a *API) GetBlockHeight() int64 {
 	//TODO(anarcher):
 	return 0
 }
 
-func (a *ContractAPI) Now() time.Time {
+func (a *API) Now() time.Time {
 	return time.Now().UTC()
 }

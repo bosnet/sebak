@@ -75,7 +75,7 @@ func FinishOperationBodyContractExecute(st *sebakstorage.LevelDBBackend, tx Tran
 		return
 	}
 
-	ctx := contract.NewContractContext(baSource, st) // st as statedb
+	ctx := contract.NewContext(baSource, st) // st as statedb
 
 	exCode := &payload.ExecCode{
 		ContractAddress: baTarget.Address,
@@ -83,6 +83,6 @@ func FinishOperationBodyContractExecute(st *sebakstorage.LevelDBBackend, tx Tran
 		Args:            op.B.(OperationBodyContractExecute).Args,
 	}
 
-	_, err = contract.ExecuteContract(ctx, exCode) //TODO: Where to pass the return value?
+	_, err = contract.Execute(ctx, exCode) //TODO: Where to pass the return value?
 	return
 }

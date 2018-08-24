@@ -32,9 +32,9 @@ function Hello(helloarg){
 		t.Fatal(err)
 	}
 	sdb := sebakstorage.NewStateDB(ts)
-	ctx := NewContractContext(ba, sdb)
+	ctx := NewContext(ba, sdb)
 
-	if err := DeployContract(ctx, payload.JavaScript, []byte(testCode)); err != nil {
+	if err := Deploy(ctx, payload.JavaScript, []byte(testCode)); err != nil {
 		t.Fatal(err)
 	}
 

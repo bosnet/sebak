@@ -71,8 +71,8 @@ func FinishOperationBodyContractDeploy(st sebakstorage.DBBackend, tx Transaction
 		return
 	}
 
-	ctx := contract.NewContractContext(baSource, st)
+	ctx := contract.NewContext(baSource, st)
 
-	err = contract.DeployContract(ctx, payload.CodeType(op.B.(OperationBodyContractDeploy).CodeType), []byte(op.B.(OperationBodyContractDeploy).Code)) //TODO: Where to pass the return value?
+	err = contract.Deploy(ctx, payload.CodeType(op.B.(OperationBodyContractDeploy).CodeType), []byte(op.B.(OperationBodyContractDeploy).Code)) //TODO: Where to pass the return value?
 	return
 }
