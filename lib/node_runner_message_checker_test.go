@@ -33,7 +33,7 @@ func TestMessageChecker(t *testing.T) {
 	require.Nil(t, err)
 	require.Equal(t, checker.Transaction, validTx)
 
-	err = HasTransactionAlready(checker)
+	err = HasTransaction(checker)
 	require.Nil(t, err)
 
 	err = SaveTransactionHistory(checker)
@@ -48,7 +48,7 @@ func TestMessageChecker(t *testing.T) {
 
 	// BroadcastTransaction(checker) is not suitable in unittest
 
-	err = HasTransactionAlready(checker)
+	err = HasTransaction(checker)
 	require.Equal(t, err, sebakerror.ErrorNewButKnownMessage)
 
 	err = SaveTransactionHistory(checker)
@@ -59,7 +59,7 @@ func TestMessageChecker(t *testing.T) {
 
 	var CheckerFuncs = []sebakcommon.CheckerFunc{
 		TransactionUnmarshal,
-		HasTransactionAlready,
+		HasTransaction,
 		SaveTransactionHistory,
 		PushIntoTransactionPool,
 	}

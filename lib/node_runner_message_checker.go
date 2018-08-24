@@ -4,7 +4,7 @@
 	Checker methods are called sequentially by the RunChecker() method in the handleMessageFromClient method of node_runner.go.
 	The process is as follows :
 	1. TransactionUnmarshal: Unmarshal the received message in transaction
-	2. HasTransactionAlready: The transaction that already exists does not proceed anymore
+	2. HasTransaction: The transaction that already exists does not proceed anymore
 	3. History: Save History
 	4. PushIntoTransactionPool: Insert into transaction pool
 	5. BroadcastTransaction: Passing a transaction to all known Validators.
@@ -50,9 +50,9 @@ func TransactionUnmarshal(c sebakcommon.Checker, args ...interface{}) (err error
 	return
 }
 
-// HasTransactionAlready checks transaction is in
+// HasTransaction checks transaction is in
 // `TransactionPool`.
-func HasTransactionAlready(c sebakcommon.Checker, args ...interface{}) (err error) {
+func HasTransaction(c sebakcommon.Checker, args ...interface{}) (err error) {
 	checker := c.(*MessageChecker)
 
 	consensus := checker.NodeRunner.Consensus()
