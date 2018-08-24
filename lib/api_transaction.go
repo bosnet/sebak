@@ -2,7 +2,7 @@ package sebak
 
 import (
 	"fmt"
-	"io/ioutil"
+	// "io/ioutil"
 	"net/http"
 
 	"boscoin.io/sebak/lib/common"
@@ -145,20 +145,20 @@ func GetMissingTransactionsByHashHandler(storage *sebakstorage.LevelDBBackend /*
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		key := vars["hash"]
-		var requestBody []byte
+		// var requestBody []byte
 		var err error
 
 		if r.Method != "POST" {
 			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 			return
 		}
-		if requestBody, err := ioutil.ReadAll(r.Body); err != nil {
-			http.Error(w, "Error reading request body", http.StatusInternalServerError)
-			return
-		}
-		if hash, err := NewMissingTransactionsFromJSON(requestBody); err != nil {
+		// if requestBody, err := ioutil.ReadAll(r.Body); err != nil {
+		// 	http.Error(w, "Error reading request body", http.StatusInternalServerError)
+		// 	return
+		// }
+		// if hash, err := NewMissingTransactionsFromJSON(requestBody); err != nil {
 
-		}
+		// }
 
 		var readyChan = make(chan struct{})
 		iterateId := sebakcommon.GetUniqueIDFromUUID()
