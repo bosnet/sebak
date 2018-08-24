@@ -168,7 +168,7 @@ func GetAccountOperationsHandler(storage *sebakstorage.LevelDBBackend) http.Hand
 					count--
 					if !hasNext || count < 0 {
 						break
-						 
+
 					}
 					observer.BlockOperationObserver.Trigger(fmt.Sprintf("iterate-%s", iterateId), &bo)
 				}
