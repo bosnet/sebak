@@ -1,14 +1,45 @@
 package sebak
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 
-	"boscoin.io/sebak/lib/common"
-
 	"github.com/google/uuid"
 	"github.com/stellar/go/keypair"
+
+	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/network"
+	"boscoin.io/sebak/lib/node"
+	"boscoin.io/sebak/lib/storage"
 )
+
+var networkID []byte = []byte("sebak-test-network")
+
+func createNetMemoryNetwork() (*sebaknetwork.MemoryNetwork, *sebaknode.LocalNode) {
+	mn := sebaknetwork.NewMemoryNetwork()
+
+	kp, _ := keypair.Random()
+	localNode, _ := sebaknode.NewLocalNode(kp, mn.Endpoint(), "")
+
+	mn.SetContext(context.WithValue(context.Background(), "localNode", localNode))
+
+	return mn, localNode
+}
+
+func MakeNodeRunner() (*NodeRunner, *sebaknode.LocalNode) {
+	kp, _ := keypair.Random()
+
+	nodeEndpoint := &sebakcommon.Endpoint{Scheme: "https", Host: "https://locahost:5000"}
+	localNode, _ := sebaknode.NewLocalNode(kp, nodeEndpoint, "")
+
+	vth, _ := NewDefaultVotingThresholdPolicy(66, 66)
+	is, _ := NewISAAC(networkID, localNode, vth)
+	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
+	network, _ := createNetMemoryNetwork()
+	nodeRunner, _ := NewNodeRunner(string(networkID), localNode, vth, network, is, st)
+	return nodeRunner, localNode
+}
 
 func TestMakeNewBlockOperation(networkID []byte, n int) (bos []BlockOperation) {
 	_, tx := TestMakeTransaction(networkID, n)

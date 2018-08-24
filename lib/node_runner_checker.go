@@ -10,101 +10,7 @@ import (
 	logging "github.com/inconshreveable/log15"
 )
 
-type NodeRunnerHandleMessageChecker struct {
-	sebakcommon.DefaultChecker
-
-	NodeRunner *NodeRunner
-	LocalNode  *sebaknode.LocalNode
-	NetworkID  []byte
-	Message    sebaknetwork.Message
-
-	Transaction Transaction
-}
-
-// CheckNodeRunnerHandleMessageTransactionUnmarshal makes `Transaction` from
-// incoming `sebaknetwork.Message`.
-func CheckNodeRunnerHandleMessageTransactionUnmarshal(c sebakcommon.Checker, args ...interface{}) (err error) {
-	checker := c.(*NodeRunnerHandleMessageChecker)
-
-	var tx Transaction
-	if tx, err = NewTransactionFromJSON(checker.Message.Data); err != nil {
-		return
-	}
-
-	if err = tx.IsWellFormed(checker.NetworkID); err != nil {
-		return
-	}
-
-	checker.Transaction = tx
-	checker.NodeRunner.Log().Debug("message is transaction")
-
-	return
-}
-
-// CheckNodeRunnerHandleMessageHasTransactionAlready checks transaction is in
-// `TransactionPool`.
-func CheckNodeRunnerHandleMessageHasTransactionAlready(c sebakcommon.Checker, args ...interface{}) (err error) {
-	checker := c.(*NodeRunnerHandleMessageChecker)
-
-	is := checker.NodeRunner.Consensus()
-	if is.TransactionPool.Has(checker.Transaction.GetHash()) {
-		err = sebakerror.ErrorNewButKnownMessage
-		return
-	}
-
-	return
-}
-
-// CheckNodeRunnerHandleMessageHistory checks transaction is in
-// `BlockTransactionHistory`, which has the received transaction recently.
-func CheckNodeRunnerHandleMessageHistory(c sebakcommon.Checker, args ...interface{}) (err error) {
-	checker := c.(*NodeRunnerHandleMessageChecker)
-
-	var found bool
-	if found, err = ExistsBlockTransactionHistory(checker.NodeRunner.Storage(), checker.Transaction.GetHash()); found && err == nil {
-		checker.NodeRunner.Log().Debug("found in history", "transction", checker.Transaction.GetHash())
-		err = sebakerror.ErrorNewButKnownMessage
-		return
-	}
-
-	bt := NewTransactionHistoryFromTransaction(checker.Transaction, checker.Message.Data)
-	if err = bt.Save(checker.NodeRunner.Storage()); err != nil {
-		return
-	}
-
-	checker.NodeRunner.Log().Debug("saved in history", "transaction", checker.Transaction.GetHash())
-
-	return
-}
-
-// CheckNodeRunnerHandleMessagePushIntoTransactionPool add the incoming
-// transactions into `TransactionPool`.
-func CheckNodeRunnerHandleMessagePushIntoTransactionPool(c sebakcommon.Checker, args ...interface{}) (err error) {
-	checker := c.(*NodeRunnerHandleMessageChecker)
-
-	tx := checker.Transaction
-	is := checker.NodeRunner.Consensus()
-	is.TransactionPool.Add(tx)
-
-	checker.NodeRunner.Log().Debug("push transaction into transactionPool", "transaction", checker.Transaction.GetHash())
-
-	return
-}
-
-// CheckNodeRunnerHandleMessageTransactionBroadcast broadcasts the incoming
-// transaction to the other nodes.
-func CheckNodeRunnerHandleMessageTransactionBroadcast(c sebakcommon.Checker, args ...interface{}) (err error) {
-	checker := c.(*NodeRunnerHandleMessageChecker)
-
-	checker.NodeRunner.Log().Debug("transaction will be broadcasted", "transaction", checker.Transaction.GetHash())
-
-	// TODO sender should be excluded
-	checker.NodeRunner.ConnectionManager().Broadcast(checker.Transaction)
-
-	return
-}
-
-type NodeRunnerHandleBallotChecker struct {
+type BallotChecker struct {
 	sebakcommon.DefaultChecker
 
 	NodeRunner         *NodeRunner
@@ -122,9 +28,9 @@ type NodeRunnerHandleBallotChecker struct {
 	Log logging.Logger
 }
 
-// CheckNodeRunnerHandleBallotUnmarshal makes `Ballot` from sebaknetwork.Message.
-func CheckNodeRunnerHandleBallotUnmarshal(c sebakcommon.Checker, args ...interface{}) (err error) {
-	checker := c.(*NodeRunnerHandleBallotChecker)
+// BallotUnmarshal makes `Ballot` from sebaknetwork.Message.
+func BallotUnmarshal(c sebakcommon.Checker, args ...interface{}) (err error) {
+	checker := c.(*BallotChecker)
 
 	var ballot Ballot
 	if ballot, err = NewBallotFromJSON(checker.Message.Data); err != nil {
@@ -142,10 +48,10 @@ func CheckNodeRunnerHandleBallotUnmarshal(c sebakcommon.Checker, args ...interfa
 	return
 }
 
-// CheckNodeRunnerHandleBallotNotFromKnownValidators checks the incoming ballot
+// BallotNotFromKnownValidators checks the incoming ballot
 // is from the known validators.
-func CheckNodeRunnerHandleBallotNotFromKnownValidators(c sebakcommon.Checker, args ...interface{}) (err error) {
-	checker := c.(*NodeRunnerHandleBallotChecker)
+func BallotNotFromKnownValidators(c sebakcommon.Checker, args ...interface{}) (err error) {
+	checker := c.(*BallotChecker)
 	if checker.LocalNode.HasValidators(checker.Ballot.Source()) {
 		return
 	}
@@ -159,10 +65,10 @@ func CheckNodeRunnerHandleBallotNotFromKnownValidators(c sebakcommon.Checker, ar
 	return
 }
 
-// CheckNodeRunnerHandleBallotAlreadyFinished checks the incoming ballot in
+// BallotAlreadyFinished checks the incoming ballot in
 // valid round.
-func CheckNodeRunnerHandleBallotAlreadyFinished(c sebakcommon.Checker, args ...interface{}) (err error) {
-	checker := c.(*NodeRunnerHandleBallotChecker)
+func BallotAlreadyFinished(c sebakcommon.Checker, args ...interface{}) (err error) {
+	checker := c.(*BallotChecker)
 
 	round := checker.Ballot.Round()
 	if !checker.NodeRunner.Consensus().IsAvailableRound(round) {
@@ -174,9 +80,9 @@ func CheckNodeRunnerHandleBallotAlreadyFinished(c sebakcommon.Checker, args ...i
 	return
 }
 
-// CheckNodeRunnerHandleBallotAlreadyVoted checks the node of ballot voted.
-func CheckNodeRunnerHandleBallotAlreadyVoted(c sebakcommon.Checker, args ...interface{}) (err error) {
-	checker := c.(*NodeRunnerHandleBallotChecker)
+// BallotAlreadyVoted checks the node of ballot voted.
+func BallotAlreadyVoted(c sebakcommon.Checker, args ...interface{}) (err error) {
+	checker := c.(*BallotChecker)
 	rr := checker.NodeRunner.Consensus().RunningRounds
 
 	var found bool
@@ -193,11 +99,11 @@ func CheckNodeRunnerHandleBallotAlreadyVoted(c sebakcommon.Checker, args ...inte
 	return
 }
 
-// CheckNodeRunnerHandleBallotVote vote by incoming ballot; if the ballot is new
+// BallotVote vote by incoming ballot; if the ballot is new
 // and the round of ballot is not yet registered, this will make new
 // `RunningRound`.
-func CheckNodeRunnerHandleBallotVote(c sebakcommon.Checker, args ...interface{}) (err error) {
-	checker := c.(*NodeRunnerHandleBallotChecker)
+func BallotVote(c sebakcommon.Checker, args ...interface{}) (err error) {
+	checker := c.(*BallotChecker)
 
 	roundHash := checker.Ballot.Round().Hash()
 	rr := checker.NodeRunner.Consensus().RunningRounds
@@ -237,10 +143,10 @@ func CheckNodeRunnerHandleBallotVote(c sebakcommon.Checker, args ...interface{})
 	return
 }
 
-// CheckNodeRunnerHandleBallotIsSameProposer checks the incoming ballot has the
+// BallotIsSameProposer checks the incoming ballot has the
 // same proposer with the current `RunningRound`.
-func CheckNodeRunnerHandleBallotIsSameProposer(c sebakcommon.Checker, args ...interface{}) (err error) {
-	checker := c.(*NodeRunnerHandleBallotChecker)
+func BallotIsSameProposer(c sebakcommon.Checker, args ...interface{}) (err error) {
+	checker := c.(*BallotChecker)
 
 	if checker.VotingHole != VotingNOTYET {
 		return
@@ -271,9 +177,9 @@ func CheckNodeRunnerHandleBallotIsSameProposer(c sebakcommon.Checker, args ...in
 	return
 }
 
-// CheckNodeRunnerHandleBallotCheckResult checks the voting result.
-func CheckNodeRunnerHandleBallotCheckResult(c sebakcommon.Checker, args ...interface{}) (err error) {
-	checker := c.(*NodeRunnerHandleBallotChecker)
+// BallotCheckResult checks the voting result.
+func BallotCheckResult(c sebakcommon.Checker, args ...interface{}) (err error) {
+	checker := c.(*BallotChecker)
 
 	if !checker.Ballot.State().IsValidForVote() {
 		return
@@ -296,16 +202,16 @@ func CheckNodeRunnerHandleBallotCheckResult(c sebakcommon.Checker, args ...inter
 }
 
 var handleBallotTransactionCheckerFuncs = []sebakcommon.CheckerFunc{
-	CheckNodeRunnerHandleTransactionsIsNew,
-	CheckNodeRunnerHandleTransactionsGetMissingTransaction,
-	CheckNodeRunnerHandleTransactionsSameSource,
-	CheckNodeRunnerHandleTransactionsSourceCheck,
+	IsNew,
+	GetMissingTransaction,
+	SameSource,
+	SourceCheck,
 }
 
-// CheckNodeRunnerHandleINITBallotValidateTransactions validates the
+// INITBallotValidateTransactions validates the
 // transactions of newly added ballot.
-func CheckNodeRunnerHandleINITBallotValidateTransactions(c sebakcommon.Checker, args ...interface{}) (err error) {
-	checker := c.(*NodeRunnerHandleBallotChecker)
+func INITBallotValidateTransactions(c sebakcommon.Checker, args ...interface{}) (err error) {
+	checker := c.(*BallotChecker)
 
 	if !checker.IsNew || checker.VotingFinished {
 		return
@@ -325,7 +231,7 @@ func CheckNodeRunnerHandleINITBallotValidateTransactions(c sebakcommon.Checker, 
 		return
 	}
 
-	transactionsChecker := &NodeRunnerHandleTransactionChecker{
+	transactionsChecker := &BallotTransactionChecker{
 		DefaultChecker: sebakcommon.DefaultChecker{handleBallotTransactionCheckerFuncs},
 		NodeRunner:     checker.NodeRunner,
 		LocalNode:      checker.LocalNode,
@@ -354,10 +260,10 @@ func CheckNodeRunnerHandleINITBallotValidateTransactions(c sebakcommon.Checker, 
 	return
 }
 
-// CheckNodeRunnerHandleINITBallotBroadcast will broadcast the validated INIT
+// INITBallotBroadcast will broadcast the validated INIT
 // ballot.
-func CheckNodeRunnerHandleINITBallotBroadcast(c sebakcommon.Checker, args ...interface{}) (err error) {
-	checker := c.(*NodeRunnerHandleBallotChecker)
+func INITBallotBroadcast(c sebakcommon.Checker, args ...interface{}) (err error) {
+	checker := c.(*BallotChecker)
 	if !checker.IsNew {
 		return
 	}
@@ -383,10 +289,10 @@ func CheckNodeRunnerHandleINITBallotBroadcast(c sebakcommon.Checker, args ...int
 	return
 }
 
-// CheckNodeRunnerHandleSIGNBallotBroadcast will broadcast the confirmed SIGN
+// SIGNBallotBroadcast will broadcast the confirmed SIGN
 // ballot.
-func CheckNodeRunnerHandleSIGNBallotBroadcast(c sebakcommon.Checker, args ...interface{}) (err error) {
-	checker := c.(*NodeRunnerHandleBallotChecker)
+func SIGNBallotBroadcast(c sebakcommon.Checker, args ...interface{}) (err error) {
+	checker := c.(*BallotChecker)
 	if !checker.VotingFinished {
 		return
 	}
@@ -411,10 +317,10 @@ func CheckNodeRunnerHandleSIGNBallotBroadcast(c sebakcommon.Checker, args ...int
 	return
 }
 
-// CheckNodeRunnerHandleACCEPTBallotStore will store the confirmed ballot to
+// ACCEPTBallotStore will store the confirmed ballot to
 // `Block`.
-func CheckNodeRunnerHandleACCEPTBallotStore(c sebakcommon.Checker, args ...interface{}) (err error) {
-	checker := c.(*NodeRunnerHandleBallotChecker)
+func ACCEPTBallotStore(c sebakcommon.Checker, args ...interface{}) (err error) {
+	checker := c.(*BallotChecker)
 
 	if !checker.VotingFinished {
 		return
