@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/handlers"
 
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"golang.org/x/net/http2"
 )
 
@@ -176,6 +177,7 @@ func (t *HTTP2Network) Ready() error {
 	nodeRouter.HandleFunc("/connect", ConnectHandler(t.Context(), t)).Methods("POST")
 	nodeRouter.HandleFunc("/message", MessageHandler(t.Context(), t)).Methods("POST")
 	nodeRouter.HandleFunc("/ballot", BallotHandler(t.Context(), t)).Methods("POST")
+	nodeRouter.HandleFunc("/metrics", promhttp.Handler().ServeHTTP)
 
 	t.server.Handler = handlers.CombinedLoggingHandler(t.config.HTTP2LogOutput, t.router)
 
