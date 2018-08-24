@@ -13,3 +13,4 @@ db
 *.orig
 .idea
 tests/*/coverage/
+.vscode/
