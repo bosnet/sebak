@@ -12,17 +12,17 @@ func TestParseISO8601(t *testing.T) {
 	parsed, err := ParseISO8601(s)
 	require.Nil(t, err)
 
-	require.Equal(t, parsed.Year(), 2018)
-	require.Equal(t, parsed.Month(), time.Month(8))
-	require.Equal(t, parsed.Day(), 25)
-	require.Equal(t, parsed.Hour(), 14)
-	require.Equal(t, parsed.Minute(), 12)
-	require.Equal(t, parsed.Second(), 10)
-	require.Equal(t, parsed.Nanosecond(), 90758840)
+	require.Equal(t, 2018, parsed.Year())
+	require.Equal(t, time.Month(8), parsed.Month())
+	require.Equal(t, 25, parsed.Day())
+	require.Equal(t, 14, parsed.Hour())
+	require.Equal(t, 12, parsed.Minute())
+	require.Equal(t, 10, parsed.Second())
+	require.Equal(t, 90758840, parsed.Nanosecond())
 
 	zone, offset := parsed.Zone()
-	require.Equal(t, zone, "KST")
-	require.Equal(t, offset, 9*60*60)
+	require.Equal(t, "KST", zone)
+	require.Equal(t, 9*60*60, offset)
 }
 
 func TestParseISO8601Timezone(t *testing.T) {
@@ -37,5 +37,5 @@ func TestParseISO8601Timezone(t *testing.T) {
 	parsed, err := ParseISO8601(formattedCEST)
 	require.Nil(t, err)
 
-	require.Equal(t, now.Sub(parsed), time.Duration(0))
+	require.Equal(t, time.Duration(0), now.Sub(parsed))
 }

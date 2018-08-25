@@ -4,6 +4,8 @@ defaults: &defaults
   working_directory: /go/src/boscoin.io/sebak
   docker:
     - image: circleci/golang:1.10
+  environment:
+    TZ: "/usr/share/zoneinfo/Asia/Seoul"
 
 workspace: &workspace
   attach_workspace:
