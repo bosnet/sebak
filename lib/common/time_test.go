@@ -20,8 +20,7 @@ func TestParseISO8601(t *testing.T) {
 	require.Equal(t, 10, parsed.Second())
 	require.Equal(t, 90758840, parsed.Nanosecond())
 
-	zone, offset := parsed.Zone()
-	require.Equal(t, "KST", zone)
+	_, offset := parsed.Zone()
 	require.Equal(t, 9*60*60, offset)
 }
 
