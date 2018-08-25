@@ -19,7 +19,7 @@ func TestNodeRunnerConsensusStoreInHistoryIncomingTxMessage(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 
-	var handleMessageFromClientCheckerFuncs = []sebakcommon.CheckerFunc{
+	var handleTransactionCheckerFuncs = []sebakcommon.CheckerFunc{
 		CheckNodeRunnerHandleMessageTransactionUnmarshal,
 		CheckNodeRunnerHandleMessageHistory,
 		func(c sebakcommon.Checker, args ...interface{}) error {
@@ -30,7 +30,7 @@ func TestNodeRunnerConsensusStoreInHistoryIncomingTxMessage(t *testing.T) {
 	}
 
 	for _, nr := range nodeRunners {
-		nr.SetHandleMessageFromClientCheckerFuncs(nil, handleMessageFromClientCheckerFuncs...)
+		nr.SetHandleTransactionCheckerFuncs(nil, handleTransactionCheckerFuncs...)
 	}
 
 	nr0 := nodeRunners[0]
@@ -201,7 +201,7 @@ func TestNodeRunnerConsensusSameSourceWillBeIgnored(t *testing.T) {
 	}
 
 	for _, nr := range nodeRunners {
-		nr.SetHandleMessageFromClientCheckerFuncs(deferFunc)
+		nr.SetHandleTransactionCheckerFuncs(deferFunc)
 	}
 
 	wg = sync.WaitGroup{}

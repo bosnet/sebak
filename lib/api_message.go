@@ -26,7 +26,7 @@ func (api NetworkHandlerNode) MessageHandler(w http.ResponseWriter, r *http.Requ
 		http.Error(w, "Error reading request body", http.StatusInternalServerError)
 	}
 
-	api.network.MessageBroker().ReceiveMessage(api.network, sebaknetwork.Message{Type: sebaknetwork.MessageFromClient, Data: body})
+	api.network.MessageBroker().ReceiveMessage(api.network, sebaknetwork.Message{Type: sebaknetwork.TransactionMessage, Data: body})
 	api.network.MessageBroker().ResponseMessage(w, string(body))
 }
 

@@ -237,7 +237,7 @@ func TestMemoryNetworkHandleMessageFromClient(t *testing.T) {
 		},
 	}
 
-	nodeRunners[0].SetHandleMessageFromClientCheckerFuncs(nil, handleMessageFromClientCheckerFuncs...)
+	nodeRunners[0].SetHandleTransactionCheckerFuncs(nil, handleMessageFromClientCheckerFuncs...)
 
 	tx := makeTransaction(nodeRunners[0].Node().Keypair())
 	c0.SendMessage(tx)
@@ -299,7 +299,7 @@ func TestMemoryNetworkHandleMessageFromClientBroadcast(t *testing.T) {
 		},
 		CheckNodeRunnerHandleMessageBroadcast,
 	}
-	nodeRunners[0].SetHandleMessageFromClientCheckerFuncs(nil, handleMessageFromClientCheckerFuncs...)
+	nodeRunners[0].SetHandleTransactionCheckerFuncs(nil, handleMessageFromClientCheckerFuncs...)
 
 	for _, nr := range nodeRunners {
 		nr.SetHandleBallotCheckerFuncs(nil, handleBallotCheckerFuncs...)
@@ -387,7 +387,7 @@ func TestMemoryNetworkHandleMessageCheckHasMessage(t *testing.T) {
 		foundErrors = append(foundErrors, err)
 	}
 
-	nr.SetHandleMessageFromClientCheckerFuncs(deferFunc, handleMessageFromClientCheckerFuncs...)
+	nr.SetHandleTransactionCheckerFuncs(deferFunc, handleMessageFromClientCheckerFuncs...)
 
 	tx := makeTransaction(nr.Node().Keypair())
 	c0.SendMessage(tx)
@@ -460,7 +460,7 @@ func TestMemoryNetworkHandleMessageAddBallot(t *testing.T) {
 		foundErrors = append(foundErrors, err)
 	}
 
-	nr0.SetHandleMessageFromClientCheckerFuncs(deferFunc, handleMessageFromClientCheckerFuncs...)
+	nr0.SetHandleTransactionCheckerFuncs(deferFunc, handleMessageFromClientCheckerFuncs...)
 
 	c0.SendMessage(makeTransaction(nr0.Node().Keypair()))
 	c0.SendMessage(makeTransaction(nr1.Node().Keypair()))

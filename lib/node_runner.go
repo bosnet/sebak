@@ -26,11 +26,11 @@ type NodeRunner struct {
 	connectionManager *sebaknetwork.ConnectionManager
 	storage           *sebakstorage.LevelDBBackend
 
-	handleMessageFromClientCheckerFuncs []sebakcommon.CheckerFunc
-	handleBallotCheckerFuncs            []sebakcommon.CheckerFunc
+	handleTransactionCheckerFuncs []sebakcommon.CheckerFunc
+	handleBallotCheckerFuncs      []sebakcommon.CheckerFunc
 
-	handleMessageFromClientCheckerDeferFunc sebakcommon.CheckerDeferFunc
-	handleBallotCheckerDeferFunc            sebakcommon.CheckerDeferFunc
+	handleTransactionCheckerDeferFunc sebakcommon.CheckerDeferFunc
+	handleBallotCheckerDeferFunc      sebakcommon.CheckerDeferFunc
 
 	log logging.Logger
 }
@@ -61,7 +61,7 @@ func NewNodeRunner(
 	)
 	nr.network.AddWatcher(nr.connectionManager.ConnectionWatcher)
 
-	nr.SetHandleMessageFromClientCheckerFuncs(nil, DefaultHandleMessageFromClientCheckerFuncs...)
+	nr.SetHandleTransactionCheckerFuncs(nil, DefaultHandleTransactionCheckerFuncs...)
 	nr.SetHandleBallotCheckerFuncs(nil, DefaultHandleBallotCheckerFuncs...)
 
 	return nr
@@ -174,7 +174,7 @@ func (nr *NodeRunner) ConnectValidators() {
 	nr.connectionManager.Start()
 }
 
-var DefaultHandleMessageFromClientCheckerFuncs = []sebakcommon.CheckerFunc{
+var DefaultHandleTransactionCheckerFuncs = []sebakcommon.CheckerFunc{
 	CheckNodeRunnerHandleMessageTransactionUnmarshal,
 	CheckNodeRunnerHandleMessageTransactionHasSameSource,
 	CheckNodeRunnerHandleMessageHistory,
@@ -195,19 +195,19 @@ var DefaultHandleBallotCheckerFuncs = []sebakcommon.CheckerFunc{
 	CheckNodeRunnerHandleBallotBroadcast,
 }
 
-func (nr *NodeRunner) SetHandleMessageFromClientCheckerFuncs(
+func (nr *NodeRunner) SetHandleTransactionCheckerFuncs(
 	deferFunc sebakcommon.CheckerDeferFunc,
 	f ...sebakcommon.CheckerFunc,
 ) {
 	if len(f) > 0 {
-		nr.handleMessageFromClientCheckerFuncs = f
+		nr.handleTransactionCheckerFuncs = f
 	}
 
 	if deferFunc == nil {
 		deferFunc = sebakcommon.DefaultDeferFunc
 	}
 
-	nr.handleMessageFromClientCheckerDeferFunc = deferFunc
+	nr.handleTransactionCheckerDeferFunc = deferFunc
 }
 
 func (nr *NodeRunner) SetHandleBallotCheckerFuncs(
@@ -243,27 +243,27 @@ func (nr *NodeRunner) handleMessage() {
 				nr.log.Error("invalid validator data was received", "data", message.Data)
 				continue
 			}
-		case sebaknetwork.MessageFromClient:
+		case sebaknetwork.TransactionMessage:
 			if message.IsEmpty() {
-				nr.log.Error("got empty message from client`")
+				nr.log.Error("got empty transaction`")
 				continue
 			}
 
-			nr.log.Debug("got message from client`", "message", message.Head(50))
+			nr.log.Debug("got transaction`", "message", message.Head(50))
 
 			checker := &NodeRunnerHandleMessageChecker{
-				DefaultChecker: sebakcommon.DefaultChecker{Funcs: nr.handleMessageFromClientCheckerFuncs},
+				DefaultChecker: sebakcommon.DefaultChecker{Funcs: nr.handleTransactionCheckerFuncs},
 				NodeRunner:     nr,
 				LocalNode:      nr.localNode,
 				NetworkID:      nr.networkID,
 				Message:        message,
 			}
 
-			if err = sebakcommon.RunChecker(checker, nr.handleMessageFromClientCheckerDeferFunc); err != nil {
+			if err = sebakcommon.RunChecker(checker, nr.handleTransactionCheckerDeferFunc); err != nil {
 				if _, ok := err.(sebakcommon.CheckerErrorStop); ok {
 					continue
 				}
-				nr.log.Error("failed to handle message from client", "error", err)
+				nr.log.Error("failed to handle transaction", "error", err)
 				continue
 			}
 		case sebaknetwork.BallotMessage:

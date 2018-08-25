@@ -111,8 +111,8 @@ func TestMemoryNetworkGetClient(t *testing.T) {
 	select {
 	case receivedMessage := <-gotMessage:
 		receivedDummy, _ := DummyMessageFromString(receivedMessage.Data)
-		if receivedMessage.Type != "message" {
-			t.Error("got invalid message")
+		if receivedMessage.Type != TransactionMessage {
+			t.Error("wrong message type")
 		}
 		if !message.Equal(receivedDummy) {
 			t.Error("got invalid message")
