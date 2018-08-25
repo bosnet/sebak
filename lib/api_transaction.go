@@ -13,9 +13,8 @@ import (
 
 const GetTransactionsHandlerPattern = "/transactions"
 
-func (api NetworkHandlerAPI) GetTransactionsHandler() http.HandlerFunc {
-
-	return func(w http.ResponseWriter, r *http.Request) {
+func (api NetworkHandlerAPI) GetTransactionsHandler(w http.ResponseWriter, r *http.Request) {
+	{
 		var err error
 
 		switch r.Header.Get("Accept") {
@@ -46,7 +45,7 @@ func (api NetworkHandlerAPI) GetTransactionsHandler() http.HandlerFunc {
 			}
 			event := "saved"
 			event += " " + fmt.Sprintf("iterate-%s", iterateId)
-			streaming(observer.BlockTransactionObserver, r, w, event, callBackFunc, readyChan)
+			streaming(observer.BlockTransactionObserver, w, event, callBackFunc, readyChan)
 		default:
 
 			var s []byte
@@ -72,10 +71,8 @@ func (api NetworkHandlerAPI) GetTransactionsHandler() http.HandlerFunc {
 
 const GetTransactionByHashHandlerPattern = "/transactions/{txid}"
 
-func (api NetworkHandlerAPI) GetTransactionByHashHandler() http.HandlerFunc {
-
-	return func(w http.ResponseWriter, r *http.Request) {
-
+func (api NetworkHandlerAPI) GetTransactionByHashHandler(w http.ResponseWriter, r *http.Request) {
+	{
 		vars := mux.Vars(r)
 		key := vars["txid"]
 		var err error
@@ -105,7 +102,7 @@ func (api NetworkHandlerAPI) GetTransactionByHashHandler() http.HandlerFunc {
 
 			event := fmt.Sprintf("iterate-%s", iterateId)
 			event += " " + fmt.Sprintf("hash-%s", key)
-			streaming(observer.BlockTransactionObserver, r, w, event, callBackFunc, readyChan)
+			streaming(observer.BlockTransactionObserver, w, event, callBackFunc, readyChan)
 		default:
 
 			var s []byte

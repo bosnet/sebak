@@ -14,12 +14,12 @@ import (
 
 const GetAccountHandlerPattern = "/account/{address}"
 
-func (api NetworkHandlerAPI) GetAccountHandler() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		var blk *block.BlockAccount
-		var err error
+func (api NetworkHandlerAPI) GetAccountHandler(w http.ResponseWriter, r *http.Request) {
+	{
 		vars := mux.Vars(r)
 		address := vars["address"]
+		var blk *block.BlockAccount
+		var err error
 		if blk, err = block.GetBlockAccount(api.storage, address); err != nil {
 			http.Error(w, "Error reading request body", http.StatusInternalServerError)
 			return
@@ -28,6 +28,7 @@ func (api NetworkHandlerAPI) GetAccountHandler() http.HandlerFunc {
 		switch r.Header.Get("Accept") {
 		case "text/event-stream":
 			var readyChan = make(chan struct{})
+
 			// Trigger event for data already stored in the storage
 			iterateId := sebakcommon.GetUniqueIDFromUUID()
 			go func() {
@@ -45,7 +46,7 @@ func (api NetworkHandlerAPI) GetAccountHandler() http.HandlerFunc {
 
 			event := fmt.Sprintf("iterate-%s", iterateId)
 			event += " " + fmt.Sprintf("address-%s", address)
-			streaming(observer.BlockAccountObserver, r, w, event, callBackFunc, readyChan)
+			streaming(observer.BlockAccountObserver, w, event, callBackFunc, readyChan)
 		default:
 			var s []byte
 			if s, err = blk.Serialize(); err != nil {
@@ -62,9 +63,8 @@ func (api NetworkHandlerAPI) GetAccountHandler() http.HandlerFunc {
 
 const GetAccountTransactionsHandlerPattern = "/account/{address}/transactions"
 
-func (api NetworkHandlerAPI) GetAccountTransactionsHandler() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-
+func (api NetworkHandlerAPI) GetAccountTransactionsHandler(w http.ResponseWriter, r *http.Request) {
+	{
 		vars := mux.Vars(r)
 		address := vars["address"]
 
@@ -100,7 +100,7 @@ func (api NetworkHandlerAPI) GetAccountTransactionsHandler() http.HandlerFunc {
 
 			event := fmt.Sprintf("iterate-%s", iterateId)
 			event += " " + fmt.Sprintf("source-%s", address)
-			streaming(observer.BlockTransactionObserver, r, w, event, callBackFunc, readyChan)
+			streaming(observer.BlockTransactionObserver, w, event, callBackFunc, readyChan)
 		default:
 
 			var btl []BlockTransaction
@@ -126,8 +126,8 @@ func (api NetworkHandlerAPI) GetAccountTransactionsHandler() http.HandlerFunc {
 
 const GetAccountOperationsHandlerPattern = "/account/{address}/operations"
 
-func (api NetworkHandlerAPI) GetAccountOperationsHandler() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func (api NetworkHandlerAPI) GetAccountOperationsHandler(w http.ResponseWriter, r *http.Request) {
+	{
 		vars := mux.Vars(r)
 		address := vars["address"]
 
@@ -162,7 +162,7 @@ func (api NetworkHandlerAPI) GetAccountOperationsHandler() http.HandlerFunc {
 			}
 			event := fmt.Sprintf("iterate-%s", iterateId)
 			event += " " + fmt.Sprintf("source-%s", address)
-			streaming(observer.BlockOperationObserver, r, w, event, callBackFunc, readyChan)
+			streaming(observer.BlockOperationObserver, w, event, callBackFunc, readyChan)
 		default:
 
 			var bol []BlockOperation

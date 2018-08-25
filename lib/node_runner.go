@@ -73,10 +73,10 @@ func (nr *NodeRunner) Ready() {
 		network:   nr.network,
 	}
 
-	nr.network.AddHandler(sebaknetwork.UrlPathPrefixNode+"/", nodeHandler.NodeInfoHandler())
-	nr.network.AddHandler(sebaknetwork.UrlPathPrefixNode+"/connect", nodeHandler.ConnectHandler())
-	nr.network.AddHandler(sebaknetwork.UrlPathPrefixNode+"/message", nodeHandler.MessageHandler())
-	nr.network.AddHandler(sebaknetwork.UrlPathPrefixNode+"/ballot", nodeHandler.BallotHandler())
+	nr.network.AddHandler(sebaknetwork.UrlPathPrefixNode+"/", nodeHandler.NodeInfoHandler)
+	nr.network.AddHandler(sebaknetwork.UrlPathPrefixNode+"/connect", nodeHandler.ConnectHandler)
+	nr.network.AddHandler(sebaknetwork.UrlPathPrefixNode+"/message", nodeHandler.MessageHandler)
+	nr.network.AddHandler(sebaknetwork.UrlPathPrefixNode+"/ballot", nodeHandler.BallotHandler)
 
 	apiHandler := NetworkHandlerAPI{
 		localNode: nr.localNode,
@@ -84,10 +84,26 @@ func (nr *NodeRunner) Ready() {
 		storage:   nr.storage,
 	}
 
-	nr.network.AddHandler(sebaknetwork.UrlPathPrefixAPI+"/account/{address}", apiHandler.GetAccountHandler()).Methods("GET")
-	nr.network.AddHandler(sebaknetwork.UrlPathPrefixAPI+"/account/{address}/transactions", apiHandler.GetAccountTransactionsHandler()).Methods("GET")
-	nr.network.AddHandler(sebaknetwork.UrlPathPrefixAPI+"/account/{address}/operations", apiHandler.GetAccountOperationsHandler()).Methods("GET")
-	nr.network.AddHandler(sebaknetwork.UrlPathPrefixAPI+"/transactions/{txid}", apiHandler.GetTransactionByHashHandler()).Methods("GET")
+	nr.network.AddHandler(
+		sebaknetwork.UrlPathPrefixAPI+GetAccountHandlerPattern,
+		apiHandler.GetAccountHandler,
+	).Methods("GET")
+	nr.network.AddHandler(
+		sebaknetwork.UrlPathPrefixAPI+GetAccountTransactionsHandlerPattern,
+		apiHandler.GetAccountTransactionsHandler,
+	).Methods("GET")
+	nr.network.AddHandler(
+		sebaknetwork.UrlPathPrefixAPI+GetAccountOperationsHandlerPattern,
+		apiHandler.GetAccountOperationsHandler,
+	).Methods("GET")
+	nr.network.AddHandler(
+		sebaknetwork.UrlPathPrefixAPI+GetTransactionsHandlerPattern,
+		apiHandler.GetTransactionsHandler,
+	).Methods("GET")
+	nr.network.AddHandler(
+		sebaknetwork.UrlPathPrefixAPI+GetTransactionByHashHandlerPattern,
+		apiHandler.GetTransactionByHashHandler,
+	).Methods("GET")
 
 	nr.network.Ready()
 }
@@ -143,9 +159,8 @@ func (nr *NodeRunner) Log() logging.Logger {
 
 func (nr *NodeRunner) ConnectValidators() {
 	ticker := time.NewTicker(time.Millisecond * 5)
-	for t := range ticker.C {
+	for _ = range ticker.C {
 		if !nr.network.IsReady() {
-			nr.log.Debug("current network is not ready: %v", t)
 			continue
 		}
 

@@ -29,7 +29,7 @@ func TestGetAccountHandler(t *testing.T) {
 	apiHandler := NetworkHandlerAPI{storage: storage}
 
 	router := mux.NewRouter()
-	router.HandleFunc(GetAccountHandlerPattern, apiHandler.GetAccountHandler()).Methods("GET")
+	router.HandleFunc(GetAccountHandlerPattern, apiHandler.GetAccountHandler).Methods("GET")
 
 	ts := httptest.NewServer(router)
 	defer ts.Close()
@@ -132,7 +132,7 @@ func TestGetAccountTransactionsHandler(t *testing.T) {
 	apiHandler := NetworkHandlerAPI{storage: storage}
 
 	router := mux.NewRouter()
-	router.HandleFunc(GetAccountTransactionsHandlerPattern, apiHandler.GetAccountTransactionsHandler()).Methods("GET")
+	router.HandleFunc(GetAccountTransactionsHandlerPattern, apiHandler.GetAccountTransactionsHandler).Methods("GET")
 
 	ts := httptest.NewServer(router)
 	defer ts.Close()
@@ -229,7 +229,7 @@ func TestGetAccountOperationsHandler(t *testing.T) {
 	apiHandler := NetworkHandlerAPI{storage: storage}
 
 	router := mux.NewRouter()
-	router.HandleFunc(GetAccountOperationsHandlerPattern, apiHandler.GetAccountOperationsHandler()).Methods("GET")
+	router.HandleFunc(GetAccountOperationsHandlerPattern, apiHandler.GetAccountOperationsHandler).Methods("GET")
 
 	ts := httptest.NewServer(router)
 	defer ts.Close()
@@ -333,7 +333,7 @@ func TestGetTransactionByHashHandler(t *testing.T) {
 	apiHandler := NetworkHandlerAPI{storage: storage}
 
 	router := mux.NewRouter()
-	router.HandleFunc(GetTransactionByHashHandlerPattern, apiHandler.GetTransactionByHashHandler()).Methods("GET")
+	router.HandleFunc(GetTransactionByHashHandlerPattern, apiHandler.GetTransactionByHashHandler).Methods("GET")
 
 	ts := httptest.NewServer(router)
 	defer ts.Close()
@@ -393,7 +393,7 @@ func TestGetTransactionsHandler(t *testing.T) {
 	apiHandler := NetworkHandlerAPI{storage: storage}
 
 	router := mux.NewRouter()
-	router.HandleFunc(GetTransactionsHandlerPattern, apiHandler.GetTransactionsHandler()).Methods("GET")
+	router.HandleFunc(GetTransactionsHandlerPattern, apiHandler.GetTransactionsHandler).Methods("GET")
 
 	ts := httptest.NewServer(router)
 	defer ts.Close()
