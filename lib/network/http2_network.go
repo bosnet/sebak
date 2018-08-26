@@ -2,6 +2,7 @@ package sebaknetwork
 
 import (
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"strings"
@@ -26,6 +27,19 @@ var (
 	UrlPathPrefixAPI  = fmt.Sprintf("/%s", RouterNameAPI)
 )
 
+type HTTP2MessageBroker struct {
+	network *HTTP2Network
+}
+
+func (r HTTP2MessageBroker) Response(w io.Writer, o []byte) error {
+	_, err := w.Write(o)
+	return err
+}
+
+func (r HTTP2MessageBroker) Receive(msg Message) {
+	r.network.ReceiveChannel() <- msg
+}
+
 type HTTP2Network struct {
 	tlsCertFile string
 	tlsKeyFile  string
@@ -43,11 +57,6 @@ type HTTP2Network struct {
 	handlers map[string]func(http.ResponseWriter, *http.Request)
 
 	config HTTP2NetworkConfig
-}
-
-type MessageBroker interface {
-	ResponseMessage(http.ResponseWriter, string)
-	ReceiveMessage(Network, Message)
 }
 
 type HandlerFunc func(w http.ResponseWriter, r *http.Request)
@@ -93,19 +102,9 @@ func NewHTTP2Network(config HTTP2NetworkConfig) (h2n *HTTP2Network) {
 	h2n.setNotReadyHandler()
 	h2n.server.ConnState = h2n.ConnState
 
-	h2n.SetMessageBroker(Http2MessageBroker{})
+	h2n.SetMessageBroker(HTTP2MessageBroker{network: h2n})
 
 	return
-}
-
-type Http2MessageBroker struct{}
-
-func (r Http2MessageBroker) ResponseMessage(w http.ResponseWriter, o string) {
-	fmt.Fprintf(w, o)
-}
-
-func (r Http2MessageBroker) ReceiveMessage(t Network, msg Message) {
-	t.ReceiveChannel() <- msg
 }
 
 // GetClient creates new keep-alive HTTP2 client

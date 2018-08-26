@@ -2,6 +2,7 @@ package sebaknetwork
 
 import (
 	"encoding/json"
+	"io"
 	"math"
 	"net"
 	"net/http"
@@ -10,6 +11,12 @@ import (
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/node"
+)
+
+const (
+	ConnectMessage                 = "connect"
+	TransactionMessage MessageType = "transaction"
+	BallotMessage                  = "ballot"
 )
 
 type Network interface {
@@ -60,12 +67,6 @@ func (t MessageType) String() string {
 	return string(t)
 }
 
-const (
-	ConnectMessage                 = "connect"
-	TransactionMessage MessageType = "transaction"
-	BallotMessage                  = "ballot"
-)
-
 // TODO versioning
 
 type Message struct {
@@ -96,4 +97,9 @@ func NewMessage(mt MessageType, data []byte) Message {
 		Type: mt,
 		Data: data,
 	}
+}
+
+type MessageBroker interface {
+	Response(io.Writer, []byte) error
+	Receive(Message)
 }

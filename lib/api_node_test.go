@@ -2,7 +2,7 @@ package sebak
 
 import (
 	"fmt"
-	"net/http"
+	"io"
 	"strings"
 	"testing"
 	"unicode"
@@ -94,13 +94,16 @@ func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, mn *sebaknetwork.HTT
 	return
 }
 
-type TestMessageBroker struct{}
-
-func (r TestMessageBroker) ResponseMessage(w http.ResponseWriter, o string) {
-	fmt.Fprintf(w, o)
+type TestMessageBroker struct {
+	network *sebaknetwork.HTTP2Network
 }
 
-func (r TestMessageBroker) ReceiveMessage(sebaknetwork.Network, sebaknetwork.Message) {}
+func (r TestMessageBroker) Response(w io.Writer, o []byte) error {
+	_, err := w.Write(o)
+	return err
+}
+
+func (r TestMessageBroker) Receive(sebaknetwork.Message) {}
 
 func removeWhiteSpaces(str string) string {
 	return strings.Map(func(r rune) rune {
@@ -113,7 +116,7 @@ func removeWhiteSpaces(str string) string {
 
 func TestHTTP2NetworkGetNodeInfo(t *testing.T) {
 	_, s0, nodeRunner := createNewHTTP2Network(t)
-	s0.SetMessageBroker(TestMessageBroker{})
+	s0.SetMessageBroker(TestMessageBroker{network: s0})
 	nodeRunner.Ready()
 
 	go nodeRunner.Start()
@@ -141,18 +144,20 @@ func TestHTTP2NetworkGetNodeInfo(t *testing.T) {
 }
 
 type StringResponseMessageBroker struct {
-	msg string
+	network *sebaknetwork.HTTP2Network
+	msg     string
 }
 
-func (r StringResponseMessageBroker) ResponseMessage(w http.ResponseWriter, _ string) {
-	fmt.Fprintf(w, r.msg)
+func (r StringResponseMessageBroker) Response(w io.Writer, _ []byte) error {
+	_, err := w.Write([]byte(r.msg))
+	return err
 }
 
-func (r StringResponseMessageBroker) ReceiveMessage(sebaknetwork.Network, sebaknetwork.Message) {}
+func (r StringResponseMessageBroker) Receive(sebaknetwork.Message) {}
 
 func TestHTTP2NetworkMessageBrokerResponseMessage(t *testing.T) {
 	_, s0, nodeRunner := createNewHTTP2Network(t)
-	s0.SetMessageBroker(StringResponseMessageBroker{"ResponseMessage"})
+	s0.SetMessageBroker(StringResponseMessageBroker{network: s0, msg: "ResponseMessage"})
 	nodeRunner.Ready()
 
 	go nodeRunner.Start()
@@ -168,7 +173,7 @@ func TestHTTP2NetworkMessageBrokerResponseMessage(t *testing.T) {
 
 func TestHTTP2NetworkConnect(t *testing.T) {
 	_, s0, nodeRunner := createNewHTTP2Network(t)
-	s0.SetMessageBroker(TestMessageBroker{})
+	s0.SetMessageBroker(TestMessageBroker{network: s0})
 	nodeRunner.Ready()
 
 	go nodeRunner.Start()
@@ -188,7 +193,7 @@ func TestHTTP2NetworkConnect(t *testing.T) {
 
 func TestHTTP2NetworkSendMessage(t *testing.T) {
 	_, s0, nodeRunner := createNewHTTP2Network(t)
-	s0.SetMessageBroker(TestMessageBroker{})
+	s0.SetMessageBroker(TestMessageBroker{network: s0})
 	nodeRunner.Ready()
 
 	go nodeRunner.Start()
@@ -208,7 +213,7 @@ func TestHTTP2NetworkSendMessage(t *testing.T) {
 
 func TestHTTP2NetworkSendBallot(t *testing.T) {
 	_, s0, nodeRunner := createNewHTTP2Network(t)
-	s0.SetMessageBroker(TestMessageBroker{})
+	s0.SetMessageBroker(TestMessageBroker{network: s0})
 	nodeRunner.Ready()
 
 	go nodeRunner.Start()

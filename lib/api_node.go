@@ -9,7 +9,7 @@ import (
 
 func (api NetworkHandlerNode) NodeInfoHandler(w http.ResponseWriter, r *http.Request) {
 	o, _ := api.localNode.Serialize()
-	api.network.MessageBroker().ResponseMessage(w, string(o))
+	api.network.MessageBroker().Response(w, o)
 }
 
 func (api NetworkHandlerNode) ConnectHandler(w http.ResponseWriter, r *http.Request) {
@@ -25,7 +25,7 @@ func (api NetworkHandlerNode) ConnectHandler(w http.ResponseWriter, r *http.Requ
 		http.Error(w, "Error reading request body", http.StatusInternalServerError)
 	}
 
-	api.network.MessageBroker().ReceiveMessage(api.network, sebaknetwork.Message{Type: sebaknetwork.ConnectMessage, Data: body})
+	api.network.MessageBroker().Receive(sebaknetwork.Message{Type: sebaknetwork.ConnectMessage, Data: body})
 	o, _ := api.localNode.Serialize()
-	api.network.MessageBroker().ResponseMessage(w, string(o))
+	api.network.MessageBroker().Response(w, o)
 }
