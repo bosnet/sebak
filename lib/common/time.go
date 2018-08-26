@@ -2,7 +2,7 @@ package sebakcommon
 
 import "time"
 
-var (
+const (
 	TIMEFORMAT_ISO8601 string = "2006-01-02T15:04:05.000000000Z07:00"
 )
 
