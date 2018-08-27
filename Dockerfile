@@ -11,7 +11,7 @@ ARG BUILD_MODE="install"
 ARG BUILD_ARGS=''
 ARG BUILD_PKG="./..."
 
-RUN apk add --no-cache git openssh
+RUN apk add --no-cache git openssh gcc musl-dev linux-headers
 RUN go get github.com/ahmetb/govvv
 
 ## Note that we do not get the dependencies anew
