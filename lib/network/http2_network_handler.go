@@ -99,27 +99,3 @@ func BallotHandler(ctx context.Context, t *HTTP2Network) HandlerFunc {
 		return
 	}
 }
-
-// func TransactionstHandler(ctx context.Context, t *HTTP2Network) HandlerFunc {
-// 	return func(w http.ResponseWriter, r *http.Request) {
-// 		if r.Method != "POST" {
-// 			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
-// 			return
-// 		}
-// 		if ct := r.Header.Get("Content-Type"); strings.ToLower(ct) != "application/json" {
-// 			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-// 			return
-// 		}
-
-// 		body, err := ioutil.ReadAll(r.Body)
-// 		if err != nil {
-// 			http.Error(w, "Error reading request body", http.StatusInternalServerError)
-// 			return
-// 		}
-
-// 		t.messageBroker.ReceiveMessage(t, Message{Type: TransactionsMessage, Data: body})
-// 		t.messageBroker.ResponseMessage(w, string(body))
-
-// 		return
-// 	}
-// }
