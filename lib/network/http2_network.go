@@ -8,11 +8,11 @@ import (
 	"strings"
 	"time"
 
-	"boscoin.io/sebak/lib/common"
 	"github.com/gorilla/handlers"
-
 	"github.com/gorilla/mux"
 	"golang.org/x/net/http2"
+
+	"boscoin.io/sebak/lib/common"
 )
 
 type Handlers map[string]func(http.ResponseWriter, *http.Request)
@@ -121,8 +121,7 @@ func (t *HTTP2Network) GetClient(endpoint *sebakcommon.Endpoint) NetworkClient {
 }
 
 func (t *HTTP2Network) Endpoint() *sebakcommon.Endpoint {
-	host, port, _ := net.SplitHostPort(t.server.Addr)
-	return &sebakcommon.Endpoint{Scheme: "https", Host: fmt.Sprintf("%s:%s", host, port)}
+	return t.config.Endpoint
 }
 
 func (t *HTTP2Network) AddWatcher(f func(Network, net.Conn, http.ConnState)) {
@@ -197,10 +196,16 @@ func (t *HTTP2Network) IsReady() bool {
 	return true
 }
 
+// Start will start `HTTP2Network`. If `tlsCertFile` or `tlsKeyFile` is missing,
+// it will start 'HTTP' mode, not 'HTTPS'.
 func (t *HTTP2Network) Start() (err error) {
 	defer func() {
 		close(t.receiveChannel)
 	}()
+
+	if strings.ToLower(t.config.Endpoint.Scheme) == "http" {
+		return t.server.ListenAndServe()
+	}
 
 	return t.server.ListenAndServeTLS(t.tlsCertFile, t.tlsKeyFile)
 }

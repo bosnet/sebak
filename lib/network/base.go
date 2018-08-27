@@ -40,7 +40,7 @@ func NewNetwork(endpoint *sebakcommon.Endpoint) (n Network, err error) {
 	switch endpoint.Scheme {
 	case "memory":
 		n = NewMemoryNetwork()
-	case "https":
+	case "https", "http":
 		var config HTTP2NetworkConfig
 		config, err = NewHTTP2NetworkConfigFromEndpoint(endpoint)
 		if err != nil {
