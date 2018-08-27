@@ -46,7 +46,7 @@ func GetTransactionsHandler(storage *sebakstorage.LevelDBBackend) http.HandlerFu
 			}
 			event := "saved"
 			event += " " + fmt.Sprintf("iterate-%s", iterateId)
-			streaming(observer.BlockTransactionObserver, w, event, callBackFunc, readyChan)
+			streaming(observer.BlockTransactionObserver, r, w, event, callBackFunc, readyChan)
 		default:
 
 			var s []byte
@@ -105,7 +105,7 @@ func GetTransactionByHashHandler(storage *sebakstorage.LevelDBBackend) http.Hand
 
 			event := fmt.Sprintf("iterate-%s", iterateId)
 			event += " " + fmt.Sprintf("hash-%s", key)
-			streaming(observer.BlockTransactionObserver, w, event, callBackFunc, readyChan)
+			streaming(observer.BlockTransactionObserver, r, w, event, callBackFunc, readyChan)
 		default:
 
 			var s []byte
