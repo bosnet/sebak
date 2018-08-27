@@ -27,7 +27,7 @@ func TestParseISO8601(t *testing.T) {
 func TestParseISO8601Timezone(t *testing.T) {
 	now := time.Now()
 
-	location, err := time.LoadLocation("Europe/Amsterdam") // Wouter Bothoff lives in Amsterdam.
+	location, err := time.LoadLocation("Europe/Amsterdam") // Wouter lives in Amsterdam.
 	require.Nil(t, err)
 
 	nowCEST := now.In(location)
