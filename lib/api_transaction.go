@@ -149,7 +149,7 @@ func GetMissingTransactionsByHashHandler(storage *sebakstorage.LevelDBBackend /*
 		var err error
 
 		if r.Method != "POST" {
-			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 			return
 		}
 		// if requestBody, err := ioutil.ReadAll(r.Body); err != nil {
