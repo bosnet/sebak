@@ -18,10 +18,10 @@ type ISAAC struct {
 
 func NewISAAC(networkID []byte, node *sebaknode.LocalNode, votingThresholdPolicy sebakcommon.VotingThresholdPolicy) (is *ISAAC, err error) {
 	is = &ISAAC{
-		networkID: networkID,
-		Node:      node,
+		networkID:             networkID,
+		Node:                  node,
 		VotingThresholdPolicy: votingThresholdPolicy,
-		Boxes: NewBallotBoxes(),
+		Boxes:                 NewBallotBoxes(),
 	}
 
 	return
