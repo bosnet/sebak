@@ -10,6 +10,7 @@ import (
 	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
 
+	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
@@ -17,6 +18,16 @@ import (
 )
 
 var networkID []byte = []byte("sebak-test-network")
+
+var (
+	kp           *keypair.Full
+	account      *block.BlockAccount
+	genesisBlock Block
+)
+
+func init() {
+	kp, _ = keypair.Random()
+}
 
 func createNetMemoryNetwork() (*sebaknetwork.MemoryNetwork, *sebaknode.LocalNode) {
 	mn := sebaknetwork.NewMemoryNetwork()
@@ -173,6 +184,36 @@ func GetTransaction(t *testing.T) (tx Transaction, txByte []byte) {
 
 	txByte, err = tx.Serialize()
 	require.Nil(t, err)
+
+	return
+}
+
+func makeTransactionCreateAccount(kpSource *keypair.Full, target string, amount sebakcommon.Amount) (tx Transaction) {
+	opb := NewOperationBodyCreateAccount(target, sebakcommon.Amount(amount))
+
+	op := Operation{
+		H: OperationHeader{
+			Type: OperationCreateAccount,
+		},
+		B: opb,
+	}
+
+	txBody := TransactionBody{
+		Source:     kpSource.Address(),
+		Fee:        BaseFee,
+		Checkpoint: uuid.New().String(),
+		Operations: []Operation{op},
+	}
+
+	tx = Transaction{
+		T: "transaction",
+		H: TransactionHeader{
+			Created: sebakcommon.NowISO8601(),
+			Hash:    txBody.MakeHashString(),
+		},
+		B: txBody,
+	}
+	tx.Sign(kpSource, networkID)
 
 	return
 }

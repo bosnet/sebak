@@ -14,16 +14,6 @@ import (
 	"github.com/stellar/go/keypair"
 )
 
-var (
-	kp           *keypair.Full
-	account      *block.BlockAccount
-	genesisBlock Block
-)
-
-func init() {
-	kp, _ = keypair.Random()
-}
-
 func createTestNodeRunner(n int) []*NodeRunner {
 	var ns []*sebaknetwork.MemoryNetwork
 	var nodes []*sebaknode.LocalNode
