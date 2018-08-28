@@ -8,23 +8,7 @@ import (
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/network"
-	"boscoin.io/sebak/lib/node"
-	"boscoin.io/sebak/lib/storage"
 )
-
-func MakeNodeRunner() (*NodeRunner, *sebaknode.LocalNode) {
-	kp, _ := keypair.Random()
-
-	nodeEndpoint := &sebakcommon.Endpoint{Scheme: "https", Host: "https://locahost:5000"}
-	localNode, _ := sebaknode.NewLocalNode(kp, nodeEndpoint, "")
-
-	vth, _ := NewDefaultVotingThresholdPolicy(66, 66)
-	is, _ := NewISAAC(networkID, localNode, vth)
-	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
-	network, _ := createNetMemoryNetwork()
-	nodeRunner, _ := NewNodeRunner(string(networkID), localNode, vth, network, is, st)
-	return nodeRunner, localNode
-}
 
 func TestMessageChecker(t *testing.T) {
 	_, validTx := TestMakeTransaction(networkID, 1)
@@ -45,39 +29,39 @@ func TestMessageChecker(t *testing.T) {
 		Message:        validMessage,
 	}
 
-	err = CheckNodeRunnerHandleMessageTransactionUnmarshal(checker)
-	assert.Nil(t, err)
-	assert.Equal(t, checker.Transaction, validTx)
+	err = TransactionUnmarshal(checker)
+	require.Nil(t, err)
+	require.Equal(t, checker.Transaction, validTx)
 
-	err = CheckNodeRunnerHandleMessageHasTransactionAlready(checker)
-	assert.Nil(t, err)
+	err = HasTransaction(checker)
+	require.Nil(t, err)
 
-	err = CheckNodeRunnerHandleMessageHistory(checker)
-	assert.Nil(t, err)
+	err = SaveTransactionHistory(checker)
+	require.Nil(t, err)
 	var found bool
 	found, err = ExistsBlockTransactionHistory(checker.NodeRunner.Storage(), checker.Transaction.GetHash())
-	assert.True(t, found)
+	require.True(t, found)
 
-	err = CheckNodeRunnerHandleMessagePushIntoTransactionPool(checker)
-	assert.Nil(t, err)
-	assert.True(t, checker.NodeRunner.Consensus().TransactionPool.Has(validTx.GetHash()))
+	err = PushIntoTransactionPool(checker)
+	require.Nil(t, err)
+	require.True(t, checker.NodeRunner.Consensus().TransactionPool.Has(validTx.GetHash()))
 
-	// CheckNodeRunnerHandleMessageTransactionBroadcast(checker) is not suitable in unittest
+	// TransactionBroadcast(checker) is not suitable in unittest
 
-	err = CheckNodeRunnerHandleMessageHasTransactionAlready(checker)
-	assert.Equal(t, err, sebakerror.ErrorNewButKnownMessage)
+	err = HasTransaction(checker)
+	require.Equal(t, err, sebakerror.ErrorNewButKnownMessage)
 
-	err = CheckNodeRunnerHandleMessageHistory(checker)
-	assert.Equal(t, err, sebakerror.ErrorNewButKnownMessage)
+	err = SaveTransactionHistory(checker)
+	require.Equal(t, err, sebakerror.ErrorNewButKnownMessage)
 
-	err = CheckNodeRunnerHandleMessagePushIntoTransactionPool(checker)
-	assert.Nil(t, err)
+	err = PushIntoTransactionPool(checker)
+	require.Nil(t, err)
 
 	var CheckerFuncs = []sebakcommon.CheckerFunc{
-		CheckNodeRunnerHandleMessageTransactionUnmarshal,
-		CheckNodeRunnerHandleMessageHasTransactionAlready,
-		CheckNodeRunnerHandleMessageHistory,
-		CheckNodeRunnerHandleMessagePushIntoTransactionPool,
+		TransactionUnmarshal,
+		HasTransaction,
+		SaveTransactionHistory,
+		PushIntoTransactionPool,
 	}
 
 	checker.DefaultChecker = sebakcommon.DefaultChecker{CheckerFuncs}
