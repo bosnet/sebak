@@ -7,8 +7,8 @@ import (
 
 // Reader is the interface that only account and storage state
 type Reader interface {
-	GetAccount(address string) *block.BlockAccount
-	GetStorageItem(address string, key string) *storage.Item
+	GetAccount(address string) (*block.BlockAccount, error)
+	GetStorageItem(address string, key string) (*storage.Item, error)
 }
 
 // Writer is the interface that account and storage state
