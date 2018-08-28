@@ -89,7 +89,35 @@ func TestGetAccountHandler(t *testing.T) {
 	json.Unmarshal(readByte, cba)
 	require.Equal(t, ba.Address, cba.Address, "not equal")
 	require.Equal(t, ba.GetBalance(), cba.GetBalance(), "not equal")
+}
 
+// Test that getting an inexisting account returns an error
+func TestGetNonExistentAccountHandler(t *testing.T) {
+	// Setting Server
+	storage, err := sebakstorage.NewTestMemoryLevelDBBackend()
+	require.Nil(t, err)
+	defer storage.Close()
+
+	router := mux.NewRouter()
+	router.HandleFunc(GetAccountHandlerPattern, GetAccountHandler(storage)).Methods("GET")
+
+	ts := httptest.NewServer(router)
+	defer ts.Close()
+
+	// Do the request to an inexisting address
+	genesisAddress := "GDMZMF2EAK4E6NSZNSCJQQHQGMAOZ6UI3XQVVLMEJRFDPYHLY7PPHKLP"
+	url := ts.URL + fmt.Sprintf("/account/%s", genesisAddress)
+	req, err := http.NewRequest("GET", url, nil)
+	require.Nil(t, err)
+	req.Header.Set("Accept", "text/event-stream")
+	resp, err := ts.Client().Do(req)
+	require.Nil(t, err)
+	defer resp.Body.Close()
+	require.Equal(t, resp.StatusCode, 404)
+	reader := bufio.NewReader(resp.Body)
+	data, err := ioutil.ReadAll(reader)
+	require.Nil(t, err)
+	require.Equal(t, "Not Found\n", string(data))
 }
 
 func TestGetAccountTransactionsHandler(t *testing.T) {
