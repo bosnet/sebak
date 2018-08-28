@@ -25,7 +25,7 @@ func TestExecutor(t *testing.T) {
 
 	ex.RegisterFunc("Hello", func(ex *NativeExecutor, execCode *payload.ExecCode) (ret *value.Value, err error) {
 		greeting := execCode.Args[0]
-		retHello, err := ex.API().Helloworld(greeting)
+		retHello, err := ex.API().Helloworld(greeting.(string))
 
 		ret, _ = value.ToValue(retHello)
 		return
@@ -34,7 +34,7 @@ func TestExecutor(t *testing.T) {
 	excode := &payload.ExecCode{
 		ContractAddress: testAddress,
 		Method:          "Hello",
-		Args:            []string{"boscoin"},
+		Args:            []interface{}{"boscoin"},
 	}
 
 	ret, err := ex.Execute(excode)

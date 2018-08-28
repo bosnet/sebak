@@ -65,13 +65,15 @@ func NewOttoExecutor(ctx *context.Context, api *api.API, deployCode *payload.Dep
 func (ex *OttoExecutor) Execute(c *payload.ExecCode) (retCode *value.Value, err error) {
 
 	function := ex.functions[c.Method]
-	ivalue, _ := function.Call(function, c.Args)
+	ivalue, _ := function.Call(function, c.Args...)
 	retCode, err = value.ToValue(ivalue)
 	return
 }
 
 func (ex *OttoExecutor) RegisterFuncs() {
 	ex.VM.Set("HelloWorld", HelloWorldFunc(ex.api))
+	ex.VM.Set("GetStatus", GetStatusFunc(ex.api))
+	ex.VM.Set("SetStatus", SetStatusFunc(ex.api))
 }
 
 func contains(slice []string, item string) bool {

@@ -18,7 +18,7 @@ func RegisterHelloWorld(ex *native.NativeExecutor) {
 
 func hello(ex *native.NativeExecutor, execCode *payload.ExecCode) (ret *value.Value, err error) {
 	greeting := execCode.Args[0]
-	retHello, err := ex.API().Helloworld(greeting)
+	retHello, err := ex.API().Helloworld(greeting.(string))
 
 	ret, _ = value.ToValue(retHello)
 	return

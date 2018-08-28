@@ -49,6 +49,10 @@ func (v *Value) String() string {
 	return fmt.Sprint(v.value)
 }
 
+func (v *Value) Value() interface{} {
+	return v.value
+}
+
 func ToValue(iv interface{}) (v *Value, err error) {
 	v = &Value{}
 

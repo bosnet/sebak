@@ -5,7 +5,7 @@ import "boscoin.io/sebak/lib/common"
 type ExecCode struct {
 	ContractAddress string
 	Method          string
-	Args            []string
+	Args            []interface{}
 }
 
 func (ec *ExecCode) Serialize() (encoded []byte, err error) {

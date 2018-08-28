@@ -21,6 +21,8 @@ function Hello(helloarg){
 `
 	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
 	Root := sebakcommon.Hash{}
+
+	// Deploy hello world js
 	{
 		sdb := statedb.New(Root, trie.NewEthDatabase(st))
 
@@ -34,6 +36,8 @@ function Hello(helloarg){
 		Root, _ = sdb.CommitTrie()
 		sdb.CommitDB(Root)
 	}
+
+	// Execute hello world js
 	{
 		sdb := statedb.New(Root, trie.NewEthDatabase(st))
 		ctx := context.NewContext(testAddress, sdb)
@@ -41,7 +45,7 @@ function Hello(helloarg){
 		exCode := &payload.ExecCode{
 			ContractAddress: testAddress,
 			Method:          "Hello",
-			Args:            []string{"boscoin"},
+			Args:            []interface{}{"boscoin"},
 		}
 
 		ex, err := NewExecutor(ctx, exCode)
@@ -66,6 +70,7 @@ function Hello(helloarg){
 		}
 	}
 
+	// Execute hello world Native function
 	{
 
 		sdb := statedb.New(sebakcommon.Hash{}, trie.NewEthDatabase(st))
@@ -73,7 +78,7 @@ function Hello(helloarg){
 		exCode := &payload.ExecCode{
 			ContractAddress: "HELLOWORLDADDRESS",
 			Method:          "Hello",
-			Args:            []string{"boscoin"},
+			Args:            []interface{}{"boscoin"},
 		}
 
 		ex, err := NewExecutor(ctx, exCode)
