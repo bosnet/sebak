@@ -45,6 +45,7 @@ func TestGetAccountHandler(t *testing.T) {
 	resp, err := ts.Client().Do(req)
 	require.Nil(t, err)
 	defer resp.Body.Close()
+	require.Equal(t, resp.StatusCode, 200)
 	reader := bufio.NewReader(resp.Body)
 
 	recv := make(chan struct{})
@@ -127,6 +128,7 @@ func TestGetAccountTransactionsHandler(t *testing.T) {
 	resp, err := ts.Client().Do(req)
 	require.Nil(t, err)
 	defer resp.Body.Close()
+	require.Equal(t, resp.StatusCode, 200)
 	reader := bufio.NewReader(resp.Body)
 
 	// Makes Some Events
@@ -171,6 +173,7 @@ func TestGetAccountTransactionsHandler(t *testing.T) {
 	resp, err = ts.Client().Do(req)
 	require.Nil(t, err)
 	defer resp.Body.Close()
+	require.Equal(t, resp.StatusCode, 200)
 	reader = bufio.NewReader(resp.Body)
 	readByte, err := ioutil.ReadAll(reader)
 	require.Nil(t, err)
@@ -184,7 +187,6 @@ func TestGetAccountTransactionsHandler(t *testing.T) {
 		require.Equal(t, bt.Hash, receivedBts[i].Hash, "hash is not same")
 		i++
 	}
-
 }
 
 func TestGetAccountOperationsHandler(t *testing.T) {
@@ -224,6 +226,7 @@ func TestGetAccountOperationsHandler(t *testing.T) {
 	resp, err := ts.Client().Do(req)
 	require.Nil(t, err)
 	defer resp.Body.Close()
+	require.Equal(t, resp.StatusCode, 200)
 	reader := bufio.NewReader(resp.Body)
 
 	// Makes Some Events
@@ -272,6 +275,7 @@ func TestGetAccountOperationsHandler(t *testing.T) {
 	resp2, err := ts.Client().Do(req)
 	require.Nil(t, err)
 	defer resp2.Body.Close()
+	require.Equal(t, resp2.StatusCode, 200)
 	reader = bufio.NewReader(resp2.Body)
 	readByte, err := ioutil.ReadAll(reader)
 	require.Nil(t, err)
@@ -285,7 +289,6 @@ func TestGetAccountOperationsHandler(t *testing.T) {
 		require.Equal(t, bo.Hash, receivedBos[i].Hash, "hash is not same")
 		i++
 	}
-
 }
 
 func TestGetTransactionByHashHandler(t *testing.T) {
@@ -320,6 +323,7 @@ func TestGetTransactionByHashHandler(t *testing.T) {
 	resp, err := ts.Client().Do(req)
 	require.Nil(t, err)
 	defer resp.Body.Close()
+	require.Equal(t, resp.StatusCode, 200)
 	reader := bufio.NewReader(resp.Body)
 	line, err := reader.ReadBytes('\n')
 	require.Nil(t, err)
@@ -335,6 +339,7 @@ func TestGetTransactionByHashHandler(t *testing.T) {
 	resp2, err := ts.Client().Do(req)
 	require.Nil(t, err)
 	defer resp2.Body.Close()
+	require.Equal(t, resp2.StatusCode, 200)
 	reader = bufio.NewReader(resp2.Body)
 	readByte, err := ioutil.ReadAll(reader)
 	require.Nil(t, err)
@@ -342,7 +347,6 @@ func TestGetTransactionByHashHandler(t *testing.T) {
 	json.Unmarshal(readByte, &receivedBts)
 
 	require.Equal(t, bt.Hash, receivedBts.Hash, "hash is not same")
-
 }
 
 func TestGetTransactionsHandler(t *testing.T) {
@@ -376,6 +380,7 @@ func TestGetTransactionsHandler(t *testing.T) {
 	resp, err := ts.Client().Do(req)
 	require.Nil(t, err)
 	defer resp.Body.Close()
+	require.Equal(t, resp.StatusCode, 200)
 	reader := bufio.NewReader(resp.Body)
 
 	// Producer
@@ -419,6 +424,7 @@ func TestGetTransactionsHandler(t *testing.T) {
 	resp2, err := ts.Client().Do(req)
 	require.Nil(t, err)
 	defer resp2.Body.Close()
+	require.Equal(t, resp2.StatusCode, 200)
 	reader = bufio.NewReader(resp2.Body)
 	readByte, err := ioutil.ReadAll(reader)
 	require.Nil(t, err)
