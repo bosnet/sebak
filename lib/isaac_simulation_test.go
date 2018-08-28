@@ -1,3 +1,8 @@
+/*
+	In this file, there are unittests assume that one node receive a message from validators,
+	and how the state of the node changes.
+*/
+
 package sebak
 
 import (
@@ -9,6 +14,14 @@ import (
 	"boscoin.io/sebak/lib/network"
 )
 
+/*
+TestIsaacSimulationProposer indicates the following:
+	1. Proceed for one round.
+	2. The node is the proposer of this round.
+	3. There are 5 nodes and threshold is 4.
+	3. The node receives the SIGN, ACCEPT messages in order from the other four validator nodes.
+	4. The node receives a ballot that exceeds the threshold, and the block is confirmed.
+*/
 func TestIsaacSimulationProposer(t *testing.T) {
 	nodeRunners := createTestNodeRunner(5)
 
