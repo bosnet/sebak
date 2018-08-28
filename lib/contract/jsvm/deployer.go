@@ -7,10 +7,10 @@ import (
 )
 
 type JsDeployer struct {
-	Context context.Context
+	Context *context.Context
 }
 
-func NewDeployer(context context.Context) *JsDeployer {
+func NewDeployer(context *context.Context) *JsDeployer {
 
 	de := &JsDeployer{
 		Context: context,

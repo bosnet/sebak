@@ -13,14 +13,14 @@ func TestStateDB(t *testing.T) {
 	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
 
 	var keyHash = sebakcommon.BytesToHash(sebakcommon.MakeHash([]byte("key")))
-	var valueHash = sebakcommon.BytesToHash(sebakcommon.MakeHash([]byte("value")))
+	var value = []byte("value")
 
 	var err error
 
 	{
 		stateDB := New(Root, trie.NewEthDatabase(st))
 		stateDB.GetOrNewStateObject("dummy")
-		stateDB.SetState("dummy", keyHash, valueHash)
+		stateDB.SetState("dummy", keyHash, value)
 		Root, err = stateDB.CommitTrie()
 		if err != nil {
 			t.Error(err)
@@ -31,6 +31,36 @@ func TestStateDB(t *testing.T) {
 	{
 		stateDB := New(Root, trie.NewEthDatabase(st))
 		gotValueHash := stateDB.GetState("dummy", keyHash)
-		assert.Equal(t, gotValueHash, valueHash)
+		assert.Equal(t, gotValueHash, value)
+	}
+	{
+		stateDB := New(Root, trie.NewEthDatabase(st))
+		stateDB.SetCode("dummy", []byte("codecode"))
+		Root, err = stateDB.CommitTrie()
+		if err != nil {
+			t.Error(err)
+		}
+		stateDB.CommitDB(Root)
+	}
+	{
+		stateDB := New(Root, trie.NewEthDatabase(st))
+		encoded := stateDB.GetCode("dummy")
+		t.Log(encoded)
+	}
+
+	{
+		stateDB := New(Root, trie.NewEthDatabase(st))
+		stateDB.SetCode("dummy", []byte("codecode2222"))
+		Root, err = stateDB.CommitTrie()
+		if err != nil {
+			t.Error(err)
+		}
+		stateDB.CommitDB(Root)
+	}
+	{
+		edb := trie.NewEthDatabase(st)
+		var a []byte
+		a, err = edb.Get(sebakcommon.MakeHash([]byte("codecode2222")))
+		t.Log(a)
 	}
 }

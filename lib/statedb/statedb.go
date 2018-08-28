@@ -76,12 +76,12 @@ func (stateDB *StateDB) GetCodeHash(addr string) sebakcommon.Hash {
 	return sebakcommon.BytesToHash(stateObject.CodeHash())
 }
 
-func (stateDB *StateDB) GetState(a string, b sebakcommon.Hash) sebakcommon.Hash {
+func (stateDB *StateDB) GetState(a string, b sebakcommon.Hash) []byte {
 	stateObject := stateDB.getStateObject(a)
 	if stateObject != nil {
 		return stateObject.GetState(b)
 	}
-	return sebakcommon.Hash{}
+	return []byte{}
 }
 
 func (stateDB *StateDB) CreateAccount(addr string) {
@@ -130,7 +130,7 @@ func (stateDB *StateDB) SetCode(addr string, code []byte) {
 	}
 }
 
-func (stateDB *StateDB) SetState(addr string, key, value sebakcommon.Hash) {
+func (stateDB *StateDB) SetState(addr string, key sebakcommon.Hash, value []byte) {
 	stateObject := stateDB.GetOrNewStateObject(addr)
 	if stateObject != nil {
 		stateObject.SetState(key, value)

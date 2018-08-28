@@ -6,11 +6,7 @@ import (
 
 	"github.com/stellar/go/keypair"
 
-	"boscoin.io/sebak/lib/block"
 	sebakcommon "boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/contract"
-	"boscoin.io/sebak/lib/contract/payload"
-	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/storage"
 )
 
@@ -65,24 +61,27 @@ func (o OperationBodyContractExecute) GetAmount() sebakcommon.Amount {
 }
 
 func FinishOperationBodyContractExecute(st *sebakstorage.LevelDBBackend, tx Transaction, op Operation) (err error) {
-	var baSource, baTarget *block.BlockAccount
-	if baSource, err = block.GetBlockAccount(st, tx.B.Source); err != nil {
-		err = sebakerror.ErrorBlockAccountDoesNotExists
-		return
-	}
-	if baTarget, err = block.GetBlockAccount(st, op.B.TargetAddress()); err != nil {
-		err = sebakerror.ErrorBlockAccountDoesNotExists
-		return
-	}
+	//TODO: use statedb
+	/*
+		var baSource, baTarget *block.BlockAccount
+		if baSource, err = block.GetBlockAccount(st, tx.B.Source); err != nil {
+			err = sebakerror.ErrorBlockAccountDoesNotExists
+			return
+		}
+		if baTarget, err = block.GetBlockAccount(st, op.B.TargetAddress()); err != nil {
+			err = sebakerror.ErrorBlockAccountDoesNotExists
+			return
+		}
 
-	ctx := contract.NewContext(baSource, st) // st as statedb
+		ctx := contract.NewContext(baSource, st) // st as statedb
 
-	exCode := &payload.ExecCode{
-		ContractAddress: baTarget.Address,
-		Method:          op.B.(OperationBodyContractExecute).Method,
-		Args:            op.B.(OperationBodyContractExecute).Args,
-	}
+		exCode := &payload.ExecCode{
+			ContractAddress: baTarget.Address,
+			Method:          op.B.(OperationBodyContractExecute).Method,
+			Args:            op.B.(OperationBodyContractExecute).Args,
+		}
 
-	_, err = contract.Execute(ctx, exCode) //TODO: Where to pass the return value?
+		_, err = contract.Execute(ctx, exCode) //TODO: Where to pass the return value?
+	*/
 	return
 }

@@ -32,13 +32,13 @@ var intrinsicFunctions = []string{
 }
 
 type OttoExecutor struct {
-	Context   context.Context
-	api       api.API
+	Context   *context.Context
+	api       *api.API
 	functions map[string]otto.Value
 	VM        *otto.Otto
 }
 
-func NewOttoExecutor(ctx context.Context, api api.API, deployCode *payload.DeployCode) *OttoExecutor {
+func NewOttoExecutor(ctx *context.Context, api *api.API, deployCode *payload.DeployCode) *OttoExecutor {
 
 	vm := otto.New()
 	vm.Run(deployCode.Code)
@@ -65,13 +65,15 @@ func NewOttoExecutor(ctx context.Context, api api.API, deployCode *payload.Deplo
 func (ex *OttoExecutor) Execute(c *payload.ExecCode) (retCode *value.Value, err error) {
 
 	function := ex.functions[c.Method]
-	ivalue, _ := function.Call(function, c.Args)
+	ivalue, _ := function.Call(function, c.Args...)
 	retCode, err = value.ToValue(ivalue)
 	return
 }
 
 func (ex *OttoExecutor) RegisterFuncs() {
 	ex.VM.Set("HelloWorld", HelloWorldFunc(ex.api))
+	ex.VM.Set("GetStatus", GetStatusFunc(ex.api))
+	ex.VM.Set("SetStatus", SetStatusFunc(ex.api))
 }
 
 func contains(slice []string, item string) bool {

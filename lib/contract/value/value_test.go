@@ -72,10 +72,7 @@ func TestValue(t *testing.T) {
 		if err != nil {
 			panic(err)
 		}
-		encoded, err := v1.Serialize()
-		if err != nil {
-			panic(err)
-		}
+		encoded := v1.Serialize()
 		v2, err := ToValue(encoded)
 		if err != nil {
 			panic(err)
@@ -94,10 +91,7 @@ func TestValue(t *testing.T) {
 		if err != nil {
 			panic(err)
 		}
-		encoded, err := v1.Serialize()
-		if err != nil {
-			panic(err)
-		}
+		encoded := v1.Serialize()
 		v2, err := ToValue(encoded)
 		if err != nil {
 			panic(err)
