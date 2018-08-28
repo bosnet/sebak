@@ -59,33 +59,3 @@ func makeTransactionPayment(kpSource *keypair.Full, target string, amount sebakc
 
 	return
 }
-
-func makeTransactionCreateAccount(kpSource *keypair.Full, target string, amount sebakcommon.Amount) (tx Transaction) {
-	opb := NewOperationBodyCreateAccount(target, sebakcommon.Amount(amount))
-
-	op := Operation{
-		H: OperationHeader{
-			Type: OperationCreateAccount,
-		},
-		B: opb,
-	}
-
-	txBody := TransactionBody{
-		Source:     kpSource.Address(),
-		Fee:        BaseFee,
-		Checkpoint: uuid.New().String(),
-		Operations: []Operation{op},
-	}
-
-	tx = Transaction{
-		T: "transaction",
-		H: TransactionHeader{
-			Created: sebakcommon.NowISO8601(),
-			Hash:    txBody.MakeHashString(),
-		},
-		B: txBody,
-	}
-	tx.Sign(kpSource, networkID)
-
-	return
-}

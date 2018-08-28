@@ -46,7 +46,7 @@ func TestMessageChecker(t *testing.T) {
 	require.Nil(t, err)
 	require.True(t, checker.NodeRunner.Consensus().TransactionPool.Has(validTx.GetHash()))
 
-	// BroadcastTransaction(checker) is not suitable in unittest
+	// TransactionBroadcast(checker) is not suitable in unittest
 
 	err = HasTransaction(checker)
 	require.Equal(t, err, sebakerror.ErrorNewButKnownMessage)

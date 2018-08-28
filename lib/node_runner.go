@@ -10,7 +10,6 @@ package sebak
 import (
 	"context"
 	"errors"
-	"fmt"
 	"sort"
 	"time"
 
@@ -67,14 +66,19 @@ var DefaultHandleACCEPTBallotCheckerFuncs = []sebakcommon.CheckerFunc{
 	ACCEPTBallotStore,
 }
 
+type ProposerCalculator interface {
+	Calculate(nr *NodeRunner, blockHeight uint64, roundNumber uint64) string
+}
+
 type NodeRunner struct {
-	networkID         []byte
-	localNode         *sebaknode.LocalNode
-	policy            sebakcommon.VotingThresholdPolicy
-	network           sebaknetwork.Network
-	consensus         *ISAAC
-	connectionManager *sebaknetwork.ConnectionManager
-	storage           *sebakstorage.LevelDBBackend
+	networkID          []byte
+	localNode          *sebaknode.LocalNode
+	policy             sebakcommon.VotingThresholdPolicy
+	network            sebaknetwork.Network
+	consensus          *ISAAC
+	connectionManager  *sebaknetwork.ConnectionManager
+	storage            *sebakstorage.LevelDBBackend
+	proposerCalculator ProposerCalculator
 
 	handleMessageFromClientCheckerFuncs []sebakcommon.CheckerFunc
 	handleBaseBallotCheckerFuncs        []sebakcommon.CheckerFunc
@@ -111,6 +115,8 @@ func NewNodeRunner(
 	nr.ctx = context.WithValue(nr.ctx, "networkID", nr.networkID)
 	nr.ctx = context.WithValue(nr.ctx, "storage", nr.storage)
 
+	nr.SetProposerCalculator(SimpleProposerCalculator{})
+
 	nr.connectionManager = sebaknetwork.NewConnectionManager(
 		nr.localNode,
 		nr.network,
@@ -126,6 +132,20 @@ func NewNodeRunner(
 	nr.SetHandleACCEPTBallotCheckerFuncs(DefaultHandleACCEPTBallotCheckerFuncs...)
 
 	return
+}
+
+type SimpleProposerCalculator struct {
+}
+
+func (c SimpleProposerCalculator) Calculate(nr *NodeRunner, blockHeight uint64, roundNumber uint64) string {
+	candidates := sort.StringSlice(nr.connectionManager.AllValidators())
+	candidates.Sort()
+
+	return candidates[(blockHeight+roundNumber)%uint64(len(candidates))]
+}
+
+func (nr *NodeRunner) SetProposerCalculator(c ProposerCalculator) {
+	nr.proposerCalculator = c
 }
 
 func (nr *NodeRunner) Ready() {
@@ -373,14 +393,7 @@ func (nr *NodeRunner) startRound() {
 }
 
 func (nr *NodeRunner) CalculateProposer(blockHeight uint64, roundNumber uint64) string {
-	candidates := sort.StringSlice(nr.connectionManager.AllValidators())
-	candidates.Sort()
-
-	var hashedNumber int
-	for _, i := range sebakcommon.MakeHash([]byte(fmt.Sprintf("%d+%d", blockHeight, roundNumber))) {
-		hashedNumber += int(i)
-	}
-	return candidates[hashedNumber%len(candidates)]
+	return nr.proposerCalculator.Calculate(nr, blockHeight, roundNumber)
 }
 
 func (nr *NodeRunner) StartNewRound(roundNumber uint64) {

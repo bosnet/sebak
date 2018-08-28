@@ -5,7 +5,7 @@
 	The process is as follows :
 	1. TransactionUnmarshal: Unmarshal the received message in transaction
 	2. HasTransaction: The transaction that already exists does not proceed anymore
-	3. History: Save History
+	3. SaveTransactionHistory: Save History
 	4. PushIntoTransactionPool: Insert into transaction pool
 	5. BroadcastTransaction: Passing a transaction to all known Validators.
 */
