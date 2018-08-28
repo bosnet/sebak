@@ -8,7 +8,7 @@ import (
 
 var HelloWorldAddress = "HELLOWORLDADDRESS"
 
-func Init() {
+func init() {
 	native.AddContract(HelloWorldAddress, RegisterHelloWorld)
 }
 
