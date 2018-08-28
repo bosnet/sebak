@@ -22,10 +22,7 @@ func TestErrorBallotHasOverMaxTransactionsInBallot(t *testing.T) {
 
 	ballot := NewBallot(node, round, []string{tx.GetHash()})
 	ballot.Sign(node.Keypair(), networkID)
-	if err := ballot.IsWellFormed(networkID); err != nil {
-		t.Error(err)
-		return
-	}
+	require.Nil(t, ballot.IsWellFormed(networkID))
 
 	var txs []string
 	for i := 0; i < MaxTransactionsInBallot+1; i++ {
