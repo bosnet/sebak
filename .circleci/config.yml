@@ -3,7 +3,7 @@ version: 2
 defaults: &defaults
   working_directory: /go/src/boscoin.io/sebak
   docker:
-    - image: circleci/golang:1.10
+    - image: circleci/golang:1.11
 
 workspace: &workspace
   attach_workspace:
@@ -51,9 +51,9 @@ jobs:
           name: run tests
           command: SEBAK_LOG_HANDLER=null GOCACHE=off go test -v -timeout 3m ./...
 
-  test_go1_9:
+  test_go1_11:
     docker:
-      - image: circleci/golang:1.9
+      - image: circleci/golang:1.11
     working_directory: /go/src/boscoin.io/sebak
     steps:
       - <<: *workspace
@@ -121,7 +121,7 @@ workflows:
       - test_go1_10:
           requires:
             - fmt
-      - test_go1_9:
+      - test_go1_11:
           requires:
             - fmt
       - generate_merged_tree:
