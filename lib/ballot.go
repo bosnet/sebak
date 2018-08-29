@@ -28,7 +28,13 @@ func NewBallot(localNode *sebaknode.LocalNode, round Round, transactions []strin
 			Transactions: transactions,
 		},
 		State: sebakcommon.BallotStateINIT,
+		Vote:  sebakcommon.VotingNOTYET,
 	}
+
+	if len(transactions) < 1 {
+		body.Vote = sebakcommon.VotingYES
+	}
+
 	b = &Ballot{
 		H: BallotHeader{},
 		B: body,
@@ -104,7 +110,7 @@ func (b Ballot) ProposerConfirmed() string {
 	return b.B.Proposed.Confirmed
 }
 
-func (b Ballot) Vote() VotingHole {
+func (b Ballot) Vote() sebakcommon.VotingHole {
 	return b.B.Vote
 }
 
@@ -112,7 +118,7 @@ func (b *Ballot) SetSource(source string) {
 	b.B.Source = source
 }
 
-func (b *Ballot) SetVote(state sebakcommon.BallotState, vote VotingHole) {
+func (b *Ballot) SetVote(state sebakcommon.BallotState, vote sebakcommon.VotingHole) {
 	b.B.State = state
 	b.B.Vote = vote
 }
@@ -195,7 +201,7 @@ type BallotBody struct {
 	Proposed  BallotBodyProposed      `json:"proposed"`
 	Source    string                  `json:"source"`
 	State     sebakcommon.BallotState `json:"state"`
-	Vote      VotingHole              `json:"vote"`
+	Vote      sebakcommon.VotingHole  `json:"vote"`
 	Reason    *sebakerror.Error       `json:"reason"`
 }
 
@@ -207,11 +213,10 @@ func (rb BallotBody) MakeHashString() string {
 	return base58.Encode(rb.MakeHash())
 }
 
-func FinishBallot(st *sebakstorage.LevelDBBackend, ballot Ballot, transactionPool *TransactionPool) (Block, error) {
-	var err error
+func FinishBallot(st *sebakstorage.LevelDBBackend, ballot Ballot, transactionPool *TransactionPool) (blk Block, err error) {
 	var ts *sebakstorage.LevelDBBackend
 	if ts, err = st.OpenTransaction(); err != nil {
-		return Block{}, err
+		return
 	}
 
 	transactions := map[string]Transaction{}
@@ -219,24 +224,29 @@ func FinishBallot(st *sebakstorage.LevelDBBackend, ballot Ballot, transactionPoo
 		tx, found := transactionPool.Get(hash)
 		if !found {
 			err = sebakerror.ErrorTransactionNotFound
-			return Block{}, err
+			return
 		}
 		transactions[hash] = tx
+	}
+
+	blk = NewBlockFromBallot(ballot)
+	if err = blk.Save(ts); err != nil {
+		return
 	}
 
 	for _, hash := range ballot.B.Proposed.Transactions {
 		tx := transactions[hash]
 		raw, _ := json.Marshal(tx)
 
-		bt := NewBlockTransactionFromTransaction(tx, raw)
+		bt := NewBlockTransactionFromTransaction(blk.Hash, tx, raw)
 		if err = bt.Save(ts); err != nil {
 			ts.Discard()
-			return Block{}, err
+			return
 		}
 		for _, op := range tx.B.Operations {
 			if err = FinishOperation(ts, tx, op); err != nil {
 				ts.Discard()
-				return Block{}, err
+				return
 			}
 		}
 
@@ -244,29 +254,24 @@ func FinishBallot(st *sebakstorage.LevelDBBackend, ballot Ballot, transactionPoo
 		if baSource, err = block.GetBlockAccount(ts, tx.B.Source); err != nil {
 			err = sebakerror.ErrorBlockAccountDoesNotExists
 			ts.Discard()
-			return Block{}, err
+			return
 		}
 
 		if err = baSource.Withdraw(tx.TotalAmount(true), tx.NextSourceCheckpoint()); err != nil {
 			ts.Discard()
-			return Block{}, err
+			return
 		}
 
 		if err = baSource.Save(ts); err != nil {
 			ts.Discard()
-			return Block{}, err
+			return
 		}
 
-	}
-
-	retBlock := NewBlockFromBallot(ballot)
-	if err = retBlock.Save(ts); err != nil {
-		return Block{}, err
 	}
 
 	if err = ts.Commit(); err != nil {
 		ts.Discard()
 	}
 
-	return retBlock, err
+	return
 }
