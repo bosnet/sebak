@@ -341,10 +341,18 @@ func runNode() {
 	{
 		nr, err := sebak.NewNodeRunner(flagNetworkID, localNode, policy, nt, isaac, st)
 		conf := sebak.NewNodeRunnerConfiguration()
-		conf.TimeoutINIT = timeoutINIT
-		conf.TimeoutSIGN = timeoutSIGN
-		conf.TimeoutACCEPT = timeoutACCEPT
-		conf.TimeoutALLCONFIRM = timeoutALLCONFIRM
+		if timeoutINIT != 0 {
+			conf.TimeoutINIT = timeoutINIT
+		}
+		if timeoutSIGN != 0 {
+			conf.TimeoutSIGN = timeoutSIGN
+		}
+		if timeoutACCEPT != 0 {
+			conf.TimeoutACCEPT = timeoutACCEPT
+		}
+		if timeoutALLCONFIRM != 0 {
+			conf.TimeoutALLCONFIRM = timeoutALLCONFIRM
+		}
 
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
