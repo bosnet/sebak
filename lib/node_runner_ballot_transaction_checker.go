@@ -14,7 +14,7 @@ type BallotTransactionChecker struct {
 	NetworkID  []byte
 
 	Transactions         []string
-	VotingHole           VotingHole
+	VotingHole           sebakcommon.VotingHole
 	ValidTransactions    []string
 	validTransactionsMap map[string]bool
 	CheckAll             bool

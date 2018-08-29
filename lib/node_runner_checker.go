@@ -19,11 +19,11 @@ type BallotChecker struct {
 	Message            sebaknetwork.Message
 	IsNew              bool
 	Ballot             Ballot
-	VotingHole         VotingHole
+	VotingHole         sebakcommon.VotingHole
 	RoundVote          *RoundVote
 	Result             RoundVoteResult
 	VotingFinished     bool
-	FinishedVotingHole VotingHole
+	FinishedVotingHole sebakcommon.VotingHole
 
 	Log logging.Logger
 }
@@ -148,7 +148,7 @@ func BallotVote(c sebakcommon.Checker, args ...interface{}) (err error) {
 func BallotIsSameProposer(c sebakcommon.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotChecker)
 
-	if checker.VotingHole != VotingNOTYET {
+	if checker.VotingHole != sebakcommon.VotingNOTYET {
 		return
 	}
 
@@ -165,7 +165,7 @@ func BallotIsSameProposer(c sebakcommon.Checker, args ...interface{}) (err error
 	}
 
 	if runningRound.Proposer != checker.Ballot.Proposer() {
-		checker.VotingHole = VotingNO
+		checker.VotingHole = sebakcommon.VotingNO
 		checker.Log.Debug(
 			"ballot has different proposer",
 			"proposer", runningRound.Proposer,
@@ -222,12 +222,12 @@ func INITBallotValidateTransactions(c sebakcommon.Checker, args ...interface{}) 
 		return
 	}
 
-	if checker.VotingHole != VotingNOTYET {
+	if checker.VotingHole != sebakcommon.VotingNOTYET {
 		return
 	}
 
 	if checker.Ballot.TransactionsLength() < 1 {
-		checker.VotingHole = VotingYES
+		checker.VotingHole = sebakcommon.VotingYES
 		return
 	}
 
@@ -237,13 +237,13 @@ func INITBallotValidateTransactions(c sebakcommon.Checker, args ...interface{}) 
 		LocalNode:      checker.LocalNode,
 		NetworkID:      checker.NetworkID,
 		Transactions:   checker.Ballot.Transactions(),
-		VotingHole:     VotingNOTYET,
+		VotingHole:     sebakcommon.VotingNOTYET,
 	}
 
 	err = sebakcommon.RunChecker(transactionsChecker, sebakcommon.DefaultDeferFunc)
 	if err != nil {
 		if _, ok := err.(sebakcommon.CheckerErrorStop); !ok {
-			checker.VotingHole = VotingNO
+			checker.VotingHole = sebakcommon.VotingNO
 			checker.Log.Debug("failed to handle transactions of ballot", "error", err)
 			err = nil
 			return
@@ -251,10 +251,10 @@ func INITBallotValidateTransactions(c sebakcommon.Checker, args ...interface{}) 
 		err = nil
 	}
 
-	if transactionsChecker.VotingHole == VotingNO {
-		checker.VotingHole = VotingNO
+	if transactionsChecker.VotingHole == sebakcommon.VotingNO {
+		checker.VotingHole = sebakcommon.VotingNO
 	} else {
-		checker.VotingHole = VotingYES
+		checker.VotingHole = sebakcommon.VotingYES
 	}
 
 	return
@@ -326,8 +326,8 @@ func ACCEPTBallotStore(c sebakcommon.Checker, args ...interface{}) (err error) {
 		return
 	}
 
-	willStore := checker.FinishedVotingHole == VotingYES
-	if checker.FinishedVotingHole == VotingYES {
+	willStore := checker.FinishedVotingHole == sebakcommon.VotingYES
+	if checker.FinishedVotingHole == sebakcommon.VotingYES {
 		// TODO If consensused ballot is not for next waiting block, the node
 		// will go into **catchup** status.
 

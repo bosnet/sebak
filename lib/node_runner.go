@@ -308,12 +308,12 @@ func (nr *NodeRunner) handleBallotMessage(message sebaknetwork.Message) (err err
 		NetworkID:      nr.networkID,
 		Message:        message,
 		Log:            nr.Log(),
-		VotingHole:     VotingNOTYET,
+		VotingHole:     sebakcommon.VotingNOTYET,
 	}
 	err = sebakcommon.RunChecker(baseChecker, nr.handleMessageCheckerDeferFunc)
 	if err != nil {
 		if _, ok := err.(sebakcommon.CheckerErrorStop); !ok {
-			nr.log.Error("failed to handle ballot", "error", err, "state", "base")
+			nr.log.Error("failed to handle ballot", "error", err, "nodeRunnerStateManager", "base")
 			return
 		}
 	}
@@ -343,7 +343,7 @@ func (nr *NodeRunner) handleBallotMessage(message sebaknetwork.Message) (err err
 	err = sebakcommon.RunChecker(checker, nr.handleMessageCheckerDeferFunc)
 	if err != nil {
 		if _, ok := err.(sebakcommon.CheckerErrorStop); !ok {
-			nr.log.Error("failed to handle ballot", "error", err, "state", baseChecker.Ballot.State())
+			nr.log.Error("failed to handle ballot", "error", err, "nodeRunnerStateManager", baseChecker.Ballot.State())
 			return
 		}
 	}
@@ -475,7 +475,7 @@ func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) error {
 		NetworkID:      nr.networkID,
 		Transactions:   availableTransactions,
 		CheckAll:       true,
-		VotingHole:     VotingNOTYET,
+		VotingHole:     sebakcommon.VotingNOTYET,
 	}
 
 	{
@@ -487,7 +487,7 @@ func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) error {
 	}
 
 	ballot := NewBallot(nr.localNode, round, transactionsChecker.ValidTransactions)
-	ballot.SetVote(sebakcommon.BallotStateINIT, VotingYES)
+	ballot.SetVote(sebakcommon.BallotStateINIT, sebakcommon.VotingYES)
 	ballot.Sign(nr.localNode.Keypair(), nr.networkID)
 
 	nr.log.Debug("new ballot created", "ballot", ballot)
