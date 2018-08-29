@@ -45,7 +45,7 @@ func (api NetworkHandlerAPI) GetTransactionsHandler(w http.ResponseWriter, r *ht
 			}
 			event := "saved"
 			event += " " + fmt.Sprintf("iterate-%s", iterateId)
-			streaming(observer.BlockTransactionObserver, w, event, callBackFunc, readyChan)
+			streaming(observer.BlockTransactionObserver, r, w, event, callBackFunc, readyChan)
 		default:
 
 			var s []byte
@@ -102,7 +102,7 @@ func (api NetworkHandlerAPI) GetTransactionByHashHandler(w http.ResponseWriter, 
 
 			event := fmt.Sprintf("iterate-%s", iterateId)
 			event += " " + fmt.Sprintf("hash-%s", key)
-			streaming(observer.BlockTransactionObserver, w, event, callBackFunc, readyChan)
+			streaming(observer.BlockTransactionObserver, r, w, event, callBackFunc, readyChan)
 		default:
 
 			var s []byte

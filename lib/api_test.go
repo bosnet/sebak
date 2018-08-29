@@ -100,8 +100,10 @@ func TestGetNonExistentAccountHandler(t *testing.T) {
 	require.Nil(t, err)
 	defer storage.Close()
 
+	apiHandler := NetworkHandlerAPI{storage: storage}
+
 	router := mux.NewRouter()
-	router.HandleFunc(GetAccountHandlerPattern, GetAccountHandler(storage)).Methods("GET")
+	router.HandleFunc(GetAccountHandlerPattern, apiHandler.GetAccountHandler).Methods("GET")
 
 	ts := httptest.NewServer(router)
 	defer ts.Close()
@@ -115,7 +117,7 @@ func TestGetNonExistentAccountHandler(t *testing.T) {
 	resp, err := ts.Client().Do(req)
 	require.Nil(t, err)
 	defer resp.Body.Close()
-	require.Equal(t, resp.StatusCode, 404)
+	require.Equal(t, 404, resp.StatusCode)
 	reader := bufio.NewReader(resp.Body)
 	data, err := ioutil.ReadAll(reader)
 	require.Nil(t, err)

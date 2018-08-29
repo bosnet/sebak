@@ -20,7 +20,11 @@ func (api NetworkHandlerAPI) GetAccountHandler(w http.ResponseWriter, r *http.Re
 	var blk *block.BlockAccount
 	var err error
 	if blk, err = block.GetBlockAccount(api.storage, address); err != nil {
-		http.Error(w, "Error reading request body", http.StatusInternalServerError)
+		if err == sebakerror.ErrorStorageRecordDoesNotExist {
+			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		} else {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
 		return
 	}
 
@@ -45,7 +49,7 @@ func (api NetworkHandlerAPI) GetAccountHandler(w http.ResponseWriter, r *http.Re
 
 		event := fmt.Sprintf("iterate-%s", iterateId)
 		event += " " + fmt.Sprintf("address-%s", address)
-		streaming(observer.BlockAccountObserver, w, event, callBackFunc, readyChan)
+		streaming(observer.BlockAccountObserver, r, w, event, callBackFunc, readyChan)
 	default:
 		var s []byte
 		if s, err = blk.Serialize(); err != nil {
@@ -97,7 +101,7 @@ func (api NetworkHandlerAPI) GetAccountTransactionsHandler(w http.ResponseWriter
 
 		event := fmt.Sprintf("iterate-%s", iterateId)
 		event += " " + fmt.Sprintf("source-%s", address)
-		streaming(observer.BlockTransactionObserver, w, event, callBackFunc, readyChan)
+		streaming(observer.BlockTransactionObserver, r, w, event, callBackFunc, readyChan)
 	default:
 		var btl []BlockTransaction
 		iterFunc, closeFunc := GetBlockTransactionsByAccount(api.storage, address, false)
@@ -156,7 +160,7 @@ func (api NetworkHandlerAPI) GetAccountOperationsHandler(w http.ResponseWriter, 
 		}
 		event := fmt.Sprintf("iterate-%s", iterateId)
 		event += " " + fmt.Sprintf("source-%s", address)
-		streaming(observer.BlockOperationObserver, w, event, callBackFunc, readyChan)
+		streaming(observer.BlockOperationObserver, r, w, event, callBackFunc, readyChan)
 	default:
 		var bol []BlockOperation
 		iterFunc, closeFunc := GetBlockOperationsBySource(api.storage, address, false)
