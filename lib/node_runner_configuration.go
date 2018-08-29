@@ -26,23 +26,23 @@ func NewNodeRunnerConfiguration() *NodeRunnerConfiguration {
 	return &p
 }
 
-func (n *NodeRunnerConfiguration) SetINIT(f float64) *NodeRunnerConfiguration {
-	n.TimeoutINIT = Millisecond(f)
+func (n *NodeRunnerConfiguration) SetINIT(t time.Duration) *NodeRunnerConfiguration {
+	n.TimeoutINIT = t
 	return n
 }
 
-func (n *NodeRunnerConfiguration) SetSIGN(f float64) *NodeRunnerConfiguration {
-	n.TimeoutSIGN = Millisecond(f)
+func (n *NodeRunnerConfiguration) SetSIGN(t time.Duration) *NodeRunnerConfiguration {
+	n.TimeoutSIGN = t
 	return n
 }
 
-func (n *NodeRunnerConfiguration) SetACCEPT(f float64) *NodeRunnerConfiguration {
-	n.TimeoutACCEPT = Millisecond(f)
+func (n *NodeRunnerConfiguration) SetACCEPT(t time.Duration) *NodeRunnerConfiguration {
+	n.TimeoutACCEPT = t
 	return n
 }
 
-func (n *NodeRunnerConfiguration) SetALLCONFIRM(f float64) *NodeRunnerConfiguration {
-	n.TimeoutALLCONFIRM = Millisecond(f)
+func (n *NodeRunnerConfiguration) SetALLCONFIRM(t time.Duration) *NodeRunnerConfiguration {
+	n.TimeoutALLCONFIRM = t
 	return n
 }
 
@@ -62,8 +62,4 @@ func (n *NodeRunnerConfiguration) GetTimeout(ballotState sebakcommon.BallotState
 func (n *NodeRunnerConfiguration) SetTxLimit(i int) *NodeRunnerConfiguration {
 	n.TransactionsLimit = i
 	return n
-}
-
-func Millisecond(f float64) time.Duration {
-	return time.Millisecond * time.Duration(int(f*1000))
 }

@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"golang.org/x/net/http2"
 
@@ -60,10 +61,10 @@ var (
 	storageConfig     *sebakstorage.Config
 	validators        []*sebaknode.Validator
 	threshold         int
-	timeoutINIT       float64
-	timeoutSIGN       float64
-	timeoutACCEPT     float64
-	timeoutALLCONFIRM float64
+	timeoutINIT       time.Duration
+	timeoutSIGN       time.Duration
+	timeoutACCEPT     time.Duration
+	timeoutALLCONFIRM time.Duration
 	transactionsLimit int
 	logLevel          logging.Lvl
 	log               logging.Logger
@@ -209,20 +210,29 @@ func parseFlagsNode() {
 		common.PrintFlagsError(nodeCmd, "--storage", err)
 	}
 
-	if timeoutINIT, err = strconv.ParseFloat(flagTimeoutINIT, 64); err != nil {
+	var tmpFloat float64
+	if tmpFloat, err = strconv.ParseFloat(flagTimeoutINIT, 64); err != nil {
 		common.PrintFlagsError(nodeCmd, "--timeout-init", err)
+	} else {
+		timeoutINIT = time.Duration(tmpFloat)
 	}
 
-	if timeoutSIGN, err = strconv.ParseFloat(flagTimeoutSIGN, 64); err != nil {
+	if tmpFloat, err = strconv.ParseFloat(flagTimeoutSIGN, 64); err != nil {
 		common.PrintFlagsError(nodeCmd, "--timeout-sign", err)
+	} else {
+		timeoutSIGN = time.Duration(tmpFloat)
 	}
 
-	if timeoutACCEPT, err = strconv.ParseFloat(flagTimeoutACCEPT, 64); err != nil {
+	if tmpFloat, err = strconv.ParseFloat(flagTimeoutACCEPT, 64); err != nil {
 		common.PrintFlagsError(nodeCmd, "--timeout-accept", err)
+	} else {
+		timeoutACCEPT = time.Duration(tmpFloat)
 	}
 
-	if timeoutALLCONFIRM, err = strconv.ParseFloat(flagTimeoutALLCONFIRM, 64); err != nil {
+	if tmpFloat, err = strconv.ParseFloat(flagTimeoutALLCONFIRM, 64); err != nil {
 		common.PrintFlagsError(nodeCmd, "--timeout-allconfirm", err)
+	} else {
+		timeoutALLCONFIRM = time.Duration(tmpFloat)
 	}
 
 	if transactionsLimit, err = strconv.Atoi(flagTransactionsLimit); err != nil {
@@ -327,8 +337,7 @@ func runNode() {
 	{
 		nr, err := sebak.NewNodeRunner(flagNetworkID, localNode, policy, nt, isaac, st)
 		conf := sebak.NewNodeRunnerConfiguration()
-		conf.SetINIT(timeoutINIT).SetSIGN(timeoutSIGN).SetACCEPT(timeoutACCEPT).SetALLCONFIRM(timeoutALLCONFIRM)
-		// nr.SetConf(conf)
+		conf.SetINIT(timeoutINIT).SetSIGN(timeoutSIGN).SetACCEPT(timeoutACCEPT).SetALLCONFIRM(timeoutALLCONFIRM).SetTxLimit(transactionsLimit)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
 			os.Exit(1)
