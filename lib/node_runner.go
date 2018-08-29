@@ -10,7 +10,6 @@ package sebak
 import (
 	"boscoin.io/sebak/lib/network"
 	"context"
-	// "encoding/json"
 	"errors"
 	"fmt"
 	"sort"
@@ -19,7 +18,6 @@ import (
 	logging "github.com/inconshreveable/log15"
 
 	"boscoin.io/sebak/lib/common"
-	// "boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/storage"
 )
