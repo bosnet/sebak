@@ -45,18 +45,28 @@ var (
 	flagTLSKeyFile          string = sebakcommon.GetENVValue("SEBAK_TLS_KEY", "sebak.key")
 	flagValidators          string = sebakcommon.GetENVValue("SEBAK_VALIDATORS", "")
 	flagThreshold           string = sebakcommon.GetENVValue("SEBAK_THRESHOLD", "66")
+	flagTimeoutINIT         string = sebakcommon.GetENVValue("TIMEOUT_INIT", "2")
+	flagTimeoutSIGN         string = sebakcommon.GetENVValue("TIMEOUT_SIGN", "2")
+	flagTimeoutACCEPT       string = sebakcommon.GetENVValue("TIMEOUT_ACCEPT", "2")
+	flagTimeoutALLCONFIRM   string = sebakcommon.GetENVValue("TIMEOUT_ALLCONFIRM", "2")
+	flagTransactionsLimit   string = sebakcommon.GetENVValue("TRANSACTIONS_LIMIT", "1000")
 )
 
 var (
 	nodeCmd *cobra.Command
 
-	kp            *keypair.Full
-	nodeEndpoint  *sebakcommon.Endpoint
-	storageConfig *sebakstorage.Config
-	validators    []*sebaknode.Validator
-	threshold     int
-	logLevel      logging.Lvl
-	log           logging.Logger
+	kp                *keypair.Full
+	nodeEndpoint      *sebakcommon.Endpoint
+	storageConfig     *sebakstorage.Config
+	validators        []*sebaknode.Validator
+	threshold         int
+	timeoutINIT       float64
+	timeoutSIGN       float64
+	timeoutACCEPT     float64
+	timeoutALLCONFIRM float64
+	transactionsLimit int
+	logLevel          logging.Lvl
+	log               logging.Logger
 )
 
 func init() {
@@ -114,6 +124,11 @@ func init() {
 	nodeCmd.Flags().StringVar(&flagTLSKeyFile, "tls-key", flagTLSKeyFile, "tls key file")
 	nodeCmd.Flags().StringVar(&flagValidators, "validators", flagValidators, "set validator: <endpoint url>?address=<public address>[&alias=<alias>] [ <validator>...]")
 	nodeCmd.Flags().StringVar(&flagThreshold, "threshold", flagThreshold, "threshold")
+	nodeCmd.Flags().StringVar(&flagTimeoutINIT, "timeout-init", flagTimeoutINIT, "timeout of the init state")
+	nodeCmd.Flags().StringVar(&flagTimeoutSIGN, "timeout-sign", flagTimeoutSIGN, "timeout of the sign state")
+	nodeCmd.Flags().StringVar(&flagTimeoutACCEPT, "timeout-accept", flagTimeoutACCEPT, "timeout of  the accept state")
+	nodeCmd.Flags().StringVar(&flagTimeoutALLCONFIRM, "timeout-allconfirm", flagTimeoutALLCONFIRM, "timeout for the allconfirm state")
+	nodeCmd.Flags().StringVar(&flagTransactionsLimit, "transactions-limit", flagTransactionsLimit, "transactions limit in a ballot")
 
 	rootCmd.AddCommand(nodeCmd)
 }
@@ -194,6 +209,26 @@ func parseFlagsNode() {
 		common.PrintFlagsError(nodeCmd, "--storage", err)
 	}
 
+	if timeoutINIT, err = strconv.ParseFloat(flagTimeoutINIT, 64); err != nil {
+		common.PrintFlagsError(nodeCmd, "--timeout-init", err)
+	}
+
+	if timeoutSIGN, err = strconv.ParseFloat(flagTimeoutSIGN, 64); err != nil {
+		common.PrintFlagsError(nodeCmd, "--timeout-sign", err)
+	}
+
+	if timeoutACCEPT, err = strconv.ParseFloat(flagTimeoutACCEPT, 64); err != nil {
+		common.PrintFlagsError(nodeCmd, "--timeout-accept", err)
+	}
+
+	if timeoutALLCONFIRM, err = strconv.ParseFloat(flagTimeoutALLCONFIRM, 64); err != nil {
+		common.PrintFlagsError(nodeCmd, "--timeout-allconfirm", err)
+	}
+
+	if transactionsLimit, err = strconv.Atoi(flagTransactionsLimit); err != nil {
+		common.PrintFlagsError(nodeCmd, "--transactions-limit", err)
+	}
+
 	if threshold, err = strconv.Atoi(flagThreshold); err != nil {
 		common.PrintFlagsError(nodeCmd, "--threshold", err)
 	}
@@ -215,9 +250,9 @@ func parseFlagsNode() {
 	logHandler = logging.CallerFileHandler(logHandler)
 
 	log = logging.New("module", "main")
-	log.SetHandler(logging.LvlFilterHandler(logLevel, logHandler))
-	sebak.SetLogging(logLevel, logHandler)
-	sebaknetwork.SetLogging(logLevel, logHandler)
+	log.SetHandler(logging.LvlFilterHandler(logging.LvlInfo, logHandler))
+	sebak.SetLogging(logging.LvlInfo, logHandler)
+	sebaknetwork.SetLogging(logging.LvlInfo, logHandler)
 
 	log.Info("Starting Sebak")
 
@@ -231,6 +266,11 @@ func parseFlagsNode() {
 	parsedFlags = append(parsedFlags, "\n\tlog-level", flagLogLevel)
 	parsedFlags = append(parsedFlags, "\n\tlog-output", flagLogOutput)
 	parsedFlags = append(parsedFlags, "\n\tthreshold", flagThreshold)
+	parsedFlags = append(parsedFlags, "\n\ttimeout-init", flagTimeoutINIT)
+	parsedFlags = append(parsedFlags, "\n\ttimeout-sign", flagTimeoutSIGN)
+	parsedFlags = append(parsedFlags, "\n\ttimeout-accept", flagTimeoutACCEPT)
+	parsedFlags = append(parsedFlags, "\n\ttimeout-allconfirm", flagTimeoutALLCONFIRM)
+	parsedFlags = append(parsedFlags, "\n\ttransactions-limit", flagTransactionsLimit)
 
 	var vl []interface{}
 	for i, v := range validators {
@@ -286,6 +326,9 @@ func runNode() {
 	var g run.Group
 	{
 		nr, err := sebak.NewNodeRunner(flagNetworkID, localNode, policy, nt, isaac, st)
+		conf := sebak.NewNodeRunnerConfiguration()
+		conf.SetINIT(timeoutINIT).SetSIGN(timeoutSIGN).SetACCEPT(timeoutACCEPT).SetALLCONFIRM(timeoutALLCONFIRM)
+		// nr.SetConf(conf)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
 			os.Exit(1)
