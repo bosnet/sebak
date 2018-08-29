@@ -41,8 +41,8 @@ var (
 		fmt.Sprintf("%s://%s:%d", defaultNetwork, defaultHost, defaultPort),
 	)
 	flagStorageConfigString string
-	flagTLSCertFile         string = sebakcommon.GetENVValue("SEBAK_TLS_CERT", "")
-	flagTLSKeyFile          string = sebakcommon.GetENVValue("SEBAK_TLS_KEY", "")
+	flagTLSCertFile         string = sebakcommon.GetENVValue("SEBAK_TLS_CERT", "sebak.crt")
+	flagTLSKeyFile          string = sebakcommon.GetENVValue("SEBAK_TLS_KEY", "sebak.key")
 	flagValidators          string = sebakcommon.GetENVValue("SEBAK_VALIDATORS", "")
 	flagSignThreshold       string = sebakcommon.GetENVValue("SEBAK_SIGN_THRESHOLD", "60")
 	flagAcceptThreshold     string = sebakcommon.GetENVValue("SEBAK_ACCEPT_THRESHOLD", "60")
@@ -165,14 +165,6 @@ func parseFlagsNode() {
 	}
 
 	if strings.ToLower(nodeEndpoint.Scheme) == "https" {
-		if len(flagTLSCertFile) < 1 || len(flagTLSKeyFile) < 1 {
-			common.PrintFlagsError(
-				nodeCmd,
-				"--tls-cert, --tls-key",
-				errors.New("HTTPS needs `--tls-cert` and `--tls-key`"),
-			)
-		}
-
 		if _, err = os.Stat(flagTLSCertFile); os.IsNotExist(err) {
 			common.PrintFlagsError(nodeCmd, "--tls-cert", err)
 		}

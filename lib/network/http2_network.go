@@ -196,8 +196,7 @@ func (t *HTTP2Network) IsReady() bool {
 	return true
 }
 
-// Start will start `HTTP2Network`. If `tlsCertFile` or `tlsKeyFile` is missing,
-// it will start 'HTTP' mode, not 'HTTPS'.
+// Start will start `HTTP2Network`.
 func (t *HTTP2Network) Start() (err error) {
 	defer func() {
 		close(t.receiveChannel)
