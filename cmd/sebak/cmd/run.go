@@ -95,10 +95,10 @@ func init() {
 	// storage
 	var currentDirectory string
 	if currentDirectory, err = os.Getwd(); err != nil {
-		common.PrintFlagsError(nodeCmd, "-tls-cert", err)
+		common.PrintFlagsError(nodeCmd, "--storage", err)
 	}
 	if currentDirectory, err = filepath.Abs(currentDirectory); err != nil {
-		common.PrintFlagsError(nodeCmd, "-tls-cert", err)
+		common.PrintFlagsError(nodeCmd, "--storage", err)
 	}
 	flagStorageConfigString = sebakcommon.GetENVValue("SEBAK_STORAGE", fmt.Sprintf("file://%s/db", currentDirectory))
 
@@ -164,11 +164,13 @@ func parseFlagsNode() {
 		flagEndpointString = nodeEndpoint.String()
 	}
 
-	if _, err = os.Stat(flagTLSCertFile); os.IsNotExist(err) {
-		common.PrintFlagsError(nodeCmd, "--tls-cert", err)
-	}
-	if _, err = os.Stat(flagTLSKeyFile); os.IsNotExist(err) {
-		common.PrintFlagsError(nodeCmd, "--tls-key", err)
+	if strings.ToLower(nodeEndpoint.Scheme) == "https" {
+		if _, err = os.Stat(flagTLSCertFile); os.IsNotExist(err) {
+			common.PrintFlagsError(nodeCmd, "--tls-cert", err)
+		}
+		if _, err = os.Stat(flagTLSKeyFile); os.IsNotExist(err) {
+			common.PrintFlagsError(nodeCmd, "--tls-key", err)
+		}
 	}
 
 	queries := nodeEndpoint.Query()

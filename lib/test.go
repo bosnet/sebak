@@ -152,7 +152,7 @@ func doConsensus(nodeRunners []*NodeRunner, tx Transaction) []VotingStateStaging
 	}
 
 	for _, nr := range nodeRunners {
-		nr.SetHandleMessageFromClientCheckerFuncs(messageDeferFunc)
+		nr.SetHandleTransactionCheckerFuncs(messageDeferFunc)
 		nr.SetHandleBallotCheckerFuncs(ballotDeferFunc)
 	}
 

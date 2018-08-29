@@ -1,12 +1,12 @@
 package sebaknetwork
 
 import (
-	"context"
 	"net"
 	"net/http"
 
 	"boscoin.io/sebak/lib/common"
 	"github.com/google/uuid"
+	"github.com/gorilla/mux"
 )
 
 var memoryNetworks map[ /* endpoint */ string]*MemoryNetwork
@@ -30,20 +30,12 @@ func getMemoryNetwork(endpoint *sebakcommon.Endpoint) *MemoryNetwork {
 }
 
 type MemoryNetwork struct {
-	ctx        context.Context
+	localNode  sebakcommon.Serializable
 	endpoint   *sebakcommon.Endpoint
 	connWriter chan Message
 	close      chan bool
 
 	receiveChannel chan Message
-}
-
-func (t *MemoryNetwork) Context() context.Context {
-	return t.ctx
-}
-
-func (t *MemoryNetwork) SetContext(ctx context.Context) {
-	t.ctx = ctx
 }
 
 func (t *MemoryNetwork) GetClient(endpoint *sebakcommon.Endpoint) NetworkClient {
@@ -79,13 +71,20 @@ func (p *MemoryNetwork) Ready() error {
 }
 
 func (p *MemoryNetwork) SetMessageBroker(MessageBroker) {
+}
 
+func (p *MemoryNetwork) MessageBroker() MessageBroker {
+	return nil
 }
 
 func (p *MemoryNetwork) IsReady() bool {
 	return true
 }
 
+func (p *MemoryNetwork) GetNodeInfo() []byte {
+	o, _ := p.localNode.Serialize()
+	return o
+}
 func (p *MemoryNetwork) Send(mt MessageType, b []byte) (err error) {
 	p.connWriter <- NewMessage(mt, b)
 
@@ -111,10 +110,8 @@ func (p *MemoryNetwork) receiveMessage() {
 	}
 }
 
-func (p *MemoryNetwork) GetNodeInfo() []byte {
-	localNode := p.Context().Value("localNode").(sebakcommon.Serializable)
-	o, _ := localNode.Serialize()
-	return o
+func (p *MemoryNetwork) SetLocalNode(localNode sebakcommon.Serializable) {
+	p.localNode = localNode
 }
 
 func CreateNewMemoryEndpoint() *sebakcommon.Endpoint {
@@ -134,6 +131,6 @@ func NewMemoryNetwork() *MemoryNetwork {
 	return n
 }
 
-func (p *MemoryNetwork) AddHandler(context.Context, ...interface{}) error {
-	return nil
+func (p *MemoryNetwork) AddHandler(string, http.HandlerFunc) *mux.Route {
+	return &mux.Route{}
 }

@@ -43,6 +43,8 @@ func NewEndpointFromString(s string) (e *Endpoint, err error) {
 	if u, err = url.Parse(s); err != nil {
 		return
 	}
+
+	u.Scheme = strings.ToLower(u.Scheme)
 	e = NewEndpointFromURL(u)
 	return
 }
@@ -57,6 +59,10 @@ func (e *Endpoint) String() string {
 
 func (e *Endpoint) Query() url.Values {
 	return (*url.URL)(e).Query()
+}
+
+func (e *Endpoint) Port() string {
+	return (*url.URL)(e).Port()
 }
 
 func (e *Endpoint) UnmarshalJSON(b []byte) error {

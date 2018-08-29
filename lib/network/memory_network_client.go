@@ -37,7 +37,7 @@ func (m *MemoryTransportClient) SendMessage(message sebakcommon.Serializable) (b
 	if s, err = message.Serialize(); err != nil {
 		return
 	}
-	m.server.Send(MessageFromClient, s)
+	m.server.Send(TransactionMessage, s)
 
 	return
 }

@@ -1,7 +1,6 @@
 package sebaknetwork
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"testing"
@@ -85,7 +84,7 @@ func createNewMemoryNetwork() (*keypair.Full, *MemoryNetwork, *sebaknode.LocalNo
 	kp, _ := keypair.Random()
 	localNode, _ := sebaknode.NewLocalNode(kp, mn.Endpoint(), "")
 
-	mn.SetContext(context.WithValue(context.Background(), "localNode", localNode))
+	mn.SetLocalNode(localNode)
 
 	return kp, mn, localNode
 }
@@ -112,8 +111,8 @@ func TestMemoryNetworkGetClient(t *testing.T) {
 	select {
 	case receivedMessage := <-gotMessage:
 		receivedDummy, _ := DummyMessageFromString(receivedMessage.Data)
-		if receivedMessage.Type != "message" {
-			t.Error("got invalid message")
+		if receivedMessage.Type != TransactionMessage {
+			t.Error("wrong message type")
 		}
 		if !message.Equal(receivedDummy) {
 			t.Error("got invalid message")

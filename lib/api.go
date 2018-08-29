@@ -1,25 +1,27 @@
 package sebak
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 
-	"boscoin.io/sebak/lib/network"
-	"boscoin.io/sebak/lib/storage"
 	"github.com/GianlucaGuarini/go-observable"
+
+	"boscoin.io/sebak/lib/network"
+	"boscoin.io/sebak/lib/node"
+	"boscoin.io/sebak/lib/storage"
 )
 
 const maxNumberOfExistingData = 10
 
-func AddAPIHandlers(s *sebakstorage.LevelDBBackend) func(ctx context.Context, t *sebaknetwork.HTTP2Network) {
-	fn := func(ctx context.Context, t *sebaknetwork.HTTP2Network) {
-		t.AddAPIHandler(GetAccountHandlerPattern, GetAccountHandler(s)).Methods("GET")
-		t.AddAPIHandler(GetAccountTransactionsHandlerPattern, GetAccountTransactionsHandler(s)).Methods("GET")
-		t.AddAPIHandler(GetAccountOperationsHandlerPattern, GetAccountOperationsHandler(s)).Methods("GET")
-		t.AddAPIHandler(GetTransactionByHashHandlerPattern, GetTransactionByHashHandler(s)).Methods("GET")
-	}
-	return fn
+type NetworkHandlerNode struct {
+	localNode *sebaknode.LocalNode
+	network   sebaknetwork.Network
+}
+
+type NetworkHandlerAPI struct {
+	localNode *sebaknode.LocalNode
+	network   sebaknetwork.Network
+	storage   *sebakstorage.LevelDBBackend
 }
 
 // Implement `Server Sent Event`
