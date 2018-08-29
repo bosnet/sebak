@@ -66,6 +66,7 @@ const (
 	TransactionMessage             = "transaction"
 	BallotMessage                  = "ballot"
 	GetNodeInfoMessage             = "get-node-info"
+	MissingTxs                     = "missing_txs"
 )
 
 // TODO versioning
