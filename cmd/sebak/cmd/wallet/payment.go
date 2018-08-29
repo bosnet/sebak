@@ -1,3 +1,6 @@
+//
+// Implement CLI for payment, account creation, and freezing requests
+//
 package wallet
 
 import (
@@ -23,6 +26,7 @@ var (
 	flagEndpoint      string
 	flagCreateAccount bool
 	flagDry           bool
+	flagFreeze        bool
 	flagVerbose       bool
 )
 
@@ -49,6 +53,10 @@ func init() {
 			// Amount
 			if amount, err = cmdcommon.ParseAmountFromString(args[1]); err != nil {
 				cmdcommon.PrintFlagsError(c, "<amount>", err)
+			}
+			if flagFreeze == true && (amount%common.Unit) != 0 {
+				cmdcommon.PrintFlagsError(c, "<amount>",
+					fmt.Errorf("Amount should be an exact multiple of %v when --freeze is provided", common.Unit))
 			}
 
 			// Sender's secret seed
@@ -106,8 +114,10 @@ func init() {
 			}
 
 			// TODO: Validate that the account doesn't already exists
-			if flagCreateAccount {
-				tx = makeTransactionCreateAccount(sender, receiver, amount, senderAccount.SequenceID)
+			if flagFreeze {
+				tx = makeTransactionCreateAccount(sender, receiver, amount, senderAccount.SequenceID, sender.Address())
+			} else if flagCreateAccount {
+				tx = makeTransactionCreateAccount(sender, receiver, amount, senderAccount.SequenceID, "")
 			} else {
 				tx = makeTransactionPayment(sender, receiver, amount, senderAccount.SequenceID)
 			}
@@ -138,6 +148,7 @@ func init() {
 	PaymentCmd.Flags().StringVar(&flagEndpoint, "endpoint", flagEndpoint, "endpoint to send the transaction to (https / memory address)")
 	PaymentCmd.Flags().StringVar(&flagNetworkID, "network-id", flagNetworkID, "network id")
 	PaymentCmd.Flags().BoolVar(&flagCreateAccount, "create", flagCreateAccount, "Whether or not the account should be created")
+	PaymentCmd.Flags().BoolVar(&flagFreeze, "freeze", flagFreeze, "When present, the payment is a frozen account creation. Imply --create.")
 	PaymentCmd.Flags().BoolVar(&flagDry, "dry-run", flagDry, "Print the transaction instead of sending it")
 	PaymentCmd.Flags().BoolVar(&flagVerbose, "verbose", flagVerbose, "Print extra data (transaction sent, before/after balance...)")
 }
@@ -153,12 +164,13 @@ func init() {
 ///   kpDest   = Newly created account's address
 ///   amount   = Amount to send as initial value
 ///   seqid    = SequenceID of the last transaction
+///   target   = Address of the linked account, if we're creating a frozen account
 ///
 /// Returns:
 ///   `sebak.Transaction` = The generated `Transaction` creating the account
 ///
-func makeTransactionCreateAccount(kpSource keypair.KP, kpDest keypair.KP, amount common.Amount, seqid uint64) transaction.Transaction {
-	opb := transaction.NewOperationBodyCreateAccount(kpDest.Address(), amount, "")
+func makeTransactionCreateAccount(kpSource keypair.KP, kpDest keypair.KP, amount common.Amount, seqid uint64, target string) transaction.Transaction {
+	opb := transaction.NewOperationBodyCreateAccount(kpDest.Address(), amount, target)
 
 	op := transaction.Operation{
 		H: transaction.OperationHeader{
