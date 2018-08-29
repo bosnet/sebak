@@ -1,35 +1,41 @@
-//
-// Struct that bridges together components of a node
-//
-// NodeRunner bridges together the connection, storage and `LocalNode`.
-// In this regard, it can be seen as a single node, and is used as such
-// in unit tests.
-//
+/*
+	In this file, there are unittests for checking NodeRunnerConfiguration struct.
+*/
 package sebak
 
 import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
+/*
+	TestConfigurationDefault tests the default timeout values.
+*/
 func TestConfigurationDefault(t *testing.T) {
 	n := NewNodeRunnerConfiguration()
-	assert.Equal(t, n.TimeoutINIT, 2*time.Second)
-	assert.Equal(t, n.TimeoutSIGN, 2*time.Second)
-	assert.Equal(t, n.TimeoutACCEPT, 2*time.Second)
-	assert.Equal(t, n.TimeoutALLCONFIRM, 2*time.Second)
-	assert.Equal(t, n.TransactionsLimit, 1000)
+	require.Equal(t, n.TimeoutINIT, 2*time.Second)
+	require.Equal(t, n.TimeoutSIGN, 2*time.Second)
+	require.Equal(t, n.TimeoutACCEPT, 2*time.Second)
+	require.Equal(t, n.TimeoutALLCONFIRM, 2*time.Second)
+	require.Equal(t, uint64(1000), n.TransactionsLimit)
 }
 
+/*
+	TestConfigurationSetAndGet tests setting timeout fields and checking.
+*/
 func TestConfigurationSetAndGet(t *testing.T) {
 	n := NewNodeRunnerConfiguration()
-	n.SetINIT(3).SetSIGN(1).SetACCEPT(1).SetALLCONFIRM(2).SetTxLimit(500)
+	n.TimeoutINIT = 3 * time.Second
+	n.TimeoutSIGN = 1 * time.Second
+	n.TimeoutACCEPT = 1 * time.Second
+	n.TimeoutALLCONFIRM = 2 * time.Second
+	n.TransactionsLimit = uint64(500)
 
-	assert.Equal(t, n.TimeoutINIT, 3*time.Second)
-	assert.Equal(t, n.TimeoutSIGN, 1*time.Second)
-	assert.Equal(t, n.TimeoutACCEPT, 1*time.Second)
-	assert.Equal(t, n.TimeoutALLCONFIRM, 2*time.Second)
-	assert.Equal(t, n.TransactionsLimit, 500)
+	require.Equal(t, n.TimeoutINIT, 3*time.Second)
+	require.Equal(t, n.TimeoutSIGN, 1*time.Second)
+	require.Equal(t, n.TimeoutACCEPT, 1*time.Second)
+	require.Equal(t, n.TimeoutALLCONFIRM, 2*time.Second)
+	require.Equal(t, uint64(500), n.TransactionsLimit)
 }

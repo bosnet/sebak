@@ -210,29 +210,33 @@ func parseFlagsNode() {
 		common.PrintFlagsError(nodeCmd, "--storage", err)
 	}
 
-	var tmpFloat float64
-	if tmpFloat, err = strconv.ParseFloat(flagTimeoutINIT, 64); err != nil {
+	var tmpInt int
+	if tmpInt, err = strconv.Atoi(flagTimeoutINIT); err != nil {
 		common.PrintFlagsError(nodeCmd, "--timeout-init", err)
+		timeoutINIT = 0
 	} else {
-		timeoutINIT = time.Duration(tmpFloat)
+		timeoutINIT = time.Duration(tmpInt) * time.Second
 	}
 
-	if tmpFloat, err = strconv.ParseFloat(flagTimeoutSIGN, 64); err != nil {
+	if tmpInt, err = strconv.Atoi(flagTimeoutSIGN); err != nil {
 		common.PrintFlagsError(nodeCmd, "--timeout-sign", err)
+		timeoutSIGN = 0
 	} else {
-		timeoutSIGN = time.Duration(tmpFloat)
+		timeoutSIGN = time.Duration(tmpInt) * time.Second
 	}
 
-	if tmpFloat, err = strconv.ParseFloat(flagTimeoutACCEPT, 64); err != nil {
+	if tmpInt, err = strconv.Atoi(flagTimeoutACCEPT); err != nil {
 		common.PrintFlagsError(nodeCmd, "--timeout-accept", err)
+		timeoutACCEPT = 0
 	} else {
-		timeoutACCEPT = time.Duration(tmpFloat)
+		timeoutACCEPT = time.Duration(tmpInt) * time.Second
 	}
 
-	if tmpFloat, err = strconv.ParseFloat(flagTimeoutALLCONFIRM, 64); err != nil {
+	if tmpInt, err = strconv.Atoi(flagTimeoutALLCONFIRM); err != nil {
 		common.PrintFlagsError(nodeCmd, "--timeout-allconfirm", err)
+		timeoutALLCONFIRM = 0
 	} else {
-		timeoutALLCONFIRM = time.Duration(tmpFloat)
+		timeoutALLCONFIRM = time.Duration(tmpInt) * time.Second
 	}
 
 	if transactionsLimit, err = strconv.Atoi(flagTransactionsLimit); err != nil {
@@ -260,9 +264,9 @@ func parseFlagsNode() {
 	logHandler = logging.CallerFileHandler(logHandler)
 
 	log = logging.New("module", "main")
-	log.SetHandler(logging.LvlFilterHandler(logging.LvlInfo, logHandler))
-	sebak.SetLogging(logging.LvlInfo, logHandler)
-	sebaknetwork.SetLogging(logging.LvlInfo, logHandler)
+	log.SetHandler(logging.LvlFilterHandler(logLevel, logHandler))
+	sebak.SetLogging(logLevel, logHandler)
+	sebaknetwork.SetLogging(logLevel, logHandler)
 
 	log.Info("Starting Sebak")
 
@@ -337,7 +341,11 @@ func runNode() {
 	{
 		nr, err := sebak.NewNodeRunner(flagNetworkID, localNode, policy, nt, isaac, st)
 		conf := sebak.NewNodeRunnerConfiguration()
-		conf.SetINIT(timeoutINIT).SetSIGN(timeoutSIGN).SetACCEPT(timeoutACCEPT).SetALLCONFIRM(timeoutALLCONFIRM).SetTxLimit(transactionsLimit)
+		conf.TimeoutINIT = timeoutINIT
+		conf.TimeoutSIGN = timeoutSIGN
+		conf.TimeoutACCEPT = timeoutACCEPT
+		conf.TimeoutALLCONFIRM = timeoutALLCONFIRM
+
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
 			os.Exit(1)

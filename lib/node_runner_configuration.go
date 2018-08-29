@@ -17,33 +17,19 @@ type NodeRunnerConfiguration struct {
 	TimeoutACCEPT     time.Duration
 	TimeoutALLCONFIRM time.Duration
 
-	TransactionsLimit int
+	TransactionsLimit uint64
 }
 
 func NewNodeRunnerConfiguration() *NodeRunnerConfiguration {
 	p := NodeRunnerConfiguration{}
-	p.SetINIT(2).SetSIGN(2).SetACCEPT(2).SetALLCONFIRM(2).SetTxLimit(1000)
+
+	p.TimeoutINIT = 2 * time.Second
+	p.TimeoutSIGN = 2 * time.Second
+	p.TimeoutACCEPT = 2 * time.Second
+	p.TimeoutALLCONFIRM = 2 * time.Second
+	p.TransactionsLimit = uint64(1000)
+
 	return &p
-}
-
-func (n *NodeRunnerConfiguration) SetINIT(t time.Duration) *NodeRunnerConfiguration {
-	n.TimeoutINIT = t
-	return n
-}
-
-func (n *NodeRunnerConfiguration) SetSIGN(t time.Duration) *NodeRunnerConfiguration {
-	n.TimeoutSIGN = t
-	return n
-}
-
-func (n *NodeRunnerConfiguration) SetACCEPT(t time.Duration) *NodeRunnerConfiguration {
-	n.TimeoutACCEPT = t
-	return n
-}
-
-func (n *NodeRunnerConfiguration) SetALLCONFIRM(t time.Duration) *NodeRunnerConfiguration {
-	n.TimeoutALLCONFIRM = t
-	return n
 }
 
 func (n *NodeRunnerConfiguration) GetTimeout(ballotState sebakcommon.BallotState) time.Duration {
@@ -57,9 +43,4 @@ func (n *NodeRunnerConfiguration) GetTimeout(ballotState sebakcommon.BallotState
 	default:
 		return 0
 	}
-}
-
-func (n *NodeRunnerConfiguration) SetTxLimit(i int) *NodeRunnerConfiguration {
-	n.TransactionsLimit = i
-	return n
 }
