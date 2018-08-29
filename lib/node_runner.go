@@ -312,7 +312,7 @@ func (nr *NodeRunner) handleBallotMessage(message sebaknetwork.Message) (err err
 	err = sebakcommon.RunChecker(baseChecker, nr.handleMessageCheckerDeferFunc)
 	if err != nil {
 		if _, ok := err.(sebakcommon.CheckerErrorStop); !ok {
-			nr.log.Error("failed to handle ballot", "error", err, "state", "base")
+			nr.log.Error("failed to handle ballot", "error", err, "nodeRunnerStateManager", "base")
 			return
 		}
 	}
