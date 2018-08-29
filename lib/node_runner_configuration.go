@@ -1,9 +1,7 @@
 //
-// Struct that bridges together components of a node
-//
-// NodeRunner bridges together the connection, storage and `LocalNode`.
-// In this regard, it can be seen as a single node, and is used as such
-// in unit tests.
+// NodeRunnerConfiguration has timeout features and transaction limit.
+// The NodeRunnerConfiguration is included in NodeRunnerStateManager and
+// these timeout features are used in ISAAC consensus.
 //
 package sebak
 
