@@ -98,8 +98,11 @@ func init() {
 
 			parseFlagsNode()
 
-			runNode()
-			return
+			var exitCode int
+			if err = runNode(); err != nil {
+				exitCode = 1
+			}
+			os.Exit(exitCode)
 		},
 	}
 
@@ -295,36 +298,38 @@ func getTimeout(timeoutStr string, errMessage string) time.Duration {
 	return timeoutDuration
 }
 
-func runNode() {
+func runNode() error {
 	// create current Node
 	localNode, err := sebaknode.NewLocalNode(kp, nodeEndpoint, "")
 	if err != nil {
 		log.Error("failed to launch main node", "error", err)
-		return
+		return err
 	}
 	localNode.AddValidators(validators...)
 
 	// create network
 	nt, err := sebaknetwork.NewNetwork(nodeEndpoint)
 	if err != nil {
-		log.Crit("transport error", "error", err)
-
-		os.Exit(1)
+		log.Crit("failed to create Network", "error", err)
+		return err
 	}
 
-	policy, _ := sebak.NewDefaultVotingThresholdPolicy(threshold, threshold)
+	policy, err := sebak.NewDefaultVotingThresholdPolicy(threshold, threshold)
+	if err != nil {
+		log.Crit("failed to create VotingThresholdPolicy", "error", err)
+		return err
+	}
 
 	isaac, err := sebak.NewISAAC([]byte(flagNetworkID), localNode, policy)
 	if err != nil {
-		log.Error("failed to launch consensus", "error", err)
-		return
+		log.Crit("failed to launch consensus", "error", err)
+		return err
 	}
 
 	st, err := sebakstorage.NewStorage(storageConfig)
 	if err != nil {
 		log.Crit("failed to initialize storage", "error", err)
-
-		os.Exit(1)
+		return err
 	}
 
 	// Execution group.
@@ -342,7 +347,7 @@ func runNode() {
 
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
-			os.Exit(1)
+			return err
 		}
 
 		g.Add(func() error {
@@ -366,6 +371,8 @@ func runNode() {
 
 	if err := g.Run(); err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
-		os.Exit(1)
+		return err
 	}
+
+	return nil
 }

@@ -92,7 +92,9 @@ func TestIsaacSimulationProposer(t *testing.T) {
 
 	ballotACCEPT4 := GenerateBallot(t, proposer, round, tx, sebakcommon.BallotStateACCEPT, nodeRunners[4].localNode)
 	err = ReceiveBallot(t, nodeRunner, ballotACCEPT4)
-	require.EqualError(t, err, "stop checker and return: ballot got consensus and will be stored")
+
+	_, ok := err.(CheckerStopCloseConsensus)
+	require.True(t, ok)
 
 	require.Equal(t, 4, len(rr.Voted[proposer.Address()].GetResult(sebakcommon.BallotStateACCEPT)))
 

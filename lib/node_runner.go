@@ -154,6 +154,7 @@ func (nr *NodeRunner) Ready() {
 }
 
 func (nr *NodeRunner) Start() (err error) {
+	nr.log.Debug("NodeRunner started")
 	nr.Ready()
 
 	go nr.handleMessage()
@@ -267,7 +268,7 @@ func (nr *NodeRunner) handleMessage() {
 		}
 
 		if err != nil {
-			if _, ok := err.(sebakcommon.CheckerErrorStop); ok {
+			if _, ok := err.(sebakcommon.CheckerStop); ok {
 				continue
 			}
 			nr.log.Error("failed to handle sebaknetwork.Message", "message", message.Head(50), "error", err)
@@ -340,7 +341,13 @@ func (nr *NodeRunner) handleBallotMessage(message sebaknetwork.Message) (err err
 	}
 	err = sebakcommon.RunChecker(checker, nr.handleMessageCheckerDeferFunc)
 	if err != nil {
-		if _, ok := err.(sebakcommon.CheckerErrorStop); !ok {
+		if stopped, ok := err.(sebakcommon.CheckerStop); ok {
+			nr.log.Debug(
+				"stopped to handle ballot",
+				"state", baseChecker.Ballot.State(),
+				"reason", stopped.Error(),
+			)
+		} else {
 			nr.log.Error("failed to handle ballot", "error", err, "state", baseChecker.Ballot.State())
 			return
 		}
@@ -364,6 +371,10 @@ func (nr *NodeRunner) InitRound() {
 	for _ = range ticker.C {
 		var notFound bool
 		connected := nr.connectionManager.AllConnected()
+		if len(connected) < 1 {
+			continue
+		}
+
 		for address, _ := range nr.localNode.GetValidators() {
 			if _, found := sebakcommon.InStringArray(connected, address); !found {
 				notFound = true
@@ -376,7 +387,11 @@ func (nr *NodeRunner) InitRound() {
 		}
 	}
 
-	nr.log.Debug("caught up with network and connected to all validators")
+	nr.log.Debug(
+		"caught up with network and connected to all validators",
+		"connected", nr.Policy().Connected(),
+		"validators", nr.Policy().Validators(),
+	)
 
 	go nr.startRound()
 }
@@ -473,7 +488,9 @@ func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) error {
 	}
 
 	if err := sebakcommon.RunChecker(transactionsChecker, sebakcommon.DefaultDeferFunc); err != nil {
-		return err
+		if _, ok := err.(sebakcommon.CheckerErrorStop); !ok {
+			nr.log.Error("error occurred in BallotTransactionChecker", "error", err)
+		}
 	}
 
 	// remove invalid transactions

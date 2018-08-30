@@ -5,12 +5,12 @@ import (
 )
 
 type Header struct {
-	Version          uint32
-	PrevBlockHash    string // TODO Uint256 type
-	TransactionsRoot string // Merkle root of Txs // TODO Uint256 type
-	Timestamp        time.Time
-	Height           uint64
-	TotalTxs         uint64
+	Version          uint32    `json:"Version"`
+	PrevBlockHash    string    `json:"prev-block-hash"`   // TODO Uint256 type
+	TransactionsRoot string    `json:"transactions-root"` // Merkle root of Txs // TODO Uint256 type
+	Timestamp        time.Time `json:"timestamp"`
+	Height           uint64    `json:"height"`
+	TotalTxs         uint64    `json:"total-txs"`
 
 	// TODO smart contract fields
 }
