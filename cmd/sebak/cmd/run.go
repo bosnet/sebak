@@ -46,11 +46,11 @@ var (
 	flagTLSKeyFile          string = sebakcommon.GetENVValue("SEBAK_TLS_KEY", "sebak.key")
 	flagValidators          string = sebakcommon.GetENVValue("SEBAK_VALIDATORS", "")
 	flagThreshold           string = sebakcommon.GetENVValue("SEBAK_THRESHOLD", "66")
-	flagTimeoutINIT         string = sebakcommon.GetENVValue("TIMEOUT_INIT", "2")
-	flagTimeoutSIGN         string = sebakcommon.GetENVValue("TIMEOUT_SIGN", "2")
-	flagTimeoutACCEPT       string = sebakcommon.GetENVValue("TIMEOUT_ACCEPT", "2")
-	flagTimeoutALLCONFIRM   string = sebakcommon.GetENVValue("TIMEOUT_ALLCONFIRM", "2")
-	flagTransactionsLimit   string = sebakcommon.GetENVValue("TRANSACTIONS_LIMIT", "1000")
+	flagTimeoutINIT         string = sebakcommon.GetENVValue("SEBAK_TIMEOUT_INIT", "2")
+	flagTimeoutSIGN         string = sebakcommon.GetENVValue("SEBAK_TIMEOUT_SIGN", "2")
+	flagTimeoutACCEPT       string = sebakcommon.GetENVValue("SEBAK_TIMEOUT_ACCEPT", "2")
+	flagTimeoutALLCONFIRM   string = sebakcommon.GetENVValue("SEBAK_TIMEOUT_ALLCONFIRM", "2")
+	flagTransactionsLimit   string = sebakcommon.GetENVValue("SEBAK_TRANSACTIONS_LIMIT", "1000")
 )
 
 var (
@@ -289,6 +289,9 @@ func getTimeout(timeoutStr string, errMessage string) time.Duration {
 	} else {
 		timeoutDuration = time.Duration(tmpUint64) * time.Second
 	}
+	if timeoutDuration == 0 {
+		timeoutDuration = 2 * time.Second
+	}
 	return timeoutDuration
 }
 
@@ -329,22 +332,14 @@ func runNode() {
 	var g run.Group
 	{
 		nr, err := sebak.NewNodeRunner(flagNetworkID, localNode, policy, nt, isaac, st)
-		conf := sebak.NewNodeRunnerConfiguration()
-		if timeoutINIT != 0 {
-			conf.TimeoutINIT = timeoutINIT
+		conf := &sebak.NodeRunnerConfiguration{
+			TimeoutINIT:       timeoutINIT,
+			TimeoutSIGN:       timeoutSIGN,
+			TimeoutACCEPT:     timeoutACCEPT,
+			TimeoutALLCONFIRM: timeoutALLCONFIRM,
+			TransactionsLimit: uint64(transactionsLimit),
 		}
-		if timeoutSIGN != 0 {
-			conf.TimeoutSIGN = timeoutSIGN
-		}
-		if timeoutACCEPT != 0 {
-			conf.TimeoutACCEPT = timeoutACCEPT
-		}
-		if timeoutALLCONFIRM != 0 {
-			conf.TimeoutALLCONFIRM = timeoutALLCONFIRM
-		}
-		if transactionsLimit != 0 {
-			conf.TransactionsLimit = uint64(transactionsLimit)
-		}
+		nr.SetConf(conf)
 
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
