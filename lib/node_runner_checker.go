@@ -11,11 +11,11 @@ import (
 )
 
 type CheckerStopCloseConsensus struct {
-	checker *NodeRunnerHandleBallotChecker
+	checker *BallotChecker
 	message string
 }
 
-func NewCheckerStopCloseConsensus(checker *NodeRunnerHandleBallotChecker, message string) CheckerStopCloseConsensus {
+func NewCheckerStopCloseConsensus(checker *BallotChecker, message string) CheckerStopCloseConsensus {
 	return CheckerStopCloseConsensus{
 		checker: checker,
 		message: message,
@@ -440,8 +440,8 @@ func ACCEPTBallotStore(c sebakcommon.Checker, args ...interface{}) (err error) {
 		return
 	}
 
-	willStore := checker.FinishedVotingHole == VotingYES
-	if checker.FinishedVotingHole == VotingYES {
+	willStore := checker.FinishedVotingHole == sebakcommon.VotingYES
+	if checker.FinishedVotingHole == sebakcommon.VotingYES {
 		var block Block
 		block, err = FinishBallot(
 			checker.NodeRunner.Storage(),
