@@ -5,9 +5,10 @@ import (
 	"strings"
 	"testing"
 
-	"boscoin.io/sebak/lib/common"
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/stellar/go/keypair"
+
+	"boscoin.io/sebak/lib/common"
 )
 
 func TestLoadTransactionFromJSON(t *testing.T) {
