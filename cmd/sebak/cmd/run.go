@@ -223,9 +223,6 @@ func parseFlagsNode() {
 
 	if transactionsLimit, err = strconv.ParseUint(flagTransactionsLimit, 10, 64); err != nil {
 		common.PrintFlagsError(nodeCmd, "--transactions-limit", err)
-		if transactionsLimit < 0 {
-			transactionsLimit = 0
-		}
 	}
 
 	var tmpUint64 uint64
