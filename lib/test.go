@@ -172,6 +172,41 @@ func TestMakeTransactionWithKeypair(networkID []byte, n int, srcKp *keypair.Full
 	return
 }
 
+type SelfProposerCalculator struct {
+}
+
+func (c SelfProposerCalculator) Calculate(nr *NodeRunner, _ uint64, _ uint64) string {
+	return nr.localNode.Address()
+}
+
+type TheOtherProposerCalculator struct {
+}
+
+func (c TheOtherProposerCalculator) Calculate(nr *NodeRunner, _ uint64, _ uint64) string {
+	for _, v := range nr.ConnectionManager().AllValidators() {
+		if v != nr.localNode.Address() {
+			return v
+		}
+	}
+	panic("There is no the other validators")
+}
+
+type SelfProposerThenNotProposer struct {
+}
+
+func (c *SelfProposerThenNotProposer) Calculate(nr *NodeRunner, blockHeight uint64, roundNumber uint64) string {
+	if blockHeight < 2 && roundNumber == 0 {
+		return nr.localNode.Address()
+	} else {
+		for _, v := range nr.ConnectionManager().AllValidators() {
+			if v != nr.localNode.Address() {
+				return v
+			}
+		}
+		panic("There is no the other validators")
+	}
+}
+
 func GetTransaction(t *testing.T) (tx Transaction, txByte []byte) {
 	initialBalance := sebakcommon.Amount(1)
 	kpNewAccount, _ := keypair.Random()

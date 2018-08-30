@@ -25,7 +25,7 @@ type Block struct {
 	Hash      string `json:"hash"`
 	Confirmed string `json:"confirmed"`
 	Proposer  string `json:"proposer"` /* Node.Address() */
-	Round     Round  `json:"round"`
+	PrevRound Round  `json:"round"`
 }
 
 func (bck Block) Serialize() (encoded []byte, err error) {
@@ -60,16 +60,16 @@ func MakeGenesisBlock(st *sebakstorage.LevelDBBackend, account block.BlockAccoun
 	return b
 }
 
-func NewBlock(proposer string, round Round, transactions []string, confirmed string) Block {
+func NewBlock(proposer string, prevRound Round, transactions []string, confirmed string) Block {
 	b := &Block{
-		Header:       *NewBlockHeader(round.BlockHeight+1, round.BlockHash, round.TotalTxs, uint64(len(transactions)), getTransactionRoot(transactions)),
+		Header:       *NewBlockHeader(prevRound, uint64(len(transactions)), getTransactionRoot(transactions)),
 		Transactions: transactions,
 		Proposer:     proposer,
-		Round:        round,
+		PrevRound:    prevRound,
 		Confirmed:    confirmed,
 	}
 
-	log.Debug("NewBlock created", "PrevTotalTxs", round.TotalTxs, "txs", len(transactions), "TotalTxs", b.Header.TotalTxs)
+	log.Debug("NewBlock created", "PrevTotalTxs", prevRound.TotalTxs, "txs", len(transactions), "TotalTxs", b.Header.TotalTxs)
 
 	b.Hash = base58.Encode(sebakcommon.MustMakeObjectHash(b))
 

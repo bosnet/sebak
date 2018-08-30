@@ -1,3 +1,7 @@
+/*
+	In this file, there are unittests about `Ballot` struct
+*/
+
 package sebak
 
 import (
@@ -35,4 +39,29 @@ func TestErrorBallotHasOverMaxTransactionsInBallot(t *testing.T) {
 
 	err := ballot.IsWellFormed(networkID)
 	require.Error(t, err, sebakerror.ErrorBallotHasOverMaxTransactionsInBallot)
+}
+
+/*
+	TestBallotHash checks that ballot.GetHash() makes non-empty hash.
+*/
+func TestBallotHash(t *testing.T) {
+	nodeRunners := createTestNodeRunner(1)
+
+	nodeRunner := nodeRunners[0]
+
+	// `nodeRunner` is proposer's runner
+	nodeRunner.SetProposerCalculator(SelfProposerCalculator{})
+
+	nodeRunner.Consensus().SetLatestConsensusedBlock(genesisBlock)
+
+	round := Round{
+		Number:      0,
+		BlockHeight: nodeRunner.Consensus().LatestConfirmedBlock.Height,
+		BlockHash:   nodeRunner.Consensus().LatestConfirmedBlock.Hash,
+		TotalTxs:    nodeRunner.Consensus().LatestConfirmedBlock.TotalTxs,
+	}
+
+	ballot := NewBallot(nodeRunner.localNode, round, []string{})
+	ballot.Sign(kp, networkID)
+	require.NotZero(t, len(ballot.GetHash()))
 }
