@@ -40,6 +40,7 @@ func (o OperationBodyCreateAccount) Validate(st *sebakstorage.LevelDBBackend) (e
 	var exists bool
 	if exists, err = block.ExistBlockAccount(st, o.Target); err == nil && exists {
 		err = sebakerror.ErrorBlockAccountAlreadyExists
+		return
 	}
 
 	return

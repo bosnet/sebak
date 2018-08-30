@@ -32,6 +32,8 @@ var DefaultHandleMessageFromClientCheckerFuncs = []sebakcommon.CheckerFunc{
 	TransactionUnmarshal,
 	HasTransaction,
 	SaveTransactionHistory,
+	MessageHasSameSource,
+	MessageValidate,
 	PushIntoTransactionPool,
 	BroadcastTransaction,
 }
@@ -116,6 +118,7 @@ func NewNodeRunner(
 	nr.ctx = context.WithValue(nr.ctx, "storage", nr.storage)
 
 	nr.SetProposerCalculator(SimpleProposerCalculator{})
+	nr.policy.SetValidators(len(nr.localNode.GetValidators()) + 1) // including self
 
 	nr.connectionManager = sebaknetwork.NewConnectionManager(
 		nr.localNode,
@@ -209,9 +212,8 @@ func (nr *NodeRunner) Log() logging.Logger {
 
 func (nr *NodeRunner) ConnectValidators() {
 	ticker := time.NewTicker(time.Millisecond * 5)
-	for t := range ticker.C {
+	for _ = range ticker.C {
 		if !nr.network.IsReady() {
-			nr.log.Debug("current network is not ready: %v", t)
 			continue
 		}
 
@@ -405,18 +407,14 @@ func (nr *NodeRunner) StartNewRound(roundNumber uint64) {
 		nr.timerExpireRound = nil
 	}
 
+	// wait for new ballot from new proposer
+	nr.timerExpireRound = time.NewTimer(TimeoutExpireRound)
 	go func() {
-		// wait for new ballot from new proposer
-		nr.timerExpireRound = time.NewTimer(TimeoutExpireRound)
-		go func() {
-			for {
-				select {
-				case <-nr.timerExpireRound.C:
-					go nr.StartNewRound(roundNumber + 1)
-					return
-				}
-			}
-		}()
+		select {
+		case <-nr.timerExpireRound.C:
+			go nr.StartNewRound(roundNumber + 1)
+			return
+		}
 	}()
 
 	proposer := nr.CalculateProposer(
@@ -481,13 +479,12 @@ func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) error {
 		VotingHole:     sebakcommon.VotingNOTYET,
 	}
 
-	{
-		err := sebakcommon.RunChecker(transactionsChecker, sebakcommon.DefaultDeferFunc)
-		if err != nil {
-			if _, ok := err.(sebakcommon.CheckerErrorStop); !ok {
-			}
-		}
+	if err := sebakcommon.RunChecker(transactionsChecker, sebakcommon.DefaultDeferFunc); err != nil {
+		return err
 	}
+
+	// remove invalid transactions
+	nr.Consensus().TransactionPool.Remove(transactionsChecker.InvalidTransactions()...)
 
 	ballot := NewBallot(nr.localNode, round, transactionsChecker.ValidTransactions)
 	ballot.SetVote(sebakcommon.BallotStateINIT, sebakcommon.VotingYES)
@@ -509,12 +506,12 @@ func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) error {
 	return nil
 }
 
-func (nr *NodeRunner) CloseConsensus(round Round, confirmed bool) {
-	nr.consensus.SetLatestRound(round)
+func (nr *NodeRunner) CloseConsensus(ballot Ballot, confirmed bool) {
+	nr.consensus.SetLatestRound(ballot.Round())
 
 	if confirmed {
 		go nr.StartNewRound(0)
 	} else {
-		go nr.StartNewRound(round.Number + 1)
+		go nr.StartNewRound(ballot.Round().Number + 1)
 	}
 }

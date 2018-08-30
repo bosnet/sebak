@@ -20,6 +20,29 @@ type BallotTransactionChecker struct {
 	CheckAll             bool
 }
 
+func (checker *BallotTransactionChecker) InvalidTransactions() (invalids []string) {
+	for _, hash := range checker.Transactions {
+		if _, found := checker.validTransactionsMap[hash]; found {
+			continue
+		}
+
+		invalids = append(invalids, hash)
+	}
+
+	return
+}
+
+func (checker *BallotTransactionChecker) setValidTransactions(hashes []string) {
+	checker.ValidTransactions = hashes
+
+	checker.validTransactionsMap = map[string]bool{}
+	for _, hash := range hashes {
+		checker.validTransactionsMap[hash] = true
+	}
+
+	return
+}
+
 // TransactionsIsNew checks the incoming transaction is
 // already stored or not.
 func IsNew(c sebakcommon.Checker, args ...interface{}) (err error) {
@@ -40,7 +63,7 @@ func IsNew(c sebakcommon.Checker, args ...interface{}) (err error) {
 	}
 
 	err = nil
-	checker.ValidTransactions = validTransactions
+	checker.setValidTransactions(validTransactions)
 
 	return
 }
@@ -60,14 +83,14 @@ func GetMissingTransaction(c sebakcommon.Checker, args ...interface{}) (err erro
 		validTransactions = append(validTransactions, hash)
 	}
 
-	checker.ValidTransactions = validTransactions
+	checker.setValidTransactions(validTransactions)
 
 	return
 }
 
-// TransactionsSameSource checks there are transactions
-// which has same source in the `Transactions`.
-func SameSource(c sebakcommon.Checker, args ...interface{}) (err error) {
+// BallotTransactionsSourceCheck checks there are transactions which has same
+// source in the `Transactions`.
+func BallotTransactionsSameSource(c sebakcommon.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotTransactionChecker)
 
 	var validTransactions []string
@@ -86,13 +109,13 @@ func SameSource(c sebakcommon.Checker, args ...interface{}) (err error) {
 		validTransactions = append(validTransactions, hash)
 	}
 	err = nil
-	checker.ValidTransactions = validTransactions
+	checker.setValidTransactions(validTransactions)
 
 	return
 }
 
-// SourceCheck calls `Transaction.Validate()`.
-func SourceCheck(c sebakcommon.Checker, args ...interface{}) (err error) {
+// BallotTransactionsSourceCheck calls `Transaction.Validate()`.
+func BallotTransactionsSourceCheck(c sebakcommon.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotTransactionChecker)
 
 	var validTransactions []string
@@ -109,7 +132,7 @@ func SourceCheck(c sebakcommon.Checker, args ...interface{}) (err error) {
 	}
 
 	err = nil
-	checker.ValidTransactions = validTransactions
+	checker.setValidTransactions(validTransactions)
 
 	return
 }

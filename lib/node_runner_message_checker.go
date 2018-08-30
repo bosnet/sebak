@@ -86,6 +86,30 @@ func SaveTransactionHistory(c sebakcommon.Checker, args ...interface{}) (err err
 	return
 }
 
+// SameSource checks there are transactions which has same source in the
+// `TransactionPool`.
+func MessageHasSameSource(c sebakcommon.Checker, args ...interface{}) (err error) {
+	checker := c.(*MessageChecker)
+
+	if checker.NodeRunner.Consensus().TransactionPool.IsSameSource(checker.Transaction.Source()) {
+		err = sebakerror.ErrorTransactionSameSource
+		return
+	}
+
+	return
+}
+
+// MessageValidate validates.
+func MessageValidate(c sebakcommon.Checker, args ...interface{}) (err error) {
+	checker := c.(*MessageChecker)
+
+	if err = checker.Transaction.Validate(checker.NodeRunner.Storage()); err != nil {
+		return
+	}
+
+	return
+}
+
 // PushIntoTransactionPool add the incoming
 // transactions into `TransactionPool`.
 func PushIntoTransactionPool(c sebakcommon.Checker, args ...interface{}) (err error) {

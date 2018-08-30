@@ -1,6 +1,8 @@
 package sebak
 
 import (
+	"fmt"
+	"io/ioutil"
 	"reflect"
 	"testing"
 	"time"
@@ -13,6 +15,21 @@ import (
 
 	"github.com/stellar/go/keypair"
 )
+
+var (
+	tlsKey *sebaknetwork.KeyGenerator
+)
+
+func init() {
+	kp, _ = keypair.Random()
+
+	dir, err := ioutil.TempDir("/tmp/", "sebak-test")
+	if err != nil {
+		panic(err)
+	}
+
+	tlsKey = sebaknetwork.NewKeyGenerator(dir, "sebak-test.crt", "sebak-test.key")
+}
 
 func createTestNodeRunner(n int) []*NodeRunner {
 	var ns []*sebaknetwork.MemoryNetwork
@@ -40,7 +57,6 @@ func createTestNodeRunner(n int) []*NodeRunner {
 	for i := 0; i < n; i++ {
 		v := nodes[i]
 		p, _ := NewDefaultVotingThresholdPolicy(66, 66)
-		p.SetValidators(len(v.GetValidators()) + 1)
 		is, _ := NewISAAC(networkID, v, p)
 		st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
 
@@ -93,6 +109,105 @@ func createTestNodeRunnerWithReady(n int) []*NodeRunner {
 	}
 
 	return nodeRunners
+}
+
+func createTestNodeRunnersHTTP2Network(n int) (nodeRunners []*NodeRunner, rootKP *keypair.Full) {
+	var nodes []*sebaknode.LocalNode
+	var ports []int
+	for i := 0; i < n; i++ {
+		kp, _ := keypair.Random()
+		port := sebakcommon.GetFreePort(ports...)
+		if port < 1 {
+			panic("failed to find free port")
+		}
+		ports = append(ports, port)
+
+		endpoint, _ := sebakcommon.NewEndpointFromString(
+			fmt.Sprintf(
+				"http://localhost:%d?NodeName=%s&HTTP2LogOutput=%s",
+				port,
+				kp.Address(),
+				"/dev/null",
+			),
+		)
+		node, _ := sebaknode.NewLocalNode(kp, endpoint, "")
+		nodes = append(nodes, node)
+	}
+
+	for i, node0 := range nodes {
+		for j, node1 := range nodes {
+			if i == j {
+				continue
+			}
+			node0.AddValidators(node1.ConvertToValidator())
+		}
+	}
+
+	rootKP, _ = keypair.Random()
+	genesisAccount := block.NewBlockAccount(
+		rootKP.Address(),
+		10000000000000,
+		sebakcommon.MakeGenesisCheckpoint(networkID),
+	)
+	for _, node := range nodes {
+		vth, _ := NewDefaultVotingThresholdPolicy(66, 66)
+		is, _ := NewISAAC(networkID, node, vth)
+		st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
+		networkConfig, _ := sebaknetwork.NewHTTP2NetworkConfigFromEndpoint(node.Endpoint())
+		network := sebaknetwork.NewHTTP2Network(networkConfig)
+		nodeRunner, _ := NewNodeRunner(string(networkID), node, vth, network, is, st)
+
+		genesisAccount.Save(nodeRunner.Storage())
+		MakeGenesisBlock(st, *genesisAccount)
+
+		nodeRunners = append(nodeRunners, nodeRunner)
+	}
+
+	return nodeRunners, rootKP
+}
+
+func createTestNodeRunnersHTTP2NetworkWithReady(n int) (nodeRunners []*NodeRunner, rootKP *keypair.Full) {
+	nodeRunners, rootKP = createTestNodeRunnersHTTP2Network(n)
+
+	for _, nr := range nodeRunners {
+		go func(nodeRunner *NodeRunner) {
+			if err := nodeRunner.Start(); err != nil {
+				panic(err)
+			}
+		}(nr)
+	}
+
+	return
+
+	T := time.NewTicker(100 * time.Millisecond)
+	stopTimer := make(chan bool)
+
+	go func() {
+		time.Sleep(5 * time.Second)
+		stopTimer <- true
+	}()
+
+	go func() {
+		for _ = range T.C {
+			var notyet bool
+			for _, nr := range nodeRunners {
+				if nr.ConnectionManager().CountConnected() != n-1 {
+					notyet = true
+					break
+				}
+			}
+			if notyet {
+				continue
+			}
+			stopTimer <- true
+		}
+	}()
+	select {
+	case <-stopTimer:
+		T.Stop()
+	}
+
+	return
 }
 
 func TestCreateNodeRunner(t *testing.T) {

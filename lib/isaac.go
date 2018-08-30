@@ -173,14 +173,16 @@ func (rr *RunningRound) Vote(ballot Ballot) {
 type TransactionPool struct {
 	sebakcommon.SafeLock
 
-	Pool   map[ /* Transaction.GetHash() */ string]Transaction
-	Hashes []string // Transaction.GetHash()
+	Pool    map[ /* Transaction.GetHash() */ string]Transaction
+	Hashes  []string // Transaction.GetHash()
+	Sources map[ /* Transaction.Source() */ string]bool
 }
 
 func NewTransactionPool() *TransactionPool {
 	return &TransactionPool{
-		Pool:   map[string]Transaction{},
-		Hashes: []string{},
+		Pool:    map[string]Transaction{},
+		Hashes:  []string{},
+		Sources: map[string]bool{},
 	}
 }
 
@@ -208,11 +210,16 @@ func (tp *TransactionPool) Add(tx Transaction) bool {
 
 	tp.Pool[tx.GetHash()] = tx
 	tp.Hashes = append(tp.Hashes, tx.GetHash())
+	tp.Sources[tx.Source()] = true
 
 	return true
 }
 
 func (tp *TransactionPool) Remove(hashes ...string) {
+	if len(hashes) < 1 {
+		return
+	}
+
 	tp.Lock()
 	defer tp.Unlock()
 
@@ -226,6 +233,10 @@ func (tp *TransactionPool) Remove(hashes ...string) {
 		indices[index] = 1
 		if index > max {
 			max = index
+		}
+
+		if tx, found := tp.Get(hash); found {
+			delete(tp.Sources, tx.Source())
 		}
 	}
 
@@ -258,6 +269,12 @@ func (tp *TransactionPool) AvailableTransactions() []string {
 	}
 
 	return tp.Hashes[:MaxTransactionsInBallot]
+}
+
+func (tp *TransactionPool) IsSameSource(source string) (found bool) {
+	_, found = tp.Sources[source]
+
+	return
 }
 
 type ISAAC struct {
