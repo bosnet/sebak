@@ -10,6 +10,22 @@
   revision = "e39e699e0a002c560bdff16804c81ac1cd12fac2"
 
 [[projects]]
+  digest = "1:d8ebbd207f3d3266d4423ce4860c9f3794956306ded6c7ba312ecc69cdfbf04c"
+  name = "github.com/PuerkitoBio/purell"
+  packages = ["."]
+  pruneopts = "NT"
+  revision = "0bcb03f4b4d0a9428594752bd2a3b9aa0a9d4bd4"
+  version = "v1.1.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:8098cd40cd09879efbf12e33bcd51ead4a66006ac802cd563a66c4f3373b9727"
+  name = "github.com/PuerkitoBio/urlesc"
+  packages = ["."]
+  pruneopts = "NT"
+  revision = "de5bf2ad457846296e2031421a34e2568e304e35"
+
+[[projects]]
   branch = "master"
   digest = "1:4cf11742b199ab3aacf26b00187e72f7ff8ba2145f363b74f295d54f098f79e4"
   name = "github.com/agl/ed25519"
@@ -19,14 +35,6 @@
   ]
   pruneopts = "NT"
   revision = "5312a61534124124185d41f09206b9fef1d88403"
-
-[[projects]]
-  branch = "master"
-  digest = "1:c819830f4f5ef85874a90ac3cbcc96cd322c715f5c96fbe4722eacd3dafbaa07"
-  name = "github.com/beorn7/perks"
-  packages = ["quantile"]
-  pruneopts = "NT"
-  revision = "3a771d992973f24aa725d07868b467d1ddfceafb"
 
 [[projects]]
   branch = "master"
@@ -73,20 +81,44 @@
   version = "v1.8.13"
 
 [[projects]]
+  digest = "1:260f7ebefc63024c8dfe2c9f1a2935a89fa4213637a1f522f592f80c001cc441"
+  name = "github.com/go-openapi/jsonpointer"
+  packages = ["."]
+  pruneopts = "NT"
+  revision = "3a0015ad55fa9873f41605d3e8f28cd279c32ab2"
+  version = "0.16.0"
+
+[[projects]]
+  digest = "1:98abd61947ff5c7c6fcfec5473d02a4821ed3a2dd99a4fbfdb7925b0dd745546"
+  name = "github.com/go-openapi/jsonreference"
+  packages = ["."]
+  pruneopts = "NT"
+  revision = "3fb327e6747da3043567ee86abd02bb6376b6be2"
+  version = "0.16.0"
+
+[[projects]]
+  digest = "1:dfab391de021809e0041f0ab5648da6b74dd16a685472a1b8c3dc06b3dca1ee2"
+  name = "github.com/go-openapi/spec"
+  packages = ["."]
+  pruneopts = "NT"
+  revision = "384415f06ee238aae1df5caad877de6ceac3a5c4"
+  version = "0.16.0"
+
+[[projects]]
+  digest = "1:44d7c281784896656e8c802c13a2e38d0f440904bdf6bdf968bb29f032df6a36"
+  name = "github.com/go-openapi/swag"
+  packages = ["."]
+  pruneopts = "NT"
+  revision = "becd2f08beafcca035645a8a101e0e3e18140458"
+  version = "0.16.0"
+
+[[projects]]
   digest = "1:a1efdbc2762667c8a41cbf02b19a0549c846bf2c1d08cad4f445e3344089f1f0"
   name = "github.com/go-stack/stack"
   packages = ["."]
   pruneopts = "NT"
   revision = "259ab82a6cad3992b4e21ff5cac294ccb06474bc"
   version = "v1.7.0"
-
-[[projects]]
-  digest = "1:d7cb4458ea8782e6efacd8f4940796ec559c90833509c436f40c4085b98156dd"
-  name = "github.com/golang/protobuf"
-  packages = ["proto"]
-  pruneopts = "NT"
-  revision = "aa810b61a9c79d51363740d207bb46cf8e620ed5"
-  version = "v1.2.0"
 
 [[projects]]
   branch = "master"
@@ -164,6 +196,18 @@
   version = "v1.8.0"
 
 [[projects]]
+  branch = "master"
+  digest = "1:7d9fcac7f1228470c4ea0ee31cdfb662a758c44df691e39b3e76c11d3e12ba8f"
+  name = "github.com/mailru/easyjson"
+  packages = [
+    "buffer",
+    "jlexer",
+    "jwriter",
+  ]
+  pruneopts = "NT"
+  revision = "60711f1a8329503b04e1c88535f419d0bb440bff"
+
+[[projects]]
   digest = "1:e0a9ecd540b69f570f96c593b713268aad428e4a25a98f23467c59e6f69ab880"
   name = "github.com/mattn/go-colorable"
   packages = ["."]
@@ -178,14 +222,6 @@
   pruneopts = "NT"
   revision = "0360b2af4f38e8d38c7fce2a9f4e702702d73a39"
   version = "v0.0.3"
-
-[[projects]]
-  digest = "1:ea1db000388d88b31db7531c83016bef0d6db0d908a07794bfc36aca16fbf935"
-  name = "github.com/matttproud/golang_protobuf_extensions"
-  packages = ["pbutil"]
-  pruneopts = "NT"
-  revision = "c12348ce28de40eed0136aa2b644d0ee0650e56c"
-  version = "v1.0.1"
 
 [[projects]]
   branch = "master"
@@ -218,50 +254,6 @@
   pruneopts = "NT"
   revision = "792786c7400a136282c1664665ae0a8db921c6c2"
   version = "v1.0.0"
-
-[[projects]]
-  digest = "1:a22debd993d18b9203c985810f33f52e7583724800ee8d15e7d362e7175639d1"
-  name = "github.com/prometheus/client_golang"
-  packages = [
-    "prometheus",
-    "prometheus/promhttp",
-  ]
-  pruneopts = "NT"
-  revision = "c5b7fccd204277076155f10851dad72b76a49317"
-  version = "v0.8.0"
-
-[[projects]]
-  branch = "master"
-  digest = "1:c2cc5049e927e2749c0d5163c9f8d924880d83e84befa732b9aad0b6be227bed"
-  name = "github.com/prometheus/client_model"
-  packages = ["go"]
-  pruneopts = "NT"
-  revision = "5c3871d89910bfb32f5fcab2aa4b9ec68e65a99f"
-
-[[projects]]
-  branch = "master"
-  digest = "1:fa652fffdb9a8a025500345a0e1472db5b3c07a8b20f33a3ae2c13f59d6f29d4"
-  name = "github.com/prometheus/common"
-  packages = [
-    "expfmt",
-    "internal/bitbucket.org/ww/goautoneg",
-    "model",
-  ]
-  pruneopts = "NT"
-  revision = "c7de2306084e37d54b8be01f3541a8464345e9a5"
-
-[[projects]]
-  branch = "master"
-  digest = "1:3c54832e04d11b79309415c5da9a5d85940ea367c1693ae0aebf26b0ee405ca1"
-  name = "github.com/prometheus/procfs"
-  packages = [
-    ".",
-    "internal/util",
-    "nfs",
-    "xfs",
-  ]
-  pruneopts = "NT"
-  revision = "05ee40e3a273f7245e8777337fc7b46e533a9a92"
 
 [[projects]]
   digest = "1:6bc0652ea6e39e22ccd522458b8bdd8665bf23bdc5a20eec90056e4dc7e273ca"
@@ -316,6 +308,30 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:4789c9a0bdd9b3d22bb38c92f40b70495cecc713d17bffac5f9a801d9b7f3bf6"
+  name = "github.com/swaggo/files"
+  packages = ["."]
+  pruneopts = "NT"
+  revision = "49c8a91ea3fafab040bb3da430dbd76d67448bd6"
+
+[[projects]]
+  branch = "master"
+  digest = "1:c3afe85a29547d57272ea5084e4377fa2c7635089fe0fa607bfa700c4ed7e41d"
+  name = "github.com/swaggo/http-swagger"
+  packages = ["."]
+  pruneopts = "NT"
+  revision = "e030f0899372a1184af9d99e174e26c12437f8c0"
+
+[[projects]]
+  digest = "1:a435822bc3d45f38b61376baba426ada67ae57e381b98cfba0c577d99d10210c"
+  name = "github.com/swaggo/swag"
+  packages = ["."]
+  pruneopts = "NT"
+  revision = "db2ee6c14a35e4fca95b0d75054296ef2b699050"
+  version = "v1.3.2"
+
+[[projects]]
+  branch = "master"
   digest = "1:4935f6f14363e5243a4843e35b2024bba4ebb2da48bf7f483a3966fd1cd23d20"
   name = "github.com/syndtr/goleveldb"
   packages = [
@@ -351,11 +367,14 @@
   digest = "1:5ece59b75274e04f53cf6f25c6c20500b66e341d9d62ecb3d348a54bbe4d558e"
   name = "golang.org/x/net"
   packages = [
+    "context",
     "http/httpguts",
     "http2",
     "http2/hpack",
     "idna",
     "lex/httplex",
+    "webdav",
+    "webdav/internal/xml",
   ]
   pruneopts = "NT"
   revision = "5f9ae10d9af5b1c89ae6904293b14b064d4ada23"
@@ -389,6 +408,7 @@
     "unicode/cldr",
     "unicode/norm",
     "unicode/rangetable",
+    "width",
   ]
   pruneopts = "NT"
   revision = "f21a4dfb5e38f5895301dc265a8def02365cc3d0"
@@ -426,12 +446,13 @@
     "github.com/inconshreveable/log15",
     "github.com/magiconair/properties/assert",
     "github.com/oklog/run",
-    "github.com/prometheus/client_golang/prometheus",
-    "github.com/prometheus/client_golang/prometheus/promhttp",
     "github.com/satori/go.uuid",
     "github.com/spf13/cobra",
     "github.com/stellar/go/keypair",
+    "github.com/stretchr/testify/assert",
     "github.com/stretchr/testify/require",
+    "github.com/swaggo/http-swagger",
+    "github.com/swaggo/swag",
     "github.com/syndtr/goleveldb/leveldb",
     "github.com/syndtr/goleveldb/leveldb/iterator",
     "github.com/syndtr/goleveldb/leveldb/opt",
