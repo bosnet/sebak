@@ -1,11 +1,8 @@
 package sebak
 
 import (
-	"fmt"
-
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
-	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
 )
 
@@ -54,7 +51,7 @@ func GetMissingTransaction(c sebakcommon.Checker, args ...interface{}) (err erro
 	checker := c.(*BallotTransactionChecker)
 
 	var validTransactions []string
-	sources := map[string]bool{}
+	//sources := map[string]bool{}
 	for _, hash := range checker.ValidTransactions {
 		var checkMissingTransaction = checker.NodeRunner.Consensus().TransactionPool.Has(hash)
 		if !checkMissingTransaction {
