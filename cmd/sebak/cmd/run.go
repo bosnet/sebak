@@ -65,7 +65,7 @@ var (
 	timeoutSIGN       time.Duration
 	timeoutACCEPT     time.Duration
 	timeoutALLCONFIRM time.Duration
-	transactionsLimit int
+	transactionsLimit uint64
 	logLevel          logging.Lvl
 	log               logging.Logger
 )
@@ -210,60 +210,39 @@ func parseFlagsNode() {
 		common.PrintFlagsError(nodeCmd, "--storage", err)
 	}
 
-	var tmpInt int
-	if tmpInt, err = strconv.Atoi(flagTimeoutINIT); err != nil {
+	var tmpUint64 uint64
+	if tmpUint64, err = strconv.ParseUint(flagTimeoutINIT, 10, 64); err != nil {
 		common.PrintFlagsError(nodeCmd, "--timeout-init", err)
-		timeoutINIT = 0
 	} else {
-		if tmpInt > 0 {
-			timeoutINIT = time.Duration(tmpInt) * time.Second
-		} else {
-			timeoutINIT = 0
-		}
+		timeoutINIT = time.Duration(tmpUint64) * time.Second
 	}
 
-	if tmpInt, err = strconv.Atoi(flagTimeoutSIGN); err != nil {
+	if tmpUint64, err = strconv.ParseUint(flagTimeoutSIGN, 10, 64); err != nil {
 		common.PrintFlagsError(nodeCmd, "--timeout-sign", err)
-		timeoutSIGN = 0
 	} else {
-		if tmpInt > 0 {
-			timeoutSIGN = time.Duration(tmpInt) * time.Second
-		} else {
-			timeoutSIGN = 0
-		}
+		timeoutSIGN = time.Duration(tmpUint64) * time.Second
 	}
 
-	if tmpInt, err = strconv.Atoi(flagTimeoutACCEPT); err != nil {
+	if tmpUint64, err = strconv.ParseUint(flagTimeoutACCEPT, 10, 64); err != nil {
 		common.PrintFlagsError(nodeCmd, "--timeout-accept", err)
-		timeoutACCEPT = 0
 	} else {
-		if tmpInt > 0 {
-			timeoutACCEPT = time.Duration(tmpInt) * time.Second
-		} else {
-			timeoutACCEPT = 0
-		}
+		timeoutACCEPT = time.Duration(tmpUint64) * time.Second
 	}
 
-	if tmpInt, err = strconv.Atoi(flagTimeoutALLCONFIRM); err != nil {
+	if tmpUint64, err = strconv.ParseUint(flagTimeoutALLCONFIRM, 10, 64); err != nil {
 		common.PrintFlagsError(nodeCmd, "--timeout-allconfirm", err)
-		timeoutALLCONFIRM = 0
 	} else {
-		if tmpInt > 0 {
-			timeoutALLCONFIRM = time.Duration(tmpInt) * time.Second
-		} else {
-			timeoutALLCONFIRM = 0
-		}
+		timeoutALLCONFIRM = time.Duration(tmpUint64) * time.Second
 	}
 
-	if transactionsLimit, err = strconv.Atoi(flagTransactionsLimit); err != nil {
+	if transactionsLimit, err = strconv.ParseUint(flagTransactionsLimit, 10, 64); err != nil {
 		common.PrintFlagsError(nodeCmd, "--transactions-limit", err)
-		if transactionsLimit < 0 {
-			transactionsLimit = 0
-		}
 	}
 
-	if threshold, err = strconv.Atoi(flagThreshold); err != nil {
+	if tmpUint64, err = strconv.ParseUint(flagThreshold, 10, 64); err != nil {
 		common.PrintFlagsError(nodeCmd, "--threshold", err)
+	} else {
+		threshold = int(tmpUint64)
 	}
 
 	if logLevel, err = logging.LvlFromString(flagLogLevel); err != nil {
