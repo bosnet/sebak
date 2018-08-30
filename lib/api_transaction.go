@@ -2,7 +2,6 @@ package sebak
 
 import (
 	"fmt"
-	// "io/ioutil"
 	"net/http"
 
 	"boscoin.io/sebak/lib/common"
@@ -137,74 +136,4 @@ func GetTransactionByHashHandler(storage *sebakstorage.LevelDBBackend) http.Hand
 			}
 		}
 	}
-}
-
-const GetMissingTransactionByHashHandlerPattern = "/missingtxs"
-
-func GetMissingTransactionsByHashHandler(storage *sebakstorage.LevelDBBackend /**nr *NodeRunner**/) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-		key := vars["hash"]
-		// var requestBody []byte
-		var err error
-
-		if r.Method != "POST" {
-			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-			return
-		}
-		// if requestBody, err := ioutil.ReadAll(r.Body); err != nil {
-		// 	http.Error(w, "Error reading request body", http.StatusInternalServerError)
-		// 	return
-		// }
-		// if hash, err := NewMissingTransactionsFromJSON(requestBody); err != nil {
-
-		// }
-
-		var readyChan = make(chan struct{})
-		iterateId := sebakcommon.GetUniqueIDFromUUID()
-		go func() {
-			<-readyChan
-
-			var bt BlockTransaction
-			if bt, err = GetBlockTransaction(storage, key); err != nil {
-				http.Error(w, "Error reading request body", http.StatusInternalServerError)
-				return
-			}
-			observer.BlockTransactionObserver.Trigger(fmt.Sprintf("iterate-%s", iterateId), &bt)
-		}()
-
-		callBackFunc := func(args ...interface{}) (missingtxs []byte, err error) {
-			ba := args[1].(*BlockTransaction)
-			if missingtxs, err = ba.Serialize(); err != nil {
-				return []byte{}, sebakerror.ErrorBlockAccountDoesNotExists
-			}
-			return missingtxs, nil
-		}
-
-		event := fmt.Sprintf("iterate-%s", iterateId)
-		event += " " + fmt.Sprintf("hash-%s", key)
-		streaming(observer.BlockTransactionObserver, w, event, callBackFunc, readyChan)
-
-		var s []byte
-		if found, err := ExistBlockTransaction(storage, key); err != nil {
-			http.Error(w, "Error reading request body", http.StatusInternalServerError)
-			return
-		} else if found {
-			var bt BlockTransaction
-			if bt, err = GetBlockTransaction(storage, key); err != nil {
-				http.Error(w, "Error reading request body", http.StatusInternalServerError)
-				return
-			}
-			if s, err = bt.Serialize(); err != nil {
-				http.Error(w, "Error reading request body", http.StatusInternalServerError)
-				return
-			}
-		}
-		if _, err = w.Write(s); err != nil {
-			http.Error(w, "Error reading request body", http.StatusInternalServerError)
-			return
-		}
-
-	}
-
 }

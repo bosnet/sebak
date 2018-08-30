@@ -81,7 +81,7 @@ func (missingTxApi MissingTxAPI) SendMissingTxToRequestNode(storage *sebakstorag
 					if missingBlockTransaction, err = GetBlockTransaction(storage, hash); err != nil {
 						return
 					}
-					// append blocktransaction to Mp
+					// append blocktransaction to Map
 					resultTx[hash] = missingBlockTransaction.Transaction()
 
 				}
