@@ -20,6 +20,29 @@ type BallotTransactionChecker struct {
 	CheckAll             bool
 }
 
+func (checker *BallotTransactionChecker) InvalidTransactions() (invalids []string) {
+	for _, hash := range checker.Transactions {
+		if _, found := checker.validTransactionsMap[hash]; found {
+			continue
+		}
+
+		invalids = append(invalids, hash)
+	}
+
+	return
+}
+
+func (checker *BallotTransactionChecker) setValidTransactions(hashes []string) {
+	checker.ValidTransactions = hashes
+
+	checker.validTransactionsMap = map[string]bool{}
+	for _, hash := range hashes {
+		checker.validTransactionsMap[hash] = true
+	}
+
+	return
+}
+
 // TransactionsIsNew checks the incoming transaction is
 // already stored or not.
 func IsNew(c sebakcommon.Checker, args ...interface{}) (err error) {
@@ -51,7 +74,7 @@ func GetMissingTransaction(c sebakcommon.Checker, args ...interface{}) (err erro
 	checker := c.(*BallotTransactionChecker)
 
 	var validTransactions []string
-	for _, hash := range checker.validTransactions {
+	for _, hash := range checker.ValidTransactions {
 		if !checker.NodeRunner.Consensus().TransactionPool.Has(hash) {
 			// TODO get transaction from proposer and check
 			// `Transaction.IsWellFormed()`
@@ -65,14 +88,14 @@ func GetMissingTransaction(c sebakcommon.Checker, args ...interface{}) (err erro
 	return
 }
 
-// TransactionsSameSource checks there are transactions
-// which has same source in the `Transactions`.
-func SameSource(c sebakcommon.Checker, args ...interface{}) (err error) {
+// BallotTransactionsSourceCheck checks there are transactions which has same
+// source in the `Transactions`.
+func BallotTransactionsSameSource(c sebakcommon.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotTransactionChecker)
 
 	var validTransactions []string
 	sources := map[string]bool{}
-	for _, hash := range checker.validTransactions {
+	for _, hash := range checker.ValidTransactions {
 		tx, _ := checker.NodeRunner.Consensus().TransactionPool.Get(hash)
 		if found := sebakcommon.InStringMap(sources, tx.B.Source); found {
 			if !checker.CheckAll {
@@ -91,12 +114,12 @@ func SameSource(c sebakcommon.Checker, args ...interface{}) (err error) {
 	return
 }
 
-// SourceCheck calls `Transaction.Validate()`.
-func SourceCheck(c sebakcommon.Checker, args ...interface{}) (err error) {
+// BallotTransactionsSourceCheck calls `Transaction.Validate()`.
+func BallotTransactionsSourceCheck(c sebakcommon.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotTransactionChecker)
 
 	var validTransactions []string
-	for _, hash := range checker.validTransactions {
+	for _, hash := range checker.ValidTransactions {
 		tx, _ := checker.NodeRunner.Consensus().TransactionPool.Get(hash)
 
 		if err = tx.Validate(checker.NodeRunner.Storage()); err != nil {

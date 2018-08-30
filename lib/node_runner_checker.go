@@ -204,8 +204,8 @@ func BallotCheckResult(c sebakcommon.Checker, args ...interface{}) (err error) {
 var handleBallotTransactionCheckerFuncs = []sebakcommon.CheckerFunc{
 	IsNew,
 	GetMissingTransaction,
-	SameSource,
-	SourceCheck,
+	BallotTransactionsSameSource,
+	BallotTransactionsSourceCheck,
 }
 
 // INITBallotValidateTransactions validates the

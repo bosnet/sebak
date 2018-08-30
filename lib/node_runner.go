@@ -32,6 +32,8 @@ var DefaultHandleMessageFromClientCheckerFuncs = []sebakcommon.CheckerFunc{
 	TransactionUnmarshal,
 	HasTransaction,
 	SaveTransactionHistory,
+	MessageHasSameSource,
+	MessageValidate,
 	PushIntoTransactionPool,
 	BroadcastTransaction,
 }

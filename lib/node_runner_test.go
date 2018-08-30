@@ -17,9 +17,7 @@ import (
 )
 
 var (
-	kp      *keypair.Full
-	account *block.BlockAccount
-	tlsKey  *sebaknetwork.KeyGenerator
+	tlsKey *sebaknetwork.KeyGenerator
 )
 
 func init() {

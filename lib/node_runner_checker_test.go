@@ -28,7 +28,7 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 	runChecker := func(tx Transaction, expectedError error) {
 		messageData, _ := tx.Serialize()
 
-		checker := &NodeRunnerHandleMessageChecker{
+		checker := &MessageChecker{
 			DefaultChecker: sebakcommon.DefaultChecker{DefaultHandleMessageFromClientCheckerFuncs},
 			NodeRunner:     nodeRunner,
 			LocalNode:      nodeRunner.Node(),
