@@ -148,6 +148,9 @@ func (nr *NodeRunner) SetProposerCalculator(c ProposerCalculator) {
 	nr.proposerCalculator = c
 }
 
+func (nr *NodeRunner) SetConf(conf *NodeRunnerConfiguration) {
+}
+
 func (nr *NodeRunner) Ready() {
 	nr.network.SetContext(nr.ctx)
 	nr.network.AddHandler(nr.ctx, AddAPIHandlers(nr.storage))
