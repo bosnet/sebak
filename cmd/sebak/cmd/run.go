@@ -210,35 +210,16 @@ func parseFlagsNode() {
 		common.PrintFlagsError(nodeCmd, "--storage", err)
 	}
 
-	var tmpUint64 uint64
-	if tmpUint64, err = strconv.ParseUint(flagTimeoutINIT, 10, 64); err != nil {
-		common.PrintFlagsError(nodeCmd, "--timeout-init", err)
-	} else {
-		timeoutINIT = time.Duration(tmpUint64) * time.Second
-	}
-
-	if tmpUint64, err = strconv.ParseUint(flagTimeoutSIGN, 10, 64); err != nil {
-		common.PrintFlagsError(nodeCmd, "--timeout-sign", err)
-	} else {
-		timeoutSIGN = time.Duration(tmpUint64) * time.Second
-	}
-
-	if tmpUint64, err = strconv.ParseUint(flagTimeoutACCEPT, 10, 64); err != nil {
-		common.PrintFlagsError(nodeCmd, "--timeout-accept", err)
-	} else {
-		timeoutACCEPT = time.Duration(tmpUint64) * time.Second
-	}
-
-	if tmpUint64, err = strconv.ParseUint(flagTimeoutALLCONFIRM, 10, 64); err != nil {
-		common.PrintFlagsError(nodeCmd, "--timeout-allconfirm", err)
-	} else {
-		timeoutALLCONFIRM = time.Duration(tmpUint64) * time.Second
-	}
+	timeoutINIT = getTimeout(flagTimeoutINIT, "--timeout-init")
+	timeoutSIGN = getTimeout(flagTimeoutSIGN, "--timeout-sign")
+	timeoutACCEPT = getTimeout(flagTimeoutACCEPT, "--timeout-accept")
+	timeoutALLCONFIRM = getTimeout(flagTimeoutALLCONFIRM, "--timeout-allconfirm")
 
 	if transactionsLimit, err = strconv.ParseUint(flagTransactionsLimit, 10, 64); err != nil {
 		common.PrintFlagsError(nodeCmd, "--transactions-limit", err)
 	}
 
+	var tmpUint64 uint64
 	if tmpUint64, err = strconv.ParseUint(flagThreshold, 10, 64); err != nil {
 		common.PrintFlagsError(nodeCmd, "--threshold", err)
 	} else {
@@ -299,6 +280,16 @@ func parseFlagsNode() {
 	if flagVerbose {
 		http2.VerboseLogs = true
 	}
+}
+
+func getTimeout(timeoutStr string, errMessage string) time.Duration {
+	var timeoutDuration time.Duration
+	if tmpUint64, err := strconv.ParseUint(flagTimeoutINIT, 10, 64); err != nil {
+		common.PrintFlagsError(nodeCmd, errMessage, err)
+	} else {
+		timeoutDuration = time.Duration(tmpUint64) * time.Second
+	}
+	return timeoutDuration
 }
 
 func runNode() {
