@@ -1,7 +1,7 @@
 module boscoin.io/sebak
 
 require (
-	github.com/GianlucaGuarini/go-observable v0.0.0-20171228155646-e39e699e0a00
+	github.com/GianlucaGuarini/go-observable v0.0.0-20180829201609-d386f0081a66
 	github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412 // indirect
 	github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973 // indirect
 	github.com/btcsuite/btcd v0.0.0-20180810000619-f899737d7f27 // indirect
