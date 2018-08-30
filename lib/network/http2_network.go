@@ -156,6 +156,11 @@ func (t *HTTP2Network) AddHandler(pattern string, handler http.HandlerFunc) (rou
 		routerName = RouterNameAPI
 		prefix = pattern[len(UrlPathPrefixAPI):]
 	default:
+		// if a pattern has a suffix * , the router sets path prefix and handler
+		if strings.HasSuffix(pattern, "*") {
+			pathPrefix := strings.TrimSuffix(pattern, "*")
+			return t.router.PathPrefix(pathPrefix).Handler(handler)
+		}
 		// if unknown pattern, it will be attached to base router
 		return t.router.HandleFunc(pattern, handler)
 	}
