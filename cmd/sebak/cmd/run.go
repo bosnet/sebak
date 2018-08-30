@@ -215,32 +215,51 @@ func parseFlagsNode() {
 		common.PrintFlagsError(nodeCmd, "--timeout-init", err)
 		timeoutINIT = 0
 	} else {
-		timeoutINIT = time.Duration(tmpInt) * time.Second
+		if tmpInt > 0 {
+			timeoutINIT = time.Duration(tmpInt) * time.Second
+		} else {
+			timeoutINIT = 0
+		}
 	}
 
 	if tmpInt, err = strconv.Atoi(flagTimeoutSIGN); err != nil {
 		common.PrintFlagsError(nodeCmd, "--timeout-sign", err)
 		timeoutSIGN = 0
 	} else {
-		timeoutSIGN = time.Duration(tmpInt) * time.Second
+		if tmpInt > 0 {
+			timeoutSIGN = time.Duration(tmpInt) * time.Second
+		} else {
+			timeoutSIGN = 0
+		}
 	}
 
 	if tmpInt, err = strconv.Atoi(flagTimeoutACCEPT); err != nil {
 		common.PrintFlagsError(nodeCmd, "--timeout-accept", err)
 		timeoutACCEPT = 0
 	} else {
-		timeoutACCEPT = time.Duration(tmpInt) * time.Second
+		if tmpInt > 0 {
+			timeoutACCEPT = time.Duration(tmpInt) * time.Second
+		} else {
+			timeoutACCEPT = 0
+		}
 	}
 
 	if tmpInt, err = strconv.Atoi(flagTimeoutALLCONFIRM); err != nil {
 		common.PrintFlagsError(nodeCmd, "--timeout-allconfirm", err)
 		timeoutALLCONFIRM = 0
 	} else {
-		timeoutALLCONFIRM = time.Duration(tmpInt) * time.Second
+		if tmpInt > 0 {
+			timeoutALLCONFIRM = time.Duration(tmpInt) * time.Second
+		} else {
+			timeoutALLCONFIRM = 0
+		}
 	}
 
 	if transactionsLimit, err = strconv.Atoi(flagTransactionsLimit); err != nil {
 		common.PrintFlagsError(nodeCmd, "--transactions-limit", err)
+		if transactionsLimit < 0 {
+			transactionsLimit = 0
+		}
 	}
 
 	if threshold, err = strconv.Atoi(flagThreshold); err != nil {
@@ -352,6 +371,9 @@ func runNode() {
 		}
 		if timeoutALLCONFIRM != 0 {
 			conf.TimeoutALLCONFIRM = timeoutALLCONFIRM
+		}
+		if transactionsLimit != 0 {
+			conf.TransactionsLimit = uint64(transactionsLimit)
 		}
 
 		if err != nil {
