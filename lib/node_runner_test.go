@@ -3,6 +3,7 @@ package sebak
 import (
 	"fmt"
 	"io/ioutil"
+	"sync"
 	"testing"
 	"time"
 
@@ -252,6 +253,47 @@ func TestNodeRunnerCreateAccount(t *testing.T) {
 	for i, nr := range nodeRunners {
 		if !nr.Consensus().TransactionPool.Has(tx.GetHash()) {
 			t.Error("failed to broadcast message", "node", nr.Node(), "index", i)
+		}
+	}
+}
+
+func TestNodeRunnerSaveBlock(t *testing.T) {
+	numberOfNodes := 4
+	nodeRunners, _ := createTestNodeRunnersHTTP2NetworkWithReady(numberOfNodes)
+	previousBlockHeight := map[string]uint64{}
+	for _, nodeRunner := range nodeRunners {
+		bck, err := GetLatestBlock(nodeRunner.Storage())
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		previousBlockHeight[nodeRunner.Node().Address()] = bck.Height
+	}
+	var wg sync.WaitGroup
+	wg.Add(numberOfNodes)
+	checkerDeferFunc := func(n int, checker sebakcommon.Checker, err error) {
+		if _, ok := err.(sebakcommon.CheckerStop); !ok {
+			return
+		}
+		wg.Done()
+	}
+	for _, nodeRunner := range nodeRunners {
+		nodeRunner.SetHandleMessageCheckerDeferFunc(checkerDeferFunc)
+	}
+	wg.Wait()
+	for _, nodeRunner := range nodeRunners {
+		bck, err := GetLatestBlock(nodeRunner.Storage())
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		previous := previousBlockHeight[nodeRunner.Node().Address()]
+		if previous+1 != bck.Height {
+			t.Error("nil block must be stored")
+			return
+		}
+		if len(bck.Transactions) != 0 {
+			t.Error("`Block..Transactions` must be empty")
 		}
 	}
 }

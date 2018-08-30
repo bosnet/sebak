@@ -1,5 +1,5 @@
 /*
-	In this file, there are unittests about `Ballot` struct
+	This file contains unittests for the Ballot struct
 */
 
 package sebak
@@ -41,9 +41,7 @@ func TestErrorBallotHasOverMaxTransactionsInBallot(t *testing.T) {
 	require.Error(t, err, sebakerror.ErrorBallotHasOverMaxTransactionsInBallot)
 }
 
-/*
-	TestBallotHash checks that ballot.GetHash() makes non-empty hash.
-*/
+//	TestBallotHash checks that ballot.GetHash() makes non-empty hash.
 func TestBallotHash(t *testing.T) {
 	nodeRunners := createTestNodeRunner(1)
 

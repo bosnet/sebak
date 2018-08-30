@@ -15,12 +15,12 @@ type Header struct {
 	// TODO smart contract fields
 }
 
-func NewBlockHeader(prevRound Round, currentTxs uint64, txRoot string) *Header {
+func NewBlockHeader(round Round, currentTxs uint64, txRoot string) *Header {
 	return &Header{
-		PrevBlockHash:    prevRound.BlockHash,
+		PrevBlockHash:    round.BlockHash,
 		Timestamp:        time.Now(),
-		Height:           prevRound.BlockHeight + 1,
-		TotalTxs:         prevRound.TotalTxs + currentTxs,
+		Height:           round.BlockHeight + 1,
+		TotalTxs:         round.TotalTxs + currentTxs,
 		TransactionsRoot: txRoot,
 	}
 }
