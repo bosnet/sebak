@@ -1,0 +1,46 @@
+basePath: /api
+definitions:
+  block.BlockAccount:
+    properties:
+      address:
+        type: string
+      balance:
+        type: string
+      checkpoint:
+        type: string
+      codeHash:
+        items:
+          type: byte
+        type: array
+      rootHash:
+        $ref: '#/definitions/sebakcommon.Hash'
+        type: object
+    type: object
+  sebakcommon.Hash:
+    type: object
+info:
+  contact: {}
+  license: {}
+  title: API
+  version: "1.0"
+paths:
+  /account/{address}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: Account's address
+        in: path
+        name: address
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/block.BlockAccount'
+            type: object
+        "500": {}
+swagger: "2.0"

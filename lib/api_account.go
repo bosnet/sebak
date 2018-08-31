@@ -14,6 +14,13 @@ import (
 
 const GetAccountHandlerPattern = "/account/{address}"
 
+// Get Account godoc
+// @Accept json
+// @Produce json
+// @Param address path string true "Account's address"
+// @Success 200 {object} block.BlockAccount
+// @Failure 500
+// @Router /account/{address} [get]
 func (api NetworkHandlerAPI) GetAccountHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	address := vars["address"]

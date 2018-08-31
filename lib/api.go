@@ -18,6 +18,9 @@ type NetworkHandlerNode struct {
 	network   sebaknetwork.Network
 }
 
+// @title API
+// @version 1.0
+// @BasePath /api
 type NetworkHandlerAPI struct {
 	localNode *sebaknode.LocalNode
 	network   sebaknetwork.Network
