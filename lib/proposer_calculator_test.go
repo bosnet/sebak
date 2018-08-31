@@ -1,7 +1,3 @@
-/*
-	In this file, there are unittests for checking CalculateProposer method.
-*/
-
 package sebak
 
 import (

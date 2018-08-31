@@ -1,7 +1,3 @@
-/*
-	This file contains unittests for the Ballot struct
-*/
-
 package sebak
 
 import (
