@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib"
 )
 
 func NodeInfoHandler(ctx context.Context, t *HTTP2Network) HandlerFunc {
@@ -96,6 +97,18 @@ func BallotHandler(ctx context.Context, t *HTTP2Network) HandlerFunc {
 		t.messageBroker.ReceiveMessage(t, Message{Type: BallotMessage, Data: body})
 		t.messageBroker.ResponseMessage(w, string(body))
 
+		return
+	}
+}
+
+func NodeAPITransactionHandler(ctx context.Context, t *HTTP2Network) HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		txpool := ctx.Value("txpool").(sebak.TransactionPool)
+		//TODO: get request parameters from r
+		txpool.Has("hash")
+		//TODO: retrieve transaction from txpool denoted by request parameters
+
+		//TODO: write response
 		return
 	}
 }
