@@ -89,8 +89,9 @@ func (b Ballot) IsWellFormed(networkID []byte) (err error) {
 		return
 	}
 
-	timeStart := time.Now().Add(time.Duration(-1) * BallotConfirmedTimeAllowDuration)
-	timeEnd := time.Now().Add(BallotConfirmedTimeAllowDuration)
+	now := time.Now()
+	timeStart := now.Add(time.Duration(-1) * BallotConfirmedTimeAllowDuration)
+	timeEnd := now.Add(BallotConfirmedTimeAllowDuration)
 	if confirmed.Before(timeStart) || confirmed.After(timeEnd) {
 		err = sebakerror.ErrorMessageHasIncorrectTime
 		return
