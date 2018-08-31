@@ -11,15 +11,11 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
-	"time"
 
 	"github.com/btcsuite/btcutil/base58"
 	uuid "github.com/satori/go.uuid"
+	"github.com/stellar/go/keypair"
 )
-
-func NowISO8601() string {
-	return time.Now().Format("2006-01-02T15:04:05.000000000Z07:00")
-}
 
 func GetUniqueIDFromUUID() string {
 	return uuid.Must(uuid.NewV1(), nil).String()
@@ -185,4 +181,9 @@ func IsStringMapEqualWithHash(a, b map[string]bool) bool {
 	bHash := MustMakeObjectHash(b)
 
 	return bytes.Equal(aHash, bHash)
+}
+
+// MakeSignature makes signature from given hash string
+func MakeSignature(kp keypair.KP, networkID []byte, hash string) ([]byte, error) {
+	return kp.Sign(append(networkID, []byte(hash)...))
 }

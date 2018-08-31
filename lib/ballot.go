@@ -2,6 +2,7 @@ package sebak
 
 import (
 	"encoding/json"
+	"time"
 
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/stellar/go/keypair"
@@ -80,6 +81,26 @@ func (b Ballot) IsWellFormed(networkID []byte) (err error) {
 		return
 	}
 
+	var confirmed, proposerConfirmed time.Time
+	if confirmed, err = sebakcommon.ParseISO8601(b.B.Confirmed); err != nil {
+		return
+	}
+	if proposerConfirmed, err = sebakcommon.ParseISO8601(b.ProposerConfirmed()); err != nil {
+		return
+	}
+
+	now := time.Now()
+	timeStart := now.Add(time.Duration(-1) * BallotConfirmedTimeAllowDuration)
+	timeEnd := now.Add(BallotConfirmedTimeAllowDuration)
+	if confirmed.Before(timeStart) || confirmed.After(timeEnd) {
+		err = sebakerror.ErrorMessageHasIncorrectTime
+		return
+	}
+	if proposerConfirmed.Before(timeStart) || proposerConfirmed.After(timeEnd) {
+		err = sebakerror.ErrorMessageHasIncorrectTime
+		return
+	}
+
 	if err = b.Verify(networkID); err != nil {
 		return
 	}
@@ -140,14 +161,14 @@ func (b *Ballot) Sign(kp keypair.KP, networkID []byte) {
 	if kp.Address() == b.B.Proposed.Proposer {
 		b.B.Proposed.Confirmed = sebakcommon.NowISO8601()
 		hash := sebakcommon.MustMakeObjectHash(b.B.Proposed)
-		signature, _ := kp.Sign(append(networkID, []byte(hash)...))
+		signature, _ := sebakcommon.MakeSignature(kp, networkID, string(hash))
 		b.H.ProposerSignature = base58.Encode(signature)
 	}
 
 	b.B.Confirmed = sebakcommon.NowISO8601()
 	b.B.Source = kp.Address()
 	b.H.Hash = b.B.MakeHashString()
-	signature, _ := kp.Sign(append(networkID, []byte(b.H.Hash)...))
+	signature, _ := sebakcommon.MakeSignature(kp, networkID, b.H.Hash)
 	b.H.Signature = base58.Encode(signature)
 
 	return

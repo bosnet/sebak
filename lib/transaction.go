@@ -222,7 +222,7 @@ func (tx Transaction) String() string {
 
 func (tx *Transaction) Sign(kp keypair.KP, networkID []byte) {
 	tx.H.Hash = tx.B.MakeHashString()
-	signature, _ := kp.Sign(append(networkID, []byte(tx.H.Hash)...))
+	signature, _ := sebakcommon.MakeSignature(kp, networkID, tx.H.Hash)
 
 	tx.H.Signature = base58.Encode(signature)
 
