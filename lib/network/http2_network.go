@@ -185,6 +185,7 @@ func (t *HTTP2Network) Ready() error {
 	nodeRouter.HandleFunc("/connect", ConnectHandler(t.Context(), t)).Methods("POST")
 	nodeRouter.HandleFunc("/message", MessageHandler(t.Context(), t)).Methods("POST")
 	nodeRouter.HandleFunc("/ballot", BallotHandler(t.Context(), t)).Methods("POST")
+	nodeRouter.HandleFunc("/transactions", NodeAPITransactionHandler(t.Context(), t)).Methods("GET")
 
 	t.server.Handler = handlers.CombinedLoggingHandler(t.config.HTTP2LogOutput, t.router)
 
