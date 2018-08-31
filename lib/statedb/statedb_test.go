@@ -1,11 +1,13 @@
 package statedb
 
 import (
+	"testing"
+
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/trie"
-	"github.com/magiconair/properties/assert"
-	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestStateDB(t *testing.T) {
@@ -31,6 +33,6 @@ func TestStateDB(t *testing.T) {
 	{
 		stateDB := New(Root, trie.NewEthDatabase(st))
 		gotValueHash := stateDB.GetState("dummy", keyHash)
-		assert.Equal(t, gotValueHash, valueHash)
+		require.Equal(t, gotValueHash, valueHash)
 	}
 }
