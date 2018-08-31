@@ -48,11 +48,6 @@ func TestBallotHash(t *testing.T) {
 
 	nodeRunner := nodeRunners[0]
 
-	// `nodeRunner` is proposer's runner
-	nodeRunner.SetProposerCalculator(SelfProposerCalculator{})
-
-	nodeRunner.Consensus().SetLatestConsensusedBlock(genesisBlock)
-
 	round := Round{
 		Number:      0,
 		BlockHeight: nodeRunner.Consensus().LatestConfirmedBlock.Height,

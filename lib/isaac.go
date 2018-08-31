@@ -78,13 +78,15 @@ func (rv *RoundVote) CanGetVotingResult(policy sebakcommon.VotingThresholdPolicy
 		return result, sebakcommon.VotingNOTYET, false
 	}
 
-	var yes, no int
+	var yes, no, expired int
 	for _, votingHole := range result {
 		switch votingHole {
 		case sebakcommon.VotingYES:
 			yes++
 		case sebakcommon.VotingNO:
 			no++
+		case sebakcommon.VotingEXP:
+			expired++
 		}
 	}
 
@@ -93,24 +95,39 @@ func (rv *RoundVote) CanGetVotingResult(policy sebakcommon.VotingThresholdPolicy
 		"threshold", threshold,
 		"yes", yes,
 		"no", no,
+		"expired", expired,
 		"policy", policy,
 		"state", state,
 	)
 
-	if yes >= threshold {
-		return result, sebakcommon.VotingYES, true
-	} else if no >= threshold {
-		return result, sebakcommon.VotingNO, true
+	if state == sebakcommon.BallotStateSIGN {
+		if yes >= threshold {
+			return result, sebakcommon.VotingYES, true
+		} else if no >= threshold+1 {
+			return result, sebakcommon.VotingNO, true
+		}
+	} else if state == sebakcommon.BallotStateACCEPT {
+		if yes >= threshold {
+			return result, sebakcommon.VotingYES, true
+		} else if no >= threshold {
+			return result, sebakcommon.VotingNO, true
+		}
+	} else {
+		// do nothing
 	}
 
 	// check draw!
 	total := policy.Validators()
-	voted := yes + no
-	if total-voted < threshold-yes && total-voted < threshold-no { // draw
-		return result, sebakcommon.VotingNO, true
+	voted := yes + no + expired
+	if cannotBeOver(total-voted, threshold, yes, no) { // draw
+		return result, sebakcommon.VotingEXP, true
 	}
 
 	return result, sebakcommon.VotingNOTYET, false
+}
+
+func cannotBeOver(remain, threshold, yes, no int) bool {
+	return remain+yes < threshold && remain+no < threshold
 }
 
 type RunningRound struct {
@@ -260,15 +277,15 @@ func (tp *TransactionPool) Remove(hashes ...string) {
 	return
 }
 
-func (tp *TransactionPool) AvailableTransactions() []string {
+func (tp *TransactionPool) AvailableTransactions(conf *NodeRunnerConfiguration) []string {
 	tp.Lock()
 	defer tp.Unlock()
 
-	if tp.Len() <= MaxTransactionsInBallot {
+	if tp.Len() <= int(conf.TransactionsLimit) {
 		return tp.Hashes
 	}
 
-	return tp.Hashes[:MaxTransactionsInBallot]
+	return tp.Hashes[:conf.TransactionsLimit]
 }
 
 func (tp *TransactionPool) IsSameSource(source string) (found bool) {
