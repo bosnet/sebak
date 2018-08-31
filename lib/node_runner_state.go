@@ -1,3 +1,7 @@
+// When a node receive ballot, if the ballotState is former then nodeRunnerState,
+// the ballot is ignored.
+// The node decides it is former or not by NodeRunnerState.
+
 package sebak
 
 import (
