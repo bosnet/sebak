@@ -17,7 +17,3 @@ func NewNodeRunnerState(round Round, ballotState sebakcommon.BallotState) NodeRu
 
 	return p
 }
-
-func (ns *NodeRunnerState) Next() {
-	ns.ballotState = ns.ballotState.Next()
-}
