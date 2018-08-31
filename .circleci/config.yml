@@ -21,7 +21,7 @@ jobs:
           key: dependency-cache-{{ checksum "Gopkg.lock" }}
       - run:
           name: install dependencies
-          command: dep ensure
+          command: dep ensure -v
       - save_cache:
           key: dependency-cache-{{ checksum "Gopkg.lock" }}
           paths:
