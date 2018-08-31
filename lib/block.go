@@ -62,7 +62,7 @@ func MakeGenesisBlock(st *sebakstorage.LevelDBBackend, account block.BlockAccoun
 
 func NewBlock(proposer string, round Round, transactions []string, confirmed string) Block {
 	b := &Block{
-		Header:       *NewBlockHeader(round.BlockHeight+1, round.BlockHash, round.TotalTxs, uint64(len(transactions)), getTransactionRoot(transactions)),
+		Header:       *NewBlockHeader(round, uint64(len(transactions)), getTransactionRoot(transactions)),
 		Transactions: transactions,
 		Proposer:     proposer,
 		Round:        round,

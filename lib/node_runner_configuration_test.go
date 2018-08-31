@@ -10,9 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-/*
-	TestConfigurationDefault tests the default timeout values.
-*/
+//	TestConfigurationDefault tests the default timeout values.
 func TestConfigurationDefault(t *testing.T) {
 	n := NewNodeRunnerConfiguration()
 	require.Equal(t, n.TimeoutINIT, 2*time.Second)
@@ -22,9 +20,7 @@ func TestConfigurationDefault(t *testing.T) {
 	require.Equal(t, uint64(1000), n.TransactionsLimit)
 }
 
-/*
-	TestConfigurationSetAndGet tests setting timeout fields and checking.
-*/
+//	TestConfigurationSetAndGet tests setting timeout fields and checking.
 func TestConfigurationSetAndGet(t *testing.T) {
 	n := NewNodeRunnerConfiguration()
 	n.TimeoutINIT = 3 * time.Second
