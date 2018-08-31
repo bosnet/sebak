@@ -109,6 +109,7 @@ func NewNodeRunner(
 	nr.ctx = context.WithValue(context.Background(), "localNode", localNode)
 	nr.ctx = context.WithValue(nr.ctx, "networkID", nr.networkID)
 	nr.ctx = context.WithValue(nr.ctx, "storage", nr.storage)
+	nr.ctx = context.WithValue(nr.ctx, "txpool", nr.consensus.TransactionPool)
 
 	nr.SetProposerCalculator(SimpleProposerCalculator{})
 	nr.policy.SetValidators(len(nr.localNode.GetValidators()) + 1) // including self
