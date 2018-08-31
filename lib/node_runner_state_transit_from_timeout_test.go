@@ -1,3 +1,5 @@
+// We can test that a node broadcast propose ballot or B(`EXP`) in NodeRunnerStateManager.
+// when the timeout is expired,
 package sebak
 
 import (
@@ -9,6 +11,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// 1. All 3 Nodes.
+// 2. Proposer itself.
+// 3. When `NodeRunnerStateManager` starts, the node proposes ballot to validators.
 func TestStateINITProposer(t *testing.T) {
 	nodeRunners := createTestNodeRunner(3)
 
@@ -40,6 +45,10 @@ func TestStateINITProposer(t *testing.T) {
 	}
 }
 
+// 1. All 3 Nodes.
+// 2. Not proposer itself.
+// 3. When `NodeRunnerStateManager` starts, the node waits a ballot by proposer.
+// 4. But TimeoutINIT is an hour, so it doesn't broadcast anything.
 func TestStateINITNotProposer(t *testing.T) {
 	nodeRunners := createTestNodeRunner(3)
 
@@ -65,6 +74,11 @@ func TestStateINITNotProposer(t *testing.T) {
 	require.Equal(t, 0, len(b.Messages))
 }
 
+// 1. All 3 Nodes.
+// 2. Not proposer itself.
+// 3. When `NodeRunnerStateManager` starts, the node waits a ballot by proposer.
+// 4. But TimeoutINIT is a millisecond.
+// 5. After 200 milliseconds, the node broadcasts B(`SIGN`, `EXP`)
 func TestStateINITTimeoutNotProposer(t *testing.T) {
 	nodeRunners := createTestNodeRunner(3)
 
@@ -111,6 +125,12 @@ func TestStateINITTimeoutNotProposer(t *testing.T) {
 	require.Equal(t, 0, accept)
 }
 
+// 1. All 3 Nodes.
+// 2. Proposer itself.
+// 3. When `NodeRunnerStateManager` starts, the node proposes B(`INIT`, `YES`) to validators.
+// 4. Then NodeRunnerState will be changed to `SIGN`.
+// 4. But TimeoutSIGN is a millisecond.
+// 5. After 200 milliseconds, the node broadcasts B(`ACCEPT`, `EXP`)
 func TestStateSIGNTimeoutProposer(t *testing.T) {
 	nodeRunners := createTestNodeRunner(3)
 
@@ -161,6 +181,14 @@ func TestStateSIGNTimeoutProposer(t *testing.T) {
 	require.Equal(t, 1, accept)
 }
 
+// 1. All 3 Nodes.
+// 2. Not proposer itself.
+// 3. When `NodeRunnerStateManager` starts, the node waits a ballot by proposer.
+// 4. TimeoutINIT is a millisecond.
+// 5. After milliseconds, the node broadcasts B(`SIGN`, `EXP`).
+// 6. NodeRunnerState is changed to `SIGN`.
+// 7. TimeoutSIGN is a millisecond.
+// 8. After milliseconds, the node broadcasts B(`ACCEPT`, `EXP`).
 func TestStateSIGNTimeoutNotProposer(t *testing.T) {
 	nodeRunners := createTestNodeRunner(3)
 
@@ -209,6 +237,12 @@ func TestStateSIGNTimeoutNotProposer(t *testing.T) {
 	require.Equal(t, 1, accept)
 }
 
+// 1. All 3 Nodes.
+// 2. Proposer itself at round 0.
+// 3. When `NodeRunnerStateManager` starts, the node proposes a ballot.
+// 6. NodeRunnerState is changed to `SIGN`.
+// 7. TimeoutSIGN is a millisecond.
+// 8. After milliseconds, the node broadcasts B(`ACCEPT`, `EXP`).
 func TestStateACCEPTTimeoutProposerThenNotProposer(t *testing.T) {
 	nodeRunners := createTestNodeRunner(3)
 
@@ -258,88 +292,4 @@ func TestStateACCEPTTimeoutProposerThenNotProposer(t *testing.T) {
 	require.Equal(t, 1, init)
 	require.Equal(t, 0, sign)
 	require.Equal(t, 1, accept)
-}
-
-func TestStateTransitFromTimeoutInitToAccept(t *testing.T) {
-	nodeRunners := createTestNodeRunner(3)
-	nr := nodeRunners[0]
-
-	b := NewTestBroadcastor()
-	nr.SetBroadcastor(b)
-	nr.SetProposerCalculator(TheOtherProposerCalculator{})
-
-	nr.Consensus().SetLatestConsensusedBlock(genesisBlock)
-
-	conf := NewNodeRunnerConfiguration()
-	conf.TimeoutINIT = time.Hour
-	conf.TimeoutSIGN = time.Millisecond
-	conf.TimeoutACCEPT = time.Millisecond
-	conf.TimeoutALLCONFIRM = time.Millisecond
-
-	nr.SetConf(conf)
-
-	nr.StartStateManager()
-	time.Sleep(time.Duration(100) * time.Millisecond)
-	require.Equal(t, 0, len(b.Messages))
-	for _, message := range b.Messages {
-		ballot, ok := message.(Ballot)
-		require.True(t, ok)
-		require.Equal(t, nr.localNode.Address(), ballot.Proposer())
-		require.Equal(t, sebakcommon.BallotStateINIT, ballot.State())
-		require.Equal(t, sebakcommon.VotingYES, ballot.Vote())
-	}
-
-	nr.TransitNodeRunnerState(nr.nodeRunnerStateManager.State().round, sebakcommon.BallotStateSIGN)
-	time.Sleep(time.Duration(100) * time.Millisecond)
-	require.Equal(t, 1, len(b.Messages))
-	for _, message := range b.Messages {
-		ballot, ok := message.(Ballot)
-		require.True(t, ok)
-		require.Equal(t, nr.localNode.Address(), ballot.Proposer())
-		require.Equal(t, sebakcommon.BallotStateACCEPT, ballot.State())
-		require.Equal(t, sebakcommon.VotingEXP, ballot.Vote())
-	}
-}
-
-func TestStateTransitFromTimeoutSignToAccept(t *testing.T) {
-	nodeRunners := createTestNodeRunner(3)
-	nr := nodeRunners[0]
-
-	b := NewTestBroadcastor()
-	nr.SetBroadcastor(b)
-	nr.SetProposerCalculator(SelfProposerCalculator{})
-
-	nr.Consensus().SetLatestConsensusedBlock(genesisBlock)
-
-	conf := NewNodeRunnerConfiguration()
-	conf.TimeoutINIT = time.Hour
-	conf.TimeoutSIGN = time.Hour
-	conf.TimeoutACCEPT = time.Millisecond
-	conf.TimeoutALLCONFIRM = time.Millisecond
-
-	nr.SetConf(conf)
-
-	nr.StartStateManager()
-	time.Sleep(time.Duration(200) * time.Millisecond)
-
-	require.Equal(t, sebakcommon.BallotStateSIGN, nr.nodeRunnerStateManager.State().ballotState)
-	require.Equal(t, 1, len(b.Messages))
-	for _, message := range b.Messages {
-		ballot, ok := message.(Ballot)
-		require.True(t, ok)
-		require.Equal(t, nr.localNode.Address(), ballot.Proposer())
-		require.Equal(t, sebakcommon.BallotStateINIT, ballot.State())
-		require.Equal(t, sebakcommon.VotingYES, ballot.Vote())
-	}
-
-	nr.TransitNodeRunnerState(nr.nodeRunnerStateManager.State().round, sebakcommon.BallotStateACCEPT)
-	time.Sleep(time.Duration(200) * time.Millisecond)
-	require.Equal(t, 2, len(b.Messages))
-	for _, message := range b.Messages {
-		ballot, ok := message.(Ballot)
-		require.True(t, ok)
-		require.Equal(t, nr.localNode.Address(), ballot.Proposer())
-		require.Equal(t, sebakcommon.BallotStateINIT, ballot.State())
-		require.Equal(t, sebakcommon.VotingYES, ballot.Vote())
-	}
 }

@@ -1,3 +1,6 @@
+// NodeRunnerStateManager manages the NodeRunnerState.
+// The most important function `Start()` is called in StartStateManager() function in node_runner.go by goroutine.
+
 package sebak
 
 import (
@@ -74,6 +77,9 @@ func (sm *NodeRunnerStateManager) ResetRound() {
 	}()
 }
 
+// In `Start()` method a node proposes ballot.
+// Or it sets or resets timeout. If it is expired, it broadcasts B(`EXP`).
+// And it manages the node round.
 func (sm *NodeRunnerStateManager) Start() {
 	oneHour := time.Duration(1 * time.Hour)
 	if sm.on {
