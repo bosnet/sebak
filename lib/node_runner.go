@@ -68,8 +68,6 @@ type ProposerCalculator interface {
 }
 
 type NodeRunner struct {
-	sebakcommon.SafeLock
-
 	networkID              []byte
 	localNode              *sebaknode.LocalNode
 	policy                 sebakcommon.VotingThresholdPolicy
