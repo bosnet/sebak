@@ -21,7 +21,7 @@ func TestProposerCalculator(t *testing.T) {
 }
 
 /*
-	TestNodesHaveSameProposers tests all 3 nodes have the same proposers at each round.
+	All 3 nodes have the same proposer at each round
 */
 func TestNodesHaveSameProposers(t *testing.T) {
 	numberOfNodes := 3
