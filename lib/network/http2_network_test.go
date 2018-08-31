@@ -17,7 +17,7 @@ import (
 	"boscoin.io/sebak/lib/node"
 
 	"github.com/stellar/go/keypair"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func getPort() string {
@@ -155,8 +155,8 @@ func TestHTTP2NetworkGetNodeInfo(t *testing.T) {
 	server := localNode.Endpoint().String()
 	client := v.Endpoint().String()
 
-	assert.Equal(t, server, client, "Server endpoint and received endpoint should be the same.")
-	assert.Equal(t, localNode.Address(), v.Address(), "Server address and received address should be the same.")
+	require.Equal(t, server, client, "Server endpoint and received endpoint should be the same.")
+	require.Equal(t, localNode.Address(), v.Address(), "Server address and received address should be the same.")
 }
 
 type StringResponseMessageBroker struct {
@@ -182,7 +182,7 @@ func TestHTTP2NetworkMessageBrokerResponseMessage(t *testing.T) {
 
 	returnMsg, _ := c0.Connect(localNode)
 
-	assert.Equal(t, string(returnMsg), "ResponseMessage", "The connectNode and the return should be the same.")
+	require.Equal(t, string(returnMsg), "ResponseMessage", "The connectNode and the return should be the same.")
 }
 
 func TestHTTP2NetworkConnect(t *testing.T) {
@@ -202,7 +202,7 @@ func TestHTTP2NetworkConnect(t *testing.T) {
 	returnMsg, _ := c0.Connect(localNode)
 	returnStr := removeWhiteSpaces(string(returnMsg))
 
-	assert.Equal(t, returnStr, nodeStr, "The connectNode and the return should be the same.")
+	require.Equal(t, returnStr, nodeStr, "The connectNode and the return should be the same.")
 }
 
 func TestHTTP2NetworkSendMessage(t *testing.T) {
@@ -222,5 +222,5 @@ func TestHTTP2NetworkSendMessage(t *testing.T) {
 	returnStr := removeWhiteSpaces(string(returnMsg))
 	sendMsg := removeWhiteSpaces(msg.String())
 
-	assert.Equal(t, returnStr, sendMsg, "The sendMessage and the return should be the same.")
+	require.Equal(t, returnStr, sendMsg, "The sendMessage and the return should be the same.")
 }

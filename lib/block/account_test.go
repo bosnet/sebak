@@ -1,14 +1,16 @@
 package block
 
 import (
+	"fmt"
+	"sync"
 	"testing"
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/observer"
 	"boscoin.io/sebak/lib/storage"
-	"fmt"
+
 	"github.com/google/uuid"
-	"sync"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSaveNewBlockAccount(t *testing.T) {
@@ -16,21 +18,11 @@ func TestSaveNewBlockAccount(t *testing.T) {
 
 	b := TestMakeBlockAccount()
 	err := b.Save(st)
-	if err != nil {
-		t.Errorf("failed to save BlockAccount, %v", err)
-		return
-	}
+	require.Nil(t, err)
 
 	exists, err := ExistBlockAccount(st, b.Address)
-	if err != nil {
-		t.Errorf("failed to get BlockAccount, %v", err)
-		return
-	}
-
-	if !exists {
-		t.Errorf("failed to get BlockAccount, does not exists")
-		return
-	}
+	require.Nil(t, err)
+	require.Equal(t, exists, true, "BlockAccount does not exists")
 }
 
 func TestSaveExistingBlockAccount(t *testing.T) {
@@ -39,18 +31,14 @@ func TestSaveExistingBlockAccount(t *testing.T) {
 	b := TestMakeBlockAccount()
 	b.Save(st)
 
-	if err := b.Deposit(sebakcommon.Amount(100), "fake-checkpoint"); err != nil {
-		panic(err)
-	}
-	if err := b.Save(st); err != nil {
-		panic(err)
-	}
+	err := b.Deposit(sebakcommon.Amount(100), "fake-checkpoint")
+	require.Nil(t, err)
+
+	err = b.Save(st)
+	require.Nil(t, err)
 
 	fetched, _ := GetBlockAccount(st, b.Address)
-	if b.Balance != fetched.Balance {
-		t.Error("failed to update `BlockAccount.Balance`")
-		return
-	}
+	require.Equal(t, b.Balance, fetched.Balance)
 }
 
 func TestSortMultipleBlockAccount(t *testing.T) {
@@ -77,10 +65,7 @@ func TestSortMultipleBlockAccount(t *testing.T) {
 	closeFunc()
 
 	for i, a := range createdOrder {
-		if a != saved[i] {
-			t.Error("failed to save `BlockAccount` by creation order")
-			break
-		}
+		require.Equal(t, a, saved[i], "Blockaccount are not saved in the order they are created")
 	}
 }
 
@@ -108,10 +93,7 @@ func TestGetSortedBlockAccounts(t *testing.T) {
 	closeFunc()
 
 	for i, a := range createdOrder {
-		if a != saved[i] {
-			t.Error("failed to save `BlockAccount` by creation order")
-			break
-		}
+		require.Equal(t, a, saved[i], "Blockaccount are not saved in the order they are created")
 	}
 }
 
@@ -142,18 +124,9 @@ func TestBlockAccountSaveBlockAccountCheckpoints(t *testing.T) {
 	closeFunc()
 
 	for i := 0; i < len(saved); i++ {
-		if saved[i].Address != fetched[i].Address {
-			t.Error("mismatch: Address")
-			return
-		}
-		if saved[i].Balance != fetched[i].Balance {
-			t.Error("mismatch: Balance")
-			return
-		}
-		if saved[i].Checkpoint != fetched[i].Checkpoint {
-			t.Error("mismatch: Checkpoint")
-			return
-		}
+		require.Equal(t, saved[i].Address, fetched[i].Address)
+		require.Equal(t, saved[i].Balance, fetched[i].Balance)
+		require.Equal(t, saved[i].Checkpoint, fetched[i].Checkpoint)
 	}
 }
 func TestBlockAccountObserver(t *testing.T) {
@@ -176,16 +149,7 @@ func TestBlockAccountObserver(t *testing.T) {
 
 	wg.Wait()
 
-	if b.Address != triggered.Address {
-		t.Error("Address is not match")
-		return
-	}
-	if b.Balance != triggered.Balance {
-		t.Error("Balance is not match")
-		return
-	}
-	if b.Checkpoint != triggered.Checkpoint {
-		t.Error("Checkpoint is not match")
-		return
-	}
+	require.Equal(t, b.Address, triggered.Address)
+	require.Equal(t, b.Balance, triggered.Balance)
+	require.Equal(t, b.Checkpoint, triggered.Checkpoint)
 }

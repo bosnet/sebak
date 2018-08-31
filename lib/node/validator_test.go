@@ -8,7 +8,7 @@ import (
 	"boscoin.io/sebak/lib/common"
 
 	"github.com/stellar/go/keypair"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestParseValidatorFromURI(t *testing.T) {
@@ -80,16 +80,16 @@ func TestValidatorMarshalJSON(t *testing.T) {
 	kp, _ := keypair.Random()
 
 	endpoint, err := sebakcommon.NewEndpointFromString(fmt.Sprintf("https://localhost:5000?NodeName=n1"))
-	assert.Equal(t, nil, err)
+	require.Equal(t, nil, err)
 
 	validator, _ := NewValidator(kp.Address(), endpoint, "v1")
 
 	tmpByte, err := validator.MarshalJSON()
-	assert.Equal(t, nil, err)
+	require.Equal(t, nil, err)
 
 	jsonStr := `"alias":"%s","endpoint":"https://localhost:%s","state":"%s"`
 	fmt.Println(string(tmpByte))
-	assert.Equal(t, true, strings.Contains(string(tmpByte), fmt.Sprintf(jsonStr, "v1", "5000", "NONE")))
+	require.Equal(t, true, strings.Contains(string(tmpByte), fmt.Sprintf(jsonStr, "v1", "5000", "NONE")))
 }
 
 func TestValidatorNewValidatorFromString(t *testing.T) {
@@ -102,16 +102,16 @@ func TestValidatorNewValidatorFromString(t *testing.T) {
 		}`,
 	))
 
-	assert.Equal(t, "v1", validator.Alias())
-	assert.Equal(t, "https://localhost:5000", validator.Endpoint().String())
-	assert.Equal(t, NodeStateNONE, validator.State())
+	require.Equal(t, "v1", validator.Alias())
+	require.Equal(t, "https://localhost:5000", validator.Endpoint().String())
+	require.Equal(t, NodeStateNONE, validator.State())
 }
 
 func TestValidatorUnMarshalJSON(t *testing.T) {
 	kp, _ := keypair.Random()
 
 	endpoint, err := sebakcommon.NewEndpointFromString(fmt.Sprintf("https://localhost:5000?NodeName=n1"))
-	assert.Equal(t, nil, err)
+	require.Equal(t, nil, err)
 
 	validator, _ := NewValidator(kp.Address(), endpoint, "node")
 
@@ -123,9 +123,9 @@ func TestValidatorUnMarshalJSON(t *testing.T) {
 			"state":"NONE"
 		}`,
 	))
-	assert.Equal(t, nil, err)
+	require.Equal(t, nil, err)
 
-	assert.Equal(t, "v1", validator.Alias())
-	assert.Equal(t, "https://localhost:5000", validator.Endpoint().String())
-	assert.Equal(t, NodeStateNONE, validator.State())
+	require.Equal(t, "v1", validator.Alias())
+	require.Equal(t, "https://localhost:5000", validator.Endpoint().String())
+	require.Equal(t, NodeStateNONE, validator.State())
 }

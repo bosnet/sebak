@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"boscoin.io/sebak/lib/common"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGenerateKey(t *testing.T) {
@@ -14,10 +14,10 @@ func TestGenerateKey(t *testing.T) {
 	certPath := "tls_tmp/sebak.cert"
 	keyPath := "tls_tmp/sebak.key"
 
-	assert.Equal(t, g.GetCertPath(), certPath)
-	assert.Equal(t, g.GetKeyPath(), keyPath)
+	require.Equal(t, g.GetCertPath(), certPath)
+	require.Equal(t, g.GetKeyPath(), keyPath)
 
-	assert.Equal(t, sebakcommon.IsExists(certPath), true)
-	assert.Equal(t, sebakcommon.IsExists(keyPath), true)
+	require.Equal(t, sebakcommon.IsExists(certPath), true)
+	require.Equal(t, sebakcommon.IsExists(keyPath), true)
 
 }

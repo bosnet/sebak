@@ -5,33 +5,28 @@ import (
 	"strings"
 	"testing"
 
+	"boscoin.io/sebak/lib/common"
+
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/stellar/go/keypair"
-
-	"boscoin.io/sebak/lib/common"
+	"github.com/stretchr/testify/require"
 )
 
 func TestLoadTransactionFromJSON(t *testing.T) {
 	_, tx := TestMakeTransaction(networkID, 1)
 
-	var b []byte
-	var err error
-	if b, err = tx.Serialize(); err != nil {
-		t.Errorf("failed to serialize transction: %v", err)
-	}
+	b, err := tx.Serialize()
+	require.Nil(t, err)
 
-	if _, err = NewTransactionFromJSON(b); err != nil {
-		t.Errorf("failed to load serialized transction: %v", err)
-	}
+	_, err = NewTransactionFromJSON(b)
+	require.Nil(t, err)
 }
 
 func TestIsWellFormedTransaction(t *testing.T) {
 	_, tx := TestMakeTransaction(networkID, 1)
 
-	var err error
-	if err = tx.IsWellFormed(networkID); err != nil {
-		t.Errorf("failed to validate transaction: %v", err)
-	}
+	err := tx.IsWellFormed(networkID)
+	require.Nil(t, err)
 }
 
 func TestIsWellFormedTransactionWithLowerFee(t *testing.T) {
@@ -41,29 +36,26 @@ func TestIsWellFormedTransactionWithLowerFee(t *testing.T) {
 	tx.B.Fee = BaseFee
 	tx.H.Hash = tx.B.MakeHashString()
 	tx.Sign(kp, networkID)
-	if err = tx.IsWellFormed(networkID); err != nil {
-		t.Errorf("transaction must not be failed for fee: %d: %v", BaseFee, err)
-	}
+	err = tx.IsWellFormed(networkID)
+	require.Nil(t, err)
+
 	tx.B.Fee = BaseFee.MustAdd(1)
 	tx.H.Hash = tx.B.MakeHashString()
 	tx.Sign(kp, networkID)
-	if err = tx.IsWellFormed(networkID); err != nil {
-		t.Errorf("transaction must not be failed for fee: %d: %v", BaseFee+1, err)
-	}
+	err = tx.IsWellFormed(networkID)
+	require.Nil(t, err)
 
 	tx.B.Fee = BaseFee.MustSub(1)
 	tx.H.Hash = tx.B.MakeHashString()
 	tx.Sign(kp, networkID)
-	if err = tx.IsWellFormed(networkID); err == nil {
-		t.Errorf("transaction must be failed for fee: %d", BaseFee-1)
-	}
+	err = tx.IsWellFormed(networkID)
+	require.NotNil(t, err, "Transaction shouidn't pass Fee checks")
 
 	tx.B.Fee = sebakcommon.Amount(0)
 	tx.H.Hash = tx.B.MakeHashString()
 	tx.Sign(kp, networkID)
-	if err = tx.IsWellFormed(networkID); err == nil {
-		t.Errorf("transaction must be failed for fee: %d", 0)
-	}
+	err = tx.IsWellFormed(networkID)
+	require.NotNil(t, err, "Transaction shouidn't pass Fee checks")
 }
 
 func TestIsWellFormedTransactionWithInvalidSourceAddress(t *testing.T) {
@@ -71,9 +63,8 @@ func TestIsWellFormedTransactionWithInvalidSourceAddress(t *testing.T) {
 
 	_, tx := TestMakeTransaction(networkID, 1)
 	tx.B.Source = "invalid-address"
-	if err = tx.IsWellFormed(networkID); err == nil {
-		t.Errorf("transaction must be failed for invalid source: '%s'", tx.B.Source)
-	}
+	err = tx.IsWellFormed(networkID)
+	require.NotNil(t, err)
 }
 
 func TestIsWellFormedTransactionWithTargetAddressIsSameWithSourceAddress(t *testing.T) {
@@ -81,25 +72,22 @@ func TestIsWellFormedTransactionWithTargetAddressIsSameWithSourceAddress(t *test
 
 	_, tx := TestMakeTransaction(networkID, 1)
 	tx.B.Source = tx.B.Operations[0].B.TargetAddress()
-	if err = tx.IsWellFormed(networkID); err == nil {
-		t.Errorf("transaction must be failed for same source: '%s'", tx.B.Source)
-	}
+	err = tx.IsWellFormed(networkID)
+	require.NotNil(t, err, "Transaction to self should be rejected")
 }
 
 func TestIsWellFormedTransactionWithInvalidSignature(t *testing.T) {
 	var err error
 
 	_, tx := TestMakeTransaction(networkID, 1)
-	if err = tx.IsWellFormed(networkID); err != nil {
-		t.Errorf("failed to be wellformed for transaction: '%s'", err)
-	}
+	err = tx.IsWellFormed(networkID)
+	require.Nil(t, err)
 
 	newSignature, _ := keypair.Master("find me").Sign(append(networkID, []byte(tx.B.MakeHashString())...))
 	tx.H.Signature = base58.Encode(newSignature)
 
-	if err = tx.IsWellFormed(networkID); err == nil {
-		t.Errorf("transaction must be failed for signature verification")
-	}
+	err = tx.IsWellFormed(networkID)
+	require.NotNil(t, err)
 }
 
 func TestTransactionIsValidCheckpoint(t *testing.T) {
@@ -110,12 +98,6 @@ func TestTransactionIsValidCheckpoint(t *testing.T) {
 	l := strings.SplitN(tx.B.Checkpoint, "-", 2)
 
 	newCheckpoint := fmt.Sprintf("%s-%s", l[0], TestGenerateNewCheckpoint())
-	if !(tx.IsValidCheckpoint(tx.B.Checkpoint)) {
-		t.Error("checkpoint has same with tx")
-		return
-	}
-	if !tx.IsValidCheckpoint(newCheckpoint) {
-		t.Error("checkpoint has same head with tx")
-		return
-	}
+	require.Equal(t, tx.IsValidCheckpoint(tx.B.Checkpoint), true)
+	require.Equal(t, tx.IsValidCheckpoint(newCheckpoint), true)
 }
