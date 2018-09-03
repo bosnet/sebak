@@ -45,6 +45,7 @@ func TestGetAccountHandler(t *testing.T) {
 	resp, err := ts.Client().Do(req)
 	require.Nil(t, err)
 	defer resp.Body.Close()
+	require.Equal(t, resp.StatusCode, 200)
 	reader := bufio.NewReader(resp.Body)
 
 	recv := make(chan struct{})
@@ -88,7 +89,35 @@ func TestGetAccountHandler(t *testing.T) {
 	json.Unmarshal(readByte, cba)
 	require.Equal(t, ba.Address, cba.Address, "not equal")
 	require.Equal(t, ba.GetBalance(), cba.GetBalance(), "not equal")
+}
 
+// Test that getting an inexisting account returns an error
+func TestGetNonExistentAccountHandler(t *testing.T) {
+	// Setting Server
+	storage, err := sebakstorage.NewTestMemoryLevelDBBackend()
+	require.Nil(t, err)
+	defer storage.Close()
+
+	router := mux.NewRouter()
+	router.HandleFunc(GetAccountHandlerPattern, GetAccountHandler(storage)).Methods("GET")
+
+	ts := httptest.NewServer(router)
+	defer ts.Close()
+
+	// Do the request to an inexisting address
+	genesisAddress := "GDMZMF2EAK4E6NSZNSCJQQHQGMAOZ6UI3XQVVLMEJRFDPYHLY7PPHKLP"
+	url := ts.URL + fmt.Sprintf("/account/%s", genesisAddress)
+	req, err := http.NewRequest("GET", url, nil)
+	require.Nil(t, err)
+	req.Header.Set("Accept", "text/event-stream")
+	resp, err := ts.Client().Do(req)
+	require.Nil(t, err)
+	defer resp.Body.Close()
+	require.Equal(t, resp.StatusCode, 404)
+	reader := bufio.NewReader(resp.Body)
+	data, err := ioutil.ReadAll(reader)
+	require.Nil(t, err)
+	require.Equal(t, "Not Found\n", string(data))
 }
 
 func TestGetAccountTransactionsHandler(t *testing.T) {
@@ -134,6 +163,7 @@ func TestGetAccountTransactionsHandler(t *testing.T) {
 	resp, err := ts.Client().Do(req)
 	require.Nil(t, err)
 	defer resp.Body.Close()
+	require.Equal(t, resp.StatusCode, 200)
 	reader := bufio.NewReader(resp.Body)
 
 	// Makes Some Events
@@ -178,6 +208,7 @@ func TestGetAccountTransactionsHandler(t *testing.T) {
 	resp, err = ts.Client().Do(req)
 	require.Nil(t, err)
 	defer resp.Body.Close()
+	require.Equal(t, resp.StatusCode, 200)
 	reader = bufio.NewReader(resp.Body)
 	readByte, err := ioutil.ReadAll(reader)
 	require.Nil(t, err)
@@ -238,6 +269,7 @@ func TestGetAccountOperationsHandler(t *testing.T) {
 	resp, err := ts.Client().Do(req)
 	require.Nil(t, err)
 	defer resp.Body.Close()
+	require.Equal(t, resp.StatusCode, 200)
 	reader := bufio.NewReader(resp.Body)
 
 	// Makes Some Events
@@ -286,6 +318,7 @@ func TestGetAccountOperationsHandler(t *testing.T) {
 	resp2, err := ts.Client().Do(req)
 	require.Nil(t, err)
 	defer resp2.Body.Close()
+	require.Equal(t, resp2.StatusCode, 200)
 	reader = bufio.NewReader(resp2.Body)
 	readByte, err := ioutil.ReadAll(reader)
 	require.Nil(t, err)
@@ -299,7 +332,6 @@ func TestGetAccountOperationsHandler(t *testing.T) {
 		require.Equal(t, bo.Hash, receivedBos[i].Hash, "hash is not same")
 		i++
 	}
-
 }
 
 func TestGetTransactionByHashHandler(t *testing.T) {
@@ -336,6 +368,7 @@ func TestGetTransactionByHashHandler(t *testing.T) {
 	resp, err := ts.Client().Do(req)
 	require.Nil(t, err)
 	defer resp.Body.Close()
+	require.Equal(t, resp.StatusCode, 200)
 	reader := bufio.NewReader(resp.Body)
 	line, err := reader.ReadBytes('\n')
 	require.Nil(t, err)
@@ -351,6 +384,7 @@ func TestGetTransactionByHashHandler(t *testing.T) {
 	resp2, err := ts.Client().Do(req)
 	require.Nil(t, err)
 	defer resp2.Body.Close()
+	require.Equal(t, resp2.StatusCode, 200)
 	reader = bufio.NewReader(resp2.Body)
 	readByte, err := ioutil.ReadAll(reader)
 	require.Nil(t, err)
@@ -358,7 +392,6 @@ func TestGetTransactionByHashHandler(t *testing.T) {
 	json.Unmarshal(readByte, &receivedBts)
 
 	require.Equal(t, bt.Hash, receivedBts.Hash, "hash is not same")
-
 }
 
 func TestGetTransactionsHandler(t *testing.T) {
@@ -399,6 +432,7 @@ func TestGetTransactionsHandler(t *testing.T) {
 	resp, err := ts.Client().Do(req)
 	require.Nil(t, err)
 	defer resp.Body.Close()
+	require.Equal(t, resp.StatusCode, 200)
 	reader := bufio.NewReader(resp.Body)
 
 	// Producer
@@ -442,6 +476,7 @@ func TestGetTransactionsHandler(t *testing.T) {
 	resp2, err := ts.Client().Do(req)
 	require.Nil(t, err)
 	defer resp2.Body.Close()
+	require.Equal(t, resp2.StatusCode, 200)
 	reader = bufio.NewReader(resp2.Body)
 	readByte, err := ioutil.ReadAll(reader)
 	require.Nil(t, err)

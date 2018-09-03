@@ -15,36 +15,24 @@ import (
 const GetAccountHandlerPattern = "/account/{address}"
 
 func GetAccountHandler(storage *sebakstorage.LevelDBBackend) http.HandlerFunc {
-
 	return func(w http.ResponseWriter, r *http.Request) {
-
+		var blk *block.BlockAccount
+		var err error
 		vars := mux.Vars(r)
 		address := vars["address"]
-		if found, err := block.ExistBlockAccount(storage, address); err != nil {
-			http.Error(w, "Error reading request body", http.StatusInternalServerError)
-			return
-		} else if !found {
+		if blk, err = block.GetBlockAccount(storage, address); err != nil {
 			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 			return
 		}
 
-		var err error
-		var ba *block.BlockAccount
-
 		switch r.Header.Get("Accept") {
 		case "text/event-stream":
-
 			var readyChan = make(chan struct{})
-
 			// Trigger event for data already stored in the storage
 			iterateId := sebakcommon.GetUniqueIDFromUUID()
 			go func() {
 				<-readyChan
-				if ba, err = block.GetBlockAccount(storage, address); err != nil {
-					http.Error(w, "Error reading request body", http.StatusInternalServerError)
-					return
-				}
-				observer.BlockAccountObserver.Trigger(fmt.Sprintf("iterate-%s", iterateId), ba)
+				observer.BlockAccountObserver.Trigger(fmt.Sprintf("iterate-%s", iterateId), blk)
 			}()
 
 			callBackFunc := func(args ...interface{}) (account []byte, err error) {
@@ -59,13 +47,8 @@ func GetAccountHandler(storage *sebakstorage.LevelDBBackend) http.HandlerFunc {
 			event += " " + fmt.Sprintf("address-%s", address)
 			streaming(observer.BlockAccountObserver, r, w, event, callBackFunc, readyChan)
 		default:
-			if ba, err = block.GetBlockAccount(storage, address); err != nil {
-				http.Error(w, "Error reading request body", http.StatusInternalServerError)
-				return
-			}
-
 			var s []byte
-			if s, err = ba.Serialize(); err != nil {
+			if s, err = blk.Serialize(); err != nil {
 				http.Error(w, "Error reading request body", http.StatusInternalServerError)
 				return
 			}
