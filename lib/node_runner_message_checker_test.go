@@ -64,7 +64,7 @@ func TestMessageChecker(t *testing.T) {
 		PushIntoTransactionPool,
 	}
 
-	checker.DefaultChecker = sebakcommon.DefaultChecker{CheckerFuncs}
+	checker.DefaultChecker = sebakcommon.DefaultChecker{Funcs: CheckerFuncs}
 
 	err = sebakcommon.RunChecker(checker, sebakcommon.DefaultDeferFunc)
 	require.Equal(t, err, sebakerror.ErrorNewButKnownMessage)

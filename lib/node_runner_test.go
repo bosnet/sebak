@@ -177,8 +177,6 @@ func createTestNodeRunnersHTTP2NetworkWithReady(n int) (nodeRunners []*NodeRunne
 		}(nr)
 	}
 
-	return
-
 	T := time.NewTicker(100 * time.Millisecond)
 	stopTimer := make(chan bool)
 

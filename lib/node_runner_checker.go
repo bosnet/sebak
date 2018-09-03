@@ -346,7 +346,7 @@ func INITBallotValidateTransactions(c sebakcommon.Checker, args ...interface{}) 
 	}
 
 	transactionsChecker := &BallotTransactionChecker{
-		DefaultChecker: sebakcommon.DefaultChecker{handleBallotTransactionCheckerFuncs},
+		DefaultChecker: sebakcommon.DefaultChecker{Funcs: handleBallotTransactionCheckerFuncs},
 		NodeRunner:     checker.NodeRunner,
 		LocalNode:      checker.LocalNode,
 		NetworkID:      checker.NetworkID,

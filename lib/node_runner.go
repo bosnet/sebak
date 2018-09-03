@@ -280,7 +280,7 @@ func (nr *NodeRunner) handleMessageFromClient(message sebaknetwork.Message) (err
 	nr.log.Debug("got message`", "message", message.Head(50))
 
 	checker := &MessageChecker{
-		DefaultChecker: sebakcommon.DefaultChecker{nr.handleMessageFromClientCheckerFuncs},
+		DefaultChecker: sebakcommon.DefaultChecker{Funcs: nr.handleMessageFromClientCheckerFuncs},
 		NodeRunner:     nr,
 		LocalNode:      nr.localNode,
 		NetworkID:      nr.networkID,
@@ -301,7 +301,7 @@ func (nr *NodeRunner) handleBallotMessage(message sebaknetwork.Message) (err err
 	nr.log.Debug("got ballot", "message", message.Head(50))
 
 	baseChecker := &BallotChecker{
-		DefaultChecker: sebakcommon.DefaultChecker{nr.handleBaseBallotCheckerFuncs},
+		DefaultChecker: sebakcommon.DefaultChecker{Funcs: nr.handleBaseBallotCheckerFuncs},
 		NodeRunner:     nr,
 		LocalNode:      nr.localNode,
 		NetworkID:      nr.networkID,
@@ -328,7 +328,7 @@ func (nr *NodeRunner) handleBallotMessage(message sebaknetwork.Message) (err err
 	}
 
 	checker := &BallotChecker{
-		DefaultChecker: sebakcommon.DefaultChecker{checkerFuncs},
+		DefaultChecker: sebakcommon.DefaultChecker{Funcs: checkerFuncs},
 		NodeRunner:     nr,
 		LocalNode:      nr.localNode,
 		NetworkID:      nr.networkID,
@@ -478,7 +478,7 @@ func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) error {
 	nr.log.Debug("new round proposed", "round", round, "transactions", availableTransactions)
 
 	transactionsChecker := &BallotTransactionChecker{
-		DefaultChecker: sebakcommon.DefaultChecker{handleBallotTransactionCheckerFuncs},
+		DefaultChecker: sebakcommon.DefaultChecker{Funcs: handleBallotTransactionCheckerFuncs},
 		NodeRunner:     nr,
 		LocalNode:      nr.localNode,
 		NetworkID:      nr.networkID,

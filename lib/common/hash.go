@@ -2,6 +2,7 @@ package sebakcommon
 
 import (
 	"github.com/btcsuite/btcutil/base58"
+	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/rlp"
 	"golang.org/x/crypto/argon2"
 )
@@ -31,4 +32,12 @@ func MustMakeObjectHash(i interface{}) (b []byte) {
 func MustMakeObjectHashString(i interface{}) string {
 	b := MustMakeObjectHash(i)
 	return base58.Encode(b)
+}
+
+type Hash = ethcommon.Hash
+
+func BytesToHash(b []byte) Hash {
+	var h Hash
+	h.SetBytes(b)
+	return h
 }

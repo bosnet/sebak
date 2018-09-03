@@ -29,7 +29,7 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 		messageData, _ := tx.Serialize()
 
 		checker := &MessageChecker{
-			DefaultChecker: sebakcommon.DefaultChecker{DefaultHandleMessageFromClientCheckerFuncs},
+			DefaultChecker: sebakcommon.DefaultChecker{Funcs: DefaultHandleMessageFromClientCheckerFuncs},
 			NodeRunner:     nodeRunner,
 			LocalNode:      nodeRunner.Node(),
 			NetworkID:      networkID,
