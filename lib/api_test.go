@@ -503,3 +503,19 @@ func TestGetTransactionsHandler(t *testing.T) {
 		require.Equal(t, bt.Hash, btmap[bt.Hash].Hash, "hash is not same")
 	}
 }
+
+func TestAPIResourceAccount(t *testing.T) {
+	l := APIResourceList{}
+	for idx := 0; idx < 10; idx++ {
+		a := &APIResourceAccount{
+			id:         "aaa",
+			accountId:  "aaa",
+			checkpoint: "xxx",
+			balance:    "1111",
+		}
+		l = append(l, a)
+	}
+	r := l.Resource("asdfhahfj;aosdf")
+	j, _ := json.MarshalIndent(r, "", "  ")
+	fmt.Printf("%s", j)
+}
