@@ -1,4 +1,4 @@
-// NodeRunnerStateManager manages the NodeRunnerState.
+// IsaacStateManager manages the IsaacState.
 // The most important function `Start()` is called in StartStateManager() function in node_runner.go by goroutine.
 
 package sebak
@@ -7,40 +7,37 @@ import (
 	"time"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/round"
 )
 
-type NodeRunnerStateManager struct {
-	nr            *NodeRunner
-	state         NodeRunnerState
-	conf          *NodeRunnerConfiguration
-	stateTransit  chan NodeRunnerState
-	increaseRound chan bool
-	resetRound    chan bool
-	stop          chan bool
-	on            bool
+type IsaacStateManager struct {
+	nr           *NodeRunner
+	state        IsaacState
+	conf         *IsaacConfiguration
+	stateTransit chan IsaacState
+	resetRound   chan bool
+	stop         chan bool
 }
 
-func NewNodeRunnerStateManager(nr *NodeRunner) *NodeRunnerStateManager {
-	p := &NodeRunnerStateManager{
-		conf: NewNodeRunnerConfiguration(),
+func NewIsaacStateManager(nr *NodeRunner) *IsaacStateManager {
+	p := &IsaacStateManager{
+		conf: NewIsaacConfiguration(),
 		nr:   nr,
 	}
-	p.stateTransit = make(chan NodeRunnerState)
-	p.increaseRound = make(chan bool)
+	p.stateTransit = make(chan IsaacState)
 	p.resetRound = make(chan bool)
 	p.stop = make(chan bool)
-	p.on = false
 
 	return p
 }
 
-func (sm *NodeRunnerStateManager) SetConf(conf *NodeRunnerConfiguration) {
+func (sm *IsaacStateManager) SetConf(conf *IsaacConfiguration) {
 	sm.conf = conf
 }
 
-func (sm *NodeRunnerStateManager) TransitNodeRunnerState(round Round, ballotState sebakcommon.BallotState) {
+func (sm *IsaacStateManager) TransitIsaacState(round round.Round, ballotState sebakcommon.BallotState) {
 	currentState := sm.state
-	targetState := NewNodeRunnerState(round, ballotState)
+	targetState := NewIsaacState(round, ballotState)
 
 	if currentState.round.BlockHeight > targetState.round.BlockHeight {
 		return
@@ -61,17 +58,17 @@ func (sm *NodeRunnerStateManager) TransitNodeRunnerState(round Round, ballotStat
 	}
 
 	go func() {
-		sm.stateTransit <- NewNodeRunnerState(round, ballotState)
+		sm.stateTransit <- NewIsaacState(round, ballotState)
 	}()
 }
 
-func (sm *NodeRunnerStateManager) IncreaseRound() {
-	go func() {
-		sm.increaseRound <- true
-	}()
+func (sm *IsaacStateManager) increaseRound() {
+	round := sm.state.round
+	round.Number++
+	sm.TransitIsaacState(round, sebakcommon.BallotStateINIT)
 }
 
-func (sm *NodeRunnerStateManager) ResetRound() {
+func (sm *IsaacStateManager) ResetRound() {
 	go func() {
 		sm.resetRound <- true
 	}()
@@ -80,15 +77,11 @@ func (sm *NodeRunnerStateManager) ResetRound() {
 // In `Start()` method a node proposes ballot.
 // Or it sets or resets timeout. If it is expired, it broadcasts B(`EXP`).
 // And it manages the node round.
-func (sm *NodeRunnerStateManager) Start() {
+func (sm *IsaacStateManager) Start() {
 	oneHour := time.Duration(1 * time.Hour)
-	if sm.on {
-		return
-	}
-	sm.on = true
 	timer := time.NewTimer(sm.conf.GetTimeout(sebakcommon.BallotStateINIT))
-	sm.state = NewNodeRunnerState(
-		Round{
+	sm.state = NewIsaacState(
+		round.Round{
 			Number:      0,
 			BlockHeight: 0,
 		},
@@ -99,56 +92,56 @@ func (sm *NodeRunnerStateManager) Start() {
 		select {
 		case <-timer.C:
 			if sm.state.ballotState == sebakcommon.BallotStateACCEPT {
-				sm.IncreaseRound()
+				sm.increaseRound()
 				break
 			}
 			go sm.broadcastExpiredBallot(sm.state)
-			sm.TransitNodeRunnerState(sm.state.round, sm.state.ballotState.Next())
-		case sm.state = <-sm.stateTransit:
-			switch sm.state.ballotState {
+			state := sm.state
+			state.ballotState = sm.state.ballotState.Next()
+			sm.transitState(timer, state)
+		case state := <-sm.stateTransit:
+			switch state.ballotState {
 			case sebakcommon.BallotStateINIT:
-				timer.Reset(oneHour)
-				proposer := sm.nr.CalculateProposer(sm.state.round.BlockHeight, sm.state.round.Number)
+				proposer := sm.nr.CalculateProposer(state.round.BlockHeight, state.round.Number)
 				log.Debug("calculated proposer", "proposer", proposer)
 
 				if proposer == sm.nr.localNode.Address() {
-					if err := sm.nr.proposeNewBallot(sm.state.round.Number); err == nil {
-						log.Debug("propose new ballot", "proposer", proposer, "round", sm.state.round, "ballotState", sebakcommon.BallotStateSIGN)
-						sm.TransitNodeRunnerState(sm.state.round, sebakcommon.BallotStateSIGN)
+					timer.Reset(oneHour)
+					if err := sm.nr.proposeNewBallot(state.round.Number); err == nil {
+						log.Debug("propose new ballot", "proposer", proposer, "round", state.round, "ballotState", sebakcommon.BallotStateSIGN)
+						state.ballotState = sebakcommon.BallotStateSIGN
+						sm.transitState(timer, state)
 					} else {
 						sm.nr.log.Error("failed to proposeNewBallot", "height", sm.nr.consensus.LatestConfirmedBlock.Height, "error", err)
-						sm.TransitNodeRunnerState(sm.state.round, sebakcommon.BallotStateINIT)
+						state.ballotState = sebakcommon.BallotStateINIT
+						sm.transitState(timer, state)
 					}
 				} else {
-					timer.Reset(sm.conf.TimeoutINIT)
+					state.ballotState = sebakcommon.BallotStateINIT
+					sm.transitState(timer, state)
 				}
 			case sebakcommon.BallotStateSIGN:
-				timer.Reset(sm.conf.TimeoutSIGN)
+				sm.transitState(timer, state)
 			case sebakcommon.BallotStateACCEPT:
-				timer.Reset(sm.conf.TimeoutACCEPT)
+				sm.transitState(timer, state)
 			case sebakcommon.BallotStateALLCONFIRM:
 				sm.ResetRound()
 			case sebakcommon.BallotStateNONE:
-				timer.Reset(sm.conf.TimeoutINIT)
+				sm.transitState(timer, state)
 			}
-		case <-sm.increaseRound:
-			round := sm.state.round
-			round.Number++
-			sm.TransitNodeRunnerState(round, sebakcommon.BallotStateINIT)
 		case <-sm.resetRound:
 			round := sm.state.round
 			round.BlockHeight++
 			round.Number = 0
-			sm.TransitNodeRunnerState(round, sebakcommon.BallotStateINIT)
+			sm.TransitIsaacState(round, sebakcommon.BallotStateINIT)
 		case <-sm.stop:
-			sm.on = false
 			return
 		}
 	}
 }
 
-func (sm *NodeRunnerStateManager) broadcastExpiredBallot(state NodeRunnerState) {
-	round := Round{
+func (sm *IsaacStateManager) broadcastExpiredBallot(state IsaacState) {
+	round := round.Round{
 		Number:      state.round.Number,
 		BlockHeight: sm.nr.consensus.LatestConfirmedBlock.Height,
 		BlockHash:   sm.nr.consensus.LatestConfirmedBlock.Hash,
@@ -162,11 +155,23 @@ func (sm *NodeRunnerStateManager) broadcastExpiredBallot(state NodeRunnerState) 
 	sm.nr.ConnectionManager().Broadcast(*newExpiredBallot)
 }
 
-func (sm *NodeRunnerStateManager) State() NodeRunnerState {
+func (sm *IsaacStateManager) transitState(timer *time.Timer, state IsaacState) {
+	switch state.ballotState {
+	case sebakcommon.BallotStateINIT:
+		timer.Reset(sm.conf.TimeoutINIT)
+	case sebakcommon.BallotStateSIGN:
+		timer.Reset(sm.conf.TimeoutSIGN)
+	case sebakcommon.BallotStateACCEPT:
+		timer.Reset(sm.conf.TimeoutACCEPT)
+	}
+	sm.state = state
+}
+
+func (sm *IsaacStateManager) State() IsaacState {
 	return sm.state
 }
 
-func (sm *NodeRunnerStateManager) Stop() {
+func (sm *IsaacStateManager) Stop() {
 	go func() {
 		sm.stop <- true
 	}()

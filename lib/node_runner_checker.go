@@ -407,7 +407,7 @@ func TransitStateToSIGN(c sebakcommon.Checker, args ...interface{}) (err error) 
 	if !checker.IsNew {
 		return
 	}
-	checker.NodeRunner.TransitNodeRunnerState(checker.NodeRunner.nodeRunnerStateManager.State().round, sebakcommon.BallotStateSIGN)
+	checker.NodeRunner.TransitIsaacState(checker.Ballot.Round(), sebakcommon.BallotStateSIGN)
 
 	return
 }
@@ -445,7 +445,7 @@ func TransitStateToACCEPT(c sebakcommon.Checker, args ...interface{}) (err error
 	if !checker.VotingFinished {
 		return
 	}
-	checker.NodeRunner.TransitNodeRunnerState(checker.NodeRunner.nodeRunnerStateManager.State().round, sebakcommon.BallotStateACCEPT)
+	checker.NodeRunner.TransitIsaacState(checker.NodeRunner.nodeRunnerStateManager.State().round, sebakcommon.BallotStateACCEPT)
 
 	return
 }

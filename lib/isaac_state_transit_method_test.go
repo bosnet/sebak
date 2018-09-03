@@ -1,4 +1,4 @@
-// We can check that the `TransitNodeRunnerState()` call transitions the state.
+// We can check that the `TransitIsaacState()` call transitions the state.
 package sebak
 
 import (
@@ -12,9 +12,9 @@ import (
 
 // 1. All 3 Nodes.
 // 2. Not proposer itself.
-// 3. When `NodeRunnerStateManager` starts, the node waits for a proposed ballot.
-// 4. TransitNodeRunnerState(SIGN) method is called.
-// 5. NodeRunnerState is changed to `SIGN`.
+// 3. When `IsaacStateManager` starts, the node waits for a proposed ballot.
+// 4. TransitIsaacState(SIGN) method is called.
+// 5. IsaacState is changed to `SIGN`.
 // 6. TimeoutSIGN is a millisecond.
 // 7. After milliseconds, the node broadcasts B(`ACCEPT`, `EXP`).
 func TestStateTransitFromTimeoutInitToAccept(t *testing.T) {
@@ -27,7 +27,7 @@ func TestStateTransitFromTimeoutInitToAccept(t *testing.T) {
 
 	nr.Consensus().SetLatestConsensusedBlock(genesisBlock)
 
-	conf := NewNodeRunnerConfiguration()
+	conf := NewIsaacConfiguration()
 	conf.TimeoutINIT = time.Hour
 	conf.TimeoutSIGN = time.Millisecond
 	conf.TimeoutACCEPT = time.Millisecond
@@ -46,7 +46,7 @@ func TestStateTransitFromTimeoutInitToAccept(t *testing.T) {
 		require.Equal(t, sebakcommon.VotingYES, ballot.Vote())
 	}
 
-	nr.TransitNodeRunnerState(nr.nodeRunnerStateManager.State().round, sebakcommon.BallotStateSIGN)
+	nr.TransitIsaacState(nr.nodeRunnerStateManager.State().round, sebakcommon.BallotStateSIGN)
 	time.Sleep(time.Duration(100) * time.Millisecond)
 	require.Equal(t, 1, len(b.Messages))
 	for _, message := range b.Messages {
@@ -60,12 +60,12 @@ func TestStateTransitFromTimeoutInitToAccept(t *testing.T) {
 
 // 1. All 3 Nodes.
 // 1. Proposer itself.
-// 1. When `NodeRunnerStateManager` starts, the node proposes a ballot.
-// 1. NodeRunnerState is changed to `SIGN`.
-// 1. TransitNodeRunnerState(ACCEPT) method is called.
-// 1. NodeRunnerState is changed to `ACCEPT`.
+// 1. When `IsaacStateManager` starts, the node proposes a ballot.
+// 1. IsaacState is changed to `SIGN`.
+// 1. TransitIsaacState(ACCEPT) method is called.
+// 1. IsaacState is changed to `ACCEPT`.
 // 1. TimeoutACCEPT is a millisecond.
-// 1. After milliseconds, NodeRunnerState is back to `INIT`
+// 1. After milliseconds, IsaacState is back to `INIT`
 func TestStateTransitFromTimeoutSignToAccept(t *testing.T) {
 	nodeRunners := createTestNodeRunner(3)
 	nr := nodeRunners[0]
@@ -76,7 +76,7 @@ func TestStateTransitFromTimeoutSignToAccept(t *testing.T) {
 
 	nr.Consensus().SetLatestConsensusedBlock(genesisBlock)
 
-	conf := NewNodeRunnerConfiguration()
+	conf := NewIsaacConfiguration()
 	conf.TimeoutINIT = time.Hour
 	conf.TimeoutSIGN = time.Hour
 	conf.TimeoutACCEPT = time.Millisecond
@@ -97,7 +97,7 @@ func TestStateTransitFromTimeoutSignToAccept(t *testing.T) {
 		require.Equal(t, sebakcommon.VotingYES, ballot.Vote())
 	}
 
-	nr.TransitNodeRunnerState(nr.nodeRunnerStateManager.State().round, sebakcommon.BallotStateACCEPT)
+	nr.TransitIsaacState(nr.nodeRunnerStateManager.State().round, sebakcommon.BallotStateACCEPT)
 	time.Sleep(time.Duration(200) * time.Millisecond)
 	require.Equal(t, 2, len(b.Messages))
 	for _, message := range b.Messages {

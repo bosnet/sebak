@@ -18,6 +18,7 @@ import (
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
+	"boscoin.io/sebak/lib/round"
 	"boscoin.io/sebak/lib/storage"
 )
 
@@ -76,7 +77,7 @@ type NodeRunner struct {
 	connectionManager      *sebaknetwork.ConnectionManager
 	storage                *sebakstorage.LevelDBBackend
 	proposerCalculator     ProposerCalculator
-	nodeRunnerStateManager *NodeRunnerStateManager
+	nodeRunnerStateManager *IsaacStateManager
 
 	handleMessageFromClientCheckerFuncs []sebakcommon.CheckerFunc
 	handleBaseBallotCheckerFuncs        []sebakcommon.CheckerFunc
@@ -107,7 +108,7 @@ func NewNodeRunner(
 		storage:   storage,
 		log:       log.New(logging.Ctx{"node": localNode.Alias()}),
 	}
-	nr.nodeRunnerStateManager = NewNodeRunnerStateManager(nr)
+	nr.nodeRunnerStateManager = NewIsaacStateManager(nr)
 	nr.ctx = context.WithValue(context.Background(), "localNode", localNode)
 	nr.ctx = context.WithValue(nr.ctx, "networkID", nr.networkID)
 	nr.ctx = context.WithValue(nr.ctx, "storage", nr.storage)
@@ -148,7 +149,7 @@ func (nr *NodeRunner) SetProposerCalculator(c ProposerCalculator) {
 	nr.proposerCalculator = c
 }
 
-func (nr *NodeRunner) SetConf(conf *NodeRunnerConfiguration) {
+func (nr *NodeRunner) SetConf(conf *IsaacConfiguration) {
 	nr.nodeRunnerStateManager.SetConf(conf)
 }
 
@@ -375,7 +376,7 @@ func (nr *NodeRunner) InitRound() {
 	}
 
 	nr.consensus.SetLatestConsensusedBlock(latestBlock)
-	nr.consensus.SetLatestRound(Round{})
+	nr.consensus.SetLatestRound(round.Round{})
 
 	ticker := time.NewTicker(time.Millisecond * 5)
 	for _ = range ticker.C {
@@ -421,12 +422,12 @@ func (nr *NodeRunner) CalculateProposer(blockHeight uint64, roundNumber uint64) 
 	return nr.proposerCalculator.Calculate(nr, blockHeight, roundNumber)
 }
 
-func (nr *NodeRunner) TransitNodeRunnerState(round Round, ballotState sebakcommon.BallotState) {
-	nr.nodeRunnerStateManager.TransitNodeRunnerState(round, ballotState)
+func (nr *NodeRunner) TransitIsaacState(round round.Round, ballotState sebakcommon.BallotState) {
+	nr.nodeRunnerStateManager.TransitIsaacState(round, ballotState)
 }
 
 func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) error {
-	round := Round{
+	round := round.Round{
 		Number:      roundNumber,
 		BlockHeight: nr.consensus.LatestConfirmedBlock.Height,
 		BlockHash:   nr.consensus.LatestConfirmedBlock.Hash,
@@ -476,7 +477,7 @@ func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) error {
 	return nil
 }
 
-func (nr *NodeRunner) CloseConsensus(round Round) {
+func (nr *NodeRunner) CloseConsensus(round round.Round) {
 	nr.consensus.SetLatestRound(round)
 	nr.nodeRunnerStateManager.ResetRound()
 }

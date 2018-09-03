@@ -4,188 +4,9 @@ import (
 	"errors"
 
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/node"
+	"boscoin.io/sebak/lib/round"
 )
-
-type RoundVoteResult map[ /* Node.Address() */ string]sebakcommon.VotingHole
-
-type RoundVote struct {
-	SIGN   RoundVoteResult
-	ACCEPT RoundVoteResult
-}
-
-func NewRoundVote(ballot Ballot) (rv *RoundVote) {
-	rv = &RoundVote{
-		SIGN:   RoundVoteResult{},
-		ACCEPT: RoundVoteResult{},
-	}
-
-	rv.Vote(ballot)
-
-	return rv
-}
-
-func (rv *RoundVote) IsVoted(ballot Ballot) bool {
-	result := rv.GetResult(ballot.State())
-
-	_, found := result[ballot.Source()]
-	return found
-}
-
-func (rv *RoundVote) IsVotedByNode(state sebakcommon.BallotState, node string) bool {
-	result := rv.GetResult(state)
-
-	_, found := result[node]
-	return found
-}
-
-func (rv *RoundVote) Vote(ballot Ballot) (isNew bool, err error) {
-	if ballot.IsFromProposer() {
-		return
-	}
-
-	result := rv.GetResult(ballot.State())
-	_, isNew = result[ballot.Source()]
-	result[ballot.Source()] = ballot.Vote()
-
-	return
-}
-
-func (rv *RoundVote) GetResult(state sebakcommon.BallotState) (result RoundVoteResult) {
-	if !state.IsValidForVote() {
-		return
-	}
-
-	switch state {
-	case sebakcommon.BallotStateSIGN:
-		result = rv.SIGN
-	case sebakcommon.BallotStateACCEPT:
-		result = rv.ACCEPT
-	}
-
-	return result
-}
-
-func (rv *RoundVote) CanGetVotingResult(policy sebakcommon.VotingThresholdPolicy, state sebakcommon.BallotState) (RoundVoteResult, sebakcommon.VotingHole, bool) {
-	threshold := policy.Threshold(state)
-	if threshold < 1 {
-		return RoundVoteResult{}, sebakcommon.VotingNOTYET, false
-	}
-
-	result := rv.GetResult(state)
-	if len(result) < int(threshold) {
-		return result, sebakcommon.VotingNOTYET, false
-	}
-
-	var yes, no, expired int
-	for _, votingHole := range result {
-		switch votingHole {
-		case sebakcommon.VotingYES:
-			yes++
-		case sebakcommon.VotingNO:
-			no++
-		case sebakcommon.VotingEXP:
-			expired++
-		}
-	}
-
-	log.Debug(
-		"check threshold in isaac",
-		"threshold", threshold,
-		"yes", yes,
-		"no", no,
-		"expired", expired,
-		"policy", policy,
-		"state", state,
-	)
-
-	if state == sebakcommon.BallotStateSIGN {
-		if yes >= threshold {
-			return result, sebakcommon.VotingYES, true
-		} else if no >= threshold+1 {
-			return result, sebakcommon.VotingNO, true
-		}
-	} else if state == sebakcommon.BallotStateACCEPT {
-		if yes >= threshold {
-			return result, sebakcommon.VotingYES, true
-		} else if no >= threshold {
-			return result, sebakcommon.VotingNO, true
-		}
-	} else {
-		// do nothing
-	}
-
-	// check draw!
-	total := policy.Validators()
-	voted := yes + no + expired
-	if cannotBeOver(total-voted, threshold, yes, no) { // draw
-		return result, sebakcommon.VotingEXP, true
-	}
-
-	return result, sebakcommon.VotingNOTYET, false
-}
-
-func cannotBeOver(remain, threshold, yes, no int) bool {
-	return remain+yes < threshold && remain+no < threshold
-}
-
-type RunningRound struct {
-	sebakcommon.SafeLock
-
-	Round        Round
-	Proposer     string                              // LocalNode's `Proposer`
-	Transactions map[ /* Proposer */ string][]string /* Transaction.Hash */
-	Voted        map[ /* Proposer */ string]*RoundVote
-}
-
-func NewRunningRound(proposer string, ballot Ballot) (*RunningRound, error) {
-	transactions := map[string][]string{
-		ballot.Proposer(): ballot.Transactions(),
-	}
-
-	roundVote := NewRoundVote(ballot)
-	voted := map[string]*RoundVote{
-		ballot.Proposer(): roundVote,
-	}
-
-	return &RunningRound{
-		Round:        ballot.Round(),
-		Proposer:     proposer,
-		Transactions: transactions,
-		Voted:        voted,
-	}, nil
-}
-
-func (rr *RunningRound) RoundVote(proposer string) (rv *RoundVote, err error) {
-	var found bool
-	rv, found = rr.Voted[proposer]
-	if !found {
-		err = sebakerror.ErrorRoundVoteNotFound
-		return
-	}
-	return
-}
-
-func (rr *RunningRound) IsVoted(ballot Ballot) bool {
-	roundVote, err := rr.RoundVote(ballot.Proposer())
-	if err != nil {
-		return false
-	}
-
-	return roundVote.IsVoted(ballot)
-}
-
-func (rr *RunningRound) Vote(ballot Ballot) {
-	rr.Lock()
-	defer rr.Unlock()
-
-	if _, found := rr.Voted[ballot.Proposer()]; !found {
-		rr.Voted[ballot.Proposer()] = NewRoundVote(ballot)
-	} else {
-		rr.Voted[ballot.Proposer()].Vote(ballot)
-	}
-}
 
 type TransactionPool struct {
 	sebakcommon.SafeLock
@@ -277,7 +98,7 @@ func (tp *TransactionPool) Remove(hashes ...string) {
 	return
 }
 
-func (tp *TransactionPool) AvailableTransactions(conf *NodeRunnerConfiguration) []string {
+func (tp *TransactionPool) AvailableTransactions(conf *IsaacConfiguration) []string {
 	tp.Lock()
 	defer tp.Unlock()
 
@@ -303,7 +124,7 @@ type ISAAC struct {
 	TransactionPool       *TransactionPool
 	RunningRounds         map[ /* Round.Hash() */ string]*RunningRound
 	LatestConfirmedBlock  Block
-	LatestRound           Round
+	LatestRound           round.Round
 }
 
 func NewISAAC(networkID []byte, node *sebaknode.LocalNode, votingThresholdPolicy sebakcommon.VotingThresholdPolicy) (is *ISAAC, err error) {
@@ -318,7 +139,7 @@ func NewISAAC(networkID []byte, node *sebaknode.LocalNode, votingThresholdPolicy
 	return
 }
 
-func (is *ISAAC) CloseConsensus(proposer string, round Round, vh sebakcommon.VotingHole) (err error) {
+func (is *ISAAC) CloseConsensus(proposer string, round round.Round, vh sebakcommon.VotingHole) (err error) {
 	is.Lock()
 	defer is.Unlock()
 
@@ -359,11 +180,11 @@ func (is *ISAAC) SetLatestConsensusedBlock(block Block) {
 	is.LatestConfirmedBlock = block
 }
 
-func (is *ISAAC) SetLatestRound(round Round) {
+func (is *ISAAC) SetLatestRound(round round.Round) {
 	is.LatestRound = round
 }
 
-func (is *ISAAC) IsAvailableRound(round Round) bool {
+func (is *ISAAC) IsAvailableRound(round round.Round) bool {
 	// check current round is from InitRound
 	if is.LatestRound.BlockHash == "" {
 		return true
