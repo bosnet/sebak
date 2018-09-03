@@ -27,14 +27,7 @@ func AddAPIHandlers(s *sebakstorage.LevelDBBackend) func(ctx context.Context, t 
 // When the `event` triggered, `callBackFunc` fired
 // readyChan is used to notify caller of this function that streaming is ready
 // This function is not end until the connection is closed
-func streaming(o *observable.Observable, w http.ResponseWriter, event string, callBackFunc func(args ...interface{}) ([]byte, error), readyChan chan struct{}) {
-
-	cn, ok := w.(http.CloseNotifier)
-	if !ok {
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
-	}
-
+func streaming(o *observable.Observable, r *http.Request, w http.ResponseWriter, event string, callBackFunc func(args ...interface{}) ([]byte, error), readyChan chan struct{}) {
 	flusher, ok := w.(http.Flusher)
 	if !ok {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -66,7 +59,7 @@ func streaming(o *observable.Observable, w http.ResponseWriter, event string, ca
 	readyChan <- struct{}{}
 	for {
 		select {
-		case <-cn.CloseNotify():
+		case <-r.Context().Done():
 			close(consumerChan)
 			return
 		case message := <-messageChan:
@@ -74,5 +67,4 @@ func streaming(o *observable.Observable, w http.ResponseWriter, event string, ca
 			flusher.Flush()
 		}
 	}
-
 }

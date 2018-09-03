@@ -57,7 +57,7 @@ func GetAccountHandler(storage *sebakstorage.LevelDBBackend) http.HandlerFunc {
 
 			event := fmt.Sprintf("iterate-%s", iterateId)
 			event += " " + fmt.Sprintf("address-%s", address)
-			streaming(observer.BlockAccountObserver, w, event, callBackFunc, readyChan)
+			streaming(observer.BlockAccountObserver, r, w, event, callBackFunc, readyChan)
 		default:
 			if ba, err = block.GetBlockAccount(storage, address); err != nil {
 				http.Error(w, "Error reading request body", http.StatusInternalServerError)
@@ -118,7 +118,7 @@ func GetAccountTransactionsHandler(storage *sebakstorage.LevelDBBackend) http.Ha
 
 			event := fmt.Sprintf("iterate-%s", iterateId)
 			event += " " + fmt.Sprintf("source-%s", address)
-			streaming(observer.BlockTransactionObserver, w, event, callBackFunc, readyChan)
+			streaming(observer.BlockTransactionObserver, r, w, event, callBackFunc, readyChan)
 		default:
 
 			var btl []BlockTransaction
@@ -182,7 +182,7 @@ func GetAccountOperationsHandler(storage *sebakstorage.LevelDBBackend) http.Hand
 			}
 			event := fmt.Sprintf("iterate-%s", iterateId)
 			event += " " + fmt.Sprintf("source-%s", address)
-			streaming(observer.BlockOperationObserver, w, event, callBackFunc, readyChan)
+			streaming(observer.BlockOperationObserver, r, w, event, callBackFunc, readyChan)
 		default:
 
 			var bol []BlockOperation
