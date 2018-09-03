@@ -5,13 +5,11 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/storage"
 )
 
 type MissingTxAPI struct {
 	noderunner *NodeRunner
-	network    *sebaknetwork.Network
 }
 type MissingTransactions struct {
 	MissingTxs map[string]Transaction `json:"txs"`
@@ -49,7 +47,7 @@ func NewMissingTransactionsFromJSON(b []byte) (*MissingTransactions, error) {
 
 const SendMissingTxToRequestNodePattern = "/missingtx"
 
-func (missingTxApi MissingTxAPI) SendMissingTxToRequestNode(storage *sebakstorage.LevelDBBackend) http.HandlerFunc {
+func (ms MissingTxAPI) SendMissingTxToRequestNode(storage *sebakstorage.LevelDBBackend) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var err error
 
@@ -69,7 +67,7 @@ func (missingTxApi MissingTxAPI) SendMissingTxToRequestNode(storage *sebakstorag
 
 		for _, h := range hashesFromRequestNode.MissingTxs {
 			hash := h.GetHash()
-			if resultTransaction, found := missingTxApi.noderunner.Consensus().TransactionPool.Get(hash); found {
+			if resultTransaction, found := ms.noderunner.Consensus().TransactionPool.Get(hash); found {
 				// append hash to map
 				resultTx[hash] = resultTransaction
 

@@ -18,6 +18,7 @@ func AddAPIHandlers(s *sebakstorage.LevelDBBackend) func(ctx context.Context, t 
 		t.AddAPIHandler(GetAccountTransactionsHandlerPattern, GetAccountTransactionsHandler(s)).Methods("GET")
 		t.AddAPIHandler(GetAccountOperationsHandlerPattern, GetAccountOperationsHandler(s)).Methods("GET")
 		t.AddAPIHandler(GetTransactionByHashHandlerPattern, GetTransactionByHashHandler(s)).Methods("GET")
+		t.AddAPIHandler(SendMissingTxToRequestNodePattern, MissingTxAPI.SendMissingTxToRequestNode(s)).Methods("POST")
 	}
 	return fn
 }
