@@ -272,7 +272,7 @@ func TestNodeRunnerSaveBlock(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(numberOfNodes)
 	checkerDeferFunc := func(n int, checker sebakcommon.Checker, err error) {
-		if _, ok := err.(sebakcommon.CheckerStop); !ok {
+		if _, ok := err.(CheckerStopCloseConsensus); !ok {
 			return
 		}
 		wg.Done()
