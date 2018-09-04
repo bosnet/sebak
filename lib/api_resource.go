@@ -29,7 +29,7 @@ func (al APIResourceList) LinkSelf() string {
 	return ""
 }
 func (al APIResourceList) GetMap() hal.Entry {
-	return hal.Entry{"a": "b"}
+	return hal.Entry{}
 }
 
 const (
@@ -39,7 +39,6 @@ const (
 )
 
 type APIResourceAccount struct {
-	id         string
 	accountId  string
 	checkpoint string
 	balance    string
@@ -47,7 +46,7 @@ type APIResourceAccount struct {
 
 func (aa APIResourceAccount) GetMap() hal.Entry {
 	return hal.Entry{
-		"id":         aa.id,
+		"id":         aa.accountId,
 		"account_id": aa.accountId,
 		"checkpoint": aa.checkpoint,
 		"balance":    aa.balance,
@@ -56,53 +55,55 @@ func (aa APIResourceAccount) GetMap() hal.Entry {
 
 func (aa APIResourceAccount) Resource(selfUrl string) *hal.Resource {
 	r := hal.NewResource(aa, selfUrl)
-	r.AddNewLink("transactions", strings.Replace(UrlAccounts, "{id}", aa.id, -1)+"/transactions{?cursor,limit,order}")
-	r.AddNewLink("operations", strings.Replace(UrlAccounts, "{id}", aa.id, -1)+"/operations{?cursor,limit,order}")
+	r.AddLink("transactions", hal.NewLink(strings.Replace(UrlAccounts, "{id}", aa.accountId, -1)+"/transactions{?cursor,limit,order}", hal.LinkAttr{"templated": true}))
+	r.AddLink("operations", hal.NewLink(strings.Replace(UrlAccounts, "{id}", aa.accountId, -1)+"/operations{?cursor,limit,order}", hal.LinkAttr{"templated": true}))
 	return r
 }
 
 func (aa APIResourceAccount) LinkSelf() string {
-	return strings.Replace(UrlAccounts, "{id}", aa.id, -1)
+	return strings.Replace(UrlAccounts, "{id}", aa.accountId, -1)
 }
 
 type APIResourceTransaction struct {
-	id               string
-	hash             string
-	account          string //Source Account
-	feePaid          string
-	sourceCheckpoint string
-	targetCheckpoint string
-	createdAt        string //confirmed? created?
-	operationCount   uint64
+	hash               string
+	previousCheckpoint string
+	sourceCheckpoint   string
+	targetCheckpoint   string
+	signature          string
+	source             string
+	fee                string
+	amount             string
+	created            string
+	operations         []string
 }
 
 func (at APIResourceTransaction) GetMap() hal.Entry {
 	return hal.Entry{
-		"id":               at.id,
-		"hash":             at.hash,
-		"account":          at.account,
-		"fee_paid":         at.feePaid,
-		"sourceCheckpoint": at.sourceCheckpoint,
-		"targetCheckpoint": at.targetCheckpoint,
-		"created_at":       at.createdAt,
-		"operationCount":   at.operationCount,
+		"id":                at.hash,
+		"hash":              at.hash,
+		"account":           at.source,
+		"fee_paid":          at.fee,
+		"source_checkpoint": at.sourceCheckpoint,
+		"target_checkpoint": at.targetCheckpoint,
+		"created_at":        at.created,
+		"operation_count":   len(at.operations),
 	}
 }
 func (at APIResourceTransaction) Resource(selfUrl string) *hal.Resource {
 
 	r := hal.NewResource(at, selfUrl)
-	r.AddNewLink("accounts", strings.Replace(UrlAccounts, "{id}", at.account, -1))
-	r.AddNewLink("operations", strings.Replace(UrlTransactions, "{id}", at.id, -1)+"/operations{?cursor,limit,order}")
+	r.AddLink("accounts", hal.NewLink(strings.Replace(UrlAccounts, "{id}", at.source, -1)))
+	r.AddLink("operations", hal.NewLink(strings.Replace(UrlTransactions, "{id}", at.hash, -1)+"/operations{?cursor,limit,order}", hal.LinkAttr{"templated": true}))
 	return r
 }
 
 func (at APIResourceTransaction) LinkSelf() string {
-	return strings.Replace(UrlTransactions, "{id}", at.id, -1)
+	return strings.Replace(UrlTransactions, "{id}", at.hash, -1)
 }
 
 type APIResourceOperation struct {
-	id      string
 	hash    string
+	txHash  string
 	funder  string //Source Account
 	account string //Target Account
 	otype   string
@@ -111,7 +112,7 @@ type APIResourceOperation struct {
 
 func (ao APIResourceOperation) GetMap() hal.Entry {
 	return hal.Entry{
-		"id":      ao.id,
+		"id":      ao.hash,
 		"hash":    ao.hash,
 		"funder":  ao.funder,
 		"account": ao.account,
@@ -123,10 +124,10 @@ func (ao APIResourceOperation) GetMap() hal.Entry {
 func (ao APIResourceOperation) Resource(selfUrl string) *hal.Resource {
 
 	r := hal.NewResource(ao, selfUrl)
-	r.AddNewLink("transactions", strings.Replace(UrlTransactions, "{id}", ao.id, -1))
+	r.AddNewLink("transactions", strings.Replace(UrlTransactions, "{id}", ao.txHash, -1))
 	return r
 }
 
 func (ao APIResourceOperation) LinkSelf() string {
-	return strings.Replace(UrlOperations, "{id}", ao.id, -1)
+	return strings.Replace(UrlOperations, "{id}", ao.hash, -1)
 }
