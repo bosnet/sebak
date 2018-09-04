@@ -173,7 +173,7 @@ func (c *ConnectionManager) Broadcast(message sebakcommon.Message) {
 				var err error
 				if message.GetType() == BallotMessage {
 					_, err = client.SendBallot(message)
-				} else if message.GetType() == TransactionMessage {
+				} else if message.GetType() == string(TransactionMessage) {
 					_, err = client.SendMessage(message)
 				} else {
 					panic("invalid message")

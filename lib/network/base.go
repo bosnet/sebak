@@ -1,27 +1,34 @@
 package sebaknetwork
 
 import (
-	"context"
 	"encoding/json"
+	"io"
 	"math"
 	"net"
 	"net/http"
+
+	"github.com/gorilla/mux"
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/node"
 )
 
+const (
+	ConnectMessage                 = "connect"
+	TransactionMessage MessageType = "transaction"
+	BallotMessage                  = "ballot"
+)
+
 type Network interface {
 	Endpoint() *sebakcommon.Endpoint
-	Context() context.Context
-	SetContext(context.Context)
 	GetClient(endpoint *sebakcommon.Endpoint) NetworkClient
 	AddWatcher(func(Network, net.Conn, http.ConnState))
-	AddHandler(context.Context, ...interface{}) error
+	AddHandler(string, http.HandlerFunc) *mux.Route
 
 	Start() error
 	Stop()
 	SetMessageBroker(MessageBroker)
+	MessageBroker() MessageBroker
 	Ready() error
 	IsReady() bool
 
@@ -33,7 +40,7 @@ func NewNetwork(endpoint *sebakcommon.Endpoint) (n Network, err error) {
 	switch endpoint.Scheme {
 	case "memory":
 		n = NewMemoryNetwork()
-	case "https":
+	case "https", "http":
 		var config HTTP2NetworkConfig
 		config, err = NewHTTP2NetworkConfigFromEndpoint(endpoint)
 		if err != nil {
@@ -60,20 +67,11 @@ func (t MessageType) String() string {
 	return string(t)
 }
 
-const (
-	MessageFromClient  MessageType = "message"
-	ConnectMessage                 = "connect"
-	TransactionMessage             = "transaction"
-	BallotMessage                  = "ballot"
-	GetNodeInfoMessage             = "get-node-info"
-)
-
 // TODO versioning
 
 type Message struct {
 	Type MessageType
 	Data []byte
-	//DataString string // optional
 }
 
 func (t Message) String() string {
@@ -98,6 +96,10 @@ func NewMessage(mt MessageType, data []byte) Message {
 	return Message{
 		Type: mt,
 		Data: data,
-		//DataString: string(data),
 	}
+}
+
+type MessageBroker interface {
+	Response(io.Writer, []byte) error
+	Receive(Message)
 }

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io"
 	"os"
+	"strings"
 	"time"
 
 	"boscoin.io/sebak/lib/common"
@@ -11,6 +12,7 @@ import (
 
 type HTTP2NetworkConfig struct {
 	NodeName string
+	Endpoint *sebakcommon.Endpoint
 	Addr     string
 
 	ReadTimeout,
@@ -70,6 +72,11 @@ func NewHTTP2NetworkConfigFromEndpoint(endpoint *sebakcommon.Endpoint) (config H
 	TLSCertFile = query.Get("TLSCertFile")
 	TLSKeyFile = query.Get("TLSKeyFile")
 
+	if strings.ToLower(endpoint.Scheme) == "https" && (len(TLSCertFile) < 1 || len(TLSKeyFile) < 1) {
+		err = errors.New("HTTPS needs `TLSCertFile` and `TLSKeyFile`")
+		return
+	}
+
 	if v := query.Get("NodeName"); len(v) < 1 {
 		err = errors.New("`NodeName` must be given")
 		return
@@ -88,6 +95,7 @@ func NewHTTP2NetworkConfigFromEndpoint(endpoint *sebakcommon.Endpoint) (config H
 
 	config = HTTP2NetworkConfig{
 		NodeName:          NodeName,
+		Endpoint:          endpoint,
 		Addr:              endpoint.Host,
 		ReadTimeout:       ReadTimeout,
 		ReadHeaderTimeout: ReadHeaderTimeout,

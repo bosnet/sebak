@@ -1,23 +1,20 @@
 package sebaknetwork
 
 import (
-	"context"
+	"crypto/tls"
+	"errors"
 	"fmt"
-	"net/http"
-	"strings"
-	"testing"
-	"unicode"
-
 	"math/rand"
 	"net"
+	"net/http"
+	"net/url"
 	"strconv"
+	"testing"
 	"time"
 
-	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/node"
-
-	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
+
+	"boscoin.io/sebak/lib/common"
 )
 
 func getPort() string {
@@ -38,166 +35,122 @@ func getPort() string {
 	return testPort
 }
 
-const (
-	dirPath  = "tmp"
-	certPath = "cert.pem"
-	keyPath  = "key.pem"
-)
+func makeTestHTTP2NetworkForTLS(endpoint *sebakcommon.Endpoint) (network *HTTP2Network, err error) {
+	var config HTTP2NetworkConfig
+	if config, err = NewHTTP2NetworkConfigFromEndpoint(endpoint); err != nil {
+		return
+	}
 
-// Waiting until the server is ready
-func pingAndWait(t *testing.T, c0 NetworkClient) {
-	waitCount := 0
-	for {
-		if b, err := c0.GetNodeInfo(); len(b) != 0 && err == nil {
+	network = NewHTTP2Network(config)
+	go network.Start()
+
+	timer := time.NewTimer(5 * time.Second)
+	ticker := time.NewTicker(100 * time.Millisecond)
+	defer func() {
+		timer.Stop()
+		ticker.Stop()
+	}()
+
+	var connected bool
+	for _ = range ticker.C {
+		if connected {
 			break
-		} else {
-			time.Sleep(time.Millisecond * 100)
-			waitCount++
-			if waitCount > 100 {
-				t.Error("Server is not available")
+		}
+
+		select {
+		case <-timer.C:
+			err = errors.New("failed to create HTTP2Network")
+			return
+		default:
+			conn, _ := net.DialTimeout("tcp", net.JoinHostPort("", endpoint.Port()), 500*time.Millisecond)
+			if conn != nil {
+				conn.Close()
+				connected = true
+				break
 			}
 		}
 	}
+
+	return network, nil
 }
 
-func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, mn *HTTP2Network, localNode *sebaknode.LocalNode) {
-	g := NewKeyGenerator(dirPath, certPath, keyPath)
+// TestHTTP2NetworkTLSSupport will test the HTTP2Network with TLS support.
+func TestHTTP2NetworkTLSSupport(t *testing.T) {
+	g := NewKeyGenerator("tls_tmp", "sebak.cert", "sebak.key")
+	defer g.Close()
 
-	var config HTTP2NetworkConfig
-	endpoint, err := sebakcommon.NewEndpointFromString(fmt.Sprintf("https://localhost:%s?NodeName=n1", getPort()))
-	if err != nil {
-		t.Error(err)
-		return
+	require.NotNil(t, g)
+
+	queryValues := url.Values{}
+	queryValues.Set("NodeName", "showme")
+	queryValues.Set("TLSCertFile", g.GetCertPath())
+	queryValues.Set("TLSKeyFile", g.GetKeyPath())
+
+	endpoint := &sebakcommon.Endpoint{
+		Scheme:   "https",
+		Host:     fmt.Sprintf("localhost:%s", getPort()),
+		RawQuery: queryValues.Encode(),
 	}
 
-	queries := endpoint.Query()
-	queries.Add("TLSCertFile", g.GetCertPath())
-	queries.Add("TLSKeyFile", g.GetKeyPath())
-	endpoint.RawQuery = queries.Encode()
+	network, err := makeTestHTTP2NetworkForTLS(endpoint)
+	require.Nil(t, err)
+	defer network.Stop()
 
-	config, err = NewHTTP2NetworkConfigFromEndpoint(endpoint)
-	if err != nil {
-		t.Error(err)
-		return
+	{
+		// with normal HTTP2Client
+		client, err := sebakcommon.NewHTTP2Client(
+			defaultTimeout,
+			defaultIdleTimeout,
+			false,
+		)
+
+		require.Nil(t, err)
+
+		_, err = client.Get(endpoint.String(), http.Header{})
+		require.Nil(t, err)
 	}
-	mn = NewHTTP2Network(config)
 
-	kp, _ = keypair.Random()
-	localNode, _ = sebaknode.NewLocalNode(kp, mn.Endpoint(), "")
-
-	mn.SetContext(context.WithValue(context.Background(), "localNode", localNode))
-
-	return
-}
-
-type TestMessageBroker struct{}
-
-func (r TestMessageBroker) ResponseMessage(w http.ResponseWriter, o string) {
-	fmt.Fprintf(w, o)
-}
-
-func (r TestMessageBroker) ReceiveMessage(*HTTP2Network, Message) {}
-
-func removeWhiteSpaces(str string) string {
-	return strings.Map(func(r rune) rune {
-		if unicode.IsSpace(r) {
-			return -1
+	{
+		// with normal HTTPClient
+		transport := &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		}
-		return r
-	}, str)
-}
+		client := &http.Client{Transport: transport}
 
-func TestHTTP2NetworkGetNodeInfo(t *testing.T) {
-	_, s0, localNode := createNewHTTP2Network(t)
-	s0.SetMessageBroker(TestMessageBroker{})
-	s0.Ready()
-
-	go s0.Start()
-	defer s0.Stop()
-
-	c0 := s0.GetClient(s0.Endpoint())
-	pingAndWait(t, c0)
-
-	b, err := c0.GetNodeInfo()
-	if err != nil {
-		t.Error(err)
-		return
+		_, err := client.Get(endpoint.String())
+		require.Nil(t, err)
 	}
-	v, err := sebaknode.NewValidatorFromString(b)
-	if err != nil {
-		t.Error(err)
-		return
+}
+
+// TestHTTP2NetworkWithoutTLS will test the HTTP2Network without TLS support.
+// Without TLS configurations, `TLSCertFile`, `TLSKeyFile`, `HTTP2Network`
+// will be `HTTP` server, not `HTTPS`.
+func TestHTTP2NetworkWithoutTLS(t *testing.T) {
+	endpoint, err := sebakcommon.NewEndpointFromString(
+		fmt.Sprintf("http://localhost:%s?NodeName=showme", getPort()),
+	)
+	require.Nil(t, err)
+
+	network, err := makeTestHTTP2NetworkForTLS(endpoint)
+	require.Nil(t, err)
+	defer network.Stop()
+
+	{
+		// with normal HTTP2Client
+		client, err := sebakcommon.NewHTTP2Client(
+			defaultTimeout,
+			defaultIdleTimeout,
+			false,
+		)
+		require.Nil(t, err)
+
+		_, err = client.Get(endpoint.String(), http.Header{})
+		require.Nil(t, err)
 	}
 
-	server := localNode.Endpoint().String()
-	client := v.Endpoint().String()
-
-	require.Equal(t, server, client, "Server endpoint and received endpoint should be the same.")
-	require.Equal(t, localNode.Address(), v.Address(), "Server address and received address should be the same.")
-}
-
-type StringResponseMessageBroker struct {
-	msg string
-}
-
-func (r StringResponseMessageBroker) ResponseMessage(w http.ResponseWriter, _ string) {
-	fmt.Fprintf(w, r.msg)
-}
-
-func (r StringResponseMessageBroker) ReceiveMessage(*HTTP2Network, Message) {}
-
-func TestHTTP2NetworkMessageBrokerResponseMessage(t *testing.T) {
-	_, s0, localNode := createNewHTTP2Network(t)
-	s0.SetMessageBroker(StringResponseMessageBroker{"ResponseMessage"})
-	s0.Ready()
-
-	go s0.Start()
-	defer s0.Stop()
-
-	c0 := s0.GetClient(s0.Endpoint())
-	pingAndWait(t, c0)
-
-	returnMsg, _ := c0.Connect(localNode)
-
-	require.Equal(t, string(returnMsg), "ResponseMessage", "The connectNode and the return should be the same.")
-}
-
-func TestHTTP2NetworkConnect(t *testing.T) {
-	_, s0, localNode := createNewHTTP2Network(t)
-	s0.SetMessageBroker(TestMessageBroker{})
-	s0.Ready()
-
-	go s0.Start()
-	defer s0.Stop()
-
-	c0 := s0.GetClient(s0.Endpoint())
-	pingAndWait(t, c0)
-
-	o, _ := localNode.Serialize()
-	nodeStr := removeWhiteSpaces(string(o))
-
-	returnMsg, _ := c0.Connect(localNode)
-	returnStr := removeWhiteSpaces(string(returnMsg))
-
-	require.Equal(t, returnStr, nodeStr, "The connectNode and the return should be the same.")
-}
-
-func TestHTTP2NetworkSendMessage(t *testing.T) {
-	_, s0, _ := createNewHTTP2Network(t)
-	s0.SetMessageBroker(TestMessageBroker{})
-	s0.Ready()
-
-	go s0.Start()
-	defer s0.Stop()
-
-	c0 := s0.GetClient(s0.Endpoint())
-	pingAndWait(t, c0)
-
-	msg := NewDummyMessage("findme")
-	returnMsg, _ := c0.SendMessage(msg)
-
-	returnStr := removeWhiteSpaces(string(returnMsg))
-	sendMsg := removeWhiteSpaces(msg.String())
-
-	require.Equal(t, returnStr, sendMsg, "The sendMessage and the return should be the same.")
+	{
+		// with normal HTTPClient
+		_, err := http.Get(endpoint.String())
+		require.Nil(t, err)
+	}
 }

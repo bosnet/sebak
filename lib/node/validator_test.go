@@ -88,7 +88,6 @@ func TestValidatorMarshalJSON(t *testing.T) {
 	require.Equal(t, nil, err)
 
 	jsonStr := `"alias":"%s","endpoint":"https://localhost:%s","state":"%s"`
-	fmt.Println(string(tmpByte))
 	require.Equal(t, true, strings.Contains(string(tmpByte), fmt.Sprintf(jsonStr, "v1", "5000", "NONE")))
 }
 

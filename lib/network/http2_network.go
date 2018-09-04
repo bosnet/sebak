@@ -1,18 +1,18 @@
 package sebaknetwork
 
 import (
-	"context"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
+	"strings"
 	"time"
 
-	"boscoin.io/sebak/lib/common"
 	"github.com/gorilla/handlers"
-
 	"github.com/gorilla/mux"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"golang.org/x/net/http2"
+
+	"boscoin.io/sebak/lib/common"
 )
 
 type Handlers map[string]func(http.ResponseWriter, *http.Request)
@@ -27,8 +27,20 @@ var (
 	UrlPathPrefixAPI  = fmt.Sprintf("/%s", RouterNameAPI)
 )
 
+type HTTP2MessageBroker struct {
+	network *HTTP2Network
+}
+
+func (r HTTP2MessageBroker) Response(w io.Writer, o []byte) error {
+	_, err := w.Write(o)
+	return err
+}
+
+func (r HTTP2MessageBroker) Receive(msg Message) {
+	r.network.ReceiveChannel() <- msg
+}
+
 type HTTP2Network struct {
-	ctx         context.Context
 	tlsCertFile string
 	tlsKeyFile  string
 
@@ -45,11 +57,6 @@ type HTTP2Network struct {
 	handlers map[string]func(http.ResponseWriter, *http.Request)
 
 	config HTTP2NetworkConfig
-}
-
-type MessageBroker interface {
-	ResponseMessage(http.ResponseWriter, string)
-	ReceiveMessage(*HTTP2Network, Message)
 }
 
 type HandlerFunc func(w http.ResponseWriter, r *http.Request)
@@ -96,27 +103,9 @@ func NewHTTP2Network(config HTTP2NetworkConfig) (h2n *HTTP2Network) {
 	h2n.setNotReadyHandler()
 	h2n.server.ConnState = h2n.ConnState
 
-	h2n.SetMessageBroker(Http2MessageBroker{})
+	h2n.SetMessageBroker(HTTP2MessageBroker{network: h2n})
 
 	return
-}
-
-type Http2MessageBroker struct{}
-
-func (r Http2MessageBroker) ResponseMessage(w http.ResponseWriter, o string) {
-	fmt.Fprintf(w, o)
-}
-
-func (r Http2MessageBroker) ReceiveMessage(t *HTTP2Network, msg Message) {
-	t.ReceiveChannel() <- msg
-}
-
-func (t *HTTP2Network) Context() context.Context {
-	return t.ctx
-}
-
-func (t *HTTP2Network) SetContext(ctx context.Context) {
-	t.ctx = ctx
 }
 
 // GetClient creates new keep-alive HTTP2 client
@@ -133,16 +122,7 @@ func (t *HTTP2Network) GetClient(endpoint *sebakcommon.Endpoint) NetworkClient {
 }
 
 func (t *HTTP2Network) Endpoint() *sebakcommon.Endpoint {
-	host, port, _ := net.SplitHostPort(t.server.Addr)
-
-	var scheme string
-	if t.config.IsHTTPS() {
-		scheme = "https"
-	} else {
-		scheme = "http"
-	}
-
-	return &sebakcommon.Endpoint{Scheme: scheme, Host: fmt.Sprintf("%s:%s", host, port)}
+	return t.config.Endpoint
 }
 
 func (t *HTTP2Network) AddWatcher(f func(Network, net.Conn, http.ConnState)) {
@@ -166,28 +146,35 @@ func (t *HTTP2Network) setNotReadyHandler() {
 	t.server.Handler = handlers.CombinedLoggingHandler(t.config.HTTP2LogOutput, t.router)
 }
 
-func (t *HTTP2Network) AddHandler(ctx context.Context, args ...interface{}) (err error) {
-	addAPIFunc := args[0].(func(context.Context, *HTTP2Network))
-	addAPIFunc(ctx, t)
-	return
-}
-func (t *HTTP2Network) AddAPIHandler(pattern string, handlerFunc http.HandlerFunc) (router *mux.Route) {
-	apiRouter := t.routers[RouterNameAPI]
-	return apiRouter.HandleFunc(pattern, handlerFunc)
+func (t *HTTP2Network) AddHandler(pattern string, handler http.HandlerFunc) (router *mux.Route) {
+	var routerName string
+	var prefix string
+	switch {
+	case strings.HasPrefix(pattern, UrlPathPrefixNode):
+		routerName = RouterNameNode
+		prefix = pattern[len(UrlPathPrefixNode):]
+	case strings.HasPrefix(pattern, UrlPathPrefixAPI):
+		routerName = RouterNameAPI
+		prefix = pattern[len(UrlPathPrefixAPI):]
+	default:
+		// if unknown pattern, it will be attached to base router
+		return t.router.HandleFunc(pattern, handler)
+	}
+
+	r, _ := t.routers[routerName]
+
+	return r.HandleFunc(prefix, handler)
 }
 
 func (t *HTTP2Network) SetMessageBroker(mb MessageBroker) {
 	t.messageBroker = mb
 }
 
-func (t *HTTP2Network) Ready() error {
-	nodeRouter := t.routers[RouterNameNode]
-	nodeRouter.HandleFunc("/", NodeInfoHandler(t.Context(), t))
-	nodeRouter.HandleFunc("/connect", ConnectHandler(t.Context(), t)).Methods("POST")
-	nodeRouter.HandleFunc("/message", MessageHandler(t.Context(), t)).Methods("POST")
-	nodeRouter.HandleFunc("/ballot", BallotHandler(t.Context(), t)).Methods("POST")
-	nodeRouter.HandleFunc("/metrics", promhttp.Handler().ServeHTTP)
+func (t *HTTP2Network) MessageBroker() MessageBroker {
+	return t.messageBroker
+}
 
+func (t *HTTP2Network) Ready() error {
 	t.server.Handler = handlers.CombinedLoggingHandler(t.config.HTTP2LogOutput, t.router)
 
 	t.ready = true
@@ -210,16 +197,17 @@ func (t *HTTP2Network) IsReady() bool {
 	return true
 }
 
+// Start will start `HTTP2Network`.
 func (t *HTTP2Network) Start() (err error) {
 	defer func() {
 		close(t.receiveChannel)
 	}()
 
-	if t.config.IsHTTPS() {
-		return t.server.ListenAndServeTLS(t.tlsCertFile, t.tlsKeyFile)
-	} else {
+	if strings.ToLower(t.config.Endpoint.Scheme) == "http" {
 		return t.server.ListenAndServe()
 	}
+
+	return t.server.ListenAndServeTLS(t.tlsCertFile, t.tlsKeyFile)
 }
 
 func (t *HTTP2Network) Stop() {

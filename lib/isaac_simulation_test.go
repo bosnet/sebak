@@ -27,7 +27,7 @@ func TestIsaacSimulationProposer(t *testing.T) {
 
 	tx, txByte := GetTransaction(t)
 
-	message := sebaknetwork.Message{Type: sebaknetwork.MessageFromClient, Data: txByte}
+	message := sebaknetwork.Message{Type: sebaknetwork.TransactionMessage, Data: txByte}
 
 	nodeRunner := nodeRunners[0]
 
@@ -38,7 +38,7 @@ func TestIsaacSimulationProposer(t *testing.T) {
 	nodeRunner.Consensus().SetLatestConsensusedBlock(genesisBlock)
 
 	var err error
-	err = nodeRunner.handleMessageFromClient(message)
+	err = nodeRunner.handleTransaction(message)
 
 	require.Nil(t, err)
 	require.True(t, nodeRunner.Consensus().TransactionPool.Has(tx.GetHash()))

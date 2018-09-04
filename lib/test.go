@@ -1,7 +1,6 @@
 package sebak
 
 import (
-	"context"
 	"fmt"
 	"math/rand"
 	"testing"
@@ -35,7 +34,7 @@ func createNetMemoryNetwork() (*sebaknetwork.MemoryNetwork, *sebaknode.LocalNode
 	kp, _ := keypair.Random()
 	localNode, _ := sebaknode.NewLocalNode(kp, mn.Endpoint(), "")
 
-	mn.SetContext(context.WithValue(context.Background(), "localNode", localNode))
+	mn.SetLocalNode(localNode)
 
 	return mn, localNode
 }
