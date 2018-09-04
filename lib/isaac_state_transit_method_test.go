@@ -46,7 +46,7 @@ func TestStateTransitFromTimeoutInitToAccept(t *testing.T) {
 		require.Equal(t, sebakcommon.VotingYES, ballot.Vote())
 	}
 
-	nr.TransitIsaacState(nr.nodeRunnerStateManager.State().round, sebakcommon.BallotStateSIGN)
+	nr.TransitIsaacState(nr.isaacStateManager.State().round, sebakcommon.BallotStateSIGN)
 	time.Sleep(time.Duration(100) * time.Millisecond)
 	require.Equal(t, 1, len(b.Messages))
 	for _, message := range b.Messages {
@@ -87,7 +87,7 @@ func TestStateTransitFromTimeoutSignToAccept(t *testing.T) {
 	nr.StartStateManager()
 	time.Sleep(time.Duration(200) * time.Millisecond)
 
-	require.Equal(t, sebakcommon.BallotStateSIGN, nr.nodeRunnerStateManager.State().ballotState)
+	require.Equal(t, sebakcommon.BallotStateSIGN, nr.isaacStateManager.State().ballotState)
 	require.Equal(t, 1, len(b.Messages))
 	for _, message := range b.Messages {
 		ballot, ok := message.(Ballot)
@@ -97,7 +97,7 @@ func TestStateTransitFromTimeoutSignToAccept(t *testing.T) {
 		require.Equal(t, sebakcommon.VotingYES, ballot.Vote())
 	}
 
-	nr.TransitIsaacState(nr.nodeRunnerStateManager.State().round, sebakcommon.BallotStateACCEPT)
+	nr.TransitIsaacState(nr.isaacStateManager.State().round, sebakcommon.BallotStateACCEPT)
 	time.Sleep(time.Duration(200) * time.Millisecond)
 	require.Equal(t, 2, len(b.Messages))
 	for _, message := range b.Messages {

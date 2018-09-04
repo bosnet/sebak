@@ -15,7 +15,7 @@ type IsaacStateManager struct {
 	state        IsaacState
 	conf         *IsaacConfiguration
 	stateTransit chan IsaacState
-	resetRound   chan bool
+	nextHeight   chan bool
 	stop         chan bool
 }
 
@@ -25,7 +25,7 @@ func NewIsaacStateManager(nr *NodeRunner) *IsaacStateManager {
 		nr:   nr,
 	}
 	p.stateTransit = make(chan IsaacState)
-	p.resetRound = make(chan bool)
+	p.nextHeight = make(chan bool)
 	p.stop = make(chan bool)
 
 	return p
@@ -36,30 +36,35 @@ func (sm *IsaacStateManager) SetConf(conf *IsaacConfiguration) {
 }
 
 func (sm *IsaacStateManager) TransitIsaacState(round round.Round, ballotState sebakcommon.BallotState) {
-	currentState := sm.state
-	targetState := NewIsaacState(round, ballotState)
+	current := sm.state
+	target := NewIsaacState(round, ballotState)
 
-	if currentState.round.BlockHeight > targetState.round.BlockHeight {
-		return
-	} else if currentState.round.BlockHeight < targetState.round.BlockHeight {
-		// transit
-	} else { // currentState.round.BlockHeight == targetState.round.BlockHeight
-		if currentState.round.Number > round.Number {
-			return
-		} else if currentState.round.Number < targetState.round.Number {
-			// transit
-		} else { // currentState.round.Number == targetState.round.Number
-			if currentState.ballotState >= ballotState {
-				return
+	if isTargetLater(current, target) {
+		go func() {
+			sm.stateTransit <- target
+		}()
+	}
+}
+
+func isTargetLater(current IsaacState, target IsaacState) (result bool) {
+	if current.round.BlockHeight > target.round.BlockHeight {
+		result = false
+	} else if current.round.BlockHeight < target.round.BlockHeight {
+		result = true
+	} else { // current.round.BlockHeight == target.round.BlockHeight
+		if current.round.Number > target.round.Number {
+			result = false
+		} else if current.round.Number < target.round.Number {
+			result = true
+		} else { // current.round.Number == target.round.Number
+			if current.ballotState >= target.ballotState {
+				result = false
 			} else {
-				// transit
+				result = true
 			}
 		}
 	}
-
-	go func() {
-		sm.stateTransit <- NewIsaacState(round, ballotState)
-	}()
+	return result
 }
 
 func (sm *IsaacStateManager) increaseRound() {
@@ -68,9 +73,9 @@ func (sm *IsaacStateManager) increaseRound() {
 	sm.TransitIsaacState(round, sebakcommon.BallotStateINIT)
 }
 
-func (sm *IsaacStateManager) ResetRound() {
+func (sm *IsaacStateManager) NextHeight() {
 	go func() {
-		sm.resetRound <- true
+		sm.nextHeight <- true
 	}()
 }
 
@@ -78,14 +83,13 @@ func (sm *IsaacStateManager) ResetRound() {
 // Or it sets or resets timeout. If it is expired, it broadcasts B(`EXP`).
 // And it manages the node round.
 func (sm *IsaacStateManager) Start() {
-	oneHour := time.Duration(1 * time.Hour)
-	timer := time.NewTimer(sm.conf.GetTimeout(sebakcommon.BallotStateINIT))
+	timer := time.NewTimer(time.Duration(1 * time.Hour))
 	sm.state = NewIsaacState(
 		round.Round{
 			Number:      0,
 			BlockHeight: 0,
 		},
-		sebakcommon.BallotStateNONE,
+		sebakcommon.BallotStateINIT,
 	)
 
 	for {
@@ -96,44 +100,32 @@ func (sm *IsaacStateManager) Start() {
 				break
 			}
 			go sm.broadcastExpiredBallot(sm.state)
-			state := sm.state
-			state.ballotState = sm.state.ballotState.Next()
-			sm.transitState(timer, state)
+			sm.state.ballotState = sm.state.ballotState.Next()
+			sm.resetTimer(timer, sm.state.ballotState)
+
 		case state := <-sm.stateTransit:
 			switch state.ballotState {
 			case sebakcommon.BallotStateINIT:
-				proposer := sm.nr.CalculateProposer(state.round.BlockHeight, state.round.Number)
-				log.Debug("calculated proposer", "proposer", proposer)
-
-				if proposer == sm.nr.localNode.Address() {
-					timer.Reset(oneHour)
-					if err := sm.nr.proposeNewBallot(state.round.Number); err == nil {
-						log.Debug("propose new ballot", "proposer", proposer, "round", state.round, "ballotState", sebakcommon.BallotStateSIGN)
-						state.ballotState = sebakcommon.BallotStateSIGN
-						sm.transitState(timer, state)
-					} else {
-						sm.nr.log.Error("failed to proposeNewBallot", "height", sm.nr.consensus.LatestConfirmedBlock.Height, "error", err)
-						state.ballotState = sebakcommon.BallotStateINIT
-						sm.transitState(timer, state)
-					}
-				} else {
-					state.ballotState = sebakcommon.BallotStateINIT
-					sm.transitState(timer, state)
-				}
+				sm.proposeOrWait(timer, state)
 			case sebakcommon.BallotStateSIGN:
-				sm.transitState(timer, state)
+				sm.state = state
+				timer.Reset(sm.conf.TimeoutSIGN)
 			case sebakcommon.BallotStateACCEPT:
-				sm.transitState(timer, state)
+				sm.state = state
+				timer.Reset(sm.conf.TimeoutACCEPT)
 			case sebakcommon.BallotStateALLCONFIRM:
-				sm.ResetRound()
+				sm.NextHeight()
 			case sebakcommon.BallotStateNONE:
-				sm.transitState(timer, state)
+				timer.Reset(sm.conf.TimeoutINIT)
+				log.Error("Wrong IsaacState", "IsaacState", state)
 			}
-		case <-sm.resetRound:
+
+		case <-sm.nextHeight:
 			round := sm.state.round
 			round.BlockHeight++
 			round.Number = 0
 			sm.TransitIsaacState(round, sebakcommon.BallotStateINIT)
+
 		case <-sm.stop:
 			return
 		}
@@ -155,8 +147,8 @@ func (sm *IsaacStateManager) broadcastExpiredBallot(state IsaacState) {
 	sm.nr.ConnectionManager().Broadcast(*newExpiredBallot)
 }
 
-func (sm *IsaacStateManager) transitState(timer *time.Timer, state IsaacState) {
-	switch state.ballotState {
+func (sm *IsaacStateManager) resetTimer(timer *time.Timer, state sebakcommon.BallotState) {
+	switch state {
 	case sebakcommon.BallotStateINIT:
 		timer.Reset(sm.conf.TimeoutINIT)
 	case sebakcommon.BallotStateSIGN:
@@ -164,7 +156,28 @@ func (sm *IsaacStateManager) transitState(timer *time.Timer, state IsaacState) {
 	case sebakcommon.BallotStateACCEPT:
 		timer.Reset(sm.conf.TimeoutACCEPT)
 	}
-	sm.state = state
+}
+
+func (sm *IsaacStateManager) proposeOrWait(timer *time.Timer, state IsaacState) {
+	timer.Reset(time.Duration(1 * time.Hour))
+	proposer := sm.nr.CalculateProposer(state.round.BlockHeight, state.round.Number)
+	log.Debug("calculated proposer", "proposer", proposer)
+
+	if proposer == sm.nr.localNode.Address() {
+		if err := sm.nr.proposeNewBallot(state.round.Number); err == nil {
+			log.Debug("propose new ballot", "proposer", proposer, "round", state.round, "ballotState", sebakcommon.BallotStateSIGN)
+			sm.state = state
+			sm.state.ballotState = sebakcommon.BallotStateSIGN
+			timer.Reset(sm.conf.TimeoutSIGN)
+		} else {
+			log.Error("failed to proposeNewBallot", "height", sm.nr.consensus.LatestConfirmedBlock.Height, "error", err)
+			sm.state = state
+			timer.Reset(sm.conf.TimeoutINIT)
+		}
+	} else {
+		sm.state = state
+		timer.Reset(sm.conf.TimeoutINIT)
+	}
 }
 
 func (sm *IsaacStateManager) State() IsaacState {

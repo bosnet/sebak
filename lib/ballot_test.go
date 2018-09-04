@@ -67,7 +67,7 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 	endpoint, _ := sebakcommon.NewEndpointFromString("https://localhost:1000")
 	node, _ := sebaknode.NewLocalNode(kp, endpoint, "")
 
-	round := Round{Number: 0, BlockHeight: 0, BlockHash: "", TotalTxs: 0}
+	round := round.Round{Number: 0, BlockHeight: 0, BlockHash: "", TotalTxs: 0}
 
 	updateBallot := func(ballot *Ballot) {
 		ballot.H.Hash = ballot.B.MakeHashString()

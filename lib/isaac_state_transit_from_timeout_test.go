@@ -129,8 +129,8 @@ func TestStateINITTimeoutNotProposer(t *testing.T) {
 // 2. Proposer itself.
 // 3. When `IsaacStateManager` starts, the node proposes B(`INIT`, `YES`) to validators.
 // 4. Then IsaacState will be changed to `SIGN`.
-// 4. But TimeoutSIGN is a millisecond.
-// 5. After 200 milliseconds, the node broadcasts B(`ACCEPT`, `EXP`)
+// 5. But TimeoutSIGN is a millisecond.
+// 6. After 200 milliseconds, the node broadcasts B(`ACCEPT`, `EXP`)
 func TestStateSIGNTimeoutProposer(t *testing.T) {
 	nodeRunners := createTestNodeRunner(3)
 

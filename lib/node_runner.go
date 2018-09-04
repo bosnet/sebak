@@ -69,15 +69,15 @@ type ProposerCalculator interface {
 }
 
 type NodeRunner struct {
-	networkID              []byte
-	localNode              *sebaknode.LocalNode
-	policy                 sebakcommon.VotingThresholdPolicy
-	network                sebaknetwork.Network
-	consensus              *ISAAC
-	connectionManager      *sebaknetwork.ConnectionManager
-	storage                *sebakstorage.LevelDBBackend
-	proposerCalculator     ProposerCalculator
-	nodeRunnerStateManager *IsaacStateManager
+	networkID          []byte
+	localNode          *sebaknode.LocalNode
+	policy             sebakcommon.VotingThresholdPolicy
+	network            sebaknetwork.Network
+	consensus          *ISAAC
+	connectionManager  *sebaknetwork.ConnectionManager
+	storage            *sebakstorage.LevelDBBackend
+	proposerCalculator ProposerCalculator
+	isaacStateManager  *IsaacStateManager
 
 	handleMessageFromClientCheckerFuncs []sebakcommon.CheckerFunc
 	handleBaseBallotCheckerFuncs        []sebakcommon.CheckerFunc
@@ -108,7 +108,7 @@ func NewNodeRunner(
 		storage:   storage,
 		log:       log.New(logging.Ctx{"node": localNode.Alias()}),
 	}
-	nr.nodeRunnerStateManager = NewIsaacStateManager(nr)
+	nr.isaacStateManager = NewIsaacStateManager(nr)
 	nr.ctx = context.WithValue(context.Background(), "localNode", localNode)
 	nr.ctx = context.WithValue(nr.ctx, "networkID", nr.networkID)
 	nr.ctx = context.WithValue(nr.ctx, "storage", nr.storage)
@@ -150,7 +150,7 @@ func (nr *NodeRunner) SetProposerCalculator(c ProposerCalculator) {
 }
 
 func (nr *NodeRunner) SetConf(conf *IsaacConfiguration) {
-	nr.nodeRunnerStateManager.SetConf(conf)
+	nr.isaacStateManager.SetConf(conf)
 }
 
 func (nr *NodeRunner) SetBroadcastor(b sebaknetwork.Broadcastor) {
@@ -180,7 +180,7 @@ func (nr *NodeRunner) Start() (err error) {
 
 func (nr *NodeRunner) Stop() {
 	nr.network.Stop()
-	nr.nodeRunnerStateManager.Stop()
+	nr.isaacStateManager.Stop()
 }
 
 func (nr *NodeRunner) Node() *sebaknode.LocalNode {
@@ -413,8 +413,8 @@ func (nr *NodeRunner) StartStateManager() {
 		return
 	}
 
-	go nr.nodeRunnerStateManager.Start()
-	nr.nodeRunnerStateManager.ResetRound()
+	go nr.isaacStateManager.Start()
+	nr.isaacStateManager.NextHeight()
 	return
 }
 
@@ -423,7 +423,7 @@ func (nr *NodeRunner) CalculateProposer(blockHeight uint64, roundNumber uint64) 
 }
 
 func (nr *NodeRunner) TransitIsaacState(round round.Round, ballotState sebakcommon.BallotState) {
-	nr.nodeRunnerStateManager.TransitIsaacState(round, ballotState)
+	nr.isaacStateManager.TransitIsaacState(round, ballotState)
 }
 
 func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) error {
@@ -435,7 +435,7 @@ func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) error {
 	}
 
 	// collect incoming transactions from `TransactionPool`
-	availableTransactions := nr.consensus.TransactionPool.AvailableTransactions(nr.nodeRunnerStateManager.conf)
+	availableTransactions := nr.consensus.TransactionPool.AvailableTransactions(nr.isaacStateManager.conf)
 	nr.log.Debug("new round proposed", "round", round, "transactions", availableTransactions)
 
 	transactionsChecker := &BallotTransactionChecker{
@@ -479,5 +479,5 @@ func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) error {
 
 func (nr *NodeRunner) CloseConsensus(round round.Round) {
 	nr.consensus.SetLatestRound(round)
-	nr.nodeRunnerStateManager.ResetRound()
+	nr.isaacStateManager.NextHeight()
 }
