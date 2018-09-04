@@ -2,12 +2,12 @@
 
 
 [[projects]]
-  branch = "master"
-  digest = "1:e65ecc7bc574fcf4f3a5863459cc691334fbac63b21e95c4fb2ce207dff334c4"
+  branch = "dev"
+  digest = "1:8ee7fa4f9c8705684b7a10533435a2b24ceed01ad7d9b238d90d7da29d5c57d7"
   name = "github.com/GianlucaGuarini/go-observable"
   packages = ["."]
   pruneopts = "NT"
-  revision = "e39e699e0a002c560bdff16804c81ac1cd12fac2"
+  revision = "d386f0081a66ac3d2c0a79ff4c734dd3165869c0"
 
 [[projects]]
   branch = "master"
@@ -154,14 +154,6 @@
   ]
   pruneopts = "NT"
   revision = "d34b9ff171c21ad295489235aec8b6626023cd04"
-
-[[projects]]
-  digest = "1:4244266b65ea535b8ebd109a327720821707b59f9a37bda738946d52ec69442d"
-  name = "github.com/magiconair/properties"
-  packages = ["assert"]
-  pruneopts = "NT"
-  revision = "c2353362d570a7bfa228149c62842019201cfb71"
-  version = "v1.8.0"
 
 [[projects]]
   digest = "1:e0a9ecd540b69f570f96c593b713268aad428e4a25a98f23467c59e6f69ab880"
