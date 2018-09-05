@@ -99,8 +99,9 @@ func GetBlockKeyPrefixConfirmed(confirmed string) string {
 
 func (b Block) NewBlockKeyConfirmed() string {
 	return fmt.Sprintf(
-		"%s%s",
+		"%s%s%s",
 		GetBlockKeyPrefixConfirmed(b.Confirmed),
+		common.EncodeUint64ToByteSlice(b.Height),
 		common.GetUniqueIDFromUUID(),
 	)
 }
@@ -137,14 +138,14 @@ func LoadBlocksInsideIterator(
 	iterFunc func() (storage.IterItem, bool),
 	closeFunc func(),
 ) (
-	func() (Block, bool),
+	func() (Block, bool, []byte),
 	func(),
 ) {
 
-	return (func() (Block, bool) {
+	return (func() (Block, bool, []byte) {
 			item, hasNext := iterFunc()
 			if !hasNext {
-				return Block{}, false
+				return Block{}, false, []byte{}
 			}
 
 			var hash string
@@ -152,28 +153,28 @@ func LoadBlocksInsideIterator(
 
 			b, err := GetBlock(st, hash)
 			if err != nil {
-				return Block{}, false
+				return Block{}, false, []byte{}
 			}
 
-			return b, hasNext
+			return b, hasNext, item.Key
 		}), (func() {
 			closeFunc()
 		})
 }
 
-func GetBlocksByConfirmed(st *storage.LevelDBBackend, reverse bool) (
-	func() (Block, bool),
+func GetBlocksByConfirmed(st *storage.LevelDBBackend, iteratorOptions *storage.IteratorOptions) (
+	func() (Block, bool, []byte),
 	func(),
 ) {
-	iterFunc, closeFunc := st.GetIterator(BlockPrefixConfirmed, reverse)
+	iterFunc, closeFunc := st.GetIterator(BlockPrefixConfirmed, iteratorOptions)
 
 	return LoadBlocksInsideIterator(st, iterFunc, closeFunc)
 }
 
 func GetLatestBlock(st *storage.LevelDBBackend) (b Block, err error) {
 	// get latest blocks
-	iterFunc, closeFunc := GetBlocksByConfirmed(st, true)
-	b, _ = iterFunc()
+	iterFunc, closeFunc := GetBlocksByConfirmed(st, &storage.IteratorOptions{Reverse: true})
+	b, _, _ = iterFunc()
 	closeFunc()
 
 	if b.Hash == "" {

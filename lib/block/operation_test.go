@@ -15,7 +15,7 @@ func TestNewBlockOperationFromOperation(t *testing.T) {
 	_, tx := transaction.TestMakeTransaction(networkID, 1)
 
 	op := tx.B.Operations[0]
-	bo := NewBlockOperationFromOperation(op, tx)
+	bo := NewBlockOperationFromOperation(op, tx, 0)
 
 	require.Equal(t, bo.Type, op.H.Type)
 	require.Equal(t, bo.TxHash, tx.H.Hash)
@@ -79,9 +79,9 @@ func TestGetSortedBlockOperationsByTxHash(t *testing.T) {
 
 	for _, txHash := range txHashes {
 		var saved []BlockOperation
-		iterFunc, closeFunc := GetBlockOperationsByTxHash(st, txHash, false)
+		iterFunc, closeFunc := GetBlockOperationsByTxHash(st, txHash, nil)
 		for {
-			bo, hasNext := iterFunc()
+			bo, hasNext, _ := iterFunc()
 			if !hasNext {
 				break
 			}
@@ -101,14 +101,14 @@ func TestBlockOperationSaveByTransacton(t *testing.T) {
 
 	_, tx := transaction.TestMakeTransaction(networkID, 10)
 	block := TestMakeNewBlock([]string{tx.GetHash()})
-	bt := NewBlockTransactionFromTransaction(block.Hash, tx, common.MustJSONMarshal(tx))
+	bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, tx, common.MustJSONMarshal(tx))
 	err := bt.Save(st)
 	require.Nil(t, err)
 
 	var saved []BlockOperation
-	iterFunc, closeFunc := GetBlockOperationsByTxHash(st, tx.GetHash(), false)
+	iterFunc, closeFunc := GetBlockOperationsByTxHash(st, tx.GetHash(), nil)
 	for {
-		bo, hasNext := iterFunc()
+		bo, hasNext, _ := iterFunc()
 		if !hasNext {
 			break
 		}

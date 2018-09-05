@@ -156,7 +156,7 @@ func TestGetAccountTransactionsHandler(t *testing.T) {
 	for _, tx := range txs {
 		a, err := tx.Serialize()
 		require.Nil(t, err)
-		bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, tx, a)
+		bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, theBlock.Height, tx, a)
 		err = bt.Save(storage)
 		require.Nil(t, err)
 		btmap[bt.Hash] = bt
@@ -183,7 +183,7 @@ func TestGetAccountTransactionsHandler(t *testing.T) {
 			if !assert.Nil(t, err) {
 				panic(err)
 			}
-			bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, tx, a)
+			bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, theBlock.Height, tx, a)
 			err = bt.Save(storage)
 			if !assert.Nil(t, err) {
 				panic(err)
@@ -223,6 +223,7 @@ func TestGetAccountTransactionsHandler(t *testing.T) {
 	require.Nil(t, err)
 	var receivedBts []block.BlockTransaction
 	json.Unmarshal(readByte, &receivedBts)
+	fmt.Println(receivedBts[0])
 
 	require.Equal(t, len(btmap), len(receivedBts), "length is not same")
 
@@ -260,7 +261,7 @@ func TestGetAccountOperationsHandler(t *testing.T) {
 	for _, tx := range txs {
 		a, err := tx.Serialize()
 		require.Nil(t, err)
-		bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, tx, a)
+		bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, theBlock.Height, tx, a)
 		bt.Save(storage)
 
 		for _, boHash := range bt.Operations {
@@ -290,7 +291,7 @@ func TestGetAccountOperationsHandler(t *testing.T) {
 			if !assert.Nil(t, err) {
 				panic(err)
 			}
-			bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, tx, a)
+			bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, theBlock.Height, tx, a)
 			bt.Save(storage)
 
 			for _, boHash := range bt.Operations {
@@ -364,7 +365,7 @@ func TestGetTransactionByHashHandler(t *testing.T) {
 	require.Nil(t, err)
 
 	theBlock := block.TestMakeNewBlock([]string{tx.GetHash()})
-	bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, tx, a)
+	bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, theBlock.Height, tx, a)
 
 	// Do a Request
 	url := ts.URL + fmt.Sprintf("/transactions/%s", bt.Hash)
@@ -431,7 +432,7 @@ func TestGetTransactionsHandler(t *testing.T) {
 	for _, tx := range txs {
 		a, err := tx.Serialize()
 		require.Nil(t, err)
-		bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, tx, a)
+		bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, theBlock.Height, tx, a)
 		err = bt.Save(storage)
 		require.Nil(t, err)
 		btmap[bt.Hash] = bt
@@ -458,7 +459,7 @@ func TestGetTransactionsHandler(t *testing.T) {
 			if !assert.Nil(t, err) {
 				panic(err)
 			}
-			bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, tx, a)
+			bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, theBlock.Height, tx, a)
 			err = bt.Save(storage)
 			if !assert.Nil(t, err) {
 				panic(err)

@@ -7,6 +7,7 @@ import (
 	"boscoin.io/sebak/lib/network/httputils"
 
 	"boscoin.io/sebak/lib/block"
+	"boscoin.io/sebak/lib/storage"
 	"github.com/gorilla/mux"
 )
 
@@ -14,9 +15,9 @@ func (api NetworkHandlerAPI) GetTransactionsHandler(w http.ResponseWriter, r *ht
 
 	readFunc := func(cnt int) []*block.BlockTransaction {
 		var txs []*block.BlockTransaction
-		iterFunc, closeFunc := block.GetBlockTransactions(api.storage, false)
+		iterFunc, closeFunc := block.GetBlockTransactions(api.storage, &storage.IteratorOptions{Reverse: false})
 		for {
-			t, hasNext := iterFunc()
+			t, hasNext, _ := iterFunc()
 			if !hasNext || cnt == 0 {
 				break
 			}

@@ -13,7 +13,7 @@ var SupportedStorageType []string = []string{
 }
 
 type IterItem struct {
-	N     int64
+	N     uint64
 	Key   []byte
 	Value []byte
 }

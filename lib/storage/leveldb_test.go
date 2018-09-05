@@ -301,14 +301,14 @@ func TestLevelDBIterator(t *testing.T) {
 	}
 
 	var collected []string
-	it, closeFunc := st.GetIterator("", false)
+	it, closeFunc := st.GetIterator("", &IteratorOptions{Reverse: false})
 	for {
 		v, hasNext := it()
 		if !hasNext {
 			break
 		}
 
-		if v.N > int64(filteredCount) {
+		if v.N > uint64(filteredCount) {
 			break
 		}
 		collected = append(collected, string(v.Key))
@@ -320,6 +320,80 @@ func TestLevelDBIterator(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(expected, collected) {
+		t.Error("failed to fetch the exact sequence of items")
+	}
+
+	return
+}
+
+func TestLevelDBIteratorSeek(t *testing.T) {
+	st, _ := NewTestMemoryLevelDBBackend()
+	defer st.Close()
+
+	total := 300
+
+	expected := []string{}
+	for i := 0; i < total; i++ {
+		key := fmt.Sprintf("%03d", i)
+		st.New(key, 0)
+
+		expected = append(expected, key)
+	}
+
+	expected = expected[100:]
+
+	var collected []string
+	it, closeFunc := st.GetIterator("", &IteratorOptions{Reverse: false, Cursor: []byte(fmt.Sprintf("%03d", 100))})
+	for {
+		v, hasNext := it()
+		if !hasNext {
+			break
+		}
+
+		collected = append(collected, string(v.Key))
+	}
+	closeFunc()
+
+	if !reflect.DeepEqual(expected, collected) {
+		t.Log(expected)
+		t.Log(collected)
+		t.Error("failed to fetch the exact sequence of items")
+	}
+
+	return
+}
+
+func TestLevelDBIteratorLimit(t *testing.T) {
+	st, _ := NewTestMemoryLevelDBBackend()
+	defer st.Close()
+
+	total := 300
+
+	expected := []string{}
+	for i := 0; i < total; i++ {
+		key := fmt.Sprintf("%03d", i)
+		st.New(key, 0)
+
+		expected = append(expected, key)
+	}
+
+	expected = expected[:100]
+
+	var collected []string
+	it, closeFunc := st.GetIterator("", &IteratorOptions{Reverse: false, Limit: 100})
+	for {
+		v, hasNext := it()
+		if !hasNext {
+			break
+		}
+
+		collected = append(collected, string(v.Key))
+	}
+	closeFunc()
+
+	if !reflect.DeepEqual(expected, collected) {
+		t.Log(expected)
+		t.Log(collected)
 		t.Error("failed to fetch the exact sequence of items")
 	}
 
@@ -341,7 +415,7 @@ func TestLevelDBIteratorReverseOrder(t *testing.T) {
 	}
 
 	var collected []string
-	it, closeFunc := st.GetIterator("", true)
+	it, closeFunc := st.GetIterator("", &IteratorOptions{Reverse: true})
 	for {
 		v, hasNext := it()
 		if !hasNext {

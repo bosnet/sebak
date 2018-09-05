@@ -58,7 +58,7 @@ func TestMakeNewBlockOperation(networkID []byte, n int) (bos []BlockOperation) {
 	_, tx := transaction.TestMakeTransaction(networkID, n)
 
 	for _, op := range tx.B.Operations {
-		bos = append(bos, NewBlockOperationFromOperation(op, tx))
+		bos = append(bos, NewBlockOperationFromOperation(op, tx, 0))
 	}
 
 	return
@@ -69,5 +69,5 @@ func TestMakeNewBlockTransaction(networkID []byte, n int) BlockTransaction {
 
 	block := TestMakeNewBlock([]string{tx.GetHash()})
 	a, _ := tx.Serialize()
-	return NewBlockTransactionFromTransaction(block.Hash, tx, a)
+	return NewBlockTransactionFromTransaction(block.Hash, block.Height, tx, a)
 }

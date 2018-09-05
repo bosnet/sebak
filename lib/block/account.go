@@ -106,30 +106,30 @@ func GetBlockAccount(st *storage.LevelDBBackend, address string) (b *BlockAccoun
 	return
 }
 
-func GetBlockAccountAddressesByCreated(st *storage.LevelDBBackend, reverse bool) (func() (string, bool), func()) {
-	iterFunc, closeFunc := st.GetIterator(BlockAccountPrefixCreated, reverse)
+func GetBlockAccountAddressesByCreated(st *storage.LevelDBBackend, iteratorOptions *storage.IteratorOptions) (func() (string, bool, []byte), func()) {
+	iterFunc, closeFunc := st.GetIterator(BlockAccountPrefixCreated, iteratorOptions)
 
-	return (func() (string, bool) {
+	return (func() (string, bool, []byte) {
 			item, hasNext := iterFunc()
 			if !hasNext {
-				return "", false
+				return "", false, []byte{}
 			}
 
 			var address string
 			json.Unmarshal(item.Value, &address)
-			return address, hasNext
+			return address, hasNext, item.Key
 		}), (func() {
 			closeFunc()
 		})
 }
 
-func GetBlockAccountsByCreated(st *storage.LevelDBBackend, reverse bool) (func() (*BlockAccount, bool), func()) {
-	iterFunc, closeFunc := GetBlockAccountAddressesByCreated(st, reverse)
+func GetBlockAccountsByCreated(st *storage.LevelDBBackend, iteratorOptions *storage.IteratorOptions) (func() (*BlockAccount, bool, []byte), func()) {
+	iterFunc, closeFunc := GetBlockAccountAddressesByCreated(st, iteratorOptions)
 
-	return (func() (*BlockAccount, bool) {
-			address, hasNext := iterFunc()
+	return (func() (*BlockAccount, bool, []byte) {
+			address, hasNext, cursor := iterFunc()
 			if !hasNext {
-				return nil, false
+				return nil, false, cursor
 			}
 
 			ba, err := GetBlockAccount(st, address)
@@ -137,9 +137,9 @@ func GetBlockAccountsByCreated(st *storage.LevelDBBackend, reverse bool) (func()
 			// TODO if err != nil, stopping iteration is right? how about just
 			// ignoring the missing one?
 			if err != nil {
-				return nil, false
+				return nil, false, cursor
 			}
-			return ba, hasNext
+			return ba, hasNext, cursor
 		}), (func() {
 			closeFunc()
 		})
@@ -238,14 +238,14 @@ func GetBlockAccountSequenceID(st *storage.LevelDBBackend, address string, seque
 	return
 }
 
-func GetBlockAccountSequenceIDByAddress(st *storage.LevelDBBackend, address string, reverse bool) (func() (BlockAccountSequenceID, bool), func()) {
+func GetBlockAccountSequenceIDByAddress(st *storage.LevelDBBackend, address string, iteratorOptions *storage.IteratorOptions) (func() (BlockAccountSequenceID, bool, []byte), func()) {
 	prefix := GetBlockAccountSequenceIDByAddressKeyPrefix(address)
-	iterFunc, closeFunc := st.GetIterator(prefix, reverse)
+	iterFunc, closeFunc := st.GetIterator(prefix, iteratorOptions)
 
-	return (func() (BlockAccountSequenceID, bool) {
+	return (func() (BlockAccountSequenceID, bool, []byte) {
 			item, hasNext := iterFunc()
 			if !hasNext {
-				return BlockAccountSequenceID{}, false
+				return BlockAccountSequenceID{}, false, []byte{}
 			}
 
 			var key string
@@ -253,9 +253,10 @@ func GetBlockAccountSequenceIDByAddress(st *storage.LevelDBBackend, address stri
 
 			var bac BlockAccountSequenceID
 			if err := st.Get(key, &bac); err != nil {
-				return BlockAccountSequenceID{}, false
+				return BlockAccountSequenceID{}, false, []byte{}
 			}
-			return bac, hasNext
+			return bac, hasNext, item.Key
+
 		}), (func() {
 			closeFunc()
 		})

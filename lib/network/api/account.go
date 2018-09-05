@@ -10,6 +10,7 @@ import (
 	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/network/httputils"
+	"boscoin.io/sebak/lib/storage"
 )
 
 func (api NetworkHandlerAPI) GetAccountHandler(w http.ResponseWriter, r *http.Request) {
@@ -49,9 +50,9 @@ func (api NetworkHandlerAPI) GetAccountTransactionsHandler(w http.ResponseWriter
 
 	readFunc := func(cnt int) []*block.BlockTransaction {
 		var txs []*block.BlockTransaction
-		iterFunc, closeFunc := block.GetBlockTransactionsByAccount(api.storage, address, false)
+		iterFunc, closeFunc := block.GetBlockTransactionsByAccount(api.storage, address, &storage.IteratorOptions{Reverse: false})
 		for {
-			t, hasNext := iterFunc()
+			t, hasNext, _ := iterFunc()
 			if !hasNext || cnt == 0 {
 				break
 			}
@@ -88,9 +89,9 @@ func (api NetworkHandlerAPI) GetAccountOperationsHandler(w http.ResponseWriter, 
 
 	readFunc := func(cnt int) []*block.BlockOperation {
 		var txs []*block.BlockOperation
-		iterFunc, closeFunc := block.GetBlockOperationsBySource(api.storage, address, false)
+		iterFunc, closeFunc := block.GetBlockOperationsBySource(api.storage, address, &storage.IteratorOptions{Reverse: false})
 		for {
-			t, hasNext := iterFunc()
+			t, hasNext, _ := iterFunc()
 			if !hasNext || cnt == 0 {
 				break
 			}
