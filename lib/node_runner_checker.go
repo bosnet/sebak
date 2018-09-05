@@ -374,9 +374,8 @@ func INITBallotValidateTransactions(c sebakcommon.Checker, args ...interface{}) 
 	return
 }
 
-// INITBallotBroadcast will broadcast the validated INIT
-// ballot.
-func INITBallotBroadcast(c sebakcommon.Checker, args ...interface{}) (err error) {
+// SIGNBallotBroadcast will broadcast the validated SIGN ballot.
+func SIGNBallotBroadcast(c sebakcommon.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotChecker)
 	if !checker.IsNew {
 		return
@@ -403,9 +402,19 @@ func INITBallotBroadcast(c sebakcommon.Checker, args ...interface{}) (err error)
 	return
 }
 
-// SIGNBallotBroadcast will broadcast the confirmed SIGN
+func TransitStateToSIGN(c sebakcommon.Checker, args ...interface{}) (err error) {
+	checker := c.(*BallotChecker)
+	if !checker.IsNew {
+		return
+	}
+	checker.NodeRunner.TransitIsaacState(checker.Ballot.Round(), sebakcommon.BallotStateSIGN)
+
+	return
+}
+
+// ACCEPTBallotBroadcast will broadcast the confirmed ACCEPT
 // ballot.
-func SIGNBallotBroadcast(c sebakcommon.Checker, args ...interface{}) (err error) {
+func ACCEPTBallotBroadcast(c sebakcommon.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotChecker)
 	if !checker.VotingFinished {
 		return
@@ -431,16 +440,24 @@ func SIGNBallotBroadcast(c sebakcommon.Checker, args ...interface{}) (err error)
 	return
 }
 
-// ACCEPTBallotStore will store the confirmed ballot to
+func TransitStateToACCEPT(c sebakcommon.Checker, args ...interface{}) (err error) {
+	checker := c.(*BallotChecker)
+	if !checker.VotingFinished {
+		return
+	}
+	checker.NodeRunner.TransitIsaacState(checker.Ballot.Round(), sebakcommon.BallotStateACCEPT)
+
+	return
+}
+
+// FinishedBallotStore will store the confirmed ballot to
 // `Block`.
-func ACCEPTBallotStore(c sebakcommon.Checker, args ...interface{}) (err error) {
+func FinishedBallotStore(c sebakcommon.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotChecker)
 
 	if !checker.VotingFinished {
 		return
 	}
-
-	willStore := checker.FinishedVotingHole == sebakcommon.VotingYES
 	if checker.FinishedVotingHole == sebakcommon.VotingYES {
 		var block Block
 		block, err = FinishBallot(
@@ -454,9 +471,11 @@ func ACCEPTBallotStore(c sebakcommon.Checker, args ...interface{}) (err error) {
 
 		checker.NodeRunner.Consensus().SetLatestConsensusedBlock(block)
 		checker.Log.Debug("ballot was stored", "block", block)
+		checker.NodeRunner.TransitIsaacState(checker.Ballot.Round(), sebakcommon.BallotStateALLCONFIRM)
 
 		err = NewCheckerStopCloseConsensus(checker, "ballot got consensus and will be stored")
 	} else {
+		checker.NodeRunner.isaacStateManager.IncreaseRound()
 		err = NewCheckerStopCloseConsensus(checker, "ballot got consensus")
 	}
 
@@ -465,7 +484,6 @@ func ACCEPTBallotStore(c sebakcommon.Checker, args ...interface{}) (err error) {
 		checker.Ballot.Round(),
 		checker.FinishedVotingHole,
 	)
-	checker.NodeRunner.CloseConsensus(checker.Ballot, willStore)
 
 	return
 }

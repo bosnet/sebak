@@ -2,6 +2,8 @@ package sebak
 
 import (
 	"time"
+
+	"boscoin.io/sebak/lib/round"
 )
 
 type Header struct {
@@ -15,7 +17,7 @@ type Header struct {
 	// TODO smart contract fields
 }
 
-func NewBlockHeader(round Round, currentTxs uint64, txRoot string) *Header {
+func NewBlockHeader(round round.Round, currentTxs uint64, txRoot string) *Header {
 	return &Header{
 		PrevBlockHash:    round.BlockHash,
 		Timestamp:        time.Now(),

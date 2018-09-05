@@ -1,6 +1,6 @@
 //
-// NodeRunnerConfiguration has timeout features and transaction limit.
-// The NodeRunnerConfiguration is included in NodeRunnerStateManager and
+// IsaacConfiguration has timeout features and transaction limit.
+// The IsaacConfiguration is included in IsaacStateManager and
 // these timeout features are used in ISAAC consensus.
 //
 package sebak
@@ -11,7 +11,7 @@ import (
 	"boscoin.io/sebak/lib/common"
 )
 
-type NodeRunnerConfiguration struct {
+type IsaacConfiguration struct {
 	TimeoutINIT       time.Duration
 	TimeoutSIGN       time.Duration
 	TimeoutACCEPT     time.Duration
@@ -20,8 +20,8 @@ type NodeRunnerConfiguration struct {
 	TransactionsLimit uint64
 }
 
-func NewNodeRunnerConfiguration() *NodeRunnerConfiguration {
-	p := NodeRunnerConfiguration{}
+func NewIsaacConfiguration() *IsaacConfiguration {
+	p := IsaacConfiguration{}
 
 	p.TimeoutINIT = 2 * time.Second
 	p.TimeoutSIGN = 2 * time.Second
@@ -32,7 +32,7 @@ func NewNodeRunnerConfiguration() *NodeRunnerConfiguration {
 	return &p
 }
 
-func (n *NodeRunnerConfiguration) GetTimeout(ballotState sebakcommon.BallotState) time.Duration {
+func (n *IsaacConfiguration) GetTimeout(ballotState sebakcommon.BallotState) time.Duration {
 	switch ballotState {
 	case sebakcommon.BallotStateINIT:
 		return n.TimeoutINIT

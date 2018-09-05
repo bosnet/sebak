@@ -15,9 +15,10 @@ import (
 type ConnectionManager struct {
 	sync.Mutex
 
-	localNode *sebaknode.LocalNode
-	network   Network
-	policy    sebakcommon.VotingThresholdPolicy
+	localNode   *sebaknode.LocalNode
+	network     Network
+	policy      sebakcommon.VotingThresholdPolicy
+	broadcastor Broadcastor
 
 	validators map[ /* nodd.Address() */ string]*sebaknode.Validator
 	clients    map[ /* nodd.Address() */ string]NetworkClient
@@ -43,6 +44,14 @@ func NewConnectionManager(
 		connected: map[string]bool{},
 		log:       log.New(logging.Ctx{"node": localNode.Alias()}),
 	}
+}
+
+func (c *ConnectionManager) SetBroadcastor(broadcastor Broadcastor) {
+	c.broadcastor = broadcastor
+}
+
+type Broadcastor interface {
+	Broadcast(*ConnectionManager, sebakcommon.Message) (errs map[string]error)
 }
 
 func (c *ConnectionManager) GetConnection(address string) (client NetworkClient) {
@@ -165,24 +174,37 @@ func (c *ConnectionManager) ConnectionWatcher(t Network, conn net.Conn, state ht
 }
 
 func (c *ConnectionManager) Broadcast(message sebakcommon.Message) {
-	for address, connected := range c.connected {
-		if connected {
-			go func(v string) {
-				client := c.GetConnection(v)
-
-				var err error
-				if message.GetType() == BallotMessage {
-					_, err = client.SendBallot(message)
-				} else if message.GetType() == TransactionMessage {
-					_, err = client.SendMessage(message)
-				} else {
-					panic("invalid message")
-				}
-
-				if err != nil {
-					c.log.Error("failed to SendBallot", "error", err, "validator", v)
-				}
-			}(address)
-		}
+	errs := c.broadcastor.Broadcast(c, message)
+	for v, err := range errs {
+		c.log.Error("failed to SendBallot", "error", err, "validator", v)
 	}
+}
+
+type SimpleBroadcastor struct {
+}
+
+func (b SimpleBroadcastor) Broadcast(c *ConnectionManager, message sebakcommon.Message) (errs map[string]error) {
+	for addr, _ := range c.connected {
+		go func(v *sebaknode.Validator) {
+			if v == nil {
+				panic("Validator connected but not registered")
+			}
+
+			client := c.GetConnection(v.Address())
+
+			var err error
+			if message.GetType() == BallotMessage {
+				_, err = client.SendBallot(message)
+			} else if message.GetType() == TransactionMessage {
+				_, err = client.SendMessage(message)
+			} else {
+				panic("invalid message")
+			}
+
+			if err != nil {
+				errs[v.Address()] = err
+			}
+		}(c.validators[addr])
+	}
+	return
 }

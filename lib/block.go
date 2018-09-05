@@ -9,6 +9,7 @@ import (
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/round"
 	"boscoin.io/sebak/lib/storage"
 )
 
@@ -22,10 +23,10 @@ type Block struct {
 	Transactions []string `json:"transactions"` /* []Transaction.GetHash() */
 	//PrevConsensusResult ConsensusResult
 
-	Hash      string `json:"hash"`
-	Confirmed string `json:"confirmed"`
-	Proposer  string `json:"proposer"` /* Node.Address() */
-	Round     Round  `json:"round"`
+	Hash      string      `json:"hash"`
+	Confirmed string      `json:"confirmed"`
+	Proposer  string      `json:"proposer"` /* Node.Address() */
+	Round     round.Round `json:"round"`
 }
 
 func (bck Block) Serialize() (encoded []byte, err error) {
@@ -40,7 +41,7 @@ func (bck Block) String() string {
 
 func MakeGenesisBlock(st *sebakstorage.LevelDBBackend, account block.BlockAccount) Block {
 	proposer := "" // null proposer
-	round := Round{
+	round := round.Round{
 		Number:      0,
 		BlockHeight: 0,
 		BlockHash:   base58.Encode(sebakcommon.MustMakeObjectHash(account)),
@@ -60,7 +61,7 @@ func MakeGenesisBlock(st *sebakstorage.LevelDBBackend, account block.BlockAccoun
 	return b
 }
 
-func NewBlock(proposer string, round Round, transactions []string, confirmed string) Block {
+func NewBlock(proposer string, round round.Round, transactions []string, confirmed string) Block {
 	b := &Block{
 		Header:       *NewBlockHeader(round, uint64(len(transactions)), getTransactionRoot(transactions)),
 		Transactions: transactions,
