@@ -218,10 +218,8 @@ func TestGetAccountTransactionsHandler(t *testing.T) {
 
 	require.Equal(t, len(btmap), len(receivedBts), "length is not same")
 
-	i := 0
 	for _, bt := range receivedBts {
 		require.Equal(t, bt.Hash, btmap[bt.Hash].Hash, "hash is not same")
-		i++
 	}
 }
 
@@ -324,10 +322,8 @@ func TestGetAccountOperationsHandler(t *testing.T) {
 
 	require.Equal(t, len(bomap), len(receivedBos), "length is not same")
 
-	i := 0
 	for _, bo := range receivedBos {
 		require.Equal(t, bo.Hash, bomap[bo.Hash].Hash, "hash is not same")
-		i++
 	}
 }
 
@@ -479,9 +475,7 @@ func TestGetTransactionsHandler(t *testing.T) {
 
 	require.Equal(t, len(receivedBts), len(receivedBts), "length is not same")
 
-	i := 0
 	for _, bt := range receivedBts {
 		require.Equal(t, bt.Hash, btmap[bt.Hash].Hash, "hash is not same")
-		i++
 	}
 }
