@@ -476,8 +476,3 @@ func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) error {
 
 	return nil
 }
-
-func (nr *NodeRunner) CloseConsensus(round round.Round) {
-	nr.consensus.SetLatestRound(round)
-	nr.isaacStateManager.NextHeight()
-}

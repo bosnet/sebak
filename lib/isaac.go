@@ -129,8 +129,8 @@ type ISAAC struct {
 
 func NewISAAC(networkID []byte, node *sebaknode.LocalNode, votingThresholdPolicy sebakcommon.VotingThresholdPolicy) (is *ISAAC, err error) {
 	is = &ISAAC{
-		NetworkID:             networkID,
-		Node:                  node,
+		NetworkID: networkID,
+		Node:      node,
 		VotingThresholdPolicy: votingThresholdPolicy,
 		TransactionPool:       NewTransactionPool(),
 		RunningRounds:         map[string]*RunningRound{},
@@ -142,6 +142,8 @@ func NewISAAC(networkID []byte, node *sebaknode.LocalNode, votingThresholdPolicy
 func (is *ISAAC) CloseConsensus(proposer string, round round.Round, vh sebakcommon.VotingHole) (err error) {
 	is.Lock()
 	defer is.Unlock()
+
+	is.SetLatestRound(round)
 
 	if vh == sebakcommon.VotingNOTYET {
 		err = errors.New("invalid VotingHole, `VotingNOTYET`")
