@@ -18,14 +18,16 @@ import (
 func TestAPIStreamRun(t *testing.T) {
 	tests := []struct {
 		name       string
-		makeStream func(*observable.Observable) *EventStream
+		events     []string
+		makeStream func(http.ResponseWriter, *http.Request) *EventStream
 		trigger    func(*observable.Observable)
 		respFunc   func(testing.TB, *http.Response)
 	}{
 		{
 			"default",
-			func(ob *observable.Observable) *EventStream {
-				es := NewEventStream(ob, "test1")
+			[]string{"test1"},
+			func(w http.ResponseWriter, r *http.Request) *EventStream {
+				es := NewDefaultEventStream(w, r)
 				return es
 			},
 			func(ob *observable.Observable) {
@@ -42,10 +44,10 @@ func TestAPIStreamRun(t *testing.T) {
 			},
 		},
 		{
-			"onFunc",
-			func(ob *observable.Observable) *EventStream {
-				es := NewEventStream(ob, "test1")
-				es.On(func(args ...interface{}) ([]byte, error) {
+			"renderFunc",
+			[]string{"test1"},
+			func(w http.ResponseWriter, r *http.Request) *EventStream {
+				renderFunc := func(args ...interface{}) ([]byte, error) {
 					s, ok := args[1].(*block.BlockAccount)
 					if !ok {
 						return nil, fmt.Errorf("this is not serializable")
@@ -55,8 +57,8 @@ func TestAPIStreamRun(t *testing.T) {
 						return nil, err
 					}
 					return bs, nil
-
-				})
+				}
+				es := NewEventStream(w, r, renderFunc, DefaultContentType)
 				return es
 			},
 			func(ob *observable.Observable) {
@@ -73,15 +75,14 @@ func TestAPIStreamRun(t *testing.T) {
 			},
 		},
 		{
-			"beforeFunc",
-			func(ob *observable.Observable) *EventStream {
-				es := NewEventStream(ob, "test1")
-				es.Before(func() {
-					ob.Trigger("test1", block.NewBlockAccount("hello", 100, "tx1-tx1"))
-				})
+			"renderBeforeObservable",
+			[]string{"test1"},
+			func(w http.ResponseWriter, r *http.Request) *EventStream {
+				es := NewDefaultEventStream(w, r)
+				es.Render(block.NewBlockAccount("hello", 100, "tx1-tx1"))
 				return es
 			},
-			nil,
+			nil, // no trigger
 			func(t testing.TB, res *http.Response) {
 				s := bufio.NewScanner(res.Body)
 				s.Scan()
@@ -100,8 +101,8 @@ func TestAPIStreamRun(t *testing.T) {
 			ob := observable.New()
 
 			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				es := test.makeStream(ob)
-				run := es.Start(w, r)
+				es := test.makeStream(w, r)
+				run := es.Start(ob, test.events...)
 
 				if test.trigger != nil {
 					c := <-ready
