@@ -10,8 +10,8 @@ import (
 )
 
 type EventStream struct {
-	Events      []string
-	ContentType string
+	events      []string
+	contentType string
 	observer    *observable.Observable
 	beforeFunc  func()
 	onFunc      OnFunc
@@ -19,7 +19,8 @@ type EventStream struct {
 
 type OnFunc func(args ...interface{}) ([]byte, error)
 
-var DefaultContentType = "application/json"
+const DefaultContentType = "application/json"
+
 var OnSerializableFunc = func(args ...interface{}) ([]byte, error) {
 	s, ok := args[1].(common.Serializable)
 	if !ok {
@@ -35,14 +36,14 @@ var OnSerializableFunc = func(args ...interface{}) ([]byte, error) {
 
 func NewEventStream(ob *observable.Observable, event ...string) *EventStream {
 	e := &EventStream{
-		Events:   event,
+		events:   event,
 		observer: ob,
 	}
 	return e
 }
 
 func (s *EventStream) SetContentType(ct string) {
-	s.ContentType = ct
+	s.contentType = ct
 }
 
 func (s *EventStream) Before(beforeFunc func()) {
@@ -69,7 +70,7 @@ func (s *EventStream) Start(w http.ResponseWriter, r *http.Request) func() {
 		return func() {}
 	}
 
-	event := strings.Join(s.Events, " ")
+	event := strings.Join(s.events, " ")
 	msg := make(chan []byte)
 	stop := make(chan struct{})
 
@@ -109,10 +110,10 @@ func (s *EventStream) Start(w http.ResponseWriter, r *http.Request) func() {
 		go s.beforeFunc()
 	}
 
-	if s.ContentType == "" {
-		s.ContentType = DefaultContentType
+	if s.contentType == "" {
+		s.contentType = DefaultContentType
 	}
-	w.Header().Set("Content-Type", s.ContentType)
+	w.Header().Set("Content-Type", s.contentType)
 
 	return func() {
 		defer s.observer.Off(event, onFunc)
