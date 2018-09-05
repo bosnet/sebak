@@ -11,6 +11,7 @@ import (
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/node"
+	"boscoin.io/sebak/lib/round"
 )
 
 func TestErrorBallotHasOverMaxTransactionsInBallot(t *testing.T) {
@@ -22,7 +23,7 @@ func TestErrorBallotHasOverMaxTransactionsInBallot(t *testing.T) {
 	MaxTransactionsInBallot = 2
 
 	_, node := createNetMemoryNetwork()
-	round := Round{Number: 0, BlockHeight: 1, BlockHash: "hahaha", TotalTxs: 1}
+	round := round.Round{Number: 0, BlockHeight: 1, BlockHash: "hahaha", TotalTxs: 1}
 	_, tx := TestMakeTransaction(networkID, 1)
 
 	ballot := NewBallot(node, round, []string{tx.GetHash()})
@@ -48,12 +49,7 @@ func TestBallotHash(t *testing.T) {
 
 	nodeRunner := nodeRunners[0]
 
-	// `nodeRunner` is proposer's runner
-	nodeRunner.SetProposerCalculator(SelfProposerCalculator{})
-
-	nodeRunner.Consensus().SetLatestConsensusedBlock(genesisBlock)
-
-	round := Round{
+	round := round.Round{
 		Number:      0,
 		BlockHeight: nodeRunner.Consensus().LatestConfirmedBlock.Height,
 		BlockHash:   nodeRunner.Consensus().LatestConfirmedBlock.Hash,
@@ -71,7 +67,7 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 	endpoint, _ := sebakcommon.NewEndpointFromString("https://localhost:1000")
 	node, _ := sebaknode.NewLocalNode(kp, endpoint, "")
 
-	round := Round{Number: 0, BlockHeight: 0, BlockHash: "", TotalTxs: 0}
+	round := round.Round{Number: 0, BlockHeight: 0, BlockHash: "", TotalTxs: 0}
 
 	updateBallot := func(ballot *Ballot) {
 		ballot.H.Hash = ballot.B.MakeHashString()

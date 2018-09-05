@@ -13,6 +13,7 @@ import (
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
+	"boscoin.io/sebak/lib/round"
 	"boscoin.io/sebak/lib/storage"
 )
 
@@ -58,7 +59,7 @@ func testMakeNewBlock(transactions []string) Block {
 
 	return NewBlock(
 		kp.Address(),
-		Round{
+		round.Round{
 			BlockHeight: 0,
 			BlockHash:   "",
 		},
@@ -252,7 +253,7 @@ func makeTransactionCreateAccount(kpSource *keypair.Full, target string, amount 
 	return
 }
 
-func GenerateBallot(t *testing.T, proposer *sebaknode.LocalNode, round Round, tx Transaction, ballotState sebakcommon.BallotState, sender *sebaknode.LocalNode) *Ballot {
+func GenerateBallot(t *testing.T, proposer *sebaknode.LocalNode, round round.Round, tx Transaction, ballotState sebakcommon.BallotState, sender *sebaknode.LocalNode) *Ballot {
 	ballot := NewBallot(proposer, round, []string{tx.GetHash()})
 	ballot.SetVote(sebakcommon.BallotStateINIT, sebakcommon.VotingYES)
 	ballot.Sign(proposer.Keypair(), networkID)
@@ -267,7 +268,7 @@ func GenerateBallot(t *testing.T, proposer *sebaknode.LocalNode, round Round, tx
 	return ballot
 }
 
-func GenerateEmptyTxBallot(t *testing.T, proposer *sebaknode.LocalNode, round Round, ballotState sebakcommon.BallotState, sender *sebaknode.LocalNode) *Ballot {
+func GenerateEmptyTxBallot(t *testing.T, proposer *sebaknode.LocalNode, round round.Round, ballotState sebakcommon.BallotState, sender *sebaknode.LocalNode) *Ballot {
 	ballot := NewBallot(proposer, round, []string{})
 	ballot.SetVote(sebakcommon.BallotStateINIT, sebakcommon.VotingYES)
 	ballot.Sign(proposer.Keypair(), networkID)
