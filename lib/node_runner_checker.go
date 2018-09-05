@@ -471,9 +471,11 @@ func FinishedBallotStore(c sebakcommon.Checker, args ...interface{}) (err error)
 
 		checker.NodeRunner.Consensus().SetLatestConsensusedBlock(block)
 		checker.Log.Debug("ballot was stored", "block", block)
+		checker.NodeRunner.TransitIsaacState(checker.Ballot.Round(), sebakcommon.BallotStateALLCONFIRM)
 
 		err = NewCheckerStopCloseConsensus(checker, "ballot got consensus and will be stored")
 	} else {
+		checker.NodeRunner.isaacStateManager.IncreaseRound()
 		err = NewCheckerStopCloseConsensus(checker, "ballot got consensus")
 	}
 
