@@ -11,12 +11,12 @@ import (
 )
 
 type IsaacStateManager struct {
-	nr             *NodeRunner
-	state          IsaacState
-	conf           *IsaacConfiguration
-	stateTransitCh chan IsaacState
-	nextHeightCh   chan bool
-	stopCh         chan bool
+	nr           *NodeRunner
+	state        IsaacState
+	conf         *IsaacConfiguration
+	stateTransit chan IsaacState
+	nextHeight   chan bool
+	stop         chan bool
 }
 
 func NewIsaacStateManager(nr *NodeRunner) *IsaacStateManager {
@@ -24,9 +24,9 @@ func NewIsaacStateManager(nr *NodeRunner) *IsaacStateManager {
 		conf: NewIsaacConfiguration(),
 		nr:   nr,
 	}
-	p.stateTransitCh = make(chan IsaacState)
-	p.nextHeightCh = make(chan bool)
-	p.stopCh = make(chan bool)
+	p.stateTransit = make(chan IsaacState)
+	p.nextHeight = make(chan bool)
+	p.stop = make(chan bool)
 
 	return p
 }
@@ -41,7 +41,7 @@ func (sm *IsaacStateManager) TransitIsaacState(round round.Round, ballotState se
 
 	if isTargetLater(current, target) {
 		go func() {
-			sm.stateTransitCh <- target
+			sm.stateTransit <- target
 		}()
 	}
 }
@@ -79,7 +79,7 @@ func (sm *IsaacStateManager) increaseRound() {
 
 func (sm *IsaacStateManager) NextHeight() {
 	go func() {
-		sm.nextHeightCh <- true
+		sm.nextHeight <- true
 	}()
 }
 
@@ -107,7 +107,7 @@ func (sm *IsaacStateManager) Start() {
 			sm.state.ballotState = sm.state.ballotState.Next()
 			sm.resetTimer(timer, sm.state.ballotState)
 
-		case state := <-sm.stateTransitCh:
+		case state := <-sm.stateTransit:
 			switch state.ballotState {
 			case sebakcommon.BallotStateINIT:
 				sm.proposeOrWait(timer, state)
@@ -124,13 +124,13 @@ func (sm *IsaacStateManager) Start() {
 				log.Error("Wrong IsaacState", "IsaacState", state)
 			}
 
-		case <-sm.nextHeightCh:
+		case <-sm.nextHeight:
 			round := sm.state.round
 			round.BlockHeight++
 			round.Number = 0
 			sm.TransitIsaacState(round, sebakcommon.BallotStateINIT)
 
-		case <-sm.stopCh:
+		case <-sm.stop:
 			return
 		}
 	}
@@ -190,6 +190,6 @@ func (sm *IsaacStateManager) State() IsaacState {
 
 func (sm *IsaacStateManager) Stop() {
 	go func() {
-		sm.stopCh <- true
+		sm.stop <- true
 	}()
 }
