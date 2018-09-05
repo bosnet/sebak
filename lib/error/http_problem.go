@@ -52,6 +52,10 @@ func NewDetailedStatusProblem(status int, detail string) problem {
 	return p
 }
 
+func Problem(w http.ResponseWriter, detail string, status int) {
+	NewDetailedStatusProblem(status, detail).Problem(w, "", -1)
+}
+
 func (p problem) SetInstance(instance string) problem {
 	p.Instance = instance
 	return p
