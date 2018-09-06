@@ -9,8 +9,12 @@ import (
 	observable "github.com/GianlucaGuarini/go-observable"
 )
 
+// DefaultContentType is "application/json"
 const DefaultContentType = "application/json"
 
+// EventStream handles chunked responses of a observable trigger
+//
+// renderFunc uses on observable.On() and Render function
 type EventStream struct {
 	contentType string
 	renderFunc  RenderFunc
@@ -22,6 +26,9 @@ type EventStream struct {
 
 type RenderFunc func(args ...interface{}) ([]byte, error)
 
+// RenderSerializableFunc is default RenderFunc. It takes common.Serializable and serialize it for rendering.
+//
+// NewDefaultEventStream uses RenderFunc by default
 var RenderSerializableFunc = func(args ...interface{}) ([]byte, error) {
 	s, ok := args[1].(common.Serializable)
 	if !ok {
@@ -35,10 +42,12 @@ var RenderSerializableFunc = func(args ...interface{}) ([]byte, error) {
 	return bs, nil
 }
 
+// NewDefaultEventStream returns *EventStream with RenderSerializableFunc and DefaultContentType
 func NewDefaultEventStream(w http.ResponseWriter, r *http.Request) *EventStream {
 	return NewEventStream(w, r, RenderSerializableFunc, DefaultContentType)
 }
 
+// NewEventStream makes *EventStream and checks http.Flusher by type assertion.
 func NewEventStream(w http.ResponseWriter, r *http.Request, renderFunc RenderFunc, ct string) *EventStream {
 	es := &EventStream{
 		request:     r,
@@ -60,6 +69,7 @@ func NewEventStream(w http.ResponseWriter, r *http.Request, renderFunc RenderFun
 	return es
 }
 
+// Render make a chunked response by using RenderFunc and flush it.
 func (s *EventStream) Render(args ...interface{}) {
 	if s.err != nil {
 		return
@@ -78,10 +88,21 @@ func (s *EventStream) Render(args ...interface{}) {
 	s.flusher.Flush()
 }
 
+// Run start observing events.
+//
+// Simple use case:
+//
+// 	event := fmt.Sprintf("address-%s", address)
+// 	es := NewDefaultEventStream(w, r)
+// 	es.Render(blk)
+// 	es.Run(observer.BlockAccountObserver, event)
 func (s *EventStream) Run(ob *observable.Observable, events ...string) {
 	s.Start(ob, events...)()
 }
 
+// Start prepares for observing events and returns run func.
+//
+// In most case, Use Run instead of Start
 func (s *EventStream) Start(ob *observable.Observable, events ...string) func() {
 	if s.err != nil {
 		http.Error(s.writer, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
