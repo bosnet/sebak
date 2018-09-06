@@ -68,7 +68,7 @@ type NodeRunner struct {
 	networkID          []byte
 	localNode          *sebaknode.LocalNode
 	policy             sebakcommon.VotingThresholdPolicy
-	net                network.Network
+	network            network.Network
 	consensus          *ISAAC
 	connectionManager  *network.ConnectionManager
 	storage            *sebakstorage.LevelDBBackend
@@ -92,7 +92,7 @@ func NewNodeRunner(
 	networkID string,
 	localNode *sebaknode.LocalNode,
 	policy sebakcommon.VotingThresholdPolicy,
-	net network.Network,
+	n network.Network,
 	consensus *ISAAC,
 	storage *sebakstorage.LevelDBBackend,
 ) (nr *NodeRunner, err error) {
@@ -100,7 +100,7 @@ func NewNodeRunner(
 		networkID: []byte(networkID),
 		localNode: localNode,
 		policy:    policy,
-		net:       net,
+		network:   n,
 		consensus: consensus,
 		storage:   storage,
 		log:       log.New(logging.Ctx{"node": localNode.Alias()}),
@@ -111,11 +111,11 @@ func NewNodeRunner(
 
 	nr.connectionManager = network.NewConnectionManager(
 		nr.localNode,
-		nr.net,
+		nr.network,
 		nr.policy,
 		nr.localNode.GetValidators(),
 	)
-	nr.net.AddWatcher(nr.connectionManager.ConnectionWatcher)
+	nr.network.AddWatcher(nr.connectionManager.ConnectionWatcher)
 
 	nr.SetHandleTransactionCheckerFuncs(nil, DefaultHandleTransactionCheckerFuncs...)
 	nr.SetHandleBaseBallotCheckerFuncs(DefaultHandleBaseBallotCheckerFuncs...)
@@ -146,42 +146,42 @@ func (nr *NodeRunner) SetConf(conf *NodeRunnerConfiguration) {
 func (nr *NodeRunner) Ready() {
 	nodeHandler := NetworkHandlerNode{
 		localNode: nr.localNode,
-		network:   nr.net,
+		network:   nr.network,
 	}
 
-	nr.net.AddHandler(network.UrlPathPrefixNode+"/", nodeHandler.NodeInfoHandler)
-	nr.net.AddHandler(network.UrlPathPrefixNode+"/connect", nodeHandler.ConnectHandler)
-	nr.net.AddHandler(network.UrlPathPrefixNode+"/message", nodeHandler.MessageHandler)
-	nr.net.AddHandler(network.UrlPathPrefixNode+"/ballot", nodeHandler.BallotHandler)
+	nr.network.AddHandler(network.UrlPathPrefixNode+"/", nodeHandler.NodeInfoHandler)
+	nr.network.AddHandler(network.UrlPathPrefixNode+"/connect", nodeHandler.ConnectHandler)
+	nr.network.AddHandler(network.UrlPathPrefixNode+"/message", nodeHandler.MessageHandler)
+	nr.network.AddHandler(network.UrlPathPrefixNode+"/ballot", nodeHandler.BallotHandler)
 
 	apiHandler := NetworkHandlerAPI{
 		localNode: nr.localNode,
-		network:   nr.net,
+		network:   nr.network,
 		storage:   nr.storage,
 	}
 
-	nr.net.AddHandler(
+	nr.network.AddHandler(
 		network.UrlPathPrefixAPI+GetAccountHandlerPattern,
 		apiHandler.GetAccountHandler,
 	).Methods("GET")
-	nr.net.AddHandler(
+	nr.network.AddHandler(
 		network.UrlPathPrefixAPI+GetAccountTransactionsHandlerPattern,
 		apiHandler.GetAccountTransactionsHandler,
 	).Methods("GET")
-	nr.net.AddHandler(
+	nr.network.AddHandler(
 		network.UrlPathPrefixAPI+GetAccountOperationsHandlerPattern,
 		apiHandler.GetAccountOperationsHandler,
 	).Methods("GET")
-	nr.net.AddHandler(
+	nr.network.AddHandler(
 		network.UrlPathPrefixAPI+GetTransactionsHandlerPattern,
 		apiHandler.GetTransactionsHandler,
 	).Methods("GET")
-	nr.net.AddHandler(
+	nr.network.AddHandler(
 		network.UrlPathPrefixAPI+GetTransactionByHashHandlerPattern,
 		apiHandler.GetTransactionByHashHandler,
 	).Methods("GET")
 
-	nr.net.Ready()
+	nr.network.Ready()
 }
 
 func (nr *NodeRunner) Start() (err error) {
@@ -192,7 +192,7 @@ func (nr *NodeRunner) Start() (err error) {
 	go nr.ConnectValidators()
 	go nr.InitRound()
 
-	if err = nr.net.Start(); err != nil {
+	if err = nr.network.Start(); err != nil {
 		return
 	}
 
@@ -200,7 +200,7 @@ func (nr *NodeRunner) Start() (err error) {
 }
 
 func (nr *NodeRunner) Stop() {
-	nr.net.Stop()
+	nr.network.Stop()
 }
 
 func (nr *NodeRunner) Node() *sebaknode.LocalNode {
@@ -212,7 +212,7 @@ func (nr *NodeRunner) NetworkID() []byte {
 }
 
 func (nr *NodeRunner) Network() network.Network {
-	return nr.net
+	return nr.network
 }
 
 func (nr *NodeRunner) Consensus() *ISAAC {
@@ -238,7 +238,7 @@ func (nr *NodeRunner) Log() logging.Logger {
 func (nr *NodeRunner) ConnectValidators() {
 	ticker := time.NewTicker(time.Millisecond * 5)
 	for _ = range ticker.C {
-		if !nr.net.IsReady() {
+		if !nr.network.IsReady() {
 			continue
 		}
 
@@ -288,7 +288,7 @@ func (nr *NodeRunner) SetHandleMessageCheckerDeferFunc(f sebakcommon.CheckerDefe
 }
 
 func (nr *NodeRunner) handleMessage() {
-	for message := range nr.net.ReceiveMessage() {
+	for message := range nr.network.ReceiveMessage() {
 		var err error
 
 		if message.IsEmpty() {
