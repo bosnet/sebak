@@ -4,18 +4,18 @@ import (
 	"testing"
 
 	"github.com/stellar/go/keypair"
+	"github.com/stretchr/testify/require"
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/storage"
-
-	"github.com/stretchr/testify/require"
 )
 
 func TestNewBlockTransaction(t *testing.T) {
 	_, tx := TestMakeTransaction(networkID, 1)
 	a, _ := tx.Serialize()
-	bt := NewBlockTransactionFromTransaction(tx, a)
+	block := testMakeNewBlock([]string{tx.GetHash()})
+	bt := NewBlockTransactionFromTransaction(block.Hash, tx, a)
 
 	require.Equal(t, bt.Hash, tx.H.Hash)
 	require.Equal(t, bt.PreviousCheckpoint, tx.B.Checkpoint)
@@ -114,23 +114,37 @@ func TestMultipleBlockTransactionSource(t *testing.T) {
 	numTxs := 10
 
 	var txs []Transaction
+	var txHashes []string
 	var createdOrder []string
 	for i := 0; i < numTxs; i++ {
 		tx := TestMakeTransactionWithKeypair(networkID, 1, kp)
 		txs = append(txs, tx)
 		createdOrder = append(createdOrder, tx.GetHash())
+		txHashes = append(txHashes, tx.GetHash())
 
+	}
+
+	block := testMakeNewBlock(txHashes)
+	for _, tx := range txs {
 		a, _ := tx.Serialize()
-		bt := NewBlockTransactionFromTransaction(tx, a)
+		bt := NewBlockTransactionFromTransaction(block.Hash, tx, a)
 		err := bt.Save(st)
 		require.Nil(t, err)
 	}
 
 	// create txs from another keypair
+	txs = []Transaction{}
+	txHashes = []string{}
 	for i := 0; i < numTxs; i++ {
 		tx := TestMakeTransactionWithKeypair(networkID, 1, kpAnother)
+		txs = append(txs, tx)
+		txHashes = append(txHashes, tx.GetHash())
+	}
+
+	block = testMakeNewBlock(txHashes)
+	for _, tx := range txs {
 		a, _ := tx.Serialize()
-		bt := NewBlockTransactionFromTransaction(tx, a)
+		bt := NewBlockTransactionFromTransaction(block.Hash, tx, a)
 		err := bt.Save(st)
 		require.Nil(t, err)
 	}
@@ -183,12 +197,20 @@ func TestMultipleBlockTransactionConfirmed(t *testing.T) {
 
 	numTxs := 10
 
+	var txs []Transaction
+	var txHashes []string
 	var createdOrder []string
 	for i := 0; i < numTxs; i++ {
 		tx := TestMakeTransactionWithKeypair(networkID, 1, kp)
 		createdOrder = append(createdOrder, tx.GetHash())
+		txs = append(txs, tx)
+		txHashes = append(txHashes, tx.GetHash())
+	}
+
+	block := testMakeNewBlock(txHashes)
+	for _, tx := range txs {
 		a, _ := tx.Serialize()
-		bt := NewBlockTransactionFromTransaction(tx, a)
+		bt := NewBlockTransactionFromTransaction(block.Hash, tx, a)
 		err := bt.Save(st)
 		require.Nil(t, err)
 	}
@@ -276,36 +298,54 @@ func TestMultipleBlockTransactionGetByAccount(t *testing.T) {
 	numTxs := 5
 
 	var txs []Transaction
+	var txHashes []string
 	var createdOrder []string
-
 	for i := 0; i < numTxs; i++ {
 		tx := TestMakeTransactionWithKeypair(networkID, 1, kp)
 		txs = append(txs, tx)
 		createdOrder = append(createdOrder, tx.GetHash())
+		txHashes = append(txHashes, tx.GetHash())
+	}
 
+	block := testMakeNewBlock(txHashes)
+	for _, tx := range txs {
 		a, _ := tx.Serialize()
-		bt := NewBlockTransactionFromTransaction(tx, a)
+		bt := NewBlockTransactionFromTransaction(block.Hash, tx, a)
 		err := bt.Save(st)
 		require.Nil(t, err)
 	}
 
 	// create txs from another keypair source but target is this keypair
+	txs = []Transaction{}
+	txHashes = []string{}
 	for i := 0; i < numTxs; i++ {
 		tx := TestMakeTransactionWithKeypair(networkID, 1, kpAnother, kp)
 		txs = append(txs, tx)
 		createdOrder = append(createdOrder, tx.GetHash())
+		txHashes = append(txHashes, tx.GetHash())
+	}
 
+	block = testMakeNewBlock(txHashes)
+	for _, tx := range txs {
 		a, _ := tx.Serialize()
-		bt := NewBlockTransactionFromTransaction(tx, a)
+		bt := NewBlockTransactionFromTransaction(block.Hash, tx, a)
 		err := bt.Save(st)
 		require.Nil(t, err)
 	}
 
 	// create txs from another keypair
+	txs = []Transaction{}
+	txHashes = []string{}
 	for i := 0; i < numTxs; i++ {
 		tx := TestMakeTransactionWithKeypair(networkID, 1, kpAnother)
+		txs = append(txs, tx)
+		txHashes = append(txHashes, tx.GetHash())
+	}
+
+	block = testMakeNewBlock(txHashes)
+	for _, tx := range txs {
 		a, _ := tx.Serialize()
-		bt := NewBlockTransactionFromTransaction(tx, a)
+		bt := NewBlockTransactionFromTransaction(block.Hash, tx, a)
 		err := bt.Save(st)
 		require.Nil(t, err)
 	}
@@ -326,6 +366,85 @@ func TestMultipleBlockTransactionGetByAccount(t *testing.T) {
 		require.Equal(t, len(saved), len(createdOrder))
 		for i, bt := range saved {
 			require.Equal(t, bt.Hash, createdOrder[i])
+		}
+	}
+}
+
+func TestMultipleBlockTransactionGetByBlock(t *testing.T) {
+	kp, _ := keypair.Random()
+	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
+
+	numTxs := 5
+
+	var txs0 []Transaction
+	var txHashes0 []string
+	var createdOrder0 []string
+	for i := 0; i < numTxs; i++ {
+		tx := TestMakeTransactionWithKeypair(networkID, 1, kp)
+		txs0 = append(txs0, tx)
+		createdOrder0 = append(createdOrder0, tx.GetHash())
+		txHashes0 = append(txHashes0, tx.GetHash())
+	}
+
+	block0 := testMakeNewBlock(txHashes0)
+	for _, tx := range txs0 {
+		a, _ := tx.Serialize()
+		bt := NewBlockTransactionFromTransaction(block0.Hash, tx, a)
+		require.Nil(t, bt.Save(st))
+	}
+
+	var txs1 []Transaction
+	var txHashes1 []string
+	var createdOrder1 []string
+	for i := 0; i < numTxs; i++ {
+		tx := TestMakeTransactionWithKeypair(networkID, 1, kp)
+		txs1 = append(txs1, tx)
+		createdOrder1 = append(createdOrder1, tx.GetHash())
+		txHashes1 = append(txHashes1, tx.GetHash())
+	}
+
+	block1 := testMakeNewBlock(txHashes1)
+	for _, tx := range txs1 {
+		a, _ := tx.Serialize()
+		bt := NewBlockTransactionFromTransaction(block1.Hash, tx, a)
+		require.Nil(t, bt.Save(st))
+	}
+
+	{
+		var saved []BlockTransaction
+		iterFunc, closeFunc := GetBlockTransactionsByBlock(st, block0.Hash, false)
+		for {
+			bo, hasNext := iterFunc()
+			if !hasNext {
+				break
+			}
+
+			saved = append(saved, bo)
+		}
+		closeFunc()
+
+		require.Equal(t, len(saved), len(createdOrder0), "fetched records insufficient")
+		for i, bt := range saved {
+			require.Equal(t, bt.Hash, createdOrder0[i], "order mismatch")
+		}
+	}
+
+	{
+		var saved []BlockTransaction
+		iterFunc, closeFunc := GetBlockTransactionsByBlock(st, block1.Hash, false)
+		for {
+			bo, hasNext := iterFunc()
+			if !hasNext {
+				break
+			}
+
+			saved = append(saved, bo)
+		}
+		closeFunc()
+
+		require.Equal(t, len(saved), len(createdOrder1), "fetched records insufficient")
+		for i, bt := range saved {
+			require.Equal(t, bt.Hash, createdOrder1[i], "order mismatch")
 		}
 	}
 }

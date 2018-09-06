@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/stellar/go/keypair"
 
+	"boscoin.io/sebak/lib"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/storage"
 
@@ -129,6 +130,9 @@ func MakeGenesisBlock(addressStr, networkID, balanceStr, storage string) (string
 		sebakcommon.MakeGenesisCheckpoint([]byte(flagNetworkID)),
 	)
 	account.Save(st)
+
+	sebak.MakeGenesisBlock(st, *account)
+
 	st.Close()
 	return "", nil
 }

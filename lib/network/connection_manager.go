@@ -81,22 +81,36 @@ func (c *ConnectionManager) setConnected(v *sebaknode.Validator, connected bool)
 		c.policy.SetConnected(c.CountConnected())
 	}()
 
-	_, ok := c.connected[v.Address()]
-	if !connected {
-		delete(c.connected, v.Address())
-		return ok
-	}
-	if ok {
-		return false
+	old, found := c.connected[v.Address()]
+	c.connected[v.Address()] = connected
+
+	return !found || old != connected
+}
+
+func (c *ConnectionManager) AllConnected() []string {
+	var connected []string
+	for address, isConnected := range c.connected {
+		if !isConnected {
+			continue
+		}
+		connected = append(connected, address)
 	}
 
-	c.connected[v.Address()] = true
+	return connected
+}
 
-	return true
+// Returns:
+//   A list of all validators, including self
+func (c *ConnectionManager) AllValidators() []string {
+	var validators []string
+	for address := range c.validators {
+		validators = append(validators, address)
+	}
+	return append(validators, c.localNode.Address())
 }
 
 func (c *ConnectionManager) CountConnected() int {
-	return len(c.connected)
+	return len(c.AllConnected())
 }
 
 func (c *ConnectionManager) connectValidators() {
@@ -110,16 +124,12 @@ func (c *ConnectionManager) connectingValidator(v *sebaknode.Validator) {
 	ticker := time.NewTicker(time.Second * 1)
 	for _ = range ticker.C {
 		err := c.connectValidator(v)
-		if err != nil {
-			c.log.Error("failed to connect", "validator", v, "error", err)
-			continue
-		}
 
 		if c.setConnected(v, err == nil) {
 			if err == nil {
 				c.log.Debug("validator is connected", "validator", v)
 			} else {
-				c.log.Debug("validator is disconnected", "validator", v)
+				c.log.Debug("validator is disconnected", "validator", v, "error", err)
 			}
 		}
 	}
@@ -155,16 +165,24 @@ func (c *ConnectionManager) ConnectionWatcher(t Network, conn net.Conn, state ht
 }
 
 func (c *ConnectionManager) Broadcast(message sebakcommon.Message) {
-	for addr, _ := range c.connected {
-		go func(v *sebaknode.Validator) {
-			if v == nil {
-				panic("Validator connected but not registered")
-			}
+	for address, connected := range c.connected {
+		if connected {
+			go func(v string) {
+				client := c.GetConnection(v)
 
-			client := c.GetConnection(v.Address())
-			if _, err := client.SendBallot(message); err != nil {
-				c.log.Error("failed to SendBallot", "error", err, "validator", v)
-			}
-		}(c.validators[addr])
+				var err error
+				if message.GetType() == BallotMessage {
+					_, err = client.SendBallot(message)
+				} else if message.GetType() == string(TransactionMessage) {
+					_, err = client.SendMessage(message)
+				} else {
+					panic("invalid message")
+				}
+
+				if err != nil {
+					c.log.Error("failed to SendBallot", "error", err, "validator", v)
+				}
+			}(address)
+		}
 	}
 }

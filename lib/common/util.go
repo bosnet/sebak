@@ -1,6 +1,7 @@
 package sebakcommon
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,15 +11,11 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
-	"time"
 
 	"github.com/btcsuite/btcutil/base58"
 	uuid "github.com/satori/go.uuid"
+	"github.com/stellar/go/keypair"
 )
-
-func NowISO8601() string {
-	return time.Now().Format("2006-01-02T15:04:05.000000000Z07:00")
-}
 
 func GetUniqueIDFromUUID() string {
 	return uuid.Must(uuid.NewV1(), nil).String()
@@ -30,14 +27,6 @@ func GenerateUUID() string {
 
 func GetUniqueIDFromDate() string {
 	return NowISO8601()
-}
-
-type CheckerErrorStop struct {
-	Message string
-}
-
-func (c CheckerErrorStop) Error() string {
-	return fmt.Sprintf("stop checker and return: %s", c.Message)
 }
 
 type SafeLock struct {
@@ -91,6 +80,11 @@ func InStringArray(a []string, s string) (index int, found bool) {
 	}
 
 	index = -1
+	return
+}
+
+func InStringMap(a map[string]bool, s string) (found bool) {
+	_, found = a[s]
 	return
 }
 
@@ -151,4 +145,45 @@ func ParseCheckpoint(a string) (p [2]string, err error) {
 func MakeGenesisCheckpoint(networkID []byte) string {
 	h := base58.Encode(networkID)
 	return MakeCheckpoint(h, h)
+}
+
+func IsStringArrayEqual(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i, v := range a {
+		if v != b[i] {
+			return false
+		}
+	}
+
+	return true
+}
+
+func IsStringMapEqual(a, b map[string]bool) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for hash := range a {
+		if _, ok := b[hash]; !ok {
+			return false
+		}
+	}
+
+	return true
+}
+
+func IsStringMapEqualWithHash(a, b map[string]bool) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	aHash := MustMakeObjectHash(a)
+	bHash := MustMakeObjectHash(b)
+
+	return bytes.Equal(aHash, bHash)
+}
+
+// MakeSignature makes signature from given hash string
+func MakeSignature(kp keypair.KP, networkID []byte, hash string) ([]byte, error) {
+	return kp.Sign(append(networkID, []byte(hash)...))
 }

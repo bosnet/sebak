@@ -109,11 +109,45 @@ func (tx Transaction) IsWellFormed(networkID []byte) (err error) {
 	return
 }
 
+// Validate checks,
+// * source account exists
+// * checkpoint is valid
+// * source has enough balance to pay
+// * and it's `Operations`
 func (tx Transaction) Validate(st *sebakstorage.LevelDBBackend) (err error) {
-	// TODO check whether `Checkpoint` is in `Block Transaction` and is latest
-	// `Checkpoint`
-	// TODO check whether `Source` is in `Block Account`
-	// TODO check whether the balance of `Source` is greater than `totalAmount`
+	// check, source exists
+	var ba *block.BlockAccount
+	if ba, err = block.GetBlockAccount(st, tx.B.Source); err != nil {
+		err = sebakerror.ErrorBlockAccountDoesNotExists
+		return
+	}
+
+	// check, checkpoint is based on latest checkpoint
+	if !tx.IsValidCheckpoint(ba.Checkpoint) {
+		err = sebakerror.ErrorTransactionInvalidCheckpoint
+		return
+	}
+
+	// get the balance at checkpoint
+	var bac block.BlockAccountCheckpoint
+	bac, err = block.GetBlockAccountCheckpoint(st, tx.B.Source, tx.B.Checkpoint)
+	if err != nil {
+		return
+	}
+
+	totalAmount := tx.TotalAmount(true)
+
+	// check, have enough balance at checkpoint
+	if sebakcommon.MustAmountFromString(bac.Balance) < totalAmount {
+		err = sebakerror.ErrorTransactionExcessAbilityToPay
+		return
+	}
+
+	for _, op := range tx.B.Operations {
+		if err = op.Validate(st); err != nil {
+			return
+		}
+	}
 
 	return
 }
@@ -188,7 +222,7 @@ func (tx Transaction) String() string {
 
 func (tx *Transaction) Sign(kp keypair.KP, networkID []byte) {
 	tx.H.Hash = tx.B.MakeHashString()
-	signature, _ := kp.Sign(append(networkID, []byte(tx.H.Hash)...))
+	signature, _ := sebakcommon.MakeSignature(kp, networkID, tx.H.Hash)
 
 	tx.H.Signature = base58.Encode(signature)
 
@@ -230,63 +264,4 @@ func (tb TransactionBody) MakeHash() []byte {
 
 func (tb TransactionBody) MakeHashString() string {
 	return base58.Encode(tb.MakeHash())
-}
-
-///
-/// Apply this transaction (`tx`) to the storage, externalizing it
-///
-/// Params:
-///   st = Storage backend
-///   ballot = the ballot that triggered consensus
-///   tx = `Transaction` to externalize
-///
-/// Returns:
-///   err = If the `Transaction` could not be externalized
-///
-func FinishTransaction(st *sebakstorage.LevelDBBackend, ballot Ballot, tx Transaction) (err error) {
-	var raw []byte
-	raw, err = ballot.Data().Serialize()
-	if err != nil {
-		return
-	}
-
-	var ts *sebakstorage.LevelDBBackend
-	if ts, err = st.OpenTransaction(); err != nil {
-		return
-	}
-
-	bt := NewBlockTransactionFromTransaction(tx, raw)
-	if err = bt.Save(ts); err != nil {
-		ts.Discard()
-		return
-	}
-	for _, op := range tx.B.Operations {
-		if err = FinishOperation(ts, tx, op); err != nil {
-			ts.Discard()
-			return
-		}
-	}
-
-	var baSource *block.BlockAccount
-	if baSource, err = block.GetBlockAccount(ts, tx.B.Source); err != nil {
-		err = sebakerror.ErrorBlockAccountDoesNotExists
-		ts.Discard()
-		return
-	}
-
-	if err = baSource.Withdraw(tx.TotalAmount(true), tx.NextSourceCheckpoint()); err != nil {
-		ts.Discard()
-		return
-	}
-
-	if err = baSource.Save(ts); err != nil {
-		ts.Discard()
-		return
-	}
-
-	if err = ts.Commit(); err != nil {
-		ts.Discard()
-	}
-
-	return
 }

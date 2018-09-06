@@ -108,3 +108,11 @@ func NewHTTP2NetworkConfigFromEndpoint(endpoint *sebakcommon.Endpoint) (config H
 
 	return
 }
+
+func (config HTTP2NetworkConfig) IsHTTPS() bool {
+	return len(config.TLSCertFile) > 0 && len(config.TLSKeyFile) > 0
+}
+
+func (config HTTP2NetworkConfig) String() string {
+	return string(sebakcommon.MustJSONMarshal(config))
+}

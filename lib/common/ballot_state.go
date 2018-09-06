@@ -1,9 +1,5 @@
 package sebakcommon
 
-import (
-	"fmt"
-)
-
 type BallotState uint
 
 const (
@@ -14,54 +10,53 @@ const (
 	BallotStateALLCONFIRM
 )
 
-var BallotInitState = BallotStateNONE
-
 func (s BallotState) String() string {
 	switch s {
-	case 0:
-		return "NONE"
-	case 1:
+	case BallotStateINIT:
 		return "INIT"
-	case 2:
+	case BallotStateSIGN:
 		return "SIGN"
-	case 3:
+	case BallotStateACCEPT:
 		return "ACCEPT"
-	case 4:
-		return "ALL-CONFIRM"
+	case BallotStateALLCONFIRM:
+		return "ALLCONFIRM"
+	default:
+		return ""
+	}
+}
+
+func (s BallotState) IsValid() bool {
+	switch s {
+	case BallotStateINIT:
+	case BallotStateSIGN:
+	case BallotStateACCEPT:
+	default:
+		return false
 	}
 
-	return ""
+	return true
 }
 
 func (s BallotState) Next() BallotState {
-	n := s + 1
-	if n > BallotStateALLCONFIRM {
+	switch s {
+	case BallotStateINIT:
+		return BallotStateSIGN
+	case BallotStateSIGN:
+		return BallotStateACCEPT
+	case BallotStateACCEPT:
+		return BallotStateALLCONFIRM
+	default:
 		return BallotStateNONE
 	}
-
-	return n
 }
 
-func (s BallotState) MarshalJSON() ([]byte, error) {
-	return []byte(fmt.Sprintf("\"%s\"", s.String())), nil
-}
-
-func (s *BallotState) UnmarshalJSON(b []byte) (err error) {
-	var c int
-	switch string(b[1 : len(b)-1]) {
-	case "NONE":
-		c = 0
-	case "INIT":
-		c = 1
-	case "SIGN":
-		c = 2
-	case "ACCEPT":
-		c = 3
-	case "ALL-CONFIRM":
-		c = 4
+func (s BallotState) IsValidForVote() bool {
+	switch s {
+	case BallotStateSIGN:
+	case BallotStateACCEPT:
+	default:
+		return false
 	}
 
-	*s = BallotState(c)
-
-	return
+	return true
 }

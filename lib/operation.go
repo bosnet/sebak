@@ -39,7 +39,7 @@ func (o Operation) IsWellFormed(networkID []byte) (err error) {
 	return
 }
 
-func (o Operation) Validate(st sebakstorage.LevelDBBackend) (err error) {
+func (o Operation) Validate(st *sebakstorage.LevelDBBackend) (err error) {
 	if err = o.B.Validate(st); err != nil {
 		return
 	}
@@ -132,7 +132,7 @@ type OperationHeader struct {
 }
 
 type OperationBody interface {
-	Validate(sebakstorage.LevelDBBackend) error
+	Validate(*sebakstorage.LevelDBBackend) error
 	IsWellFormed([]byte) error
 	TargetAddress() string
 	GetAmount() sebakcommon.Amount

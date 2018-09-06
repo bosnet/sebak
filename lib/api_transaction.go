@@ -1,13 +1,13 @@
 package sebak
 
 import (
-	"net/http"
-
 	"fmt"
+	"net/http"
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/observer"
+
 	"github.com/gorilla/mux"
 )
 

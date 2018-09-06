@@ -15,6 +15,7 @@ import (
 	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
 
+	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
@@ -86,10 +87,21 @@ func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, mn *sebaknetwork.HTT
 	kp, _ = keypair.Random()
 	localNode, _ := sebaknode.NewLocalNode(kp, mn.Endpoint(), "")
 
-	p, _ := NewDefaultVotingThresholdPolicy(100, 30, 30)
+	p, _ := NewDefaultVotingThresholdPolicy(30, 30)
 	is, _ := NewISAAC(networkID, localNode, p)
 	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
-	nodeRunner = NewNodeRunner(string(networkID), localNode, p, mn, is, st)
+	// Make the latest block
+	{
+		checkpoint := sebakcommon.MakeGenesisCheckpoint(networkID)
+		address := kp.Address()
+		balance := BaseFee.MustAdd(BaseFee)
+		account := block.NewBlockAccount(address, balance, checkpoint)
+		account.Save(st)
+		MakeGenesisBlock(st, *account)
+	}
+	if nodeRunner, err = NewNodeRunner(string(networkID), localNode, p, mn, is, st); err != nil {
+		panic(err)
+	}
 
 	return
 }
@@ -189,44 +201,4 @@ func TestHTTP2NetworkConnect(t *testing.T) {
 	returnStr := removeWhiteSpaces(string(returnMsg))
 
 	require.Equal(t, returnStr, nodeStr, "The connectNode and the return should be the same.")
-}
-
-func TestHTTP2NetworkSendMessage(t *testing.T) {
-	_, s0, nodeRunner := createNewHTTP2Network(t)
-	s0.SetMessageBroker(TestMessageBroker{network: s0})
-	nodeRunner.Ready()
-
-	go nodeRunner.Start()
-	defer nodeRunner.Stop()
-
-	c0 := s0.GetClient(s0.Endpoint())
-	pingAndWait(t, c0)
-
-	msg := NewDummyMessage("findme")
-	returnMsg, _ := c0.SendMessage(msg)
-
-	returnStr := removeWhiteSpaces(string(returnMsg))
-	sendMsg := removeWhiteSpaces(msg.String())
-
-	require.Equal(t, returnStr, sendMsg, "The sendMessage and the return should be the same.")
-}
-
-func TestHTTP2NetworkSendBallot(t *testing.T) {
-	_, s0, nodeRunner := createNewHTTP2Network(t)
-	s0.SetMessageBroker(TestMessageBroker{network: s0})
-	nodeRunner.Ready()
-
-	go nodeRunner.Start()
-	defer nodeRunner.Stop()
-
-	c0 := s0.GetClient(s0.Endpoint())
-	pingAndWait(t, c0)
-
-	msg := NewDummyMessage("findme")
-	returnMsg, _ := c0.SendBallot(msg)
-
-	returnStr := removeWhiteSpaces(string(returnMsg))
-	sendMsg := removeWhiteSpaces(msg.String())
-
-	require.Equal(t, returnStr, sendMsg, "The sendBallot and the return should be the same.")
 }

@@ -1,11 +1,34 @@
 package sebak
 
 import (
-	"boscoin.io/sebak/lib/block"
+	"errors"
+
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
+	logging "github.com/inconshreveable/log15"
 )
+
+type CheckerStopCloseConsensus struct {
+	checker *BallotChecker
+	message string
+}
+
+func NewCheckerStopCloseConsensus(checker *BallotChecker, message string) CheckerStopCloseConsensus {
+	return CheckerStopCloseConsensus{
+		checker: checker,
+		message: message,
+	}
+}
+
+func (c CheckerStopCloseConsensus) Error() string {
+	return c.message
+}
+
+func (c CheckerStopCloseConsensus) Checker() sebakcommon.Checker {
+	return c.checker
+}
 
 type NodeRunnerHandleMessageChecker struct {
 	sebakcommon.DefaultChecker
@@ -16,9 +39,10 @@ type NodeRunnerHandleMessageChecker struct {
 	Message    sebaknetwork.Message
 
 	Transaction Transaction
-	Ballot      Ballot
 }
 
+// CheckNodeRunnerHandleMessageTransactionUnmarshal makes `Transaction` from
+// incoming `sebaknetwork.Message`.
 func CheckNodeRunnerHandleMessageTransactionUnmarshal(c sebakcommon.Checker, args ...interface{}) (err error) {
 	checker := c.(*NodeRunnerHandleMessageChecker)
 
@@ -37,22 +61,31 @@ func CheckNodeRunnerHandleMessageTransactionUnmarshal(c sebakcommon.Checker, arg
 	return
 }
 
-func CheckNodeRunnerHandleMessageTransactionHasSameSource(c sebakcommon.Checker, args ...interface{}) (err error) {
+// CheckNodeRunnerHandleMessageHasTransactionAlready checks transaction is in
+// `TransactionPool`.
+func CheckNodeRunnerHandleMessageHasTransactionAlready(c sebakcommon.Checker, args ...interface{}) (err error) {
 	checker := c.(*NodeRunnerHandleMessageChecker)
 
-	incomingTx := checker.Transaction
-	isaac := checker.NodeRunner.Consensus().(*ISAAC)
-
-	if isaac.Boxes.IsSameSourceUnderVoting(incomingTx) {
-		err = sebakcommon.CheckerErrorStop{Message: "stop consensus, because same source transaction already in progress"}
+	is := checker.NodeRunner.Consensus()
+	if is.TransactionPool.Has(checker.Transaction.GetHash()) {
+		err = sebakerror.ErrorNewButKnownMessage
 		return
 	}
 
 	return
 }
 
+// CheckNodeRunnerHandleMessageHistory checks transaction is in
+// `BlockTransactionHistory`, which has the received transaction recently.
 func CheckNodeRunnerHandleMessageHistory(c sebakcommon.Checker, args ...interface{}) (err error) {
 	checker := c.(*NodeRunnerHandleMessageChecker)
+
+	var found bool
+	if found, err = ExistsBlockTransactionHistory(checker.NodeRunner.Storage(), checker.Transaction.GetHash()); found && err == nil {
+		checker.NodeRunner.Log().Debug("found in history", "transction", checker.Transaction.GetHash())
+		err = sebakerror.ErrorNewButKnownMessage
+		return
+	}
 
 	bt := NewTransactionHistoryFromTransaction(checker.Transaction, checker.Message.Data)
 	if err = bt.Save(checker.NodeRunner.Storage()); err != nil {
@@ -64,279 +97,375 @@ func CheckNodeRunnerHandleMessageHistory(c sebakcommon.Checker, args ...interfac
 	return
 }
 
-func CheckNodeRunnerHandleMessageISAACReceiveMessage(c sebakcommon.Checker, args ...interface{}) (err error) {
+// CheckNodeRunnerHandleMessagePushIntoTransactionPool add the incoming
+// transactions into `TransactionPool`.
+func CheckNodeRunnerHandleMessagePushIntoTransactionPool(c sebakcommon.Checker, args ...interface{}) (err error) {
 	checker := c.(*NodeRunnerHandleMessageChecker)
 
-	var ballot Ballot
-	if ballot, err = checker.NodeRunner.Consensus().ReceiveMessage(checker.Transaction); err != nil {
-		return
-	}
+	tx := checker.Transaction
+	is := checker.NodeRunner.Consensus()
+	is.TransactionPool.Add(tx)
 
-	checker.Ballot = ballot
+	checker.NodeRunner.Log().Debug("push transaction into transactionPool", "transaction", checker.Transaction.GetHash())
 
 	return
 }
 
-func CheckNodeRunnerHandleMessageSignBallot(c sebakcommon.Checker, args ...interface{}) (err error) {
+// CheckNodeRunnerHandleMessageTransactionBroadcast broadcasts the incoming
+// transaction to the other nodes.
+func CheckNodeRunnerHandleMessageTransactionBroadcast(c sebakcommon.Checker, args ...interface{}) (err error) {
 	checker := c.(*NodeRunnerHandleMessageChecker)
 
-	// self-sign
-	checker.Ballot.Vote(VotingYES)
-	checker.Ballot.UpdateHash()
-	checker.Ballot.Sign(checker.LocalNode.Keypair(), checker.NetworkID)
+	checker.NodeRunner.Log().Debug("transaction will be broadcasted", "transaction", checker.Transaction.GetHash())
+
+	// TODO sender should be excluded
+	checker.NodeRunner.ConnectionManager().Broadcast(checker.Transaction)
 
 	return
 }
 
-func CheckNodeRunnerHandleMessageBroadcast(c sebakcommon.Checker, args ...interface{}) (err error) {
-	checker := c.(*NodeRunnerHandleMessageChecker)
-
-	checker.NodeRunner.Log().Debug("ballot from client will be broadcasted", "ballot", checker.Ballot.MessageHash())
-	checker.NodeRunner.ConnectionManager().Broadcast(checker.Ballot)
-
-	return
-}
-
-type NodeRunnerHandleBallotChecker struct {
+type BallotChecker struct {
 	sebakcommon.DefaultChecker
 
 	NodeRunner         *NodeRunner
 	LocalNode          *sebaknode.LocalNode
 	NetworkID          []byte
 	Message            sebaknetwork.Message
-	Ballot             Ballot
 	IsNew              bool
-	VotingStateStaging VotingStateStaging
-	VotingHole         VotingHole
-	WillBroadcast      bool
+	Ballot             Ballot
+	VotingHole         sebakcommon.VotingHole
+	RoundVote          *RoundVote
+	Result             RoundVoteResult
+	VotingFinished     bool
+	FinishedVotingHole sebakcommon.VotingHole
+
+	Log logging.Logger
 }
 
-func (c *NodeRunnerHandleBallotChecker) GetTransaction() (tx Transaction) {
-	if c.Ballot.IsEmpty() {
-		return
-	}
-
-	tx = c.Ballot.Data().Data.(Transaction)
-	return
-}
-
-func CheckNodeRunnerHandleBallotIsWellformed(c sebakcommon.Checker, args ...interface{}) (err error) {
-	checker := c.(*NodeRunnerHandleBallotChecker)
+// BallotUnmarshal makes `Ballot` from sebaknetwork.Message.
+func BallotUnmarshal(c sebakcommon.Checker, args ...interface{}) (err error) {
+	checker := c.(*BallotChecker)
 
 	var ballot Ballot
 	if ballot, err = NewBallotFromJSON(checker.Message.Data); err != nil {
 		return
 	}
 
+	if err = ballot.IsWellFormed(checker.NetworkID); err != nil {
+		return
+	}
+
 	checker.Ballot = ballot
+	checker.Log = checker.Log.New(logging.Ctx{"ballot": checker.Ballot.GetHash(), "state": checker.Ballot.State()})
+	checker.Log.Debug("message is verified")
 
 	return
 }
 
-func CheckNodeRunnerHandleBallotNotFromKnownValidators(c sebakcommon.Checker, args ...interface{}) (err error) {
-	checker := c.(*NodeRunnerHandleBallotChecker)
-	if checker.LocalNode.HasValidators(checker.Ballot.B.NodeKey) {
+// BallotNotFromKnownValidators checks the incoming ballot
+// is from the known validators.
+func BallotNotFromKnownValidators(c sebakcommon.Checker, args ...interface{}) (err error) {
+	checker := c.(*BallotChecker)
+	if checker.LocalNode.HasValidators(checker.Ballot.Source()) {
 		return
 	}
 
-	checker.NodeRunner.Log().Debug(
+	checker.Log.Debug(
 		"ballot from unknown validator",
-		"from", checker.Ballot.B.NodeKey,
-		"ballot", checker.Ballot.MessageHash(),
+		"from", checker.Ballot.Source(),
 	)
 
-	err = sebakcommon.CheckerErrorStop{Message: "ballot from unknown validator"}
+	err = sebakerror.ErrorBallotFromUnknownValidator
 	return
 }
 
-func CheckNodeRunnerHandleBallotCheckIsNew(c sebakcommon.Checker, args ...interface{}) (err error) {
-	checker := c.(*NodeRunnerHandleBallotChecker)
+// BallotAlreadyFinished checks the incoming ballot in
+// valid round.
+func BallotAlreadyFinished(c sebakcommon.Checker, args ...interface{}) (err error) {
+	checker := c.(*BallotChecker)
 
-	checker.IsNew = !checker.NodeRunner.Consensus().HasMessageByHash(checker.Ballot.MessageHash())
-
-	return
-}
-
-func CheckNodeRunnerHandleBallotReceiveBallot(c sebakcommon.Checker, args ...interface{}) (err error) {
-	checker := c.(*NodeRunnerHandleBallotChecker)
-
-	var vs VotingStateStaging
-	if vs, err = checker.NodeRunner.Consensus().ReceiveBallot(checker.Ballot); err != nil {
+	round := checker.Ballot.Round()
+	if !checker.NodeRunner.Consensus().IsAvailableRound(round) {
+		err = sebakerror.ErrorBallotAlreadyFinished
+		checker.Log.Debug("ballot already finished", "round", round)
 		return
-	}
-
-	checker.VotingStateStaging = vs
-
-	return
-}
-
-func CheckNodeRunnerHandleBallotHistory(c sebakcommon.Checker, args ...interface{}) (err error) {
-	checker := c.(*NodeRunnerHandleBallotChecker)
-
-	if !checker.IsNew {
-		return
-	}
-
-	var raw []byte
-	if raw, err = checker.Ballot.Data().Serialize(); err != nil {
-		return
-	}
-
-	tx := checker.GetTransaction()
-	bt := NewTransactionHistoryFromTransaction(tx, raw)
-	if err = bt.Save(checker.NodeRunner.Storage()); err != nil {
-		return
-	}
-
-	checker.NodeRunner.Log().Debug("saved in history from ballot", "transction", tx.GetHash())
-
-	return
-}
-
-func CheckNodeRunnerHandleBallotStore(c sebakcommon.Checker, args ...interface{}) (err error) {
-	checker := c.(*NodeRunnerHandleBallotChecker)
-
-	if !checker.VotingStateStaging.IsStorable() || !checker.VotingStateStaging.IsClosed() {
-		return
-	}
-
-	if err = FinishTransaction(checker.NodeRunner.Storage(), checker.Ballot, checker.GetTransaction()); err != nil {
-		return
-	}
-
-	checker.NodeRunner.Log().Debug(
-		"got consensus",
-		"ballot", checker.Ballot.MessageHash(),
-		"votingResultStaging", checker.VotingStateStaging,
-	)
-
-	err = sebakcommon.CheckerErrorStop{Message: "got consensus"}
-
-	return
-}
-
-func CheckNodeRunnerHandleBallotIsBroadcastable(c sebakcommon.Checker, args ...interface{}) (err error) {
-	checker := c.(*NodeRunnerHandleBallotChecker)
-
-	if checker.VotingStateStaging.IsClosed() {
-		err = sebakcommon.CheckerErrorStop{Message: "VotingResult is already closed"}
-		return
-	}
-
-	if checker.IsNew || checker.VotingStateStaging.IsChanged() {
-		checker.WillBroadcast = true
 	}
 
 	return
 }
 
-func CheckNodeRunnerHandleBallotVotingHole(c sebakcommon.Checker, args ...interface{}) (err error) {
-	checker := c.(*NodeRunnerHandleBallotChecker)
-	votingHole := VotingNOTYET
-	defer func() {
-		checker.VotingHole = votingHole
-	}()
+// BallotAlreadyVoted checks the node of ballot voted.
+func BallotAlreadyVoted(c sebakcommon.Checker, args ...interface{}) (err error) {
+	checker := c.(*BallotChecker)
+	rr := checker.NodeRunner.Consensus().RunningRounds
 
-	if checker.VotingStateStaging.State != sebakcommon.BallotStateSIGN {
+	var found bool
+	var runningRound *RunningRound
+	if runningRound, found = rr[checker.Ballot.Round().Hash()]; !found {
 		return
 	}
 
-	if !checker.WillBroadcast {
+	if runningRound.IsVoted(checker.Ballot) {
+		err = sebakerror.ErrorBallotAlreadyVoted
 		return
 	}
 
-	votingHole = VotingNO
+	return
+}
 
-	tx := checker.GetTransaction()
-	if tx.B.Fee < BaseFee {
-		checker.NodeRunner.Log().Debug("VotingNO: tx.B.Fee < BaseFee")
-		votingHole = VotingNO
+// BallotVote vote by incoming ballot; if the ballot is new
+// and the round of ballot is not yet registered, this will make new
+// `RunningRound`.
+func BallotVote(c sebakcommon.Checker, args ...interface{}) (err error) {
+	checker := c.(*BallotChecker)
 
-		return
+	roundHash := checker.Ballot.Round().Hash()
+	rr := checker.NodeRunner.Consensus().RunningRounds
+
+	var isNew bool
+	var found bool
+	var runningRound *RunningRound
+	if runningRound, found = rr[roundHash]; !found {
+		proposer := checker.NodeRunner.CalculateProposer(
+			checker.Ballot.Round().BlockHeight,
+			checker.Ballot.Round().Number,
+		)
+
+		runningRound, err = NewRunningRound(proposer, checker.Ballot)
+		if err != nil {
+			return
+		}
+
+		rr[roundHash] = runningRound
+		isNew = true
+	} else {
+		if _, found = runningRound.Voted[checker.Ballot.Proposer()]; !found {
+			isNew = true
+		}
+
+		runningRound.Vote(checker.Ballot)
 	}
 
-	// check, source exists
-	var ba *block.BlockAccount
-	if ba, err = block.GetBlockAccount(checker.NodeRunner.Storage(), tx.B.Source); err != nil {
-		return
-	}
-
-	// check, checkpoint is based on latest checkpoint
-	if !tx.IsValidCheckpoint(ba.Checkpoint) {
-		return
-	}
-
-	// get the balance at checkpoint
-	var bac block.BlockAccountCheckpoint
-	bac, err = block.GetBlockAccountCheckpoint(checker.NodeRunner.Storage(), tx.B.Source, tx.B.Checkpoint)
+	checker.IsNew = isNew
+	checker.RoundVote, err = runningRound.RoundVote(checker.Ballot.Proposer())
 	if err != nil {
 		return
 	}
 
-	totalAmount := tx.TotalAmount(true)
-	// check, have enough balance at checkpoint
-	if sebakcommon.MustAmountFromString(bac.Balance) < totalAmount {
-		return
-	}
-
-	// check, have enough balance now
-	if sebakcommon.MustAmountFromString(ba.Balance) < totalAmount {
-		checker.NodeRunner.Log().Debug(
-			"VotingNO: tx.TotalAmount(true) > MustAmountFromString(ba.Balance)",
-			"tx.TotalAmount(true)", totalAmount,
-			"MustAmountFromString(ba.Balance)", sebakcommon.MustAmountFromString(ba.Balance),
-		)
-		return
-	}
-
-	votingHole = VotingYES
+	checker.Log.Debug("ballot voted", "runningRound", runningRound, "new", isNew)
 
 	return
 }
 
-func CheckNodeRunnerHandleBallotBroadcast(c sebakcommon.Checker, args ...interface{}) (err error) {
-	checker := c.(*NodeRunnerHandleBallotChecker)
+// BallotIsSameProposer checks the incoming ballot has the
+// same proposer with the current `RunningRound`.
+func BallotIsSameProposer(c sebakcommon.Checker, args ...interface{}) (err error) {
+	checker := c.(*BallotChecker)
 
-	if checker.VotingStateStaging.IsClosed() {
-		if err := checker.NodeRunner.Consensus().CloseConsensus(checker.Ballot); err != nil {
-			checker.NodeRunner.Log().Error("failed to close consensus", "error", err)
+	if checker.VotingHole != sebakcommon.VotingNOTYET {
+		return
+	}
+
+	if checker.Ballot.IsFromProposer() && checker.Ballot.Source() == checker.NodeRunner.Node().Address() {
+		return
+	}
+
+	rr := checker.NodeRunner.Consensus().RunningRounds
+	var runningRound *RunningRound
+	var found bool
+	if runningRound, found = rr[checker.Ballot.Round().Hash()]; !found {
+		err = errors.New("`RunningRound` not found")
+		return
+	}
+
+	if runningRound.Proposer != checker.Ballot.Proposer() {
+		checker.VotingHole = sebakcommon.VotingNO
+		checker.Log.Debug(
+			"ballot has different proposer",
+			"proposer", runningRound.Proposer,
+			"proposed-proposer", checker.Ballot.Proposer(),
+		)
+		return
+	}
+
+	return
+}
+
+// BallotCheckResult checks the voting result.
+func BallotCheckResult(c sebakcommon.Checker, args ...interface{}) (err error) {
+	checker := c.(*BallotChecker)
+
+	if !checker.Ballot.State().IsValidForVote() {
+		return
+	}
+
+	result, votingHole, finished := checker.RoundVote.CanGetVotingResult(
+		checker.NodeRunner.Consensus().VotingThresholdPolicy,
+		checker.Ballot.State(),
+	)
+
+	checker.Result = result
+	checker.VotingFinished = finished
+	checker.FinishedVotingHole = votingHole
+
+	if checker.VotingFinished {
+		checker.Log.Debug("get result", "finished VotingHole", checker.FinishedVotingHole, "result", checker.Result)
+	}
+
+	return
+}
+
+var handleBallotTransactionCheckerFuncs = []sebakcommon.CheckerFunc{
+	IsNew,
+	GetMissingTransaction,
+	BallotTransactionsSameSource,
+	BallotTransactionsSourceCheck,
+}
+
+// INITBallotValidateTransactions validates the
+// transactions of newly added ballot.
+func INITBallotValidateTransactions(c sebakcommon.Checker, args ...interface{}) (err error) {
+	checker := c.(*BallotChecker)
+
+	if !checker.IsNew || checker.VotingFinished {
+		return
+	}
+
+	if checker.RoundVote.IsVotedByNode(checker.Ballot.State(), checker.LocalNode.Address()) {
+		err = sebakerror.ErrorBallotAlreadyVoted
+		return
+	}
+
+	if checker.VotingHole != sebakcommon.VotingNOTYET {
+		return
+	}
+
+	if checker.Ballot.TransactionsLength() < 1 {
+		checker.VotingHole = sebakcommon.VotingYES
+		return
+	}
+
+	transactionsChecker := &BallotTransactionChecker{
+		DefaultChecker: sebakcommon.DefaultChecker{Funcs: handleBallotTransactionCheckerFuncs},
+		NodeRunner:     checker.NodeRunner,
+		LocalNode:      checker.LocalNode,
+		NetworkID:      checker.NetworkID,
+		Transactions:   checker.Ballot.Transactions(),
+		VotingHole:     sebakcommon.VotingNOTYET,
+	}
+
+	err = sebakcommon.RunChecker(transactionsChecker, sebakcommon.DefaultDeferFunc)
+	if err != nil {
+		if _, ok := err.(sebakcommon.CheckerErrorStop); !ok {
+			checker.VotingHole = sebakcommon.VotingNO
+			checker.Log.Debug("failed to handle transactions of ballot", "error", err)
+			err = nil
+			return
 		}
-		err = sebakcommon.CheckerErrorStop{Message: "VotingResult is already closed"}
+		err = nil
+	}
+
+	if transactionsChecker.VotingHole == sebakcommon.VotingNO {
+		checker.VotingHole = sebakcommon.VotingNO
+	} else {
+		checker.VotingHole = sebakcommon.VotingYES
+	}
+
+	return
+}
+
+// INITBallotBroadcast will broadcast the validated INIT
+// ballot.
+func INITBallotBroadcast(c sebakcommon.Checker, args ...interface{}) (err error) {
+	checker := c.(*BallotChecker)
+	if !checker.IsNew {
 		return
 	}
 
-	if !checker.WillBroadcast {
-		return
-	}
-
-	var newBallot Ballot
-	newBallot = checker.Ballot.Clone()
-
-	state := checker.Ballot.State()
-	votingHole := checker.Ballot.B.VotingHole
-	if checker.VotingStateStaging.IsChanged() {
-		state = checker.VotingStateStaging.State
-		votingHole = checker.VotingStateStaging.VotingHole
-	}
-
-	if checker.VotingHole != VotingNOTYET {
-		votingHole = checker.VotingHole
-	}
-
-	checker.VotingHole = votingHole
-
-	newBallot.SetState(state)
-	newBallot.Vote(checker.VotingHole)
+	newBallot := checker.Ballot
+	newBallot.SetSource(checker.LocalNode.Address())
+	newBallot.SetVote(sebakcommon.BallotStateSIGN, checker.VotingHole)
 	newBallot.Sign(checker.LocalNode.Keypair(), checker.NetworkID)
 
-	checker.NodeRunner.Consensus().AddBallot(newBallot)
+	rr := checker.NodeRunner.Consensus().RunningRounds
 
-	checker.NodeRunner.Log().Debug(
-		"ballot will be broadcasted",
-		"ballot", newBallot.MessageHash(),
-		"isNew", checker.IsNew,
-	)
+	var runningRound *RunningRound
+	var found bool
+	if runningRound, found = rr[checker.Ballot.Round().Hash()]; !found {
+		err = errors.New("RunningRound not found")
+		return
+	}
+	runningRound.Vote(newBallot)
+
 	checker.NodeRunner.ConnectionManager().Broadcast(newBallot)
+	checker.Log.Debug("ballot will be broadcasted", "newBallot", newBallot)
+
+	return
+}
+
+// SIGNBallotBroadcast will broadcast the confirmed SIGN
+// ballot.
+func SIGNBallotBroadcast(c sebakcommon.Checker, args ...interface{}) (err error) {
+	checker := c.(*BallotChecker)
+	if !checker.VotingFinished {
+		return
+	}
+
+	newBallot := checker.Ballot
+	newBallot.SetSource(checker.LocalNode.Address())
+	newBallot.SetVote(sebakcommon.BallotStateACCEPT, checker.FinishedVotingHole)
+	newBallot.Sign(checker.LocalNode.Keypair(), checker.NetworkID)
+
+	rr := checker.NodeRunner.Consensus().RunningRounds
+	var runningRound *RunningRound
+	var found bool
+	if runningRound, found = rr[checker.Ballot.Round().Hash()]; !found {
+		err = errors.New("RunningRound not found")
+		return
+	}
+	runningRound.Vote(newBallot)
+
+	checker.NodeRunner.ConnectionManager().Broadcast(newBallot)
+	checker.Log.Debug("ballot will be broadcasted", "newBallot", newBallot)
+
+	return
+}
+
+// ACCEPTBallotStore will store the confirmed ballot to
+// `Block`.
+func ACCEPTBallotStore(c sebakcommon.Checker, args ...interface{}) (err error) {
+	checker := c.(*BallotChecker)
+
+	if !checker.VotingFinished {
+		return
+	}
+
+	willStore := checker.FinishedVotingHole == sebakcommon.VotingYES
+	if checker.FinishedVotingHole == sebakcommon.VotingYES {
+		var block Block
+		block, err = FinishBallot(
+			checker.NodeRunner.Storage(),
+			checker.Ballot,
+			checker.NodeRunner.Consensus().TransactionPool,
+		)
+		if err != nil {
+			return
+		}
+
+		checker.NodeRunner.Consensus().SetLatestConsensusedBlock(block)
+		checker.Log.Debug("ballot was stored", "block", block)
+
+		err = NewCheckerStopCloseConsensus(checker, "ballot got consensus and will be stored")
+	} else {
+		err = NewCheckerStopCloseConsensus(checker, "ballot got consensus")
+	}
+
+	checker.NodeRunner.Consensus().CloseConsensus(
+		checker.Ballot.Proposer(),
+		checker.Ballot.Round(),
+		checker.FinishedVotingHole,
+	)
+	checker.NodeRunner.CloseConsensus(checker.Ballot, willStore)
 
 	return
 }

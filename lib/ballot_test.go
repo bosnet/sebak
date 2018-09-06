@@ -2,143 +2,136 @@ package sebak
 
 import (
 	"testing"
+	"time"
 
-	"github.com/stretchr/testify/require"
-
+	"github.com/btcsuite/btcutil/base58"
 	"github.com/stellar/go/keypair"
+	"github.com/stretchr/testify/require"
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/node"
 )
 
-func makeNewBallot(state sebakcommon.BallotState, vote VotingHole) (*keypair.Full, Transaction, Ballot) {
-	kpNode, tx := TestMakeTransaction(networkID, 1)
-	ballot, _ := NewBallotFromMessage(kpNode.Address(), tx)
+func TestErrorBallotHasOverMaxTransactionsInBallot(t *testing.T) {
+	MaxTransactionsInBallotOrig := MaxTransactionsInBallot
+	defer func() {
+		MaxTransactionsInBallot = MaxTransactionsInBallotOrig
+	}()
 
-	ballot.SetState(state)
-	ballot.Vote(vote)
-	ballot.UpdateHash()
-	ballot.Sign(kpNode, networkID)
+	MaxTransactionsInBallot = 2
 
-	return kpNode, tx, ballot
+	_, node := createNetMemoryNetwork()
+	round := Round{Number: 0, BlockHeight: 1, BlockHash: "hahaha", TotalTxs: 1}
+	_, tx := TestMakeTransaction(networkID, 1)
+
+	ballot := NewBallot(node, round, []string{tx.GetHash()})
+	ballot.Sign(node.Keypair(), networkID)
+	require.Nil(t, ballot.IsWellFormed(networkID))
+
+	var txs []string
+	for i := 0; i < MaxTransactionsInBallot+1; i++ {
+		_, tx := TestMakeTransaction(networkID, 1)
+		txs = append(txs, tx.GetHash())
+	}
+
+	ballot = NewBallot(node, round, txs)
+	ballot.Sign(node.Keypair(), networkID)
+
+	err := ballot.IsWellFormed(networkID)
+	require.Error(t, err, sebakerror.ErrorBallotHasOverMaxTransactionsInBallot)
 }
 
-func TestNewBallot(t *testing.T) {
-	kpNode, tx := TestMakeTransaction(networkID, 1)
-	ballot, _ := NewBallotFromMessage(kpNode.Address(), tx)
+//	TestBallotHash checks that ballot.GetHash() makes non-empty hash.
+func TestBallotHash(t *testing.T) {
+	nodeRunners := createTestNodeRunner(1)
 
-	if len(ballot.H.Hash) < 1 {
-		t.Error("`Ballot.H.Hash` is empty")
-		return
-	}
-	if len(ballot.B.NodeKey) < 1 {
-		t.Error("`Ballot.B.NodeKey` is empty")
-		return
-	}
-	if len(ballot.H.Signature) > 0 {
-		t.Error("`Ballot.H.Signature` is not empty")
-		return
-	}
-	if len(ballot.B.Reason) > 0 {
-		t.Error("`Ballot.H.Reason` is not empty")
-		return
-	}
-	if !ballot.Data().Message().Equal(tx) {
-		t.Error("`Ballot.B.Hash` mismatch")
-		return
-	}
-	if ballot.B.State != sebakcommon.BallotInitState {
-		t.Error("`Ballot.B.State` is not `BallotInitState`")
-		return
-	}
-	if ballot.B.VotingHole != VotingNOTYET {
-		t.Error("initial `Ballot.B.VotingHole` must be `VotingNOTYET`")
-		return
-	}
-}
+	nodeRunner := nodeRunners[0]
 
-func TestBallotSign(t *testing.T) {
-	kpNode, _, ballot := makeNewBallot(sebakcommon.BallotStateINIT, VotingYES)
-	ballot.Sign(kpNode, networkID)
+	// `nodeRunner` is proposer's runner
+	nodeRunner.SetProposerCalculator(SelfProposerCalculator{})
 
-	if len(ballot.H.Signature) < 1 {
-		t.Error("`Ballot.H.Signature` is empty")
-		return
+	nodeRunner.Consensus().SetLatestConsensusedBlock(genesisBlock)
+
+	round := Round{
+		Number:      0,
+		BlockHeight: nodeRunner.Consensus().LatestConfirmedBlock.Height,
+		BlockHash:   nodeRunner.Consensus().LatestConfirmedBlock.Hash,
+		TotalTxs:    nodeRunner.Consensus().LatestConfirmedBlock.TotalTxs,
 	}
 
-	if err := ballot.VerifySignature(networkID); err != nil {
-		t.Error(err)
-		return
-	}
-}
-
-func TestBallotVote(t *testing.T) {
-	kpNode, _, ballot := makeNewBallot(sebakcommon.BallotStateINIT, VotingNOTYET)
-
-	var err error
-
-	err = ballot.IsWellFormed(networkID)
-	if err.(*sebakerror.Error).Code != sebakerror.ErrorBallotNoVoting.Code {
-		t.Errorf("error must be %v", sebakerror.ErrorBallotNoVoting)
-		return
-	}
-
-	ballot.Vote(VotingYES)
-	err = ballot.IsWellFormed(networkID)
-	if err.(*sebakerror.Error).Code != sebakerror.ErrorHashDoesNotMatch.Code {
-		t.Errorf("error must be %v", sebakerror.ErrorHashDoesNotMatch)
-		return
-	}
-
-	ballot.UpdateHash()
-	ballot.Sign(kpNode, networkID)
-	err = ballot.IsWellFormed(networkID)
-	if err != nil {
-		t.Errorf("failed to `UpdateHash()`: %v", err)
-		return
-	}
-}
-
-func TestBallotNewBallotFromMessageWithTransaction(t *testing.T) {
-	kp, _, ballot := makeNewBallot(sebakcommon.BallotStateINIT, VotingYES)
+	ballot := NewBallot(nodeRunner.localNode, round, []string{})
 	ballot.Sign(kp, networkID)
+	require.NotZero(t, len(ballot.GetHash()))
 
-	jsoned, err := ballot.Serialize()
-	if err != nil {
-		t.Error(err)
-		return
-	}
-
-	newBallot, err := NewBallotFromJSON(jsoned)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-
-	if err := newBallot.IsWellFormed(networkID); err != nil {
-		t.Error(err)
-		return
-	}
 }
 
-func TestBallotCanFitVotingBox(t *testing.T) {
-	_, _, ballot := makeNewBallot(sebakcommon.BallotStateNONE, VotingYES)
-	require.Equal(t, false, ballot.CanFitInVotingBox())
-	require.Equal(t, false, ballot.CanFitInWaitingBox())
+func TestBallotBadConfirmedTime(t *testing.T) {
+	kp, _ := keypair.Random()
+	endpoint, _ := sebakcommon.NewEndpointFromString("https://localhost:1000")
+	node, _ := sebaknode.NewLocalNode(kp, endpoint, "")
 
-	ballot.SetState(sebakcommon.BallotStateINIT)
-	require.Equal(t, false, ballot.CanFitInVotingBox())
-	require.Equal(t, true, ballot.CanFitInWaitingBox())
+	round := Round{Number: 0, BlockHeight: 0, BlockHash: "", TotalTxs: 0}
 
-	ballot.SetState(sebakcommon.BallotStateSIGN)
-	require.Equal(t, true, ballot.CanFitInVotingBox())
-	require.Equal(t, false, ballot.CanFitInWaitingBox())
+	updateBallot := func(ballot *Ballot) {
+		ballot.H.Hash = ballot.B.MakeHashString()
+		signature, _ := sebakcommon.MakeSignature(kp, networkID, ballot.H.Hash)
+		ballot.H.Signature = base58.Encode(signature)
+	}
 
-	ballot.SetState(sebakcommon.BallotStateACCEPT)
-	require.Equal(t, true, ballot.CanFitInVotingBox())
-	require.Equal(t, false, ballot.CanFitInWaitingBox())
+	{
+		ballot := NewBallot(node, round, []string{})
+		ballot.Sign(kp, networkID)
 
-	ballot.SetState(sebakcommon.BallotStateALLCONFIRM)
-	require.Equal(t, false, ballot.CanFitInVotingBox())
-	require.Equal(t, false, ballot.CanFitInWaitingBox())
+		err := ballot.IsWellFormed(networkID)
+		require.Nil(t, err)
+	}
+
+	{ // bad `Ballot.B.Confirmed` time; too ahead
+		ballot := NewBallot(node, round, []string{})
+		ballot.Sign(kp, networkID)
+
+		newConfirmed := time.Now().Add(time.Duration(2) * BallotConfirmedTimeAllowDuration)
+		ballot.B.Confirmed = sebakcommon.FormatISO8601(newConfirmed)
+		updateBallot(ballot)
+
+		err := ballot.IsWellFormed(networkID)
+		require.Error(t, err, sebakerror.ErrorMessageHasIncorrectTime)
+	}
+
+	{ // bad `Ballot.B.Confirmed` time; too behind
+		ballot := NewBallot(node, round, []string{})
+		ballot.Sign(kp, networkID)
+
+		newConfirmed := time.Now().Add(time.Duration(-2) * BallotConfirmedTimeAllowDuration)
+		ballot.B.Confirmed = sebakcommon.FormatISO8601(newConfirmed)
+		updateBallot(ballot)
+
+		err := ballot.IsWellFormed(networkID)
+		require.Error(t, err, sebakerror.ErrorMessageHasIncorrectTime)
+	}
+
+	{ // bad `Ballot.B.Proposed.Confirmed` time; too ahead
+		ballot := NewBallot(node, round, []string{})
+		ballot.Sign(kp, networkID)
+
+		newConfirmed := time.Now().Add(time.Duration(2) * BallotConfirmedTimeAllowDuration)
+		ballot.B.Proposed.Confirmed = sebakcommon.FormatISO8601(newConfirmed)
+		updateBallot(ballot)
+
+		err := ballot.IsWellFormed(networkID)
+		require.Error(t, err, sebakerror.ErrorMessageHasIncorrectTime)
+	}
+
+	{ // bad `Ballot.B.Proposed.Confirmed` time; too behind
+		ballot := NewBallot(node, round, []string{})
+		ballot.Sign(kp, networkID)
+
+		newConfirmed := time.Now().Add(time.Duration(-2) * BallotConfirmedTimeAllowDuration)
+		ballot.B.Proposed.Confirmed = sebakcommon.FormatISO8601(newConfirmed)
+		updateBallot(ballot)
+
+		err := ballot.IsWellFormed(networkID)
+		require.Error(t, err, sebakerror.ErrorMessageHasIncorrectTime)
+	}
 }

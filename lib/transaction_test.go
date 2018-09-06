@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/storage"
 
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/stellar/go/keypair"
@@ -24,23 +23,22 @@ func TestLoadTransactionFromJSON(t *testing.T) {
 }
 
 func TestIsWellFormedTransaction(t *testing.T) {
-	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
 	_, tx := TestMakeTransaction(networkID, 1)
 
-	err := tx.Validate(st)
+	err := tx.IsWellFormed(networkID)
 	require.Nil(t, err)
 }
 
 func TestIsWellFormedTransactionWithLowerFee(t *testing.T) {
 	var err error
 
-	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
 	kp, tx := TestMakeTransaction(networkID, 1)
 	tx.B.Fee = BaseFee
 	tx.H.Hash = tx.B.MakeHashString()
 	tx.Sign(kp, networkID)
-	err = tx.Validate(st)
+	err = tx.IsWellFormed(networkID)
 	require.Nil(t, err)
+
 	tx.B.Fee = BaseFee.MustAdd(1)
 	tx.H.Hash = tx.B.MakeHashString()
 	tx.Sign(kp, networkID)

@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"golang.org/x/net/http2"
 
@@ -44,19 +45,29 @@ var (
 	flagTLSCertFile         string = sebakcommon.GetENVValue("SEBAK_TLS_CERT", "sebak.crt")
 	flagTLSKeyFile          string = sebakcommon.GetENVValue("SEBAK_TLS_KEY", "sebak.key")
 	flagValidators          string = sebakcommon.GetENVValue("SEBAK_VALIDATORS", "")
-	flagSignThreshold       string = sebakcommon.GetENVValue("SEBAK_SIGN_THRESHOLD", "60")
-	flagAcceptThreshold     string = sebakcommon.GetENVValue("SEBAK_ACCEPT_THRESHOLD", "60")
+	flagThreshold           string = sebakcommon.GetENVValue("SEBAK_THRESHOLD", "66")
+	flagTimeoutINIT         string = sebakcommon.GetENVValue("SEBAK_TIMEOUT_INIT", "2")
+	flagTimeoutSIGN         string = sebakcommon.GetENVValue("SEBAK_TIMEOUT_SIGN", "2")
+	flagTimeoutACCEPT       string = sebakcommon.GetENVValue("SEBAK_TIMEOUT_ACCEPT", "2")
+	flagTimeoutALLCONFIRM   string = sebakcommon.GetENVValue("SEBAK_TIMEOUT_ALLCONFIRM", "2")
+	flagTransactionsLimit   string = sebakcommon.GetENVValue("SEBAK_TRANSACTIONS_LIMIT", "1000")
 )
 
 var (
 	nodeCmd *cobra.Command
 
-	kp            *keypair.Full
-	nodeEndpoint  *sebakcommon.Endpoint
-	storageConfig *sebakstorage.Config
-	validators    []*sebaknode.Validator
-	logLevel      logging.Lvl
-	log           logging.Logger
+	kp                *keypair.Full
+	nodeEndpoint      *sebakcommon.Endpoint
+	storageConfig     *sebakstorage.Config
+	validators        []*sebaknode.Validator
+	threshold         int
+	timeoutINIT       time.Duration
+	timeoutSIGN       time.Duration
+	timeoutACCEPT     time.Duration
+	timeoutALLCONFIRM time.Duration
+	transactionsLimit uint64
+	logLevel          logging.Lvl
+	log               logging.Logger
 )
 
 func init() {
@@ -87,8 +98,14 @@ func init() {
 
 			parseFlagsNode()
 
-			runNode()
-			return
+			if err = runNode(); err != nil {
+				// TODO: Handle errors here
+				// We should handle the error correctly, however since we don't currently
+				// shut down the HTTP server correctly, we get an error,
+				// and we need the binary to exit with a successfull error code for
+				// code coverage in integration test to work.
+				log.Error("Node exited with error: %v", err)
+			}
 		},
 	}
 
@@ -113,8 +130,12 @@ func init() {
 	nodeCmd.Flags().StringVar(&flagTLSCertFile, "tls-cert", flagTLSCertFile, "tls certificate file")
 	nodeCmd.Flags().StringVar(&flagTLSKeyFile, "tls-key", flagTLSKeyFile, "tls key file")
 	nodeCmd.Flags().StringVar(&flagValidators, "validators", flagValidators, "set validator: <endpoint url>?address=<public address>[&alias=<alias>] [ <validator>...]")
-	nodeCmd.Flags().StringVar(&flagSignThreshold, "sign-threshold", flagSignThreshold, "sign threshold")
-	nodeCmd.Flags().StringVar(&flagAcceptThreshold, "accept-threshold", flagAcceptThreshold, "accept threshold")
+	nodeCmd.Flags().StringVar(&flagThreshold, "threshold", flagThreshold, "threshold")
+	nodeCmd.Flags().StringVar(&flagTimeoutINIT, "timeout-init", flagTimeoutINIT, "timeout of the init state")
+	nodeCmd.Flags().StringVar(&flagTimeoutSIGN, "timeout-sign", flagTimeoutSIGN, "timeout of the sign state")
+	nodeCmd.Flags().StringVar(&flagTimeoutACCEPT, "timeout-accept", flagTimeoutACCEPT, "timeout of the accept state")
+	nodeCmd.Flags().StringVar(&flagTimeoutALLCONFIRM, "timeout-allconfirm", flagTimeoutALLCONFIRM, "timeout of the allconfirm state")
+	nodeCmd.Flags().StringVar(&flagTransactionsLimit, "transactions-limit", flagTransactionsLimit, "transactions limit in a ballot")
 
 	rootCmd.AddCommand(nodeCmd)
 }
@@ -197,6 +218,22 @@ func parseFlagsNode() {
 		common.PrintFlagsError(nodeCmd, "--storage", err)
 	}
 
+	timeoutINIT = getTimeout(flagTimeoutINIT, "--timeout-init")
+	timeoutSIGN = getTimeout(flagTimeoutSIGN, "--timeout-sign")
+	timeoutACCEPT = getTimeout(flagTimeoutACCEPT, "--timeout-accept")
+	timeoutALLCONFIRM = getTimeout(flagTimeoutALLCONFIRM, "--timeout-allconfirm")
+
+	if transactionsLimit, err = strconv.ParseUint(flagTransactionsLimit, 10, 64); err != nil {
+		common.PrintFlagsError(nodeCmd, "--transactions-limit", err)
+	}
+
+	var tmpUint64 uint64
+	if tmpUint64, err = strconv.ParseUint(flagThreshold, 10, 64); err != nil {
+		common.PrintFlagsError(nodeCmd, "--threshold", err)
+	} else {
+		threshold = int(tmpUint64)
+	}
+
 	if logLevel, err = logging.LvlFromString(flagLogLevel); err != nil {
 		common.PrintFlagsError(nodeCmd, "--log-level", err)
 	}
@@ -229,8 +266,12 @@ func parseFlagsNode() {
 	parsedFlags = append(parsedFlags, "\n\ttls-key", flagTLSKeyFile)
 	parsedFlags = append(parsedFlags, "\n\tlog-level", flagLogLevel)
 	parsedFlags = append(parsedFlags, "\n\tlog-output", flagLogOutput)
-	parsedFlags = append(parsedFlags, "\n\tsign-threshold", flagSignThreshold)
-	parsedFlags = append(parsedFlags, "\n\taccept-threshold", flagAcceptThreshold)
+	parsedFlags = append(parsedFlags, "\n\tthreshold", flagThreshold)
+	parsedFlags = append(parsedFlags, "\n\ttimeout-init", flagTimeoutINIT)
+	parsedFlags = append(parsedFlags, "\n\ttimeout-sign", flagTimeoutSIGN)
+	parsedFlags = append(parsedFlags, "\n\ttimeout-accept", flagTimeoutACCEPT)
+	parsedFlags = append(parsedFlags, "\n\ttimeout-allconfirm", flagTimeoutALLCONFIRM)
+	parsedFlags = append(parsedFlags, "\n\ttransactions-limit", flagTransactionsLimit)
 
 	var vl []interface{}
 	for i, v := range validators {
@@ -249,45 +290,71 @@ func parseFlagsNode() {
 	}
 }
 
-func runNode() {
+func getTimeout(timeoutStr string, errMessage string) time.Duration {
+	var timeoutDuration time.Duration
+	if tmpUint64, err := strconv.ParseUint(flagTimeoutINIT, 10, 64); err != nil {
+		common.PrintFlagsError(nodeCmd, errMessage, err)
+	} else {
+		timeoutDuration = time.Duration(tmpUint64) * time.Second
+	}
+	if timeoutDuration == 0 {
+		timeoutDuration = 2 * time.Second
+	}
+	return timeoutDuration
+}
+
+func runNode() error {
 	// create current Node
 	localNode, err := sebaknode.NewLocalNode(kp, nodeEndpoint, "")
 	if err != nil {
 		log.Error("failed to launch main node", "error", err)
-		return
+		return err
 	}
 	localNode.AddValidators(validators...)
 
 	// create network
 	nt, err := sebaknetwork.NewNetwork(nodeEndpoint)
 	if err != nil {
-		log.Crit("transport error", "error", err)
-
-		os.Exit(1)
+		log.Crit("failed to create Network", "error", err)
+		return err
 	}
 
-	signTh, err := strconv.Atoi(flagSignThreshold)
-	acceptTh, err := strconv.Atoi(flagAcceptThreshold)
-	policy, _ := sebak.NewDefaultVotingThresholdPolicy(100, signTh, acceptTh)
-	policy.SetValidators(len(localNode.GetValidators()) + 1) // including 'self'
+	policy, err := sebak.NewDefaultVotingThresholdPolicy(threshold, threshold)
+	if err != nil {
+		log.Crit("failed to create VotingThresholdPolicy", "error", err)
+		return err
+	}
 
 	isaac, err := sebak.NewISAAC([]byte(flagNetworkID), localNode, policy)
 	if err != nil {
-		log.Error("failed to launch consensus", "error", err)
-		return
+		log.Crit("failed to launch consensus", "error", err)
+		return err
 	}
 
 	st, err := sebakstorage.NewStorage(storageConfig)
 	if err != nil {
 		log.Crit("failed to initialize storage", "error", err)
-
-		os.Exit(1)
+		return err
 	}
 
 	// Execution group.
 	var g run.Group
 	{
-		nr := sebak.NewNodeRunner(flagNetworkID, localNode, policy, nt, isaac, st)
+		nr, err := sebak.NewNodeRunner(flagNetworkID, localNode, policy, nt, isaac, st)
+		conf := &sebak.NodeRunnerConfiguration{
+			TimeoutINIT:       timeoutINIT,
+			TimeoutSIGN:       timeoutSIGN,
+			TimeoutACCEPT:     timeoutACCEPT,
+			TimeoutALLCONFIRM: timeoutALLCONFIRM,
+			TransactionsLimit: uint64(transactionsLimit),
+		}
+		nr.SetConf(conf)
+
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "%v\n", err)
+			return err
+		}
+
 		g.Add(func() error {
 			if err := nr.Start(); err != nil {
 				log.Crit("failed to start node", "error", err)
@@ -309,6 +376,8 @@ func runNode() {
 
 	if err := g.Run(); err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
-		os.Exit(1)
+		return err
 	}
+
+	return nil
 }

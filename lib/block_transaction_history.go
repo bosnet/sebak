@@ -19,6 +19,8 @@ const (
 )
 
 // TODO Is it correct to save raw `message` in BlockTransactionHistory?
+// TODO Do `BlockTransactionHistory` purge the old transactions? That is, it
+// just keep the recent transactions
 
 type BlockTransactionHistory struct {
 	Hash   string
@@ -81,6 +83,10 @@ func GetBlockTransactionHistory(st *sebakstorage.LevelDBBackend, hash string) (b
 
 	bt.isSaved = true
 	return
+}
+
+func ExistsBlockTransactionHistory(st *sebakstorage.LevelDBBackend, hash string) (bool, error) {
+	return st.Has(GetBlockTransactionHistoryKey(hash))
 }
 
 // BlockTransactionError stores all the non-confirmed transactions and it's reason.
