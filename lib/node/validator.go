@@ -19,10 +19,10 @@ import (
 )
 
 type ValidatorFromJSON struct {
-	Alias    string                `json:"alias"`
-	Address  string                `json:"address"`
+	Alias    string           `json:"alias"`
+	Address  string           `json:"address"`
 	Endpoint *common.Endpoint `json:"endpoint"`
-	State    NodeState             `json:"state"`
+	State    NodeState        `json:"state"`
 }
 
 type Validator struct {

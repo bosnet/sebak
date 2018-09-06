@@ -12,7 +12,7 @@ import (
 )
 
 type OperationBodyCreateAccount struct {
-	Target string             `json:"target"`
+	Target string        `json:"target"`
 	Amount common.Amount `json:"amount"`
 }
 
