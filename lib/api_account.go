@@ -7,7 +7,6 @@ import (
 	"github.com/gorilla/mux"
 
 	"boscoin.io/sebak/lib/block"
-	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/httputils"
 	"boscoin.io/sebak/lib/observer"
@@ -48,23 +47,23 @@ func (api NetworkHandlerAPI) GetAccountTransactionsHandler(w http.ResponseWriter
 	vars := mux.Vars(r)
 	address := vars["address"]
 
-	readFunc := func(cnt int) []BlockTransaction {
-		var txs []BlockTransaction
+	readFunc := func(cnt int) []*BlockTransaction {
+		var txs []*BlockTransaction
 		iterFunc, closeFunc := GetBlockTransactionsByAccount(api.storage, address, false)
 		for {
 			t, hasNext := iterFunc()
-			cnt--
 			if !hasNext || cnt == 0 {
 				break
 			}
-			txs = append(txs, t)
+			txs = append(txs, &t)
+			cnt--
 		}
 		closeFunc()
 		return txs
 	}
 
 	if httputils.IsEventStream(r) {
-		event := fmt.Sprintf("source-%s", address)
+		event := fmt.Sprintf("bt-source-%s", address)
 		es := NewDefaultEventStream(w, r)
 		txs := readFunc(maxNumberOfExistingData)
 		for _, tx := range txs {
@@ -87,55 +86,35 @@ func (api NetworkHandlerAPI) GetAccountOperationsHandler(w http.ResponseWriter, 
 	vars := mux.Vars(r)
 	address := vars["address"]
 
-	var err error
-	var s []byte
-
-	switch r.Header.Get("Accept") {
-	case "text/event-stream":
-		var readyChan = make(chan struct{})
-		iterateId := common.GetUniqueIDFromUUID()
-		go func() {
-			<-readyChan
-			count := maxNumberOfExistingData
-			iterFunc, closeFunc := GetBlockOperationsBySource(api.storage, address, false)
-			for {
-				bo, hasNext := iterFunc()
-				count--
-				if !hasNext || count < 0 {
-					break
-				}
-				observer.BlockOperationObserver.Trigger(fmt.Sprintf("iterate-%s", iterateId), &bo)
-			}
-			closeFunc()
-		}()
-
-		callBackFunc := func(args ...interface{}) (boSerialized []byte, err error) {
-			bo := args[1].(*BlockOperation)
-			if boSerialized, err = bo.Serialize(); err != nil {
-				return []byte{}, errors.ErrorBlockTransactionDoesNotExists
-			}
-			return boSerialized, nil
-		}
-		event := fmt.Sprintf("iterate-%s", iterateId)
-		event += " " + fmt.Sprintf("source-%s", address)
-		streaming(observer.BlockOperationObserver, r, w, event, callBackFunc, readyChan)
-	default:
-		var bol []BlockOperation
+	readFunc := func(cnt int) []*BlockOperation {
+		var txs []*BlockOperation
 		iterFunc, closeFunc := GetBlockOperationsBySource(api.storage, address, false)
 		for {
-			bo, hasNext := iterFunc()
-			if !hasNext {
+			t, hasNext := iterFunc()
+			if !hasNext || cnt == 0 {
 				break
 			}
-			bol = append(bol, bo)
+			txs = append(txs, &t)
+			cnt--
 		}
 		closeFunc()
+		return txs
+	}
 
-		s, err = common.EncodeJSONValue(bol)
-
-		if _, err = w.Write(s); err != nil {
-			http.Error(w, "Error reading request body", http.StatusInternalServerError)
-			return
+	if httputils.IsEventStream(r) {
+		event := fmt.Sprintf("bo-source-%s", address)
+		es := NewDefaultEventStream(w, r)
+		txs := readFunc(maxNumberOfExistingData)
+		for _, tx := range txs {
+			es.Render(tx)
 		}
+		es.Run(observer.BlockOperationObserver, event)
+		return
+	}
+
+	txs := readFunc(-1) //TODO paging support
+	if err := httputils.WriteJSON(w, 200, txs); err != nil {
+		http.Error(w, "Error reading request body", http.StatusInternalServerError)
+		return
 	}
 }

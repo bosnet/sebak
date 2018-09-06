@@ -1,135 +1,88 @@
 package sebak
 
 import (
-	"fmt"
 	"net/http"
 
-	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/httputils"
 	"boscoin.io/sebak/lib/observer"
 
 	"github.com/gorilla/mux"
 )
 
-const GetTransactionsHandlerPattern = "/transactions"
-
 func (api NetworkHandlerAPI) GetTransactionsHandler(w http.ResponseWriter, r *http.Request) {
-	var err error
 
-	switch r.Header.Get("Accept") {
-	case "text/event-stream":
-		var readyChan = make(chan struct{})
-		iterateId := common.GetUniqueIDFromUUID()
-		go func() {
-			<-readyChan
-			count := maxNumberOfExistingData
-			iterFunc, closeFunc := GetBlockTransactions(api.storage, false)
-			for {
-				bt, hasNext := iterFunc()
-				count--
-				if !hasNext || count < 0 {
-					break
-				}
-				observer.BlockTransactionObserver.Trigger(fmt.Sprintf("iterate-%s", iterateId), &bt)
-			}
-			closeFunc()
-		}()
-
-		callBackFunc := func(args ...interface{}) (account []byte, err error) {
-			ba := args[1].(*BlockTransaction)
-			if account, err = ba.Serialize(); err != nil {
-				return []byte{}, errors.ErrorBlockAccountDoesNotExists
-			}
-			return account, nil
-		}
-		event := "saved"
-		event += " " + fmt.Sprintf("iterate-%s", iterateId)
-		streaming(observer.BlockTransactionObserver, r, w, event, callBackFunc, readyChan)
-	default:
-
-		var s []byte
-		var btl []BlockTransaction
+	readFunc := func(cnt int) []*BlockTransaction {
+		var txs []*BlockTransaction
 		iterFunc, closeFunc := GetBlockTransactions(api.storage, false)
 		for {
-			bt, hasNext := iterFunc()
-			if !hasNext {
+			t, hasNext := iterFunc()
+			if !hasNext || cnt == 0 {
 				break
 			}
-			btl = append(btl, bt)
+			txs = append(txs, &t)
+			cnt--
 		}
 		closeFunc()
+		return txs
+	}
 
-		s, err = common.EncodeJSONValue(btl)
-		if _, err = w.Write(s); err != nil {
-			http.Error(w, "Error reading request body", http.StatusInternalServerError)
-			return
+	if httputils.IsEventStream(r) {
+		event := "bt-saved"
+		es := NewDefaultEventStream(w, r)
+		txs := readFunc(maxNumberOfExistingData)
+		for _, tx := range txs {
+			es.Render(tx)
 		}
+		es.Run(observer.BlockTransactionObserver, event)
+		return
+	}
+
+	txs := readFunc(-1) // -1 is infinte. TODO: Paging support makes better this space.
+
+	if err := httputils.WriteJSON(w, 200, txs); err != nil {
+		http.Error(w, "Error reading request body", http.StatusInternalServerError)
+		return
 	}
 }
 
-const GetTransactionByHashHandlerPattern = "/transactions/{txid}"
-
 func (api NetworkHandlerAPI) GetTransactionByHashHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	key := vars["txid"]
-	var err error
+	key := vars["txid"] //TODO: validate input
 
-	switch r.Header.Get("Accept") {
-	case "text/event-stream":
+	found, err := ExistBlockTransaction(api.storage, key)
+	if err != nil {
+		http.Error(w, "Error reading request body", http.StatusInternalServerError)
+		return
+	}
 
-		var readyChan = make(chan struct{})
-		iterateId := common.GetUniqueIDFromUUID()
-		go func() {
-			<-readyChan
-			var bt BlockTransaction
-			if bt, err = GetBlockTransaction(api.storage, key); err != nil {
-				http.Error(w, "Error reading request body", http.StatusInternalServerError)
-				return
-			}
-			observer.BlockTransactionObserver.Trigger(fmt.Sprintf("iterate-%s", iterateId), &bt)
-		}()
+	var payload interface{}
 
-		callBackFunc := func(args ...interface{}) (account []byte, err error) {
-			ba := args[1].(*BlockTransaction)
-			if account, err = ba.Serialize(); err != nil {
-				return []byte{}, errors.ErrorBlockAccountDoesNotExists
-			}
-			return account, nil
-		}
-
-		event := fmt.Sprintf("iterate-%s", iterateId)
-		event += " " + fmt.Sprintf("hash-%s", key)
-		streaming(observer.BlockTransactionObserver, r, w, event, callBackFunc, readyChan)
-	default:
-
-		var s []byte
-		if found, err := ExistBlockTransaction(api.storage, key); err != nil {
-			http.Error(w, "Error reading request body", http.StatusInternalServerError)
-			return
-		} else if found {
-			var bt BlockTransaction
-			if bt, err = GetBlockTransaction(api.storage, key); err != nil {
-				http.Error(w, "Error reading request body", http.StatusInternalServerError)
-				return
-			}
-			if s, err = bt.Serialize(); err != nil {
-				http.Error(w, "Error reading request body", http.StatusInternalServerError)
-				return
-			}
-		} else {
-			var bth BlockTransactionHistory
-			if bth, err = GetBlockTransactionHistory(api.storage, key); err != nil {
-				http.Error(w, "Error reading request body", http.StatusInternalServerError)
-				return
-			}
-			if s, err = bth.Serialize(); err != nil {
-				http.Error(w, "Error reading request body", http.StatusInternalServerError)
-				return
-			}
-		}
-		if _, err = w.Write(s); err != nil {
+	if found {
+		bt, err := GetBlockTransaction(api.storage, key)
+		if err != nil {
 			http.Error(w, "Error reading request body", http.StatusInternalServerError)
 			return
 		}
+		payload = bt
+
+	} else {
+		bth, err := GetBlockTransactionHistory(api.storage, key)
+		if err != nil {
+			http.Error(w, "Error reading request body", http.StatusInternalServerError)
+			return
+		}
+		payload = bth
+	}
+
+	if httputils.IsEventStream(r) {
+		event := "bt-saved"
+		es := NewDefaultEventStream(w, r)
+		es.Render(payload)
+		es.Run(observer.BlockTransactionObserver, event)
+		return
+	}
+
+	if err := httputils.WriteJSON(w, 200, payload); err != nil {
+		http.Error(w, "Error reading request body", http.StatusInternalServerError)
 	}
 }

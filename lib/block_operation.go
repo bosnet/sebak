@@ -93,6 +93,7 @@ func (bo *BlockOperation) Save(st *sebakstorage.LevelDBBackend) (err error) {
 
 	event := "saved"
 	event += " " + fmt.Sprintf("source-%s", bo.Source)
+	event += " " + fmt.Sprintf("bo-source-%s", bo.Source)
 	event += " " + fmt.Sprintf("hash-%s", bo.Hash)
 	observer.BlockOperationObserver.Trigger(event, bo)
 

@@ -18,6 +18,8 @@ const (
 	GetAccountTransactionsHandlerPattern = "/account/{address}/transactions"
 	GetAccountHandlerPattern             = "/account/{address}"
 	GetAccountOperationsHandlerPattern   = "/account/{address}/operations"
+	GetTransactionsHandlerPattern        = "/transactions"
+	GetTransactionByHashHandlerPattern   = "/transactions/{txid}"
 )
 
 type NetworkHandlerNode struct {
