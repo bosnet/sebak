@@ -49,10 +49,10 @@ func TestMessageChecker(t *testing.T) {
 	// TransactionBroadcast(checker) is not suitable in unittest
 
 	err = HasTransaction(checker)
-	require.Equal(t, err, sebakerror.ErrorNewButKnownMessage)
+	require.Equal(t, err, errors.ErrorNewButKnownMessage)
 
 	err = SaveTransactionHistory(checker)
-	require.Equal(t, err, sebakerror.ErrorNewButKnownMessage)
+	require.Equal(t, err, errors.ErrorNewButKnownMessage)
 
 	err = PushIntoTransactionPool(checker)
 	require.Nil(t, err)
@@ -67,7 +67,7 @@ func TestMessageChecker(t *testing.T) {
 	checker.DefaultChecker = sebakcommon.DefaultChecker{Funcs: CheckerFuncs}
 
 	err = sebakcommon.RunChecker(checker, sebakcommon.DefaultDeferFunc)
-	require.Equal(t, err, sebakerror.ErrorNewButKnownMessage)
+	require.Equal(t, err, errors.ErrorNewButKnownMessage)
 }
 
 func TestMessageCheckerWithInvalidMessage(t *testing.T) {
@@ -91,7 +91,7 @@ func TestMessageCheckerWithInvalidMessage(t *testing.T) {
 	}
 
 	err = TransactionUnmarshal(checker)
-	require.EqualError(t, err, sebakerror.ErrorSignatureVerificationFailed.Message)
+	require.EqualError(t, err, errors.ErrorSignatureVerificationFailed.Message)
 
 	checker.Message.Data = []byte{}
 	err = TransactionUnmarshal(checker)

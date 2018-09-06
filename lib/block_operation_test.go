@@ -56,7 +56,7 @@ func TestBlockOperationSaveExisting(t *testing.T) {
 
 	err = bo.Save(st)
 	require.NotNil(t, err, "An error should have been returned")
-	require.Equal(t, err, sebakerror.ErrorAlreadySaved)
+	require.Equal(t, err, errors.ErrorAlreadySaved)
 }
 
 func TestGetSortedBlockOperationsByTxHash(t *testing.T) {

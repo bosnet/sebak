@@ -53,7 +53,7 @@ func (bt BlockTransactionHistory) Serialize() (encoded []byte, err error) {
 }
 func (bt *BlockTransactionHistory) Save(st *sebakstorage.LevelDBBackend) (err error) {
 	if bt.isSaved {
-		return sebakerror.ErrorAlreadySaved
+		return errors.ErrorAlreadySaved
 	}
 
 	key := GetBlockTransactionHistoryKey(bt.Hash)
@@ -63,7 +63,7 @@ func (bt *BlockTransactionHistory) Save(st *sebakstorage.LevelDBBackend) (err er
 	if err != nil {
 		return
 	} else if exists {
-		return sebakerror.ErrorBlockAlreadyExists
+		return errors.ErrorBlockAlreadyExists
 	}
 
 	bt.Confirmed = sebakcommon.NowISO8601()

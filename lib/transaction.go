@@ -62,7 +62,7 @@ func NewTransactionFromJSON(b []byte) (tx Transaction, err error) {
 
 func NewTransaction(source, checkpoint string, ops ...Operation) (tx Transaction, err error) {
 	if len(ops) < 1 {
-		err = sebakerror.ErrorTransactionEmptyOperations
+		err = errors.ErrorTransactionEmptyOperations
 		return
 	}
 
@@ -118,13 +118,13 @@ func (tx Transaction) Validate(st *sebakstorage.LevelDBBackend) (err error) {
 	// check, source exists
 	var ba *block.BlockAccount
 	if ba, err = block.GetBlockAccount(st, tx.B.Source); err != nil {
-		err = sebakerror.ErrorBlockAccountDoesNotExists
+		err = errors.ErrorBlockAccountDoesNotExists
 		return
 	}
 
 	// check, checkpoint is based on latest checkpoint
 	if !tx.IsValidCheckpoint(ba.Checkpoint) {
-		err = sebakerror.ErrorTransactionInvalidCheckpoint
+		err = errors.ErrorTransactionInvalidCheckpoint
 		return
 	}
 
@@ -139,7 +139,7 @@ func (tx Transaction) Validate(st *sebakstorage.LevelDBBackend) (err error) {
 
 	// check, have enough balance at checkpoint
 	if sebakcommon.MustAmountFromString(bac.Balance) < totalAmount {
-		err = sebakerror.ErrorTransactionExcessAbilityToPay
+		err = errors.ErrorTransactionExcessAbilityToPay
 		return
 	}
 

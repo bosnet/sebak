@@ -1,4 +1,4 @@
-package sebakerror
+package errors
 
 var (
 	ErrorBlockAlreadyExists                   = NewError(100, "already exists in block")

@@ -73,12 +73,12 @@ func (b Ballot) String() string {
 
 func (b Ballot) IsWellFormed(networkID []byte) (err error) {
 	if b.TransactionsLength() > MaxTransactionsInBallot {
-		err = sebakerror.ErrorBallotHasOverMaxTransactionsInBallot
+		err = errors.ErrorBallotHasOverMaxTransactionsInBallot
 		return
 	}
 
 	if !b.B.State.IsValid() {
-		err = sebakerror.ErrorInvalidState
+		err = errors.ErrorInvalidState
 		return
 	}
 
@@ -94,11 +94,11 @@ func (b Ballot) IsWellFormed(networkID []byte) (err error) {
 	timeStart := now.Add(time.Duration(-1) * BallotConfirmedTimeAllowDuration)
 	timeEnd := now.Add(BallotConfirmedTimeAllowDuration)
 	if confirmed.Before(timeStart) || confirmed.After(timeEnd) {
-		err = sebakerror.ErrorMessageHasIncorrectTime
+		err = errors.ErrorMessageHasIncorrectTime
 		return
 	}
 	if proposerConfirmed.Before(timeStart) || proposerConfirmed.After(timeEnd) {
-		err = sebakerror.ErrorMessageHasIncorrectTime
+		err = errors.ErrorMessageHasIncorrectTime
 		return
 	}
 
@@ -150,7 +150,7 @@ func (b *Ballot) SetVote(state sebakcommon.BallotState, vote sebakcommon.VotingH
 	b.B.Vote = vote
 }
 
-func (b *Ballot) SetReason(reason *sebakerror.Error) {
+func (b *Ballot) SetReason(reason *errors.Error) {
 	b.B.Reason = reason
 }
 
@@ -229,7 +229,7 @@ type BallotBody struct {
 	Source    string                  `json:"source"`
 	State     sebakcommon.BallotState `json:"state"`
 	Vote      sebakcommon.VotingHole  `json:"vote"`
-	Reason    *sebakerror.Error       `json:"reason"`
+	Reason    *errors.Error       `json:"reason"`
 }
 
 func (rb BallotBody) MakeHash() []byte {
@@ -250,7 +250,7 @@ func FinishBallot(st *sebakstorage.LevelDBBackend, ballot Ballot, transactionPoo
 	for _, hash := range ballot.B.Proposed.Transactions {
 		tx, found := transactionPool.Get(hash)
 		if !found {
-			err = sebakerror.ErrorTransactionNotFound
+			err = errors.ErrorTransactionNotFound
 			return
 		}
 		transactions[hash] = tx
@@ -279,7 +279,7 @@ func FinishBallot(st *sebakstorage.LevelDBBackend, ballot Ballot, transactionPoo
 
 		var baSource *block.BlockAccount
 		if baSource, err = block.GetBlockAccount(ts, tx.B.Source); err != nil {
-			err = sebakerror.ErrorBlockAccountDoesNotExists
+			err = errors.ErrorBlockAccountDoesNotExists
 			ts.Discard()
 			return
 		}

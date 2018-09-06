@@ -38,7 +38,7 @@ func (api NetworkHandlerAPI) GetTransactionsHandler(w http.ResponseWriter, r *ht
 		callBackFunc := func(args ...interface{}) (account []byte, err error) {
 			ba := args[1].(*BlockTransaction)
 			if account, err = ba.Serialize(); err != nil {
-				return []byte{}, sebakerror.ErrorBlockAccountDoesNotExists
+				return []byte{}, errors.ErrorBlockAccountDoesNotExists
 			}
 			return account, nil
 		}
@@ -92,7 +92,7 @@ func (api NetworkHandlerAPI) GetTransactionByHashHandler(w http.ResponseWriter, 
 		callBackFunc := func(args ...interface{}) (account []byte, err error) {
 			ba := args[1].(*BlockTransaction)
 			if account, err = ba.Serialize(); err != nil {
-				return []byte{}, sebakerror.ErrorBlockAccountDoesNotExists
+				return []byte{}, errors.ErrorBlockAccountDoesNotExists
 			}
 			return account, nil
 		}

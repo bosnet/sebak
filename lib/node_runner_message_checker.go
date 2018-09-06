@@ -57,7 +57,7 @@ func HasTransaction(c sebakcommon.Checker, args ...interface{}) (err error) {
 
 	consensus := checker.NodeRunner.Consensus()
 	if consensus.TransactionPool.Has(checker.Transaction.GetHash()) {
-		err = sebakerror.ErrorNewButKnownMessage
+		err = errors.ErrorNewButKnownMessage
 		return
 	}
 
@@ -72,7 +72,7 @@ func SaveTransactionHistory(c sebakcommon.Checker, args ...interface{}) (err err
 	var found bool
 	if found, err = ExistsBlockTransactionHistory(checker.NodeRunner.Storage(), checker.Transaction.GetHash()); found && err == nil {
 		checker.NodeRunner.Log().Debug("found in history", "transction", checker.Transaction.GetHash())
-		err = sebakerror.ErrorNewButKnownMessage
+		err = errors.ErrorNewButKnownMessage
 		return
 	}
 
@@ -92,7 +92,7 @@ func MessageHasSameSource(c sebakcommon.Checker, args ...interface{}) (err error
 	checker := c.(*MessageChecker)
 
 	if checker.NodeRunner.Consensus().TransactionPool.IsSameSource(checker.Transaction.Source()) {
-		err = sebakerror.ErrorTransactionSameSource
+		err = errors.ErrorTransactionSameSource
 		return
 	}
 

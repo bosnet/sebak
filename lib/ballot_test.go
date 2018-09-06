@@ -40,7 +40,7 @@ func TestErrorBallotHasOverMaxTransactionsInBallot(t *testing.T) {
 	ballot.Sign(node.Keypair(), networkID)
 
 	err := ballot.IsWellFormed(networkID)
-	require.Error(t, err, sebakerror.ErrorBallotHasOverMaxTransactionsInBallot)
+	require.Error(t, err, errors.ErrorBallotHasOverMaxTransactionsInBallot)
 }
 
 //	TestBallotHash checks that ballot.GetHash() makes non-empty hash.
@@ -92,7 +92,7 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 		updateBallot(ballot)
 
 		err := ballot.IsWellFormed(networkID)
-		require.Error(t, err, sebakerror.ErrorMessageHasIncorrectTime)
+		require.Error(t, err, errors.ErrorMessageHasIncorrectTime)
 	}
 
 	{ // bad `Ballot.B.Confirmed` time; too behind
@@ -104,7 +104,7 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 		updateBallot(ballot)
 
 		err := ballot.IsWellFormed(networkID)
-		require.Error(t, err, sebakerror.ErrorMessageHasIncorrectTime)
+		require.Error(t, err, errors.ErrorMessageHasIncorrectTime)
 	}
 
 	{ // bad `Ballot.B.Proposed.Confirmed` time; too ahead
@@ -116,7 +116,7 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 		updateBallot(ballot)
 
 		err := ballot.IsWellFormed(networkID)
-		require.Error(t, err, sebakerror.ErrorMessageHasIncorrectTime)
+		require.Error(t, err, errors.ErrorMessageHasIncorrectTime)
 	}
 
 	{ // bad `Ballot.B.Proposed.Confirmed` time; too behind
@@ -128,6 +128,6 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 		updateBallot(ballot)
 
 		err := ballot.IsWellFormed(networkID)
-		require.Error(t, err, sebakerror.ErrorMessageHasIncorrectTime)
+		require.Error(t, err, errors.ErrorMessageHasIncorrectTime)
 	}
 }

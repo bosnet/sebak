@@ -45,7 +45,7 @@ func (o OperationBodyPayment) IsWellFormed([]byte) (err error) {
 func (o OperationBodyPayment) Validate(st *sebakstorage.LevelDBBackend) (err error) {
 	var exists bool
 	if exists, err = block.ExistBlockAccount(st, o.Target); err == nil && !exists {
-		err = sebakerror.ErrorBlockAccountDoesNotExists
+		err = errors.ErrorBlockAccountDoesNotExists
 		return
 	}
 
@@ -63,11 +63,11 @@ func (o OperationBodyPayment) GetAmount() sebakcommon.Amount {
 func FinishOperationPayment(st *sebakstorage.LevelDBBackend, tx Transaction, op Operation) (err error) {
 	var baSource, baTarget *block.BlockAccount
 	if baSource, err = block.GetBlockAccount(st, tx.B.Source); err != nil {
-		err = sebakerror.ErrorBlockAccountDoesNotExists
+		err = errors.ErrorBlockAccountDoesNotExists
 		return
 	}
 	if baTarget, err = block.GetBlockAccount(st, op.B.TargetAddress()); err != nil {
-		err = sebakerror.ErrorBlockAccountDoesNotExists
+		err = errors.ErrorBlockAccountDoesNotExists
 		return
 	}
 	current, err := sebakcommon.ParseCheckpoint(baTarget.Checkpoint)

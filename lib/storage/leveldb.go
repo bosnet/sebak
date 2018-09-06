@@ -102,7 +102,7 @@ func (st *LevelDBBackend) GetRaw(k string) (b []byte, err error) {
 	var exists bool
 	if exists, err = st.Has(k); !exists || err != nil {
 		if !exists || err == leveldb.ErrNotFound {
-			err = sebakerror.ErrorStorageRecordDoesNotExist
+			err = errors.ErrorStorageRecordDoesNotExist
 		}
 		return
 	}

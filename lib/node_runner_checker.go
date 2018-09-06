@@ -68,7 +68,7 @@ func CheckNodeRunnerHandleMessageHasTransactionAlready(c sebakcommon.Checker, ar
 
 	is := checker.NodeRunner.Consensus()
 	if is.TransactionPool.Has(checker.Transaction.GetHash()) {
-		err = sebakerror.ErrorNewButKnownMessage
+		err = errors.ErrorNewButKnownMessage
 		return
 	}
 
@@ -83,7 +83,7 @@ func CheckNodeRunnerHandleMessageHistory(c sebakcommon.Checker, args ...interfac
 	var found bool
 	if found, err = ExistsBlockTransactionHistory(checker.NodeRunner.Storage(), checker.Transaction.GetHash()); found && err == nil {
 		checker.NodeRunner.Log().Debug("found in history", "transction", checker.Transaction.GetHash())
-		err = sebakerror.ErrorNewButKnownMessage
+		err = errors.ErrorNewButKnownMessage
 		return
 	}
 
@@ -175,7 +175,7 @@ func BallotNotFromKnownValidators(c sebakcommon.Checker, args ...interface{}) (e
 		"from", checker.Ballot.Source(),
 	)
 
-	err = sebakerror.ErrorBallotFromUnknownValidator
+	err = errors.ErrorBallotFromUnknownValidator
 	return
 }
 
@@ -186,7 +186,7 @@ func BallotAlreadyFinished(c sebakcommon.Checker, args ...interface{}) (err erro
 
 	round := checker.Ballot.Round()
 	if !checker.NodeRunner.Consensus().IsAvailableRound(round) {
-		err = sebakerror.ErrorBallotAlreadyFinished
+		err = errors.ErrorBallotAlreadyFinished
 		checker.Log.Debug("ballot already finished", "round", round)
 		return
 	}
@@ -206,7 +206,7 @@ func BallotAlreadyVoted(c sebakcommon.Checker, args ...interface{}) (err error) 
 	}
 
 	if runningRound.IsVoted(checker.Ballot) {
-		err = sebakerror.ErrorBallotAlreadyVoted
+		err = errors.ErrorBallotAlreadyVoted
 		return
 	}
 
@@ -332,7 +332,7 @@ func INITBallotValidateTransactions(c sebakcommon.Checker, args ...interface{}) 
 	}
 
 	if checker.RoundVote.IsVotedByNode(checker.Ballot.State(), checker.LocalNode.Address()) {
-		err = sebakerror.ErrorBallotAlreadyVoted
+		err = errors.ErrorBallotAlreadyVoted
 		return
 	}
 
