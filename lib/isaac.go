@@ -119,7 +119,7 @@ type ISAAC struct {
 	sebakcommon.SafeLock
 
 	NetworkID             []byte
-	Node                  *sebaknode.LocalNode
+	Node                  *node.LocalNode
 	VotingThresholdPolicy sebakcommon.VotingThresholdPolicy
 	TransactionPool       *TransactionPool
 	RunningRounds         map[ /* Round.Hash() */ string]*RunningRound
@@ -127,7 +127,7 @@ type ISAAC struct {
 	LatestRound           round.Round
 }
 
-func NewISAAC(networkID []byte, node *sebaknode.LocalNode, votingThresholdPolicy sebakcommon.VotingThresholdPolicy) (is *ISAAC, err error) {
+func NewISAAC(networkID []byte, node *node.LocalNode, votingThresholdPolicy sebakcommon.VotingThresholdPolicy) (is *ISAAC, err error) {
 	is = &ISAAC{
 		NetworkID:             networkID,
 		Node:                  node,

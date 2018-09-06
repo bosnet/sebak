@@ -10,7 +10,7 @@ type BallotTransactionChecker struct {
 	sebakcommon.DefaultChecker
 
 	NodeRunner *NodeRunner
-	LocalNode  sebaknode.Node
+	LocalNode  node.Node
 	NetworkID  []byte
 
 	Transactions         []string

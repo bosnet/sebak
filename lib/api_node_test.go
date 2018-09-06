@@ -85,7 +85,7 @@ func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, mn *network.HTTP2Net
 	mn = network.NewHTTP2Network(config)
 
 	kp, _ = keypair.Random()
-	localNode, _ := sebaknode.NewLocalNode(kp, mn.Endpoint(), "")
+	localNode, _ := node.NewLocalNode(kp, mn.Endpoint(), "")
 
 	p, _ := NewDefaultVotingThresholdPolicy(30, 30)
 	is, _ := NewISAAC(networkID, localNode, p)
@@ -142,7 +142,7 @@ func TestHTTP2NetworkGetNodeInfo(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	v, err := sebaknode.NewValidatorFromString(b)
+	v, err := node.NewValidatorFromString(b)
 	if err != nil {
 		t.Error(err)
 		return

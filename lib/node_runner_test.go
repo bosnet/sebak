@@ -33,7 +33,7 @@ func init() {
 
 func createTestNodeRunner(n int) []*NodeRunner {
 	var ns []*network.MemoryNetwork
-	var nodes []*sebaknode.LocalNode
+	var nodes []*node.LocalNode
 	for i := 0; i < n; i++ {
 		s, v := createNetMemoryNetwork()
 		ns = append(ns, s)
@@ -112,7 +112,7 @@ func createTestNodeRunnerWithReady(n int) []*NodeRunner {
 }
 
 func createTestNodeRunnersHTTP2Network(n int) (nodeRunners []*NodeRunner, rootKP *keypair.Full) {
-	var nodes []*sebaknode.LocalNode
+	var nodes []*node.LocalNode
 	var ports []int
 	for i := 0; i < n; i++ {
 		kp, _ := keypair.Random()
@@ -130,7 +130,7 @@ func createTestNodeRunnersHTTP2Network(n int) (nodeRunners []*NodeRunner, rootKP
 				"/dev/null",
 			),
 		)
-		node, _ := sebaknode.NewLocalNode(kp, endpoint, "")
+		node, _ := node.NewLocalNode(kp, endpoint, "")
 		nodes = append(nodes, node)
 	}
 

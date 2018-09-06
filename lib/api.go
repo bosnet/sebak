@@ -14,12 +14,12 @@ import (
 const maxNumberOfExistingData = 10
 
 type NetworkHandlerNode struct {
-	localNode *sebaknode.LocalNode
+	localNode *node.LocalNode
 	network   network.Network
 }
 
 type NetworkHandlerAPI struct {
-	localNode *sebaknode.LocalNode
+	localNode *node.LocalNode
 	network   network.Network
 	storage   *sebakstorage.LevelDBBackend
 }

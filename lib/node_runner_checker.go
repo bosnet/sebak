@@ -34,7 +34,7 @@ type NodeRunnerHandleMessageChecker struct {
 	sebakcommon.DefaultChecker
 
 	NodeRunner *NodeRunner
-	LocalNode  *sebaknode.LocalNode
+	LocalNode  *node.LocalNode
 	NetworkID  []byte
 	Message    network.Message
 
@@ -128,7 +128,7 @@ type BallotChecker struct {
 	sebakcommon.DefaultChecker
 
 	NodeRunner         *NodeRunner
-	LocalNode          *sebaknode.LocalNode
+	LocalNode          *node.LocalNode
 	NetworkID          []byte
 	Message            network.Message
 	IsNew              bool

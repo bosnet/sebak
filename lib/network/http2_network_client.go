@@ -79,13 +79,13 @@ func (c *HTTP2NetworkClient) GetNodeInfo() (body []byte, err error) {
 	return
 }
 
-func (c *HTTP2NetworkClient) Connect(node sebaknode.Node) (body []byte, err error) {
+func (c *HTTP2NetworkClient) Connect(n node.Node) (body []byte, err error) {
 	headers := c.DefaultHeaders()
 	headers.Set("Content-Type", "application/json")
 
-	n, _ := node.Serialize()
+	serialized, _ := n.Serialize()
 	var response *http.Response
-	response, err = c.client.Post(c.resolvePath(UrlPathPrefixNode+"/connect").String(), n, headers)
+	response, err = c.client.Post(c.resolvePath(UrlPathPrefixNode+"/connect").String(), serialized, headers)
 	if err != nil {
 		return
 	}

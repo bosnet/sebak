@@ -21,7 +21,7 @@ type Ballot struct {
 	B BallotBody
 }
 
-func NewBallot(localNode *sebaknode.LocalNode, round round.Round, transactions []string) (b *Ballot) {
+func NewBallot(localNode *node.LocalNode, round round.Round, transactions []string) (b *Ballot) {
 	body := BallotBody{
 		Source: localNode.Address(),
 		Proposed: BallotBodyProposed{

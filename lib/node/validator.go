@@ -4,7 +4,7 @@
 // A `Validator` is a remote node as seen by the other type of node (`LocalNode`).
 // It provides any information which is node-specific and relevant to us / consensus.
 //
-package sebaknode
+package node
 
 import (
 	"encoding/json"

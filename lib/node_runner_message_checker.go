@@ -23,7 +23,7 @@ type MessageChecker struct {
 	sebakcommon.DefaultChecker
 
 	NodeRunner *NodeRunner
-	LocalNode  *sebaknode.LocalNode
+	LocalNode  *node.LocalNode
 	NetworkID  []byte
 	Message    network.Message
 

@@ -1,4 +1,4 @@
-package sebaknode
+package node
 
 import (
 	"boscoin.io/sebak/lib/common"
