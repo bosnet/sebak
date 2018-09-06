@@ -456,19 +456,16 @@ func (nr *NodeRunner) CalculateProposer(blockHeight uint64, roundNumber uint64) 
 
 func (nr *NodeRunner) StartNewRound(roundNumber uint64) {
 	if nr.timerExpireRound != nil {
-		nr.timerExpireRound.Stop()
-		nr.timerExpireRound = nil
+		if !nr.timerExpireRound.Stop() {
+			<-nr.timerExpireRound.C
+		}
 	}
 
 	// wait for new ballot from new proposer
-	nr.timerExpireRound = time.NewTimer(TimeoutExpireRound)
-	go func() {
-		select {
-		case <-nr.timerExpireRound.C:
-			go nr.StartNewRound(roundNumber + 1)
-			return
-		}
-	}()
+	nr.timerExpireRound = time.AfterFunc(TimeoutExpireRound,
+		func() {
+			nr.StartNewRound(roundNumber + 1)
+		})
 
 	proposer := nr.CalculateProposer(
 		nr.consensus.LatestConfirmedBlock.Height,
