@@ -107,16 +107,16 @@ func NewOperation(t OperationType, body OperationBody) (op Operation, err error)
 	switch t {
 	case OperationCreateAccount:
 		if _, ok := body.(OperationBodyCreateAccount); !ok {
-			err = sebakerror.ErrorTypeOperationBodyNotMatched
+			err = errors.ErrorTypeOperationBodyNotMatched
 			return
 		}
 	case OperationPayment:
 		if _, ok := body.(OperationBodyPayment); !ok {
-			err = sebakerror.ErrorTypeOperationBodyNotMatched
+			err = errors.ErrorTypeOperationBodyNotMatched
 			return
 		}
 	default:
-		err = sebakerror.ErrorUnknownOperationType
+		err = errors.ErrorUnknownOperationType
 		return
 	}
 
@@ -146,7 +146,7 @@ func FinishOperation(st *sebakstorage.LevelDBBackend, tx Transaction, op Operati
 	case OperationPayment:
 		return FinishOperationPayment(st, tx, op)
 	default:
-		err = sebakerror.ErrorUnknownOperationType
+		err = errors.ErrorUnknownOperationType
 		return
 	}
 }

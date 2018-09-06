@@ -136,8 +136,8 @@ func TestLevelDBBackendGetRaw(t *testing.T) {
 	st.New(key, input)
 
 	// when record does not exist, it should return ErrorStorageRecordDoesNotExist
-	if _, err := st.GetRaw("vacuum"); err != sebakerror.ErrorStorageRecordDoesNotExist {
-		t.Errorf("failed to GetRaw: want=%v have=%v", sebakerror.ErrorStorageRecordDoesNotExist, err)
+	if _, err := st.GetRaw("vacuum"); err != errors.ErrorStorageRecordDoesNotExist {
+		t.Errorf("failed to GetRaw: want=%v have=%v", errors.ErrorStorageRecordDoesNotExist, err)
 	}
 }
 

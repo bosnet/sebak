@@ -114,7 +114,7 @@ func (b Block) Save(st *sebakstorage.LevelDBBackend) (err error) {
 	if err != nil {
 		return
 	} else if exists {
-		return sebakerror.ErrorBlockAlreadyExists
+		return errors.ErrorBlockAlreadyExists
 	}
 
 	if err = st.New(key, b); err != nil {
@@ -178,7 +178,7 @@ func GetLatestBlock(st *sebakstorage.LevelDBBackend) (b Block, err error) {
 	closeFunc()
 
 	if b.Hash == "" {
-		err = sebakerror.ErrorBlockNotFound
+		err = errors.ErrorBlockNotFound
 		return
 	}
 

@@ -2,7 +2,6 @@ package sebakstorage
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	"github.com/syndtr/goleveldb/leveldb"
@@ -102,7 +101,7 @@ func (st *LevelDBBackend) GetRaw(k string) (b []byte, err error) {
 	var exists bool
 	if exists, err = st.Has(k); !exists || err != nil {
 		if !exists || err == leveldb.ErrNotFound {
-			err = sebakerror.ErrorStorageRecordDoesNotExist
+			err = errors.ErrorStorageRecordDoesNotExist
 		}
 		return
 	}

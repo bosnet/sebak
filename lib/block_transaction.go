@@ -114,7 +114,7 @@ func (bt BlockTransaction) NewBlockTransactionKeyByBlock(hash string) string {
 
 func (bt *BlockTransaction) Save(st *sebakstorage.LevelDBBackend) (err error) {
 	if bt.isSaved {
-		return sebakerror.ErrorAlreadySaved
+		return errors.ErrorAlreadySaved
 	}
 
 	key := GetBlockTransactionKey(bt.Hash)
@@ -124,7 +124,7 @@ func (bt *BlockTransaction) Save(st *sebakstorage.LevelDBBackend) (err error) {
 	if err != nil {
 		return
 	} else if exists {
-		return sebakerror.ErrorBlockAlreadyExists
+		return errors.ErrorBlockAlreadyExists
 	}
 
 	bt.Confirmed = sebakcommon.NowISO8601()

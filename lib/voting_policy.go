@@ -31,7 +31,7 @@ func (vt *ISAACVotingThresholdPolicy) Validators() int {
 
 func (vt *ISAACVotingThresholdPolicy) SetValidators(n int) error {
 	if n < 1 {
-		return sebakerror.ErrorVotingThresholdInvalidValidators
+		return errors.ErrorVotingThresholdInvalidValidators
 	}
 
 	vt.validators = n
@@ -45,7 +45,7 @@ func (vt *ISAACVotingThresholdPolicy) Connected() int {
 
 func (vt *ISAACVotingThresholdPolicy) SetConnected(n int) error {
 	if n < 1 {
-		return sebakerror.ErrorVotingThresholdInvalidValidators
+		return errors.ErrorVotingThresholdInvalidValidators
 	}
 
 	vt.connected = n
@@ -79,11 +79,11 @@ func (vt *ISAACVotingThresholdPolicy) Threshold(state sebakcommon.BallotState) i
 
 func NewDefaultVotingThresholdPolicy(sign, accept int) (vt *ISAACVotingThresholdPolicy, err error) {
 	if sign <= 0 || accept <= 0 {
-		err = sebakerror.ErrorInvalidVotingThresholdPolicy
+		err = errors.ErrorInvalidVotingThresholdPolicy
 		return
 	}
 	if sign > 100 || accept > 100 {
-		err = sebakerror.ErrorInvalidVotingThresholdPolicy
+		err = errors.ErrorInvalidVotingThresholdPolicy
 		return
 	}
 

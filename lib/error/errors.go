@@ -1,4 +1,8 @@
-package sebakerror
+package errors
+
+import "errors"
+
+var New = errors.New
 
 var (
 	ErrorBlockAlreadyExists                   = NewError(100, "already exists in block")

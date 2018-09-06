@@ -55,7 +55,7 @@ func (a Amount) Add(added Amount) (n Amount, err error) {
 	a.Invariant()
 	added.Invariant()
 	if n = a + added; n > MaximumBalance {
-		err = sebakerror.ErrorMaximumBalanceReached
+		err = errors.ErrorMaximumBalanceReached
 	}
 	return
 }
@@ -80,7 +80,7 @@ func (a Amount) Sub(sub Amount) (Amount, error) {
 	a.Invariant()
 	sub.Invariant()
 	if a < sub {
-		return invalidValue, sebakerror.ErrorAccountBalanceUnderZero
+		return invalidValue, errors.ErrorAccountBalanceUnderZero
 	}
 	return a - sub, nil
 }
@@ -103,7 +103,7 @@ func (a Amount) MultUint(n uint) (Amount, error) {
 /// Ditto
 func (a Amount) MultInt64(n int64) (Amount, error) {
 	if n < 0 {
-		return invalidValue, sebakerror.ErrorAccountBalanceUnderZero
+		return invalidValue, errors.ErrorAccountBalanceUnderZero
 	}
 	return a.MultUint64(uint64(n))
 }
@@ -112,7 +112,7 @@ func (a Amount) MultInt64(n int64) (Amount, error) {
 func (a Amount) MultUint64(n uint64) (Amount, error) {
 	a.Invariant()
 	if uint64(MaximumBalance)/n < uint64(a) {
-		return invalidValue, sebakerror.ErrorMaximumBalanceReached
+		return invalidValue, errors.ErrorMaximumBalanceReached
 	}
 
 	return Amount(uint64(a) * n), nil

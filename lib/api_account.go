@@ -20,7 +20,7 @@ func (api NetworkHandlerAPI) GetAccountHandler(w http.ResponseWriter, r *http.Re
 	var blk *block.BlockAccount
 	var err error
 	if blk, err = block.GetBlockAccount(api.storage, address); err != nil {
-		if err == sebakerror.ErrorStorageRecordDoesNotExist {
+		if err == errors.ErrorStorageRecordDoesNotExist {
 			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		} else {
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -42,7 +42,7 @@ func (api NetworkHandlerAPI) GetAccountHandler(w http.ResponseWriter, r *http.Re
 		callBackFunc := func(args ...interface{}) (account []byte, err error) {
 			blk := args[1].(*block.BlockAccount)
 			if account, err = blk.Serialize(); err != nil {
-				return []byte{}, sebakerror.ErrorBlockAccountDoesNotExists
+				return []byte{}, errors.ErrorBlockAccountDoesNotExists
 			}
 			return account, nil
 		}
@@ -94,7 +94,7 @@ func (api NetworkHandlerAPI) GetAccountTransactionsHandler(w http.ResponseWriter
 		callBackFunc := func(args ...interface{}) (btSerialized []byte, err error) {
 			bt := args[1].(*BlockTransaction)
 			if btSerialized, err = bt.Serialize(); err != nil {
-				return []byte{}, sebakerror.ErrorBlockTransactionDoesNotExists
+				return []byte{}, errors.ErrorBlockTransactionDoesNotExists
 			}
 			return btSerialized, nil
 		}
@@ -154,7 +154,7 @@ func (api NetworkHandlerAPI) GetAccountOperationsHandler(w http.ResponseWriter, 
 		callBackFunc := func(args ...interface{}) (boSerialized []byte, err error) {
 			bo := args[1].(*BlockOperation)
 			if boSerialized, err = bo.Serialize(); err != nil {
-				return []byte{}, sebakerror.ErrorBlockTransactionDoesNotExists
+				return []byte{}, errors.ErrorBlockTransactionDoesNotExists
 			}
 			return boSerialized, nil
 		}

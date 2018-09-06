@@ -61,7 +61,7 @@ func NewBlockOperationFromOperation(op Operation, tx Transaction) BlockOperation
 
 func (bo *BlockOperation) Save(st *sebakstorage.LevelDBBackend) (err error) {
 	if bo.isSaved {
-		return sebakerror.ErrorAlreadySaved
+		return errors.ErrorAlreadySaved
 	}
 
 	key := GetBlockOperationKey(bo.Hash)
@@ -70,7 +70,7 @@ func (bo *BlockOperation) Save(st *sebakstorage.LevelDBBackend) (err error) {
 	if exists, err = st.Has(key); err != nil {
 		return
 	} else if exists {
-		return sebakerror.ErrorBlockAlreadyExists
+		return errors.ErrorBlockAlreadyExists
 	}
 
 	if err = st.New(GetBlockOperationKey(bo.Hash), bo); err != nil {

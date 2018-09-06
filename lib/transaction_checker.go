@@ -20,7 +20,7 @@ type TransactionChecker struct {
 func CheckTransactionSource(c sebakcommon.Checker, args ...interface{}) (err error) {
 	checker := c.(*TransactionChecker)
 	if _, err = keypair.Parse(checker.Transaction.B.Source); err != nil {
-		err = sebakerror.ErrorBadPublicAddress
+		err = errors.ErrorBadPublicAddress
 		return
 	}
 
@@ -30,7 +30,7 @@ func CheckTransactionSource(c sebakcommon.Checker, args ...interface{}) (err err
 func CheckTransactionCheckpoint(c sebakcommon.Checker, args ...interface{}) (err error) {
 	checker := c.(*TransactionChecker)
 	if _, err = sebakcommon.ParseCheckpoint(checker.Transaction.B.Checkpoint); err != nil {
-		err = sebakerror.ErrorTransactionInvalidCheckpoint
+		err = errors.ErrorTransactionInvalidCheckpoint
 		return
 	}
 
@@ -40,7 +40,7 @@ func CheckTransactionCheckpoint(c sebakcommon.Checker, args ...interface{}) (err
 func CheckTransactionBaseFee(c sebakcommon.Checker, args ...interface{}) (err error) {
 	checker := c.(*TransactionChecker)
 	if checker.Transaction.B.Fee < BaseFee {
-		err = sebakerror.ErrorInvalidFee
+		err = errors.ErrorInvalidFee
 		return
 	}
 
@@ -51,14 +51,14 @@ func CheckTransactionOperation(c sebakcommon.Checker, args ...interface{}) (err 
 	checker := c.(*TransactionChecker)
 
 	if len(checker.Transaction.B.Operations) < 1 {
-		err = sebakerror.ErrorTransactionEmptyOperations
+		err = errors.ErrorTransactionEmptyOperations
 		return
 	}
 
 	var hashes []string
 	for _, op := range checker.Transaction.B.Operations {
 		if checker.Transaction.B.Source == op.B.TargetAddress() {
-			err = sebakerror.ErrorInvalidOperation
+			err = errors.ErrorInvalidOperation
 			return
 		}
 		if err = op.IsWellFormed(checker.NetworkID); err != nil {
@@ -68,7 +68,7 @@ func CheckTransactionOperation(c sebakcommon.Checker, args ...interface{}) (err 
 		// 'TargetAddress()', this transaction will be invalid.
 		u := fmt.Sprintf("%s-%s", op.H.Type, op.B.TargetAddress())
 		if _, found := sebakcommon.InStringArray(hashes, u); found {
-			err = sebakerror.ErrorDuplicatedOperation
+			err = errors.ErrorDuplicatedOperation
 			return
 		}
 
@@ -98,7 +98,7 @@ func CheckTransactionVerifySignature(c sebakcommon.Checker, args ...interface{})
 func CheckTransactionHashMatch(c sebakcommon.Checker, args ...interface{}) (err error) {
 	checker := c.(*TransactionChecker)
 	if checker.Transaction.H.Hash != checker.Transaction.B.MakeHashString() {
-		err = sebakerror.ErrorHashDoesNotMatch
+		err = errors.ErrorHashDoesNotMatch
 		return
 	}
 

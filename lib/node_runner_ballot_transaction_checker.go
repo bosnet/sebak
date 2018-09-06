@@ -54,7 +54,7 @@ func IsNew(c sebakcommon.Checker, args ...interface{}) (err error) {
 		var found bool
 		if found, err = ExistBlockTransaction(checker.NodeRunner.Storage(), hash); err != nil || found {
 			if !checker.CheckAll {
-				err = sebakerror.ErrorNewButKnownMessage
+				err = errors.ErrorNewButKnownMessage
 				return
 			}
 			continue
@@ -99,7 +99,7 @@ func BallotTransactionsSameSource(c sebakcommon.Checker, args ...interface{}) (e
 		tx, _ := checker.NodeRunner.Consensus().TransactionPool.Get(hash)
 		if found := sebakcommon.InStringMap(sources, tx.B.Source); found {
 			if !checker.CheckAll {
-				err = sebakerror.ErrorTransactionSameSource
+				err = errors.ErrorTransactionSameSource
 				return
 			}
 			continue

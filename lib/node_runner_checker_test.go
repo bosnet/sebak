@@ -64,7 +64,7 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 		tx.B.Checkpoint = rootAccount.Checkpoint
 		tx.Sign(rootKP, networkID)
 
-		runChecker(tx, sebakerror.ErrorTransactionSameSource)
+		runChecker(tx, errors.ErrorTransactionSameSource)
 
 		require.False(
 			t,
@@ -80,7 +80,7 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 
 		tx := TestMakeTransactionWithKeypair(networkID, 1, sourceKP, targetKP)
 
-		runChecker(tx, sebakerror.ErrorBlockAccountDoesNotExists)
+		runChecker(tx, errors.ErrorBlockAccountDoesNotExists)
 
 		require.False(
 			t,
@@ -98,7 +98,7 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 		tx.B.Checkpoint = sourceAccount.Checkpoint
 		tx.Sign(sourceKP, networkID)
 
-		runChecker(tx, sebakerror.ErrorBlockAccountDoesNotExists)
+		runChecker(tx, errors.ErrorBlockAccountDoesNotExists)
 
 		require.False(
 			t,
