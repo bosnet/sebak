@@ -29,22 +29,22 @@ func init() {
 	kp, _ = keypair.Random()
 }
 
-func createNetMemoryNetwork() (*network.MemoryNetwork, *sebaknode.LocalNode) {
+func createNetMemoryNetwork() (*network.MemoryNetwork, *node.LocalNode) {
 	mn := network.NewMemoryNetwork()
 
 	kp, _ := keypair.Random()
-	localNode, _ := sebaknode.NewLocalNode(kp, mn.Endpoint(), "")
+	localNode, _ := node.NewLocalNode(kp, mn.Endpoint(), "")
 
 	mn.SetLocalNode(localNode)
 
 	return mn, localNode
 }
 
-func MakeNodeRunner() (*NodeRunner, *sebaknode.LocalNode) {
+func MakeNodeRunner() (*NodeRunner, *node.LocalNode) {
 	kp, _ := keypair.Random()
 
 	nodeEndpoint := &sebakcommon.Endpoint{Scheme: "https", Host: "https://locahost:5000"}
-	localNode, _ := sebaknode.NewLocalNode(kp, nodeEndpoint, "")
+	localNode, _ := node.NewLocalNode(kp, nodeEndpoint, "")
 
 	vth, _ := NewDefaultVotingThresholdPolicy(66, 66)
 	is, _ := NewISAAC(networkID, localNode, vth)
@@ -253,7 +253,7 @@ func makeTransactionCreateAccount(kpSource *keypair.Full, target string, amount 
 	return
 }
 
-func GenerateBallot(t *testing.T, proposer *sebaknode.LocalNode, round round.Round, tx Transaction, ballotState sebakcommon.BallotState, sender *sebaknode.LocalNode) *Ballot {
+func GenerateBallot(t *testing.T, proposer *node.LocalNode, round round.Round, tx Transaction, ballotState sebakcommon.BallotState, sender *node.LocalNode) *Ballot {
 	ballot := NewBallot(proposer, round, []string{tx.GetHash()})
 	ballot.SetVote(sebakcommon.BallotStateINIT, sebakcommon.VotingYES)
 	ballot.Sign(proposer.Keypair(), networkID)
@@ -268,7 +268,7 @@ func GenerateBallot(t *testing.T, proposer *sebaknode.LocalNode, round round.Rou
 	return ballot
 }
 
-func GenerateEmptyTxBallot(t *testing.T, proposer *sebaknode.LocalNode, round round.Round, ballotState sebakcommon.BallotState, sender *sebaknode.LocalNode) *Ballot {
+func GenerateEmptyTxBallot(t *testing.T, proposer *node.LocalNode, round round.Round, ballotState sebakcommon.BallotState, sender *node.LocalNode) *Ballot {
 	ballot := NewBallot(proposer, round, []string{})
 	ballot.SetVote(sebakcommon.BallotStateINIT, sebakcommon.VotingYES)
 	ballot.Sign(proposer.Keypair(), networkID)

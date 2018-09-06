@@ -6,7 +6,7 @@
 //
 // There should only be one `LocalNode` per program.
 //
-package sebaknode
+package node
 
 import (
 	"encoding/json"

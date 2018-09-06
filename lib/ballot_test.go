@@ -65,7 +65,7 @@ func TestBallotHash(t *testing.T) {
 func TestBallotBadConfirmedTime(t *testing.T) {
 	kp, _ := keypair.Random()
 	endpoint, _ := sebakcommon.NewEndpointFromString("https://localhost:1000")
-	node, _ := sebaknode.NewLocalNode(kp, endpoint, "")
+	node, _ := node.NewLocalNode(kp, endpoint, "")
 
 	round := round.Round{Number: 0, BlockHeight: 0, BlockHash: "", TotalTxs: 0}
 

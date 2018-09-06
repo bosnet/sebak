@@ -59,7 +59,7 @@ var (
 	kp                *keypair.Full
 	nodeEndpoint      *sebakcommon.Endpoint
 	storageConfig     *sebakstorage.Config
-	validators        []*sebaknode.Validator
+	validators        []*node.Validator
 	threshold         int
 	timeoutINIT       time.Duration
 	timeoutSIGN       time.Duration
@@ -140,15 +140,15 @@ func init() {
 	rootCmd.AddCommand(nodeCmd)
 }
 
-func parseFlagValidators(v string) (vs []*sebaknode.Validator, err error) {
+func parseFlagValidators(v string) (vs []*node.Validator, err error) {
 	splitted := strings.Fields(v)
 	if len(splitted) < 1 {
 		return
 	}
 
 	for _, v := range splitted {
-		var validator *sebaknode.Validator
-		if validator, err = sebaknode.NewValidatorFromURI(v); err != nil {
+		var validator *node.Validator
+		if validator, err = node.NewValidatorFromURI(v); err != nil {
 			return
 		}
 		vs = append(vs, validator)
@@ -198,7 +198,7 @@ func parseFlagsNode() {
 	queries.Add("TLSCertFile", flagTLSCertFile)
 	queries.Add("TLSKeyFile", flagTLSKeyFile)
 	queries.Add("IdleTimeout", "3s")
-	queries.Add("NodeName", sebaknode.MakeAlias(kp.Address()))
+	queries.Add("NodeName", node.MakeAlias(kp.Address()))
 	nodeEndpoint.RawQuery = queries.Encode()
 
 	if validators, err = parseFlagValidators(flagValidators); err != nil {
@@ -305,7 +305,7 @@ func getTimeout(timeoutStr string, errMessage string) time.Duration {
 
 func runNode() error {
 	// create current Node
-	localNode, err := sebaknode.NewLocalNode(kp, nodeEndpoint, "")
+	localNode, err := node.NewLocalNode(kp, nodeEndpoint, "")
 	if err != nil {
 		log.Error("failed to launch main node", "error", err)
 		return err

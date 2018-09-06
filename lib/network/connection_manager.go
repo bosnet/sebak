@@ -15,11 +15,11 @@ import (
 type ConnectionManager struct {
 	sync.Mutex
 
-	localNode *sebaknode.LocalNode
+	localNode *node.LocalNode
 	network   Network
 	policy    sebakcommon.VotingThresholdPolicy
 
-	validators map[ /* nodd.Address() */ string]*sebaknode.Validator
+	validators map[ /* nodd.Address() */ string]*node.Validator
 	clients    map[ /* nodd.Address() */ string]NetworkClient
 	connected  map[ /* nodd.Address() */ string]bool
 
@@ -27,10 +27,10 @@ type ConnectionManager struct {
 }
 
 func NewConnectionManager(
-	localNode *sebaknode.LocalNode,
+	localNode *node.LocalNode,
 	network Network,
 	policy sebakcommon.VotingThresholdPolicy,
-	validators map[string]*sebaknode.Validator,
+	validators map[string]*node.Validator,
 ) *ConnectionManager {
 	return &ConnectionManager{
 		localNode: localNode,
@@ -55,7 +55,7 @@ func (c *ConnectionManager) GetConnection(address string) (client NetworkClient)
 		return
 	}
 
-	var validator *sebaknode.Validator
+	var validator *node.Validator
 	if validator, ok = c.validators[address]; !ok {
 		return
 	}
@@ -74,7 +74,7 @@ func (c *ConnectionManager) Start() {
 
 // setConnected returns `true` when the validator is newly connected or
 // disconnected at first
-func (c *ConnectionManager) setConnected(v *sebaknode.Validator, connected bool) bool {
+func (c *ConnectionManager) setConnected(v *node.Validator, connected bool) bool {
 	c.Lock()
 	defer c.Unlock()
 	defer func() {
@@ -120,7 +120,7 @@ func (c *ConnectionManager) connectValidators() {
 	}
 }
 
-func (c *ConnectionManager) connectingValidator(v *sebaknode.Validator) {
+func (c *ConnectionManager) connectingValidator(v *node.Validator) {
 	ticker := time.NewTicker(time.Second * 1)
 	for _ = range ticker.C {
 		err := c.connectValidator(v)
@@ -137,7 +137,7 @@ func (c *ConnectionManager) connectingValidator(v *sebaknode.Validator) {
 	return
 }
 
-func (c *ConnectionManager) connectValidator(v *sebaknode.Validator) (err error) {
+func (c *ConnectionManager) connectValidator(v *node.Validator) (err error) {
 	client := c.GetConnection(v.Address())
 
 	var b []byte
@@ -147,8 +147,8 @@ func (c *ConnectionManager) connectValidator(v *sebaknode.Validator) (err error)
 	}
 
 	// load and check validator info; addresses are same?
-	var validator *sebaknode.Validator
-	validator, err = sebaknode.NewValidatorFromString(b)
+	var validator *node.Validator
+	validator, err = node.NewValidatorFromString(b)
 	if err != nil {
 		return
 	}

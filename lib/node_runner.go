@@ -67,7 +67,7 @@ type ProposerCalculator interface {
 
 type NodeRunner struct {
 	networkID          []byte
-	localNode          *sebaknode.LocalNode
+	localNode          *node.LocalNode
 	policy             sebakcommon.VotingThresholdPolicy
 	network            network.Network
 	consensus          *ISAAC
@@ -91,7 +91,7 @@ type NodeRunner struct {
 
 func NewNodeRunner(
 	networkID string,
-	localNode *sebaknode.LocalNode,
+	localNode *node.LocalNode,
 	policy sebakcommon.VotingThresholdPolicy,
 	n network.Network,
 	consensus *ISAAC,
@@ -204,7 +204,7 @@ func (nr *NodeRunner) Stop() {
 	nr.network.Stop()
 }
 
-func (nr *NodeRunner) Node() *sebaknode.LocalNode {
+func (nr *NodeRunner) Node() *node.LocalNode {
 	return nr.localNode
 }
 
@@ -298,7 +298,7 @@ func (nr *NodeRunner) handleMessage() {
 		}
 		switch message.Type {
 		case network.ConnectMessage:
-			if _, err := sebaknode.NewValidatorFromString(message.Data); err != nil {
+			if _, err := node.NewValidatorFromString(message.Data); err != nil {
 				nr.log.Error("invalid validator data was received", "data", message.Data)
 				continue
 			}

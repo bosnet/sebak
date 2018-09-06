@@ -78,11 +78,11 @@ func TestMemoryNetworkCreate(t *testing.T) {
 	}
 }
 
-func createNewMemoryNetwork() (*keypair.Full, *MemoryNetwork, *sebaknode.LocalNode) {
+func createNewMemoryNetwork() (*keypair.Full, *MemoryNetwork, *node.LocalNode) {
 	mn := NewMemoryNetwork()
 
 	kp, _ := keypair.Random()
-	localNode, _ := sebaknode.NewLocalNode(kp, mn.Endpoint(), "")
+	localNode, _ := node.NewLocalNode(kp, mn.Endpoint(), "")
 
 	mn.SetLocalNode(localNode)
 
@@ -133,7 +133,7 @@ func TestMemoryNetworkGetNodeInfo(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	v, err := sebaknode.NewValidatorFromString(b)
+	v, err := node.NewValidatorFromString(b)
 	if err != nil {
 		t.Error(err)
 		return
@@ -158,7 +158,7 @@ func TestMemoryNetworkConnect(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	v, err := sebaknode.NewValidatorFromString(b)
+	v, err := node.NewValidatorFromString(b)
 	if err != nil {
 		t.Error(err)
 		return
