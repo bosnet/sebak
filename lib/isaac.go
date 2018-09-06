@@ -201,7 +201,7 @@ func (is *ISAAC) IsAvailableRound(round round.Round) bool {
 	} else {
 		// TODO if incoming round.BlockHeight is bigger than
 		// LatestConfirmedBlock.Height and this round confirmed successfully,
-		// this node will get into catchup status
+		// this node will get into sync state
 	}
 
 	if round.BlockHeight == is.LatestRound.BlockHeight {
