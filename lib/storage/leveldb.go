@@ -2,7 +2,7 @@ package sebakstorage
 
 import (
 	"encoding/json"
-	stderrors "errors"
+	"errors"
 	"fmt"
 
 	"github.com/syndtr/goleveldb/leveldb"
@@ -12,7 +12,7 @@ import (
 	leveldbUtil "github.com/syndtr/goleveldb/leveldb/util"
 
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/error"
+	sebakerrors "boscoin.io/sebak/lib/error"
 )
 
 type LevelDBCore interface {
@@ -57,7 +57,7 @@ func (st *LevelDBBackend) Close() error {
 func (st *LevelDBBackend) OpenTransaction() (*LevelDBBackend, error) {
 	_, ok := st.Core.(*leveldb.Transaction)
 	if ok {
-		return nil, stderrors.New("this is already *leveldb.Transaction")
+		return nil, errors.New("this is already *leveldb.Transaction")
 	}
 
 	transaction, err := st.Core.(*leveldb.DB).OpenTransaction()
@@ -74,7 +74,7 @@ func (st *LevelDBBackend) OpenTransaction() (*LevelDBBackend, error) {
 func (st *LevelDBBackend) Discard() error {
 	ts, ok := st.Core.(*leveldb.Transaction)
 	if !ok {
-		return stderrors.New("this is not *leveldb.Transaction")
+		return errors.New("this is not *leveldb.Transaction")
 	}
 
 	ts.Discard()
@@ -84,7 +84,7 @@ func (st *LevelDBBackend) Discard() error {
 func (st *LevelDBBackend) Commit() error {
 	ts, ok := st.Core.(*leveldb.Transaction)
 	if !ok {
-		return stderrors.New("this is not *leveldb.Transaction")
+		return errors.New("this is not *leveldb.Transaction")
 	}
 
 	return ts.Commit()
@@ -102,7 +102,7 @@ func (st *LevelDBBackend) GetRaw(k string) (b []byte, err error) {
 	var exists bool
 	if exists, err = st.Has(k); !exists || err != nil {
 		if !exists || err == leveldb.ErrNotFound {
-			err = errors.ErrorStorageRecordDoesNotExist
+			err = sebakerrors.ErrorStorageRecordDoesNotExist
 		}
 		return
 	}
@@ -152,7 +152,7 @@ func (st *LevelDBBackend) New(k string, v interface{}) (err error) {
 
 func (st *LevelDBBackend) News(vs ...Item) (err error) {
 	if len(vs) < 1 {
-		err = stderrors.New("empty values")
+		err = errors.New("empty values")
 		return
 	}
 
@@ -217,7 +217,7 @@ func (st *LevelDBBackend) put(k string, v interface{}) (err error) {
 
 func (st *LevelDBBackend) Sets(vs ...Item) (err error) {
 	if len(vs) < 1 {
-		err = stderrors.New("empty values")
+		err = errors.New("empty values")
 		return
 	}
 

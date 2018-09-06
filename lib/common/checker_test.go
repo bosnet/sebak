@@ -1,7 +1,7 @@
 package sebakcommon
 
 import (
-	stderrors "errors"
+	"errors"
 	"testing"
 )
 
@@ -48,7 +48,7 @@ func TestCheckerWithProperties(t *testing.T) {
 	f1 := func(c Checker, args ...interface{}) error {
 		checker := c.(*CheckerWithProperties)
 		if checker.P0 != 99 {
-			err := stderrors.New("failed to set property in Checker")
+			err := errors.New("failed to set property in Checker")
 			t.Error(err)
 			return err
 		}

@@ -2,7 +2,7 @@ package network
 
 import (
 	"crypto/tls"
-	stderrors "errors"
+	"errors"
 	"fmt"
 	"math/rand"
 	"net"
@@ -59,7 +59,7 @@ func makeTestHTTP2NetworkForTLS(endpoint *sebakcommon.Endpoint) (network *HTTP2N
 
 		select {
 		case <-timer.C:
-			err = stderrors.New("failed to create HTTP2Network")
+			err = errors.New("failed to create HTTP2Network")
 			return
 		default:
 			conn, _ := net.DialTimeout("tcp", net.JoinHostPort("", endpoint.Port()), 500*time.Millisecond)

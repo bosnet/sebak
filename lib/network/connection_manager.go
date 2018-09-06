@@ -1,7 +1,7 @@
 package network
 
 import (
-	stderrors "errors"
+	"errors"
 	"net"
 	"net/http"
 	"sync"
@@ -153,7 +153,7 @@ func (c *ConnectionManager) connectValidator(v *sebaknode.Validator) (err error)
 		return
 	}
 	if v.Address() != validator.Address() {
-		err = stderrors.New("address is mismatch")
+		err = errors.New("address is mismatch")
 		return
 	}
 

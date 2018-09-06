@@ -8,7 +8,7 @@ package sebaknode
 
 import (
 	"encoding/json"
-	stderrors "errors"
+	"errors"
 	"fmt"
 	"net/url"
 	"sync"
@@ -166,7 +166,7 @@ func NewValidatorFromURI(v string) (validator *Validator, err error) {
 
 	var address, alias string
 	if addressStrings, ok := queries["address"]; !ok || len(addressStrings) < 1 {
-		err = stderrors.New("`address` is missing")
+		err = errors.New("`address` is missing")
 		return
 	} else {
 		var parsedKP keypair.KP

@@ -1,7 +1,7 @@
 package network
 
 import (
-	stderrors "errors"
+	"errors"
 	"io"
 	"os"
 	"strings"
@@ -41,7 +41,7 @@ func NewHTTP2NetworkConfigFromEndpoint(endpoint *sebakcommon.Endpoint) (config H
 		return
 	}
 	if ReadTimeout < 0*time.Second {
-		err = stderrors.New("invalid 'ReadTimeout'")
+		err = errors.New("invalid 'ReadTimeout'")
 		return
 	}
 
@@ -49,7 +49,7 @@ func NewHTTP2NetworkConfigFromEndpoint(endpoint *sebakcommon.Endpoint) (config H
 		return
 	}
 	if ReadHeaderTimeout < 0*time.Second {
-		err = stderrors.New("invalid 'ReadHeaderTimeout'")
+		err = errors.New("invalid 'ReadHeaderTimeout'")
 		return
 	}
 
@@ -57,7 +57,7 @@ func NewHTTP2NetworkConfigFromEndpoint(endpoint *sebakcommon.Endpoint) (config H
 		return
 	}
 	if WriteTimeout < 0*time.Second {
-		err = stderrors.New("invalid 'WriteTimeout'")
+		err = errors.New("invalid 'WriteTimeout'")
 		return
 	}
 
@@ -65,7 +65,7 @@ func NewHTTP2NetworkConfigFromEndpoint(endpoint *sebakcommon.Endpoint) (config H
 		return
 	}
 	if IdleTimeout < 0*time.Second {
-		err = stderrors.New("invalid 'IdleTimeout'")
+		err = errors.New("invalid 'IdleTimeout'")
 		return
 	}
 
@@ -73,12 +73,12 @@ func NewHTTP2NetworkConfigFromEndpoint(endpoint *sebakcommon.Endpoint) (config H
 	TLSKeyFile = query.Get("TLSKeyFile")
 
 	if strings.ToLower(endpoint.Scheme) == "https" && (len(TLSCertFile) < 1 || len(TLSKeyFile) < 1) {
-		err = stderrors.New("HTTPS needs `TLSCertFile` and `TLSKeyFile`")
+		err = errors.New("HTTPS needs `TLSCertFile` and `TLSKeyFile`")
 		return
 	}
 
 	if v := query.Get("NodeName"); len(v) < 1 {
-		err = stderrors.New("`NodeName` must be given")
+		err = errors.New("`NodeName` must be given")
 		return
 	} else {
 		NodeName = v

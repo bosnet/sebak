@@ -1,7 +1,7 @@
 package sebak
 
 import (
-	stderrors "errors"
+	"errors"
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/node"
@@ -129,8 +129,8 @@ type ISAAC struct {
 
 func NewISAAC(networkID []byte, node *sebaknode.LocalNode, votingThresholdPolicy sebakcommon.VotingThresholdPolicy) (is *ISAAC, err error) {
 	is = &ISAAC{
-		NetworkID:             networkID,
-		Node:                  node,
+		NetworkID: networkID,
+		Node:      node,
 		VotingThresholdPolicy: votingThresholdPolicy,
 		TransactionPool:       NewTransactionPool(),
 		RunningRounds:         map[string]*RunningRound{},
@@ -144,7 +144,7 @@ func (is *ISAAC) CloseConsensus(proposer string, round round.Round, vh sebakcomm
 	defer is.Unlock()
 
 	if vh == sebakcommon.VotingNOTYET {
-		err = stderrors.New("invalid VotingHole, `VotingNOTYET`")
+		err = errors.New("invalid VotingHole, `VotingNOTYET`")
 		return
 	}
 

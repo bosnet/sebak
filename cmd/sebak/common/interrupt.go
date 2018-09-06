@@ -1,7 +1,7 @@
 package common
 
 import (
-	stderrors "errors"
+	"errors"
 	"fmt"
 	"os"
 	"os/signal"
@@ -16,6 +16,6 @@ func Interrupt(cancel <-chan struct{}) error {
 		fmt.Println("Received signal ", sig, ", shutting down...")
 		return nil
 	case <-cancel:
-		return stderrors.New("canceled")
+		return errors.New("canceled")
 	}
 }
