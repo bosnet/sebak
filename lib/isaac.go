@@ -143,8 +143,6 @@ func (is *ISAAC) CloseConsensus(proposer string, round round.Round, vh sebakcomm
 	is.Lock()
 	defer is.Unlock()
 
-	is.SetLatestRound(round)
-
 	if vh == sebakcommon.VotingNOTYET {
 		err = errors.New("invalid VotingHole, `VotingNOTYET`")
 		return

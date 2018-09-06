@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-//In TestProposerCalculator test, the proposer is always the node itself because of SelfProposerCalculator.
+// In TestProposerCalculator test, the proposer is always the node itself because of SelfProposerCalculator.
 func TestProposerCalculator(t *testing.T) {
 	nodeRunners := createTestNodeRunner(1)
 
@@ -18,7 +18,7 @@ func TestProposerCalculator(t *testing.T) {
 	require.Equal(t, nodeRunner.localNode.Address(), nodeRunner.CalculateProposer(2, 1))
 }
 
-//	All 3 nodes have the same proposer at each round
+// All 3 nodes have the same proposer at each round
 func TestNodesHaveSameProposers(t *testing.T) {
 	numberOfNodes := 3
 
