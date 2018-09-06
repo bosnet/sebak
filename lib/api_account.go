@@ -66,7 +66,10 @@ func (api NetworkHandlerAPI) GetAccountTransactionsHandler(w http.ResponseWriter
 	if httputils.IsEventStream(r) {
 		event := fmt.Sprintf("source-%s", address)
 		es := NewDefaultEventStream(w, r)
-		es.Render(readFunc(maxNumberOfExistingData))
+		txs := readFunc(maxNumberOfExistingData)
+		for _, tx := range txs {
+			es.Render(tx)
+		}
 		es.Run(observer.BlockTransactionObserver, event)
 		return
 	}
