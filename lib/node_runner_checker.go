@@ -1,8 +1,6 @@
 package sebak
 
 import (
-	stderrors "errors"
-
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/network"
@@ -274,7 +272,7 @@ func BallotIsSameProposer(c sebakcommon.Checker, args ...interface{}) (err error
 	var runningRound *RunningRound
 	var found bool
 	if runningRound, found = rr[checker.Ballot.Round().Hash()]; !found {
-		err = stderrors.New("`RunningRound` not found")
+		err = errors.New("`RunningRound` not found")
 		return
 	}
 
@@ -392,7 +390,7 @@ func INITBallotBroadcast(c sebakcommon.Checker, args ...interface{}) (err error)
 	var runningRound *RunningRound
 	var found bool
 	if runningRound, found = rr[checker.Ballot.Round().Hash()]; !found {
-		err = stderrors.New("RunningRound not found")
+		err = errors.New("RunningRound not found")
 		return
 	}
 	runningRound.Vote(newBallot)
@@ -420,7 +418,7 @@ func SIGNBallotBroadcast(c sebakcommon.Checker, args ...interface{}) (err error)
 	var runningRound *RunningRound
 	var found bool
 	if runningRound, found = rr[checker.Ballot.Round().Hash()]; !found {
-		err = stderrors.New("RunningRound not found")
+		err = errors.New("RunningRound not found")
 		return
 	}
 	runningRound.Vote(newBallot)
