@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/stellar/go/keypair"
 
-	"boscoin.io/sebak/cmd/sebak/common"
+	cmdcommon "boscoin.io/sebak/cmd/sebak/common"
 
 	"boscoin.io/sebak/lib"
 	"boscoin.io/sebak/lib/block"

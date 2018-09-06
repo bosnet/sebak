@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"boscoin.io/sebak/cmd/sebak/common"
+	cmdcommon "boscoin.io/sebak/cmd/sebak/common"
 	"boscoin.io/sebak/lib"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/network"

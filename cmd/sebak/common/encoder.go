@@ -1,4 +1,4 @@
-package cmdcommon
+package common
 
 import (
 	"encoding/json"

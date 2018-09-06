@@ -21,7 +21,7 @@ import (
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/storage"
 
-	"boscoin.io/sebak/cmd/sebak/common"
+	cmdcommon "boscoin.io/sebak/cmd/sebak/common"
 
 	"strconv"
 )

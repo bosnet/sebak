@@ -38,13 +38,13 @@ func generate() {
 	network.NewKeyGenerator(flagTLSOutputPath, flagTLSCertFile, flagTLSKeyFile)
 
 	if _, err = os.Stat(flagTLSOutputPath); os.IsNotExist(err) {
-		cmdcommon.PrintFlagsError(tlsCmd, "output", err)
+		common.PrintFlagsError(tlsCmd, "output", err)
 	}
 	if _, err = os.Stat(flagTLSOutputPath + "/" + flagTLSCertFile); os.IsNotExist(err) {
-		cmdcommon.PrintFlagsError(tlsCmd, "cert", err)
+		common.PrintFlagsError(tlsCmd, "cert", err)
 	}
 	if _, err = os.Stat(flagTLSOutputPath + "/" + flagTLSKeyFile); os.IsNotExist(err) {
-		cmdcommon.PrintFlagsError(tlsCmd, "key", err)
+		common.PrintFlagsError(tlsCmd, "key", err)
 	}
 
 	log = logging.New("module", "tls")
