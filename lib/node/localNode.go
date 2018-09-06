@@ -76,8 +76,8 @@ func (n *LocalNode) SetBooting() {
 	n.state = NodeStateBOOTING
 }
 
-func (n *LocalNode) SetCatchup() {
-	n.state = NodeStateCATCHUP
+func (n *LocalNode) SetSync() {
+	n.state = NodeStateSYNC
 }
 
 func (n *LocalNode) SetConsensus() {

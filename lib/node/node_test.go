@@ -23,8 +23,8 @@ func TestNodeStateChange(t *testing.T) {
 	node.SetBooting()
 	require.Equal(t, NodeStateBOOTING, node.State())
 
-	node.SetCatchup()
-	require.Equal(t, NodeStateCATCHUP, node.State())
+	node.SetSync()
+	require.Equal(t, NodeStateSYNC, node.State())
 
 	node.SetConsensus()
 	require.Equal(t, NodeStateCONSENSUS, node.State())
@@ -52,10 +52,10 @@ func TestNodeMarshalJSON(t *testing.T) {
 	require.Equal(t, nil, err)
 	require.Equal(t, true, strings.Contains(string(tmpByte), fmt.Sprintf(jsonStr, "BOOTING")))
 
-	marshalNode.SetCatchup()
+	marshalNode.SetSync()
 	tmpByte, err = marshalNode.MarshalJSON()
 	require.Equal(t, nil, err)
-	require.Equal(t, true, strings.Contains(string(tmpByte), fmt.Sprintf(jsonStr, "CATCHUP")))
+	require.Equal(t, true, strings.Contains(string(tmpByte), fmt.Sprintf(jsonStr, "SYNC")))
 
 	marshalNode.SetConsensus()
 	tmpByte, err = marshalNode.MarshalJSON()
