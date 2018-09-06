@@ -1,4 +1,4 @@
-package sebakstorage
+package storage
 
 type DBBackend interface {
 	Has(string) (bool, error)

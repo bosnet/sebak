@@ -69,11 +69,10 @@ func init() {
 //   and error is the more detailed error.
 //   Note that only one needs be non-`nil` for it to be considered an error.
 //
-func MakeGenesisBlock(addressStr, networkID, balanceStr, storage string) (string, error) {
+func MakeGenesisBlock(addressStr, networkID, balanceStr, storageConfigStr string) (string, error) {
 	var balance common.Amount
 	var err error
 	var kp keypair.KP
-	var storageConfig *sebakstorage.Config
 
 	if kp, err = keypair.Parse(addressStr); err != nil {
 		return "<address>", err
@@ -92,28 +91,29 @@ func MakeGenesisBlock(addressStr, networkID, balanceStr, storage string) (string
 	}
 
 	// Use the default value
-	if len(storage) == 0 {
+	if len(storageConfigStr) == 0 {
 		// We try to get the env value first, before doing IO which could fail
-		storage = common.GetENVValue("SEBAK_STORAGE", "")
+		storageConfigStr = common.GetENVValue("SEBAK_STORAGE", "")
 		// No env, use the default (current directory)
-		if len(storage) == 0 {
+		if len(storageConfigStr) == 0 {
 			if currentDirectory, err := os.Getwd(); err == nil {
 				if currentDirectory, err = filepath.Abs(currentDirectory); err == nil {
-					storage = fmt.Sprintf("file://%s/db", currentDirectory)
+					storageConfigStr = fmt.Sprintf("file://%s/db", currentDirectory)
 				}
 			}
 			// If any of the previous condition failed
-			if len(storage) == 0 {
+			if len(storageConfigStr) == 0 {
 				return "--storage", err
 			}
 		}
 	}
 
-	if storageConfig, err = sebakstorage.NewConfigFromString(storage); err != nil {
+	var storageConfig *storage.Config
+	if storageConfig, err = storage.NewConfigFromString(storageConfigStr); err != nil {
 		return "--storage", err
 	}
 
-	st, err := sebakstorage.NewStorage(storageConfig)
+	st, err := storage.NewStorage(storageConfig)
 	if err != nil {
 		return "--storage", fmt.Errorf("failed to initialize storage: %v", err)
 	}

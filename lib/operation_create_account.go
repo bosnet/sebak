@@ -36,7 +36,7 @@ func (o OperationBodyCreateAccount) IsWellFormed([]byte) (err error) {
 	return
 }
 
-func (o OperationBodyCreateAccount) Validate(st *sebakstorage.LevelDBBackend) (err error) {
+func (o OperationBodyCreateAccount) Validate(st *storage.LevelDBBackend) (err error) {
 	var exists bool
 	if exists, err = block.ExistBlockAccount(st, o.Target); err == nil && exists {
 		err = errors.ErrorBlockAccountAlreadyExists
@@ -54,7 +54,7 @@ func (o OperationBodyCreateAccount) GetAmount() common.Amount {
 	return o.Amount
 }
 
-func FinishOperationCreateAccount(st *sebakstorage.LevelDBBackend, tx Transaction, op Operation) (err error) {
+func FinishOperationCreateAccount(st *storage.LevelDBBackend, tx Transaction, op Operation) (err error) {
 	var baSource, baTarget *block.BlockAccount
 	if baSource, err = block.GetBlockAccount(st, tx.B.Source); err != nil {
 		err = errors.ErrorBlockAccountDoesNotExists

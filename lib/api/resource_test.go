@@ -1,17 +1,18 @@
 package api
 
 import (
+	"encoding/json"
+	"strings"
+	"testing"
+
 	"boscoin.io/sebak/lib"
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/storage"
-	"encoding/json"
 	"github.com/stretchr/testify/require"
-	"strings"
-	"testing"
 )
 
 func TestAPIResourceAccount(t *testing.T) {
-	storage, err := sebakstorage.NewTestMemoryLevelDBBackend()
+	storage, err := storage.NewTestMemoryLevelDBBackend()
 	require.Nil(t, err)
 	defer storage.Close()
 

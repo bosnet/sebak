@@ -23,7 +23,7 @@ import (
 
 func TestGetAccountHandler(t *testing.T) {
 	// Setting Server
-	storage, err := sebakstorage.NewTestMemoryLevelDBBackend()
+	storage, err := storage.NewTestMemoryLevelDBBackend()
 	require.Nil(t, err)
 	defer storage.Close()
 
@@ -97,7 +97,7 @@ func TestGetAccountHandler(t *testing.T) {
 // Test that getting an inexisting account returns an error
 func TestGetNonExistentAccountHandler(t *testing.T) {
 	// Setting Server
-	storage, err := sebakstorage.NewTestMemoryLevelDBBackend()
+	storage, err := storage.NewTestMemoryLevelDBBackend()
 	require.Nil(t, err)
 	defer storage.Close()
 
@@ -128,7 +128,7 @@ func TestGetNonExistentAccountHandler(t *testing.T) {
 func TestGetAccountTransactionsHandler(t *testing.T) {
 	var err error
 
-	storage, err := sebakstorage.NewTestMemoryLevelDBBackend()
+	storage, err := storage.NewTestMemoryLevelDBBackend()
 	require.Nil(t, err)
 	defer storage.Close()
 
@@ -232,7 +232,7 @@ func TestGetAccountTransactionsHandler(t *testing.T) {
 }
 
 func TestGetAccountOperationsHandler(t *testing.T) {
-	storage, err := sebakstorage.NewTestMemoryLevelDBBackend()
+	storage, err := storage.NewTestMemoryLevelDBBackend()
 	require.Nil(t, err)
 	defer storage.Close()
 
@@ -344,7 +344,7 @@ func TestGetAccountOperationsHandler(t *testing.T) {
 }
 
 func TestGetTransactionByHashHandler(t *testing.T) {
-	storage, err := sebakstorage.NewTestMemoryLevelDBBackend()
+	storage, err := storage.NewTestMemoryLevelDBBackend()
 	require.Nil(t, err)
 	defer storage.Close()
 
@@ -406,7 +406,7 @@ func TestGetTransactionByHashHandler(t *testing.T) {
 }
 
 func TestGetTransactionsHandler(t *testing.T) {
-	storage, err := sebakstorage.NewTestMemoryLevelDBBackend()
+	storage, err := storage.NewTestMemoryLevelDBBackend()
 	require.Nil(t, err)
 	defer storage.Close()
 

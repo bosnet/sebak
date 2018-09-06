@@ -30,7 +30,7 @@ type NetworkHandlerNode struct {
 type NetworkHandlerAPI struct {
 	localNode *node.LocalNode
 	network   network.Network
-	storage   *sebakstorage.LevelDBBackend
+	storage   *storage.LevelDBBackend
 }
 
 // Implement `Server Sent Event`

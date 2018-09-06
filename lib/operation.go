@@ -39,7 +39,7 @@ func (o Operation) IsWellFormed(networkID []byte) (err error) {
 	return
 }
 
-func (o Operation) Validate(st *sebakstorage.LevelDBBackend) (err error) {
+func (o Operation) Validate(st *storage.LevelDBBackend) (err error) {
 	if err = o.B.Validate(st); err != nil {
 		return
 	}
@@ -132,14 +132,14 @@ type OperationHeader struct {
 }
 
 type OperationBody interface {
-	Validate(*sebakstorage.LevelDBBackend) error
+	Validate(*storage.LevelDBBackend) error
 	IsWellFormed([]byte) error
 	TargetAddress() string
 	GetAmount() common.Amount
 }
 
 // FinishOperation do finish the task after consensus by the type of each operation.
-func FinishOperation(st *sebakstorage.LevelDBBackend, tx Transaction, op Operation) (err error) {
+func FinishOperation(st *storage.LevelDBBackend, tx Transaction, op Operation) (err error) {
 	switch op.H.Type {
 	case OperationCreateAccount:
 		return FinishOperationCreateAccount(st, tx, op)

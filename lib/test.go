@@ -48,7 +48,7 @@ func MakeNodeRunner() (*NodeRunner, *node.LocalNode) {
 
 	vth, _ := NewDefaultVotingThresholdPolicy(66, 66)
 	is, _ := NewISAAC(networkID, localNode, vth)
-	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
+	st, _ := storage.NewTestMemoryLevelDBBackend()
 	network, _ := createNetMemoryNetwork()
 	nodeRunner, _ := NewNodeRunner(string(networkID), localNode, vth, network, is, st)
 	return nodeRunner, localNode

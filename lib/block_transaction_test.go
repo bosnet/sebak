@@ -36,7 +36,7 @@ func TestNewBlockTransaction(t *testing.T) {
 }
 
 func TestBlockTransactionSaveAndGet(t *testing.T) {
-	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
+	st, _ := storage.NewTestMemoryLevelDBBackend()
 
 	bt := TestMakeNewBlockTransaction(networkID, 1)
 	err := bt.Save(st)
@@ -56,7 +56,7 @@ func TestBlockTransactionSaveAndGet(t *testing.T) {
 }
 
 func TestBlockTransactionSaveExisting(t *testing.T) {
-	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
+	st, _ := storage.NewTestMemoryLevelDBBackend()
 
 	bt := TestMakeNewBlockTransaction(networkID, 1)
 	err := bt.Save(st)
@@ -73,7 +73,7 @@ func TestBlockTransactionSaveExisting(t *testing.T) {
 
 /*
 func TestGetSortedBlockTransactionsByCheckpoint(t *testing.T) {
-	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
+	st, _ := storage.NewTestMemoryLevelDBBackend()
 
 	// create 30 `BlockOperation`
 	var createdOrder []string
@@ -109,7 +109,7 @@ func TestGetSortedBlockTransactionsByCheckpoint(t *testing.T) {
 func TestMultipleBlockTransactionSource(t *testing.T) {
 	kp, _ := keypair.Random()
 	kpAnother, _ := keypair.Random()
-	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
+	st, _ := storage.NewTestMemoryLevelDBBackend()
 
 	numTxs := 10
 
@@ -193,7 +193,7 @@ func TestMultipleBlockTransactionSource(t *testing.T) {
 
 func TestMultipleBlockTransactionConfirmed(t *testing.T) {
 	kp, _ := keypair.Random()
-	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
+	st, _ := storage.NewTestMemoryLevelDBBackend()
 
 	numTxs := 10
 
@@ -256,7 +256,7 @@ func TestMultipleBlockTransactionConfirmed(t *testing.T) {
 }
 
 func TestBlockTransactionMultipleSave(t *testing.T) {
-	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
+	st, _ := storage.NewTestMemoryLevelDBBackend()
 
 	bt := TestMakeNewBlockTransaction(networkID, 1)
 	err := bt.Save(st)
@@ -271,7 +271,7 @@ func TestBlockTransactionMultipleSave(t *testing.T) {
 }
 
 func TestBlockTransactionGetByCheckpoint(t *testing.T) {
-	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
+	st, _ := storage.NewTestMemoryLevelDBBackend()
 
 	bt := TestMakeNewBlockTransaction(networkID, 1)
 	err := bt.Save(st)
@@ -293,7 +293,7 @@ func TestBlockTransactionGetByCheckpoint(t *testing.T) {
 func TestMultipleBlockTransactionGetByAccount(t *testing.T) {
 	kp, _ := keypair.Random()
 	kpAnother, _ := keypair.Random()
-	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
+	st, _ := storage.NewTestMemoryLevelDBBackend()
 
 	numTxs := 5
 
@@ -372,7 +372,7 @@ func TestMultipleBlockTransactionGetByAccount(t *testing.T) {
 
 func TestMultipleBlockTransactionGetByBlock(t *testing.T) {
 	kp, _ := keypair.Random()
-	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
+	st, _ := storage.NewTestMemoryLevelDBBackend()
 
 	numTxs := 5
 

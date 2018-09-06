@@ -72,7 +72,7 @@ type NodeRunner struct {
 	network            network.Network
 	consensus          *ISAAC
 	connectionManager  *network.ConnectionManager
-	storage            *sebakstorage.LevelDBBackend
+	storage            *storage.LevelDBBackend
 	proposerCalculator ProposerCalculator
 
 	handleTransactionCheckerFuncs  []common.CheckerFunc
@@ -95,7 +95,7 @@ func NewNodeRunner(
 	policy common.VotingThresholdPolicy,
 	n network.Network,
 	consensus *ISAAC,
-	storage *sebakstorage.LevelDBBackend,
+	storage *storage.LevelDBBackend,
 ) (nr *NodeRunner, err error) {
 	nr = &NodeRunner{
 		networkID: []byte(networkID),
@@ -224,7 +224,7 @@ func (nr *NodeRunner) ConnectionManager() *network.ConnectionManager {
 	return nr.connectionManager
 }
 
-func (nr *NodeRunner) Storage() *sebakstorage.LevelDBBackend {
+func (nr *NodeRunner) Storage() *storage.LevelDBBackend {
 	return nr.storage
 }
 

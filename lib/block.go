@@ -39,7 +39,7 @@ func (bck Block) String() string {
 	return string(encoded)
 }
 
-func MakeGenesisBlock(st *sebakstorage.LevelDBBackend, account block.BlockAccount) Block {
+func MakeGenesisBlock(st *storage.LevelDBBackend, account block.BlockAccount) Block {
 	proposer := "" // null proposer
 	round := round.Round{
 		Number:      0,
@@ -106,7 +106,7 @@ func (b Block) NewBlockKeyConfirmed() string {
 	)
 }
 
-func (b Block) Save(st *sebakstorage.LevelDBBackend) (err error) {
+func (b Block) Save(st *storage.LevelDBBackend) (err error) {
 	key := GetBlockKey(b.Hash)
 
 	var exists bool
@@ -128,14 +128,14 @@ func (b Block) Save(st *sebakstorage.LevelDBBackend) (err error) {
 	return
 }
 
-func GetBlock(st *sebakstorage.LevelDBBackend, hash string) (bt Block, err error) {
+func GetBlock(st *storage.LevelDBBackend, hash string) (bt Block, err error) {
 	err = st.Get(GetBlockKey(hash), &bt)
 	return
 }
 
 func LoadBlocksInsideIterator(
-	st *sebakstorage.LevelDBBackend,
-	iterFunc func() (sebakstorage.IterItem, bool),
+	st *storage.LevelDBBackend,
+	iterFunc func() (storage.IterItem, bool),
 	closeFunc func(),
 ) (
 	func() (Block, bool),
@@ -162,7 +162,7 @@ func LoadBlocksInsideIterator(
 		})
 }
 
-func GetBlocksByConfirmed(st *sebakstorage.LevelDBBackend, reverse bool) (
+func GetBlocksByConfirmed(st *storage.LevelDBBackend, reverse bool) (
 	func() (Block, bool),
 	func(),
 ) {
@@ -171,7 +171,7 @@ func GetBlocksByConfirmed(st *sebakstorage.LevelDBBackend, reverse bool) (
 	return LoadBlocksInsideIterator(st, iterFunc, closeFunc)
 }
 
-func GetLatestBlock(st *sebakstorage.LevelDBBackend) (b Block, err error) {
+func GetLatestBlock(st *storage.LevelDBBackend) (b Block, err error) {
 	// get latest blocks
 	iterFunc, closeFunc := GetBlocksByConfirmed(st, true)
 	b, _ = iterFunc()
