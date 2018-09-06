@@ -9,16 +9,19 @@ import (
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/httputils"
 	"boscoin.io/sebak/lib/observer"
 )
-
-const GetAccountHandlerPattern = "/account/{address}"
 
 func (api NetworkHandlerAPI) GetAccountHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	address := vars["address"]
-	var blk *block.BlockAccount
-	var err error
+
+	var (
+		blk *block.BlockAccount
+		err error
+	)
+
 	if blk, err = block.GetBlockAccount(api.storage, address); err != nil {
 		if err == errors.ErrorStorageRecordDoesNotExist {
 			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
@@ -28,42 +31,18 @@ func (api NetworkHandlerAPI) GetAccountHandler(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	switch r.Header.Get("Accept") {
-	case "text/event-stream":
-		var readyChan = make(chan struct{})
+	if httputils.IsEventStream(r) {
+		event := fmt.Sprintf("address-%s", address)
+		es := NewDefaultEventStream(w, r)
+		es.Render(blk)
+		es.Run(observer.BlockAccountObserver, event)
+		return
+	}
 
-		// Trigger event for data already stored in the storage
-		iterateId := common.GetUniqueIDFromUUID()
-		go func() {
-			<-readyChan
-			observer.BlockAccountObserver.Trigger(fmt.Sprintf("iterate-%s", iterateId), blk)
-		}()
-
-		callBackFunc := func(args ...interface{}) (account []byte, err error) {
-			blk := args[1].(*block.BlockAccount)
-			if account, err = blk.Serialize(); err != nil {
-				return []byte{}, errors.ErrorBlockAccountDoesNotExists
-			}
-			return account, nil
-		}
-
-		event := fmt.Sprintf("iterate-%s", iterateId)
-		event += " " + fmt.Sprintf("address-%s", address)
-		streaming(observer.BlockAccountObserver, r, w, event, callBackFunc, readyChan)
-	default:
-		var s []byte
-		if s, err = blk.Serialize(); err != nil {
-			http.Error(w, "Error reading request body", http.StatusInternalServerError)
-			return
-		}
-		if _, err = w.Write(s); err != nil {
-			http.Error(w, "Error reading request body", http.StatusInternalServerError)
-			return
-		}
+	if err := httputils.WriteJSON(w, 200, blk); err != nil {
+		http.Error(w, "Error reading request body", http.StatusInternalServerError)
 	}
 }
-
-const GetAccountTransactionsHandlerPattern = "/account/{address}/transactions"
 
 func (api NetworkHandlerAPI) GetAccountTransactionsHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
@@ -122,8 +101,6 @@ func (api NetworkHandlerAPI) GetAccountTransactionsHandler(w http.ResponseWriter
 		}
 	}
 }
-
-const GetAccountOperationsHandlerPattern = "/account/{address}/operations"
 
 func (api NetworkHandlerAPI) GetAccountOperationsHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
