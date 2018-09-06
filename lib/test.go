@@ -28,8 +28,8 @@ func init() {
 	kp, _ = keypair.Random()
 }
 
-func createNetMemoryNetwork() (*sebaknetwork.MemoryNetwork, *sebaknode.LocalNode) {
-	mn := sebaknetwork.NewMemoryNetwork()
+func createNetMemoryNetwork() (*network.MemoryNetwork, *sebaknode.LocalNode) {
+	mn := network.NewMemoryNetwork()
 
 	kp, _ := keypair.Random()
 	localNode, _ := sebaknode.NewLocalNode(kp, mn.Endpoint(), "")
@@ -286,7 +286,7 @@ func ReceiveBallot(t *testing.T, nodeRunner *NodeRunner, ballot *Ballot) error {
 	data, err := ballot.Serialize()
 	require.Nil(t, err)
 
-	ballotMessage := sebaknetwork.Message{Type: sebaknetwork.BallotMessage, Data: data}
+	ballotMessage := network.Message{Type: network.BallotMessage, Data: data}
 	err = nodeRunner.handleBallotMessage(ballotMessage)
 	return err
 }

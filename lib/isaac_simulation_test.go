@@ -27,7 +27,7 @@ func TestIsaacSimulationProposer(t *testing.T) {
 
 	tx, txByte := GetTransaction(t)
 
-	message := sebaknetwork.Message{Type: sebaknetwork.TransactionMessage, Data: txByte}
+	message := network.Message{Type: network.TransactionMessage, Data: txByte}
 
 	nodeRunner := nodeRunners[0]
 

@@ -80,7 +80,7 @@ func init() {
 				log.Fatal("Error while creating network client: ", err)
 				os.Exit(1)
 			}
-			client := sebaknetwork.NewHTTP2NetworkClient(endpoint, connection)
+			client := network.NewHTTP2NetworkClient(endpoint, connection)
 
 			if senderAccount, err = getSenderDetails(client, sender); err != nil {
 				log.Fatal("Could not fetch sender account: ", err)
@@ -244,7 +244,7 @@ func makeTransactionPayment(kpSource keypair.KP, kpDest keypair.KP, amount sebak
 ///   sebak.BlockAccount = The deserialized block account, or a default-initialized one if an error occured
 ///   error = `nil` or the error that occured (either network or deserialization)
 ///
-func getSenderDetails(conn *sebaknetwork.HTTP2NetworkClient, sender keypair.KP) (block.BlockAccount, error) {
+func getSenderDetails(conn *network.HTTP2NetworkClient, sender keypair.KP) (block.BlockAccount, error) {
 	var ba block.BlockAccount
 	var err error
 	var retBody []byte

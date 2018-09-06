@@ -68,9 +68,9 @@ type NodeRunner struct {
 	networkID          []byte
 	localNode          *sebaknode.LocalNode
 	policy             sebakcommon.VotingThresholdPolicy
-	network            sebaknetwork.Network
+	network            network.Network
 	consensus          *ISAAC
-	connectionManager  *sebaknetwork.ConnectionManager
+	connectionManager  *network.ConnectionManager
 	storage            *sebakstorage.LevelDBBackend
 	proposerCalculator ProposerCalculator
 
@@ -92,7 +92,7 @@ func NewNodeRunner(
 	networkID string,
 	localNode *sebaknode.LocalNode,
 	policy sebakcommon.VotingThresholdPolicy,
-	network sebaknetwork.Network,
+	n network.Network,
 	consensus *ISAAC,
 	storage *sebakstorage.LevelDBBackend,
 ) (nr *NodeRunner, err error) {
@@ -100,7 +100,7 @@ func NewNodeRunner(
 		networkID: []byte(networkID),
 		localNode: localNode,
 		policy:    policy,
-		network:   network,
+		network:   n,
 		consensus: consensus,
 		storage:   storage,
 		log:       log.New(logging.Ctx{"node": localNode.Alias()}),
@@ -109,7 +109,7 @@ func NewNodeRunner(
 	nr.SetProposerCalculator(SimpleProposerCalculator{})
 	nr.policy.SetValidators(len(nr.localNode.GetValidators()) + 1) // including self
 
-	nr.connectionManager = sebaknetwork.NewConnectionManager(
+	nr.connectionManager = network.NewConnectionManager(
 		nr.localNode,
 		nr.network,
 		nr.policy,
@@ -149,10 +149,10 @@ func (nr *NodeRunner) Ready() {
 		network:   nr.network,
 	}
 
-	nr.network.AddHandler(sebaknetwork.UrlPathPrefixNode+"/", nodeHandler.NodeInfoHandler)
-	nr.network.AddHandler(sebaknetwork.UrlPathPrefixNode+"/connect", nodeHandler.ConnectHandler)
-	nr.network.AddHandler(sebaknetwork.UrlPathPrefixNode+"/message", nodeHandler.MessageHandler)
-	nr.network.AddHandler(sebaknetwork.UrlPathPrefixNode+"/ballot", nodeHandler.BallotHandler)
+	nr.network.AddHandler(network.UrlPathPrefixNode+"/", nodeHandler.NodeInfoHandler)
+	nr.network.AddHandler(network.UrlPathPrefixNode+"/connect", nodeHandler.ConnectHandler)
+	nr.network.AddHandler(network.UrlPathPrefixNode+"/message", nodeHandler.MessageHandler)
+	nr.network.AddHandler(network.UrlPathPrefixNode+"/ballot", nodeHandler.BallotHandler)
 
 	apiHandler := NetworkHandlerAPI{
 		localNode: nr.localNode,
@@ -161,23 +161,23 @@ func (nr *NodeRunner) Ready() {
 	}
 
 	nr.network.AddHandler(
-		sebaknetwork.UrlPathPrefixAPI+GetAccountHandlerPattern,
+		network.UrlPathPrefixAPI+GetAccountHandlerPattern,
 		apiHandler.GetAccountHandler,
 	).Methods("GET")
 	nr.network.AddHandler(
-		sebaknetwork.UrlPathPrefixAPI+GetAccountTransactionsHandlerPattern,
+		network.UrlPathPrefixAPI+GetAccountTransactionsHandlerPattern,
 		apiHandler.GetAccountTransactionsHandler,
 	).Methods("GET")
 	nr.network.AddHandler(
-		sebaknetwork.UrlPathPrefixAPI+GetAccountOperationsHandlerPattern,
+		network.UrlPathPrefixAPI+GetAccountOperationsHandlerPattern,
 		apiHandler.GetAccountOperationsHandler,
 	).Methods("GET")
 	nr.network.AddHandler(
-		sebaknetwork.UrlPathPrefixAPI+GetTransactionsHandlerPattern,
+		network.UrlPathPrefixAPI+GetTransactionsHandlerPattern,
 		apiHandler.GetTransactionsHandler,
 	).Methods("GET")
 	nr.network.AddHandler(
-		sebaknetwork.UrlPathPrefixAPI+GetTransactionByHashHandlerPattern,
+		network.UrlPathPrefixAPI+GetTransactionByHashHandlerPattern,
 		apiHandler.GetTransactionByHashHandler,
 	).Methods("GET")
 
@@ -211,7 +211,7 @@ func (nr *NodeRunner) NetworkID() []byte {
 	return nr.networkID
 }
 
-func (nr *NodeRunner) Network() sebaknetwork.Network {
+func (nr *NodeRunner) Network() network.Network {
 	return nr.network
 }
 
@@ -219,7 +219,7 @@ func (nr *NodeRunner) Consensus() *ISAAC {
 	return nr.consensus
 }
 
-func (nr *NodeRunner) ConnectionManager() *sebaknetwork.ConnectionManager {
+func (nr *NodeRunner) ConnectionManager() *network.ConnectionManager {
 	return nr.connectionManager
 }
 
@@ -296,17 +296,17 @@ func (nr *NodeRunner) handleMessage() {
 			continue
 		}
 		switch message.Type {
-		case sebaknetwork.ConnectMessage:
+		case network.ConnectMessage:
 			if _, err := sebaknode.NewValidatorFromString(message.Data); err != nil {
 				nr.log.Error("invalid validator data was received", "data", message.Data)
 				continue
 			}
-		case sebaknetwork.TransactionMessage:
+		case network.TransactionMessage:
 			if message.IsEmpty() {
 				nr.log.Error("got empty transaction`")
 			}
 			err = nr.handleTransaction(message)
-		case sebaknetwork.BallotMessage:
+		case network.BallotMessage:
 			err = nr.handleBallotMessage(message)
 		default:
 			err = errors.New("got unknown message")
@@ -316,12 +316,12 @@ func (nr *NodeRunner) handleMessage() {
 			if _, ok := err.(sebakcommon.CheckerStop); ok {
 				continue
 			}
-			nr.log.Error("failed to handle sebaknetwork.Message", "message", message.Head(50), "error", err)
+			nr.log.Error("failed to handle network.Message", "message", message.Head(50), "error", err)
 		}
 	}
 }
 
-func (nr *NodeRunner) handleTransaction(message sebaknetwork.Message) (err error) {
+func (nr *NodeRunner) handleTransaction(message network.Message) (err error) {
 	nr.log.Debug("got message`", "message", message.Head(50))
 
 	checker := &MessageChecker{
@@ -342,7 +342,7 @@ func (nr *NodeRunner) handleTransaction(message sebaknetwork.Message) (err error
 	return
 }
 
-func (nr *NodeRunner) handleBallotMessage(message sebaknetwork.Message) (err error) {
+func (nr *NodeRunner) handleBallotMessage(message network.Message) (err error) {
 	nr.log.Debug("got ballot", "message", message.Head(50))
 
 	baseChecker := &BallotChecker{

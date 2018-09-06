@@ -53,7 +53,7 @@ func NewBallotFromJSON(data []byte) (b Ballot, err error) {
 }
 
 func (b Ballot) GetType() string {
-	return sebaknetwork.BallotMessage
+	return network.BallotMessage
 }
 
 func (b Ballot) GetHash() string {

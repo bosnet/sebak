@@ -1,4 +1,4 @@
-package sebaknetwork
+package network
 
 import (
 	"boscoin.io/sebak/lib/common"

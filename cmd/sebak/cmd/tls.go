@@ -6,9 +6,8 @@ import (
 	logging "github.com/inconshreveable/log15"
 	"github.com/spf13/cobra"
 
-	"boscoin.io/sebak/lib/network"
-
 	"boscoin.io/sebak/cmd/sebak/common"
+	"boscoin.io/sebak/lib/network"
 )
 
 var (
@@ -36,7 +35,7 @@ func init() {
 func generate() {
 	var err error
 
-	sebaknetwork.NewKeyGenerator(flagTLSOutputPath, flagTLSCertFile, flagTLSKeyFile)
+	network.NewKeyGenerator(flagTLSOutputPath, flagTLSCertFile, flagTLSKeyFile)
 
 	if _, err = os.Stat(flagTLSOutputPath); os.IsNotExist(err) {
 		common.PrintFlagsError(tlsCmd, "output", err)

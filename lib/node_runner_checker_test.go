@@ -33,7 +33,7 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 			NodeRunner:     nodeRunner,
 			LocalNode:      nodeRunner.Node(),
 			NetworkID:      networkID,
-			Message:        sebaknetwork.Message{Type: "message", Data: messageData},
+			Message:        network.Message{Type: "message", Data: messageData},
 		}
 
 		if err := sebakcommon.RunChecker(checker, nil); err != nil {
