@@ -65,8 +65,8 @@ func (v *Validator) SetBooting() {
 	v.state = NodeStateBOOTING
 }
 
-func (v *Validator) SetCatchup() {
-	v.state = NodeStateCATCHUP
+func (v *Validator) SetSync() {
+	v.state = NodeStateSYNC
 }
 
 func (v *Validator) SetConsensus() {

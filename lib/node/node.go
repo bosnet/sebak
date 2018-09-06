@@ -14,7 +14,7 @@ type Node interface {
 	Serialize() ([]byte, error)
 	State() NodeState
 	SetBooting()
-	SetCatchup()
+	SetSync()
 	SetConsensus()
 	SetTerminating()
 }

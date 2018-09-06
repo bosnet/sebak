@@ -13,7 +13,7 @@ func TestNodeInitState(t *testing.T) {
 func TestNodeStateString(t *testing.T) {
 	require.Equal(t, NodeStateNONE.String(), "NONE")
 	require.Equal(t, NodeStateBOOTING.String(), "BOOTING")
-	require.Equal(t, NodeStateCATCHUP.String(), "CATCHUP")
+	require.Equal(t, NodeStateSYNC.String(), "SYNC")
 	require.Equal(t, NodeStateCONSENSUS.String(), "CONSENSUS")
 	require.Equal(t, NodeStateTERMINATING.String(), "TERMINATING")
 }
@@ -27,9 +27,9 @@ func TestNodeStateMarshalJSON(t *testing.T) {
 	require.Equal(t, err, nil)
 	require.Equal(t, "\"BOOTING\"", string(ret))
 
-	ret, err = NodeStateCATCHUP.MarshalJSON()
+	ret, err = NodeStateSYNC.MarshalJSON()
 	require.Equal(t, err, nil)
-	require.Equal(t, "\"CATCHUP\"", string(ret))
+	require.Equal(t, "\"SYNC\"", string(ret))
 
 	ret, err = NodeStateCONSENSUS.MarshalJSON()
 	require.Equal(t, err, nil)
@@ -50,9 +50,9 @@ func TestNodeStateUnmarshalJSON(t *testing.T) {
 	ns.UnmarshalJSON(nodeStateByteArray)
 	require.Equal(t, NodeStateBOOTING, ns)
 
-	nodeStateByteArray, _ = NodeStateCATCHUP.MarshalJSON()
+	nodeStateByteArray, _ = NodeStateSYNC.MarshalJSON()
 	ns.UnmarshalJSON(nodeStateByteArray)
-	require.Equal(t, NodeStateCATCHUP, ns)
+	require.Equal(t, NodeStateSYNC, ns)
 
 	nodeStateByteArray, _ = NodeStateCONSENSUS.MarshalJSON()
 	ns.UnmarshalJSON(nodeStateByteArray)

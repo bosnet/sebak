@@ -9,7 +9,7 @@ type NodeState uint
 const (
 	NodeStateNONE NodeState = iota
 	NodeStateBOOTING
-	NodeStateCATCHUP
+	NodeStateSYNC
 	NodeStateCONSENSUS
 	NodeStateTERMINATING
 )
@@ -23,7 +23,7 @@ func (s NodeState) String() string {
 	case 1:
 		return "BOOTING"
 	case 2:
-		return "CATCHUP"
+		return "SYNC"
 	case 3:
 		return "CONSENSUS"
 	case 4:
@@ -44,7 +44,7 @@ func (s *NodeState) UnmarshalJSON(b []byte) (err error) {
 		c = 0
 	case "BOOTING":
 		c = 1
-	case "CATCHUP":
+	case "SYNC":
 		c = 2
 	case "CONSENSUS":
 		c = 3
