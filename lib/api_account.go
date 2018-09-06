@@ -48,58 +48,36 @@ func (api NetworkHandlerAPI) GetAccountTransactionsHandler(w http.ResponseWriter
 	vars := mux.Vars(r)
 	address := vars["address"]
 
-	var err error
-	var s []byte
-
-	switch r.Header.Get("Accept") {
-	case "text/event-stream":
-		var readyChan = make(chan struct{})
-		iterateId := common.GetUniqueIDFromUUID()
-		go func() {
-			<-readyChan
-			count := maxNumberOfExistingData
-			iterFunc, closeFunc := GetBlockTransactionsByAccount(api.storage, address, false)
-			for {
-				bt, hasNext := iterFunc()
-				count--
-				if !hasNext || count < 0 {
-					break
-				}
-				observer.BlockTransactionObserver.Trigger(fmt.Sprintf("iterate-%s", iterateId), &bt)
-			}
-			closeFunc()
-		}()
-
-		callBackFunc := func(args ...interface{}) (btSerialized []byte, err error) {
-			bt := args[1].(*BlockTransaction)
-			if btSerialized, err = bt.Serialize(); err != nil {
-				return []byte{}, errors.ErrorBlockTransactionDoesNotExists
-			}
-			return btSerialized, nil
-		}
-
-		event := fmt.Sprintf("iterate-%s", iterateId)
-		event += " " + fmt.Sprintf("source-%s", address)
-		streaming(observer.BlockTransactionObserver, r, w, event, callBackFunc, readyChan)
-	default:
-		var btl []BlockTransaction
+	readFunc := func(cnt int) []BlockTransaction {
+		var txs []BlockTransaction
 		iterFunc, closeFunc := GetBlockTransactionsByAccount(api.storage, address, false)
 		for {
-			bt, hasNext := iterFunc()
-			if !hasNext {
+			t, hasNext := iterFunc()
+			cnt--
+			if !hasNext || cnt == 0 {
 				break
 			}
-			btl = append(btl, bt)
+			txs = append(txs, t)
 		}
 		closeFunc()
-
-		s, err = common.EncodeJSONValue(btl)
-
-		if _, err = w.Write(s); err != nil {
-			http.Error(w, "Error reading request body", http.StatusInternalServerError)
-			return
-		}
+		return txs
 	}
+
+	if httputils.IsEventStream(r) {
+		event := fmt.Sprintf("source-%s", address)
+		es := NewDefaultEventStream(w, r)
+		es.Render(readFunc(maxNumberOfExistingData))
+		es.Run(observer.BlockTransactionObserver, event)
+		return
+	}
+
+	txs := readFunc(-1) // -1 is infinte. TODO: Paging support makes better this space.
+
+	if err := httputils.WriteJSON(w, 200, txs); err != nil {
+		http.Error(w, "Error reading request body", http.StatusInternalServerError)
+		return
+	}
+
 }
 
 func (api NetworkHandlerAPI) GetAccountOperationsHandler(w http.ResponseWriter, r *http.Request) {

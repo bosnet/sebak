@@ -1,6 +1,7 @@
 package sebak
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -26,9 +27,7 @@ type EventStream struct {
 
 type RenderFunc func(args ...interface{}) ([]byte, error)
 
-// RenderSerializableFunc is default RenderFunc. It takes common.Serializable and serialize it for rendering.
-//
-// NewDefaultEventStream uses RenderFunc by default
+// RenderSerializableFunc takes common.Serializable and serialize it for rendering.
 var RenderSerializableFunc = func(args ...interface{}) ([]byte, error) {
 	s, ok := args[1].(common.Serializable)
 	if !ok {
@@ -42,9 +41,22 @@ var RenderSerializableFunc = func(args ...interface{}) ([]byte, error) {
 	return bs, nil
 }
 
+// NewDefaultEventStream uses RenderJSONFunc by default
+var RenderJSONFunc = func(args ...interface{}) ([]byte, error) {
+	if len(args) <= 1 {
+		return nil, fmt.Errorf("render: value is empty") //TODO(anarcher): Error type
+	}
+	v := args[1]
+	bs, err := json.Marshal(v)
+	if err != nil {
+		return nil, err
+	}
+	return bs, nil
+}
+
 // NewDefaultEventStream returns *EventStream with RenderSerializableFunc and DefaultContentType
 func NewDefaultEventStream(w http.ResponseWriter, r *http.Request) *EventStream {
-	return NewEventStream(w, r, RenderSerializableFunc, DefaultContentType)
+	return NewEventStream(w, r, RenderJSONFunc, DefaultContentType)
 }
 
 // NewEventStream makes *EventStream and checks http.Flusher by type assertion.
