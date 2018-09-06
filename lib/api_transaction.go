@@ -19,7 +19,7 @@ func (api NetworkHandlerAPI) GetTransactionsHandler(w http.ResponseWriter, r *ht
 	switch r.Header.Get("Accept") {
 	case "text/event-stream":
 		var readyChan = make(chan struct{})
-		iterateId := sebakcommon.GetUniqueIDFromUUID()
+		iterateId := common.GetUniqueIDFromUUID()
 		go func() {
 			<-readyChan
 			count := maxNumberOfExistingData
@@ -59,7 +59,7 @@ func (api NetworkHandlerAPI) GetTransactionsHandler(w http.ResponseWriter, r *ht
 		}
 		closeFunc()
 
-		s, err = sebakcommon.EncodeJSONValue(btl)
+		s, err = common.EncodeJSONValue(btl)
 		if _, err = w.Write(s); err != nil {
 			http.Error(w, "Error reading request body", http.StatusInternalServerError)
 			return
@@ -78,7 +78,7 @@ func (api NetworkHandlerAPI) GetTransactionByHashHandler(w http.ResponseWriter, 
 	case "text/event-stream":
 
 		var readyChan = make(chan struct{})
-		iterateId := sebakcommon.GetUniqueIDFromUUID()
+		iterateId := common.GetUniqueIDFromUUID()
 		go func() {
 			<-readyChan
 			var bt BlockTransaction

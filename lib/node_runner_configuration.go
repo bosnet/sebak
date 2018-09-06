@@ -32,13 +32,13 @@ func NewNodeRunnerConfiguration() *NodeRunnerConfiguration {
 	return &p
 }
 
-func (n *NodeRunnerConfiguration) GetTimeout(ballotState sebakcommon.BallotState) time.Duration {
+func (n *NodeRunnerConfiguration) GetTimeout(ballotState common.BallotState) time.Duration {
 	switch ballotState {
-	case sebakcommon.BallotStateINIT:
+	case common.BallotStateINIT:
 		return n.TimeoutINIT
-	case sebakcommon.BallotStateSIGN:
+	case common.BallotStateSIGN:
 		return n.TimeoutSIGN
-	case sebakcommon.BallotStateACCEPT:
+	case common.BallotStateACCEPT:
 		return n.TimeoutACCEPT
 	default:
 		return 0

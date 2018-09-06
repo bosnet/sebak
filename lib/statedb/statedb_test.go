@@ -11,11 +11,11 @@ import (
 )
 
 func TestStateDB(t *testing.T) {
-	var Root = sebakcommon.Hash{}
+	var Root = common.Hash{}
 	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
 
-	var keyHash = sebakcommon.BytesToHash(sebakcommon.MakeHash([]byte("key")))
-	var valueHash = sebakcommon.BytesToHash(sebakcommon.MakeHash([]byte("value")))
+	var keyHash = common.BytesToHash(common.MakeHash([]byte("key")))
+	var valueHash = common.BytesToHash(common.MakeHash([]byte("value")))
 
 	var err error
 

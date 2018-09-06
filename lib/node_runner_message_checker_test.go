@@ -22,7 +22,7 @@ func TestMessageChecker(t *testing.T) {
 	validMessage := network.Message{Type: "message", Data: b}
 	nodeRunner, localNode := MakeNodeRunner()
 	checker := &MessageChecker{
-		DefaultChecker: sebakcommon.DefaultChecker{},
+		DefaultChecker: common.DefaultChecker{},
 		NodeRunner:     nodeRunner,
 		LocalNode:      localNode,
 		NetworkID:      networkID,
@@ -57,16 +57,16 @@ func TestMessageChecker(t *testing.T) {
 	err = PushIntoTransactionPool(checker)
 	require.Nil(t, err)
 
-	var CheckerFuncs = []sebakcommon.CheckerFunc{
+	var CheckerFuncs = []common.CheckerFunc{
 		TransactionUnmarshal,
 		HasTransaction,
 		SaveTransactionHistory,
 		PushIntoTransactionPool,
 	}
 
-	checker.DefaultChecker = sebakcommon.DefaultChecker{Funcs: CheckerFuncs}
+	checker.DefaultChecker = common.DefaultChecker{Funcs: CheckerFuncs}
 
-	err = sebakcommon.RunChecker(checker, sebakcommon.DefaultDeferFunc)
+	err = common.RunChecker(checker, common.DefaultDeferFunc)
 	require.Equal(t, err, errors.ErrorNewButKnownMessage)
 }
 

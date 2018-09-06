@@ -28,7 +28,7 @@ type TransactionFromJSON struct {
 
 type TransactionBodyFromJSON struct {
 	Source     string              `json:"source"`
-	Fee        sebakcommon.Amount  `json:"fee"`
+	Fee        common.Amount       `json:"fee"`
 	Checkpoint string              `json:"checkpoint"`
 	Operations []OperationFromJSON `json:"operations"`
 }
@@ -76,7 +76,7 @@ func NewTransaction(source, checkpoint string, ops ...Operation) (tx Transaction
 	tx = Transaction{
 		T: "transaction",
 		H: TransactionHeader{
-			Created: sebakcommon.NowISO8601(),
+			Created: common.NowISO8601(),
 			Hash:    txBody.MakeHashString(),
 		},
 		B: txBody,
@@ -85,7 +85,7 @@ func NewTransaction(source, checkpoint string, ops ...Operation) (tx Transaction
 	return
 }
 
-var TransactionWellFormedCheckerFuncs = []sebakcommon.CheckerFunc{
+var TransactionWellFormedCheckerFuncs = []common.CheckerFunc{
 	CheckTransactionCheckpoint,
 	CheckTransactionSource,
 	CheckTransactionBaseFee,
@@ -98,11 +98,11 @@ func (tx Transaction) IsWellFormed(networkID []byte) (err error) {
 	// TODO check `Version` format with SemVer
 
 	checker := &TransactionChecker{
-		DefaultChecker: sebakcommon.DefaultChecker{Funcs: TransactionWellFormedCheckerFuncs},
+		DefaultChecker: common.DefaultChecker{Funcs: TransactionWellFormedCheckerFuncs},
 		NetworkID:      networkID,
 		Transaction:    tx,
 	}
-	if err = sebakcommon.RunChecker(checker, sebakcommon.DefaultDeferFunc); err != nil {
+	if err = common.RunChecker(checker, common.DefaultDeferFunc); err != nil {
 		return
 	}
 
@@ -138,7 +138,7 @@ func (tx Transaction) Validate(st *sebakstorage.LevelDBBackend) (err error) {
 	totalAmount := tx.TotalAmount(true)
 
 	// check, have enough balance at checkpoint
-	if sebakcommon.MustAmountFromString(bac.Balance) < totalAmount {
+	if common.MustAmountFromString(bac.Balance) < totalAmount {
 		err = errors.ErrorTransactionExcessAbilityToPay
 		return
 	}
@@ -156,7 +156,7 @@ func (tx Transaction) GetType() string {
 	return tx.T
 }
 
-func (tx Transaction) Equal(m sebakcommon.Message) bool {
+func (tx Transaction) Equal(m common.Message) bool {
 	return tx.H.Hash == m.GetHash()
 }
 
@@ -167,10 +167,10 @@ func (tx Transaction) IsValidCheckpoint(checkpoint string) bool {
 
 	var err error
 	var inputCheckpoint, currentCheckpoint [2]string
-	if inputCheckpoint, err = sebakcommon.ParseCheckpoint(checkpoint); err != nil {
+	if inputCheckpoint, err = common.ParseCheckpoint(checkpoint); err != nil {
 		return false
 	}
-	if currentCheckpoint, err = sebakcommon.ParseCheckpoint(tx.B.Checkpoint); err != nil {
+	if currentCheckpoint, err = common.ParseCheckpoint(tx.B.Checkpoint); err != nil {
 		return false
 	}
 
@@ -194,10 +194,10 @@ func (tx Transaction) Source() string {
 // Params:
 //   withFee = If fee should be included in the total
 //
-func (tx Transaction) TotalAmount(withFee bool) sebakcommon.Amount {
+func (tx Transaction) TotalAmount(withFee bool) common.Amount {
 	// Note that the transaction shouldn't be constructed invalid
 	// (the sum of its Operations should not exceed the maximum supply)
-	var amount sebakcommon.Amount
+	var amount common.Amount
 	for _, op := range tx.B.Operations {
 		amount = amount.MustAdd(op.B.GetAmount())
 	}
@@ -222,7 +222,7 @@ func (tx Transaction) String() string {
 
 func (tx *Transaction) Sign(kp keypair.KP, networkID []byte) {
 	tx.H.Hash = tx.B.MakeHashString()
-	signature, _ := sebakcommon.MakeSignature(kp, networkID, tx.H.Hash)
+	signature, _ := common.MakeSignature(kp, networkID, tx.H.Hash)
 
 	tx.H.Signature = base58.Encode(signature)
 
@@ -235,13 +235,13 @@ func (tx *Transaction) Sign(kp keypair.KP, networkID []byte) {
 // <subtracted>: hash of last paid transaction, it means balance is subtracted
 // <added>: hash of last added transaction, it means balance is added
 func (tx Transaction) NextSourceCheckpoint() string {
-	return sebakcommon.MakeCheckpoint(tx.GetHash(), tx.GetHash())
+	return common.MakeCheckpoint(tx.GetHash(), tx.GetHash())
 }
 
 func (tx Transaction) NextTargetCheckpoint() string {
-	parsed, _ := sebakcommon.ParseCheckpoint(tx.B.Checkpoint)
+	parsed, _ := common.ParseCheckpoint(tx.B.Checkpoint)
 
-	return sebakcommon.MakeCheckpoint(parsed[0], tx.GetHash())
+	return common.MakeCheckpoint(parsed[0], tx.GetHash())
 }
 
 type TransactionHeader struct {
@@ -252,14 +252,14 @@ type TransactionHeader struct {
 }
 
 type TransactionBody struct {
-	Source     string             `json:"source"`
-	Fee        sebakcommon.Amount `json:"fee"`
-	Checkpoint string             `json:"checkpoint"`
-	Operations []Operation        `json:"operations"`
+	Source     string        `json:"source"`
+	Fee        common.Amount `json:"fee"`
+	Checkpoint string        `json:"checkpoint"`
+	Operations []Operation   `json:"operations"`
 }
 
 func (tb TransactionBody) MakeHash() []byte {
-	return sebakcommon.MustMakeObjectHash(tb)
+	return common.MustMakeObjectHash(tb)
 }
 
 func (tb TransactionBody) MakeHashString() string {

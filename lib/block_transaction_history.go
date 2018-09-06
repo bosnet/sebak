@@ -37,7 +37,7 @@ func NewTransactionHistoryFromTransaction(tx Transaction, message []byte) BlockT
 	return BlockTransactionHistory{
 		Hash:      tx.H.Hash,
 		Source:    tx.B.Source,
-		Confirmed: sebakcommon.NowISO8601(),
+		Confirmed: common.NowISO8601(),
 		Created:   tx.H.Created,
 		Message:   string(message),
 	}
@@ -48,7 +48,7 @@ func GetBlockTransactionHistoryKey(hash string) string {
 }
 
 func (bt BlockTransactionHistory) Serialize() (encoded []byte, err error) {
-	encoded, err = sebakcommon.EncodeJSONValue(bt)
+	encoded, err = common.EncodeJSONValue(bt)
 	return
 }
 func (bt *BlockTransactionHistory) Save(st *sebakstorage.LevelDBBackend) (err error) {
@@ -66,7 +66,7 @@ func (bt *BlockTransactionHistory) Save(st *sebakstorage.LevelDBBackend) (err er
 		return errors.ErrorBlockAlreadyExists
 	}
 
-	bt.Confirmed = sebakcommon.NowISO8601()
+	bt.Confirmed = common.NowISO8601()
 	if err = st.New(GetBlockTransactionHistoryKey(bt.Hash), bt); err != nil {
 		return
 	}

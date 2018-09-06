@@ -14,7 +14,7 @@ func TestMakeHashOfOperationBodyPayment(t *testing.T) {
 
 	opb := OperationBodyPayment{
 		Target: kp.Address(),
-		Amount: sebakcommon.Amount(100),
+		Amount: common.Amount(100),
 	}
 	op := Operation{
 		H: OperationHeader{Type: OperationPayment},

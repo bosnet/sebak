@@ -13,10 +13,10 @@ import (
 
 type OperationBodyCreateAccount struct {
 	Target string             `json:"target"`
-	Amount sebakcommon.Amount `json:"amount"`
+	Amount common.Amount `json:"amount"`
 }
 
-func NewOperationBodyCreateAccount(target string, amount sebakcommon.Amount) OperationBodyCreateAccount {
+func NewOperationBodyCreateAccount(target string, amount common.Amount) OperationBodyCreateAccount {
 	return OperationBodyCreateAccount{
 		Target: target,
 		Amount: amount,
@@ -50,7 +50,7 @@ func (o OperationBodyCreateAccount) TargetAddress() string {
 	return o.Target
 }
 
-func (o OperationBodyCreateAccount) GetAmount() sebakcommon.Amount {
+func (o OperationBodyCreateAccount) GetAmount() common.Amount {
 	return o.Amount
 }
 

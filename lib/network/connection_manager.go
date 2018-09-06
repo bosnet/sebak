@@ -17,7 +17,7 @@ type ConnectionManager struct {
 
 	localNode *node.LocalNode
 	network   Network
-	policy    sebakcommon.VotingThresholdPolicy
+	policy    common.VotingThresholdPolicy
 
 	validators map[ /* nodd.Address() */ string]*node.Validator
 	clients    map[ /* nodd.Address() */ string]NetworkClient
@@ -29,7 +29,7 @@ type ConnectionManager struct {
 func NewConnectionManager(
 	localNode *node.LocalNode,
 	network Network,
-	policy sebakcommon.VotingThresholdPolicy,
+	policy common.VotingThresholdPolicy,
 	validators map[string]*node.Validator,
 ) *ConnectionManager {
 	return &ConnectionManager{
@@ -164,7 +164,7 @@ func (c *ConnectionManager) ConnectionWatcher(t Network, conn net.Conn, state ht
 	return
 }
 
-func (c *ConnectionManager) Broadcast(message sebakcommon.Message) {
+func (c *ConnectionManager) Broadcast(message common.Message) {
 	for address, connected := range c.connected {
 		if connected {
 			go func(v string) {

@@ -1,7 +1,7 @@
 package trie
 
 import (
-	"boscoin.io/sebak/lib/common"
+	sebakcommon "boscoin.io/sebak/lib/common"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/trie"
 )

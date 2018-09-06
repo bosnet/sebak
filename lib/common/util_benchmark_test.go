@@ -1,4 +1,4 @@
-package sebakcommon
+package common
 
 import (
 	"math/rand"

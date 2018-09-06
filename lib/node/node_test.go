@@ -13,7 +13,7 @@ import (
 
 func TestNodeStateChange(t *testing.T) {
 	kp, _ := keypair.Random()
-	endpoint, err := sebakcommon.NewEndpointFromString(fmt.Sprintf("https://localhost:5000?NodeName=n1"))
+	endpoint, err := common.NewEndpointFromString(fmt.Sprintf("https://localhost:5000?NodeName=n1"))
 	require.Equal(t, nil, err)
 
 	node, _ := NewLocalNode(kp, endpoint, "")
@@ -36,7 +36,7 @@ func TestNodeStateChange(t *testing.T) {
 
 func TestNodeMarshalJSON(t *testing.T) {
 	kp, _ := keypair.Random()
-	endpoint, err := sebakcommon.NewEndpointFromString(fmt.Sprintf("https://localhost:5000?NodeName=n1"))
+	endpoint, err := common.NewEndpointFromString(fmt.Sprintf("https://localhost:5000?NodeName=n1"))
 	require.Equal(t, nil, err)
 
 	marshalNode, _ := NewLocalNode(kp, endpoint, "")
@@ -71,13 +71,13 @@ func TestNodeMarshalJSON(t *testing.T) {
 func TestNodeMarshalJSONWithValidator(t *testing.T) {
 	kp, _ := keypair.Random()
 
-	endpoint, err := sebakcommon.NewEndpointFromString(fmt.Sprintf("https://localhost:5000?NodeName=n1"))
+	endpoint, err := common.NewEndpointFromString(fmt.Sprintf("https://localhost:5000?NodeName=n1"))
 	require.Equal(t, nil, err)
 
-	endpoint2, err := sebakcommon.NewEndpointFromString(fmt.Sprintf("https://localhost:5001?NodeName=n2"))
+	endpoint2, err := common.NewEndpointFromString(fmt.Sprintf("https://localhost:5001?NodeName=n2"))
 	require.Equal(t, nil, err)
 
-	endpoint3, err := sebakcommon.NewEndpointFromString(fmt.Sprintf("https://localhost:5002?NodeName=n3"))
+	endpoint3, err := common.NewEndpointFromString(fmt.Sprintf("https://localhost:5002?NodeName=n3"))
 	require.Equal(t, nil, err)
 
 	kp2, _ := keypair.Random()

@@ -47,7 +47,7 @@ func NewConfigFromString(s string) (e *Config, err error) {
 		return
 	}
 
-	if _, found := sebakcommon.InStringArray(SupportedStorageType, u.Scheme); !found {
+	if _, found := common.InStringArray(SupportedStorageType, u.Scheme); !found {
 		err = errors.New("unsupported storage type")
 		return
 	}

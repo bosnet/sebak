@@ -109,8 +109,8 @@ func NewHTTP2Network(config HTTP2NetworkConfig) (h2n *HTTP2Network) {
 }
 
 // GetClient creates new keep-alive HTTP2 client
-func (t *HTTP2Network) GetClient(endpoint *sebakcommon.Endpoint) NetworkClient {
-	rawClient, _ := sebakcommon.NewHTTP2Client(defaultTimeout, 0, true)
+func (t *HTTP2Network) GetClient(endpoint *common.Endpoint) NetworkClient {
+	rawClient, _ := common.NewHTTP2Client(defaultTimeout, 0, true)
 
 	client := NewHTTP2NetworkClient(endpoint, rawClient)
 
@@ -121,7 +121,7 @@ func (t *HTTP2Network) GetClient(endpoint *sebakcommon.Endpoint) NetworkClient {
 	return client
 }
 
-func (t *HTTP2Network) Endpoint() *sebakcommon.Endpoint {
+func (t *HTTP2Network) Endpoint() *common.Endpoint {
 	return t.config.Endpoint
 }
 
@@ -183,7 +183,7 @@ func (t *HTTP2Network) Ready() error {
 }
 
 func (t *HTTP2Network) IsReady() bool {
-	client, err := sebakcommon.NewHTTP2Client(50*time.Millisecond, 50*time.Millisecond, false)
+	client, err := common.NewHTTP2Client(50*time.Millisecond, 50*time.Millisecond, false)
 	if err != nil {
 		return false
 	}

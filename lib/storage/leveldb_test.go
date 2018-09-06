@@ -362,7 +362,7 @@ func TestLevelDBIteratorReverseOrder(t *testing.T) {
 }
 
 func TestLevelDBBackendTransactionNew(t *testing.T) {
-	dbpath := fmt.Sprintf("/tmp/%s", sebakcommon.GetUniqueIDFromUUID())
+	dbpath := fmt.Sprintf("/tmp/%s", common.GetUniqueIDFromUUID())
 	defer os.RemoveAll(dbpath)
 
 	st, _ := NewTestFileLevelDBBackend(dbpath)
@@ -370,7 +370,7 @@ func TestLevelDBBackendTransactionNew(t *testing.T) {
 
 	ts, _ := st.OpenTransaction()
 
-	key0 := sebakcommon.GetUniqueIDFromUUID()
+	key0 := common.GetUniqueIDFromUUID()
 	value0 := "findme"
 	if err := ts.New(key0, value0); err != nil {
 		t.Error(err)
@@ -403,7 +403,7 @@ func TestLevelDBBackendTransactionNew(t *testing.T) {
 }
 
 func TestLevelDBBackendTransactionDiscard(t *testing.T) {
-	dbpath := fmt.Sprintf("/tmp/%s", sebakcommon.GetUniqueIDFromUUID())
+	dbpath := fmt.Sprintf("/tmp/%s", common.GetUniqueIDFromUUID())
 	defer os.RemoveAll(dbpath)
 
 	st, _ := NewTestFileLevelDBBackend(dbpath)
@@ -411,7 +411,7 @@ func TestLevelDBBackendTransactionDiscard(t *testing.T) {
 
 	ts, _ := st.OpenTransaction()
 
-	key0 := sebakcommon.GetUniqueIDFromUUID()
+	key0 := common.GetUniqueIDFromUUID()
 	value0 := "findme"
 	if err := ts.New(key0, value0); err != nil {
 		t.Error(err)

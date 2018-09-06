@@ -11,13 +11,13 @@ import (
 )
 
 type TransactionChecker struct {
-	sebakcommon.DefaultChecker
+	common.DefaultChecker
 
 	NetworkID   []byte
 	Transaction Transaction
 }
 
-func CheckTransactionSource(c sebakcommon.Checker, args ...interface{}) (err error) {
+func CheckTransactionSource(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*TransactionChecker)
 	if _, err = keypair.Parse(checker.Transaction.B.Source); err != nil {
 		err = errors.ErrorBadPublicAddress
@@ -27,9 +27,9 @@ func CheckTransactionSource(c sebakcommon.Checker, args ...interface{}) (err err
 	return
 }
 
-func CheckTransactionCheckpoint(c sebakcommon.Checker, args ...interface{}) (err error) {
+func CheckTransactionCheckpoint(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*TransactionChecker)
-	if _, err = sebakcommon.ParseCheckpoint(checker.Transaction.B.Checkpoint); err != nil {
+	if _, err = common.ParseCheckpoint(checker.Transaction.B.Checkpoint); err != nil {
 		err = errors.ErrorTransactionInvalidCheckpoint
 		return
 	}
@@ -37,7 +37,7 @@ func CheckTransactionCheckpoint(c sebakcommon.Checker, args ...interface{}) (err
 	return
 }
 
-func CheckTransactionBaseFee(c sebakcommon.Checker, args ...interface{}) (err error) {
+func CheckTransactionBaseFee(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*TransactionChecker)
 	if checker.Transaction.B.Fee < BaseFee {
 		err = errors.ErrorInvalidFee
@@ -47,7 +47,7 @@ func CheckTransactionBaseFee(c sebakcommon.Checker, args ...interface{}) (err er
 	return
 }
 
-func CheckTransactionOperation(c sebakcommon.Checker, args ...interface{}) (err error) {
+func CheckTransactionOperation(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*TransactionChecker)
 
 	if len(checker.Transaction.B.Operations) < 1 {
@@ -67,7 +67,7 @@ func CheckTransactionOperation(c sebakcommon.Checker, args ...interface{}) (err 
 		// if there are multiple operations which has same 'Type' and same
 		// 'TargetAddress()', this transaction will be invalid.
 		u := fmt.Sprintf("%s-%s", op.H.Type, op.B.TargetAddress())
-		if _, found := sebakcommon.InStringArray(hashes, u); found {
+		if _, found := common.InStringArray(hashes, u); found {
 			err = errors.ErrorDuplicatedOperation
 			return
 		}
@@ -78,7 +78,7 @@ func CheckTransactionOperation(c sebakcommon.Checker, args ...interface{}) (err 
 	return
 }
 
-func CheckTransactionVerifySignature(c sebakcommon.Checker, args ...interface{}) (err error) {
+func CheckTransactionVerifySignature(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*TransactionChecker)
 
 	var kp keypair.KP
@@ -95,7 +95,7 @@ func CheckTransactionVerifySignature(c sebakcommon.Checker, args ...interface{})
 	return
 }
 
-func CheckTransactionHashMatch(c sebakcommon.Checker, args ...interface{}) (err error) {
+func CheckTransactionHashMatch(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*TransactionChecker)
 	if checker.Transaction.H.Hash != checker.Transaction.B.MakeHashString() {
 		err = errors.ErrorHashDoesNotMatch

@@ -20,7 +20,7 @@ import (
 )
 
 type MessageChecker struct {
-	sebakcommon.DefaultChecker
+	common.DefaultChecker
 
 	NodeRunner *NodeRunner
 	LocalNode  *node.LocalNode
@@ -32,7 +32,7 @@ type MessageChecker struct {
 
 // TransactionUnmarshal makes `Transaction` from
 // incoming `network.Message`.
-func TransactionUnmarshal(c sebakcommon.Checker, args ...interface{}) (err error) {
+func TransactionUnmarshal(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*MessageChecker)
 
 	var tx Transaction
@@ -52,7 +52,7 @@ func TransactionUnmarshal(c sebakcommon.Checker, args ...interface{}) (err error
 
 // HasTransaction checks transaction is in
 // `TransactionPool`.
-func HasTransaction(c sebakcommon.Checker, args ...interface{}) (err error) {
+func HasTransaction(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*MessageChecker)
 
 	consensus := checker.NodeRunner.Consensus()
@@ -66,7 +66,7 @@ func HasTransaction(c sebakcommon.Checker, args ...interface{}) (err error) {
 
 // SaveTransactionHistory checks transaction is in
 // `BlockTransactionHistory`, which has the received transaction recently.
-func SaveTransactionHistory(c sebakcommon.Checker, args ...interface{}) (err error) {
+func SaveTransactionHistory(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*MessageChecker)
 
 	var found bool
@@ -88,7 +88,7 @@ func SaveTransactionHistory(c sebakcommon.Checker, args ...interface{}) (err err
 
 // SameSource checks there are transactions which has same source in the
 // `TransactionPool`.
-func MessageHasSameSource(c sebakcommon.Checker, args ...interface{}) (err error) {
+func MessageHasSameSource(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*MessageChecker)
 
 	if checker.NodeRunner.Consensus().TransactionPool.IsSameSource(checker.Transaction.Source()) {
@@ -100,7 +100,7 @@ func MessageHasSameSource(c sebakcommon.Checker, args ...interface{}) (err error
 }
 
 // MessageValidate validates.
-func MessageValidate(c sebakcommon.Checker, args ...interface{}) (err error) {
+func MessageValidate(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*MessageChecker)
 
 	if err = checker.Transaction.Validate(checker.NodeRunner.Storage()); err != nil {
@@ -112,7 +112,7 @@ func MessageValidate(c sebakcommon.Checker, args ...interface{}) (err error) {
 
 // PushIntoTransactionPool add the incoming
 // transactions into `TransactionPool`.
-func PushIntoTransactionPool(c sebakcommon.Checker, args ...interface{}) (err error) {
+func PushIntoTransactionPool(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*MessageChecker)
 
 	tx := checker.Transaction
@@ -126,7 +126,7 @@ func PushIntoTransactionPool(c sebakcommon.Checker, args ...interface{}) (err er
 
 // BroadcastTransaction broadcasts the incoming
 // transaction to the other nodes.
-func BroadcastTransaction(c sebakcommon.Checker, args ...interface{}) (err error) {
+func BroadcastTransaction(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*MessageChecker)
 
 	checker.NodeRunner.Log().Debug("transaction from client will be broadcasted", "transaction", checker.Transaction.GetHash())

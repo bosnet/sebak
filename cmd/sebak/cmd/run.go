@@ -32,32 +32,32 @@ const defaultHost string = "0.0.0.0"
 const defaultLogLevel logging.Lvl = logging.LvlInfo
 
 var (
-	flagKPSecretSeed   string = sebakcommon.GetENVValue("SEBAK_SECRET_SEED", "")
-	flagNetworkID      string = sebakcommon.GetENVValue("SEBAK_NETWORK_ID", "")
-	flagLogLevel       string = sebakcommon.GetENVValue("SEBAK_LOG_LEVEL", defaultLogLevel.String())
-	flagLogOutput      string = sebakcommon.GetENVValue("SEBAK_LOG_OUTPUT", "")
-	flagVerbose        bool   = sebakcommon.GetENVValue("SEBAK_VERBOSE", "0") == "1"
-	flagEndpointString string = sebakcommon.GetENVValue(
+	flagKPSecretSeed   string = common.GetENVValue("SEBAK_SECRET_SEED", "")
+	flagNetworkID      string = common.GetENVValue("SEBAK_NETWORK_ID", "")
+	flagLogLevel       string = common.GetENVValue("SEBAK_LOG_LEVEL", defaultLogLevel.String())
+	flagLogOutput      string = common.GetENVValue("SEBAK_LOG_OUTPUT", "")
+	flagVerbose        bool   = common.GetENVValue("SEBAK_VERBOSE", "0") == "1"
+	flagEndpointString string = common.GetENVValue(
 		"SEBAK_ENDPOINT",
 		fmt.Sprintf("%s://%s:%d", defaultNetwork, defaultHost, defaultPort),
 	)
 	flagStorageConfigString string
-	flagTLSCertFile         string = sebakcommon.GetENVValue("SEBAK_TLS_CERT", "sebak.crt")
-	flagTLSKeyFile          string = sebakcommon.GetENVValue("SEBAK_TLS_KEY", "sebak.key")
-	flagValidators          string = sebakcommon.GetENVValue("SEBAK_VALIDATORS", "")
-	flagThreshold           string = sebakcommon.GetENVValue("SEBAK_THRESHOLD", "66")
-	flagTimeoutINIT         string = sebakcommon.GetENVValue("SEBAK_TIMEOUT_INIT", "2")
-	flagTimeoutSIGN         string = sebakcommon.GetENVValue("SEBAK_TIMEOUT_SIGN", "2")
-	flagTimeoutACCEPT       string = sebakcommon.GetENVValue("SEBAK_TIMEOUT_ACCEPT", "2")
-	flagTimeoutALLCONFIRM   string = sebakcommon.GetENVValue("SEBAK_TIMEOUT_ALLCONFIRM", "2")
-	flagTransactionsLimit   string = sebakcommon.GetENVValue("SEBAK_TRANSACTIONS_LIMIT", "1000")
+	flagTLSCertFile         string = common.GetENVValue("SEBAK_TLS_CERT", "sebak.crt")
+	flagTLSKeyFile          string = common.GetENVValue("SEBAK_TLS_KEY", "sebak.key")
+	flagValidators          string = common.GetENVValue("SEBAK_VALIDATORS", "")
+	flagThreshold           string = common.GetENVValue("SEBAK_THRESHOLD", "66")
+	flagTimeoutINIT         string = common.GetENVValue("SEBAK_TIMEOUT_INIT", "2")
+	flagTimeoutSIGN         string = common.GetENVValue("SEBAK_TIMEOUT_SIGN", "2")
+	flagTimeoutACCEPT       string = common.GetENVValue("SEBAK_TIMEOUT_ACCEPT", "2")
+	flagTimeoutALLCONFIRM   string = common.GetENVValue("SEBAK_TIMEOUT_ALLCONFIRM", "2")
+	flagTransactionsLimit   string = common.GetENVValue("SEBAK_TRANSACTIONS_LIMIT", "1000")
 )
 
 var (
 	nodeCmd *cobra.Command
 
 	kp                *keypair.Full
-	nodeEndpoint      *sebakcommon.Endpoint
+	nodeEndpoint      *common.Endpoint
 	storageConfig     *sebakstorage.Config
 	validators        []*node.Validator
 	threshold         int
@@ -117,7 +117,7 @@ func init() {
 	if currentDirectory, err = filepath.Abs(currentDirectory); err != nil {
 		cmdcommon.PrintFlagsError(nodeCmd, "--storage", err)
 	}
-	flagStorageConfigString = sebakcommon.GetENVValue("SEBAK_STORAGE", fmt.Sprintf("file://%s/db", currentDirectory))
+	flagStorageConfigString = common.GetENVValue("SEBAK_STORAGE", fmt.Sprintf("file://%s/db", currentDirectory))
 
 	nodeCmd.Flags().StringVar(&flagGenesis, "genesis", flagGenesis, "performs the 'genesis' command before running node. Syntax: key[,balance]")
 	nodeCmd.Flags().StringVar(&flagKPSecretSeed, "secret-seed", flagKPSecretSeed, "secret seed of this node")
@@ -178,7 +178,7 @@ func parseFlagsNode() {
 		kp = parsedKP.(*keypair.Full)
 	}
 
-	if p, err := sebakcommon.ParseEndpoint(flagEndpointString); err != nil {
+	if p, err := common.ParseEndpoint(flagEndpointString); err != nil {
 		cmdcommon.PrintFlagsError(nodeCmd, "--endpoint", err)
 	} else {
 		nodeEndpoint = p

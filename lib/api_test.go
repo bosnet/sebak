@@ -54,7 +54,7 @@ func TestGetAccountHandler(t *testing.T) {
 	go func() {
 		// Makes Some Events
 		for n := 1; n < 20; n++ {
-			newBalance := ba.GetBalance().MustAdd(sebakcommon.Amount(n))
+			newBalance := ba.GetBalance().MustAdd(common.Amount(n))
 			ba.Balance = newBalance.String()
 			ba.Save(storage)
 			if n <= 10 {
@@ -65,7 +65,7 @@ func TestGetAccountHandler(t *testing.T) {
 	}()
 
 	// Do stream Request to the Server
-	var n sebakcommon.Amount
+	var n common.Amount
 	for n = 0; n < 10; n++ {
 		<-recv
 		line, err := reader.ReadBytes('\n')
@@ -196,7 +196,7 @@ func TestGetAccountTransactionsHandler(t *testing.T) {
 	}()
 
 	// Do stream Request to the Server
-	var n sebakcommon.Amount
+	var n common.Amount
 	for n = 0; n < 10; n++ {
 		<-recv
 		line, err := reader.ReadBytes('\n')
@@ -308,7 +308,7 @@ func TestGetAccountOperationsHandler(t *testing.T) {
 	}()
 
 	// Do stream Request to the Server
-	var n sebakcommon.Amount
+	var n common.Amount
 	for n = 0; n < 10; n++ {
 		<-recv
 		line, err := reader.ReadBytes('\n')

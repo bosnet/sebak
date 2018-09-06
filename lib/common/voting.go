@@ -1,4 +1,4 @@
-package sebakcommon
+package common
 
 type VotingHole string
 

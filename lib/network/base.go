@@ -20,8 +20,8 @@ const (
 )
 
 type Network interface {
-	Endpoint() *sebakcommon.Endpoint
-	GetClient(endpoint *sebakcommon.Endpoint) NetworkClient
+	Endpoint() *common.Endpoint
+	GetClient(endpoint *common.Endpoint) NetworkClient
 	AddWatcher(func(Network, net.Conn, http.ConnState))
 	AddHandler(string, http.HandlerFunc) *mux.Route
 
@@ -36,7 +36,7 @@ type Network interface {
 	ReceiveMessage() <-chan Message
 }
 
-func NewNetwork(endpoint *sebakcommon.Endpoint) (n Network, err error) {
+func NewNetwork(endpoint *common.Endpoint) (n Network, err error) {
 	switch endpoint.Scheme {
 	case "memory":
 		n = NewMemoryNetwork()
@@ -53,12 +53,12 @@ func NewNetwork(endpoint *sebakcommon.Endpoint) (n Network, err error) {
 }
 
 type NetworkClient interface {
-	Endpoint() *sebakcommon.Endpoint
+	Endpoint() *common.Endpoint
 
 	Connect(node node.Node) ([]byte, error)
 	GetNodeInfo() ([]byte, error)
-	SendMessage(sebakcommon.Serializable) ([]byte, error)
-	SendBallot(sebakcommon.Serializable) ([]byte, error)
+	SendMessage(common.Serializable) ([]byte, error)
+	SendBallot(common.Serializable) ([]byte, error)
 }
 
 type MessageType string

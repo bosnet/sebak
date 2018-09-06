@@ -29,12 +29,12 @@ func NewBallot(localNode *node.LocalNode, round round.Round, transactions []stri
 			Round:        round,
 			Transactions: transactions,
 		},
-		State: sebakcommon.BallotStateINIT,
-		Vote:  sebakcommon.VotingNOTYET,
+		State: common.BallotStateINIT,
+		Vote:  common.VotingNOTYET,
 	}
 
 	if len(transactions) < 1 {
-		body.Vote = sebakcommon.VotingYES
+		body.Vote = common.VotingYES
 	}
 
 	b = &Ballot{
@@ -83,10 +83,10 @@ func (b Ballot) IsWellFormed(networkID []byte) (err error) {
 	}
 
 	var confirmed, proposerConfirmed time.Time
-	if confirmed, err = sebakcommon.ParseISO8601(b.B.Confirmed); err != nil {
+	if confirmed, err = common.ParseISO8601(b.B.Confirmed); err != nil {
 		return
 	}
-	if proposerConfirmed, err = sebakcommon.ParseISO8601(b.ProposerConfirmed()); err != nil {
+	if proposerConfirmed, err = common.ParseISO8601(b.ProposerConfirmed()); err != nil {
 		return
 	}
 
@@ -109,7 +109,7 @@ func (b Ballot) IsWellFormed(networkID []byte) (err error) {
 	return
 }
 
-func (b Ballot) Equal(m sebakcommon.Message) bool {
+func (b Ballot) Equal(m common.Message) bool {
 	return b.H.Hash == m.GetHash()
 }
 
@@ -137,7 +137,7 @@ func (b Ballot) ProposerConfirmed() string {
 	return b.B.Proposed.Confirmed
 }
 
-func (b Ballot) Vote() sebakcommon.VotingHole {
+func (b Ballot) Vote() common.VotingHole {
 	return b.B.Vote
 }
 
@@ -145,7 +145,7 @@ func (b *Ballot) SetSource(source string) {
 	b.B.Source = source
 }
 
-func (b *Ballot) SetVote(state sebakcommon.BallotState, vote sebakcommon.VotingHole) {
+func (b *Ballot) SetVote(state common.BallotState, vote common.VotingHole) {
 	b.B.State = state
 	b.B.Vote = vote
 }
@@ -160,16 +160,16 @@ func (b *Ballot) TransactionsLength() int {
 
 func (b *Ballot) Sign(kp keypair.KP, networkID []byte) {
 	if kp.Address() == b.B.Proposed.Proposer {
-		b.B.Proposed.Confirmed = sebakcommon.NowISO8601()
-		hash := sebakcommon.MustMakeObjectHash(b.B.Proposed)
-		signature, _ := sebakcommon.MakeSignature(kp, networkID, string(hash))
+		b.B.Proposed.Confirmed = common.NowISO8601()
+		hash := common.MustMakeObjectHash(b.B.Proposed)
+		signature, _ := common.MakeSignature(kp, networkID, string(hash))
 		b.H.ProposerSignature = base58.Encode(signature)
 	}
 
-	b.B.Confirmed = sebakcommon.NowISO8601()
+	b.B.Confirmed = common.NowISO8601()
 	b.B.Source = kp.Address()
 	b.H.Hash = b.B.MakeHashString()
-	signature, _ := sebakcommon.MakeSignature(kp, networkID, b.H.Hash)
+	signature, _ := common.MakeSignature(kp, networkID, b.H.Hash)
 	b.H.Signature = base58.Encode(signature)
 
 	return
@@ -181,7 +181,7 @@ func (b Ballot) Verify(networkID []byte) (err error) {
 		return
 	}
 	err = kp.Verify(
-		append(networkID, sebakcommon.MustMakeObjectHash(b.B.Proposed)...),
+		append(networkID, common.MustMakeObjectHash(b.B.Proposed)...),
 		base58.Decode(b.H.ProposerSignature),
 	)
 	if err != nil {
@@ -206,7 +206,7 @@ func (b Ballot) IsFromProposer() bool {
 	return b.B.Source == b.B.Proposed.Proposer
 }
 
-func (b Ballot) State() sebakcommon.BallotState {
+func (b Ballot) State() common.BallotState {
 	return b.B.State
 }
 
@@ -224,16 +224,16 @@ type BallotBodyProposed struct {
 }
 
 type BallotBody struct {
-	Confirmed string                  `json:"confirmed"` // created time, ISO8601
-	Proposed  BallotBodyProposed      `json:"proposed"`
-	Source    string                  `json:"source"`
-	State     sebakcommon.BallotState `json:"state"`
-	Vote      sebakcommon.VotingHole  `json:"vote"`
-	Reason    *errors.Error           `json:"reason"`
+	Confirmed string             `json:"confirmed"` // created time, ISO8601
+	Proposed  BallotBodyProposed `json:"proposed"`
+	Source    string             `json:"source"`
+	State     common.BallotState `json:"state"`
+	Vote      common.VotingHole  `json:"vote"`
+	Reason    *errors.Error      `json:"reason"`
 }
 
 func (rb BallotBody) MakeHash() []byte {
-	return sebakcommon.MustMakeObjectHash(rb)
+	return common.MustMakeObjectHash(rb)
 }
 
 func (rb BallotBody) MakeHashString() string {

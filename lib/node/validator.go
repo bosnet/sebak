@@ -21,7 +21,7 @@ import (
 type ValidatorFromJSON struct {
 	Alias    string                `json:"alias"`
 	Address  string                `json:"address"`
-	Endpoint *sebakcommon.Endpoint `json:"endpoint"`
+	Endpoint *common.Endpoint `json:"endpoint"`
 	State    NodeState             `json:"state"`
 }
 
@@ -31,7 +31,7 @@ type Validator struct {
 	state    NodeState
 	alias    string
 	address  string
-	endpoint *sebakcommon.Endpoint
+	endpoint *common.Endpoint
 }
 
 func (v *Validator) String() string {
@@ -89,7 +89,7 @@ func (v *Validator) SetAlias(s string) {
 	v.alias = s
 }
 
-func (v *Validator) Endpoint() *sebakcommon.Endpoint {
+func (v *Validator) Endpoint() *common.Endpoint {
 	return v.endpoint
 }
 
@@ -120,7 +120,7 @@ func (v *Validator) Serialize() ([]byte, error) {
 	return json.Marshal(v)
 }
 
-func NewValidator(address string, endpoint *sebakcommon.Endpoint, alias string) (v *Validator, err error) {
+func NewValidator(address string, endpoint *common.Endpoint, alias string) (v *Validator, err error) {
 	if len(alias) < 1 {
 		alias = MakeAlias(address)
 	}
@@ -154,8 +154,8 @@ func NewValidatorFromURI(v string) (validator *Validator, err error) {
 		return
 	}
 
-	var endpoint *sebakcommon.Endpoint
-	endpoint, err = sebakcommon.ParseEndpoint(
+	var endpoint *common.Endpoint
+	endpoint, err = common.ParseEndpoint(
 		fmt.Sprintf("%s://%s%s", parsed.Scheme, parsed.Host, parsed.Path),
 	)
 	if err != nil {

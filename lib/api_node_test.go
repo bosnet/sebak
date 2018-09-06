@@ -66,7 +66,7 @@ func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, mn *network.HTTP2Net
 	g := network.NewKeyGenerator(dirPath, certPath, keyPath)
 
 	var config network.HTTP2NetworkConfig
-	endpoint, err := sebakcommon.NewEndpointFromString(fmt.Sprintf("https://localhost:%s?NodeName=n1", getPort()))
+	endpoint, err := common.NewEndpointFromString(fmt.Sprintf("https://localhost:%s?NodeName=n1", getPort()))
 	if err != nil {
 		t.Error(err)
 		return
@@ -92,7 +92,7 @@ func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, mn *network.HTTP2Net
 	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
 	// Make the latest block
 	{
-		checkpoint := sebakcommon.MakeGenesisCheckpoint(networkID)
+		checkpoint := common.MakeGenesisCheckpoint(networkID)
 		address := kp.Address()
 		balance := BaseFee.MustAdd(BaseFee)
 		account := block.NewBlockAccount(address, balance, checkpoint)

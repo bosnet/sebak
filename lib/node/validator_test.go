@@ -79,7 +79,7 @@ func TestParseValidatorFromURI(t *testing.T) {
 func TestValidatorMarshalJSON(t *testing.T) {
 	kp, _ := keypair.Random()
 
-	endpoint, err := sebakcommon.NewEndpointFromString(fmt.Sprintf("https://localhost:5000?NodeName=n1"))
+	endpoint, err := common.NewEndpointFromString(fmt.Sprintf("https://localhost:5000?NodeName=n1"))
 	require.Equal(t, nil, err)
 
 	validator, _ := NewValidator(kp.Address(), endpoint, "v1")
@@ -109,7 +109,7 @@ func TestValidatorNewValidatorFromString(t *testing.T) {
 func TestValidatorUnMarshalJSON(t *testing.T) {
 	kp, _ := keypair.Random()
 
-	endpoint, err := sebakcommon.NewEndpointFromString(fmt.Sprintf("https://localhost:5000?NodeName=n1"))
+	endpoint, err := common.NewEndpointFromString(fmt.Sprintf("https://localhost:5000?NodeName=n1"))
 	require.Equal(t, nil, err)
 
 	validator, _ := NewValidator(kp.Address(), endpoint, "node")

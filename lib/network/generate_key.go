@@ -49,7 +49,7 @@ func NewKeyGenerator(dirPath, certPath, keyPath string) *KeyGenerator {
 	p.certPath = fmt.Sprintf("%s/%s", dirPath, certPath)
 	p.keyPath = fmt.Sprintf("%s/%s", dirPath, keyPath)
 
-	if !sebakcommon.IsExists(p.certPath) || !sebakcommon.IsExists(p.keyPath) {
+	if !common.IsExists(p.certPath) || !common.IsExists(p.keyPath) {
 		GenerateKey(p.dirPath, p.certPath, p.keyPath)
 	}
 
@@ -67,13 +67,13 @@ func (g *KeyGenerator) GetKeyPath() string {
 func (g *KeyGenerator) Close() {
 	remove(g.keyPath)
 	remove(g.certPath)
-	if res, _ := sebakcommon.IsEmpty(g.dirPath); res {
+	if res, _ := common.IsEmpty(g.dirPath); res {
 		remove(g.dirPath)
 	}
 }
 
 func GenerateKey(dirPath, certPath, keyPath string) {
-	if sebakcommon.IsNotExists(dirPath) {
+	if common.IsNotExists(dirPath) {
 		os.Mkdir(dirPath, 0755)
 	}
 

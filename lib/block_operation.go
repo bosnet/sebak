@@ -34,7 +34,7 @@ type BlockOperation struct {
 	Type   OperationType
 	Source string
 	Target string
-	Amount sebakcommon.Amount
+	Amount common.Amount
 
 	// transaction will be used only for `Save` time.
 	transaction Transaction
@@ -100,7 +100,7 @@ func (bo *BlockOperation) Save(st *sebakstorage.LevelDBBackend) (err error) {
 }
 
 func (bo BlockOperation) Serialize() (encoded []byte, err error) {
-	encoded, err = sebakcommon.EncodeJSONValue(bo)
+	encoded, err = common.EncodeJSONValue(bo)
 	return
 }
 
@@ -136,7 +136,7 @@ func (bo BlockOperation) NewBlockOperationTxHashKey() string {
 	return fmt.Sprintf(
 		"%s%s",
 		GetBlockOperationKeyPrefixTxHash(bo.TxHash),
-		sebakcommon.GetUniqueIDFromUUID(),
+		common.GetUniqueIDFromUUID(),
 	)
 }
 
@@ -144,7 +144,7 @@ func (bo BlockOperation) NewBlockOperationSourceKey() string {
 	return fmt.Sprintf(
 		"%s%s",
 		GetBlockOperationKeyPrefixSource(bo.Source),
-		sebakcommon.GetUniqueIDFromUUID(),
+		common.GetUniqueIDFromUUID(),
 	)
 }
 
@@ -152,7 +152,7 @@ func (bo BlockOperation) NewBlockOperationTargetKey() string {
 	return fmt.Sprintf(
 		"%s%s",
 		GetBlockOperationKeyPrefixTarget(bo.Target),
-		sebakcommon.GetUniqueIDFromUUID(),
+		common.GetUniqueIDFromUUID(),
 	)
 }
 
@@ -160,7 +160,7 @@ func (bo BlockOperation) NewBlockOperationCheckpoint() string {
 	return fmt.Sprintf(
 		"%s%s",
 		GetBlockOperationKeyPrefixCheckpoint(bo.transaction.B.Checkpoint),
-		sebakcommon.GetUniqueIDFromUUID(),
+		common.GetUniqueIDFromUUID(),
 	)
 }
 
@@ -170,7 +170,7 @@ func (bo BlockOperation) NewBlockOperationPeersKey() string {
 	return fmt.Sprintf(
 		"%s%s",
 		GetBlockOperationKeyPrefixPeers(addresses[0], addresses[1]),
-		sebakcommon.GetUniqueIDFromUUID(),
+		common.GetUniqueIDFromUUID(),
 	)
 }
 

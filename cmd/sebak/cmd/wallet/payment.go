@@ -18,7 +18,7 @@ import (
 )
 
 var (
-	flagNetworkID     string = sebakcommon.GetENVValue("SEBAK_NETWORK_ID", "")
+	flagNetworkID     string = common.GetENVValue("SEBAK_NETWORK_ID", "")
 	PaymentCmd        *cobra.Command
 	flagEndpoint      string
 	flagCreateAccount bool
@@ -33,11 +33,11 @@ func init() {
 		Args:  cobra.ExactArgs(3),
 		Run: func(c *cobra.Command, args []string) {
 			var err error
-			var amount sebakcommon.Amount
-			var newBalance sebakcommon.Amount
+			var amount common.Amount
+			var newBalance common.Amount
 			var sender keypair.KP
 			var receiver keypair.KP
-			var endpoint *sebakcommon.Endpoint
+			var endpoint *common.Endpoint
 
 			// Receiver's public key
 			if receiver, err = keypair.Parse(args[0]); err != nil {
@@ -63,7 +63,7 @@ func init() {
 				cmdcommon.PrintFlagsError(c, "--network-id", fmt.Errorf("A --network-id needs to be provided"))
 			}
 
-			if endpoint, err = sebakcommon.ParseEndpoint(flagEndpoint); err != nil {
+			if endpoint, err = common.ParseEndpoint(flagEndpoint); err != nil {
 				cmdcommon.PrintFlagsError(c, "--endpoint", err)
 			}
 
@@ -72,11 +72,11 @@ func init() {
 			// At the moment this is a rather crude implementation: There is no support for pooling of transaction,
 			// 1 operation == 1 transaction
 			var tx sebak.Transaction
-			var connection *sebakcommon.HTTP2Client
+			var connection *common.HTTP2Client
 			var senderAccount block.BlockAccount
 
 			// Keep-alive ignores timeout/idle timeout
-			if connection, err = sebakcommon.NewHTTP2Client(0, 0, true); err != nil {
+			if connection, err = common.NewHTTP2Client(0, 0, true); err != nil {
 				log.Fatal("Error while creating network client: ", err)
 				os.Exit(1)
 			}
@@ -93,7 +93,7 @@ func init() {
 
 			// Check that account's balance is enough before sending the transaction
 			{
-				newBalance, err = sebakcommon.MustAmountFromString(senderAccount.Balance).Sub(amount)
+				newBalance, err = common.MustAmountFromString(senderAccount.Balance).Sub(amount)
 				if err == nil {
 					newBalance, err = newBalance.Sub(sebak.BaseFee)
 				}
@@ -157,7 +157,7 @@ func init() {
 /// Returns:
 ///   `sebak.Transaction` = The generated `Transaction` creating the account
 ///
-func makeTransactionCreateAccount(kpSource keypair.KP, kpDest keypair.KP, amount sebakcommon.Amount, chkp string) sebak.Transaction {
+func makeTransactionCreateAccount(kpSource keypair.KP, kpDest keypair.KP, amount common.Amount, chkp string) sebak.Transaction {
 	opb := sebak.NewOperationBodyCreateAccount(kpDest.Address(), amount)
 
 	op := sebak.Operation{
@@ -177,7 +177,7 @@ func makeTransactionCreateAccount(kpSource keypair.KP, kpDest keypair.KP, amount
 	tx := sebak.Transaction{
 		T: "transaction",
 		H: sebak.TransactionHeader{
-			Created: sebakcommon.NowISO8601(),
+			Created: common.NowISO8601(),
 			Hash:    txBody.MakeHashString(),
 		},
 		B: txBody,
@@ -201,7 +201,7 @@ func makeTransactionCreateAccount(kpSource keypair.KP, kpDest keypair.KP, amount
 /// Returns:
 ///  `sebak.Transaction` = The generated `Transaction` to do a payment
 ///
-func makeTransactionPayment(kpSource keypair.KP, kpDest keypair.KP, amount sebakcommon.Amount, chkp string) sebak.Transaction {
+func makeTransactionPayment(kpSource keypair.KP, kpDest keypair.KP, amount common.Amount, chkp string) sebak.Transaction {
 	opb := sebak.NewOperationBodyPayment(kpDest.Address(), amount)
 
 	op := sebak.Operation{
@@ -213,7 +213,7 @@ func makeTransactionPayment(kpSource keypair.KP, kpDest keypair.KP, amount sebak
 
 	txBody := sebak.TransactionBody{
 		Source:     kpSource.Address(),
-		Fee:        sebakcommon.Amount(sebak.BaseFee),
+		Fee:        common.Amount(sebak.BaseFee),
 		Checkpoint: chkp,
 		Operations: []sebak.Operation{op},
 	}
@@ -221,7 +221,7 @@ func makeTransactionPayment(kpSource keypair.KP, kpDest keypair.KP, amount sebak
 	tx := sebak.Transaction{
 		T: "transaction",
 		H: sebak.TransactionHeader{
-			Created: sebakcommon.NowISO8601(),
+			Created: common.NowISO8601(),
 			Hash:    txBody.MakeHashString(),
 		},
 		B: txBody,

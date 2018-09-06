@@ -35,7 +35,7 @@ func getPort() string {
 	return testPort
 }
 
-func makeTestHTTP2NetworkForTLS(endpoint *sebakcommon.Endpoint) (network *HTTP2Network, err error) {
+func makeTestHTTP2NetworkForTLS(endpoint *common.Endpoint) (network *HTTP2Network, err error) {
 	var config HTTP2NetworkConfig
 	if config, err = NewHTTP2NetworkConfigFromEndpoint(endpoint); err != nil {
 		return
@@ -86,7 +86,7 @@ func TestHTTP2NetworkTLSSupport(t *testing.T) {
 	queryValues.Set("TLSCertFile", g.GetCertPath())
 	queryValues.Set("TLSKeyFile", g.GetKeyPath())
 
-	endpoint := &sebakcommon.Endpoint{
+	endpoint := &common.Endpoint{
 		Scheme:   "https",
 		Host:     fmt.Sprintf("localhost:%s", getPort()),
 		RawQuery: queryValues.Encode(),
@@ -98,7 +98,7 @@ func TestHTTP2NetworkTLSSupport(t *testing.T) {
 
 	{
 		// with normal HTTP2Client
-		client, err := sebakcommon.NewHTTP2Client(
+		client, err := common.NewHTTP2Client(
 			defaultTimeout,
 			defaultIdleTimeout,
 			false,
@@ -126,7 +126,7 @@ func TestHTTP2NetworkTLSSupport(t *testing.T) {
 // Without TLS configurations, `TLSCertFile`, `TLSKeyFile`, `HTTP2Network`
 // will be `HTTP` server, not `HTTPS`.
 func TestHTTP2NetworkWithoutTLS(t *testing.T) {
-	endpoint, err := sebakcommon.NewEndpointFromString(
+	endpoint, err := common.NewEndpointFromString(
 		fmt.Sprintf("http://localhost:%s?NodeName=showme", getPort()),
 	)
 	require.Nil(t, err)
@@ -137,7 +137,7 @@ func TestHTTP2NetworkWithoutTLS(t *testing.T) {
 
 	{
 		// with normal HTTP2Client
-		client, err := sebakcommon.NewHTTP2Client(
+		client, err := common.NewHTTP2Client(
 			defaultTimeout,
 			defaultIdleTimeout,
 			false,

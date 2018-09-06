@@ -14,10 +14,10 @@ import (
 
 type OperationBodyPayment struct {
 	Target string             `json:"target"`
-	Amount sebakcommon.Amount `json:"amount"`
+	Amount common.Amount `json:"amount"`
 }
 
-func NewOperationBodyPayment(target string, amount sebakcommon.Amount) OperationBodyPayment {
+func NewOperationBodyPayment(target string, amount common.Amount) OperationBodyPayment {
 	return OperationBodyPayment{
 		Target: target,
 		Amount: amount,
@@ -56,7 +56,7 @@ func (o OperationBodyPayment) TargetAddress() string {
 	return o.Target
 }
 
-func (o OperationBodyPayment) GetAmount() sebakcommon.Amount {
+func (o OperationBodyPayment) GetAmount() common.Amount {
 	return o.Amount
 }
 
@@ -70,9 +70,9 @@ func FinishOperationPayment(st *sebakstorage.LevelDBBackend, tx Transaction, op 
 		err = errors.ErrorBlockAccountDoesNotExists
 		return
 	}
-	current, err := sebakcommon.ParseCheckpoint(baTarget.Checkpoint)
-	next, err := sebakcommon.ParseCheckpoint(tx.NextTargetCheckpoint())
-	newCheckPoint := sebakcommon.MakeCheckpoint(current[0], next[1])
+	current, err := common.ParseCheckpoint(baTarget.Checkpoint)
+	next, err := common.ParseCheckpoint(tx.NextTargetCheckpoint())
+	newCheckPoint := common.MakeCheckpoint(current[0], next[1])
 
 	if err = baTarget.Deposit(op.B.GetAmount(), newCheckPoint); err != nil {
 		return

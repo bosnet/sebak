@@ -34,7 +34,7 @@ func (m DummyMessage) GetType() string {
 	return m.T
 }
 
-func (m DummyMessage) Equal(n sebakcommon.Message) bool {
+func (m DummyMessage) Equal(n common.Message) bool {
 	return m.Hash == n.GetHash()
 }
 
@@ -47,7 +47,7 @@ func (m DummyMessage) Source() string {
 }
 
 func (m *DummyMessage) UpdateHash() {
-	m.Hash = base58.Encode(sebakcommon.MustMakeObjectHash(m.Data))
+	m.Hash = base58.Encode(common.MustMakeObjectHash(m.Data))
 }
 
 func (m DummyMessage) Serialize() ([]byte, error) {

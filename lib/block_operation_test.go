@@ -100,7 +100,7 @@ func TestBlockOperationSaveByTransacton(t *testing.T) {
 
 	_, tx := TestMakeTransaction(networkID, 10)
 	block := testMakeNewBlock([]string{tx.GetHash()})
-	bt := NewBlockTransactionFromTransaction(block.Hash, tx, sebakcommon.MustJSONMarshal(tx))
+	bt := NewBlockTransactionFromTransaction(block.Hash, tx, common.MustJSONMarshal(tx))
 	err := bt.Save(st)
 	require.Nil(t, err)
 
@@ -131,14 +131,14 @@ func TestBlockOperationGetSortedByCheckpoint(t *testing.T) {
 
 	_, tx := TestMakeTransaction(networkID, 10)
 	block := testMakeNewBlock([]string{tx.GetHash()})
-	bt := NewBlockTransactionFromTransaction(block.Hash, tx, sebakcommon.MustJSONMarshal(tx))
+	bt := NewBlockTransactionFromTransaction(block.Hash, tx, common.MustJSONMarshal(tx))
 	err := bt.Save(st)
 	require.Nil(t, err)
 
 	{
 		_, txAnother := TestMakeTransaction(networkID, 10)
 		block := testMakeNewBlock([]string{txAnother.GetHash()})
-		btAnother := NewBlockTransactionFromTransaction(block.Hash, txAnother, sebakcommon.MustJSONMarshal(tx))
+		btAnother := NewBlockTransactionFromTransaction(block.Hash, txAnother, common.MustJSONMarshal(tx))
 		err2 := btAnother.Save(st)
 		require.Nil(t, err2)
 	}
