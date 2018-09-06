@@ -9,7 +9,6 @@ import (
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
-	"boscoin.io/sebak/lib/network"
 )
 
 func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
