@@ -20,7 +20,7 @@ var rootCmd = &cobra.Command{
 
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		common.PrintFlagsError(rootCmd, "", err)
+		cmdcommon.PrintFlagsError(rootCmd, "", err)
 	}
 }
 

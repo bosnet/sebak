@@ -62,20 +62,20 @@ func init() {
 			input := strings.TrimSpace(strings.Join(args, " "))
 
 			if flagPublicKey && len(input) == 0 {
-				common.PrintFlagsError(c, "--parse", errors.New("--parse needs <secret seed>"))
+				cmdcommon.PrintFlagsError(c, "--parse", errors.New("--parse needs <secret seed>"))
 			}
 
 			kp, err := generateKP(input, flagPublicKey)
 
 			if flagPublicKey && err != nil {
-				common.PrintFlagsError(c, "<input>", fmt.Errorf("failed to parse secret seed: %v", err))
+				cmdcommon.PrintFlagsError(c, "<input>", fmt.Errorf("failed to parse secret seed: %v", err))
 			} else if !flagPublicKey && len(input) > 0 {
 				passphrase = &input
 			}
 
-			encoders := map[string]common.Encode{
-				"json":       common.DefaultEncodes["json"],
-				"prettyjson": common.DefaultEncodes["prettyjson"],
+			encoders := map[string]cmdcommon.Encode{
+				"json":       cmdcommon.DefaultEncodes["json"],
+				"prettyjson": cmdcommon.DefaultEncodes["prettyjson"],
 				"default":    defaultEncode,
 				"oneline":    onelineEncode,
 			}
@@ -92,7 +92,7 @@ func init() {
 					panic(err)
 				}
 			} else {
-				common.PrintFlagsError(c, "format", fmt.Errorf(`"%s" not recognized`, flagFormat))
+				cmdcommon.PrintFlagsError(c, "format", fmt.Errorf(`"%s" not recognized`, flagFormat))
 			}
 
 			t := template.Must(template.New("").Parse(`       Secret Seed: {{ .seed }}

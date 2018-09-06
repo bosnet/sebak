@@ -9,12 +9,12 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/stellar/go/keypair"
 
+	"boscoin.io/sebak/cmd/sebak/common"
+
 	"boscoin.io/sebak/lib"
+	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/storage"
-
-	"boscoin.io/sebak/cmd/sebak/common"
-	"boscoin.io/sebak/lib/block"
 )
 
 const (
@@ -34,7 +34,7 @@ func init() {
 		Run: func(c *cobra.Command, args []string) {
 			flagName, err := MakeGenesisBlock(args[0], flagNetworkID, flagBalance, flagStorageConfigString)
 			if len(flagName) != 0 || err != nil {
-				common.PrintFlagsError(c, flagName, err)
+				cmdcommon.PrintFlagsError(c, flagName, err)
 			}
 
 			fmt.Println("successfully created genesis block")
@@ -87,7 +87,7 @@ func MakeGenesisBlock(addressStr, networkID, balanceStr, storage string) (string
 		balanceStr = initialBalance
 	}
 
-	if balance, err = common.ParseAmountFromString(balanceStr); err != nil {
+	if balance, err = cmdcommon.ParseAmountFromString(balanceStr); err != nil {
 		return "--balance", err
 	}
 

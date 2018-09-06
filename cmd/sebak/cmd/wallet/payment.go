@@ -41,30 +41,30 @@ func init() {
 
 			// Receiver's public key
 			if receiver, err = keypair.Parse(args[0]); err != nil {
-				common.PrintFlagsError(c, "<receiver public key>", err)
+				cmdcommon.PrintFlagsError(c, "<receiver public key>", err)
 			} else if _, err = receiver.Sign([]byte("witness")); err == nil {
-				common.PrintFlagsError(c, "<receiver public key>", fmt.Errorf("Provided key is a secret seed, not an address"))
+				cmdcommon.PrintFlagsError(c, "<receiver public key>", fmt.Errorf("Provided key is a secret seed, not an address"))
 			}
 
 			// Amount
-			if amount, err = common.ParseAmountFromString(args[1]); err != nil {
-				common.PrintFlagsError(c, "<amount>", err)
+			if amount, err = cmdcommon.ParseAmountFromString(args[1]); err != nil {
+				cmdcommon.PrintFlagsError(c, "<amount>", err)
 			}
 
 			// Sender's secret seed
 			if sender, err = keypair.Parse(args[2]); err != nil {
-				common.PrintFlagsError(c, "<sender secret seed>", err)
+				cmdcommon.PrintFlagsError(c, "<sender secret seed>", err)
 			} else if _, ok := sender.(*keypair.Full); !ok {
-				common.PrintFlagsError(c, "<sender secret seed>", fmt.Errorf("Provided key is an address, not a secret seed"))
+				cmdcommon.PrintFlagsError(c, "<sender secret seed>", fmt.Errorf("Provided key is an address, not a secret seed"))
 			}
 
 			// Check a network ID was provided
 			if len(flagNetworkID) == 0 {
-				common.PrintFlagsError(c, "--network-id", fmt.Errorf("A --network-id needs to be provided"))
+				cmdcommon.PrintFlagsError(c, "--network-id", fmt.Errorf("A --network-id needs to be provided"))
 			}
 
 			if endpoint, err = sebakcommon.ParseEndpoint(flagEndpoint); err != nil {
-				common.PrintFlagsError(c, "--endpoint", err)
+				cmdcommon.PrintFlagsError(c, "--endpoint", err)
 			}
 
 			// TODO: Validate input transaction (does the sender have enough money?)
