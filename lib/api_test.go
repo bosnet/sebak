@@ -142,7 +142,6 @@ func TestGetAccountTransactionsHandler(t *testing.T) {
 	kp, err := keypair.Random()
 	require.Nil(t, err)
 
-	var bts []BlockTransaction
 	var txs []Transaction
 	var txHashes []string
 	var btmap = make(map[string]BlockTransaction)
@@ -247,7 +246,6 @@ func TestGetAccountOperationsHandler(t *testing.T) {
 	kp, err := keypair.Random()
 	require.Nil(t, err)
 
-	var bos []BlockOperation
 	var txs []Transaction
 	var txHashes []string
 	var bomap = make(map[string]BlockOperation)
@@ -419,7 +417,6 @@ func TestGetTransactionsHandler(t *testing.T) {
 	ts := httptest.NewServer(router)
 	defer ts.Close()
 
-	var bts []BlockTransaction
 	var txs []Transaction
 	var txHashes []string
 	var btmap = make(map[string]BlockTransaction)
