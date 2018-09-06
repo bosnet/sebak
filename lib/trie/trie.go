@@ -1,7 +1,7 @@
 package trie
 
 import (
-	gocommon "github.com/ethereum/go-ethereum/common"
+	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/trie"
 
 	"boscoin.io/sebak/lib/common"
@@ -14,7 +14,7 @@ type Trie struct {
 
 func NewTrie(root common.Hash, db *EthDatabase) *Trie {
 	triedb := trie.NewDatabase(db)
-	tr, err := trie.New(gocommon.Hash(root), triedb)
+	tr, err := trie.New(ethcommon.Hash(root), triedb)
 	if err != nil {
 		panic(err)
 	}
