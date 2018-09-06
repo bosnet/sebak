@@ -36,13 +36,13 @@ type NodeRunnerHandleMessageChecker struct {
 	NodeRunner *NodeRunner
 	LocalNode  *sebaknode.LocalNode
 	NetworkID  []byte
-	Message    sebaknetwork.Message
+	Message    network.Message
 
 	Transaction Transaction
 }
 
 // CheckNodeRunnerHandleMessageTransactionUnmarshal makes `Transaction` from
-// incoming `sebaknetwork.Message`.
+// incoming `network.Message`.
 func CheckNodeRunnerHandleMessageTransactionUnmarshal(c sebakcommon.Checker, args ...interface{}) (err error) {
 	checker := c.(*NodeRunnerHandleMessageChecker)
 
@@ -130,7 +130,7 @@ type BallotChecker struct {
 	NodeRunner         *NodeRunner
 	LocalNode          *sebaknode.LocalNode
 	NetworkID          []byte
-	Message            sebaknetwork.Message
+	Message            network.Message
 	IsNew              bool
 	Ballot             Ballot
 	VotingHole         sebakcommon.VotingHole
@@ -142,7 +142,7 @@ type BallotChecker struct {
 	Log logging.Logger
 }
 
-// BallotUnmarshal makes `Ballot` from sebaknetwork.Message.
+// BallotUnmarshal makes `Ballot` from network.Message.
 func BallotUnmarshal(c sebakcommon.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotChecker)
 

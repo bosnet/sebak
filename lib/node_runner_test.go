@@ -9,7 +9,6 @@ import (
 
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/storage"
 
@@ -17,7 +16,7 @@ import (
 )
 
 var (
-	tlsKey *sebaknetwork.KeyGenerator
+	tlsKey *network.KeyGenerator
 )
 
 func init() {
@@ -28,11 +27,11 @@ func init() {
 		panic(err)
 	}
 
-	tlsKey = sebaknetwork.NewKeyGenerator(dir, "sebak-test.crt", "sebak-test.key")
+	tlsKey = network.NewKeyGenerator(dir, "sebak-test.crt", "sebak-test.key")
 }
 
 func createTestNodeRunner(n int) []*NodeRunner {
-	var ns []*sebaknetwork.MemoryNetwork
+	var ns []*network.MemoryNetwork
 	var nodes []*sebaknode.LocalNode
 	for i := 0; i < n; i++ {
 		s, v := createNetMemoryNetwork()
@@ -153,8 +152,8 @@ func createTestNodeRunnersHTTP2Network(n int) (nodeRunners []*NodeRunner, rootKP
 		vth, _ := NewDefaultVotingThresholdPolicy(66, 66)
 		is, _ := NewISAAC(networkID, node, vth)
 		st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
-		networkConfig, _ := sebaknetwork.NewHTTP2NetworkConfigFromEndpoint(node.Endpoint())
-		network := sebaknetwork.NewHTTP2Network(networkConfig)
+		networkConfig, _ := network.NewHTTP2NetworkConfigFromEndpoint(node.Endpoint())
+		network := network.NewHTTP2Network(networkConfig)
 		nodeRunner, _ := NewNodeRunner(string(networkID), node, vth, network, is, st)
 
 		genesisAccount.Save(nodeRunner.Storage())
@@ -209,7 +208,7 @@ func createTestNodeRunnersHTTP2NetworkWithReady(n int) (nodeRunners []*NodeRunne
 }
 
 func TestCreateNodeRunner(t *testing.T) {
-	defer sebaknetwork.CleanUpMemoryNetwork()
+	defer network.CleanUpMemoryNetwork()
 
 	numberOfNodes := 3
 	nodeRunners := createTestNodeRunnerWithReady(numberOfNodes)
@@ -224,7 +223,7 @@ func TestCreateNodeRunner(t *testing.T) {
 }
 
 func TestNodeRunnerCreateAccount(t *testing.T) {
-	defer sebaknetwork.CleanUpMemoryNetwork()
+	defer network.CleanUpMemoryNetwork()
 
 	numberOfNodes := 3
 	nodeRunners := createTestNodeRunnerWithReady(numberOfNodes)

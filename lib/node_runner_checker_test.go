@@ -9,7 +9,6 @@ import (
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
-	"boscoin.io/sebak/lib/network"
 )
 
 func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
@@ -33,7 +32,7 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 			NodeRunner:     nodeRunner,
 			LocalNode:      nodeRunner.Node(),
 			NetworkID:      networkID,
-			Message:        sebaknetwork.Message{Type: "message", Data: messageData},
+			Message:        network.Message{Type: "message", Data: messageData},
 		}
 
 		if err := sebakcommon.RunChecker(checker, nil); err != nil {

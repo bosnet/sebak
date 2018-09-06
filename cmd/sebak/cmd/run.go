@@ -253,7 +253,7 @@ func parseFlagsNode() {
 	log = logging.New("module", "main")
 	log.SetHandler(logging.LvlFilterHandler(logLevel, logHandler))
 	sebak.SetLogging(logLevel, logHandler)
-	sebaknetwork.SetLogging(logLevel, logHandler)
+	network.SetLogging(logLevel, logHandler)
 
 	log.Info("Starting Sebak")
 
@@ -313,7 +313,7 @@ func runNode() error {
 	localNode.AddValidators(validators...)
 
 	// create network
-	nt, err := sebaknetwork.NewNetwork(nodeEndpoint)
+	nt, err := network.NewNetwork(nodeEndpoint)
 	if err != nil {
 		log.Crit("failed to create Network", "error", err)
 		return err

@@ -7,7 +7,6 @@ import (
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
-	"boscoin.io/sebak/lib/network"
 )
 
 func TestMessageChecker(t *testing.T) {
@@ -19,7 +18,7 @@ func TestMessageChecker(t *testing.T) {
 		return
 	}
 
-	validMessage := sebaknetwork.Message{Type: "message", Data: b}
+	validMessage := network.Message{Type: "message", Data: b}
 	nodeRunner, localNode := MakeNodeRunner()
 	checker := &MessageChecker{
 		DefaultChecker: sebakcommon.DefaultChecker{},
@@ -81,7 +80,7 @@ func TestMessageCheckerWithInvalidMessage(t *testing.T) {
 		return
 	}
 
-	invalidMessage := sebaknetwork.Message{Type: "message", Data: b}
+	invalidMessage := network.Message{Type: "message", Data: b}
 	nodeRunner, localNode := MakeNodeRunner()
 	checker := &MessageChecker{
 		NodeRunner: nodeRunner,

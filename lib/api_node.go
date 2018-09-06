@@ -26,7 +26,7 @@ func (api NetworkHandlerNode) ConnectHandler(w http.ResponseWriter, r *http.Requ
 		http.Error(w, "Error reading request body", http.StatusInternalServerError)
 	}
 
-	api.network.MessageBroker().Receive(sebaknetwork.Message{Type: sebaknetwork.ConnectMessage, Data: body})
+	api.network.MessageBroker().Receive(network.Message{Type: network.ConnectMessage, Data: body})
 	o, _ := api.localNode.Serialize()
 	api.network.MessageBroker().Response(w, o)
 }
@@ -49,7 +49,7 @@ func (api NetworkHandlerNode) MessageHandler(w http.ResponseWriter, r *http.Requ
 		http.Error(w, "Error reading request body", http.StatusInternalServerError)
 	}
 
-	api.network.MessageBroker().Receive(sebaknetwork.Message{Type: sebaknetwork.TransactionMessage, Data: body})
+	api.network.MessageBroker().Receive(network.Message{Type: network.TransactionMessage, Data: body})
 	api.network.MessageBroker().Response(w, body)
 }
 
@@ -68,7 +68,7 @@ func (api NetworkHandlerNode) BallotHandler(w http.ResponseWriter, r *http.Reque
 		http.Error(w, "Error reading request body", http.StatusInternalServerError)
 	}
 
-	api.network.MessageBroker().Receive(sebaknetwork.Message{Type: sebaknetwork.BallotMessage, Data: body})
+	api.network.MessageBroker().Receive(network.Message{Type: network.BallotMessage, Data: body})
 	api.network.MessageBroker().Response(w, body)
 
 	return

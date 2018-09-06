@@ -1,4 +1,4 @@
-package sebaknetwork
+package network
 
 import (
 	logging "github.com/inconshreveable/log15"

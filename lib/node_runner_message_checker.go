@@ -25,13 +25,13 @@ type MessageChecker struct {
 	NodeRunner *NodeRunner
 	LocalNode  *sebaknode.LocalNode
 	NetworkID  []byte
-	Message    sebaknetwork.Message
+	Message    network.Message
 
 	Transaction Transaction
 }
 
 // TransactionUnmarshal makes `Transaction` from
-// incoming `sebaknetwork.Message`.
+// incoming `network.Message`.
 func TransactionUnmarshal(c sebakcommon.Checker, args ...interface{}) (err error) {
 	checker := c.(*MessageChecker)
 

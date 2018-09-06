@@ -47,7 +47,7 @@ const (
 )
 
 // Waiting until the server is ready
-func pingAndWait(t *testing.T, c0 sebaknetwork.NetworkClient) {
+func pingAndWait(t *testing.T, c0 network.NetworkClient) {
 	waitCount := 0
 	for {
 		if b, err := c0.GetNodeInfo(); len(b) != 0 && err == nil {
@@ -62,10 +62,10 @@ func pingAndWait(t *testing.T, c0 sebaknetwork.NetworkClient) {
 	}
 }
 
-func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, mn *sebaknetwork.HTTP2Network, nodeRunner *NodeRunner) {
-	g := sebaknetwork.NewKeyGenerator(dirPath, certPath, keyPath)
+func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, mn *network.HTTP2Network, nodeRunner *NodeRunner) {
+	g := network.NewKeyGenerator(dirPath, certPath, keyPath)
 
-	var config sebaknetwork.HTTP2NetworkConfig
+	var config network.HTTP2NetworkConfig
 	endpoint, err := sebakcommon.NewEndpointFromString(fmt.Sprintf("https://localhost:%s?NodeName=n1", getPort()))
 	if err != nil {
 		t.Error(err)
@@ -77,12 +77,12 @@ func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, mn *sebaknetwork.HTT
 	queries.Add("TLSKeyFile", g.GetKeyPath())
 	endpoint.RawQuery = queries.Encode()
 
-	config, err = sebaknetwork.NewHTTP2NetworkConfigFromEndpoint(endpoint)
+	config, err = network.NewHTTP2NetworkConfigFromEndpoint(endpoint)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	mn = sebaknetwork.NewHTTP2Network(config)
+	mn = network.NewHTTP2Network(config)
 
 	kp, _ = keypair.Random()
 	localNode, _ := sebaknode.NewLocalNode(kp, mn.Endpoint(), "")
@@ -107,7 +107,7 @@ func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, mn *sebaknetwork.HTT
 }
 
 type TestMessageBroker struct {
-	network *sebaknetwork.HTTP2Network
+	network *network.HTTP2Network
 }
 
 func (r TestMessageBroker) Response(w io.Writer, o []byte) error {
@@ -115,7 +115,7 @@ func (r TestMessageBroker) Response(w io.Writer, o []byte) error {
 	return err
 }
 
-func (r TestMessageBroker) Receive(sebaknetwork.Message) {}
+func (r TestMessageBroker) Receive(network.Message) {}
 
 func removeWhiteSpaces(str string) string {
 	return strings.Map(func(r rune) rune {
@@ -156,7 +156,7 @@ func TestHTTP2NetworkGetNodeInfo(t *testing.T) {
 }
 
 type StringResponseMessageBroker struct {
-	network *sebaknetwork.HTTP2Network
+	network *network.HTTP2Network
 	msg     string
 }
 
@@ -165,7 +165,7 @@ func (r StringResponseMessageBroker) Response(w io.Writer, _ []byte) error {
 	return err
 }
 
-func (r StringResponseMessageBroker) Receive(sebaknetwork.Message) {}
+func (r StringResponseMessageBroker) Receive(network.Message) {}
 
 func TestHTTP2NetworkMessageBrokerResponseMessage(t *testing.T) {
 	_, s0, nodeRunner := createNewHTTP2Network(t)
