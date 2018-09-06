@@ -17,6 +17,7 @@ import (
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
+	"boscoin.io/sebak/lib/round"
 	"boscoin.io/sebak/lib/storage"
 )
 
@@ -410,7 +411,7 @@ func (nr *NodeRunner) InitRound() {
 	}
 
 	nr.consensus.SetLatestConsensusedBlock(latestBlock)
-	nr.consensus.SetLatestRound(Round{})
+	nr.consensus.SetLatestRound(round.Round{})
 
 	ticker := time.NewTicker(time.Millisecond * 5)
 	for _ = range ticker.C {
@@ -507,8 +508,7 @@ func (nr *NodeRunner) readyToProposeNewBallot(roundNumber uint64) {
 }
 
 func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) error {
-	// start new round
-	round := Round{
+	round := round.Round{
 		Number:      roundNumber,
 		BlockHeight: nr.consensus.LatestConfirmedBlock.Height,
 		BlockHash:   nr.consensus.LatestConfirmedBlock.Hash,

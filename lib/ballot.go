@@ -12,6 +12,7 @@ import (
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
+	"boscoin.io/sebak/lib/round"
 	"boscoin.io/sebak/lib/storage"
 )
 
@@ -20,7 +21,7 @@ type Ballot struct {
 	B BallotBody
 }
 
-func NewBallot(localNode *sebaknode.LocalNode, round Round, transactions []string) (b *Ballot) {
+func NewBallot(localNode *sebaknode.LocalNode, round round.Round, transactions []string) (b *Ballot) {
 	body := BallotBody{
 		Source: localNode.Address(),
 		Proposed: BallotBodyProposed{
@@ -116,7 +117,7 @@ func (b Ballot) Source() string {
 	return b.B.Source
 }
 
-func (b Ballot) Round() Round {
+func (b Ballot) Round() round.Round {
 	return b.B.Proposed.Round
 }
 
@@ -216,10 +217,10 @@ type BallotHeader struct {
 }
 
 type BallotBodyProposed struct {
-	Confirmed    string   `json:"confirmed"` // created time, ISO8601
-	Proposer     string   `json:"proposer"`
-	Round        Round    `json:"round"`
-	Transactions []string `json:"transactions"`
+	Confirmed    string      `json:"confirmed"` // created time, ISO8601
+	Proposer     string      `json:"proposer"`
+	Round        round.Round `json:"round"`
+	Transactions []string    `json:"transactions"`
 }
 
 type BallotBody struct {

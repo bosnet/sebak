@@ -12,6 +12,7 @@ import (
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/network"
+	"boscoin.io/sebak/lib/round"
 )
 
 /*
@@ -47,7 +48,7 @@ func TestIsaacSimulationProposer(t *testing.T) {
 	roundNumber := uint64(0)
 	err = nodeRunner.proposeNewBallot(roundNumber)
 	require.Nil(t, err)
-	round := Round{
+	round := round.Round{
 		Number:      roundNumber,
 		BlockHeight: nodeRunner.Consensus().LatestConfirmedBlock.Height,
 		BlockHash:   nodeRunner.Consensus().LatestConfirmedBlock.Hash,
