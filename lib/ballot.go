@@ -229,7 +229,7 @@ type BallotBody struct {
 	Source    string                  `json:"source"`
 	State     sebakcommon.BallotState `json:"state"`
 	Vote      sebakcommon.VotingHole  `json:"vote"`
-	Reason    *errors.Error       `json:"reason"`
+	Reason    *errors.Error           `json:"reason"`
 }
 
 func (rb BallotBody) MakeHash() []byte {

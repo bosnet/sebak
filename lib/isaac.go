@@ -129,8 +129,8 @@ type ISAAC struct {
 
 func NewISAAC(networkID []byte, node *sebaknode.LocalNode, votingThresholdPolicy sebakcommon.VotingThresholdPolicy) (is *ISAAC, err error) {
 	is = &ISAAC{
-		NetworkID: networkID,
-		Node:      node,
+		NetworkID:             networkID,
+		Node:                  node,
 		VotingThresholdPolicy: votingThresholdPolicy,
 		TransactionPool:       NewTransactionPool(),
 		RunningRounds:         map[string]*RunningRound{},
