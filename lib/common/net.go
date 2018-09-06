@@ -1,7 +1,7 @@
 package sebakcommon
 
 import (
-	"errors"
+	stderrors "errors"
 	"fmt"
 	"net"
 	"net/url"
@@ -14,7 +14,7 @@ var DefaultEndpoint int = 12345
 
 func CheckPortInUse(port int) error {
 	if port < 1 {
-		return errors.New("0 port is not available")
+		return stderrors.New("0 port is not available")
 	}
 	_, err := net.DialTimeout(
 		"tcp",
@@ -57,7 +57,7 @@ func CheckBindString(b string) error {
 	if portInt, err = strconv.ParseInt(port, 10, 64); err != nil {
 		return err
 	} else if portInt < 1 {
-		return errors.New("invalid port")
+		return stderrors.New("invalid port")
 	}
 
 	return nil
@@ -114,7 +114,7 @@ func ParseEndpoint(endpoint string) (u *Endpoint, err error) {
 		return
 	}
 	if len(parsed.Scheme) < 1 {
-		err = errors.New("missing scheme")
+		err = stderrors.New("missing scheme")
 		return
 	}
 
@@ -130,7 +130,7 @@ func ParseEndpoint(endpoint string) (u *Endpoint, err error) {
 		if portInt, err = strconv.ParseInt(port, 10, 64); err != nil {
 			return
 		} else if portInt < 1 {
-			err = errors.New("invalid port")
+			err = stderrors.New("invalid port")
 			return
 		}
 

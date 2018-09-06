@@ -3,7 +3,7 @@ package sebakcommon
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
+	stderrors "errors"
 	"fmt"
 	"io"
 	"net/url"
@@ -135,7 +135,7 @@ func MakeCheckpoint(a, b string) string {
 func ParseCheckpoint(a string) (p [2]string, err error) {
 	s := strings.SplitN(a, "-", 2)
 	if len(s) != 2 {
-		err = errors.New("invalid checkpoint")
+		err = stderrors.New("invalid checkpoint")
 		return
 	}
 	p = [2]string{s[0], s[1]}

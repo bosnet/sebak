@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"errors"
+	stderrors "errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -85,7 +85,7 @@ func init() {
 				csv := strings.Split(flagGenesis, ",")
 				if len(csv) > 2 {
 					common.PrintFlagsError(nodeCmd, "--genesis",
-						errors.New("--genesis expects address[,balance], but more than 2 commas detected"))
+						stderrors.New("--genesis expects address[,balance], but more than 2 commas detected"))
 				}
 				if len(csv) == 2 {
 					balanceStr = csv[1]
@@ -161,13 +161,13 @@ func parseFlagsNode() {
 	var err error
 
 	if len(flagNetworkID) < 1 {
-		common.PrintFlagsError(nodeCmd, "--network-id", errors.New("--network-id must be given"))
+		common.PrintFlagsError(nodeCmd, "--network-id", stderrors.New("--network-id must be given"))
 	}
 	if len(flagValidators) < 1 {
-		common.PrintFlagsError(nodeCmd, "--validators", errors.New("must be given"))
+		common.PrintFlagsError(nodeCmd, "--validators", stderrors.New("must be given"))
 	}
 	if len(flagKPSecretSeed) < 1 {
-		common.PrintFlagsError(nodeCmd, "--secret-seed", errors.New("must be given"))
+		common.PrintFlagsError(nodeCmd, "--secret-seed", stderrors.New("must be given"))
 	}
 
 	var parsedKP keypair.KP

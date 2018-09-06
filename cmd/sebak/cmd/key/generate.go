@@ -1,7 +1,7 @@
 package key
 
 import (
-	"errors"
+	stderrors "errors"
 	"fmt"
 	"html/template"
 	"os"
@@ -10,8 +10,9 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/stellar/go/keypair"
 
-	"boscoin.io/sebak/cmd/sebak/common"
 	"io"
+
+	"boscoin.io/sebak/cmd/sebak/common"
 )
 
 var (
@@ -61,7 +62,7 @@ func init() {
 			input := strings.TrimSpace(strings.Join(args, " "))
 
 			if flagPublicKey && len(input) == 0 {
-				common.PrintFlagsError(c, "--parse", errors.New("--parse needs <secret seed>"))
+				common.PrintFlagsError(c, "--parse", stderrors.New("--parse needs <secret seed>"))
 			}
 
 			kp, err := generateKP(input, flagPublicKey)

@@ -1,7 +1,7 @@
 package sebakstorage
 
 import (
-	"errors"
+	stderrors "errors"
 	"net/url"
 
 	"boscoin.io/sebak/lib/common"
@@ -48,7 +48,7 @@ func NewConfigFromString(s string) (e *Config, err error) {
 	}
 
 	if _, found := sebakcommon.InStringArray(SupportedStorageType, u.Scheme); !found {
-		err = errors.New("unsupported storage type")
+		err = stderrors.New("unsupported storage type")
 		return
 	}
 
@@ -86,7 +86,7 @@ func ParseConfig(s string) (u *Config, err error) {
 		return
 	}
 	if len(parsed.Scheme) < 1 {
-		err = errors.New("missing scheme")
+		err = stderrors.New("missing scheme")
 		return
 	}
 

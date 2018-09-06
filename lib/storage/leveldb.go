@@ -2,7 +2,7 @@ package sebakstorage
 
 import (
 	"encoding/json"
-	"errors"
+	stderrors "errors"
 	"fmt"
 
 	"github.com/syndtr/goleveldb/leveldb"
@@ -57,7 +57,7 @@ func (st *LevelDBBackend) Close() error {
 func (st *LevelDBBackend) OpenTransaction() (*LevelDBBackend, error) {
 	_, ok := st.Core.(*leveldb.Transaction)
 	if ok {
-		return nil, errors.New("this is already *leveldb.Transaction")
+		return nil, stderrors.New("this is already *leveldb.Transaction")
 	}
 
 	transaction, err := st.Core.(*leveldb.DB).OpenTransaction()
@@ -74,7 +74,7 @@ func (st *LevelDBBackend) OpenTransaction() (*LevelDBBackend, error) {
 func (st *LevelDBBackend) Discard() error {
 	ts, ok := st.Core.(*leveldb.Transaction)
 	if !ok {
-		return errors.New("this is not *leveldb.Transaction")
+		return stderrors.New("this is not *leveldb.Transaction")
 	}
 
 	ts.Discard()
@@ -84,7 +84,7 @@ func (st *LevelDBBackend) Discard() error {
 func (st *LevelDBBackend) Commit() error {
 	ts, ok := st.Core.(*leveldb.Transaction)
 	if !ok {
-		return errors.New("this is not *leveldb.Transaction")
+		return stderrors.New("this is not *leveldb.Transaction")
 	}
 
 	return ts.Commit()
@@ -152,7 +152,7 @@ func (st *LevelDBBackend) New(k string, v interface{}) (err error) {
 
 func (st *LevelDBBackend) News(vs ...Item) (err error) {
 	if len(vs) < 1 {
-		err = errors.New("empty values")
+		err = stderrors.New("empty values")
 		return
 	}
 
@@ -217,7 +217,7 @@ func (st *LevelDBBackend) put(k string, v interface{}) (err error) {
 
 func (st *LevelDBBackend) Sets(vs ...Item) (err error) {
 	if len(vs) < 1 {
-		err = errors.New("empty values")
+		err = stderrors.New("empty values")
 		return
 	}
 

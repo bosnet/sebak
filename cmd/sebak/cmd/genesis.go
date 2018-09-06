@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"errors"
+	stderrors "errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -80,7 +80,7 @@ func MakeGenesisBlock(addressStr, networkID, balanceStr, storage string) (string
 	}
 
 	if len(networkID) == 0 {
-		return "--network-id", errors.New("--network-id must be provided")
+		return "--network-id", stderrors.New("--network-id must be provided")
 	}
 
 	if len(balanceStr) == 0 {
@@ -120,7 +120,7 @@ func MakeGenesisBlock(addressStr, networkID, balanceStr, storage string) (string
 
 	// check account does not exists
 	if _, err = block.GetBlockAccount(st, kp.Address()); err == nil {
-		return "<public key>", errors.New("account is already created")
+		return "<public key>", stderrors.New("account is already created")
 	}
 
 	// checkpoint of genesis block is created by `--network-id`

@@ -8,7 +8,7 @@
 package sebak
 
 import (
-	"errors"
+	stderrors "errors"
 	"sort"
 	"time"
 
@@ -310,7 +310,7 @@ func (nr *NodeRunner) handleMessage() {
 		case network.BallotMessage:
 			err = nr.handleBallotMessage(message)
 		default:
-			err = errors.New("got unknown message")
+			err = stderrors.New("got unknown message")
 		}
 
 		if err != nil {
