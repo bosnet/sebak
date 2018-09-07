@@ -61,7 +61,7 @@ func init() {
 //                If not provided, `flagBalance`, which is the value set in the env
 //                when called from another module, will be used
 //   storageConfigUri = URI to include storage path("file://path")
-//       			    If not provided, a default value will be used
+//                      If not provided, a default value will be used
 //
 // Returns:
 //   If an error happened, returns a tuple of (string, error).
