@@ -32,13 +32,13 @@ func NewIsaacConfiguration() *IsaacConfiguration {
 	return &p
 }
 
-func (n *IsaacConfiguration) GetTimeout(ballotState sebakcommon.BallotState) time.Duration {
+func (n *IsaacConfiguration) GetTimeout(ballotState common.BallotState) time.Duration {
 	switch ballotState {
-	case sebakcommon.BallotStateINIT:
+	case common.BallotStateINIT:
 		return n.TimeoutINIT
-	case sebakcommon.BallotStateSIGN:
+	case common.BallotStateSIGN:
 		return n.TimeoutSIGN
-	case sebakcommon.BallotStateACCEPT:
+	case common.BallotStateACCEPT:
 		return n.TimeoutACCEPT
 	default:
 		return 0
