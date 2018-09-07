@@ -7,18 +7,20 @@ import (
 	"github.com/gorilla/mux"
 
 	"boscoin.io/sebak/lib/block"
-	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/httputils"
 	"boscoin.io/sebak/lib/observer"
 )
-
-const GetAccountHandlerPattern = "/account/{address}"
 
 func (api NetworkHandlerAPI) GetAccountHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	address := vars["address"]
-	var blk *block.BlockAccount
-	var err error
+
+	var (
+		blk *block.BlockAccount
+		err error
+	)
+
 	if blk, err = block.GetBlockAccount(api.storage, address); err != nil {
 		if err == errors.ErrorStorageRecordDoesNotExist {
 			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
@@ -28,156 +30,91 @@ func (api NetworkHandlerAPI) GetAccountHandler(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	switch r.Header.Get("Accept") {
-	case "text/event-stream":
-		var readyChan = make(chan struct{})
+	if httputils.IsEventStream(r) {
+		event := fmt.Sprintf("address-%s", address)
+		es := NewDefaultEventStream(w, r)
+		es.Render(blk)
+		es.Run(observer.BlockAccountObserver, event)
+		return
+	}
 
-		// Trigger event for data already stored in the storage
-		iterateId := common.GetUniqueIDFromUUID()
-		go func() {
-			<-readyChan
-			observer.BlockAccountObserver.Trigger(fmt.Sprintf("iterate-%s", iterateId), blk)
-		}()
-
-		callBackFunc := func(args ...interface{}) (account []byte, err error) {
-			blk := args[1].(*block.BlockAccount)
-			if account, err = blk.Serialize(); err != nil {
-				return []byte{}, errors.ErrorBlockAccountDoesNotExists
-			}
-			return account, nil
-		}
-
-		event := fmt.Sprintf("iterate-%s", iterateId)
-		event += " " + fmt.Sprintf("address-%s", address)
-		streaming(observer.BlockAccountObserver, r, w, event, callBackFunc, readyChan)
-	default:
-		var s []byte
-		if s, err = blk.Serialize(); err != nil {
-			http.Error(w, "Error reading request body", http.StatusInternalServerError)
-			return
-		}
-		if _, err = w.Write(s); err != nil {
-			http.Error(w, "Error reading request body", http.StatusInternalServerError)
-			return
-		}
+	if err := httputils.WriteJSON(w, 200, blk); err != nil {
+		http.Error(w, "Error reading request body", http.StatusInternalServerError)
 	}
 }
-
-const GetAccountTransactionsHandlerPattern = "/account/{address}/transactions"
 
 func (api NetworkHandlerAPI) GetAccountTransactionsHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	address := vars["address"]
 
-	var err error
-	var s []byte
-
-	switch r.Header.Get("Accept") {
-	case "text/event-stream":
-		var readyChan = make(chan struct{})
-		iterateId := common.GetUniqueIDFromUUID()
-		go func() {
-			<-readyChan
-			count := maxNumberOfExistingData
-			iterFunc, closeFunc := GetBlockTransactionsByAccount(api.storage, address, false)
-			for {
-				bt, hasNext := iterFunc()
-				count--
-				if !hasNext || count < 0 {
-					break
-				}
-				observer.BlockTransactionObserver.Trigger(fmt.Sprintf("iterate-%s", iterateId), &bt)
-			}
-			closeFunc()
-		}()
-
-		callBackFunc := func(args ...interface{}) (btSerialized []byte, err error) {
-			bt := args[1].(*BlockTransaction)
-			if btSerialized, err = bt.Serialize(); err != nil {
-				return []byte{}, errors.ErrorBlockTransactionDoesNotExists
-			}
-			return btSerialized, nil
-		}
-
-		event := fmt.Sprintf("iterate-%s", iterateId)
-		event += " " + fmt.Sprintf("source-%s", address)
-		streaming(observer.BlockTransactionObserver, r, w, event, callBackFunc, readyChan)
-	default:
-		var btl []BlockTransaction
+	readFunc := func(cnt int) []*BlockTransaction {
+		var txs []*BlockTransaction
 		iterFunc, closeFunc := GetBlockTransactionsByAccount(api.storage, address, false)
 		for {
-			bt, hasNext := iterFunc()
-			if !hasNext {
+			t, hasNext := iterFunc()
+			if !hasNext || cnt == 0 {
 				break
 			}
-			btl = append(btl, bt)
+			txs = append(txs, &t)
+			cnt--
 		}
 		closeFunc()
-
-		s, err = common.EncodeJSONValue(btl)
-
-		if _, err = w.Write(s); err != nil {
-			http.Error(w, "Error reading request body", http.StatusInternalServerError)
-			return
-		}
+		return txs
 	}
-}
 
-const GetAccountOperationsHandlerPattern = "/account/{address}/operations"
+	if httputils.IsEventStream(r) {
+		event := fmt.Sprintf("bt-source-%s", address)
+		es := NewDefaultEventStream(w, r)
+		txs := readFunc(maxNumberOfExistingData)
+		for _, tx := range txs {
+			es.Render(tx)
+		}
+		es.Run(observer.BlockTransactionObserver, event)
+		return
+	}
+
+	txs := readFunc(-1) // -1 is infinte. TODO: Paging support makes better this space.
+
+	if err := httputils.WriteJSON(w, 200, txs); err != nil {
+		http.Error(w, "Error reading request body", http.StatusInternalServerError)
+		return
+	}
+
+}
 
 func (api NetworkHandlerAPI) GetAccountOperationsHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	address := vars["address"]
 
-	var err error
-	var s []byte
-
-	switch r.Header.Get("Accept") {
-	case "text/event-stream":
-		var readyChan = make(chan struct{})
-		iterateId := common.GetUniqueIDFromUUID()
-		go func() {
-			<-readyChan
-			count := maxNumberOfExistingData
-			iterFunc, closeFunc := GetBlockOperationsBySource(api.storage, address, false)
-			for {
-				bo, hasNext := iterFunc()
-				count--
-				if !hasNext || count < 0 {
-					break
-				}
-				observer.BlockOperationObserver.Trigger(fmt.Sprintf("iterate-%s", iterateId), &bo)
-			}
-			closeFunc()
-		}()
-
-		callBackFunc := func(args ...interface{}) (boSerialized []byte, err error) {
-			bo := args[1].(*BlockOperation)
-			if boSerialized, err = bo.Serialize(); err != nil {
-				return []byte{}, errors.ErrorBlockTransactionDoesNotExists
-			}
-			return boSerialized, nil
-		}
-		event := fmt.Sprintf("iterate-%s", iterateId)
-		event += " " + fmt.Sprintf("source-%s", address)
-		streaming(observer.BlockOperationObserver, r, w, event, callBackFunc, readyChan)
-	default:
-		var bol []BlockOperation
+	readFunc := func(cnt int) []*BlockOperation {
+		var txs []*BlockOperation
 		iterFunc, closeFunc := GetBlockOperationsBySource(api.storage, address, false)
 		for {
-			bo, hasNext := iterFunc()
-			if !hasNext {
+			t, hasNext := iterFunc()
+			if !hasNext || cnt == 0 {
 				break
 			}
-			bol = append(bol, bo)
+			txs = append(txs, &t)
+			cnt--
 		}
 		closeFunc()
+		return txs
+	}
 
-		s, err = common.EncodeJSONValue(bol)
-
-		if _, err = w.Write(s); err != nil {
-			http.Error(w, "Error reading request body", http.StatusInternalServerError)
-			return
+	if httputils.IsEventStream(r) {
+		event := fmt.Sprintf("bo-source-%s", address)
+		es := NewDefaultEventStream(w, r)
+		txs := readFunc(maxNumberOfExistingData)
+		for _, tx := range txs {
+			es.Render(tx)
 		}
+		es.Run(observer.BlockOperationObserver, event)
+		return
+	}
+
+	txs := readFunc(-1) //TODO paging support
+	if err := httputils.WriteJSON(w, 200, txs); err != nil {
+		http.Error(w, "Error reading request body", http.StatusInternalServerError)
+		return
 	}
 }
