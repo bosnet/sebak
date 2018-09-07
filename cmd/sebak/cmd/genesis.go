@@ -60,8 +60,8 @@ func init() {
 //   balanceStr = Amount of coins to put in the account
 //                If not provided, `flagBalance`, which is the value set in the env
 //                when called from another module, will be used
-//   storageConfigUri = URI to include storage path("file://path")
-//                      If not provided, a default value will be used
+//   storageUri = URI to include storage path("file://path")
+//                If not provided, a default value will be used
 //
 // Returns:
 //   If an error happened, returns a tuple of (string, error).
@@ -69,7 +69,7 @@ func init() {
 //   and error is the more detailed error.
 //   Note that only one needs be non-`nil` for it to be considered an error.
 //
-func MakeGenesisBlock(addressStr, networkID, balanceStr, storageConfigUri string) (string, error) {
+func MakeGenesisBlock(addressStr, networkID, balanceStr, storageUri string) (string, error) {
 	var balance common.Amount
 	var err error
 	var kp keypair.KP
@@ -91,25 +91,25 @@ func MakeGenesisBlock(addressStr, networkID, balanceStr, storageConfigUri string
 	}
 
 	// Use the default value
-	if len(storageConfigUri) == 0 {
+	if len(storageUri) == 0 {
 		// We try to get the env value first, before doing IO which could fail
-		storageConfigUri = common.GetENVValue("SEBAK_STORAGE", "")
+		storageUri = common.GetENVValue("SEBAK_STORAGE", "")
 		// No env, use the default (current directory)
-		if len(storageConfigUri) == 0 {
+		if len(storageUri) == 0 {
 			if currentDirectory, err := os.Getwd(); err == nil {
 				if currentDirectory, err = filepath.Abs(currentDirectory); err == nil {
-					storageConfigUri = fmt.Sprintf("file://%s/db", currentDirectory)
+					storageUri = fmt.Sprintf("file://%s/db", currentDirectory)
 				}
 			}
 			// If any of the previous condition failed
-			if len(storageConfigUri) == 0 {
+			if len(storageUri) == 0 {
 				return "--storage", err
 			}
 		}
 	}
 
 	var storageConfig *storage.Config
-	if storageConfig, err = storage.NewConfigFromString(storageConfigUri); err != nil {
+	if storageConfig, err = storage.NewConfigFromString(storageUri); err != nil {
 		return "--storage", err
 	}
 
