@@ -1,9 +1,10 @@
 package trie
 
 import (
-	"boscoin.io/sebak/lib/common"
-	"github.com/ethereum/go-ethereum/common"
+	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/trie"
+
+	"boscoin.io/sebak/lib/common"
 )
 
 type Trie struct {
@@ -11,9 +12,9 @@ type Trie struct {
 	DB *trie.Database
 }
 
-func NewTrie(root sebakcommon.Hash, db *EthDatabase) *Trie {
+func NewTrie(root common.Hash, db *EthDatabase) *Trie {
 	triedb := trie.NewDatabase(db)
-	tr, err := trie.New(common.Hash(root), triedb)
+	tr, err := trie.New(ethcommon.Hash(root), triedb)
 	if err != nil {
 		panic(err)
 	}
@@ -23,6 +24,6 @@ func NewTrie(root sebakcommon.Hash, db *EthDatabase) *Trie {
 	}
 }
 
-func (t *Trie) CommitDB(root sebakcommon.Hash) (err error) {
+func (t *Trie) CommitDB(root common.Hash) (err error) {
 	return t.DB.Commit(root, false)
 }

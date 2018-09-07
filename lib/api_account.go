@@ -33,7 +33,7 @@ func (api NetworkHandlerAPI) GetAccountHandler(w http.ResponseWriter, r *http.Re
 		var readyChan = make(chan struct{})
 
 		// Trigger event for data already stored in the storage
-		iterateId := sebakcommon.GetUniqueIDFromUUID()
+		iterateId := common.GetUniqueIDFromUUID()
 		go func() {
 			<-readyChan
 			observer.BlockAccountObserver.Trigger(fmt.Sprintf("iterate-%s", iterateId), blk)
@@ -75,7 +75,7 @@ func (api NetworkHandlerAPI) GetAccountTransactionsHandler(w http.ResponseWriter
 	switch r.Header.Get("Accept") {
 	case "text/event-stream":
 		var readyChan = make(chan struct{})
-		iterateId := sebakcommon.GetUniqueIDFromUUID()
+		iterateId := common.GetUniqueIDFromUUID()
 		go func() {
 			<-readyChan
 			count := maxNumberOfExistingData
@@ -114,7 +114,7 @@ func (api NetworkHandlerAPI) GetAccountTransactionsHandler(w http.ResponseWriter
 		}
 		closeFunc()
 
-		s, err = sebakcommon.EncodeJSONValue(btl)
+		s, err = common.EncodeJSONValue(btl)
 
 		if _, err = w.Write(s); err != nil {
 			http.Error(w, "Error reading request body", http.StatusInternalServerError)
@@ -135,7 +135,7 @@ func (api NetworkHandlerAPI) GetAccountOperationsHandler(w http.ResponseWriter, 
 	switch r.Header.Get("Accept") {
 	case "text/event-stream":
 		var readyChan = make(chan struct{})
-		iterateId := sebakcommon.GetUniqueIDFromUUID()
+		iterateId := common.GetUniqueIDFromUUID()
 		go func() {
 			<-readyChan
 			count := maxNumberOfExistingData
@@ -173,7 +173,7 @@ func (api NetworkHandlerAPI) GetAccountOperationsHandler(w http.ResponseWriter, 
 		}
 		closeFunc()
 
-		s, err = sebakcommon.EncodeJSONValue(bol)
+		s, err = common.EncodeJSONValue(bol)
 
 		if _, err = w.Write(s); err != nil {
 			http.Error(w, "Error reading request body", http.StatusInternalServerError)

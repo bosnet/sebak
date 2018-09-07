@@ -21,7 +21,7 @@ func makeTransaction(kp *keypair.Full) (tx Transaction) {
 	tx = Transaction{
 		T: "transaction",
 		H: TransactionHeader{
-			Created: sebakcommon.NowISO8601(),
+			Created: common.NowISO8601(),
 			Hash:    txBody.MakeHashString(),
 		},
 		B: txBody,
@@ -31,7 +31,7 @@ func makeTransaction(kp *keypair.Full) (tx Transaction) {
 	return
 }
 
-func makeTransactionPayment(kpSource *keypair.Full, target string, amount sebakcommon.Amount) (tx Transaction) {
+func makeTransactionPayment(kpSource *keypair.Full, target string, amount common.Amount) (tx Transaction) {
 	opb := NewOperationBodyPayment(target, amount)
 
 	op := Operation{
@@ -51,7 +51,7 @@ func makeTransactionPayment(kpSource *keypair.Full, target string, amount sebakc
 	tx = Transaction{
 		T: "transaction",
 		H: TransactionHeader{
-			Created: sebakcommon.NowISO8601(),
+			Created: common.NowISO8601(),
 			Hash:    txBody.MakeHashString(),
 		},
 		B: txBody,

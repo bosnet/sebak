@@ -31,7 +31,7 @@ func TestSaveExistingBlockAccount(t *testing.T) {
 	b := TestMakeBlockAccount()
 	b.Save(st)
 
-	err := b.Deposit(sebakcommon.Amount(100), "fake-checkpoint")
+	err := b.Deposit(common.Amount(100), "fake-checkpoint")
 	require.Nil(t, err)
 
 	err = b.Save(st)

@@ -182,7 +182,7 @@ func TestMultipleBlockTransactionSource(t *testing.T) {
 		}
 		closeFunc()
 
-		reverseCreatedOrder := sebakcommon.ReverseStringSlice(createdOrder)
+		reverseCreatedOrder := common.ReverseStringSlice(createdOrder)
 
 		require.Equal(t, len(saved), len(createdOrder))
 		for i, bt := range saved {
@@ -246,7 +246,7 @@ func TestMultipleBlockTransactionConfirmed(t *testing.T) {
 		}
 		closeFunc()
 
-		reverseCreatedOrder := sebakcommon.ReverseStringSlice(createdOrder)
+		reverseCreatedOrder := common.ReverseStringSlice(createdOrder)
 
 		require.Equal(t, len(saved), len(createdOrder))
 		for i, bt := range saved {

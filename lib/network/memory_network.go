@@ -24,21 +24,21 @@ func addMemoryNetwork(m *MemoryNetwork) {
 	memoryNetworks[m.Endpoint().String()] = m
 }
 
-func getMemoryNetwork(endpoint *sebakcommon.Endpoint) *MemoryNetwork {
+func getMemoryNetwork(endpoint *common.Endpoint) *MemoryNetwork {
 	n, _ := memoryNetworks[endpoint.String()]
 	return n
 }
 
 type MemoryNetwork struct {
-	localNode  sebakcommon.Serializable
-	endpoint   *sebakcommon.Endpoint
+	localNode  common.Serializable
+	endpoint   *common.Endpoint
 	connWriter chan Message
 	close      chan bool
 
 	receiveChannel chan Message
 }
 
-func (t *MemoryNetwork) GetClient(endpoint *sebakcommon.Endpoint) NetworkClient {
+func (t *MemoryNetwork) GetClient(endpoint *common.Endpoint) NetworkClient {
 	n, ok := memoryNetworks[endpoint.String()]
 	if !ok {
 		return nil
@@ -50,7 +50,7 @@ func (t *MemoryNetwork) GetClient(endpoint *sebakcommon.Endpoint) NetworkClient 
 func (p *MemoryNetwork) AddWatcher(f func(Network, net.Conn, http.ConnState)) {
 	return
 }
-func (p *MemoryNetwork) Endpoint() *sebakcommon.Endpoint {
+func (p *MemoryNetwork) Endpoint() *common.Endpoint {
 	return p.endpoint
 }
 
@@ -110,12 +110,12 @@ func (p *MemoryNetwork) receiveMessage() {
 	}
 }
 
-func (p *MemoryNetwork) SetLocalNode(localNode sebakcommon.Serializable) {
+func (p *MemoryNetwork) SetLocalNode(localNode common.Serializable) {
 	p.localNode = localNode
 }
 
-func CreateNewMemoryEndpoint() *sebakcommon.Endpoint {
-	return &sebakcommon.Endpoint{Scheme: "memory", Host: uuid.New().String()}
+func CreateNewMemoryEndpoint() *common.Endpoint {
+	return &common.Endpoint{Scheme: "memory", Host: uuid.New().String()}
 }
 
 func NewMemoryNetwork() *MemoryNetwork {

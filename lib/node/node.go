@@ -8,7 +8,7 @@ type Node interface {
 	Address() string
 	Alias() string
 	SetAlias(string)
-	Endpoint() *sebakcommon.Endpoint
+	Endpoint() *common.Endpoint
 	Equal(Node) bool
 	DeepEqual(Node) bool
 	Serialize() ([]byte, error)

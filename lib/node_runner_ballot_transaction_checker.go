@@ -7,14 +7,14 @@ import (
 )
 
 type BallotTransactionChecker struct {
-	sebakcommon.DefaultChecker
+	common.DefaultChecker
 
 	NodeRunner *NodeRunner
 	LocalNode  node.Node
 	NetworkID  []byte
 
 	Transactions         []string
-	VotingHole           sebakcommon.VotingHole
+	VotingHole           common.VotingHole
 	ValidTransactions    []string
 	validTransactionsMap map[string]bool
 	CheckAll             bool
@@ -45,7 +45,7 @@ func (checker *BallotTransactionChecker) setValidTransactions(hashes []string) {
 
 // TransactionsIsNew checks the incoming transaction is
 // already stored or not.
-func IsNew(c sebakcommon.Checker, args ...interface{}) (err error) {
+func IsNew(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotTransactionChecker)
 
 	var validTransactions []string
@@ -70,7 +70,7 @@ func IsNew(c sebakcommon.Checker, args ...interface{}) (err error) {
 
 // GetMissingTransaction will get the missing
 // tranactions, that is, not in `TransactionPool` from proposer.
-func GetMissingTransaction(c sebakcommon.Checker, args ...interface{}) (err error) {
+func GetMissingTransaction(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotTransactionChecker)
 
 	var validTransactions []string
@@ -90,14 +90,14 @@ func GetMissingTransaction(c sebakcommon.Checker, args ...interface{}) (err erro
 
 // BallotTransactionsSourceCheck checks there are transactions which has same
 // source in the `Transactions`.
-func BallotTransactionsSameSource(c sebakcommon.Checker, args ...interface{}) (err error) {
+func BallotTransactionsSameSource(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotTransactionChecker)
 
 	var validTransactions []string
 	sources := map[string]bool{}
 	for _, hash := range checker.ValidTransactions {
 		tx, _ := checker.NodeRunner.Consensus().TransactionPool.Get(hash)
-		if found := sebakcommon.InStringMap(sources, tx.B.Source); found {
+		if found := common.InStringMap(sources, tx.B.Source); found {
 			if !checker.CheckAll {
 				err = errors.ErrorTransactionSameSource
 				return
@@ -115,7 +115,7 @@ func BallotTransactionsSameSource(c sebakcommon.Checker, args ...interface{}) (e
 }
 
 // BallotTransactionsSourceCheck calls `Transaction.Validate()`.
-func BallotTransactionsSourceCheck(c sebakcommon.Checker, args ...interface{}) (err error) {
+func BallotTransactionsSourceCheck(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotTransactionChecker)
 
 	var validTransactions []string

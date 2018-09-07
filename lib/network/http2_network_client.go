@@ -11,8 +11,8 @@ import (
 )
 
 type HTTP2NetworkClient struct {
-	endpoint       *sebakcommon.Endpoint
-	client         *sebakcommon.HTTP2Client
+	endpoint       *common.Endpoint
+	client         *common.HTTP2Client
 	defaultHeaders http.Header
 }
 
@@ -21,9 +21,9 @@ var (
 	defaultIdleTimeout = 3 * time.Second
 )
 
-func NewHTTP2NetworkClient(endpoint *sebakcommon.Endpoint, client *sebakcommon.HTTP2Client) *HTTP2NetworkClient {
+func NewHTTP2NetworkClient(endpoint *common.Endpoint, client *common.HTTP2Client) *HTTP2NetworkClient {
 	if client == nil {
-		client, _ = sebakcommon.NewHTTP2Client(
+		client, _ = common.NewHTTP2Client(
 			defaultTimeout,
 			defaultIdleTimeout,
 			false,
@@ -33,7 +33,7 @@ func NewHTTP2NetworkClient(endpoint *sebakcommon.Endpoint, client *sebakcommon.H
 	return &HTTP2NetworkClient{endpoint: endpoint, client: client, defaultHeaders: http.Header{}}
 }
 
-func (c *HTTP2NetworkClient) Endpoint() *sebakcommon.Endpoint {
+func (c *HTTP2NetworkClient) Endpoint() *common.Endpoint {
 	return c.endpoint
 }
 
@@ -96,7 +96,7 @@ func (c *HTTP2NetworkClient) Connect(n node.Node) (body []byte, err error) {
 	return
 }
 
-func (c *HTTP2NetworkClient) SendMessage(message sebakcommon.Serializable) (retBody []byte, err error) {
+func (c *HTTP2NetworkClient) SendMessage(message common.Serializable) (retBody []byte, err error) {
 	headers := c.DefaultHeaders()
 	headers.Set("Content-Type", "application/json")
 
@@ -120,7 +120,7 @@ func (c *HTTP2NetworkClient) SendMessage(message sebakcommon.Serializable) (retB
 	return
 }
 
-func (c *HTTP2NetworkClient) SendBallot(message sebakcommon.Serializable) (retBody []byte, err error) {
+func (c *HTTP2NetworkClient) SendBallot(message common.Serializable) (retBody []byte, err error) {
 	headers := c.DefaultHeaders()
 	headers.Set("Content-Type", "application/json")
 

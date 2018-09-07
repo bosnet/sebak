@@ -21,7 +21,7 @@ import (
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/storage"
 
-	"boscoin.io/sebak/cmd/sebak/common"
+	cmdcommon "boscoin.io/sebak/cmd/sebak/common"
 
 	"strconv"
 )
@@ -32,32 +32,32 @@ const defaultHost string = "0.0.0.0"
 const defaultLogLevel logging.Lvl = logging.LvlInfo
 
 var (
-	flagKPSecretSeed   string = sebakcommon.GetENVValue("SEBAK_SECRET_SEED", "")
-	flagNetworkID      string = sebakcommon.GetENVValue("SEBAK_NETWORK_ID", "")
-	flagLogLevel       string = sebakcommon.GetENVValue("SEBAK_LOG_LEVEL", defaultLogLevel.String())
-	flagLogOutput      string = sebakcommon.GetENVValue("SEBAK_LOG_OUTPUT", "")
-	flagVerbose        bool   = sebakcommon.GetENVValue("SEBAK_VERBOSE", "0") == "1"
-	flagEndpointString string = sebakcommon.GetENVValue(
+	flagKPSecretSeed   string = common.GetENVValue("SEBAK_SECRET_SEED", "")
+	flagNetworkID      string = common.GetENVValue("SEBAK_NETWORK_ID", "")
+	flagLogLevel       string = common.GetENVValue("SEBAK_LOG_LEVEL", defaultLogLevel.String())
+	flagLogOutput      string = common.GetENVValue("SEBAK_LOG_OUTPUT", "")
+	flagVerbose        bool   = common.GetENVValue("SEBAK_VERBOSE", "0") == "1"
+	flagEndpointString string = common.GetENVValue(
 		"SEBAK_ENDPOINT",
 		fmt.Sprintf("%s://%s:%d", defaultNetwork, defaultHost, defaultPort),
 	)
 	flagStorageConfigString string
-	flagTLSCertFile         string = sebakcommon.GetENVValue("SEBAK_TLS_CERT", "sebak.crt")
-	flagTLSKeyFile          string = sebakcommon.GetENVValue("SEBAK_TLS_KEY", "sebak.key")
-	flagValidators          string = sebakcommon.GetENVValue("SEBAK_VALIDATORS", "")
-	flagThreshold           string = sebakcommon.GetENVValue("SEBAK_THRESHOLD", "66")
-	flagTimeoutINIT         string = sebakcommon.GetENVValue("SEBAK_TIMEOUT_INIT", "2")
-	flagTimeoutSIGN         string = sebakcommon.GetENVValue("SEBAK_TIMEOUT_SIGN", "2")
-	flagTimeoutACCEPT       string = sebakcommon.GetENVValue("SEBAK_TIMEOUT_ACCEPT", "2")
-	flagTimeoutALLCONFIRM   string = sebakcommon.GetENVValue("SEBAK_TIMEOUT_ALLCONFIRM", "2")
-	flagTransactionsLimit   string = sebakcommon.GetENVValue("SEBAK_TRANSACTIONS_LIMIT", "1000")
+	flagTLSCertFile         string = common.GetENVValue("SEBAK_TLS_CERT", "sebak.crt")
+	flagTLSKeyFile          string = common.GetENVValue("SEBAK_TLS_KEY", "sebak.key")
+	flagValidators          string = common.GetENVValue("SEBAK_VALIDATORS", "")
+	flagThreshold           string = common.GetENVValue("SEBAK_THRESHOLD", "66")
+	flagTimeoutINIT         string = common.GetENVValue("SEBAK_TIMEOUT_INIT", "2")
+	flagTimeoutSIGN         string = common.GetENVValue("SEBAK_TIMEOUT_SIGN", "2")
+	flagTimeoutACCEPT       string = common.GetENVValue("SEBAK_TIMEOUT_ACCEPT", "2")
+	flagTimeoutALLCONFIRM   string = common.GetENVValue("SEBAK_TIMEOUT_ALLCONFIRM", "2")
+	flagTransactionsLimit   string = common.GetENVValue("SEBAK_TRANSACTIONS_LIMIT", "1000")
 )
 
 var (
 	nodeCmd *cobra.Command
 
 	kp                *keypair.Full
-	nodeEndpoint      *sebakcommon.Endpoint
+	nodeEndpoint      *common.Endpoint
 	storageConfig     *sebakstorage.Config
 	validators        []*node.Validator
 	threshold         int
@@ -84,7 +84,7 @@ func init() {
 				var balanceStr string
 				csv := strings.Split(flagGenesis, ",")
 				if len(csv) > 2 {
-					common.PrintFlagsError(nodeCmd, "--genesis",
+					cmdcommon.PrintFlagsError(nodeCmd, "--genesis",
 						errors.New("--genesis expects address[,balance], but more than 2 commas detected"))
 				}
 				if len(csv) == 2 {
@@ -92,7 +92,7 @@ func init() {
 				}
 				flagName, err := MakeGenesisBlock(csv[0], flagNetworkID, balanceStr, flagStorageConfigString)
 				if len(flagName) != 0 || err != nil {
-					common.PrintFlagsError(c, flagName, err)
+					cmdcommon.PrintFlagsError(c, flagName, err)
 				}
 			}
 
@@ -112,12 +112,12 @@ func init() {
 	// storage
 	var currentDirectory string
 	if currentDirectory, err = os.Getwd(); err != nil {
-		common.PrintFlagsError(nodeCmd, "--storage", err)
+		cmdcommon.PrintFlagsError(nodeCmd, "--storage", err)
 	}
 	if currentDirectory, err = filepath.Abs(currentDirectory); err != nil {
-		common.PrintFlagsError(nodeCmd, "--storage", err)
+		cmdcommon.PrintFlagsError(nodeCmd, "--storage", err)
 	}
-	flagStorageConfigString = sebakcommon.GetENVValue("SEBAK_STORAGE", fmt.Sprintf("file://%s/db", currentDirectory))
+	flagStorageConfigString = common.GetENVValue("SEBAK_STORAGE", fmt.Sprintf("file://%s/db", currentDirectory))
 
 	nodeCmd.Flags().StringVar(&flagGenesis, "genesis", flagGenesis, "performs the 'genesis' command before running node. Syntax: key[,balance]")
 	nodeCmd.Flags().StringVar(&flagKPSecretSeed, "secret-seed", flagKPSecretSeed, "secret seed of this node")
@@ -161,25 +161,25 @@ func parseFlagsNode() {
 	var err error
 
 	if len(flagNetworkID) < 1 {
-		common.PrintFlagsError(nodeCmd, "--network-id", errors.New("--network-id must be given"))
+		cmdcommon.PrintFlagsError(nodeCmd, "--network-id", errors.New("--network-id must be given"))
 	}
 	if len(flagValidators) < 1 {
-		common.PrintFlagsError(nodeCmd, "--validators", errors.New("must be given"))
+		cmdcommon.PrintFlagsError(nodeCmd, "--validators", errors.New("must be given"))
 	}
 	if len(flagKPSecretSeed) < 1 {
-		common.PrintFlagsError(nodeCmd, "--secret-seed", errors.New("must be given"))
+		cmdcommon.PrintFlagsError(nodeCmd, "--secret-seed", errors.New("must be given"))
 	}
 
 	var parsedKP keypair.KP
 	parsedKP, err = keypair.Parse(flagKPSecretSeed)
 	if err != nil {
-		common.PrintFlagsError(nodeCmd, "--secret-seed", err)
+		cmdcommon.PrintFlagsError(nodeCmd, "--secret-seed", err)
 	} else {
 		kp = parsedKP.(*keypair.Full)
 	}
 
-	if p, err := sebakcommon.ParseEndpoint(flagEndpointString); err != nil {
-		common.PrintFlagsError(nodeCmd, "--endpoint", err)
+	if p, err := common.ParseEndpoint(flagEndpointString); err != nil {
+		cmdcommon.PrintFlagsError(nodeCmd, "--endpoint", err)
 	} else {
 		nodeEndpoint = p
 		flagEndpointString = nodeEndpoint.String()
@@ -187,10 +187,10 @@ func parseFlagsNode() {
 
 	if strings.ToLower(nodeEndpoint.Scheme) == "https" {
 		if _, err = os.Stat(flagTLSCertFile); os.IsNotExist(err) {
-			common.PrintFlagsError(nodeCmd, "--tls-cert", err)
+			cmdcommon.PrintFlagsError(nodeCmd, "--tls-cert", err)
 		}
 		if _, err = os.Stat(flagTLSKeyFile); os.IsNotExist(err) {
-			common.PrintFlagsError(nodeCmd, "--tls-key", err)
+			cmdcommon.PrintFlagsError(nodeCmd, "--tls-key", err)
 		}
 	}
 
@@ -202,20 +202,20 @@ func parseFlagsNode() {
 	nodeEndpoint.RawQuery = queries.Encode()
 
 	if validators, err = parseFlagValidators(flagValidators); err != nil {
-		common.PrintFlagsError(nodeCmd, "--validators", err)
+		cmdcommon.PrintFlagsError(nodeCmd, "--validators", err)
 	}
 
 	for _, n := range validators {
 		if n.Address() == kp.Address() {
-			common.PrintFlagsError(nodeCmd, "--validator", fmt.Errorf("duplicated public address found"))
+			cmdcommon.PrintFlagsError(nodeCmd, "--validator", fmt.Errorf("duplicated public address found"))
 		}
 		if n.Endpoint() == nodeEndpoint {
-			common.PrintFlagsError(nodeCmd, "--validator", fmt.Errorf("duplicated endpoint found"))
+			cmdcommon.PrintFlagsError(nodeCmd, "--validator", fmt.Errorf("duplicated endpoint found"))
 		}
 	}
 
 	if storageConfig, err = sebakstorage.NewConfigFromString(flagStorageConfigString); err != nil {
-		common.PrintFlagsError(nodeCmd, "--storage", err)
+		cmdcommon.PrintFlagsError(nodeCmd, "--storage", err)
 	}
 
 	timeoutINIT = getTimeout(flagTimeoutINIT, "--timeout-init")
@@ -224,18 +224,18 @@ func parseFlagsNode() {
 	timeoutALLCONFIRM = getTimeout(flagTimeoutALLCONFIRM, "--timeout-allconfirm")
 
 	if transactionsLimit, err = strconv.ParseUint(flagTransactionsLimit, 10, 64); err != nil {
-		common.PrintFlagsError(nodeCmd, "--transactions-limit", err)
+		cmdcommon.PrintFlagsError(nodeCmd, "--transactions-limit", err)
 	}
 
 	var tmpUint64 uint64
 	if tmpUint64, err = strconv.ParseUint(flagThreshold, 10, 64); err != nil {
-		common.PrintFlagsError(nodeCmd, "--threshold", err)
+		cmdcommon.PrintFlagsError(nodeCmd, "--threshold", err)
 	} else {
 		threshold = int(tmpUint64)
 	}
 
 	if logLevel, err = logging.LvlFromString(flagLogLevel); err != nil {
-		common.PrintFlagsError(nodeCmd, "--log-level", err)
+		cmdcommon.PrintFlagsError(nodeCmd, "--log-level", err)
 	}
 
 	logHandler := logging.StdoutHandler
@@ -244,7 +244,7 @@ func parseFlagsNode() {
 		flagLogOutput = "<stdout>"
 	} else {
 		if logHandler, err = logging.FileHandler(flagLogOutput, logging.JsonFormat()); err != nil {
-			common.PrintFlagsError(nodeCmd, "--log-output", err)
+			cmdcommon.PrintFlagsError(nodeCmd, "--log-output", err)
 		}
 	}
 
@@ -293,7 +293,7 @@ func parseFlagsNode() {
 func getTimeout(timeoutStr string, errMessage string) time.Duration {
 	var timeoutDuration time.Duration
 	if tmpUint64, err := strconv.ParseUint(flagTimeoutINIT, 10, 64); err != nil {
-		common.PrintFlagsError(nodeCmd, errMessage, err)
+		cmdcommon.PrintFlagsError(nodeCmd, errMessage, err)
 	} else {
 		timeoutDuration = time.Duration(tmpUint64) * time.Second
 	}
@@ -368,7 +368,7 @@ func runNode() error {
 	{
 		cancel := make(chan struct{})
 		g.Add(func() error {
-			return common.Interrupt(cancel)
+			return cmdcommon.Interrupt(cancel)
 		}, func(error) {
 			close(cancel)
 		})

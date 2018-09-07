@@ -90,11 +90,11 @@ func (s *StateDB) MakeHash() ([]byte, error) {
 		} else if err != nil {
 			return nil, err
 		}
-		h := sebakcommon.MakeHash(bs)
+		h := common.MakeHash(bs)
 		hashes = append(hashes, h)
 	}
 
-	h, err := sebakcommon.MakeObjectHash(hashes)
+	h, err := common.MakeObjectHash(hashes)
 	if err != nil {
 		return nil, err
 	}

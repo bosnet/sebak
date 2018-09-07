@@ -24,7 +24,7 @@ type Operation struct {
 }
 
 func (o Operation) MakeHash() []byte {
-	return sebakcommon.MustMakeObjectHash(o)
+	return common.MustMakeObjectHash(o)
 }
 
 func (o Operation) MakeHashString() string {
@@ -81,15 +81,15 @@ func NewOperationFromInterface(oj OperationFromJSON) (op Operation, err error) {
 	body := oj.B.(map[string]interface{})
 	switch op.H.Type {
 	case OperationCreateAccount:
-		var amount sebakcommon.Amount
-		amount, err = sebakcommon.AmountFromString(fmt.Sprintf("%v", body["amount"]))
+		var amount common.Amount
+		amount, err = common.AmountFromString(fmt.Sprintf("%v", body["amount"]))
 		if err != nil {
 			return
 		}
 		op.B = NewOperationBodyCreateAccount(body["target"].(string), amount)
 	case OperationPayment:
-		var amount sebakcommon.Amount
-		amount, err = sebakcommon.AmountFromString(fmt.Sprintf("%v", body["amount"]))
+		var amount common.Amount
+		amount, err = common.AmountFromString(fmt.Sprintf("%v", body["amount"]))
 		if err != nil {
 			return
 		}
@@ -135,7 +135,7 @@ type OperationBody interface {
 	Validate(*sebakstorage.LevelDBBackend) error
 	IsWellFormed([]byte) error
 	TargetAddress() string
-	GetAmount() sebakcommon.Amount
+	GetAmount() common.Amount
 }
 
 // FinishOperation do finish the task after consensus by the type of each operation.

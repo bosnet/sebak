@@ -8,7 +8,7 @@
 //   Those are provided for testing / quick prototyping and should not be in production code.
 // - Invariant `panic`s if the instance it's called on violates its invariant (see Contract programming)
 //
-package sebakcommon
+package common
 
 import (
 	"fmt"

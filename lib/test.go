@@ -43,7 +43,7 @@ func createNetMemoryNetwork() (*network.MemoryNetwork, *node.LocalNode) {
 func MakeNodeRunner() (*NodeRunner, *node.LocalNode) {
 	kp, _ := keypair.Random()
 
-	nodeEndpoint := &sebakcommon.Endpoint{Scheme: "https", Host: "https://locahost:5000"}
+	nodeEndpoint := &common.Endpoint{Scheme: "https", Host: "https://locahost:5000"}
 	localNode, _ := node.NewLocalNode(kp, nodeEndpoint, "")
 
 	vth, _ := NewDefaultVotingThresholdPolicy(66, 66)
@@ -64,7 +64,7 @@ func testMakeNewBlock(transactions []string) Block {
 			BlockHash:   "",
 		},
 		transactions,
-		sebakcommon.NowISO8601(),
+		common.NowISO8601(),
 	)
 }
 
@@ -101,7 +101,7 @@ func TestMakeOperationBodyPayment(amount int, addressList ...string) OperationBo
 
 	return OperationBodyPayment{
 		Target: address,
-		Amount: sebakcommon.Amount(amount),
+		Amount: common.Amount(amount),
 	}
 }
 
@@ -136,7 +136,7 @@ func TestMakeTransaction(networkID []byte, n int) (kp *keypair.Full, tx Transact
 	tx = Transaction{
 		T: "transaction",
 		H: TransactionHeader{
-			Created: sebakcommon.NowISO8601(),
+			Created: common.NowISO8601(),
 			Hash:    txBody.MakeHashString(),
 		},
 		B: txBody,
@@ -208,7 +208,7 @@ func (c *SelfProposerThenNotProposer) Calculate(nr *NodeRunner, blockHeight uint
 }
 
 func GetTransaction(t *testing.T) (tx Transaction, txByte []byte) {
-	initialBalance := sebakcommon.Amount(1)
+	initialBalance := common.Amount(1)
 	kpNewAccount, _ := keypair.Random()
 
 	tx = makeTransactionCreateAccount(kp, kpNewAccount.Address(), initialBalance)
@@ -223,8 +223,8 @@ func GetTransaction(t *testing.T) (tx Transaction, txByte []byte) {
 	return
 }
 
-func makeTransactionCreateAccount(kpSource *keypair.Full, target string, amount sebakcommon.Amount) (tx Transaction) {
-	opb := NewOperationBodyCreateAccount(target, sebakcommon.Amount(amount))
+func makeTransactionCreateAccount(kpSource *keypair.Full, target string, amount common.Amount) (tx Transaction) {
+	opb := NewOperationBodyCreateAccount(target, common.Amount(amount))
 
 	op := Operation{
 		H: OperationHeader{
@@ -243,7 +243,7 @@ func makeTransactionCreateAccount(kpSource *keypair.Full, target string, amount 
 	tx = Transaction{
 		T: "transaction",
 		H: TransactionHeader{
-			Created: sebakcommon.NowISO8601(),
+			Created: common.NowISO8601(),
 			Hash:    txBody.MakeHashString(),
 		},
 		B: txBody,
@@ -253,13 +253,13 @@ func makeTransactionCreateAccount(kpSource *keypair.Full, target string, amount 
 	return
 }
 
-func GenerateBallot(t *testing.T, proposer *node.LocalNode, round round.Round, tx Transaction, ballotState sebakcommon.BallotState, sender *node.LocalNode) *Ballot {
+func GenerateBallot(t *testing.T, proposer *node.LocalNode, round round.Round, tx Transaction, ballotState common.BallotState, sender *node.LocalNode) *Ballot {
 	ballot := NewBallot(proposer, round, []string{tx.GetHash()})
-	ballot.SetVote(sebakcommon.BallotStateINIT, sebakcommon.VotingYES)
+	ballot.SetVote(common.BallotStateINIT, common.VotingYES)
 	ballot.Sign(proposer.Keypair(), networkID)
 
 	ballot.SetSource(sender.Address())
-	ballot.SetVote(ballotState, sebakcommon.VotingYES)
+	ballot.SetVote(ballotState, common.VotingYES)
 	ballot.Sign(sender.Keypair(), networkID)
 
 	err := ballot.IsWellFormed(networkID)
@@ -268,13 +268,13 @@ func GenerateBallot(t *testing.T, proposer *node.LocalNode, round round.Round, t
 	return ballot
 }
 
-func GenerateEmptyTxBallot(t *testing.T, proposer *node.LocalNode, round round.Round, ballotState sebakcommon.BallotState, sender *node.LocalNode) *Ballot {
+func GenerateEmptyTxBallot(t *testing.T, proposer *node.LocalNode, round round.Round, ballotState common.BallotState, sender *node.LocalNode) *Ballot {
 	ballot := NewBallot(proposer, round, []string{})
-	ballot.SetVote(sebakcommon.BallotStateINIT, sebakcommon.VotingYES)
+	ballot.SetVote(common.BallotStateINIT, common.VotingYES)
 	ballot.Sign(proposer.Keypair(), networkID)
 
 	ballot.SetSource(sender.Address())
-	ballot.SetVote(ballotState, sebakcommon.VotingYES)
+	ballot.SetVote(ballotState, common.VotingYES)
 	ballot.Sign(sender.Keypair(), networkID)
 
 	err := ballot.IsWellFormed(networkID)

@@ -17,7 +17,7 @@ func TestGenerateKey(t *testing.T) {
 	require.Equal(t, g.GetCertPath(), certPath)
 	require.Equal(t, g.GetKeyPath(), keyPath)
 
-	require.Equal(t, sebakcommon.IsExists(certPath), true)
-	require.Equal(t, sebakcommon.IsExists(keyPath), true)
+	require.Equal(t, common.IsExists(certPath), true)
+	require.Equal(t, common.IsExists(keyPath), true)
 
 }

@@ -9,7 +9,7 @@ import (
 )
 
 type TransactionPool struct {
-	sebakcommon.SafeLock
+	common.SafeLock
 
 	Pool    map[ /* Transaction.GetHash() */ string]Transaction
 	Hashes  []string // Transaction.GetHash()
@@ -64,7 +64,7 @@ func (tp *TransactionPool) Remove(hashes ...string) {
 	indices := map[int]int{}
 	var max int
 	for _, hash := range hashes {
-		index, found := sebakcommon.InStringArray(tp.Hashes, hash)
+		index, found := common.InStringArray(tp.Hashes, hash)
 		if !found {
 			continue
 		}
@@ -116,18 +116,18 @@ func (tp *TransactionPool) IsSameSource(source string) (found bool) {
 }
 
 type ISAAC struct {
-	sebakcommon.SafeLock
+	common.SafeLock
 
 	NetworkID             []byte
 	Node                  *node.LocalNode
-	VotingThresholdPolicy sebakcommon.VotingThresholdPolicy
+	VotingThresholdPolicy common.VotingThresholdPolicy
 	TransactionPool       *TransactionPool
 	RunningRounds         map[ /* Round.Hash() */ string]*RunningRound
 	LatestConfirmedBlock  Block
 	LatestRound           round.Round
 }
 
-func NewISAAC(networkID []byte, node *node.LocalNode, votingThresholdPolicy sebakcommon.VotingThresholdPolicy) (is *ISAAC, err error) {
+func NewISAAC(networkID []byte, node *node.LocalNode, votingThresholdPolicy common.VotingThresholdPolicy) (is *ISAAC, err error) {
 	is = &ISAAC{
 		NetworkID:             networkID,
 		Node:                  node,
@@ -139,11 +139,11 @@ func NewISAAC(networkID []byte, node *node.LocalNode, votingThresholdPolicy seba
 	return
 }
 
-func (is *ISAAC) CloseConsensus(proposer string, round round.Round, vh sebakcommon.VotingHole) (err error) {
+func (is *ISAAC) CloseConsensus(proposer string, round round.Round, vh common.VotingHole) (err error) {
 	is.Lock()
 	defer is.Unlock()
 
-	if vh == sebakcommon.VotingNOTYET {
+	if vh == common.VotingNOTYET {
 		err = errors.New("invalid VotingHole, `VotingNOTYET`")
 		return
 	}
@@ -154,7 +154,7 @@ func (is *ISAAC) CloseConsensus(proposer string, round round.Round, vh sebakcomm
 		return
 	}
 
-	if vh == sebakcommon.VotingNO {
+	if vh == common.VotingNO {
 		delete(rr.Transactions, proposer)
 		delete(rr.Voted, proposer)
 

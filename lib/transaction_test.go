@@ -51,7 +51,7 @@ func TestIsWellFormedTransactionWithLowerFee(t *testing.T) {
 	err = tx.IsWellFormed(networkID)
 	require.NotNil(t, err, "Transaction shouidn't pass Fee checks")
 
-	tx.B.Fee = sebakcommon.Amount(0)
+	tx.B.Fee = common.Amount(0)
 	tx.H.Hash = tx.B.MakeHashString()
 	tx.Sign(kp, networkID)
 	err = tx.IsWellFormed(networkID)

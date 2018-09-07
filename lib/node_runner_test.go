@@ -49,7 +49,7 @@ func createTestNodeRunner(n int) []*NodeRunner {
 		}
 	}
 
-	checkpoint := sebakcommon.MakeGenesisCheckpoint(networkID)
+	checkpoint := common.MakeGenesisCheckpoint(networkID)
 	address := kp.Address()
 	balance := BaseFee.MustAdd(1)
 	account = block.NewBlockAccount(address, balance, checkpoint)
@@ -116,13 +116,13 @@ func createTestNodeRunnersHTTP2Network(n int) (nodeRunners []*NodeRunner, rootKP
 	var ports []int
 	for i := 0; i < n; i++ {
 		kp, _ := keypair.Random()
-		port := sebakcommon.GetFreePort(ports...)
+		port := common.GetFreePort(ports...)
 		if port < 1 {
 			panic("failed to find free port")
 		}
 		ports = append(ports, port)
 
-		endpoint, _ := sebakcommon.NewEndpointFromString(
+		endpoint, _ := common.NewEndpointFromString(
 			fmt.Sprintf(
 				"http://localhost:%d?NodeName=%s&HTTP2LogOutput=%s",
 				port,
@@ -147,7 +147,7 @@ func createTestNodeRunnersHTTP2Network(n int) (nodeRunners []*NodeRunner, rootKP
 	genesisAccount := block.NewBlockAccount(
 		rootKP.Address(),
 		10000000000000,
-		sebakcommon.MakeGenesisCheckpoint(networkID),
+		common.MakeGenesisCheckpoint(networkID),
 	)
 	for _, node := range nodes {
 		vth, _ := NewDefaultVotingThresholdPolicy(66, 66)
@@ -235,7 +235,7 @@ func TestNodeRunnerCreateAccount(t *testing.T) {
 
 	client := nr0.Network().GetClient(nr0.Node().Endpoint())
 
-	initialBalance := sebakcommon.Amount(1)
+	initialBalance := common.Amount(1)
 	tx := makeTransactionCreateAccount(kp, kpNewAccount.Address(), initialBalance)
 	tx.B.Checkpoint = account.Checkpoint
 	tx.Sign(kp, networkID)
@@ -269,8 +269,8 @@ func TestNodeRunnerSaveBlock(t *testing.T) {
 	}
 	var wg sync.WaitGroup
 	wg.Add(numberOfNodes)
-	checkerDeferFunc := func(n int, checker sebakcommon.Checker, err error) {
-		if _, ok := err.(sebakcommon.CheckerStop); !ok {
+	checkerDeferFunc := func(n int, checker common.Checker, err error) {
+		if _, ok := err.(common.CheckerStop); !ok {
 			return
 		}
 		wg.Done()

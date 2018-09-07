@@ -6,19 +6,19 @@ import (
 )
 
 type MemoryTransportClient struct {
-	endpoint *sebakcommon.Endpoint
+	endpoint *common.Endpoint
 
 	server *MemoryNetwork
 }
 
-func NewMemoryNetworkClient(endpoint *sebakcommon.Endpoint, server *MemoryNetwork) *MemoryTransportClient {
+func NewMemoryNetworkClient(endpoint *common.Endpoint, server *MemoryNetwork) *MemoryTransportClient {
 	return &MemoryTransportClient{
 		endpoint: endpoint,
 		server:   server,
 	}
 }
 
-func (m *MemoryTransportClient) Endpoint() *sebakcommon.Endpoint {
+func (m *MemoryTransportClient) Endpoint() *common.Endpoint {
 	return m.endpoint
 }
 
@@ -32,7 +32,7 @@ func (m *MemoryTransportClient) GetNodeInfo() (b []byte, err error) {
 	return
 }
 
-func (m *MemoryTransportClient) SendMessage(message sebakcommon.Serializable) (body []byte, err error) {
+func (m *MemoryTransportClient) SendMessage(message common.Serializable) (body []byte, err error) {
 	var s []byte
 	if s, err = message.Serialize(); err != nil {
 		return
@@ -42,7 +42,7 @@ func (m *MemoryTransportClient) SendMessage(message sebakcommon.Serializable) (b
 	return
 }
 
-func (m *MemoryTransportClient) SendBallot(message sebakcommon.Serializable) (body []byte, err error) {
+func (m *MemoryTransportClient) SendBallot(message common.Serializable) (body []byte, err error) {
 	var s []byte
 	if s, err = message.Serialize(); err != nil {
 		return

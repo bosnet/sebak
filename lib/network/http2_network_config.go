@@ -12,7 +12,7 @@ import (
 
 type HTTP2NetworkConfig struct {
 	NodeName string
-	Endpoint *sebakcommon.Endpoint
+	Endpoint *common.Endpoint
 	Addr     string
 
 	ReadTimeout,
@@ -26,7 +26,7 @@ type HTTP2NetworkConfig struct {
 	HTTP2LogOutput io.Writer
 }
 
-func NewHTTP2NetworkConfigFromEndpoint(endpoint *sebakcommon.Endpoint) (config HTTP2NetworkConfig, err error) {
+func NewHTTP2NetworkConfigFromEndpoint(endpoint *common.Endpoint) (config HTTP2NetworkConfig, err error) {
 	query := endpoint.Query()
 
 	var NodeName string
@@ -37,7 +37,7 @@ func NewHTTP2NetworkConfigFromEndpoint(endpoint *sebakcommon.Endpoint) (config H
 	var TLSCertFile, TLSKeyFile string
 	var HTTP2LogOutput io.Writer
 
-	if ReadTimeout, err = time.ParseDuration(sebakcommon.GetUrlQuery(query, "ReadTimeout", "0s")); err != nil {
+	if ReadTimeout, err = time.ParseDuration(common.GetUrlQuery(query, "ReadTimeout", "0s")); err != nil {
 		return
 	}
 	if ReadTimeout < 0*time.Second {
@@ -45,7 +45,7 @@ func NewHTTP2NetworkConfigFromEndpoint(endpoint *sebakcommon.Endpoint) (config H
 		return
 	}
 
-	if ReadHeaderTimeout, err = time.ParseDuration(sebakcommon.GetUrlQuery(query, "ReadHeaderTimeout", "0s")); err != nil {
+	if ReadHeaderTimeout, err = time.ParseDuration(common.GetUrlQuery(query, "ReadHeaderTimeout", "0s")); err != nil {
 		return
 	}
 	if ReadHeaderTimeout < 0*time.Second {
@@ -53,7 +53,7 @@ func NewHTTP2NetworkConfigFromEndpoint(endpoint *sebakcommon.Endpoint) (config H
 		return
 	}
 
-	if WriteTimeout, err = time.ParseDuration(sebakcommon.GetUrlQuery(query, "WriteTimeout", "0s")); err != nil {
+	if WriteTimeout, err = time.ParseDuration(common.GetUrlQuery(query, "WriteTimeout", "0s")); err != nil {
 		return
 	}
 	if WriteTimeout < 0*time.Second {
@@ -61,7 +61,7 @@ func NewHTTP2NetworkConfigFromEndpoint(endpoint *sebakcommon.Endpoint) (config H
 		return
 	}
 
-	if IdleTimeout, err = time.ParseDuration(sebakcommon.GetUrlQuery(query, "IdleTimeout", "0s")); err != nil {
+	if IdleTimeout, err = time.ParseDuration(common.GetUrlQuery(query, "IdleTimeout", "0s")); err != nil {
 		return
 	}
 	if IdleTimeout < 0*time.Second {
@@ -114,5 +114,5 @@ func (config HTTP2NetworkConfig) IsHTTPS() bool {
 }
 
 func (config HTTP2NetworkConfig) String() string {
-	return string(sebakcommon.MustJSONMarshal(config))
+	return string(common.MustJSONMarshal(config))
 }

@@ -64,14 +64,14 @@ func TestBallotHash(t *testing.T) {
 
 func TestBallotBadConfirmedTime(t *testing.T) {
 	kp, _ := keypair.Random()
-	endpoint, _ := sebakcommon.NewEndpointFromString("https://localhost:1000")
+	endpoint, _ := common.NewEndpointFromString("https://localhost:1000")
 	node, _ := node.NewLocalNode(kp, endpoint, "")
 
 	round := round.Round{Number: 0, BlockHeight: 0, BlockHash: "", TotalTxs: 0}
 
 	updateBallot := func(ballot *Ballot) {
 		ballot.H.Hash = ballot.B.MakeHashString()
-		signature, _ := sebakcommon.MakeSignature(kp, networkID, ballot.H.Hash)
+		signature, _ := common.MakeSignature(kp, networkID, ballot.H.Hash)
 		ballot.H.Signature = base58.Encode(signature)
 	}
 
@@ -88,7 +88,7 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 		ballot.Sign(kp, networkID)
 
 		newConfirmed := time.Now().Add(time.Duration(2) * BallotConfirmedTimeAllowDuration)
-		ballot.B.Confirmed = sebakcommon.FormatISO8601(newConfirmed)
+		ballot.B.Confirmed = common.FormatISO8601(newConfirmed)
 		updateBallot(ballot)
 
 		err := ballot.IsWellFormed(networkID)
@@ -100,7 +100,7 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 		ballot.Sign(kp, networkID)
 
 		newConfirmed := time.Now().Add(time.Duration(-2) * BallotConfirmedTimeAllowDuration)
-		ballot.B.Confirmed = sebakcommon.FormatISO8601(newConfirmed)
+		ballot.B.Confirmed = common.FormatISO8601(newConfirmed)
 		updateBallot(ballot)
 
 		err := ballot.IsWellFormed(networkID)
@@ -112,7 +112,7 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 		ballot.Sign(kp, networkID)
 
 		newConfirmed := time.Now().Add(time.Duration(2) * BallotConfirmedTimeAllowDuration)
-		ballot.B.Proposed.Confirmed = sebakcommon.FormatISO8601(newConfirmed)
+		ballot.B.Proposed.Confirmed = common.FormatISO8601(newConfirmed)
 		updateBallot(ballot)
 
 		err := ballot.IsWellFormed(networkID)
@@ -124,7 +124,7 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 		ballot.Sign(kp, networkID)
 
 		newConfirmed := time.Now().Add(time.Duration(-2) * BallotConfirmedTimeAllowDuration)
-		ballot.B.Proposed.Confirmed = sebakcommon.FormatISO8601(newConfirmed)
+		ballot.B.Proposed.Confirmed = common.FormatISO8601(newConfirmed)
 		updateBallot(ballot)
 
 		err := ballot.IsWellFormed(networkID)

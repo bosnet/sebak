@@ -7,7 +7,7 @@ import (
 )
 
 type RunningRound struct {
-	sebakcommon.SafeLock
+	common.SafeLock
 
 	Round        round.Round
 	Proposer     string                              // LocalNode's `Proposer`

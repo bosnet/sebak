@@ -30,10 +30,10 @@ type BlockAccount struct {
 	Balance    string
 	Checkpoint string
 	CodeHash   []byte
-	RootHash   sebakcommon.Hash
+	RootHash   common.Hash
 }
 
-func NewBlockAccount(address string, balance sebakcommon.Amount, checkpoint string) *BlockAccount {
+func NewBlockAccount(address string, balance common.Amount, checkpoint string) *BlockAccount {
 	return &BlockAccount{
 		Address:    address,
 		Balance:    balance.String(),
@@ -42,7 +42,7 @@ func NewBlockAccount(address string, balance sebakcommon.Amount, checkpoint stri
 }
 
 func (b *BlockAccount) String() string {
-	return string(sebakcommon.MustJSONMarshal(b))
+	return string(common.MustJSONMarshal(b))
 }
 
 func (b *BlockAccount) Save(st *sebakstorage.LevelDBBackend) (err error) {
@@ -59,7 +59,7 @@ func (b *BlockAccount) Save(st *sebakstorage.LevelDBBackend) (err error) {
 	} else {
 		// TODO consider to use, [`Transaction`](https://godoc.org/github.com/syndtr/goleveldb/leveldb#DB.OpenTransaction)
 		err = st.New(key, b)
-		createdKey := GetBlockAccountCreatedKey(sebakcommon.GetUniqueIDFromUUID())
+		createdKey := GetBlockAccountCreatedKey(common.GetUniqueIDFromUUID())
 		err = st.New(createdKey, b.Address)
 	}
 	if err == nil {
@@ -79,11 +79,11 @@ func (b *BlockAccount) Save(st *sebakstorage.LevelDBBackend) (err error) {
 }
 
 func (b *BlockAccount) Serialize() (encoded []byte, err error) {
-	encoded, err = sebakcommon.EncodeJSONValue(b)
+	encoded, err = common.EncodeJSONValue(b)
 	return
 }
 func (b *BlockAccount) Deserialize(encoded []byte) (err error) {
-	return sebakcommon.DecodeJSONValue(encoded, b)
+	return common.DecodeJSONValue(encoded, b)
 }
 
 func GetBlockAccountKey(address string) string {
@@ -145,15 +145,15 @@ func GetBlockAccountsByCreated(st *sebakstorage.LevelDBBackend, reverse bool) (f
 		})
 }
 
-func (b *BlockAccount) GetBalance() sebakcommon.Amount {
-	return sebakcommon.MustAmountFromString(b.Balance)
+func (b *BlockAccount) GetBalance() common.Amount {
+	return common.MustAmountFromString(b.Balance)
 }
 
 // Add fund to an account
 //
 // If the amount would make the account overflow over the full supply of coin,
 // an `error` is returned.
-func (b *BlockAccount) Deposit(fund sebakcommon.Amount, checkpoint string) error {
+func (b *BlockAccount) Deposit(fund common.Amount, checkpoint string) error {
 	if val, err := b.GetBalance().Add(fund); err != nil {
 		return err
 	} else {
@@ -166,7 +166,7 @@ func (b *BlockAccount) Deposit(fund sebakcommon.Amount, checkpoint string) error
 // Remove fund from an account
 //
 // If the amount would make the account go negative, an `error` is returned.
-func (b *BlockAccount) Withdraw(fund sebakcommon.Amount, checkpoint string) error {
+func (b *BlockAccount) Withdraw(fund common.Amount, checkpoint string) error {
 	if val, err := b.GetBalance().Sub(fund); err != nil {
 		return err
 	} else {
@@ -196,7 +196,7 @@ func GetBlockAccountCheckpointKey(address, checkpoint string) string {
 }
 
 func GetBlockAccountCheckpointByAddressKey(address string) string {
-	return fmt.Sprintf("%s%s-%s", BlockAccountCheckpointByAddressPrefix, address, sebakcommon.GetUniqueIDFromUUID())
+	return fmt.Sprintf("%s%s-%s", BlockAccountCheckpointByAddressPrefix, address, common.GetUniqueIDFromUUID())
 }
 
 func GetBlockAccountCheckpointByAddressKeyPrefix(address string) string {
@@ -204,7 +204,7 @@ func GetBlockAccountCheckpointByAddressKeyPrefix(address string) string {
 }
 
 func (b *BlockAccountCheckpoint) String() string {
-	return string(sebakcommon.MustJSONMarshal(b))
+	return string(common.MustJSONMarshal(b))
 }
 
 func (b *BlockAccountCheckpoint) Save(st *sebakstorage.LevelDBBackend) (err error) {

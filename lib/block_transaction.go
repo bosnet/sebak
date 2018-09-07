@@ -39,9 +39,9 @@ type BlockTransaction struct {
 	TargetCheckpoint   string
 	Signature          string
 	Source             string
-	Fee                sebakcommon.Amount
+	Fee                common.Amount
 	Operations         []string
-	Amount             sebakcommon.Amount
+	Amount             common.Amount
 
 	Confirmed string
 	Created   string
@@ -84,7 +84,7 @@ func (bt BlockTransaction) NewBlockTransactionKeySource() string {
 	return fmt.Sprintf(
 		"%s%s",
 		GetBlockTransactionKeyPrefixSource(bt.Source),
-		sebakcommon.GetUniqueIDFromUUID(),
+		common.GetUniqueIDFromUUID(),
 	)
 }
 
@@ -92,7 +92,7 @@ func (bt BlockTransaction) NewBlockTransactionKeyConfirmed() string {
 	return fmt.Sprintf(
 		"%s%s",
 		GetBlockTransactionKeyPrefixConfirmed(bt.Confirmed),
-		sebakcommon.GetUniqueIDFromUUID(),
+		common.GetUniqueIDFromUUID(),
 	)
 }
 
@@ -100,7 +100,7 @@ func (bt BlockTransaction) NewBlockTransactionKeyByAccount(accountAddress string
 	return fmt.Sprintf(
 		"%s%s",
 		GetBlockTransactionKeyPrefixAccount(accountAddress),
-		sebakcommon.GetUniqueIDFromUUID(),
+		common.GetUniqueIDFromUUID(),
 	)
 }
 
@@ -108,7 +108,7 @@ func (bt BlockTransaction) NewBlockTransactionKeyByBlock(hash string) string {
 	return fmt.Sprintf(
 		"%s%s",
 		GetBlockTransactionKeyPrefixBlock(hash),
-		sebakcommon.GetUniqueIDFromUUID(),
+		common.GetUniqueIDFromUUID(),
 	)
 }
 
@@ -127,7 +127,7 @@ func (bt *BlockTransaction) Save(st *sebakstorage.LevelDBBackend) (err error) {
 		return errors.ErrorBlockAlreadyExists
 	}
 
-	bt.Confirmed = sebakcommon.NowISO8601()
+	bt.Confirmed = common.NowISO8601()
 	if err = st.New(GetBlockTransactionKey(bt.Hash), bt); err != nil {
 		return
 	}
@@ -170,12 +170,12 @@ func (bt *BlockTransaction) Save(st *sebakstorage.LevelDBBackend) (err error) {
 }
 
 func (bt BlockTransaction) Serialize() (encoded []byte, err error) {
-	encoded, err = sebakcommon.EncodeJSONValue(bt)
+	encoded, err = common.EncodeJSONValue(bt)
 	return
 }
 
 func (bt BlockTransaction) String() string {
-	encoded, _ := sebakcommon.EncodeJSONValue(bt)
+	encoded, _ := common.EncodeJSONValue(bt)
 	return string(encoded)
 }
 

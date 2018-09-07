@@ -9,12 +9,12 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/stellar/go/keypair"
 
+	cmdcommon "boscoin.io/sebak/cmd/sebak/common"
+
 	"boscoin.io/sebak/lib"
+	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/storage"
-
-	"boscoin.io/sebak/cmd/sebak/common"
-	"boscoin.io/sebak/lib/block"
 )
 
 const (
@@ -23,7 +23,7 @@ const (
 
 var (
 	genesisCmd  *cobra.Command
-	flagBalance string = sebakcommon.GetENVValue("SEBAK_GENESIS_BALANCE", initialBalance)
+	flagBalance string = common.GetENVValue("SEBAK_GENESIS_BALANCE", initialBalance)
 )
 
 func init() {
@@ -34,7 +34,7 @@ func init() {
 		Run: func(c *cobra.Command, args []string) {
 			flagName, err := MakeGenesisBlock(args[0], flagNetworkID, flagBalance, flagStorageConfigString)
 			if len(flagName) != 0 || err != nil {
-				common.PrintFlagsError(c, flagName, err)
+				cmdcommon.PrintFlagsError(c, flagName, err)
 			}
 
 			fmt.Println("successfully created genesis block")
@@ -70,7 +70,7 @@ func init() {
 //   Note that only one needs be non-`nil` for it to be considered an error.
 //
 func MakeGenesisBlock(addressStr, networkID, balanceStr, storage string) (string, error) {
-	var balance sebakcommon.Amount
+	var balance common.Amount
 	var err error
 	var kp keypair.KP
 	var storageConfig *sebakstorage.Config
@@ -87,14 +87,14 @@ func MakeGenesisBlock(addressStr, networkID, balanceStr, storage string) (string
 		balanceStr = initialBalance
 	}
 
-	if balance, err = common.ParseAmountFromString(balanceStr); err != nil {
+	if balance, err = cmdcommon.ParseAmountFromString(balanceStr); err != nil {
 		return "--balance", err
 	}
 
 	// Use the default value
 	if len(storage) == 0 {
 		// We try to get the env value first, before doing IO which could fail
-		storage = sebakcommon.GetENVValue("SEBAK_STORAGE", "")
+		storage = common.GetENVValue("SEBAK_STORAGE", "")
 		// No env, use the default (current directory)
 		if len(storage) == 0 {
 			if currentDirectory, err := os.Getwd(); err == nil {
@@ -127,7 +127,7 @@ func MakeGenesisBlock(addressStr, networkID, balanceStr, storage string) (string
 	account := block.NewBlockAccount(
 		kp.Address(),
 		balance,
-		sebakcommon.MakeGenesisCheckpoint([]byte(flagNetworkID)),
+		common.MakeGenesisCheckpoint([]byte(flagNetworkID)),
 	)
 	account.Save(st)
 

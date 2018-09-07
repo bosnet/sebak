@@ -18,7 +18,7 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 
 	rootAccount, _ := block.GetBlockAccount(nodeRunner.Storage(), rootKP.Address())
 
-	TestMakeBlockAccount := func(balance sebakcommon.Amount) (account *block.BlockAccount, kp *keypair.Full) {
+	TestMakeBlockAccount := func(balance common.Amount) (account *block.BlockAccount, kp *keypair.Full) {
 		kp, _ = keypair.Random()
 		account = block.NewBlockAccount(kp.Address(), balance, TestGenerateNewCheckpoint())
 
@@ -29,22 +29,22 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 		messageData, _ := tx.Serialize()
 
 		checker := &MessageChecker{
-			DefaultChecker: sebakcommon.DefaultChecker{Funcs: DefaultHandleTransactionCheckerFuncs},
+			DefaultChecker: common.DefaultChecker{Funcs: DefaultHandleTransactionCheckerFuncs},
 			NodeRunner:     nodeRunner,
 			LocalNode:      nodeRunner.Node(),
 			NetworkID:      networkID,
 			Message:        network.Message{Type: "message", Data: messageData},
 		}
 
-		if err := sebakcommon.RunChecker(checker, nil); err != nil {
-			if _, ok := err.(sebakcommon.CheckerErrorStop); !ok && expectedError != nil {
+		if err := common.RunChecker(checker, nil); err != nil {
+			if _, ok := err.(common.CheckerErrorStop); !ok && expectedError != nil {
 				require.Error(t, err, expectedError)
 			}
 		}
 	}
 
 	{ // valid transaction
-		targetAccount, targetKP := TestMakeBlockAccount(sebakcommon.Amount(10000000000000) /* 100,00000 BOS */)
+		targetAccount, targetKP := TestMakeBlockAccount(common.Amount(10000000000000) /* 100,00000 BOS */)
 		targetAccount.Save(nodeRunner.Storage())
 
 		tx := TestMakeTransactionWithKeypair(networkID, 1, rootKP, targetKP)
@@ -57,7 +57,7 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 	}
 
 	{ // invalid transaction: same source already in TransactionPool
-		targetAccount, targetKP := TestMakeBlockAccount(sebakcommon.Amount(10000000000000))
+		targetAccount, targetKP := TestMakeBlockAccount(common.Amount(10000000000000))
 		targetAccount.Save(nodeRunner.Storage())
 
 		tx := TestMakeTransactionWithKeypair(networkID, 1, rootKP, targetKP)
@@ -74,8 +74,8 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 	}
 
 	{ // invalid transaction: source account does not exists
-		_, sourceKP := TestMakeBlockAccount(sebakcommon.Amount(10000000000000))
-		targetAccount, targetKP := TestMakeBlockAccount(sebakcommon.Amount(10000000000000))
+		_, sourceKP := TestMakeBlockAccount(common.Amount(10000000000000))
+		targetAccount, targetKP := TestMakeBlockAccount(common.Amount(10000000000000))
 		targetAccount.Save(nodeRunner.Storage())
 
 		tx := TestMakeTransactionWithKeypair(networkID, 1, sourceKP, targetKP)
@@ -90,8 +90,8 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 	}
 
 	{ // invalid transaction: target account does not exists
-		sourceAccount, sourceKP := TestMakeBlockAccount(sebakcommon.Amount(10000000000000))
-		_, targetKP := TestMakeBlockAccount(sebakcommon.Amount(10000000000000))
+		sourceAccount, sourceKP := TestMakeBlockAccount(common.Amount(10000000000000))
+		_, targetKP := TestMakeBlockAccount(common.Amount(10000000000000))
 		sourceAccount.Save(nodeRunner.Storage())
 
 		tx := TestMakeTransactionWithKeypair(networkID, 1, sourceKP, targetKP)

@@ -17,7 +17,7 @@ func TestHTTP2NetworkConfigHTTPSAndTLS(t *testing.T) {
 		queryValues.Set("TLSCertFile", "faketlscert")
 		queryValues.Set("TLSKeyFile", "faketlskey")
 
-		endpoint := &sebakcommon.Endpoint{
+		endpoint := &common.Endpoint{
 			Scheme:   "https",
 			Host:     fmt.Sprintf("localhost:%s", getPort()),
 			RawQuery: queryValues.Encode(),
@@ -32,7 +32,7 @@ func TestHTTP2NetworkConfigHTTPSAndTLS(t *testing.T) {
 		queryValues.Set("NodeName", "showme")
 		queryValues.Set("TLSCertFile", "faketlscert")
 
-		endpoint := &sebakcommon.Endpoint{
+		endpoint := &common.Endpoint{
 			Scheme:   "https",
 			Host:     fmt.Sprintf("localhost:%s", getPort()),
 			RawQuery: queryValues.Encode(),
@@ -47,7 +47,7 @@ func TestHTTP2NetworkConfigHTTPSAndTLS(t *testing.T) {
 		queryValues.Set("NodeName", "showme")
 		queryValues.Set("TLSKeyFile", "faketlskey")
 
-		endpoint := &sebakcommon.Endpoint{
+		endpoint := &common.Endpoint{
 			Scheme:   "https",
 			Host:     fmt.Sprintf("localhost:%s", getPort()),
 			RawQuery: queryValues.Encode(),
@@ -63,7 +63,7 @@ func TestHTTP2NetworkConfigHTTPSAndTLS(t *testing.T) {
 		queryValues.Set("TLSCertFile", "faketlscert")
 		queryValues.Set("TLSKeyFile", "faketlskey")
 
-		endpoint := &sebakcommon.Endpoint{
+		endpoint := &common.Endpoint{
 			Scheme:   "http",
 			Host:     fmt.Sprintf("localhost:%s", getPort()),
 			RawQuery: queryValues.Encode(),

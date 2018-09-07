@@ -16,7 +16,7 @@ type ISAACVotingThresholdPolicy struct {
 }
 
 func (vt *ISAACVotingThresholdPolicy) String() string {
-	o := sebakcommon.MustJSONMarshal(map[string]interface{}{
+	o := common.MustJSONMarshal(map[string]interface{}{
 		"sign":       vt.sign,
 		"accept":     vt.accept,
 		"validators": vt.validators,
@@ -53,12 +53,12 @@ func (vt *ISAACVotingThresholdPolicy) SetConnected(n int) error {
 	return nil
 }
 
-func (vt *ISAACVotingThresholdPolicy) Threshold(state sebakcommon.BallotState) int {
+func (vt *ISAACVotingThresholdPolicy) Threshold(state common.BallotState) int {
 	var t int
 	switch state {
-	case sebakcommon.BallotStateSIGN:
+	case common.BallotStateSIGN:
 		t = vt.sign
-	case sebakcommon.BallotStateACCEPT:
+	case common.BallotStateACCEPT:
 		t = vt.accept
 	}
 
@@ -66,7 +66,7 @@ func (vt *ISAACVotingThresholdPolicy) Threshold(state sebakcommon.BallotState) i
 	threshold := int(math.Ceil(v))
 
 	// in SIGN state, proposer assumes to say VotingYES
-	if state == sebakcommon.BallotStateSIGN {
+	if state == common.BallotStateSIGN {
 		threshold = threshold - 1
 	}
 

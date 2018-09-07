@@ -16,7 +16,7 @@ type StateDB struct {
 	stateObjectsCommitDirty map[string]struct{}
 }
 
-func New(root sebakcommon.Hash, db *trie.EthDatabase) *StateDB {
+func New(root common.Hash, db *trie.EthDatabase) *StateDB {
 	return &StateDB{
 		db:                      db,
 		trie:                    trie.NewTrie(root, db),
@@ -68,20 +68,20 @@ func (stateDB *StateDB) GetCode(addr string) []byte {
 	return nil
 }
 
-func (stateDB *StateDB) GetCodeHash(addr string) sebakcommon.Hash {
+func (stateDB *StateDB) GetCodeHash(addr string) common.Hash {
 	stateObject := stateDB.getStateObject(addr)
 	if stateObject == nil {
-		return sebakcommon.Hash{}
+		return common.Hash{}
 	}
-	return sebakcommon.BytesToHash(stateObject.CodeHash())
+	return common.BytesToHash(stateObject.CodeHash())
 }
 
-func (stateDB *StateDB) GetState(a string, b sebakcommon.Hash) sebakcommon.Hash {
+func (stateDB *StateDB) GetState(a string, b common.Hash) common.Hash {
 	stateObject := stateDB.getStateObject(a)
 	if stateObject != nil {
 		return stateObject.GetState(b)
 	}
-	return sebakcommon.Hash{}
+	return common.Hash{}
 }
 
 func (stateDB *StateDB) CreateAccount(addr string) {
@@ -95,28 +95,28 @@ func (stateDB *StateDB) SetCheckpoint(addr string, checkpoint string) {
 	}
 }
 
-func (stateDB *StateDB) AddBalance(addr string, amount sebakcommon.Amount) {
+func (stateDB *StateDB) AddBalance(addr string, amount common.Amount) {
 	stateObject := stateDB.GetOrNewStateObject(addr)
 	if stateObject != nil {
 		stateObject.AddBalance(amount)
 	}
 }
 
-func (stateDB *StateDB) AddBalanceWithCheckpoint(addr string, amount sebakcommon.Amount, checkpoint string) {
+func (stateDB *StateDB) AddBalanceWithCheckpoint(addr string, amount common.Amount, checkpoint string) {
 	stateObject := stateDB.GetOrNewStateObject(addr)
 	if stateObject != nil {
 		stateObject.AddBalanceWithCheckpoint(amount, checkpoint)
 	}
 }
 
-func (stateDB *StateDB) SubBalance(addr string, amount sebakcommon.Amount) {
+func (stateDB *StateDB) SubBalance(addr string, amount common.Amount) {
 	stateObject := stateDB.GetOrNewStateObject(addr)
 	if stateObject != nil {
 		stateObject.SubBalance(amount)
 	}
 }
 
-func (stateDB *StateDB) SubBalanceWithCheckpoint(addr string, amount sebakcommon.Amount, checkpoint string) {
+func (stateDB *StateDB) SubBalanceWithCheckpoint(addr string, amount common.Amount, checkpoint string) {
 	stateObject := stateDB.GetOrNewStateObject(addr)
 	if stateObject != nil {
 		stateObject.SubBalanceWithCheckpoint(amount, checkpoint)
@@ -126,11 +126,11 @@ func (stateDB *StateDB) SubBalanceWithCheckpoint(addr string, amount sebakcommon
 func (stateDB *StateDB) SetCode(addr string, code []byte) {
 	stateObject := stateDB.GetOrNewStateObject(addr)
 	if stateObject != nil {
-		stateObject.SetCode(sebakcommon.MakeHash(code), code)
+		stateObject.SetCode(common.MakeHash(code), code)
 	}
 }
 
-func (stateDB *StateDB) SetState(addr string, key, value sebakcommon.Hash) {
+func (stateDB *StateDB) SetState(addr string, key, value common.Hash) {
 	stateObject := stateDB.GetOrNewStateObject(addr)
 	if stateObject != nil {
 		stateObject.SetState(key, value)
@@ -179,12 +179,12 @@ func (stateDB *StateDB) updateStateObject(stateObject *stateObject) {
 
 }
 
-func (stateDB *StateDB) CommitTrie() (root sebakcommon.Hash, err error) {
+func (stateDB *StateDB) CommitTrie() (root common.Hash, err error) {
 
 	for addr, stateObject := range stateDB.stateObjects {
 		if _, isDirty := stateDB.stateObjectsDirty[addr]; isDirty {
 			if _, err = stateObject.CommitTrie(); err != nil {
-				return sebakcommon.Hash{}, err
+				return common.Hash{}, err
 			}
 			stateDB.updateStateObject(stateObject)
 			delete(stateDB.stateObjectsDirty, addr)
@@ -195,7 +195,7 @@ func (stateDB *StateDB) CommitTrie() (root sebakcommon.Hash, err error) {
 	return
 }
 
-func (stateDB *StateDB) CommitDB(root sebakcommon.Hash) (err error) {
+func (stateDB *StateDB) CommitDB(root common.Hash) (err error) {
 	for addr, stateObject := range stateDB.stateObjects {
 		if _, isDirty := stateDB.stateObjectsCommitDirty[addr]; isDirty {
 			if err = stateObject.CommitDB(stateObject.data.RootHash); err != nil {

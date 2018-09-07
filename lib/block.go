@@ -44,7 +44,7 @@ func MakeGenesisBlock(st *sebakstorage.LevelDBBackend, account block.BlockAccoun
 	round := round.Round{
 		Number:      0,
 		BlockHeight: 0,
-		BlockHash:   base58.Encode(sebakcommon.MustMakeObjectHash(account)),
+		BlockHash:   base58.Encode(common.MustMakeObjectHash(account)),
 		TotalTxs:    0,
 	}
 	transactions := []string{}
@@ -72,7 +72,7 @@ func NewBlock(proposer string, round round.Round, transactions []string, confirm
 
 	log.Debug("NewBlock created", "PrevTotalTxs", round.TotalTxs, "txs", len(transactions), "TotalTxs", b.Header.TotalTxs)
 
-	b.Hash = base58.Encode(sebakcommon.MustMakeObjectHash(b))
+	b.Hash = base58.Encode(common.MustMakeObjectHash(b))
 
 	return *b
 }
@@ -87,7 +87,7 @@ func NewBlockFromBallot(ballot Ballot) Block {
 }
 
 func getTransactionRoot(txs []string) string {
-	return sebakcommon.MustMakeObjectHashString(txs) // TODO make root
+	return common.MustMakeObjectHashString(txs) // TODO make root
 }
 
 func GetBlockKey(hash string) string {
@@ -102,7 +102,7 @@ func (b Block) NewBlockKeyConfirmed() string {
 	return fmt.Sprintf(
 		"%s%s",
 		GetBlockKeyPrefixConfirmed(b.Confirmed),
-		sebakcommon.GetUniqueIDFromUUID(),
+		common.GetUniqueIDFromUUID(),
 	)
 }
 

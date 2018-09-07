@@ -9,11 +9,11 @@ import (
 	"fmt"
 )
 
-type Storage map[sebakcommon.Hash]sebakcommon.Hash
+type Storage map[common.Hash]common.Hash
 
 type Code []byte
 
-var emptyCodeHash = sebakcommon.MakeHash([]byte{})
+var emptyCodeHash = common.MakeHash([]byte{})
 
 type stateObject struct {
 	address     string
@@ -82,26 +82,26 @@ func (so *stateObject) Checkpoint() string {
 	return so.data.Checkpoint
 }
 
-func (so *stateObject) GetState(key sebakcommon.Hash) sebakcommon.Hash {
+func (so *stateObject) GetState(key common.Hash) common.Hash {
 	value, exists := so.cachedStorage[key]
 	if exists {
 		return value
 	}
 	enc, err := so.storageTrie.TryGet(key[:])
 	if err != nil {
-		return sebakcommon.Hash{}
+		return common.Hash{}
 	}
 	if len(enc) > 0 {
 		value.SetBytes(enc)
 	}
-	if (value != sebakcommon.Hash{}) {
+	if (value != common.Hash{}) {
 		so.cachedStorage[key] = value
 	}
 	return value
 }
 
 /* SETTERS */
-func (so *stateObject) SetState(key, value sebakcommon.Hash) {
+func (so *stateObject) SetState(key, value common.Hash) {
 	so.cachedStorage[key] = value
 	so.dirtyStorage[key] = value
 
@@ -112,8 +112,8 @@ func (so *stateObject) SetState(key, value sebakcommon.Hash) {
 
 }
 
-func (so *stateObject) AddBalance(amount sebakcommon.Amount) (err error) {
-	val := sebakcommon.MustAmountFromString(so.Balance())
+func (so *stateObject) AddBalance(amount common.Amount) (err error) {
+	val := common.MustAmountFromString(so.Balance())
 	val, err = val.Add(amount)
 	so.data.Balance = val.String()
 	if so.onDirty != nil {
@@ -123,14 +123,14 @@ func (so *stateObject) AddBalance(amount sebakcommon.Amount) (err error) {
 	return
 }
 
-func (so *stateObject) AddBalanceWithCheckpoint(amount sebakcommon.Amount, checkpoint string) (err error) {
+func (so *stateObject) AddBalanceWithCheckpoint(amount common.Amount, checkpoint string) (err error) {
 	so.data.Checkpoint = checkpoint
 	so.AddBalance(amount)
 	return
 }
 
-func (so *stateObject) SubBalance(amount sebakcommon.Amount) (err error) {
-	val := sebakcommon.MustAmountFromString(so.Balance())
+func (so *stateObject) SubBalance(amount common.Amount) (err error) {
+	val := common.MustAmountFromString(so.Balance())
 	val, err = val.Sub(amount)
 	so.data.Balance = val.String()
 	if so.onDirty != nil {
@@ -140,7 +140,7 @@ func (so *stateObject) SubBalance(amount sebakcommon.Amount) (err error) {
 	return
 }
 
-func (so *stateObject) SubBalanceWithCheckpoint(amount sebakcommon.Amount, checkpoint string) (err error) {
+func (so *stateObject) SubBalanceWithCheckpoint(amount common.Amount, checkpoint string) (err error) {
 	so.data.Checkpoint = checkpoint
 	so.SubBalance(amount)
 	return
@@ -168,23 +168,23 @@ func (so *stateObject) SetCode(codeHash, code []byte) {
 func (so *stateObject) updateTrie() {
 	for key, value := range so.dirtyStorage {
 		delete(so.dirtyStorage, key)
-		if (value == sebakcommon.Hash{}) {
+		if (value == common.Hash{}) {
 			continue
 		}
 		so.storageTrie.TryUpdate(key[:], value[:])
 	}
 }
 
-func (so *stateObject) CommitTrie() (root sebakcommon.Hash, err error) {
+func (so *stateObject) CommitTrie() (root common.Hash, err error) {
 	so.updateTrie()
 	root, err = so.storageTrie.Commit(nil)
 	if err == nil {
-		so.data.RootHash = sebakcommon.Hash(root)
+		so.data.RootHash = common.Hash(root)
 	}
 	return
 }
 
-func (so *stateObject) CommitDB(root sebakcommon.Hash) (err error) {
+func (so *stateObject) CommitDB(root common.Hash) (err error) {
 	if err = so.Save(); err != nil {
 		return
 	}
@@ -209,7 +209,7 @@ func (so *stateObject) Save() (err error) {
 	} else {
 		// TODO consider to use, [`Transaction`](https://godoc.org/github.com/syndtr/goleveldb/leveldb#DB.OpenTransaction)
 		err = st.New(key, so.data)
-		createdKey := block.GetBlockAccountCreatedKey(sebakcommon.GetUniqueIDFromUUID())
+		createdKey := block.GetBlockAccountCreatedKey(common.GetUniqueIDFromUUID())
 		err = st.New(createdKey, so.Address())
 	}
 	if err == nil {
@@ -231,8 +231,8 @@ func (so *stateObject) Save() (err error) {
 /*
 func (so *stateObject) GetValue(key string, value interface{}) (err error) {
 	encKey, err := trie.EncodeToBytes(key)
-	hashedKey := sebakcommon.MakeHash(encKey)
-	hashedVal := so.GetState(sebakcommon.BytesToHash(hashedKey))
+	hashedKey := common.MakeHash(encKey)
+	hashedVal := so.GetState(common.BytesToHash(hashedKey))
 	encVal, err := so.db.Get(hashedVal[:])
 	err = trie.DecodeBytes(encVal, value)
 	return
@@ -246,13 +246,13 @@ func (so *stateObject) SetValue(key string, value interface{}) (err error) {
 	if err != nil {
 		return
 	}
-	hashedKey := sebakcommon.MakeHash(encKey)
-	hashedVal := sebakcommon.MakeHash(encVal)
+	hashedKey := common.MakeHash(encKey)
+	hashedVal := common.MakeHash(encVal)
 	err = so.db.Put(hashedVal[:], encVal)
 	if err != nil {
 		return
 	}
-	so.SetState(sebakcommon.BytesToHash(hashedKey), sebakcommon.BytesToHash(hashedVal))
+	so.SetState(common.BytesToHash(hashedKey), common.BytesToHash(hashedVal))
 	return
 }
 */

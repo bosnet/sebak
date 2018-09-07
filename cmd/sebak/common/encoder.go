@@ -2,8 +2,9 @@ package common
 
 import (
 	"encoding/json"
-	"gopkg.in/yaml.v2"
 	"io"
+
+	"gopkg.in/yaml.v2"
 )
 
 type Encode func(v interface{}, w io.Writer) error
