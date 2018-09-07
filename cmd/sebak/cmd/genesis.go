@@ -32,7 +32,7 @@ func init() {
 		Short: "initialize new network",
 		Args:  cobra.ExactArgs(1),
 		Run: func(c *cobra.Command, args []string) {
-			flagName, err := MakeGenesisBlock(args[0], flagNetworkID, flagBalance, flagStorageConfigString)
+			flagName, err := MakeGenesisBlock(args[0], flagNetworkID, flagBalance, flagStorageConfiging)
 			if len(flagName) != 0 || err != nil {
 				cmdcommon.PrintFlagsError(c, flagName, err)
 			}
@@ -42,7 +42,7 @@ func init() {
 	}
 
 	genesisCmd.Flags().StringVar(&flagBalance, "balance", flagBalance, "initial balance of genesis block")
-	genesisCmd.Flags().StringVar(&flagStorageConfigString, "storage", flagStorageConfigString, "storage uri")
+	genesisCmd.Flags().StringVar(&flagStorageConfiging, "storage", flagStorageConfiging, "storage uri")
 	genesisCmd.Flags().StringVar(&flagNetworkID, "network-id", flagNetworkID, "network id")
 
 	rootCmd.AddCommand(genesisCmd)
@@ -60,8 +60,8 @@ func init() {
 //   balanceStr = Amount of coins to put in the account
 //                If not provided, `flagBalance`, which is the value set in the env
 //                when called from another module, will be used
-//   storageConfigStr = Formatted string to include storage path("file://path")
-//       				If not provided, a default value will be used
+//   storageConfig = URI to include storage path("file://path")
+//       			 If not provided, a default value will be used
 //
 // Returns:
 //   If an error happened, returns a tuple of (string, error).
@@ -69,7 +69,7 @@ func init() {
 //   and error is the more detailed error.
 //   Note that only one needs be non-`nil` for it to be considered an error.
 //
-func MakeGenesisBlock(addressStr, networkID, balanceStr, storageConfigStr string) (string, error) {
+func MakeGenesisBlock(addressStr, networkID, balanceStr, storageConfig string) (string, error) {
 	var balance common.Amount
 	var err error
 	var kp keypair.KP
@@ -91,25 +91,25 @@ func MakeGenesisBlock(addressStr, networkID, balanceStr, storageConfigStr string
 	}
 
 	// Use the default value
-	if len(storageConfigStr) == 0 {
+	if len(storageConfig) == 0 {
 		// We try to get the env value first, before doing IO which could fail
-		storageConfigStr = common.GetENVValue("SEBAK_STORAGE", "")
+		storageConfig = common.GetENVValue("SEBAK_STORAGE", "")
 		// No env, use the default (current directory)
-		if len(storageConfigStr) == 0 {
+		if len(storageConfig) == 0 {
 			if currentDirectory, err := os.Getwd(); err == nil {
 				if currentDirectory, err = filepath.Abs(currentDirectory); err == nil {
-					storageConfigStr = fmt.Sprintf("file://%s/db", currentDirectory)
+					storageConfig = fmt.Sprintf("file://%s/db", currentDirectory)
 				}
 			}
 			// If any of the previous condition failed
-			if len(storageConfigStr) == 0 {
+			if len(storageConfig) == 0 {
 				return "--storage", err
 			}
 		}
 	}
 
 	var storageConfig *storage.Config
-	if storageConfig, err = storage.NewConfigFromString(storageConfigStr); err != nil {
+	if storageConfig, err = storage.NewConfigFromString(storageConfig); err != nil {
 		return "--storage", err
 	}
 
