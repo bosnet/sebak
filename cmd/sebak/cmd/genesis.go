@@ -57,11 +57,11 @@ func init() {
 // Params:
 //   address   = public address of the account owning the genesis block
 //   networkID = `--network-id` argument, used for the block's checkpoint
-//   balance   = Amount of coins to put in the account
-//               If not provided, `flagBalance`, which is the value set in the env
-//               when called from another module, will be used
-//   balance   = Amount of coins to put in the account
-//               If not provided, a default value will be used
+//   balanceStr = Amount of coins to put in the account
+//                If not provided, `flagBalance`, which is the value set in the env
+//                when called from another module, will be used
+//   storageConfigStr = Formatted string to include storage path("file://path")
+//       				If not provided, a default value will be used
 //
 // Returns:
 //   If an error happened, returns a tuple of (string, error).
