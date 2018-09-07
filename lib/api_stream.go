@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	common "boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common"
 	observable "github.com/GianlucaGuarini/go-observable"
 )
 

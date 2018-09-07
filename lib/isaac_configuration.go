@@ -8,7 +8,7 @@ package sebak
 import (
 	"time"
 
-	common "boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common"
 )
 
 type ISAACConfiguration struct {
