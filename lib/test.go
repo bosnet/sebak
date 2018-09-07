@@ -291,3 +291,18 @@ func ReceiveBallot(t *testing.T, nodeRunner *NodeRunner, ballot *Ballot) error {
 	err = nodeRunner.handleBallotMessage(ballotMessage)
 	return err
 }
+
+type TestBroadcastor struct {
+	Messages map[string]common.Message
+}
+
+func NewTestBroadcastor() TestBroadcastor {
+	p := TestBroadcastor{}
+	p.Messages = make(map[string]common.Message)
+	return p
+}
+
+func (b TestBroadcastor) Broadcast(_ *network.ConnectionManager, message common.Message) (errs map[string]error) {
+	b.Messages[message.GetHash()] = message
+	return
+}

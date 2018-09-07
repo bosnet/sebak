@@ -98,15 +98,15 @@ func (tp *TransactionPool) Remove(hashes ...string) {
 	return
 }
 
-func (tp *TransactionPool) AvailableTransactions() []string {
+func (tp *TransactionPool) AvailableTransactions(conf *ISAACConfiguration) []string {
 	tp.Lock()
 	defer tp.Unlock()
 
-	if tp.Len() <= MaxTransactionsInBallot {
+	if tp.Len() <= int(conf.TransactionsLimit) {
 		return tp.Hashes
 	}
 
-	return tp.Hashes[:MaxTransactionsInBallot]
+	return tp.Hashes[:conf.TransactionsLimit]
 }
 
 func (tp *TransactionPool) IsSameSource(source string) (found bool) {
@@ -129,8 +129,8 @@ type ISAAC struct {
 
 func NewISAAC(networkID []byte, node *node.LocalNode, votingThresholdPolicy common.VotingThresholdPolicy) (is *ISAAC, err error) {
 	is = &ISAAC{
-		NetworkID:             networkID,
-		Node:                  node,
+		NetworkID: networkID,
+		Node:      node,
 		VotingThresholdPolicy: votingThresholdPolicy,
 		TransactionPool:       NewTransactionPool(),
 		RunningRounds:         map[string]*RunningRound{},

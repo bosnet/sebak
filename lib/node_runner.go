@@ -42,7 +42,8 @@ var DefaultHandleINITBallotCheckerFuncs = []common.CheckerFunc{
 	BallotVote,
 	BallotIsSameProposer,
 	INITBallotValidateTransactions,
-	INITBallotBroadcast,
+	SIGNBallotBroadcast,
+	TransitStateToSIGN,
 }
 
 var DefaultHandleSIGNBallotCheckerFuncs = []common.CheckerFunc{
@@ -50,7 +51,8 @@ var DefaultHandleSIGNBallotCheckerFuncs = []common.CheckerFunc{
 	BallotVote,
 	BallotIsSameProposer,
 	BallotCheckResult,
-	SIGNBallotBroadcast,
+	ACCEPTBallotBroadcast,
+	TransitStateToACCEPT,
 }
 
 var DefaultHandleACCEPTBallotCheckerFuncs = []common.CheckerFunc{
@@ -58,7 +60,7 @@ var DefaultHandleACCEPTBallotCheckerFuncs = []common.CheckerFunc{
 	BallotVote,
 	BallotIsSameProposer,
 	BallotCheckResult,
-	ACCEPTBallotStore,
+	FinishedBallotStore,
 }
 
 type ProposerCalculator interface {
@@ -74,6 +76,7 @@ type NodeRunner struct {
 	connectionManager  *network.ConnectionManager
 	storage            *storage.LevelDBBackend
 	proposerCalculator ProposerCalculator
+	isaacStateManager  *IsaacStateManager
 
 	handleTransactionCheckerFuncs  []common.CheckerFunc
 	handleBaseBallotCheckerFuncs   []common.CheckerFunc
@@ -85,8 +88,6 @@ type NodeRunner struct {
 	handleBallotCheckerDeferFunc      common.CheckerDeferFunc
 
 	log logging.Logger
-
-	timerExpireRound *time.Timer
 }
 
 func NewNodeRunner(
@@ -106,6 +107,7 @@ func NewNodeRunner(
 		storage:   storage,
 		log:       log.New(logging.Ctx{"node": localNode.Alias()}),
 	}
+	nr.isaacStateManager = NewIsaacStateManager(nr)
 
 	nr.SetProposerCalculator(SimpleProposerCalculator{})
 	nr.policy.SetValidators(len(nr.localNode.GetValidators()) + 1) // including self
@@ -116,6 +118,8 @@ func NewNodeRunner(
 		nr.policy,
 		nr.localNode.GetValidators(),
 	)
+
+	nr.connectionManager.SetBroadcastor(network.SimpleBroadcastor{})
 	nr.network.AddWatcher(nr.connectionManager.ConnectionWatcher)
 
 	nr.SetHandleTransactionCheckerFuncs(nil, DefaultHandleTransactionCheckerFuncs...)
@@ -142,6 +146,11 @@ func (nr *NodeRunner) SetProposerCalculator(c ProposerCalculator) {
 }
 
 func (nr *NodeRunner) SetConf(conf *ISAACConfiguration) {
+	nr.isaacStateManager.SetConf(conf)
+}
+
+func (nr *NodeRunner) SetBroadcastor(b network.Broadcastor) {
+	nr.connectionManager.SetBroadcastor(b)
 }
 
 func (nr *NodeRunner) Ready() {
@@ -202,6 +211,7 @@ func (nr *NodeRunner) Start() (err error) {
 
 func (nr *NodeRunner) Stop() {
 	nr.network.Stop()
+	nr.isaacStateManager.Stop()
 }
 
 func (nr *NodeRunner) Node() *node.LocalNode {
@@ -439,72 +449,26 @@ func (nr *NodeRunner) InitRound() {
 		"validators", nr.Policy().Validators(),
 	)
 
-	go nr.startRound()
+	nr.StartStateManager()
 }
 
-func (nr *NodeRunner) startRound() {
+func (nr *NodeRunner) StartStateManager() {
 	// check whether current running rounds exist
 	if len(nr.consensus.RunningRounds) > 0 {
 		return
 	}
 
-	nr.StartNewRound(0)
+	go nr.isaacStateManager.Start()
+	nr.isaacStateManager.NextHeight()
+	return
 }
 
 func (nr *NodeRunner) CalculateProposer(blockHeight uint64, roundNumber uint64) string {
 	return nr.proposerCalculator.Calculate(nr, blockHeight, roundNumber)
 }
 
-func (nr *NodeRunner) StartNewRound(roundNumber uint64) {
-	if nr.timerExpireRound != nil {
-		if !nr.timerExpireRound.Stop() {
-			<-nr.timerExpireRound.C
-		}
-	}
-
-	// wait for new ballot from new proposer
-	nr.timerExpireRound = time.AfterFunc(TimeoutExpireRound,
-		func() {
-			nr.StartNewRound(roundNumber + 1)
-		})
-
-	proposer := nr.CalculateProposer(
-		nr.consensus.LatestConfirmedBlock.Height,
-		roundNumber,
-	)
-
-	log.Debug("calculated proposer", "proposer", proposer)
-
-	if proposer != nr.localNode.Address() {
-		return
-	}
-
-	nr.readyToProposeNewBallot(roundNumber)
-
-	return
-}
-
-func (nr *NodeRunner) readyToProposeNewBallot(roundNumber uint64) {
-	var timeout time.Duration
-	// if incoming transaactions are over `MaxTransactionsInBallot`, just
-	// start.
-	if nr.consensus.TransactionPool.Len() > MaxTransactionsInBallot {
-		timeout = TimeoutProposeNewBallotFull
-	} else {
-		timeout = TimeoutProposeNewBallot
-	}
-
-	timer := time.NewTimer(timeout)
-	go func() {
-		<-timer.C
-
-		if err := nr.proposeNewBallot(roundNumber); err != nil {
-			nr.log.Error("failed to proposeNewBallot", "round", roundNumber, "error", err)
-			go nr.StartNewRound(roundNumber)
-		}
-	}()
-
-	return
+func (nr *NodeRunner) TransitIsaacState(round round.Round, ballotState common.BallotState) {
+	nr.isaacStateManager.TransitIsaacState(round, ballotState)
 }
 
 func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) error {
@@ -516,7 +480,7 @@ func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) error {
 	}
 
 	// collect incoming transactions from `TransactionPool`
-	availableTransactions := nr.consensus.TransactionPool.AvailableTransactions()
+	availableTransactions := nr.consensus.TransactionPool.AvailableTransactions(nr.isaacStateManager.conf)
 	nr.log.Debug("new round proposed", "round", round, "transactions", availableTransactions)
 
 	transactionsChecker := &BallotTransactionChecker{
@@ -544,7 +508,7 @@ func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) error {
 
 	nr.log.Debug("new ballot created", "ballot", ballot)
 
-	nr.ConnectionManager().Broadcast(ballot)
+	nr.ConnectionManager().Broadcast(*ballot)
 
 	runningRound, err := NewRunningRound(nr.localNode.Address(), *ballot)
 	if err != nil {
@@ -556,14 +520,4 @@ func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) error {
 	nr.Log().Debug("ballot broadcasted and voted", "runningRound", runningRound)
 
 	return nil
-}
-
-func (nr *NodeRunner) CloseConsensus(ballot Ballot, confirmed bool) {
-	nr.consensus.SetLatestRound(ballot.Round())
-
-	if confirmed {
-		go nr.StartNewRound(0)
-	} else {
-		go nr.StartNewRound(ballot.Round().Number + 1)
-	}
 }
