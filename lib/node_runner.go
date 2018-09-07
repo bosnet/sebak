@@ -141,7 +141,7 @@ func (nr *NodeRunner) SetProposerCalculator(c ProposerCalculator) {
 	nr.proposerCalculator = c
 }
 
-func (nr *NodeRunner) SetConf(conf *NodeRunnerConfiguration) {
+func (nr *NodeRunner) SetConf(conf *IsaacConfiguration) {
 }
 
 func (nr *NodeRunner) Ready() {
@@ -516,7 +516,7 @@ func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) error {
 	}
 
 	// collect incoming transactions from `TransactionPool`
-	availableTransactions := nr.consensus.TransactionPool.AvailableTransactions()
+	availableTransactions := nr.consensus.TransactionPool.AvailableTransactions(NewIsaacConfiguration())
 	nr.log.Debug("new round proposed", "round", round, "transactions", availableTransactions)
 
 	transactionsChecker := &BallotTransactionChecker{

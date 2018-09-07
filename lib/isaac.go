@@ -98,15 +98,15 @@ func (tp *TransactionPool) Remove(hashes ...string) {
 	return
 }
 
-func (tp *TransactionPool) AvailableTransactions() []string {
+func (tp *TransactionPool) AvailableTransactions(conf *IsaacConfiguration) []string {
 	tp.Lock()
 	defer tp.Unlock()
 
-	if tp.Len() <= MaxTransactionsInBallot {
+	if tp.Len() <= int(conf.TransactionsLimit) {
 		return tp.Hashes
 	}
 
-	return tp.Hashes[:MaxTransactionsInBallot]
+	return tp.Hashes[:conf.TransactionsLimit]
 }
 
 func (tp *TransactionPool) IsSameSource(source string) (found bool) {
