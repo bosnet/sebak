@@ -2,7 +2,7 @@
 // ISAACConfiguration has timeout features and transaction limit.
 // The ISAACConfiguration is included in ISAACStateManager and
 // these timeout features are used in ISAAC consensus.
-//
+
 package sebak
 
 import (
