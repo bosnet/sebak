@@ -98,7 +98,7 @@ func (tp *TransactionPool) Remove(hashes ...string) {
 	return
 }
 
-func (tp *TransactionPool) AvailableTransactions(conf *IsaacConfiguration) []string {
+func (tp *TransactionPool) AvailableTransactions(conf *ISAACConfiguration) []string {
 	tp.Lock()
 	defer tp.Unlock()
 

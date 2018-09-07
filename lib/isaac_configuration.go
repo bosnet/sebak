@@ -1,6 +1,6 @@
 //
-// IsaacConfiguration has timeout features and transaction limit.
-// The IsaacConfiguration is included in IsaacStateManager and
+// ISAACConfiguration has timeout features and transaction limit.
+// The ISAACConfiguration is included in ISAACStateManager and
 // these timeout features are used in ISAAC consensus.
 //
 package sebak
@@ -8,10 +8,10 @@ package sebak
 import (
 	"time"
 
-	"boscoin.io/sebak/lib/common"
+	common "boscoin.io/sebak/lib/common"
 )
 
-type IsaacConfiguration struct {
+type ISAACConfiguration struct {
 	TimeoutINIT       time.Duration
 	TimeoutSIGN       time.Duration
 	TimeoutACCEPT     time.Duration
@@ -20,8 +20,8 @@ type IsaacConfiguration struct {
 	TransactionsLimit uint64
 }
 
-func NewIsaacConfiguration() *IsaacConfiguration {
-	p := IsaacConfiguration{}
+func NewISAACConfiguration() *ISAACConfiguration {
+	p := ISAACConfiguration{}
 
 	p.TimeoutINIT = 2 * time.Second
 	p.TimeoutSIGN = 2 * time.Second
@@ -32,7 +32,7 @@ func NewIsaacConfiguration() *IsaacConfiguration {
 	return &p
 }
 
-func (n *IsaacConfiguration) GetTimeout(ballotState common.BallotState) time.Duration {
+func (n *ISAACConfiguration) GetTimeout(ballotState common.BallotState) time.Duration {
 	switch ballotState {
 	case common.BallotStateINIT:
 		return n.TimeoutINIT

@@ -16,14 +16,14 @@ import (
 )
 
 /*
-TestIsaacSimulationProposer indicates the following:
+TestISAACSimulationProposer indicates the following:
 	1. Proceed for one round.
 	2. The node is the proposer of this round.
 	3. There are 5 nodes and threshold is 4.
 	3. The node receives the SIGN, ACCEPT messages in order from the other four validator nodes.
 	4. The node receives a ballot that exceeds the threshold, and the block is confirmed.
 */
-func TestIsaacSimulationProposer(t *testing.T) {
+func TestISAACSimulationProposer(t *testing.T) {
 	nodeRunners := createTestNodeRunner(5)
 
 	tx, txByte := GetTransaction(t)
