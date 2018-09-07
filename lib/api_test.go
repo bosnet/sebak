@@ -509,8 +509,9 @@ func TestProblem(t *testing.T) {
 
 	router := mux.NewRouter()
 
-	statusProblem := sebakerror.NewStatusProblem(http.StatusBadRequest)
-	detailedStatusProblem := sebakerror.NewDetailedStatusProblem(http.StatusBadRequest, "paramaters are not enough")
+	statusProblem := errors.NewStatusProblem(http.StatusBadRequest)
+	detailedStatusProblem := errors.NewDetailedStatusProblem(http.StatusBadRequest, "paramaters are not enough")
+	errorProblem := errors.NewErrorProblem(errors.ErrorInvalidOperation)
 
 	router.HandleFunc("/problem_status_default", func(w http.ResponseWriter, r *http.Request) {
 		statusProblem.Problem(w, "", -1)
@@ -526,6 +527,10 @@ func TestProblem(t *testing.T) {
 
 	router.HandleFunc("/problem_status_default_with_detail", func(w http.ResponseWriter, r *http.Request) {
 		detailedStatusProblem.Problem(w, "bad request yo!", -1)
+	})
+
+	router.HandleFunc("/problem_with_error", func(w http.ResponseWriter, r *http.Request) {
+		errorProblem.Problem(w, "", -1)
 	})
 
 	ts := httptest.NewServer(router)
@@ -623,4 +628,26 @@ func TestProblem(t *testing.T) {
 		}
 	}
 
+	// problem_with_error
+	{
+		url := ts.URL + fmt.Sprintf("/problem_with_error")
+		resp, err := http.Get(url)
+		require.Nil(t, err)
+		defer resp.Body.Close()
+		reader := bufio.NewReader(resp.Body)
+		readByte, err := ioutil.ReadAll(reader)
+		require.Nil(t, err)
+		//fmt.Printf("%s\n", readByte)
+		{
+			var f interface{}
+			json.Unmarshal(readByte, &f)
+			m := f.(map[string]interface{})
+			p := errorProblem
+			require.Equal(t, p.Type, m["type"])
+			require.Equal(t, p.Title, m["title"])
+			require.Empty(t, m["status"])
+			require.Empty(t, m["detail"])
+			require.Empty(t, m["instance"])
+		}
+	}
 }

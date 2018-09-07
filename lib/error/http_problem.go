@@ -1,12 +1,14 @@
-package sebakerror
+package errors
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 )
 
 const (
-	HttpProblemDefaultType = "about:blank" // It should be URI
+	HttpProblemDefaultType     = "about:blank" // It should be URI
+	HttpProblemErrorTypePrefix = "https://boscoin.io/sebak/error/"
 )
 
 type problem struct {
@@ -50,6 +52,10 @@ func NewDetailedStatusProblem(status int, detail string) problem {
 	p := NewStatusProblem(status)
 	p.Detail = detail
 	return p
+}
+
+func NewErrorProblem(err *Error) problem {
+	return problem{Type: fmt.Sprintf("%s%d", HttpProblemErrorTypePrefix, err.Code), Title: err.Message}
 }
 
 func Problem(w http.ResponseWriter, detail string, status int) {
