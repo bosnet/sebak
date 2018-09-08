@@ -1,4 +1,4 @@
-// We can check that the `TransitIsaacState()` call transitions the state.
+// We can check that the `TransitISAACState()` call transitions the state.
 package sebak
 
 import (
@@ -12,9 +12,9 @@ import (
 
 // 1. All 3 Nodes.
 // 2. Not proposer itself.
-// 3. When `IsaacStateManager` starts, the node waits for a proposed ballot.
-// 4. TransitIsaacState(SIGN) method is called.
-// 5. IsaacState is changed to `SIGN`.
+// 3. When `ISAACStateManager` starts, the node waits for a proposed ballot.
+// 4. TransitISAACState(SIGN) method is called.
+// 5. ISAACState is changed to `SIGN`.
 // 6. TimeoutSIGN is a millisecond.
 // 7. After milliseconds, the node broadcasts B(`ACCEPT`, `EXP`).
 func TestStateTransitFromTimeoutInitToAccept(t *testing.T) {
@@ -46,7 +46,7 @@ func TestStateTransitFromTimeoutInitToAccept(t *testing.T) {
 		require.Equal(t, common.VotingYES, ballot.Vote())
 	}
 
-	nr.TransitIsaacState(nr.isaacStateManager.State().round, common.BallotStateSIGN)
+	nr.TransitISAACState(nr.isaacStateManager.State().round, common.BallotStateSIGN)
 	time.Sleep(time.Duration(100) * time.Millisecond)
 	require.Equal(t, 1, len(b.Messages))
 	for _, message := range b.Messages {
@@ -60,12 +60,12 @@ func TestStateTransitFromTimeoutInitToAccept(t *testing.T) {
 
 // 1. All 3 Nodes.
 // 1. Proposer itself.
-// 1. When `IsaacStateManager` starts, the node proposes a ballot.
-// 1. IsaacState is changed to `SIGN`.
-// 1. TransitIsaacState(ACCEPT) method is called.
-// 1. IsaacState is changed to `ACCEPT`.
+// 1. When `ISAACStateManager` starts, the node proposes a ballot.
+// 1. ISAACState is changed to `SIGN`.
+// 1. TransitISAACState(ACCEPT) method is called.
+// 1. ISAACState is changed to `ACCEPT`.
 // 1. TimeoutACCEPT is a millisecond.
-// 1. After milliseconds, IsaacState is back to `INIT`
+// 1. After milliseconds, ISAACState is back to `INIT`
 func TestStateTransitFromTimeoutSignToAccept(t *testing.T) {
 	nodeRunners := createTestNodeRunner(3)
 	nr := nodeRunners[0]
@@ -97,7 +97,7 @@ func TestStateTransitFromTimeoutSignToAccept(t *testing.T) {
 		require.Equal(t, common.VotingYES, ballot.Vote())
 	}
 
-	nr.TransitIsaacState(nr.isaacStateManager.State().round, common.BallotStateACCEPT)
+	nr.TransitISAACState(nr.isaacStateManager.State().round, common.BallotStateACCEPT)
 	time.Sleep(time.Duration(200) * time.Millisecond)
 	require.Equal(t, 2, len(b.Messages))
 	for _, message := range b.Messages {

@@ -1,4 +1,4 @@
-// IsaacStateManager manages the IsaacState.
+// ISAACStateManager manages the ISAACState.
 // The most important function `Start()` is called in StartStateManager() function in node_runner.go by goroutine.
 
 package sebak
@@ -10,34 +10,34 @@ import (
 	"boscoin.io/sebak/lib/round"
 )
 
-type IsaacStateManager struct {
+type ISAACStateManager struct {
 	nr           *NodeRunner
-	state        IsaacState
+	state        ISAACState
 	conf         *ISAACConfiguration
-	stateTransit chan IsaacState
+	stateTransit chan ISAACState
 	nextHeight   chan bool
 	stop         chan bool
 }
 
-func NewIsaacStateManager(nr *NodeRunner) *IsaacStateManager {
-	p := &IsaacStateManager{
+func NewISAACStateManager(nr *NodeRunner) *ISAACStateManager {
+	p := &ISAACStateManager{
 		conf: NewISAACConfiguration(),
 		nr:   nr,
 	}
-	p.stateTransit = make(chan IsaacState)
+	p.stateTransit = make(chan ISAACState)
 	p.nextHeight = make(chan bool)
 	p.stop = make(chan bool)
 
 	return p
 }
 
-func (sm *IsaacStateManager) SetConf(conf *ISAACConfiguration) {
+func (sm *ISAACStateManager) SetConf(conf *ISAACConfiguration) {
 	sm.conf = conf
 }
 
-func (sm *IsaacStateManager) TransitIsaacState(round round.Round, ballotState common.BallotState) {
+func (sm *ISAACStateManager) TransitISAACState(round round.Round, ballotState common.BallotState) {
 	current := sm.state
-	target := NewIsaacState(round, ballotState)
+	target := NewISAACState(round, ballotState)
 
 	if isTargetLater(current, target) {
 		go func() {
@@ -46,7 +46,7 @@ func (sm *IsaacStateManager) TransitIsaacState(round round.Round, ballotState co
 	}
 }
 
-func isTargetLater(current IsaacState, target IsaacState) (result bool) {
+func isTargetLater(current ISAACState, target ISAACState) (result bool) {
 	if current.round.BlockHeight > target.round.BlockHeight {
 		result = false
 	} else if current.round.BlockHeight < target.round.BlockHeight {
@@ -67,17 +67,17 @@ func isTargetLater(current IsaacState, target IsaacState) (result bool) {
 	return result
 }
 
-func (sm *IsaacStateManager) IncreaseRound() {
+func (sm *ISAACStateManager) IncreaseRound() {
 	sm.increaseRound()
 }
 
-func (sm *IsaacStateManager) increaseRound() {
+func (sm *ISAACStateManager) increaseRound() {
 	round := sm.state.round
 	round.Number++
-	sm.TransitIsaacState(round, common.BallotStateINIT)
+	sm.TransitISAACState(round, common.BallotStateINIT)
 }
 
-func (sm *IsaacStateManager) NextHeight() {
+func (sm *ISAACStateManager) NextHeight() {
 	go func() {
 		sm.nextHeight <- true
 	}()
@@ -86,9 +86,9 @@ func (sm *IsaacStateManager) NextHeight() {
 // In `Start()` method a node proposes ballot.
 // Or it sets or resets timeout. If it is expired, it broadcasts B(`EXP`).
 // And it manages the node round.
-func (sm *IsaacStateManager) Start() {
+func (sm *ISAACStateManager) Start() {
 	timer := time.NewTimer(time.Duration(1 * time.Hour))
-	sm.state = NewIsaacState(
+	sm.state = NewISAACState(
 		round.Round{
 			Number:      0,
 			BlockHeight: 0,
@@ -121,14 +121,14 @@ func (sm *IsaacStateManager) Start() {
 				sm.NextHeight()
 			case common.BallotStateNONE:
 				timer.Reset(sm.conf.TimeoutINIT)
-				log.Error("Wrong IsaacState", "IsaacState", state)
+				log.Error("Wrong ISAACState", "ISAACState", state)
 			}
 
 		case <-sm.nextHeight:
 			round := sm.state.round
 			round.BlockHeight++
 			round.Number = 0
-			sm.TransitIsaacState(round, common.BallotStateINIT)
+			sm.TransitISAACState(round, common.BallotStateINIT)
 
 		case <-sm.stop:
 			return
@@ -136,7 +136,7 @@ func (sm *IsaacStateManager) Start() {
 	}
 }
 
-func (sm *IsaacStateManager) broadcastExpiredBallot(state IsaacState) {
+func (sm *ISAACStateManager) broadcastExpiredBallot(state ISAACState) {
 	round := round.Round{
 		Number:      state.round.Number,
 		BlockHeight: sm.nr.consensus.LatestConfirmedBlock.Height,
@@ -151,7 +151,7 @@ func (sm *IsaacStateManager) broadcastExpiredBallot(state IsaacState) {
 	sm.nr.ConnectionManager().Broadcast(*newExpiredBallot)
 }
 
-func (sm *IsaacStateManager) resetTimer(timer *time.Timer, state common.BallotState) {
+func (sm *ISAACStateManager) resetTimer(timer *time.Timer, state common.BallotState) {
 	switch state {
 	case common.BallotStateINIT:
 		timer.Reset(sm.conf.TimeoutINIT)
@@ -162,7 +162,7 @@ func (sm *IsaacStateManager) resetTimer(timer *time.Timer, state common.BallotSt
 	}
 }
 
-func (sm *IsaacStateManager) proposeOrWait(timer *time.Timer, state IsaacState) {
+func (sm *ISAACStateManager) proposeOrWait(timer *time.Timer, state ISAACState) {
 	timer.Reset(time.Duration(1 * time.Hour))
 	proposer := sm.nr.CalculateProposer(state.round.BlockHeight, state.round.Number)
 	log.Debug("calculated proposer", "proposer", proposer)
@@ -184,11 +184,11 @@ func (sm *IsaacStateManager) proposeOrWait(timer *time.Timer, state IsaacState) 
 	}
 }
 
-func (sm *IsaacStateManager) State() IsaacState {
+func (sm *ISAACStateManager) State() ISAACState {
 	return sm.state
 }
 
-func (sm *IsaacStateManager) Stop() {
+func (sm *ISAACStateManager) Stop() {
 	go func() {
 		sm.stop <- true
 	}()

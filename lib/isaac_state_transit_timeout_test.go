@@ -1,4 +1,4 @@
-// We can test that a node broadcast propose ballot or B(`EXP`) in IsaacStateManager.
+// We can test that a node broadcast propose ballot or B(`EXP`) in ISAACStateManager.
 // when the timeout is expired,
 package sebak
 
@@ -13,7 +13,7 @@ import (
 
 // 1. All 3 Nodes.
 // 2. Proposer itself.
-// 3. When `IsaacStateManager` starts, the node proposes ballot to validators.
+// 3. When `ISAACStateManager` starts, the node proposes ballot to validators.
 func TestStateINITProposer(t *testing.T) {
 	nodeRunners := createTestNodeRunner(3)
 
@@ -47,7 +47,7 @@ func TestStateINITProposer(t *testing.T) {
 
 // 1. All 3 Nodes.
 // 2. Not proposer itself.
-// 3. When `IsaacStateManager` starts, the node waits a ballot by proposer.
+// 3. When `ISAACStateManager` starts, the node waits a ballot by proposer.
 // 4. But TimeoutINIT is an hour, so it doesn't broadcast anything.
 func TestStateINITNotProposer(t *testing.T) {
 	nodeRunners := createTestNodeRunner(3)
@@ -76,7 +76,7 @@ func TestStateINITNotProposer(t *testing.T) {
 
 // 1. All 3 Nodes.
 // 2. Not proposer itself.
-// 3. When `IsaacStateManager` starts, the node waits a ballot by proposer.
+// 3. When `ISAACStateManager` starts, the node waits a ballot by proposer.
 // 4. But TimeoutINIT is a millisecond.
 // 5. After 200 milliseconds, the node broadcasts B(`SIGN`, `EXP`)
 func TestStateINITTimeoutNotProposer(t *testing.T) {
@@ -127,8 +127,8 @@ func TestStateINITTimeoutNotProposer(t *testing.T) {
 
 // 1. All 3 Nodes.
 // 2. Proposer itself.
-// 3. When `IsaacStateManager` starts, the node proposes B(`INIT`, `YES`) to validators.
-// 4. Then IsaacState will be changed to `SIGN`.
+// 3. When `ISAACStateManager` starts, the node proposes B(`INIT`, `YES`) to validators.
+// 4. Then ISAACState will be changed to `SIGN`.
 // 5. But TimeoutSIGN is a millisecond.
 // 6. After 200 milliseconds, the node broadcasts B(`ACCEPT`, `EXP`)
 func TestStateSIGNTimeoutProposer(t *testing.T) {
@@ -183,10 +183,10 @@ func TestStateSIGNTimeoutProposer(t *testing.T) {
 
 // 1. All 3 Nodes.
 // 2. Not proposer itself.
-// 3. When `IsaacStateManager` starts, the node waits a ballot by proposer.
+// 3. When `ISAACStateManager` starts, the node waits a ballot by proposer.
 // 4. TimeoutINIT is a millisecond.
 // 5. After milliseconds, the node broadcasts B(`SIGN`, `EXP`).
-// 6. IsaacState is changed to `SIGN`.
+// 6. ISAACState is changed to `SIGN`.
 // 7. TimeoutSIGN is a millisecond.
 // 8. After milliseconds, the node broadcasts B(`ACCEPT`, `EXP`).
 func TestStateSIGNTimeoutNotProposer(t *testing.T) {
@@ -239,8 +239,8 @@ func TestStateSIGNTimeoutNotProposer(t *testing.T) {
 
 // 1. All 3 Nodes.
 // 2. Proposer itself at round 0.
-// 3. When `IsaacStateManager` starts, the node proposes a ballot.
-// 4. IsaacState is changed to `SIGN`.
+// 3. When `ISAACStateManager` starts, the node proposes a ballot.
+// 4. ISAACState is changed to `SIGN`.
 // 5. TimeoutSIGN is a millisecond.
 // 6. After milliseconds, the node broadcasts B(`ACCEPT`, `EXP`).
 func TestStateACCEPTTimeoutProposerThenNotProposer(t *testing.T) {

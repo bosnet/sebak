@@ -405,7 +405,7 @@ func TransitStateToSIGN(c common.Checker, args ...interface{}) (err error) {
 	if !checker.IsNew {
 		return
 	}
-	checker.NodeRunner.TransitIsaacState(checker.Ballot.Round(), common.BallotStateSIGN)
+	checker.NodeRunner.TransitISAACState(checker.Ballot.Round(), common.BallotStateSIGN)
 
 	return
 }
@@ -443,7 +443,7 @@ func TransitStateToACCEPT(c common.Checker, args ...interface{}) (err error) {
 	if !checker.VotingFinished {
 		return
 	}
-	checker.NodeRunner.TransitIsaacState(checker.Ballot.Round(), common.BallotStateACCEPT)
+	checker.NodeRunner.TransitISAACState(checker.Ballot.Round(), common.BallotStateACCEPT)
 
 	return
 }
@@ -469,7 +469,7 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) (err error) {
 
 		checker.NodeRunner.Consensus().SetLatestConsensusedBlock(block)
 		checker.Log.Debug("ballot was stored", "block", block)
-		checker.NodeRunner.TransitIsaacState(checker.Ballot.Round(), common.BallotStateALLCONFIRM)
+		checker.NodeRunner.TransitISAACState(checker.Ballot.Round(), common.BallotStateALLCONFIRM)
 
 		err = NewCheckerStopCloseConsensus(checker, "ballot got consensus and will be stored")
 	} else {

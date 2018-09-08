@@ -76,7 +76,7 @@ type NodeRunner struct {
 	connectionManager  *network.ConnectionManager
 	storage            *storage.LevelDBBackend
 	proposerCalculator ProposerCalculator
-	isaacStateManager  *IsaacStateManager
+	isaacStateManager  *ISAACStateManager
 
 	handleTransactionCheckerFuncs  []common.CheckerFunc
 	handleBaseBallotCheckerFuncs   []common.CheckerFunc
@@ -107,7 +107,7 @@ func NewNodeRunner(
 		storage:   storage,
 		log:       log.New(logging.Ctx{"node": localNode.Alias()}),
 	}
-	nr.isaacStateManager = NewIsaacStateManager(nr)
+	nr.isaacStateManager = NewISAACStateManager(nr)
 
 	nr.SetProposerCalculator(SimpleProposerCalculator{})
 	nr.policy.SetValidators(len(nr.localNode.GetValidators()) + 1) // including self
@@ -467,8 +467,8 @@ func (nr *NodeRunner) CalculateProposer(blockHeight uint64, roundNumber uint64) 
 	return nr.proposerCalculator.Calculate(nr, blockHeight, roundNumber)
 }
 
-func (nr *NodeRunner) TransitIsaacState(round round.Round, ballotState common.BallotState) {
-	nr.isaacStateManager.TransitIsaacState(round, ballotState)
+func (nr *NodeRunner) TransitISAACState(round round.Round, ballotState common.BallotState) {
+	nr.isaacStateManager.TransitISAACState(round, ballotState)
 }
 
 func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) error {
