@@ -19,7 +19,8 @@ func TestStateINITProposer(t *testing.T) {
 
 	nr := nodeRunners[0]
 
-	b := NewTestBroadcastor()
+	recv := make(chan struct{})
+	b := NewTestBroadcastor(recv)
 	nr.SetBroadcastor(b)
 	nr.SetProposerCalculator(SelfProposerCalculator{})
 
@@ -34,8 +35,8 @@ func TestStateINITProposer(t *testing.T) {
 	nr.SetConf(conf)
 
 	nr.StartStateManager()
-	time.Sleep(time.Duration(300) * time.Millisecond)
 
+	<-recv
 	require.Equal(t, 1, len(b.Messages))
 	for _, message := range b.Messages {
 		// This message must be proposed ballot
@@ -54,7 +55,7 @@ func TestStateINITNotProposer(t *testing.T) {
 
 	nr := nodeRunners[0]
 
-	b := NewTestBroadcastor()
+	b := NewTestBroadcastor(nil)
 	nr.SetBroadcastor(b)
 	nr.SetProposerCalculator(TheOtherProposerCalculator{})
 
@@ -69,7 +70,7 @@ func TestStateINITNotProposer(t *testing.T) {
 	nr.SetConf(conf)
 
 	nr.StartStateManager()
-	time.Sleep(time.Duration(100) * time.Millisecond)
+	time.Sleep(1 * time.Second)
 
 	require.Equal(t, 0, len(b.Messages))
 }
@@ -78,13 +79,14 @@ func TestStateINITNotProposer(t *testing.T) {
 // 2. Not proposer itself.
 // 3. When `ISAACStateManager` starts, the node waits a ballot by proposer.
 // 4. But TimeoutINIT is a millisecond.
-// 5. After 200 milliseconds, the node broadcasts B(`SIGN`, `EXP`)
+// 5. After timeout, the node broadcasts B(`SIGN`, `EXP`)
 func TestStateINITTimeoutNotProposer(t *testing.T) {
 	nodeRunners := createTestNodeRunner(3)
 
 	nr := nodeRunners[0]
 
-	b := NewTestBroadcastor()
+	recv := make(chan struct{})
+	b := NewTestBroadcastor(recv)
 	nr.SetBroadcastor(b)
 	nr.SetProposerCalculator(TheOtherProposerCalculator{})
 	proposer := nr.CalculateProposer(0, 0)
@@ -102,8 +104,10 @@ func TestStateINITTimeoutNotProposer(t *testing.T) {
 	nr.SetConf(conf)
 
 	nr.StartStateManager()
-	time.Sleep(time.Duration(200) * time.Millisecond)
+	require.Equal(t, common.BallotStateINIT, nr.isaacStateManager.state.ballotState)
 
+	<-recv
+	require.Equal(t, common.BallotStateSIGN, nr.isaacStateManager.state.ballotState)
 	require.Equal(t, 1, len(b.Messages))
 	init, sign, accept := 0, 0, 0
 	for _, message := range b.Messages {
@@ -130,13 +134,14 @@ func TestStateINITTimeoutNotProposer(t *testing.T) {
 // 3. When `ISAACStateManager` starts, the node proposes B(`INIT`, `YES`) to validators.
 // 4. Then ISAACState will be changed to `SIGN`.
 // 5. But TimeoutSIGN is a millisecond.
-// 6. After 200 milliseconds, the node broadcasts B(`ACCEPT`, `EXP`)
+// 6. After timeout, the node broadcasts B(`ACCEPT`, `EXP`)
 func TestStateSIGNTimeoutProposer(t *testing.T) {
 	nodeRunners := createTestNodeRunner(3)
 
 	nr := nodeRunners[0]
 
-	b := NewTestBroadcastor()
+	recv := make(chan struct{})
+	b := NewTestBroadcastor(recv)
 	nr.SetBroadcastor(b)
 	nr.SetProposerCalculator(SelfProposerCalculator{})
 	proposer := nr.CalculateProposer(0, 0)
@@ -155,7 +160,13 @@ func TestStateSIGNTimeoutProposer(t *testing.T) {
 
 	nr.StartStateManager()
 
-	time.Sleep(time.Duration(1000) * time.Millisecond)
+	require.Equal(t, common.BallotStateINIT, nr.isaacStateManager.state.ballotState)
+
+	<-recv
+	require.Equal(t, 1, len(b.Messages))
+
+	<-recv
+	require.Equal(t, common.BallotStateACCEPT, nr.isaacStateManager.state.ballotState)
 
 	require.Equal(t, 2, len(b.Messages))
 
@@ -188,13 +199,14 @@ func TestStateSIGNTimeoutProposer(t *testing.T) {
 // 5. After milliseconds, the node broadcasts B(`SIGN`, `EXP`).
 // 6. ISAACState is changed to `SIGN`.
 // 7. TimeoutSIGN is a millisecond.
-// 8. After milliseconds, the node broadcasts B(`ACCEPT`, `EXP`).
+// 8. After timeout, the node broadcasts B(`ACCEPT`, `EXP`).
 func TestStateSIGNTimeoutNotProposer(t *testing.T) {
 	nodeRunners := createTestNodeRunner(3)
 
 	nr := nodeRunners[0]
 
-	b := NewTestBroadcastor()
+	recv := make(chan struct{})
+	b := NewTestBroadcastor(recv)
 	nr.SetBroadcastor(b)
 	nr.SetProposerCalculator(TheOtherProposerCalculator{})
 	proposer := nr.CalculateProposer(0, 0)
@@ -212,9 +224,13 @@ func TestStateSIGNTimeoutNotProposer(t *testing.T) {
 	nr.SetConf(conf)
 
 	nr.StartStateManager()
-	time.Sleep(time.Duration(300) * time.Millisecond)
 
+	<-recv
+	require.Equal(t, 1, len(b.Messages))
+
+	<-recv
 	require.Equal(t, 2, len(b.Messages))
+
 	init, sign, accept := 0, 0, 0
 	for _, message := range b.Messages {
 		ballot, ok := message.(Ballot)
@@ -242,13 +258,14 @@ func TestStateSIGNTimeoutNotProposer(t *testing.T) {
 // 3. When `ISAACStateManager` starts, the node proposes a ballot.
 // 4. ISAACState is changed to `SIGN`.
 // 5. TimeoutSIGN is a millisecond.
-// 6. After milliseconds, the node broadcasts B(`ACCEPT`, `EXP`).
+// 6. After timeout, the node broadcasts B(`ACCEPT`, `EXP`).
 func TestStateACCEPTTimeoutProposerThenNotProposer(t *testing.T) {
 	nodeRunners := createTestNodeRunner(3)
 
 	nr := nodeRunners[0]
 
-	b := NewTestBroadcastor()
+	recv := make(chan struct{})
+	b := NewTestBroadcastor(recv)
 	nr.SetBroadcastor(b)
 	nr.SetProposerCalculator(&SelfProposerThenNotProposer{})
 
@@ -269,8 +286,11 @@ func TestStateACCEPTTimeoutProposerThenNotProposer(t *testing.T) {
 	nr.SetConf(conf)
 
 	nr.StartStateManager()
-	time.Sleep(time.Duration(300) * time.Millisecond)
 
+	<-recv
+	require.Equal(t, 1, len(b.Messages))
+
+	<-recv
 	require.Equal(t, 2, len(b.Messages))
 	init, sign, accept := 0, 0, 0
 	for _, message := range b.Messages {

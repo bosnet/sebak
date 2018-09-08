@@ -12,7 +12,9 @@ func TestConectionManagerBroadcastor(t *testing.T) {
 
 	nr := nodeRunners[0]
 
-	b := NewTestBroadcastor()
+	recv := make(chan struct{})
+
+	b := NewTestBroadcastor(recv)
 	nr.SetBroadcastor(b)
 	nr.SetProposerCalculator(SelfProposerCalculator{})
 
@@ -24,6 +26,7 @@ func TestConectionManagerBroadcastor(t *testing.T) {
 	nr.SetConf(conf)
 
 	nr.StartStateManager()
-	time.Sleep(100 * time.Millisecond)
+
+	<-recv
 	assert.Equal(t, 1, len(b.Messages))
 }

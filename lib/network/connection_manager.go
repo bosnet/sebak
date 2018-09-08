@@ -51,7 +51,7 @@ func (c *ConnectionManager) SetBroadcastor(broadcastor Broadcastor) {
 }
 
 type Broadcastor interface {
-	Broadcast(*ConnectionManager, common.Message) (errs map[string]error)
+	Broadcast(common.Message) (errs map[string]error)
 }
 
 func (c *ConnectionManager) GetConnection(address string) (client NetworkClient) {
@@ -174,23 +174,34 @@ func (c *ConnectionManager) ConnectionWatcher(t Network, conn net.Conn, state ht
 }
 
 func (c *ConnectionManager) Broadcast(message common.Message) {
-	errs := c.broadcastor.Broadcast(c, message)
+	errs := c.broadcastor.Broadcast(message)
 	for v, err := range errs {
 		c.log.Error("failed to SendBallot", "error", err, "validator", v)
 	}
 }
 
 type SimpleBroadcastor struct {
+	cm *ConnectionManager
 }
 
-func (b SimpleBroadcastor) Broadcast(c *ConnectionManager, message common.Message) (errs map[string]error) {
-	for addr, _ := range c.connected {
+func NewSimpleBroadcastor(c *ConnectionManager) *SimpleBroadcastor {
+	if c == nil {
+		panic("ConnectionManager is nil")
+	}
+	p := &SimpleBroadcastor{
+		cm: c,
+	}
+	return p
+}
+
+func (b SimpleBroadcastor) Broadcast(message common.Message) (errs map[string]error) {
+	for addr, _ := range b.cm.connected {
 		go func(v *node.Validator) {
 			if v == nil {
 				panic("Validator connected but not registered")
 			}
 
-			client := c.GetConnection(v.Address())
+			client := b.cm.GetConnection(v.Address())
 
 			var err error
 			if message.GetType() == BallotMessage {
@@ -204,7 +215,7 @@ func (b SimpleBroadcastor) Broadcast(c *ConnectionManager, message common.Messag
 			if err != nil {
 				errs[v.Address()] = err
 			}
-		}(c.validators[addr])
+		}(b.cm.validators[addr])
 	}
 	return
 }

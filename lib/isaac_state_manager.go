@@ -11,12 +11,13 @@ import (
 )
 
 type ISAACStateManager struct {
-	nr           *NodeRunner
-	state        ISAACState
-	conf         *ISAACConfiguration
-	stateTransit chan ISAACState
-	nextHeight   chan bool
-	stop         chan bool
+	nr            *NodeRunner
+	state         ISAACState
+	conf          *ISAACConfiguration
+	stateTransit  chan ISAACState
+	nextHeight    chan struct{}
+	stop          chan struct{}
+	transitSignal func()
 }
 
 func NewISAACStateManager(nr *NodeRunner) *ISAACStateManager {
@@ -25,14 +26,28 @@ func NewISAACStateManager(nr *NodeRunner) *ISAACStateManager {
 		nr:   nr,
 	}
 	p.stateTransit = make(chan ISAACState)
-	p.nextHeight = make(chan bool)
-	p.stop = make(chan bool)
+	p.nextHeight = make(chan struct{})
+	p.stop = make(chan struct{})
+
+	p.state = NewISAACState(
+		round.Round{
+			Number:      0,
+			BlockHeight: 0,
+		},
+		common.BallotStateINIT,
+	)
+
+	p.transitSignal = func() {}
 
 	return p
 }
 
 func (sm *ISAACStateManager) SetConf(conf *ISAACConfiguration) {
 	sm.conf = conf
+}
+
+func (sm *ISAACStateManager) SetTransitSignal(f func()) {
+	sm.transitSignal = f
 }
 
 func (sm *ISAACStateManager) TransitISAACState(round round.Round, ballotState common.BallotState) {
@@ -79,7 +94,7 @@ func (sm *ISAACStateManager) increaseRound() {
 
 func (sm *ISAACStateManager) NextHeight() {
 	go func() {
-		sm.nextHeight <- true
+		sm.nextHeight <- struct{}{}
 	}()
 }
 
@@ -87,53 +102,50 @@ func (sm *ISAACStateManager) NextHeight() {
 // Or it sets or resets timeout. If it is expired, it broadcasts B(`EXP`).
 // And it manages the node round.
 func (sm *ISAACStateManager) Start() {
-	timer := time.NewTimer(time.Duration(1 * time.Hour))
-	sm.state = NewISAACState(
-		round.Round{
-			Number:      0,
-			BlockHeight: 0,
-		},
-		common.BallotStateINIT,
-	)
+	go func() {
+		timer := time.NewTimer(time.Duration(1 * time.Hour))
+		for {
+			select {
+			case <-timer.C:
+				if sm.state.ballotState == common.BallotStateACCEPT {
+					sm.increaseRound()
+					break
+				}
+				go sm.broadcastExpiredBallot(sm.state)
+				sm.state.ballotState = sm.state.ballotState.Next()
+				sm.resetTimer(timer, sm.state.ballotState)
+				sm.transitSignal()
 
-	for {
-		select {
-		case <-timer.C:
-			if sm.state.ballotState == common.BallotStateACCEPT {
-				sm.increaseRound()
-				break
+			case state := <-sm.stateTransit:
+				switch state.ballotState {
+				case common.BallotStateINIT:
+					sm.proposeOrWait(timer, state)
+				case common.BallotStateSIGN:
+					sm.state = state
+					sm.transitSignal()
+					timer.Reset(sm.conf.TimeoutSIGN)
+				case common.BallotStateACCEPT:
+					sm.state = state
+					sm.transitSignal()
+					timer.Reset(sm.conf.TimeoutACCEPT)
+				case common.BallotStateALLCONFIRM:
+					sm.NextHeight()
+				case common.BallotStateNONE:
+					timer.Reset(sm.conf.TimeoutINIT)
+					log.Error("Wrong ISAACState", "ISAACState", state)
+				}
+
+			case <-sm.nextHeight:
+				round := sm.state.round
+				round.BlockHeight++
+				round.Number = 0
+				sm.TransitISAACState(round, common.BallotStateINIT)
+
+			case <-sm.stop:
+				return
 			}
-			go sm.broadcastExpiredBallot(sm.state)
-			sm.state.ballotState = sm.state.ballotState.Next()
-			sm.resetTimer(timer, sm.state.ballotState)
-
-		case state := <-sm.stateTransit:
-			switch state.ballotState {
-			case common.BallotStateINIT:
-				sm.proposeOrWait(timer, state)
-			case common.BallotStateSIGN:
-				sm.state = state
-				timer.Reset(sm.conf.TimeoutSIGN)
-			case common.BallotStateACCEPT:
-				sm.state = state
-				timer.Reset(sm.conf.TimeoutACCEPT)
-			case common.BallotStateALLCONFIRM:
-				sm.NextHeight()
-			case common.BallotStateNONE:
-				timer.Reset(sm.conf.TimeoutINIT)
-				log.Error("Wrong ISAACState", "ISAACState", state)
-			}
-
-		case <-sm.nextHeight:
-			round := sm.state.round
-			round.BlockHeight++
-			round.Number = 0
-			sm.TransitISAACState(round, common.BallotStateINIT)
-
-		case <-sm.stop:
-			return
 		}
-	}
+	}()
 }
 
 func (sm *ISAACStateManager) broadcastExpiredBallot(state ISAACState) {
@@ -173,6 +185,7 @@ func (sm *ISAACStateManager) proposeOrWait(timer *time.Timer, state ISAACState) 
 			sm.state = state
 			sm.state.ballotState = common.BallotStateSIGN
 			timer.Reset(sm.conf.TimeoutSIGN)
+			sm.transitSignal()
 		} else {
 			log.Error("failed to proposeNewBallot", "height", sm.nr.consensus.LatestConfirmedBlock.Height, "error", err)
 			sm.state = state
@@ -181,6 +194,7 @@ func (sm *ISAACStateManager) proposeOrWait(timer *time.Timer, state ISAACState) 
 	} else {
 		sm.state = state
 		timer.Reset(sm.conf.TimeoutINIT)
+		sm.transitSignal()
 	}
 }
 
@@ -190,6 +204,6 @@ func (sm *ISAACStateManager) State() ISAACState {
 
 func (sm *ISAACStateManager) Stop() {
 	go func() {
-		sm.stop <- true
+		sm.stop <- struct{}{}
 	}()
 }

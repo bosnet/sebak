@@ -119,7 +119,7 @@ func NewNodeRunner(
 		nr.localNode.GetValidators(),
 	)
 
-	nr.connectionManager.SetBroadcastor(network.SimpleBroadcastor{})
+	nr.connectionManager.SetBroadcastor(network.NewSimpleBroadcastor(nr.ConnectionManager()))
 	nr.network.AddWatcher(nr.connectionManager.ConnectionWatcher)
 
 	nr.SetHandleTransactionCheckerFuncs(nil, DefaultHandleTransactionCheckerFuncs...)
@@ -458,7 +458,7 @@ func (nr *NodeRunner) StartStateManager() {
 		return
 	}
 
-	go nr.isaacStateManager.Start()
+	nr.isaacStateManager.Start()
 	nr.isaacStateManager.NextHeight()
 	return
 }
