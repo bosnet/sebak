@@ -58,7 +58,7 @@ var (
 
 	kp                *keypair.Full
 	nodeEndpoint      *common.Endpoint
-	storageConfig     *sebakstorage.Config
+	storageConfig     *storage.Config
 	validators        []*node.Validator
 	threshold         int
 	timeoutINIT       time.Duration
@@ -214,7 +214,7 @@ func parseFlagsNode() {
 		}
 	}
 
-	if storageConfig, err = sebakstorage.NewConfigFromString(flagStorageConfigString); err != nil {
+	if storageConfig, err = storage.NewConfigFromString(flagStorageConfigString); err != nil {
 		cmdcommon.PrintFlagsError(nodeCmd, "--storage", err)
 	}
 
@@ -331,7 +331,7 @@ func runNode() error {
 		return err
 	}
 
-	st, err := sebakstorage.NewStorage(storageConfig)
+	st, err := storage.NewStorage(storageConfig)
 	if err != nil {
 		log.Crit("failed to initialize storage", "error", err)
 		return err

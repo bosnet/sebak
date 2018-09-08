@@ -58,7 +58,7 @@ func createTestNodeRunner(n int) []*NodeRunner {
 		v := nodes[i]
 		p, _ := NewDefaultVotingThresholdPolicy(66, 66)
 		is, _ := NewISAAC(networkID, v, p)
-		st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
+		st, _ := storage.NewTestMemoryLevelDBBackend()
 
 		account.Save(st)
 		genesisBlock = MakeGenesisBlock(st, *account)
@@ -152,7 +152,7 @@ func createTestNodeRunnersHTTP2Network(n int) (nodeRunners []*NodeRunner, rootKP
 	for _, node := range nodes {
 		vth, _ := NewDefaultVotingThresholdPolicy(66, 66)
 		is, _ := NewISAAC(networkID, node, vth)
-		st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
+		st, _ := storage.NewTestMemoryLevelDBBackend()
 		networkConfig, _ := network.NewHTTP2NetworkConfigFromEndpoint(node.Endpoint())
 		network := network.NewHTTP2Network(networkConfig)
 		nodeRunner, _ := NewNodeRunner(string(networkID), node, vth, network, is, st)

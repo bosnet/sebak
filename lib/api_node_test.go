@@ -89,7 +89,7 @@ func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, mn *network.HTTP2Net
 
 	p, _ := NewDefaultVotingThresholdPolicy(30, 30)
 	is, _ := NewISAAC(networkID, localNode, p)
-	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
+	st, _ := storage.NewTestMemoryLevelDBBackend()
 	// Make the latest block
 	{
 		checkpoint := common.MakeGenesisCheckpoint(networkID)

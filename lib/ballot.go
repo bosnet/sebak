@@ -240,8 +240,8 @@ func (rb BallotBody) MakeHashString() string {
 	return base58.Encode(rb.MakeHash())
 }
 
-func FinishBallot(st *sebakstorage.LevelDBBackend, ballot Ballot, transactionPool *TransactionPool) (blk Block, err error) {
-	var ts *sebakstorage.LevelDBBackend
+func FinishBallot(st *storage.LevelDBBackend, ballot Ballot, transactionPool *TransactionPool) (blk Block, err error) {
+	var ts *storage.LevelDBBackend
 	if ts, err = st.OpenTransaction(); err != nil {
 		return
 	}

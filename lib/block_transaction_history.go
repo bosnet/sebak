@@ -51,7 +51,7 @@ func (bt BlockTransactionHistory) Serialize() (encoded []byte, err error) {
 	encoded, err = common.EncodeJSONValue(bt)
 	return
 }
-func (bt *BlockTransactionHistory) Save(st *sebakstorage.LevelDBBackend) (err error) {
+func (bt *BlockTransactionHistory) Save(st *storage.LevelDBBackend) (err error) {
 	if bt.isSaved {
 		return errors.ErrorAlreadySaved
 	}
@@ -76,7 +76,7 @@ func (bt *BlockTransactionHistory) Save(st *sebakstorage.LevelDBBackend) (err er
 	return nil
 }
 
-func GetBlockTransactionHistory(st *sebakstorage.LevelDBBackend, hash string) (bt BlockTransactionHistory, err error) {
+func GetBlockTransactionHistory(st *storage.LevelDBBackend, hash string) (bt BlockTransactionHistory, err error) {
 	if err = st.Get(GetBlockTransactionHistoryKey(hash), &bt); err != nil {
 		return
 	}
@@ -85,7 +85,7 @@ func GetBlockTransactionHistory(st *sebakstorage.LevelDBBackend, hash string) (b
 	return
 }
 
-func ExistsBlockTransactionHistory(st *sebakstorage.LevelDBBackend, hash string) (bool, error) {
+func ExistsBlockTransactionHistory(st *storage.LevelDBBackend, hash string) (bool, error) {
 	return st.Has(GetBlockTransactionHistoryKey(hash))
 }
 

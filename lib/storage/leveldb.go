@@ -1,4 +1,4 @@
-package sebakstorage
+package storage
 
 import (
 	"encoding/json"

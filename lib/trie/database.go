@@ -8,11 +8,11 @@ import (
 )
 
 type EthDatabase struct {
-	ldbBackend *sebakstorage.LevelDBBackend
+	ldbBackend *storage.LevelDBBackend
 	quitLock   sync.Mutex // Mutex protecting the quit channel access
 }
 
-func NewEthDatabase(ldb *sebakstorage.LevelDBBackend) *EthDatabase {
+func NewEthDatabase(ldb *storage.LevelDBBackend) *EthDatabase {
 	return &EthDatabase{
 		ldbBackend: ldb,
 	}
@@ -48,12 +48,12 @@ func (db *EthDatabase) NewBatch() ethdb.Batch {
 	return &ldbBatch{db: db.ldbBackend, b: new(leveldb.Batch)}
 }
 
-func (db *EthDatabase) BackEnd() *sebakstorage.LevelDBBackend {
+func (db *EthDatabase) BackEnd() *storage.LevelDBBackend {
 	return db.ldbBackend
 }
 
 type ldbBatch struct {
-	db   *sebakstorage.LevelDBBackend
+	db   *storage.LevelDBBackend
 	b    *leveldb.Batch
 	size int
 }

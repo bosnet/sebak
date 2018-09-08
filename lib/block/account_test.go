@@ -14,7 +14,7 @@ import (
 )
 
 func TestSaveNewBlockAccount(t *testing.T) {
-	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
+	st, _ := storage.NewTestMemoryLevelDBBackend()
 
 	b := TestMakeBlockAccount()
 	err := b.Save(st)
@@ -26,7 +26,7 @@ func TestSaveNewBlockAccount(t *testing.T) {
 }
 
 func TestSaveExistingBlockAccount(t *testing.T) {
-	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
+	st, _ := storage.NewTestMemoryLevelDBBackend()
 
 	b := TestMakeBlockAccount()
 	b.Save(st)
@@ -42,7 +42,7 @@ func TestSaveExistingBlockAccount(t *testing.T) {
 }
 
 func TestSortMultipleBlockAccount(t *testing.T) {
-	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
+	st, _ := storage.NewTestMemoryLevelDBBackend()
 
 	var createdOrder []string
 	for i := 0; i < 50; i++ {
@@ -70,7 +70,7 @@ func TestSortMultipleBlockAccount(t *testing.T) {
 }
 
 func TestGetSortedBlockAccounts(t *testing.T) {
-	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
+	st, _ := storage.NewTestMemoryLevelDBBackend()
 
 	var createdOrder []string
 	for i := 0; i < 50; i++ {
@@ -98,7 +98,7 @@ func TestGetSortedBlockAccounts(t *testing.T) {
 }
 
 func TestBlockAccountSaveBlockAccountCheckpoints(t *testing.T) {
-	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
+	st, _ := storage.NewTestMemoryLevelDBBackend()
 
 	b := TestMakeBlockAccount()
 	b.Save(st)
@@ -143,7 +143,7 @@ func TestBlockAccountObserver(t *testing.T) {
 	observer.BlockAccountObserver.On(fmt.Sprintf("address-%s", b.Address), ObserverFunc)
 	defer observer.BlockAccountObserver.Off(fmt.Sprintf("address-%s", b.Address), ObserverFunc)
 
-	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
+	st, _ := storage.NewTestMemoryLevelDBBackend()
 
 	b.Save(st)
 

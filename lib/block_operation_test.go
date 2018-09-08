@@ -24,7 +24,7 @@ func TestNewBlockOperationFromOperation(t *testing.T) {
 }
 
 func TestBlockOperationSaveAndGet(t *testing.T) {
-	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
+	st, _ := storage.NewTestMemoryLevelDBBackend()
 
 	bos := TestMakeNewBlockOperation(networkID, 1)
 	if err := bos[0].Save(st); err != nil {
@@ -44,7 +44,7 @@ func TestBlockOperationSaveAndGet(t *testing.T) {
 }
 
 func TestBlockOperationSaveExisting(t *testing.T) {
-	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
+	st, _ := storage.NewTestMemoryLevelDBBackend()
 
 	bos := TestMakeNewBlockOperation(networkID, 1)
 	bo := bos[0]
@@ -60,7 +60,7 @@ func TestBlockOperationSaveExisting(t *testing.T) {
 }
 
 func TestGetSortedBlockOperationsByTxHash(t *testing.T) {
-	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
+	st, _ := storage.NewTestMemoryLevelDBBackend()
 
 	// create 30 `BlockOperation`
 	var txHashes []string
@@ -96,7 +96,7 @@ func TestGetSortedBlockOperationsByTxHash(t *testing.T) {
 }
 
 func TestBlockOperationSaveByTransacton(t *testing.T) {
-	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
+	st, _ := storage.NewTestMemoryLevelDBBackend()
 
 	_, tx := TestMakeTransaction(networkID, 10)
 	block := testMakeNewBlock([]string{tx.GetHash()})
@@ -127,7 +127,7 @@ func TestBlockOperationSaveByTransacton(t *testing.T) {
 }
 
 func TestBlockOperationGetSortedByCheckpoint(t *testing.T) {
-	st, _ := sebakstorage.NewTestMemoryLevelDBBackend()
+	st, _ := storage.NewTestMemoryLevelDBBackend()
 
 	_, tx := TestMakeTransaction(networkID, 10)
 	block := testMakeNewBlock([]string{tx.GetHash()})

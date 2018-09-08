@@ -114,7 +114,7 @@ func (tx Transaction) IsWellFormed(networkID []byte) (err error) {
 // * checkpoint is valid
 // * source has enough balance to pay
 // * and it's `Operations`
-func (tx Transaction) Validate(st *sebakstorage.LevelDBBackend) (err error) {
+func (tx Transaction) Validate(st *storage.LevelDBBackend) (err error) {
 	// check, source exists
 	var ba *block.BlockAccount
 	if ba, err = block.GetBlockAccount(st, tx.B.Source); err != nil {
