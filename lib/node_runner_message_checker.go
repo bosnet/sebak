@@ -13,9 +13,10 @@
 package sebak
 
 import (
+	logging "github.com/inconshreveable/log15"
+
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
-	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
 )
 
@@ -25,13 +26,15 @@ type MessageChecker struct {
 	NodeRunner *NodeRunner
 	LocalNode  *node.LocalNode
 	NetworkID  []byte
-	Message    network.Message
+	Message    common.NetworkMessage
 
 	Transaction Transaction
+
+	Log logging.Logger
 }
 
 // TransactionUnmarshal makes `Transaction` from
-// incoming `network.Message`.
+// incoming `common.NetworkMessage`.
 func TransactionUnmarshal(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*MessageChecker)
 
@@ -45,7 +48,8 @@ func TransactionUnmarshal(c common.Checker, args ...interface{}) (err error) {
 	}
 
 	checker.Transaction = tx
-	checker.NodeRunner.Log().Debug("message is transaction")
+	checker.Log = checker.NodeRunner.Log().New(logging.Ctx{"transaction": tx.GetHash()})
+	checker.Log.Debug("message is transaction")
 
 	return
 }
@@ -71,7 +75,7 @@ func SaveTransactionHistory(c common.Checker, args ...interface{}) (err error) {
 
 	var found bool
 	if found, err = ExistsBlockTransactionHistory(checker.NodeRunner.Storage(), checker.Transaction.GetHash()); found && err == nil {
-		checker.NodeRunner.Log().Debug("found in history", "transction", checker.Transaction.GetHash())
+		checker.Log.Debug("found in history")
 		err = errors.ErrorNewButKnownMessage
 		return
 	}
@@ -81,7 +85,7 @@ func SaveTransactionHistory(c common.Checker, args ...interface{}) (err error) {
 		return
 	}
 
-	checker.NodeRunner.Log().Debug("saved in history", "transaction", checker.Transaction.GetHash())
+	checker.Log.Debug("saved in history")
 
 	return
 }
@@ -119,7 +123,7 @@ func PushIntoTransactionPool(c common.Checker, args ...interface{}) (err error) 
 	is := checker.NodeRunner.Consensus()
 	is.TransactionPool.Add(tx)
 
-	checker.NodeRunner.Log().Debug("push transaction into transactionPool", "transaction", checker.Transaction.GetHash())
+	checker.Log.Debug("push transaction into transactionPool")
 
 	return
 }
@@ -129,7 +133,7 @@ func PushIntoTransactionPool(c common.Checker, args ...interface{}) (err error) 
 func BroadcastTransaction(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*MessageChecker)
 
-	checker.NodeRunner.Log().Debug("transaction from client will be broadcasted", "transaction", checker.Transaction.GetHash())
+	checker.Log.Debug("transaction from client will be broadcasted")
 
 	// TODO sender should be excluded
 	checker.NodeRunner.ConnectionManager().Broadcast(checker.Transaction)

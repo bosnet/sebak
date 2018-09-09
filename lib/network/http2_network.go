@@ -36,7 +36,7 @@ func (r HTTP2MessageBroker) Response(w io.Writer, o []byte) error {
 	return err
 }
 
-func (r HTTP2MessageBroker) Receive(msg Message) {
+func (r HTTP2MessageBroker) Receive(msg common.NetworkMessage) {
 	r.network.ReceiveChannel() <- msg
 }
 
@@ -47,7 +47,7 @@ type HTTP2Network struct {
 	server *http.Server
 	router *mux.Router
 
-	receiveChannel chan Message
+	receiveChannel chan common.NetworkMessage
 
 	messageBroker MessageBroker
 	ready         bool
@@ -56,20 +56,18 @@ type HTTP2Network struct {
 	routers  map[string]*mux.Router
 	handlers map[string]func(http.ResponseWriter, *http.Request)
 
-	config HTTP2NetworkConfig
+	config *HTTP2NetworkConfig
 }
 
 type HandlerFunc func(w http.ResponseWriter, r *http.Request)
 
-func NewHTTP2Network(config HTTP2NetworkConfig) (h2n *HTTP2Network) {
-	log.Debug("new HTTP2Network created", "config", config)
+func NewHTTP2Network(config *HTTP2NetworkConfig) (h2n *HTTP2Network) {
 	server := &http.Server{
 		Addr:              config.Addr,
 		ReadTimeout:       config.ReadTimeout,
 		ReadHeaderTimeout: config.ReadHeaderTimeout,
 		WriteTimeout:      config.WriteTimeout,
-		// TODO replace custom logger
-		//ErrorLog:
+		ErrorLog:          config.ErrorLog,
 	}
 	server.SetKeepAlivesEnabled(true)
 
@@ -90,7 +88,7 @@ func NewHTTP2Network(config HTTP2NetworkConfig) (h2n *HTTP2Network) {
 		router:         baseRouter,
 		tlsCertFile:    config.TLSCertFile,
 		tlsKeyFile:     config.TLSKeyFile,
-		receiveChannel: make(chan Message),
+		receiveChannel: make(chan common.NetworkMessage),
 	}
 	h2n.handlers = map[string]func(http.ResponseWriter, *http.Request){}
 	h2n.routers = map[string]*mux.Router{
@@ -143,7 +141,7 @@ func (t *HTTP2Network) setNotReadyHandler() {
 		}
 	})
 
-	t.server.Handler = handlers.CombinedLoggingHandler(t.config.HTTP2LogOutput, t.router)
+	t.server.Handler = handlers.CombinedLoggingHandler(t.config.Log, t.router)
 }
 
 func (t *HTTP2Network) AddHandler(pattern string, handler http.HandlerFunc) (router *mux.Route) {
@@ -175,7 +173,7 @@ func (t *HTTP2Network) MessageBroker() MessageBroker {
 }
 
 func (t *HTTP2Network) Ready() error {
-	t.server.Handler = handlers.CombinedLoggingHandler(t.config.HTTP2LogOutput, t.router)
+	t.server.Handler = handlers.CombinedLoggingHandler(t.config.Log, t.router)
 
 	t.ready = true
 
@@ -214,10 +212,10 @@ func (t *HTTP2Network) Stop() {
 	t.server.Close()
 }
 
-func (t *HTTP2Network) ReceiveChannel() chan Message {
+func (t *HTTP2Network) ReceiveChannel() chan common.NetworkMessage {
 	return t.receiveChannel
 }
 
-func (t *HTTP2Network) ReceiveMessage() <-chan Message {
+func (t *HTTP2Network) ReceiveMessage() <-chan common.NetworkMessage {
 	return t.receiveChannel
 }

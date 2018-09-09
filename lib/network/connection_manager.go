@@ -123,7 +123,7 @@ func (c *ConnectionManager) CountConnected() int {
 }
 
 func (c *ConnectionManager) connectValidators() {
-	c.log.Debug("> starting to connect to validators", "validators", c.validators)
+	c.log.Debug("starting to connect to validators", "validators", c.validators)
 	for _, v := range c.validators {
 		go c.connectingValidator(v)
 	}

@@ -37,7 +37,7 @@ func (m *MemoryTransportClient) SendMessage(message common.Serializable) (body [
 	if s, err = message.Serialize(); err != nil {
 		return
 	}
-	m.server.Send(TransactionMessage, s)
+	m.server.Send(common.TransactionMessage, s)
 
 	return
 }
@@ -47,7 +47,7 @@ func (m *MemoryTransportClient) SendBallot(message common.Serializable) (body []
 	if s, err = message.Serialize(); err != nil {
 		return
 	}
-	m.server.Send(BallotMessage, s)
+	m.server.Send(common.BallotMessage, s)
 
 	return
 }

@@ -22,14 +22,6 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:c819830f4f5ef85874a90ac3cbcc96cd322c715f5c96fbe4722eacd3dafbaa07"
-  name = "github.com/beorn7/perks"
-  packages = ["quantile"]
-  pruneopts = "NT"
-  revision = "3a771d992973f24aa725d07868b467d1ddfceafb"
-
-[[projects]]
-  branch = "master"
   digest = "1:cf6f658c1797ec82080e933d055e47abde46b595f60f8ef87586fb73df6b2e75"
   name = "github.com/btcsuite/btcd"
   packages = ["btcec"]
@@ -79,14 +71,6 @@
   pruneopts = "NT"
   revision = "259ab82a6cad3992b4e21ff5cac294ccb06474bc"
   version = "v1.7.0"
-
-[[projects]]
-  digest = "1:d7cb4458ea8782e6efacd8f4940796ec559c90833509c436f40c4085b98156dd"
-  name = "github.com/golang/protobuf"
-  packages = ["proto"]
-  pruneopts = "NT"
-  revision = "aa810b61a9c79d51363740d207bb46cf8e620ed5"
-  version = "v1.2.0"
 
 [[projects]]
   branch = "master"
@@ -172,20 +156,20 @@
   version = "v0.0.3"
 
 [[projects]]
-  digest = "1:ea1db000388d88b31db7531c83016bef0d6db0d908a07794bfc36aca16fbf935"
-  name = "github.com/matttproud/golang_protobuf_extensions"
-  packages = ["pbutil"]
-  pruneopts = "NT"
-  revision = "c12348ce28de40eed0136aa2b644d0ee0650e56c"
-  version = "v1.0.1"
-
-[[projects]]
   branch = "master"
   digest = "1:9dc2f88f4fb4757aeca31aad614951f2c54ae416543a277e664c509b5c4c433a"
   name = "github.com/nullstyle/go-xdr"
   packages = ["xdr3"]
   pruneopts = "NT"
   revision = "a875e7c9fa2388ce03279f6b5ba1c2ccd1f9e917"
+
+[[projects]]
+  digest = "1:1164c67de2421e9be8aa047865ca55f4269b8ca98b9b45843b6f5b6b0cc29c2d"
+  name = "github.com/nvellon/hal"
+  packages = ["."]
+  pruneopts = "NT"
+  revision = "d5526dbaf6448b3cac35d44a2fb5c2ddb0081437"
+  version = "v0.3.0"
 
 [[projects]]
   digest = "1:3b517122f3aad1ecce45a630ea912b3092b4729f25532a911d0cb2935a1f9352"
@@ -210,50 +194,6 @@
   pruneopts = "NT"
   revision = "792786c7400a136282c1664665ae0a8db921c6c2"
   version = "v1.0.0"
-
-[[projects]]
-  digest = "1:a22debd993d18b9203c985810f33f52e7583724800ee8d15e7d362e7175639d1"
-  name = "github.com/prometheus/client_golang"
-  packages = [
-    "prometheus",
-    "prometheus/promhttp",
-  ]
-  pruneopts = "NT"
-  revision = "c5b7fccd204277076155f10851dad72b76a49317"
-  version = "v0.8.0"
-
-[[projects]]
-  branch = "master"
-  digest = "1:c2cc5049e927e2749c0d5163c9f8d924880d83e84befa732b9aad0b6be227bed"
-  name = "github.com/prometheus/client_model"
-  packages = ["go"]
-  pruneopts = "NT"
-  revision = "5c3871d89910bfb32f5fcab2aa4b9ec68e65a99f"
-
-[[projects]]
-  branch = "master"
-  digest = "1:fa652fffdb9a8a025500345a0e1472db5b3c07a8b20f33a3ae2c13f59d6f29d4"
-  name = "github.com/prometheus/common"
-  packages = [
-    "expfmt",
-    "internal/bitbucket.org/ww/goautoneg",
-    "model",
-  ]
-  pruneopts = "NT"
-  revision = "c7de2306084e37d54b8be01f3541a8464345e9a5"
-
-[[projects]]
-  branch = "master"
-  digest = "1:3c54832e04d11b79309415c5da9a5d85940ea367c1693ae0aebf26b0ee405ca1"
-  name = "github.com/prometheus/procfs"
-  packages = [
-    ".",
-    "internal/util",
-    "nfs",
-    "xfs",
-  ]
-  pruneopts = "NT"
-  revision = "05ee40e3a273f7245e8777337fc7b46e533a9a92"
 
 [[projects]]
   digest = "1:6bc0652ea6e39e22ccd522458b8bdd8665bf23bdc5a20eec90056e4dc7e273ca"
@@ -416,13 +356,12 @@
     "github.com/gorilla/handlers",
     "github.com/gorilla/mux",
     "github.com/inconshreveable/log15",
-    "github.com/magiconair/properties/assert",
+    "github.com/nvellon/hal",
     "github.com/oklog/run",
-    "github.com/prometheus/client_golang/prometheus",
-    "github.com/prometheus/client_golang/prometheus/promhttp",
     "github.com/satori/go.uuid",
     "github.com/spf13/cobra",
     "github.com/stellar/go/keypair",
+    "github.com/stretchr/testify/assert",
     "github.com/stretchr/testify/require",
     "github.com/syndtr/goleveldb/leveldb",
     "github.com/syndtr/goleveldb/leveldb/iterator",

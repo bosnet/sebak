@@ -1,6 +1,7 @@
 package sebak
 
 import (
+	"encoding/json"
 	"math"
 
 	"boscoin.io/sebak/lib/common"
@@ -13,16 +14,6 @@ type ISAACVotingThresholdPolicy struct {
 
 	validators int
 	connected  int
-}
-
-func (vt *ISAACVotingThresholdPolicy) String() string {
-	o := common.MustJSONMarshal(map[string]interface{}{
-		"sign":       vt.sign,
-		"accept":     vt.accept,
-		"validators": vt.validators,
-	})
-
-	return string(o)
 }
 
 func (vt *ISAACVotingThresholdPolicy) Validators() int {
@@ -75,6 +66,15 @@ func (vt *ISAACVotingThresholdPolicy) Threshold(state common.BallotState) int {
 	}
 
 	return 0
+}
+
+func (vt *ISAACVotingThresholdPolicy) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]interface{}{
+		"sign":       vt.sign,
+		"accept":     vt.accept,
+		"validators": vt.validators,
+		"connected":  vt.connected,
+	})
 }
 
 func NewDefaultVotingThresholdPolicy(sign, accept int) (vt *ISAACVotingThresholdPolicy, err error) {

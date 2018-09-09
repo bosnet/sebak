@@ -123,10 +123,9 @@ func createTestNodeRunnersHTTP2Network(n int) (nodeRunners []*NodeRunner, rootKP
 
 		endpoint, _ := common.NewEndpointFromString(
 			fmt.Sprintf(
-				"http://localhost:%d?NodeName=%s&HTTP2LogOutput=%s",
+				"http://localhost:%d?NodeName=%s",
 				port,
 				kp.Address(),
-				"/dev/null",
 			),
 		)
 		node, _ := node.NewLocalNode(kp, endpoint, "")
@@ -152,6 +151,8 @@ func createTestNodeRunnersHTTP2Network(n int) (nodeRunners []*NodeRunner, rootKP
 		is, _ := NewISAAC(networkID, node, vth)
 		st, _ := storage.NewTestMemoryLevelDBBackend()
 		networkConfig, _ := network.NewHTTP2NetworkConfigFromEndpoint(node.Endpoint())
+		networkConfig.SetLog("")
+		networkConfig.SetErrorLog("")
 		network := network.NewHTTP2Network(networkConfig)
 		nodeRunner, _ := NewNodeRunner(string(networkID), node, vth, network, is, st)
 

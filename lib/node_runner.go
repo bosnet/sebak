@@ -303,21 +303,18 @@ func (nr *NodeRunner) handleMessage() {
 		var err error
 
 		if message.IsEmpty() {
-			nr.log.Error("got empty message`")
+			nr.log.Error("got empty message")
 			continue
 		}
 		switch message.Type {
-		case network.ConnectMessage:
+		case common.ConnectMessage:
 			if _, err := node.NewValidatorFromString(message.Data); err != nil {
-				nr.log.Error("invalid validator data was received", "data", message.Data)
+				nr.log.Error("invalid validator data was received", "data", message.Data, "error", err)
 				continue
 			}
-		case network.TransactionMessage:
-			if message.IsEmpty() {
-				nr.log.Error("got empty transaction`")
-			}
+		case common.TransactionMessage:
 			err = nr.handleTransaction(message)
-		case network.BallotMessage:
+		case common.BallotMessage:
 			err = nr.handleBallotMessage(message)
 		default:
 			err = errors.New("got unknown message")
@@ -327,13 +324,13 @@ func (nr *NodeRunner) handleMessage() {
 			if _, ok := err.(common.CheckerStop); ok {
 				continue
 			}
-			nr.log.Error("failed to handle network.Message", "message", message.Head(50), "error", err)
+			nr.log.Error("failed to handle message", "message", message.Head(50), "error", err)
 		}
 	}
 }
 
-func (nr *NodeRunner) handleTransaction(message network.Message) (err error) {
-	nr.log.Debug("got message`", "message", message.Head(50))
+func (nr *NodeRunner) handleTransaction(message common.NetworkMessage) (err error) {
+	nr.log.Debug("got transaction", "transaction", message.Head(50))
 
 	checker := &MessageChecker{
 		DefaultChecker: common.DefaultChecker{Funcs: nr.handleTransactionCheckerFuncs},
@@ -345,7 +342,7 @@ func (nr *NodeRunner) handleTransaction(message network.Message) (err error) {
 
 	if err = common.RunChecker(checker, nr.handleTransactionCheckerDeferFunc); err != nil {
 		if _, ok := err.(common.CheckerErrorStop); !ok {
-			nr.log.Error("failed to handle message from client", "error", err)
+			nr.log.Error("failed to handle transaction", "error", err)
 		}
 		return
 	}
@@ -353,7 +350,7 @@ func (nr *NodeRunner) handleTransaction(message network.Message) (err error) {
 	return
 }
 
-func (nr *NodeRunner) handleBallotMessage(message network.Message) (err error) {
+func (nr *NodeRunner) handleBallotMessage(message common.NetworkMessage) (err error) {
 	nr.log.Debug("got ballot", "message", message.Head(50))
 
 	baseChecker := &BallotChecker{
@@ -368,7 +365,7 @@ func (nr *NodeRunner) handleBallotMessage(message network.Message) (err error) {
 	err = common.RunChecker(baseChecker, nr.handleTransactionCheckerDeferFunc)
 	if err != nil {
 		if _, ok := err.(common.CheckerErrorStop); !ok {
-			nr.log.Error("failed to handle ballot", "error", err, "state", "base")
+			nr.log.Error("failed to handle ballot", "error", err, "state", "")
 			return
 		}
 	}
@@ -444,7 +441,7 @@ func (nr *NodeRunner) InitRound() {
 	}
 
 	nr.log.Debug(
-		"caught up with network and connected to all validators",
+		"caught up network and connected to all validators",
 		"connected", nr.Policy().Connected(),
 		"validators", nr.Policy().Validators(),
 	)
@@ -517,7 +514,7 @@ func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) error {
 	rr := nr.consensus.RunningRounds
 	rr[round.Hash()] = runningRound
 
-	nr.Log().Debug("ballot broadcasted and voted", "runningRound", runningRound)
+	nr.log.Debug("ballot broadcasted and voted", "runningRound", runningRound)
 
 	return nil
 }

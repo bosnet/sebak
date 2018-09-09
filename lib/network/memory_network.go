@@ -32,10 +32,10 @@ func getMemoryNetwork(endpoint *common.Endpoint) *MemoryNetwork {
 type MemoryNetwork struct {
 	localNode  common.Serializable
 	endpoint   *common.Endpoint
-	connWriter chan Message
+	connWriter chan common.NetworkMessage
 	close      chan bool
 
-	receiveChannel chan Message
+	receiveChannel chan common.NetworkMessage
 }
 
 func (t *MemoryNetwork) GetClient(endpoint *common.Endpoint) NetworkClient {
@@ -85,17 +85,18 @@ func (p *MemoryNetwork) GetNodeInfo() []byte {
 	o, _ := p.localNode.Serialize()
 	return o
 }
-func (p *MemoryNetwork) Send(mt MessageType, b []byte) (err error) {
-	p.connWriter <- NewMessage(mt, b)
+
+func (p *MemoryNetwork) Send(mt common.MessageType, b []byte) (err error) {
+	p.connWriter <- common.NewNetworkMessage(mt, b)
 
 	return
 }
 
-func (p *MemoryNetwork) ReceiveChannel() chan Message {
+func (p *MemoryNetwork) ReceiveChannel() chan common.NetworkMessage {
 	return p.receiveChannel
 }
 
-func (p *MemoryNetwork) ReceiveMessage() <-chan Message {
+func (p *MemoryNetwork) ReceiveMessage() <-chan common.NetworkMessage {
 	return p.receiveChannel
 }
 
@@ -121,8 +122,8 @@ func CreateNewMemoryEndpoint() *common.Endpoint {
 func NewMemoryNetwork() *MemoryNetwork {
 	n := &MemoryNetwork{
 		endpoint:       CreateNewMemoryEndpoint(),
-		connWriter:     make(chan Message),
-		receiveChannel: make(chan Message),
+		connWriter:     make(chan common.NetworkMessage),
+		receiveChannel: make(chan common.NetworkMessage),
 		close:          make(chan bool),
 	}
 

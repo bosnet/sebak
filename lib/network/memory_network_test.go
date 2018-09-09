@@ -94,7 +94,7 @@ func TestMemoryNetworkGetClient(t *testing.T) {
 
 	_, s0, _ := createNewMemoryNetwork()
 
-	gotMessage := make(chan Message)
+	gotMessage := make(chan common.NetworkMessage)
 	go func() {
 		for message := range s0.ReceiveMessage() {
 			gotMessage <- message
@@ -111,7 +111,7 @@ func TestMemoryNetworkGetClient(t *testing.T) {
 	select {
 	case receivedMessage := <-gotMessage:
 		receivedDummy, _ := DummyMessageFromString(receivedMessage.Data)
-		if receivedMessage.Type != TransactionMessage {
+		if receivedMessage.Type != common.TransactionMessage {
 			t.Error("wrong message type")
 		}
 		if !message.Equal(receivedDummy) {

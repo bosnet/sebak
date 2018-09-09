@@ -3,6 +3,7 @@ package network
 import (
 	"errors"
 	"io"
+	goLog "log"
 	"os"
 	"strings"
 	"time"
@@ -23,10 +24,11 @@ type HTTP2NetworkConfig struct {
 	TLSCertFile,
 	TLSKeyFile string
 
-	HTTP2LogOutput io.Writer
+	Log      io.Writer
+	ErrorLog *goLog.Logger
 }
 
-func NewHTTP2NetworkConfigFromEndpoint(endpoint *common.Endpoint) (config HTTP2NetworkConfig, err error) {
+func NewHTTP2NetworkConfigFromEndpoint(endpoint *common.Endpoint) (config *HTTP2NetworkConfig, err error) {
 	query := endpoint.Query()
 
 	var NodeName string
@@ -35,7 +37,6 @@ func NewHTTP2NetworkConfigFromEndpoint(endpoint *common.Endpoint) (config HTTP2N
 	var WriteTimeout time.Duration = 0
 	var IdleTimeout time.Duration = 5
 	var TLSCertFile, TLSKeyFile string
-	var HTTP2LogOutput io.Writer
 
 	if ReadTimeout, err = time.ParseDuration(common.GetUrlQuery(query, "ReadTimeout", "0s")); err != nil {
 		return
@@ -84,16 +85,7 @@ func NewHTTP2NetworkConfigFromEndpoint(endpoint *common.Endpoint) (config HTTP2N
 		NodeName = v
 	}
 
-	if v := query.Get("HTTP2LogOutput"); len(v) < 1 {
-		HTTP2LogOutput = os.Stdout
-	} else {
-		HTTP2LogOutput, err = os.OpenFile(v, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
-		if err != nil {
-			return
-		}
-	}
-
-	config = HTTP2NetworkConfig{
+	config = &HTTP2NetworkConfig{
 		NodeName:          NodeName,
 		Endpoint:          endpoint,
 		Addr:              endpoint.Host,
@@ -103,8 +95,9 @@ func NewHTTP2NetworkConfigFromEndpoint(endpoint *common.Endpoint) (config HTTP2N
 		IdleTimeout:       IdleTimeout,
 		TLSCertFile:       TLSCertFile,
 		TLSKeyFile:        TLSKeyFile,
-		HTTP2LogOutput:    HTTP2LogOutput,
 	}
+	config.SetLog("")
+	config.SetErrorLog("")
 
 	return
 }
@@ -115,4 +108,34 @@ func (config HTTP2NetworkConfig) IsHTTPS() bool {
 
 func (config HTTP2NetworkConfig) String() string {
 	return string(common.MustJSONMarshal(config))
+}
+
+func (config *HTTP2NetworkConfig) SetLog(v string) error {
+	if len(v) < 1 {
+		config.Log = os.Stdout
+		return nil
+	}
+
+	httpLog, err := os.OpenFile(v, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		return err
+	}
+	config.Log = httpLog
+
+	return nil
+}
+
+func (config *HTTP2NetworkConfig) SetErrorLog(v string) (err error) {
+	var logFile *os.File
+	if len(v) < 1 {
+		logFile = os.Stdout
+	} else {
+		logFile, err = os.OpenFile(v, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+		if err != nil {
+			return
+		}
+	}
+	config.ErrorLog = goLog.New(logFile, "", goLog.LstdFlags|goLog.Lmicroseconds)
+
+	return nil
 }
