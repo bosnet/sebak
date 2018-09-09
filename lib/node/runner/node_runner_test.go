@@ -153,7 +153,7 @@ func createTestNodeRunnersHTTP2Network(n int) (nodeRunners []*NodeRunner, rootKP
 		vth, _ := consensus.NewDefaultVotingThresholdPolicy(66, 66)
 		is, _ := consensus.NewISAAC(networkID, node, vth)
 		st, _ := storage.NewTestMemoryLevelDBBackend()
-		networkConfig, _ := network.NewHTTP2NetworkConfigFromEndpoint(node.Endpoint())
+		networkConfig, _ := network.NewHTTP2NetworkConfigFromEndpoint(node, node.Endpoint())
 		networkConfig.SetLog("")
 		networkConfig.SetErrorLog("")
 		network := network.NewHTTP2Network(networkConfig)

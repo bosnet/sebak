@@ -9,10 +9,11 @@ import (
 	"time"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/node"
 )
 
 type HTTP2NetworkConfig struct {
-	NodeName string
+	Node     *node.LocalNode
 	Endpoint *common.Endpoint
 	Addr     string
 
@@ -28,10 +29,9 @@ type HTTP2NetworkConfig struct {
 	ErrorLog *goLog.Logger
 }
 
-func NewHTTP2NetworkConfigFromEndpoint(endpoint *common.Endpoint) (config *HTTP2NetworkConfig, err error) {
+func NewHTTP2NetworkConfigFromEndpoint(node *node.LocalNode, endpoint *common.Endpoint) (config *HTTP2NetworkConfig, err error) {
 	query := endpoint.Query()
 
-	var NodeName string
 	var ReadTimeout time.Duration = 0
 	var ReadHeaderTimeout time.Duration = 0
 	var WriteTimeout time.Duration = 0
@@ -78,15 +78,8 @@ func NewHTTP2NetworkConfigFromEndpoint(endpoint *common.Endpoint) (config *HTTP2
 		return
 	}
 
-	if v := query.Get("NodeName"); len(v) < 1 {
-		err = errors.New("`NodeName` must be given")
-		return
-	} else {
-		NodeName = v
-	}
-
 	config = &HTTP2NetworkConfig{
-		NodeName:          NodeName,
+		Node:              node,
 		Endpoint:          endpoint,
 		Addr:              endpoint.Host,
 		ReadTimeout:       ReadTimeout,
