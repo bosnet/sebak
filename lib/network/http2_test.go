@@ -37,7 +37,7 @@ func getPort() string {
 
 func makeTestHTTP2NetworkForTLS(endpoint *common.Endpoint) (network *HTTP2Network, err error) {
 	var config *HTTP2NetworkConfig
-	if config, err = NewHTTP2NetworkConfigFromEndpoint(nil, endpoint); err != nil {
+	if config, err = NewHTTP2NetworkConfigFromEndpoint("showme", endpoint); err != nil {
 		return
 	}
 
@@ -82,7 +82,6 @@ func TestHTTP2NetworkTLSSupport(t *testing.T) {
 	require.NotNil(t, g)
 
 	queryValues := url.Values{}
-	queryValues.Set("NodeName", "showme")
 	queryValues.Set("TLSCertFile", g.GetCertPath())
 	queryValues.Set("TLSKeyFile", g.GetKeyPath())
 

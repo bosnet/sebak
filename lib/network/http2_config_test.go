@@ -11,9 +11,9 @@ import (
 )
 
 func TestHTTP2NetworkConfigHTTPSAndTLS(t *testing.T) {
+	var nodeName string = "showme"
 	{ // HTTPS + TLSCertFile + TLSKeyFile
 		queryValues := url.Values{}
-		queryValues.Set("NodeName", "showme")
 		queryValues.Set("TLSCertFile", "faketlscert")
 		queryValues.Set("TLSKeyFile", "faketlskey")
 
@@ -23,7 +23,7 @@ func TestHTTP2NetworkConfigHTTPSAndTLS(t *testing.T) {
 			RawQuery: queryValues.Encode(),
 		}
 
-		_, err := NewHTTP2NetworkConfigFromEndpoint(nil, endpoint)
+		_, err := NewHTTP2NetworkConfigFromEndpoint(nodeName, endpoint)
 		require.Nil(t, err)
 	}
 
@@ -37,7 +37,7 @@ func TestHTTP2NetworkConfigHTTPSAndTLS(t *testing.T) {
 			RawQuery: queryValues.Encode(),
 		}
 
-		_, err := NewHTTP2NetworkConfigFromEndpoint(nil, endpoint)
+		_, err := NewHTTP2NetworkConfigFromEndpoint(nodeName, endpoint)
 		require.NotNil(t, err)
 	}
 
@@ -51,7 +51,7 @@ func TestHTTP2NetworkConfigHTTPSAndTLS(t *testing.T) {
 			RawQuery: queryValues.Encode(),
 		}
 
-		_, err := NewHTTP2NetworkConfigFromEndpoint(nil, endpoint)
+		_, err := NewHTTP2NetworkConfigFromEndpoint(nodeName, endpoint)
 		require.NotNil(t, err)
 	}
 
@@ -66,7 +66,7 @@ func TestHTTP2NetworkConfigHTTPSAndTLS(t *testing.T) {
 			RawQuery: queryValues.Encode(),
 		}
 
-		_, err := NewHTTP2NetworkConfigFromEndpoint(nil, endpoint)
+		_, err := NewHTTP2NetworkConfigFromEndpoint(nodeName, endpoint)
 		require.Nil(t, err)
 	}
 }

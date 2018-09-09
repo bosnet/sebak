@@ -81,7 +81,7 @@ func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, mn *network.HTTP2Net
 	queries.Add("TLSKeyFile", g.GetKeyPath())
 	endpoint.RawQuery = queries.Encode()
 
-	config, err = network.NewHTTP2NetworkConfigFromEndpoint(localNode, endpoint)
+	config, err = network.NewHTTP2NetworkConfigFromEndpoint(localNode.Alias(), endpoint)
 	if err != nil {
 		t.Error(err)
 		return

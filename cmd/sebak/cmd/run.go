@@ -330,7 +330,7 @@ func runNode() error {
 	localNode.AddValidators(validators...)
 
 	// create network
-	networkConfig, err := network.NewHTTP2NetworkConfigFromEndpoint(localNode, nodeEndpoint)
+	networkConfig, err := network.NewHTTP2NetworkConfigFromEndpoint(localNode.Alias(), nodeEndpoint)
 	if err != nil {
 		log.Crit("failed to create network", "error", err)
 		return err

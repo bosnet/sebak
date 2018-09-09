@@ -92,7 +92,7 @@ func NewHTTP2Network(config *HTTP2NetworkConfig) (h2n *HTTP2Network) {
 		tlsCertFile:    config.TLSCertFile,
 		tlsKeyFile:     config.TLSKeyFile,
 		receiveChannel: make(chan common.NetworkMessage),
-		log:            log.New(logging.Ctx{"node": config.Node.Alias()}),
+		log:            log.New(logging.Ctx{"node": config.NodeName}),
 	}
 	h2n.handlers = map[string]func(http.ResponseWriter, *http.Request){}
 	h2n.routers = map[string]*mux.Router{
@@ -117,7 +117,7 @@ func (t *HTTP2Network) GetClient(endpoint *common.Endpoint) NetworkClient {
 	client := NewHTTP2NetworkClient(endpoint, rawClient)
 
 	headers := http.Header{}
-	headers.Set("User-Agent", fmt.Sprintf("v-%s", t.config.Node.Alias()))
+	headers.Set("User-Agent", fmt.Sprintf("v-%s", t.config.NodeName))
 	client.SetDefaultHeaders(headers)
 
 	return client
