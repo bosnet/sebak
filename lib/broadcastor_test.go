@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestConectionManagerBroadcastor(t *testing.T) {
+func TestConnectionManagerBroadcastor(t *testing.T) {
 	nodeRunners := createTestNodeRunner(3)
 
 	nr := nodeRunners[0]
