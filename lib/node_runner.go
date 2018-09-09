@@ -141,7 +141,7 @@ func (nr *NodeRunner) SetProposerCalculator(c ProposerCalculator) {
 	nr.proposerCalculator = c
 }
 
-func (nr *NodeRunner) SetConf(conf *NodeRunnerConfiguration) {
+func (nr *NodeRunner) SetConf(conf *ISAACConfiguration) {
 }
 
 func (nr *NodeRunner) Ready() {
