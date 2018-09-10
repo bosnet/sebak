@@ -12,6 +12,7 @@ import (
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/storage"
 
+	"boscoin.io/sebak/lib/transaction"
 	"github.com/stellar/go/keypair"
 )
 
@@ -49,7 +50,7 @@ func createTestNodeRunner(n int) []*NodeRunner {
 	}
 
 	address := kp.Address()
-	balance := BaseFee.MustAdd(1)
+	balance := common.BaseFee.MustAdd(1)
 	account = block.NewBlockAccount(address, balance)
 	var nodeRunners []*NodeRunner
 	for i := 0; i < n; i++ {
@@ -234,7 +235,7 @@ func TestNodeRunnerCreateAccount(t *testing.T) {
 	client := nr0.Network().GetClient(nr0.Node().Endpoint())
 
 	initialBalance := common.Amount(1)
-	tx := makeTransactionCreateAccount(kp, kpNewAccount.Address(), initialBalance)
+	tx := transaction.MakeTransactionCreateAccount(kp, kpNewAccount.Address(), initialBalance)
 	tx.B.SequenceID = account.SequenceID
 	tx.Sign(kp, networkID)
 

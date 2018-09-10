@@ -1,4 +1,4 @@
-package sebak
+package transaction
 
 import (
 	"encoding/json"
@@ -68,7 +68,7 @@ func NewTransaction(source string, sequenceID uint64, ops ...Operation) (tx Tran
 
 	txBody := TransactionBody{
 		Source:     source,
-		Fee:        BaseFee,
+		Fee:        common.BaseFee,
 		SequenceID: sequenceID,
 		Operations: ops,
 	}

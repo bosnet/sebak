@@ -9,6 +9,7 @@ import (
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/transaction"
 )
 
 func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
@@ -24,7 +25,7 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 		return
 	}
 
-	runChecker := func(tx Transaction, expectedError error) {
+	runChecker := func(tx transaction.Transaction, expectedError error) {
 		messageData, _ := tx.Serialize()
 
 		checker := &MessageChecker{
@@ -46,7 +47,7 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 		targetAccount, targetKP := TestMakeBlockAccount(common.Amount(10000000000000) /* 100,00000 BOS */)
 		targetAccount.Save(nodeRunner.Storage())
 
-		tx := TestMakeTransactionWithKeypair(networkID, 1, rootKP, targetKP)
+		tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, rootKP, targetKP)
 		tx.B.SequenceID = rootAccount.SequenceID
 		tx.Sign(rootKP, networkID)
 
@@ -59,7 +60,7 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 		targetAccount, targetKP := TestMakeBlockAccount(common.Amount(10000000000000))
 		targetAccount.Save(nodeRunner.Storage())
 
-		tx := TestMakeTransactionWithKeypair(networkID, 1, rootKP, targetKP)
+		tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, rootKP, targetKP)
 		tx.B.SequenceID = rootAccount.SequenceID
 		tx.Sign(rootKP, networkID)
 
@@ -77,7 +78,7 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 		targetAccount, targetKP := TestMakeBlockAccount(common.Amount(10000000000000))
 		targetAccount.Save(nodeRunner.Storage())
 
-		tx := TestMakeTransactionWithKeypair(networkID, 1, sourceKP, targetKP)
+		tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, sourceKP, targetKP)
 
 		runChecker(tx, errors.ErrorBlockAccountDoesNotExists)
 
@@ -93,7 +94,7 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 		_, targetKP := TestMakeBlockAccount(common.Amount(10000000000000))
 		sourceAccount.Save(nodeRunner.Storage())
 
-		tx := TestMakeTransactionWithKeypair(networkID, 1, sourceKP, targetKP)
+		tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, sourceKP, targetKP)
 		tx.B.SequenceID = sourceAccount.SequenceID
 		tx.Sign(sourceKP, networkID)
 

@@ -7,11 +7,12 @@ import (
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/storage"
 
+	"boscoin.io/sebak/lib/transaction"
 	"github.com/stretchr/testify/require"
 )
 
 func TestNewBlockOperationFromOperation(t *testing.T) {
-	_, tx := TestMakeTransaction(networkID, 1)
+	_, tx := transaction.TestMakeTransaction(networkID, 1)
 
 	op := tx.B.Operations[0]
 	bo := NewBlockOperationFromOperation(op, tx)
@@ -98,7 +99,7 @@ func TestGetSortedBlockOperationsByTxHash(t *testing.T) {
 func TestBlockOperationSaveByTransacton(t *testing.T) {
 	st, _ := storage.NewTestMemoryLevelDBBackend()
 
-	_, tx := TestMakeTransaction(networkID, 10)
+	_, tx := transaction.TestMakeTransaction(networkID, 10)
 	block := testMakeNewBlock([]string{tx.GetHash()})
 	bt := NewBlockTransactionFromTransaction(block.Hash, tx, common.MustJSONMarshal(tx))
 	err := bt.Save(st)

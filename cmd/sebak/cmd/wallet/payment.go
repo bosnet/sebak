@@ -8,11 +8,11 @@ import (
 	"time"
 
 	cmdcommon "boscoin.io/sebak/cmd/sebak/common"
-	"boscoin.io/sebak/lib"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/network"
 
 	"boscoin.io/sebak/lib/block"
+	"boscoin.io/sebak/lib/transaction"
 	"github.com/spf13/cobra"
 	"github.com/stellar/go/keypair"
 )
@@ -71,7 +71,7 @@ func init() {
 
 			// At the moment this is a rather crude implementation: There is no support for pooling of transaction,
 			// 1 operation == 1 transaction
-			var tx sebak.Transaction
+			var tx transaction.Transaction
 			var connection *common.HTTP2Client
 			var senderAccount block.BlockAccount
 
@@ -95,12 +95,12 @@ func init() {
 			{
 				newBalance, err = senderAccount.GetBalance().Sub(amount)
 				if err == nil {
-					newBalance, err = newBalance.Sub(sebak.BaseFee)
+					newBalance, err = newBalance.Sub(common.BaseFee)
 				}
 
 				if err != nil {
 					fmt.Printf("Attempting to draft %v GON (+ %v fees), but sender account only have %v GON\n",
-						amount, sebak.BaseFee, senderAccount.GetBalance())
+						amount, common.BaseFee, senderAccount.GetBalance())
 					os.Exit(1)
 				}
 			}
@@ -157,26 +157,26 @@ func init() {
 /// Returns:
 ///   `sebak.Transaction` = The generated `Transaction` creating the account
 ///
-func makeTransactionCreateAccount(kpSource keypair.KP, kpDest keypair.KP, amount common.Amount, seqid uint64) sebak.Transaction {
-	opb := sebak.NewOperationBodyCreateAccount(kpDest.Address(), amount)
+func makeTransactionCreateAccount(kpSource keypair.KP, kpDest keypair.KP, amount common.Amount, seqid uint64) transaction.Transaction {
+	opb := transaction.NewOperationBodyCreateAccount(kpDest.Address(), amount)
 
-	op := sebak.Operation{
-		H: sebak.OperationHeader{
-			Type: sebak.OperationCreateAccount,
+	op := transaction.Operation{
+		H: transaction.OperationHeader{
+			Type: transaction.OperationCreateAccount,
 		},
 		B: opb,
 	}
 
-	txBody := sebak.TransactionBody{
+	txBody := transaction.TransactionBody{
 		Source:     kpSource.Address(),
-		Fee:        sebak.BaseFee,
+		Fee:        common.BaseFee,
 		SequenceID: seqid,
-		Operations: []sebak.Operation{op},
+		Operations: []transaction.Operation{op},
 	}
 
-	tx := sebak.Transaction{
+	tx := transaction.Transaction{
 		T: "transaction",
-		H: sebak.TransactionHeader{
+		H: transaction.TransactionHeader{
 			Created: common.NowISO8601(),
 			Hash:    txBody.MakeHashString(),
 		},
@@ -201,26 +201,26 @@ func makeTransactionCreateAccount(kpSource keypair.KP, kpDest keypair.KP, amount
 /// Returns:
 ///  `sebak.Transaction` = The generated `Transaction` to do a payment
 ///
-func makeTransactionPayment(kpSource keypair.KP, kpDest keypair.KP, amount common.Amount, seqid uint64) sebak.Transaction {
-	opb := sebak.NewOperationBodyPayment(kpDest.Address(), amount)
+func makeTransactionPayment(kpSource keypair.KP, kpDest keypair.KP, amount common.Amount, seqid uint64) transaction.Transaction {
+	opb := transaction.NewOperationBodyPayment(kpDest.Address(), amount)
 
-	op := sebak.Operation{
-		H: sebak.OperationHeader{
-			Type: sebak.OperationPayment,
+	op := transaction.Operation{
+		H: transaction.OperationHeader{
+			Type: transaction.OperationPayment,
 		},
 		B: opb,
 	}
 
-	txBody := sebak.TransactionBody{
+	txBody := transaction.TransactionBody{
 		Source:     kpSource.Address(),
-		Fee:        common.Amount(sebak.BaseFee),
+		Fee:        common.Amount(common.BaseFee),
 		SequenceID: seqid,
-		Operations: []sebak.Operation{op},
+		Operations: []transaction.Operation{op},
 	}
 
-	tx := sebak.Transaction{
+	tx := transaction.Transaction{
 		T: "transaction",
-		H: sebak.TransactionHeader{
+		H: transaction.TransactionHeader{
 			Created: common.NowISO8601(),
 			Hash:    txBody.MakeHashString(),
 		},

@@ -15,6 +15,7 @@ import (
 	"boscoin.io/sebak/lib/storage"
 
 	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/transaction"
 	"github.com/gorilla/mux"
 	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/assert"
@@ -142,11 +143,11 @@ func TestGetAccountTransactionsHandler(t *testing.T) {
 	kp, err := keypair.Random()
 	require.Nil(t, err)
 
-	var txs []Transaction
+	var txs []transaction.Transaction
 	var txHashes []string
 	var btmap = make(map[string]BlockTransaction)
 	for i := 0; i < 5; i++ {
-		tx := TestMakeTransactionWithKeypair(networkID, 1, kp)
+		tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, kp)
 		txs = append(txs, tx)
 		txHashes = append(txHashes, tx.GetHash())
 	}
@@ -176,7 +177,7 @@ func TestGetAccountTransactionsHandler(t *testing.T) {
 	recv := make(chan struct{})
 	go func() {
 		for i := 0; i < 20; i++ {
-			tx := TestMakeTransactionWithKeypair(networkID, 1, kp)
+			tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, kp)
 
 			a, err := tx.Serialize()
 			if !assert.Nil(t, err) {
@@ -246,11 +247,11 @@ func TestGetAccountOperationsHandler(t *testing.T) {
 	kp, err := keypair.Random()
 	require.Nil(t, err)
 
-	var txs []Transaction
+	var txs []transaction.Transaction
 	var txHashes []string
 	var bomap = make(map[string]BlockOperation)
 	for i := 0; i < 5; i++ {
-		tx := TestMakeTransactionWithKeypair(networkID, 3, kp)
+		tx := transaction.TestMakeTransactionWithKeypair(networkID, 3, kp)
 		txs = append(txs, tx)
 		txHashes = append(txHashes, tx.GetHash())
 	}
@@ -284,7 +285,7 @@ func TestGetAccountOperationsHandler(t *testing.T) {
 	recv := make(chan struct{})
 	go func() {
 		for i := 0; i < 20; i++ {
-			tx := TestMakeTransactionWithKeypair(networkID, 3, kp)
+			tx := transaction.TestMakeTransactionWithKeypair(networkID, 3, kp)
 			a, err := tx.Serialize()
 			if !assert.Nil(t, err) {
 				panic(err)
@@ -358,7 +359,7 @@ func TestGetTransactionByHashHandler(t *testing.T) {
 	kp, err := keypair.Random()
 	require.Nil(t, err)
 
-	tx := TestMakeTransactionWithKeypair(networkID, 1, kp)
+	tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, kp)
 	a, err := tx.Serialize()
 	require.Nil(t, err)
 
@@ -417,11 +418,11 @@ func TestGetTransactionsHandler(t *testing.T) {
 	ts := httptest.NewServer(router)
 	defer ts.Close()
 
-	var txs []Transaction
+	var txs []transaction.Transaction
 	var txHashes []string
 	var btmap = make(map[string]BlockTransaction)
 	for i := 0; i < 5; i++ {
-		_, tx := TestMakeTransaction(networkID, 1)
+		_, tx := transaction.TestMakeTransaction(networkID, 1)
 		txs = append(txs, tx)
 		txHashes = append(txHashes, tx.GetHash())
 	}
@@ -451,7 +452,7 @@ func TestGetTransactionsHandler(t *testing.T) {
 	recv := make(chan struct{})
 	go func() {
 		for i := 0; i < 20; i++ {
-			_, tx := TestMakeTransaction(networkID, 1)
+			_, tx := transaction.TestMakeTransaction(networkID, 1)
 
 			a, err := tx.Serialize()
 			if !assert.Nil(t, err) {

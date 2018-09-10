@@ -1,4 +1,4 @@
-package sebak
+package transaction
 
 import (
 	"testing"
@@ -31,19 +31,19 @@ func TestIsWellFormedTransactionWithLowerFee(t *testing.T) {
 	var err error
 
 	kp, tx := TestMakeTransaction(networkID, 1)
-	tx.B.Fee = BaseFee
+	tx.B.Fee = common.BaseFee
 	tx.H.Hash = tx.B.MakeHashString()
 	tx.Sign(kp, networkID)
 	err = tx.IsWellFormed(networkID)
 	require.Nil(t, err)
 
-	tx.B.Fee = BaseFee.MustAdd(1)
+	tx.B.Fee = common.BaseFee.MustAdd(1)
 	tx.H.Hash = tx.B.MakeHashString()
 	tx.Sign(kp, networkID)
 	err = tx.IsWellFormed(networkID)
 	require.Nil(t, err)
 
-	tx.B.Fee = BaseFee.MustSub(1)
+	tx.B.Fee = common.BaseFee.MustSub(1)
 	tx.H.Hash = tx.B.MakeHashString()
 	tx.Sign(kp, networkID)
 	err = tx.IsWellFormed(networkID)

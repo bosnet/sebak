@@ -6,19 +6,20 @@ import (
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/round"
+	"boscoin.io/sebak/lib/transaction"
 )
 
 type TransactionPool struct {
 	common.SafeLock
 
-	Pool    map[ /* Transaction.GetHash() */ string]Transaction
+	Pool    map[ /* Transaction.GetHash() */ string]transaction.Transaction
 	Hashes  []string // Transaction.GetHash()
 	Sources map[ /* Transaction.Source() */ string]bool
 }
 
 func NewTransactionPool() *TransactionPool {
 	return &TransactionPool{
-		Pool:    map[string]Transaction{},
+		Pool:    map[string]transaction.Transaction{},
 		Hashes:  []string{},
 		Sources: map[string]bool{},
 	}
@@ -33,12 +34,12 @@ func (tp *TransactionPool) Has(hash string) bool {
 	return found
 }
 
-func (tp *TransactionPool) Get(hash string) (tx Transaction, found bool) {
+func (tp *TransactionPool) Get(hash string) (tx transaction.Transaction, found bool) {
 	tx, found = tp.Pool[hash]
 	return
 }
 
-func (tp *TransactionPool) Add(tx Transaction) bool {
+func (tp *TransactionPool) Add(tx transaction.Transaction) bool {
 	if _, found := tp.Pool[tx.GetHash()]; found {
 		return false
 	}
@@ -129,8 +130,8 @@ type ISAAC struct {
 
 func NewISAAC(networkID []byte, node *node.LocalNode, votingThresholdPolicy common.VotingThresholdPolicy) (is *ISAAC, err error) {
 	is = &ISAAC{
-		NetworkID:             networkID,
-		Node:                  node,
+		NetworkID: networkID,
+		Node:      node,
 		VotingThresholdPolicy: votingThresholdPolicy,
 		TransactionPool:       NewTransactionPool(),
 		RunningRounds:         map[string]*RunningRound{},

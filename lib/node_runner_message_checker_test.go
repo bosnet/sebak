@@ -7,10 +7,11 @@ import (
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/transaction"
 )
 
 func TestMessageChecker(t *testing.T) {
-	_, validTx := TestMakeTransaction(networkID, 1)
+	_, validTx := transaction.TestMakeTransaction(networkID, 1)
 	var b []byte
 	var err error
 
@@ -70,7 +71,7 @@ func TestMessageChecker(t *testing.T) {
 }
 
 func TestMessageCheckerWithInvalidMessage(t *testing.T) {
-	_, invalidTx := TestMakeTransaction(networkID, 1)
+	_, invalidTx := transaction.TestMakeTransaction(networkID, 1)
 	invalidTx.H.Hash = "wrong hash"
 
 	var b []byte

@@ -13,6 +13,7 @@ import (
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/round"
 	"boscoin.io/sebak/lib/storage"
+	"boscoin.io/sebak/lib/transaction"
 )
 
 type Ballot struct {
@@ -245,7 +246,7 @@ func FinishBallot(st *storage.LevelDBBackend, ballot Ballot, transactionPool *Tr
 		return
 	}
 
-	transactions := map[string]Transaction{}
+	transactions := map[string]transaction.Transaction{}
 	for _, hash := range ballot.B.Proposed.Transactions {
 		tx, found := transactionPool.Get(hash)
 		if !found {
@@ -270,7 +271,7 @@ func FinishBallot(st *storage.LevelDBBackend, ballot Ballot, transactionPool *Tr
 			return
 		}
 		for _, op := range tx.B.Operations {
-			if err = FinishOperation(ts, tx, op); err != nil {
+			if err = transaction.FinishOperation(ts, tx, op); err != nil {
 				ts.Discard()
 				return
 			}

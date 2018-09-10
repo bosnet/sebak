@@ -1,4 +1,4 @@
-package sebak
+package transaction
 
 import (
 	"fmt"
@@ -34,7 +34,7 @@ func CheckTransactionSequenceID(c common.Checker, args ...interface{}) (err erro
 
 func CheckTransactionBaseFee(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*TransactionChecker)
-	if checker.Transaction.B.Fee < BaseFee {
+	if checker.Transaction.B.Fee < common.BaseFee {
 		err = errors.ErrorInvalidFee
 		return
 	}

@@ -9,6 +9,7 @@ import (
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/observer"
 	"boscoin.io/sebak/lib/storage"
+	"boscoin.io/sebak/lib/transaction"
 )
 
 // BlockOperation is `Operation` data for block. the storage should support,
@@ -30,21 +31,21 @@ type BlockOperation struct {
 	Hash   string
 	TxHash string
 
-	Type   OperationType
+	Type   transaction.OperationType
 	Source string
 	Target string
 	Amount common.Amount
 
 	// transaction will be used only for `Save` time.
-	transaction Transaction
+	transaction transaction.Transaction
 	isSaved     bool
 }
 
-func NewBlockOperationKey(op Operation, tx Transaction) string {
+func NewBlockOperationKey(op transaction.Operation, tx transaction.Transaction) string {
 	return fmt.Sprintf("%s-%s", op.MakeHashString(), tx.GetHash())
 }
 
-func NewBlockOperationFromOperation(op Operation, tx Transaction) BlockOperation {
+func NewBlockOperationFromOperation(op transaction.Operation, tx transaction.Transaction) BlockOperation {
 	return BlockOperation{
 		Hash:   NewBlockOperationKey(op, tx),
 		TxHash: tx.H.Hash,
@@ -100,7 +101,7 @@ func (bo BlockOperation) Serialize() (encoded []byte, err error) {
 	return
 }
 
-func (bo BlockOperation) Transaction() Transaction {
+func (bo BlockOperation) Transaction() transaction.Transaction {
 	return bo.transaction
 }
 

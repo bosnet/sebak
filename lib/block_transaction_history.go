@@ -6,6 +6,7 @@ import (
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/storage"
+	"boscoin.io/sebak/lib/transaction"
 )
 
 // BlockTransactionHistory is for keeping `Transaction` history. the storage should support,
@@ -33,7 +34,7 @@ type BlockTransactionHistory struct {
 	isSaved bool
 }
 
-func NewTransactionHistoryFromTransaction(tx Transaction, message []byte) BlockTransactionHistory {
+func NewTransactionHistoryFromTransaction(tx transaction.Transaction, message []byte) BlockTransactionHistory {
 	return BlockTransactionHistory{
 		Hash:      tx.H.Hash,
 		Source:    tx.B.Source,

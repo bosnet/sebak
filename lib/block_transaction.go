@@ -8,6 +8,7 @@ import (
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/observer"
 	"boscoin.io/sebak/lib/storage"
+	"boscoin.io/sebak/lib/transaction"
 )
 
 // BlockTransaction is `Transaction` data for block. the storage should support,
@@ -44,11 +45,11 @@ type BlockTransaction struct {
 	Created   string
 	Message   []byte
 
-	transaction Transaction
+	transaction transaction.Transaction
 	isSaved     bool
 }
 
-func NewBlockTransactionFromTransaction(blockHash string, tx Transaction, message []byte) BlockTransaction {
+func NewBlockTransactionFromTransaction(blockHash string, tx transaction.Transaction, message []byte) BlockTransaction {
 	var opHashes []string
 	for _, op := range tx.B.Operations {
 		opHashes = append(opHashes, NewBlockOperationKey(op, tx))
@@ -166,7 +167,7 @@ func (bt BlockTransaction) String() string {
 	return string(encoded)
 }
 
-func (bt BlockTransaction) Transaction() Transaction {
+func (bt BlockTransaction) Transaction() transaction.Transaction {
 	return bt.transaction
 }
 

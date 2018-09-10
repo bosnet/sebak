@@ -1,4 +1,4 @@
-package sebak
+package transaction
 
 import (
 	"testing"

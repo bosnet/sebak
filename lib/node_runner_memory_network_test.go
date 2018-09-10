@@ -3,23 +3,24 @@ package sebak
 import (
 	"boscoin.io/sebak/lib/common"
 
+	"boscoin.io/sebak/lib/transaction"
 	"github.com/stellar/go/keypair"
 )
 
-func makeTransaction(kp *keypair.Full) (tx Transaction) {
-	var ops []Operation
-	ops = append(ops, TestMakeOperation(-1))
+func makeTransaction(kp *keypair.Full) (tx transaction.Transaction) {
+	var ops []transaction.Operation
+	ops = append(ops, transaction.TestMakeOperation(-1))
 
-	txBody := TransactionBody{
+	txBody := transaction.TransactionBody{
 		Source:     kp.Address(),
-		Fee:        BaseFee,
+		Fee:        common.BaseFee,
 		SequenceID: 0,
 		Operations: ops,
 	}
 
-	tx = Transaction{
+	tx = transaction.Transaction{
 		T: "transaction",
-		H: TransactionHeader{
+		H: transaction.TransactionHeader{
 			Created: common.NowISO8601(),
 			Hash:    txBody.MakeHashString(),
 		},
@@ -30,26 +31,26 @@ func makeTransaction(kp *keypair.Full) (tx Transaction) {
 	return
 }
 
-func makeTransactionPayment(kpSource *keypair.Full, target string, amount common.Amount) (tx Transaction) {
-	opb := NewOperationBodyPayment(target, amount)
+func makeTransactionPayment(kpSource *keypair.Full, target string, amount common.Amount) (tx transaction.Transaction) {
+	opb := transaction.NewOperationBodyPayment(target, amount)
 
-	op := Operation{
-		H: OperationHeader{
-			Type: OperationPayment,
+	op := transaction.Operation{
+		H: transaction.OperationHeader{
+			Type: transaction.OperationPayment,
 		},
 		B: opb,
 	}
 
-	txBody := TransactionBody{
+	txBody := transaction.TransactionBody{
 		Source:     kpSource.Address(),
-		Fee:        BaseFee,
+		Fee:        common.BaseFee,
 		SequenceID: 0,
-		Operations: []Operation{op},
+		Operations: []transaction.Operation{op},
 	}
 
-	tx = Transaction{
+	tx = transaction.Transaction{
 		T: "transaction",
-		H: TransactionHeader{
+		H: transaction.TransactionHeader{
 			Created: common.NowISO8601(),
 			Hash:    txBody.MakeHashString(),
 		},

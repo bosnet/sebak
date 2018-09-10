@@ -9,10 +9,11 @@ import (
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/storage"
+	"boscoin.io/sebak/lib/transaction"
 )
 
 func TestNewBlockTransaction(t *testing.T) {
-	_, tx := TestMakeTransaction(networkID, 1)
+	_, tx := transaction.TestMakeTransaction(networkID, 1)
 	a, _ := tx.Serialize()
 	block := testMakeNewBlock([]string{tx.GetHash()})
 	bt := NewBlockTransactionFromTransaction(block.Hash, tx, a)
@@ -113,11 +114,11 @@ func TestMultipleBlockTransactionSource(t *testing.T) {
 
 	numTxs := 10
 
-	var txs []Transaction
+	var txs []transaction.Transaction
 	var txHashes []string
 	var createdOrder []string
 	for i := 0; i < numTxs; i++ {
-		tx := TestMakeTransactionWithKeypair(networkID, 1, kp)
+		tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, kp)
 		txs = append(txs, tx)
 		createdOrder = append(createdOrder, tx.GetHash())
 		txHashes = append(txHashes, tx.GetHash())
@@ -133,10 +134,10 @@ func TestMultipleBlockTransactionSource(t *testing.T) {
 	}
 
 	// create txs from another keypair
-	txs = []Transaction{}
+	txs = []transaction.Transaction{}
 	txHashes = []string{}
 	for i := 0; i < numTxs; i++ {
-		tx := TestMakeTransactionWithKeypair(networkID, 1, kpAnother)
+		tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, kpAnother)
 		txs = append(txs, tx)
 		txHashes = append(txHashes, tx.GetHash())
 	}
@@ -197,11 +198,11 @@ func TestMultipleBlockTransactionConfirmed(t *testing.T) {
 
 	numTxs := 10
 
-	var txs []Transaction
+	var txs []transaction.Transaction
 	var txHashes []string
 	var createdOrder []string
 	for i := 0; i < numTxs; i++ {
-		tx := TestMakeTransactionWithKeypair(networkID, 1, kp)
+		tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, kp)
 		createdOrder = append(createdOrder, tx.GetHash())
 		txs = append(txs, tx)
 		txHashes = append(txHashes, tx.GetHash())
@@ -277,11 +278,11 @@ func TestMultipleBlockTransactionGetByAccount(t *testing.T) {
 
 	numTxs := 5
 
-	var txs []Transaction
+	var txs []transaction.Transaction
 	var txHashes []string
 	var createdOrder []string
 	for i := 0; i < numTxs; i++ {
-		tx := TestMakeTransactionWithKeypair(networkID, 1, kp)
+		tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, kp)
 		txs = append(txs, tx)
 		createdOrder = append(createdOrder, tx.GetHash())
 		txHashes = append(txHashes, tx.GetHash())
@@ -296,10 +297,10 @@ func TestMultipleBlockTransactionGetByAccount(t *testing.T) {
 	}
 
 	// create txs from another keypair source but target is this keypair
-	txs = []Transaction{}
+	txs = []transaction.Transaction{}
 	txHashes = []string{}
 	for i := 0; i < numTxs; i++ {
-		tx := TestMakeTransactionWithKeypair(networkID, 1, kpAnother, kp)
+		tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, kpAnother, kp)
 		txs = append(txs, tx)
 		createdOrder = append(createdOrder, tx.GetHash())
 		txHashes = append(txHashes, tx.GetHash())
@@ -314,10 +315,10 @@ func TestMultipleBlockTransactionGetByAccount(t *testing.T) {
 	}
 
 	// create txs from another keypair
-	txs = []Transaction{}
+	txs = []transaction.Transaction{}
 	txHashes = []string{}
 	for i := 0; i < numTxs; i++ {
-		tx := TestMakeTransactionWithKeypair(networkID, 1, kpAnother)
+		tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, kpAnother)
 		txs = append(txs, tx)
 		txHashes = append(txHashes, tx.GetHash())
 	}
@@ -356,11 +357,11 @@ func TestMultipleBlockTransactionGetByBlock(t *testing.T) {
 
 	numTxs := 5
 
-	var txs0 []Transaction
+	var txs0 []transaction.Transaction
 	var txHashes0 []string
 	var createdOrder0 []string
 	for i := 0; i < numTxs; i++ {
-		tx := TestMakeTransactionWithKeypair(networkID, 1, kp)
+		tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, kp)
 		txs0 = append(txs0, tx)
 		createdOrder0 = append(createdOrder0, tx.GetHash())
 		txHashes0 = append(txHashes0, tx.GetHash())
@@ -373,11 +374,11 @@ func TestMultipleBlockTransactionGetByBlock(t *testing.T) {
 		require.Nil(t, bt.Save(st))
 	}
 
-	var txs1 []Transaction
+	var txs1 []transaction.Transaction
 	var txHashes1 []string
 	var createdOrder1 []string
 	for i := 0; i < numTxs; i++ {
-		tx := TestMakeTransactionWithKeypair(networkID, 1, kp)
+		tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, kp)
 		txs1 = append(txs1, tx)
 		createdOrder1 = append(createdOrder1, tx.GetHash())
 		txHashes1 = append(txHashes1, tx.GetHash())

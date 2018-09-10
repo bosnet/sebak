@@ -18,6 +18,7 @@ import (
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/node"
+	"boscoin.io/sebak/lib/transaction"
 )
 
 type MessageChecker struct {
@@ -28,9 +29,8 @@ type MessageChecker struct {
 	NetworkID  []byte
 	Message    common.NetworkMessage
 
-	Transaction Transaction
-
 	Log logging.Logger
+	Transaction transaction.Transaction
 }
 
 // TransactionUnmarshal makes `Transaction` from
@@ -38,8 +38,8 @@ type MessageChecker struct {
 func TransactionUnmarshal(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*MessageChecker)
 
-	var tx Transaction
-	if tx, err = NewTransactionFromJSON(checker.Message.Data); err != nil {
+	var tx transaction.Transaction
+	if tx, err = transaction.NewTransactionFromJSON(checker.Message.Data); err != nil {
 		return
 	}
 

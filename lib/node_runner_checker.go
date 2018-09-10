@@ -4,6 +4,7 @@ import (
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/node"
+	"boscoin.io/sebak/lib/transaction"
 	logging "github.com/inconshreveable/log15"
 )
 
@@ -35,7 +36,7 @@ type NodeRunnerHandleMessageChecker struct {
 	NetworkID  []byte
 	Message    common.NetworkMessage
 
-	Transaction Transaction
+	Transaction transaction.Transaction
 }
 
 // CheckNodeRunnerHandleMessageTransactionUnmarshal makes `Transaction` from
@@ -43,8 +44,8 @@ type NodeRunnerHandleMessageChecker struct {
 func CheckNodeRunnerHandleMessageTransactionUnmarshal(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*NodeRunnerHandleMessageChecker)
 
-	var tx Transaction
-	if tx, err = NewTransactionFromJSON(checker.Message.Data); err != nil {
+	var tx transaction.Transaction
+	if tx, err = transaction.NewTransactionFromJSON(checker.Message.Data); err != nil {
 		return
 	}
 
