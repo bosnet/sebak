@@ -485,7 +485,6 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) (err error) {
 		checker.Ballot.Round(),
 		checker.FinishedVotingHole,
 	)
-	checker.NodeRunner.CloseConsensus(checker.Ballot)
 
 	return
 }

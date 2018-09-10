@@ -518,7 +518,3 @@ func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) error {
 
 	return nil
 }
-
-func (nr *NodeRunner) CloseConsensus(ballot Ballot) {
-	nr.consensus.SetLatestRound(ballot.Round())
-}
