@@ -15,7 +15,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/stellar/go/keypair"
 
-	"boscoin.io/sebak/lib"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
@@ -23,6 +22,7 @@ import (
 
 	cmdcommon "boscoin.io/sebak/cmd/sebak/common"
 
+	"boscoin.io/sebak/lib"
 	"boscoin.io/sebak/lib/consensus"
 	"boscoin.io/sebak/lib/node/node_runner"
 	"strconv"

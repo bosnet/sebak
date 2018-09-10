@@ -145,7 +145,7 @@ func (nr *NodeRunner) SetProposerCalculator(c ProposerCalculator) {
 	nr.proposerCalculator = c
 }
 
-func (nr *NodeRunner) SetConf(conf *ISAACConfiguration) {
+func (nr *NodeRunner) SetConf(conf *consensus.ISAACConfiguration) {
 }
 
 func (nr *NodeRunner) Ready() {
@@ -494,7 +494,7 @@ func (nr *NodeRunner) readyToProposeNewBallot(roundNumber uint64) {
 	var timeout time.Duration
 	// if incoming transaactions are over `MaxTransactionsInBallot`, just
 	// start.
-	if nr.consensus.TransactionPool.Len() > MaxTransactionsInBallot {
+	if nr.consensus.TransactionPool.Len() > common.MaxTransactionsInBallot {
 		timeout = TimeoutProposeNewBallotFull
 	} else {
 		timeout = TimeoutProposeNewBallot
@@ -522,7 +522,7 @@ func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) error {
 	}
 
 	// collect incoming transactions from `TransactionPool`
-	availableTransactions := nr.consensus.TransactionPool.AvailableTransactions()
+	availableTransactions := nr.consensus.TransactionPool.AvailableTransactions(common.MaxTransactionsInBallot)
 	nr.log.Debug("new round proposed", "round", round, "transactions", availableTransactions)
 
 	transactionsChecker := &BallotTransactionChecker{
@@ -564,7 +564,7 @@ func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) error {
 	return nil
 }
 
-func (nr *NodeRunner) CloseConsensus(ballot Ballot, confirmed bool) {
+func (nr *NodeRunner) CloseConsensus(ballot block.Ballot, confirmed bool) {
 	nr.consensus.SetLatestRound(ballot.Round())
 
 	if confirmed {

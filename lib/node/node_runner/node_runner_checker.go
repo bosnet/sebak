@@ -456,8 +456,8 @@ func ACCEPTBallotStore(c common.Checker, args ...interface{}) (err error) {
 			return
 		}
 
-		checker.NodeRunner.Consensus().SetLatestConsensusedBlock(block)
-		checker.Log.Debug("ballot was stored", "block", block)
+		checker.NodeRunner.Consensus().SetLatestConsensusedBlock(theBlock)
+		checker.Log.Debug("ballot was stored", "block", theBlock)
 
 		err = NewCheckerStopCloseConsensus(checker, "ballot got consensus and will be stored")
 	} else {

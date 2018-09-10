@@ -94,7 +94,7 @@ func (tp *TransactionPool) Remove(hashes ...string) {
 	return
 }
 
-func (tp *TransactionPool) AvailableTransactions(transactionLimit uint64) []string {
+func (tp *TransactionPool) AvailableTransactions(transactionLimit int) []string {
 	tp.Lock()
 	defer tp.Unlock()
 
