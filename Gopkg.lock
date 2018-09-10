@@ -418,7 +418,6 @@
     "github.com/inconshreveable/log15",
     "github.com/magiconair/properties/assert",
     "github.com/oklog/run",
-    "github.com/prometheus/client_golang/prometheus",
     "github.com/prometheus/client_golang/prometheus/promhttp",
     "github.com/satori/go.uuid",
     "github.com/spf13/cobra",
