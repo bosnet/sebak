@@ -9,7 +9,6 @@ import (
 	"boscoin.io/sebak/lib/node"
 
 	"github.com/btcsuite/btcutil/base58"
-	"github.com/stellar/go/keypair"
 )
 
 type DummyMessage struct {
@@ -65,21 +64,10 @@ func DummyMessageFromString(b []byte) (d DummyMessage, err error) {
 	return
 }
 
-func createNewMemoryNetwork() (*keypair.Full, *MemoryNetwork, *node.LocalNode) {
-	mn := NewMemoryNetwork()
-
-	kp, _ := keypair.Random()
-	localNode, _ := node.NewLocalNode(kp, mn.Endpoint(), "")
-
-	mn.SetLocalNode(localNode)
-
-	return kp, mn, localNode
-}
-
 func TestMemoryNetworkGetClient(t *testing.T) {
 	defer CleanUpMemoryNetwork()
 
-	_, s0, _ := createNewMemoryNetwork()
+	_, s0, _ := CreateNewMemoryNetwork()
 
 	gotMessage := make(chan common.NetworkMessage)
 	go func() {
@@ -112,7 +100,7 @@ func TestMemoryNetworkGetClient(t *testing.T) {
 func TestMemoryNetworkGetNodeInfo(t *testing.T) {
 	defer CleanUpMemoryNetwork()
 
-	_, s0, localNode := createNewMemoryNetwork()
+	_, s0, localNode := CreateNewMemoryNetwork()
 
 	c0 := s0.GetClient(s0.Endpoint())
 	b, err := c0.GetNodeInfo()
@@ -137,7 +125,7 @@ func TestMemoryNetworkGetNodeInfo(t *testing.T) {
 func TestMemoryNetworkConnect(t *testing.T) {
 	defer CleanUpMemoryNetwork()
 
-	_, s0, localNode := createNewMemoryNetwork()
+	_, s0, localNode := CreateNewMemoryNetwork()
 
 	c0 := s0.GetClient(s0.Endpoint())
 	b, err := c0.Connect(localNode)

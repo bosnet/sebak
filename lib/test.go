@@ -27,27 +27,13 @@ func init() {
 	kp, _ = keypair.Random()
 }
 
-func createNetMemoryNetwork() (*network.MemoryNetwork, *node.LocalNode) {
-	mn := network.NewMemoryNetwork()
-
-	kp, _ := keypair.Random()
-	localNode, _ := node.NewLocalNode(kp, mn.Endpoint(), "")
-
-	mn.SetLocalNode(localNode)
-
-	return mn, localNode
-}
-
 func MakeNodeRunner() (*NodeRunner, *node.LocalNode) {
-	kp, _ := keypair.Random()
 
-	nodeEndpoint := &common.Endpoint{Scheme: "https", Host: "https://locahost:5000"}
-	localNode, _ := node.NewLocalNode(kp, nodeEndpoint, "")
+	_, network, localNode := network.CreateNewMemoryNetwork()
 
 	vth, _ := NewDefaultVotingThresholdPolicy(66, 66)
 	is, _ := NewISAAC(networkID, localNode, vth)
 	st, _ := storage.NewTestMemoryLevelDBBackend()
-	network, _ := createNetMemoryNetwork()
 	nodeRunner, _ := NewNodeRunner(string(networkID), localNode, vth, network, is, st)
 	return nodeRunner, localNode
 }
