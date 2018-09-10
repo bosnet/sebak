@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestConnectionManagerBroadcaster(t *testing.T) {
@@ -28,5 +28,5 @@ func TestConnectionManagerBroadcaster(t *testing.T) {
 	nr.StartStateManager()
 
 	<-recv
-	assert.Equal(t, 1, len(b.Messages))
+	require.Equal(t, 1, len(b.Messages))
 }

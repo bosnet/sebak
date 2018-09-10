@@ -9,8 +9,6 @@ import (
 
 // ISAACStateManager manages the ISAACState.
 // The most important function `Start()` is called in StartStateManager() function in node_runner.go by goroutine.
-// `transitSignal` is function which is called when the ISAACState is changed.
-// It is used in isaac_state_transit_test.go::TestStateTransitFromTimeoutInitToAccept.
 type ISAACStateManager struct {
 	nr            *NodeRunner
 	state         ISAACState
@@ -18,7 +16,7 @@ type ISAACStateManager struct {
 	stateTransit  chan ISAACState
 	nextHeight    chan struct{}
 	stop          chan struct{}
-	transitSignal func()
+	transitSignal func() // `transitSignal` is function which is called when the ISAACState is changed.
 }
 
 func NewISAACStateManager(nr *NodeRunner) *ISAACStateManager {
