@@ -372,9 +372,8 @@ func INITBallotValidateTransactions(c common.Checker, args ...interface{}) (err 
 	return
 }
 
-// INITBallotBroadcast will broadcast the validated INIT
-// ballot.
-func INITBallotBroadcast(c common.Checker, args ...interface{}) (err error) {
+// SIGNBallotBroadcast will broadcast the validated SIGN ballot.
+func SIGNBallotBroadcast(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotChecker)
 	if !checker.IsNew {
 		return
@@ -401,9 +400,19 @@ func INITBallotBroadcast(c common.Checker, args ...interface{}) (err error) {
 	return
 }
 
-// SIGNBallotBroadcast will broadcast the confirmed SIGN
+func TransitStateToSIGN(c common.Checker, args ...interface{}) (err error) {
+	checker := c.(*BallotChecker)
+	if !checker.IsNew {
+		return
+	}
+	checker.NodeRunner.TransitISAACState(checker.Ballot.Round(), common.BallotStateSIGN)
+
+	return
+}
+
+// ACCEPTBallotBroadcast will broadcast the confirmed ACCEPT
 // ballot.
-func SIGNBallotBroadcast(c common.Checker, args ...interface{}) (err error) {
+func ACCEPTBallotBroadcast(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotChecker)
 	if !checker.VotingFinished {
 		return
@@ -429,16 +438,24 @@ func SIGNBallotBroadcast(c common.Checker, args ...interface{}) (err error) {
 	return
 }
 
-// ACCEPTBallotStore will store the confirmed ballot to
+func TransitStateToACCEPT(c common.Checker, args ...interface{}) (err error) {
+	checker := c.(*BallotChecker)
+	if !checker.VotingFinished {
+		return
+	}
+	checker.NodeRunner.TransitISAACState(checker.Ballot.Round(), common.BallotStateACCEPT)
+
+	return
+}
+
+// FinishedBallotStore will store the confirmed ballot to
 // `Block`.
-func ACCEPTBallotStore(c common.Checker, args ...interface{}) (err error) {
+func FinishedBallotStore(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotChecker)
 
 	if !checker.VotingFinished {
 		return
 	}
-
-	willStore := checker.FinishedVotingHole == common.VotingYES
 	if checker.FinishedVotingHole == common.VotingYES {
 		var block Block
 		block, err = FinishBallot(
@@ -452,9 +469,11 @@ func ACCEPTBallotStore(c common.Checker, args ...interface{}) (err error) {
 
 		checker.NodeRunner.Consensus().SetLatestConsensusedBlock(block)
 		checker.Log.Debug("ballot was stored", "block", block)
+		checker.NodeRunner.TransitISAACState(checker.Ballot.Round(), common.BallotStateALLCONFIRM)
 
 		err = NewCheckerStopCloseConsensus(checker, "ballot got consensus and will be stored")
 	} else {
+		checker.NodeRunner.isaacStateManager.IncreaseRound()
 		err = NewCheckerStopCloseConsensus(checker, "ballot got consensus")
 	}
 
@@ -463,7 +482,7 @@ func ACCEPTBallotStore(c common.Checker, args ...interface{}) (err error) {
 		checker.Ballot.Round(),
 		checker.FinishedVotingHole,
 	)
-	checker.NodeRunner.CloseConsensus(checker.Ballot, willStore)
+	checker.NodeRunner.CloseConsensus(checker.Ballot)
 
 	return
 }
