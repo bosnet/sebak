@@ -2,7 +2,6 @@ package network
 
 import (
 	"encoding/json"
-	"fmt"
 	"testing"
 	"time"
 
@@ -64,18 +63,6 @@ func DummyMessageFromString(b []byte) (d DummyMessage, err error) {
 		return
 	}
 	return
-}
-
-func TestMemoryNetworkCreate(t *testing.T) {
-	defer CleanUpMemoryNetwork()
-
-	mh := NewMemoryNetwork()
-	stored := getMemoryNetwork(mh.Endpoint())
-
-	if fmt.Sprintf("%p", mh) != fmt.Sprintf("%p", stored) {
-		t.Error("failed to remember the memory network")
-		return
-	}
 }
 
 func createNewMemoryNetwork() (*keypair.Full, *MemoryNetwork, *node.LocalNode) {
