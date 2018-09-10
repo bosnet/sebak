@@ -88,6 +88,7 @@ func (l HTTP2Log15Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	l.log.Debug(
+		"request",
 		"content-length", r.Header.Get("Content-Type"),
 		"content-type", r.ContentLength,
 		"headers", header,
@@ -97,7 +98,6 @@ func (l HTTP2Log15Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		"proto", r.Proto,
 		"referer", r.Referer(),
 		"remote", r.RemoteAddr,
-		"request",
 		"uri", uri,
 		"user-agent", r.UserAgent(),
 	)
