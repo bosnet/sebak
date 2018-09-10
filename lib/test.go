@@ -292,19 +292,19 @@ func ReceiveBallot(t *testing.T, nodeRunner *NodeRunner, ballot *Ballot) error {
 	return err
 }
 
-type TestBroadcastor struct {
+type TestBroadcaster struct {
 	Messages map[string]common.Message
 	recv     chan struct{}
 }
 
-func NewTestBroadcastor(r chan struct{}) TestBroadcastor {
-	p := TestBroadcastor{}
+func NewTestBroadcaster(r chan struct{}) TestBroadcaster {
+	p := TestBroadcaster{}
 	p.Messages = make(map[string]common.Message)
 	p.recv = r
 	return p
 }
 
-func (b TestBroadcastor) Broadcast(message common.Message) (errs map[string]error) {
+func (b TestBroadcaster) Broadcast(message common.Message) (errs map[string]error) {
 	b.Messages[message.GetHash()] = message
 	if b.recv != nil {
 		b.recv <- struct{}{}

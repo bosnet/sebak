@@ -1,6 +1,3 @@
-// ISAACStateManager manages the ISAACState.
-// The most important function `Start()` is called in StartStateManager() function in node_runner.go by goroutine.
-
 package sebak
 
 import (
@@ -10,6 +7,10 @@ import (
 	"boscoin.io/sebak/lib/round"
 )
 
+// ISAACStateManager manages the ISAACState.
+// The most important function `Start()` is called in StartStateManager() function in node_runner.go by goroutine.
+// `transitSignal` is function which is called when the ISAACState is changed.
+// It is used in isaac_state_transit_test.go::TestStateTransitFromTimeoutInitToAccept.
 type ISAACStateManager struct {
 	nr            *NodeRunner
 	state         ISAACState

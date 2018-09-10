@@ -119,7 +119,7 @@ func NewNodeRunner(
 		nr.localNode.GetValidators(),
 	)
 
-	nr.connectionManager.SetBroadcastor(network.NewSimpleBroadcastor(nr.ConnectionManager()))
+	nr.connectionManager.SetBroadcaster(network.NewSimpleBroadcaster(nr.ConnectionManager()))
 	nr.network.AddWatcher(nr.connectionManager.ConnectionWatcher)
 
 	nr.SetHandleTransactionCheckerFuncs(nil, DefaultHandleTransactionCheckerFuncs...)
@@ -149,8 +149,8 @@ func (nr *NodeRunner) SetConf(conf *ISAACConfiguration) {
 	nr.isaacStateManager.SetConf(conf)
 }
 
-func (nr *NodeRunner) SetBroadcastor(b network.Broadcastor) {
-	nr.connectionManager.SetBroadcastor(b)
+func (nr *NodeRunner) SetBroadcaster(b network.Broadcaster) {
+	nr.connectionManager.SetBroadcaster(b)
 }
 
 func (nr *NodeRunner) Ready() {

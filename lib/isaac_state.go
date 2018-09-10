@@ -1,6 +1,6 @@
-// When a node receive ballot, if the ballotState is former then nodeRunnerState,
+// When a node receives a ballot,
+// if the ISAACState of the ballot is before than the ISAACState of node,
 // the ballot is ignored.
-// The node decides it is former or not by ISAACState.
 
 package sebak
 

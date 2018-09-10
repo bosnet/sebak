@@ -18,7 +18,7 @@ type ConnectionManager struct {
 	localNode   *node.LocalNode
 	network     Network
 	policy      common.VotingThresholdPolicy
-	broadcastor Broadcastor
+	broadcaster Broadcaster
 
 	validators map[ /* nodd.Address() */ string]*node.Validator
 	clients    map[ /* nodd.Address() */ string]NetworkClient
@@ -46,11 +46,11 @@ func NewConnectionManager(
 	}
 }
 
-func (c *ConnectionManager) SetBroadcastor(broadcastor Broadcastor) {
-	c.broadcastor = broadcastor
+func (c *ConnectionManager) SetBroadcaster(broadcaster Broadcaster) {
+	c.broadcaster = broadcaster
 }
 
-type Broadcastor interface {
+type Broadcaster interface {
 	Broadcast(common.Message) (errs map[string]error)
 }
 
@@ -174,27 +174,27 @@ func (c *ConnectionManager) ConnectionWatcher(t Network, conn net.Conn, state ht
 }
 
 func (c *ConnectionManager) Broadcast(message common.Message) {
-	errs := c.broadcastor.Broadcast(message)
+	errs := c.broadcaster.Broadcast(message)
 	for v, err := range errs {
 		c.log.Error("failed to SendBallot", "error", err, "validator", v)
 	}
 }
 
-type SimpleBroadcastor struct {
+type SimpleBroadcaster struct {
 	cm *ConnectionManager
 }
 
-func NewSimpleBroadcastor(c *ConnectionManager) *SimpleBroadcastor {
+func NewSimpleBroadcaster(c *ConnectionManager) *SimpleBroadcaster {
 	if c == nil {
 		panic("ConnectionManager is nil")
 	}
-	p := &SimpleBroadcastor{
+	p := &SimpleBroadcaster{
 		cm: c,
 	}
 	return p
 }
 
-func (b SimpleBroadcastor) Broadcast(message common.Message) (errs map[string]error) {
+func (b SimpleBroadcaster) Broadcast(message common.Message) (errs map[string]error) {
 	for addr, _ := range b.cm.connected {
 		go func(v *node.Validator) {
 			if v == nil {

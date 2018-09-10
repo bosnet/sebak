@@ -7,15 +7,15 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestConnectionManagerBroadcastor(t *testing.T) {
+func TestConnectionManagerBroadcaster(t *testing.T) {
 	nodeRunners := createTestNodeRunner(3)
 
 	nr := nodeRunners[0]
 
 	recv := make(chan struct{})
 
-	b := NewTestBroadcastor(recv)
-	nr.SetBroadcastor(b)
+	b := NewTestBroadcaster(recv)
+	nr.SetBroadcaster(b)
 	nr.SetProposerCalculator(SelfProposerCalculator{})
 
 	nr.Consensus().SetLatestConsensusedBlock(genesisBlock)

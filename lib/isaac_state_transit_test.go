@@ -20,8 +20,8 @@ func TestStateINITProposer(t *testing.T) {
 	nr := nodeRunners[0]
 
 	recv := make(chan struct{})
-	b := NewTestBroadcastor(recv)
-	nr.SetBroadcastor(b)
+	b := NewTestBroadcaster(recv)
+	nr.SetBroadcaster(b)
 	nr.SetProposerCalculator(SelfProposerCalculator{})
 
 	nr.Consensus().SetLatestConsensusedBlock(genesisBlock)
@@ -55,8 +55,8 @@ func TestStateINITNotProposer(t *testing.T) {
 
 	nr := nodeRunners[0]
 
-	b := NewTestBroadcastor(nil)
-	nr.SetBroadcastor(b)
+	b := NewTestBroadcaster(nil)
+	nr.SetBroadcaster(b)
 	nr.SetProposerCalculator(TheOtherProposerCalculator{})
 
 	nr.Consensus().SetLatestConsensusedBlock(genesisBlock)
@@ -86,8 +86,8 @@ func TestStateINITTimeoutNotProposer(t *testing.T) {
 	nr := nodeRunners[0]
 
 	recv := make(chan struct{})
-	b := NewTestBroadcastor(recv)
-	nr.SetBroadcastor(b)
+	b := NewTestBroadcaster(recv)
+	nr.SetBroadcaster(b)
 	nr.SetProposerCalculator(TheOtherProposerCalculator{})
 	proposer := nr.CalculateProposer(0, 0)
 
@@ -141,8 +141,8 @@ func TestStateSIGNTimeoutProposer(t *testing.T) {
 	nr := nodeRunners[0]
 
 	recv := make(chan struct{})
-	b := NewTestBroadcastor(recv)
-	nr.SetBroadcastor(b)
+	b := NewTestBroadcaster(recv)
+	nr.SetBroadcaster(b)
 	nr.SetProposerCalculator(SelfProposerCalculator{})
 	proposer := nr.CalculateProposer(0, 0)
 
@@ -206,8 +206,8 @@ func TestStateSIGNTimeoutNotProposer(t *testing.T) {
 	nr := nodeRunners[0]
 
 	recv := make(chan struct{})
-	b := NewTestBroadcastor(recv)
-	nr.SetBroadcastor(b)
+	b := NewTestBroadcaster(recv)
+	nr.SetBroadcaster(b)
 	nr.SetProposerCalculator(TheOtherProposerCalculator{})
 	proposer := nr.CalculateProposer(0, 0)
 
@@ -265,8 +265,8 @@ func TestStateACCEPTTimeoutProposerThenNotProposer(t *testing.T) {
 	nr := nodeRunners[0]
 
 	recv := make(chan struct{})
-	b := NewTestBroadcastor(recv)
-	nr.SetBroadcastor(b)
+	b := NewTestBroadcaster(recv)
+	nr.SetBroadcaster(b)
 	nr.SetProposerCalculator(&SelfProposerThenNotProposer{})
 
 	proposer := nr.CalculateProposer(0, 0)
@@ -331,8 +331,8 @@ func TestStateTransitFromTimeoutInitToAccept(t *testing.T) {
 	})
 
 	recvBroadcast := make(chan struct{})
-	b := NewTestBroadcastor(recvBroadcast)
-	nr.SetBroadcastor(b)
+	b := NewTestBroadcaster(recvBroadcast)
+	nr.SetBroadcaster(b)
 	nr.SetProposerCalculator(TheOtherProposerCalculator{})
 
 	nr.Consensus().SetLatestConsensusedBlock(genesisBlock)
@@ -378,8 +378,8 @@ func TestStateTransitFromTimeoutSignToAccept(t *testing.T) {
 	nr := nodeRunners[0]
 
 	recv := make(chan struct{})
-	b := NewTestBroadcastor(recv)
-	nr.SetBroadcastor(b)
+	b := NewTestBroadcaster(recv)
+	nr.SetBroadcaster(b)
 	nr.SetProposerCalculator(SelfProposerCalculator{})
 
 	nr.Consensus().SetLatestConsensusedBlock(genesisBlock)
