@@ -10,6 +10,7 @@ import (
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/round"
 )
@@ -22,7 +23,7 @@ func TestErrorBallotHasOverMaxTransactionsInBallot(t *testing.T) {
 
 	MaxTransactionsInBallot = 2
 
-	_, node := createNetMemoryNetwork()
+	_, _, node := network.CreateNewMemoryNetwork()
 	round := round.Round{Number: 0, BlockHeight: 1, BlockHash: "hahaha", TotalTxs: 1}
 	_, tx := TestMakeTransaction(networkID, 1)
 
