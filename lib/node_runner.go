@@ -13,6 +13,7 @@ import (
 	"time"
 
 	logging "github.com/inconshreveable/log15"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/network"
@@ -154,6 +155,7 @@ func (nr *NodeRunner) Ready() {
 	nr.network.AddHandler(network.UrlPathPrefixNode+"/connect", nodeHandler.ConnectHandler)
 	nr.network.AddHandler(network.UrlPathPrefixNode+"/message", nodeHandler.MessageHandler)
 	nr.network.AddHandler(network.UrlPathPrefixNode+"/ballot", nodeHandler.BallotHandler)
+	nr.network.AddHandler("/metrics", promhttp.Handler().ServeHTTP)
 
 	apiHandler := NetworkHandlerAPI{
 		localNode: nr.localNode,
