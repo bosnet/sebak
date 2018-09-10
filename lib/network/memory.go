@@ -36,7 +36,7 @@ type MemoryNetwork struct {
 func (t *MemoryNetwork) GetClient(endpoint *common.Endpoint) NetworkClient {
 	n, ok := memoryNetworks[endpoint.String()]
 	if !ok {
-		return nil
+		panic("Trying to get inexistant client, this is a bug in the tests!")
 	}
 
 	return NewMemoryNetworkClient(endpoint, n)
