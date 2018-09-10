@@ -19,14 +19,6 @@ import (
 //  * get list by `Source` and created order
 //  * get list by `Target` and created order
 
-const (
-	BlockOperationPrefixHash   string = "bo-hash-"   // bo-hash-<BlockOperation.Hash>
-	BlockOperationPrefixTxHash string = "bo-txhash-" // bo-txhash-<BlockOperation.TxHash>-<created>
-	BlockOperationPrefixSource string = "bo-source-" // bo-source-<BlockOperation.Source>-<created>
-	BlockOperationPrefixTarget string = "bo-target-" // bo-target-<BlockOperation.Target>-<created>
-	BlockOperationPrefixPeers  string = "bo-peers-"  // bo-target-<Address0>-<Address1>-<created>
-)
-
 type BlockOperation struct {
 	Hash   string
 	TxHash string
@@ -109,23 +101,23 @@ func (bo BlockOperation) Transaction() transaction.Transaction {
 }
 
 func GetBlockOperationKey(hash string) string {
-	return fmt.Sprintf("%s%s", BlockOperationPrefixHash, hash)
+	return fmt.Sprintf("%s%s", common.BlockOperationPrefixHash, hash)
 }
 
 func GetBlockOperationKeyPrefixTxHash(txHash string) string {
-	return fmt.Sprintf("%s%s-", BlockOperationPrefixTxHash, txHash)
+	return fmt.Sprintf("%s%s-", common.BlockOperationPrefixTxHash, txHash)
 }
 
 func GetBlockOperationKeyPrefixSource(source string) string {
-	return fmt.Sprintf("%s%s-", BlockOperationPrefixSource, source)
+	return fmt.Sprintf("%s%s-", common.BlockOperationPrefixSource, source)
 }
 
 func GetBlockOperationKeyPrefixTarget(target string) string {
-	return fmt.Sprintf("%s%s-", BlockOperationPrefixTarget, target)
+	return fmt.Sprintf("%s%s-", common.BlockOperationPrefixTarget, target)
 }
 
 func GetBlockOperationKeyPrefixPeers(one, two string) string {
-	return fmt.Sprintf("%s%s%s-", BlockOperationPrefixPeers, one, two)
+	return fmt.Sprintf("%s%s%s-", common.BlockOperationPrefixPeers, one, two)
 }
 
 func (bo BlockOperation) NewBlockOperationTxHashKey() string {

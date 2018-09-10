@@ -20,11 +20,6 @@ import (
 //  * 'created'
 // 	- 'ba-created-<sequential uuid1>': `BlockAccouna.Address`
 
-const BlockAccountPrefixAddress string = "ba-address-"
-const BlockAccountPrefixCreated string = "ba-created-"
-const BlockAccountSequenceIDPrefix string = "bac-ac-"
-const BlockAccountSequenceIDByAddressPrefix string = "bac-aa-"
-
 type BlockAccount struct {
 	Address    string
 	Balance    common.Amount
@@ -87,11 +82,11 @@ func (b *BlockAccount) Deserialize(encoded []byte) (err error) {
 }
 
 func GetBlockAccountKey(address string) string {
-	return fmt.Sprintf("%s%s", BlockAccountPrefixAddress, address)
+	return fmt.Sprintf("%s%s", common.BlockAccountPrefixAddress, address)
 }
 
 func GetBlockAccountCreatedKey(created string) string {
-	return fmt.Sprintf("%s%s", BlockAccountPrefixCreated, created)
+	return fmt.Sprintf("%s%s", common.BlockAccountPrefixCreated, created)
 }
 
 func ExistBlockAccount(st *storage.LevelDBBackend, address string) (exists bool, err error) {
@@ -107,7 +102,7 @@ func GetBlockAccount(st *storage.LevelDBBackend, address string) (b *BlockAccoun
 }
 
 func GetBlockAccountAddressesByCreated(st *storage.LevelDBBackend, iteratorOptions *storage.IteratorOptions) (func() (string, bool, []byte), func()) {
-	iterFunc, closeFunc := st.GetIterator(BlockAccountPrefixCreated, iteratorOptions)
+	iterFunc, closeFunc := st.GetIterator(common.BlockAccountPrefixCreated, iteratorOptions)
 
 	return (func() (string, bool, []byte) {
 			item, hasNext := iterFunc()
@@ -191,15 +186,15 @@ type BlockAccountSequenceID struct {
 }
 
 func GetBlockAccountSequenceIDKey(address string, sequenceID uint64) string {
-	return fmt.Sprintf("%s%s-%v", BlockAccountSequenceIDPrefix, address, sequenceID)
+	return fmt.Sprintf("%s%s-%v", common.BlockAccountSequenceIDPrefix, address, sequenceID)
 }
 
 func GetBlockAccountSequenceIDByAddressKey(address string) string {
-	return fmt.Sprintf("%s%s-%s", BlockAccountSequenceIDByAddressPrefix, address, common.GetUniqueIDFromUUID())
+	return fmt.Sprintf("%s%s-%s", common.BlockAccountSequenceIDByAddressPrefix, address, common.GetUniqueIDFromUUID())
 }
 
 func GetBlockAccountSequenceIDByAddressKeyPrefix(address string) string {
-	return fmt.Sprintf("%s%s-", BlockAccountSequenceIDByAddressPrefix, address)
+	return fmt.Sprintf("%s%s-", common.BlockAccountSequenceIDByAddressPrefix, address)
 }
 
 func (b *BlockAccountSequenceID) String() string {

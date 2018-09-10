@@ -1,0 +1,20 @@
+package common
+
+const (
+	BlockPrefixHash                       = string(0x00)
+	BlockPrefixConfirmed                  = string(0x01)
+	BlockTransactionPrefixHash            = string(0x02)
+	BlockTransactionPrefixSource          = string(0x03)
+	BlockTransactionPrefixConfirmed       = string(0x04)
+	BlockTransactionPrefixAccount         = string(0x05)
+	BlockTransactionPrefixBlock           = string(0x06)
+	BlockOperationPrefixHash              = string(0x07)
+	BlockOperationPrefixTxHash            = string(0x08)
+	BlockOperationPrefixSource            = string(0x09)
+	BlockOperationPrefixTarget            = string(0x0A)
+	BlockOperationPrefixPeers             = string(0x0B)
+	BlockAccountPrefixAddress             = string(0x0C)
+	BlockAccountPrefixCreated             = string(0x0D)
+	BlockAccountSequenceIDPrefix          = string(0x0E)
+	BlockAccountSequenceIDByAddressPrefix = string(0x0F)
+)

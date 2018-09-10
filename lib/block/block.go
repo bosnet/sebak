@@ -12,11 +12,6 @@ import (
 	"boscoin.io/sebak/lib/storage"
 )
 
-const (
-	BlockPrefixHash      string = "b-hash-"      // b-hash-<Block.Hash>
-	BlockPrefixConfirmed string = "b-confirmed-" // b-hash-<Block.Confirmed>
-)
-
 type Block struct {
 	Header
 	Transactions []string `json:"transactions"` /* []Transaction.GetHash() */
@@ -90,11 +85,11 @@ func getTransactionRoot(txs []string) string {
 }
 
 func GetBlockKey(hash string) string {
-	return fmt.Sprintf("%s%s", BlockPrefixHash, hash)
+	return fmt.Sprintf("%s%s", common.BlockPrefixHash, hash)
 }
 
 func GetBlockKeyPrefixConfirmed(confirmed string) string {
-	return fmt.Sprintf("%s%s-", BlockPrefixConfirmed, confirmed)
+	return fmt.Sprintf("%s%s-", common.BlockPrefixConfirmed, confirmed)
 }
 
 func (b Block) NewBlockKeyConfirmed() string {
@@ -166,7 +161,7 @@ func GetBlocksByConfirmed(st *storage.LevelDBBackend, iteratorOptions *storage.I
 	func() (Block, bool, []byte),
 	func(),
 ) {
-	iterFunc, closeFunc := st.GetIterator(BlockPrefixConfirmed, iteratorOptions)
+	iterFunc, closeFunc := st.GetIterator(common.BlockPrefixConfirmed, iteratorOptions)
 
 	return LoadBlocksInsideIterator(st, iterFunc, closeFunc)
 }
