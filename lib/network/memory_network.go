@@ -24,11 +24,6 @@ func addMemoryNetwork(m *MemoryNetwork) {
 	memoryNetworks[m.Endpoint().String()] = m
 }
 
-func getMemoryNetwork(endpoint *common.Endpoint) *MemoryNetwork {
-	n, _ := memoryNetworks[endpoint.String()]
-	return n
-}
-
 type MemoryNetwork struct {
 	localNode  common.Serializable
 	endpoint   *common.Endpoint
