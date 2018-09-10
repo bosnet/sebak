@@ -38,7 +38,7 @@ func TestSaveExistingBlockAccount(t *testing.T) {
 	require.Nil(t, err)
 
 	fetched, _ := GetBlockAccount(st, b.Address)
-	require.Equal(t, b.Balance, fetched.Balance)
+	require.Equal(t, b.GetBalance(), fetched.GetBalance())
 }
 
 func TestSortMultipleBlockAccount(t *testing.T) {
@@ -125,7 +125,7 @@ func TestBlockAccountSaveBlockAccountSequenceIDs(t *testing.T) {
 
 	for i := 0; i < len(saved); i++ {
 		require.Equal(t, saved[i].Address, fetched[i].Address)
-		require.Equal(t, saved[i].Balance, fetched[i].Balance)
+		require.Equal(t, saved[i].GetBalance(), fetched[i].Balance)
 		require.Equal(t, saved[i].SequenceID, fetched[i].SequenceID)
 	}
 }
@@ -150,6 +150,6 @@ func TestBlockAccountObserver(t *testing.T) {
 	wg.Wait()
 
 	require.Equal(t, b.Address, triggered.Address)
-	require.Equal(t, b.Balance, triggered.Balance)
+	require.Equal(t, b.GetBalance(), triggered.GetBalance())
 	require.Equal(t, b.SequenceID, triggered.SequenceID)
 }

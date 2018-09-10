@@ -93,14 +93,14 @@ func init() {
 
 			// Check that account's balance is enough before sending the transaction
 			{
-				newBalance, err = senderAccount.Balance.Sub(amount)
+				newBalance, err = senderAccount.GetBalance().Sub(amount)
 				if err == nil {
 					newBalance, err = newBalance.Sub(sebak.BaseFee)
 				}
 
 				if err != nil {
 					fmt.Printf("Attempting to draft %v GON (+ %v fees), but sender account only have %v GON\n",
-						amount, sebak.BaseFee, senderAccount.Balance)
+						amount, sebak.BaseFee, senderAccount.GetBalance())
 					os.Exit(1)
 				}
 			}
