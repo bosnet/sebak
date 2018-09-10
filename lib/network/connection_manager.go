@@ -15,10 +15,9 @@ import (
 type ConnectionManager struct {
 	sync.Mutex
 
-	localNode   *node.LocalNode
-	network     Network
-	policy      common.VotingThresholdPolicy
-	broadcaster Broadcaster
+	localNode *node.LocalNode
+	network   Network
+	policy    common.VotingThresholdPolicy
 
 	validators map[ /* nodd.Address() */ string]*node.Validator
 	clients    map[ /* nodd.Address() */ string]NetworkClient
@@ -44,14 +43,6 @@ func NewConnectionManager(
 		connected: map[string]bool{},
 		log:       log.New(logging.Ctx{"node": localNode.Alias()}),
 	}
-}
-
-func (c *ConnectionManager) SetBroadcaster(broadcaster Broadcaster) {
-	c.broadcaster = broadcaster
-}
-
-type Broadcaster interface {
-	Broadcast(common.Message) (errs map[string]error)
 }
 
 func (c *ConnectionManager) GetConnection(address string) (client NetworkClient) {
@@ -174,48 +165,24 @@ func (c *ConnectionManager) ConnectionWatcher(t Network, conn net.Conn, state ht
 }
 
 func (c *ConnectionManager) Broadcast(message common.Message) {
-	errs := c.broadcaster.Broadcast(message)
-	for v, err := range errs {
-		c.log.Error("failed to SendBallot", "error", err, "validator", v)
+	for address, connected := range c.connected {
+		if connected {
+			go func(v string) {
+				client := c.GetConnection(v)
+
+				var err error
+				if message.GetType() == common.BallotMessage {
+					_, err = client.SendBallot(message)
+				} else if message.GetType() == string(common.TransactionMessage) {
+					_, err = client.SendMessage(message)
+				} else {
+					panic("invalid message")
+				}
+
+				if err != nil {
+					c.log.Error("failed to SendBallot", "error", err, "validator", v)
+				}
+			}(address)
+		}
 	}
-}
-
-type SimpleBroadcaster struct {
-	cm *ConnectionManager
-}
-
-func NewSimpleBroadcaster(c *ConnectionManager) *SimpleBroadcaster {
-	if c == nil {
-		panic("ConnectionManager is nil")
-	}
-	p := &SimpleBroadcaster{
-		cm: c,
-	}
-	return p
-}
-
-func (b SimpleBroadcaster) Broadcast(message common.Message) (errs map[string]error) {
-	for addr, _ := range b.cm.connected {
-		go func(v *node.Validator) {
-			if v == nil {
-				panic("Validator connected but not registered")
-			}
-
-			client := b.cm.GetConnection(v.Address())
-
-			var err error
-			if message.GetType() == common.BallotMessage {
-				_, err = client.SendBallot(message)
-			} else if message.GetType() == string(common.TransactionMessage) {
-				_, err = client.SendMessage(message)
-			} else {
-				panic("invalid message")
-			}
-
-			if err != nil {
-				errs[v.Address()] = err
-			}
-		}(b.cm.validators[addr])
-	}
-	return
 }
