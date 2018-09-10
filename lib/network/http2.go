@@ -3,6 +3,7 @@ package network
 import (
 	"fmt"
 	"io"
+	goLog "log"
 	"net"
 	"net/http"
 	"strings"
@@ -65,12 +66,15 @@ type HTTP2Network struct {
 type HandlerFunc func(w http.ResponseWriter, r *http.Request)
 
 func NewHTTP2Network(config *HTTP2NetworkConfig) (h2n *HTTP2Network) {
+	httpLog := log.New(logging.Ctx{"module": "http", "node": config.NodeName})
+	errorLog := goLog.New(HTTP2ErrorLog15Writer{httpLog}, "", 0)
+
 	server := &http.Server{
 		Addr:              config.Addr,
 		ReadTimeout:       config.ReadTimeout,
 		ReadHeaderTimeout: config.ReadHeaderTimeout,
 		WriteTimeout:      config.WriteTimeout,
-		ErrorLog:          config.ErrorLog,
+		ErrorLog:          errorLog,
 	}
 	server.SetKeepAlivesEnabled(true)
 
@@ -92,7 +96,7 @@ func NewHTTP2Network(config *HTTP2NetworkConfig) (h2n *HTTP2Network) {
 		tlsCertFile:    config.TLSCertFile,
 		tlsKeyFile:     config.TLSKeyFile,
 		receiveChannel: make(chan common.NetworkMessage),
-		log:            log.New(logging.Ctx{"node": config.NodeName}),
+		log:            httpLog,
 	}
 	h2n.handlers = map[string]func(http.ResponseWriter, *http.Request){}
 	h2n.routers = map[string]*mux.Router{
@@ -145,7 +149,7 @@ func (t *HTTP2Network) setNotReadyHandler() {
 		}
 	})
 
-	t.server.Handler = Log15LoggingHandler{log: t.log, handler: t.router}
+	t.server.Handler = HTTP2Log15Handler{log: t.log, handler: t.router}
 }
 
 func (t *HTTP2Network) AddHandler(pattern string, handler http.HandlerFunc) (router *mux.Route) {
@@ -177,7 +181,7 @@ func (t *HTTP2Network) MessageBroker() MessageBroker {
 }
 
 func (t *HTTP2Network) Ready() error {
-	t.server.Handler = Log15LoggingHandler{log: t.log, handler: t.router}
+	t.server.Handler = HTTP2Log15Handler{log: t.log, handler: t.router}
 
 	t.ready = true
 
@@ -222,96 +226,4 @@ func (t *HTTP2Network) ReceiveChannel() chan common.NetworkMessage {
 
 func (t *HTTP2Network) ReceiveMessage() <-chan common.NetworkMessage {
 	return t.receiveChannel
-}
-
-type Log15LoggingHandler struct {
-	log     logging.Logger
-	handler http.Handler
-}
-
-func (l Log15LoggingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	uid := common.GenerateUUID()
-
-	username := "-"
-	if r.URL.User != nil {
-		if name := r.URL.User.Username(); name != "" {
-			username = name
-		}
-	}
-
-	host, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		host = r.RemoteAddr
-	}
-
-	uri := r.RequestURI
-
-	// Requests using the CONNECT method over HTTP/2.0 must use
-	// the authority field (aka r.Host) to identify the target.
-	// Refer: https://httpwg.github.io/specs/rfc7540.html#CONNECT
-	if r.ProtoMajor == 2 && r.Method == "CONNECT" {
-		uri = r.Host
-	}
-	if uri == "" {
-		uri = r.URL.RequestURI()
-	}
-
-	l.log.Debug(
-		"http-request",
-		"request-id", uid,
-		"referer", r.Referer(),
-		"user-agent", r.UserAgent(),
-		"method", r.Method,
-		"host", host,
-		"username", username,
-		"uri", uri,
-		"proto", r.Proto,
-		"remote", r.RemoteAddr,
-	)
-
-	writer := &Log15ResponseWriter{w: w}
-	l.handler.ServeHTTP(writer, r)
-
-	l.log.Debug(
-		"http-response",
-		"request-id", uid,
-		"status", writer.Status(),
-		"size", writer.Size(),
-	)
-}
-
-type Log15ResponseWriter struct {
-	w      http.ResponseWriter
-	status int
-	size   int
-}
-
-func (l *Log15ResponseWriter) Header() http.Header {
-	return l.w.Header()
-}
-
-func (l *Log15ResponseWriter) Write(b []byte) (int, error) {
-	size, err := l.w.Write(b)
-	l.size += size
-	return size, err
-}
-
-func (l *Log15ResponseWriter) WriteHeader(s int) {
-	l.w.WriteHeader(s)
-	l.status = s
-}
-
-func (l *Log15ResponseWriter) Status() int {
-	return l.status
-}
-
-func (l *Log15ResponseWriter) Size() int {
-	return l.size
-}
-
-func (l *Log15ResponseWriter) Flush() {
-	f, ok := l.w.(http.Flusher)
-	if ok {
-		f.Flush()
-	}
 }

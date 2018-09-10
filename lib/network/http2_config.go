@@ -2,9 +2,6 @@ package network
 
 import (
 	"errors"
-	"io"
-	goLog "log"
-	"os"
 	"strings"
 	"time"
 
@@ -23,9 +20,6 @@ type HTTP2NetworkConfig struct {
 
 	TLSCertFile,
 	TLSKeyFile string
-
-	Log      io.Writer
-	ErrorLog *goLog.Logger
 }
 
 func NewHTTP2NetworkConfigFromEndpoint(nodeName string, endpoint *common.Endpoint) (config *HTTP2NetworkConfig, err error) {
@@ -88,8 +82,6 @@ func NewHTTP2NetworkConfigFromEndpoint(nodeName string, endpoint *common.Endpoin
 		TLSCertFile:       TLSCertFile,
 		TLSKeyFile:        TLSKeyFile,
 	}
-	config.SetLog("")
-	config.SetErrorLog("")
 
 	return
 }
@@ -100,34 +92,4 @@ func (config HTTP2NetworkConfig) IsHTTPS() bool {
 
 func (config HTTP2NetworkConfig) String() string {
 	return string(common.MustJSONMarshal(config))
-}
-
-func (config *HTTP2NetworkConfig) SetLog(v string) error {
-	if len(v) < 1 {
-		config.Log = os.Stdout
-		return nil
-	}
-
-	httpLog, err := os.OpenFile(v, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
-	if err != nil {
-		return err
-	}
-	config.Log = httpLog
-
-	return nil
-}
-
-func (config *HTTP2NetworkConfig) SetErrorLog(v string) (err error) {
-	var logFile *os.File
-	if len(v) < 1 {
-		logFile = os.Stdout
-	} else {
-		logFile, err = os.OpenFile(v, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
-		if err != nil {
-			return
-		}
-	}
-	config.ErrorLog = goLog.New(logFile, "", goLog.LstdFlags|goLog.Lmicroseconds)
-
-	return nil
 }
