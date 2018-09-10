@@ -1,4 +1,4 @@
-package sebak
+package api
 
 import (
 	"fmt"
@@ -23,15 +23,18 @@ const (
 	PostTransactionPattern               = "/transactions"
 )
 
-type NetworkHandlerNode struct {
-	localNode *node.LocalNode
-	network   network.Network
-}
-
 type NetworkHandlerAPI struct {
 	localNode *node.LocalNode
 	network   network.Network
 	storage   *storage.LevelDBBackend
+}
+
+func NewNetworkHandlerAPI(localNode *node.LocalNode, network network.Network,storage *storage.LevelDBBackend) *NetworkHandlerAPI {
+	return &NetworkHandlerAPI{
+		localNode: localNode,
+		network: network,
+		storage: storage,
+	}
 }
 
 // Implement `Server Sent Event`

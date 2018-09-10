@@ -192,8 +192,8 @@ func ValidateOp(st *storage.LevelDBBackend, op transaction.Operation) (err error
 			return
 		}
 		var exists bool
-		if exists, err = block.ExistBlockAccount(st, op.B.(transaction.OperationBodyCreateAccount).Target); err == nil && !exists {
-			err = errors.ErrorBlockAccountDoesNotExists
+		if exists, err = block.ExistBlockAccount(st, op.B.(transaction.OperationBodyCreateAccount).Target); err == nil && exists {
+			err = errors.ErrorBlockAccountAlreadyExists
 			return
 		}
 	case transaction.OperationPayment:

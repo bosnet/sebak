@@ -6,7 +6,14 @@ import (
 	"strings"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/network"
+	"boscoin.io/sebak/lib/node"
 )
+
+type NetworkHandlerNode struct {
+	localNode *node.LocalNode
+	network   network.Network
+}
 
 func (api NetworkHandlerNode) NodeInfoHandler(w http.ResponseWriter, r *http.Request) {
 	o, _ := api.localNode.Serialize()

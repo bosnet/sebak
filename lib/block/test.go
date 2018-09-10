@@ -42,7 +42,7 @@ func createNetMemoryNetwork() (*network.MemoryNetwork, *node.LocalNode) {
 }
 
 
-func testMakeNewBlock(transactions []string) Block {
+func TestMakeNewBlock(transactions []string) Block {
 	kp, _ := keypair.Random()
 
 	return NewBlock(
@@ -69,7 +69,7 @@ func TestMakeNewBlockOperation(networkID []byte, n int) (bos []BlockOperation) {
 func TestMakeNewBlockTransaction(networkID []byte, n int) BlockTransaction {
 	_, tx := transaction.TestMakeTransaction(networkID, n)
 
-	block := testMakeNewBlock([]string{tx.GetHash()})
+	block := TestMakeNewBlock([]string{tx.GetHash()})
 	a, _ := tx.Serialize()
 	return NewBlockTransactionFromTransaction(block.Hash, tx, a)
 }

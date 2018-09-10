@@ -100,7 +100,7 @@ func TestBlockOperationSaveByTransacton(t *testing.T) {
 	st, _ := storage.NewTestMemoryLevelDBBackend()
 
 	_, tx := transaction.TestMakeTransaction(networkID, 10)
-	block := testMakeNewBlock([]string{tx.GetHash()})
+	block := TestMakeNewBlock([]string{tx.GetHash()})
 	bt := NewBlockTransactionFromTransaction(block.Hash, tx, common.MustJSONMarshal(tx))
 	err := bt.Save(st)
 	require.Nil(t, err)

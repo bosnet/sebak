@@ -38,37 +38,6 @@ func MakeNodeRunner() (*NodeRunner, *node.LocalNode) {
 	return nodeRunner, localNode
 }
 
-func testMakeNewBlock(transactions []string) block.Block {
-	kp, _ := keypair.Random()
-
-	return block.NewBlock(
-		kp.Address(),
-		round.Round{
-			BlockHeight: 0,
-			BlockHash:   "",
-		},
-		transactions,
-		common.NowISO8601(),
-	)
-}
-
-func TestMakeNewBlockOperation(networkID []byte, n int) (bos []block.BlockOperation) {
-	_, tx := transaction.TestMakeTransaction(networkID, n)
-
-	for _, op := range tx.B.Operations {
-		bos = append(bos, block.NewBlockOperationFromOperation(op, tx))
-	}
-
-	return
-}
-
-func TestMakeNewBlockTransaction(networkID []byte, n int) block.BlockTransaction {
-	_, tx := transaction.TestMakeTransaction(networkID, n)
-
-	theBlock := testMakeNewBlock([]string{tx.GetHash()})
-	a, _ := tx.Serialize()
-	return block.NewBlockTransactionFromTransaction(theBlock.Hash, tx, a)
-}
 
 func TestGenerateNewSequenceID() uint64 {
 	return 0

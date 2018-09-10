@@ -21,6 +21,7 @@ import (
 	"boscoin.io/sebak/lib/round"
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/block"
+	"boscoin.io/sebak/lib/api"
 )
 
 var DefaultHandleTransactionCheckerFuncs = []common.CheckerFunc{
@@ -158,30 +159,30 @@ func (nr *NodeRunner) Ready() {
 	nr.network.AddHandler(network.UrlPathPrefixNode+"/ballot", nodeHandler.BallotHandler)
 	nr.network.AddHandler("/metrics", promhttp.Handler().ServeHTTP)
 
-	apiHandler := NetworkHandlerAPI{
-		localNode: nr.localNode,
-		network:   nr.network,
-		storage:   nr.storage,
-	}
+	apiHandler := api.NewNetworkHandlerAPI(
+		nr.localNode,
+		nr.network,
+		nr.storage,
+	)
 
 	nr.network.AddHandler(
-		network.UrlPathPrefixAPI+GetAccountHandlerPattern,
+		network.UrlPathPrefixAPI+api.GetAccountHandlerPattern,
 		apiHandler.GetAccountHandler,
 	).Methods("GET")
 	nr.network.AddHandler(
-		network.UrlPathPrefixAPI+GetAccountTransactionsHandlerPattern,
+		network.UrlPathPrefixAPI+api.GetAccountTransactionsHandlerPattern,
 		apiHandler.GetAccountTransactionsHandler,
 	).Methods("GET")
 	nr.network.AddHandler(
-		network.UrlPathPrefixAPI+GetAccountOperationsHandlerPattern,
+		network.UrlPathPrefixAPI+api.GetAccountOperationsHandlerPattern,
 		apiHandler.GetAccountOperationsHandler,
 	).Methods("GET")
 	nr.network.AddHandler(
-		network.UrlPathPrefixAPI+GetTransactionsHandlerPattern,
+		network.UrlPathPrefixAPI+api.GetTransactionsHandlerPattern,
 		apiHandler.GetTransactionsHandler,
 	).Methods("GET")
 	nr.network.AddHandler(
-		network.UrlPathPrefixAPI+GetTransactionByHashHandlerPattern,
+		network.UrlPathPrefixAPI+api.GetTransactionByHashHandlerPattern,
 		apiHandler.GetTransactionByHashHandler,
 	).Methods("GET")
 	nr.network.AddHandler(

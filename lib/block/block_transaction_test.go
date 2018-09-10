@@ -15,7 +15,7 @@ import (
 func TestNewBlockTransaction(t *testing.T) {
 	_, tx := transaction.TestMakeTransaction(networkID, 1)
 	a, _ := tx.Serialize()
-	block := testMakeNewBlock([]string{tx.GetHash()})
+	block := TestMakeNewBlock([]string{tx.GetHash()})
 	bt := NewBlockTransactionFromTransaction(block.Hash, tx, a)
 
 	require.Equal(t, bt.Hash, tx.H.Hash)
@@ -90,7 +90,7 @@ func TestMultipleBlockTransactionSource(t *testing.T) {
 
 	}
 
-	block := testMakeNewBlock(txHashes)
+	block := TestMakeNewBlock(txHashes)
 	for _, tx := range txs {
 		a, _ := tx.Serialize()
 		bt := NewBlockTransactionFromTransaction(block.Hash, tx, a)
@@ -107,7 +107,7 @@ func TestMultipleBlockTransactionSource(t *testing.T) {
 		txHashes = append(txHashes, tx.GetHash())
 	}
 
-	block = testMakeNewBlock(txHashes)
+	block = TestMakeNewBlock(txHashes)
 	for _, tx := range txs {
 		a, _ := tx.Serialize()
 		bt := NewBlockTransactionFromTransaction(block.Hash, tx, a)
@@ -173,7 +173,7 @@ func TestMultipleBlockTransactionConfirmed(t *testing.T) {
 		txHashes = append(txHashes, tx.GetHash())
 	}
 
-	block := testMakeNewBlock(txHashes)
+	block := TestMakeNewBlock(txHashes)
 	for _, tx := range txs {
 		a, _ := tx.Serialize()
 		bt := NewBlockTransactionFromTransaction(block.Hash, tx, a)
@@ -253,7 +253,7 @@ func TestMultipleBlockTransactionGetByAccount(t *testing.T) {
 		txHashes = append(txHashes, tx.GetHash())
 	}
 
-	block := testMakeNewBlock(txHashes)
+	block := TestMakeNewBlock(txHashes)
 	for _, tx := range txs {
 		a, _ := tx.Serialize()
 		bt := NewBlockTransactionFromTransaction(block.Hash, tx, a)
@@ -271,7 +271,7 @@ func TestMultipleBlockTransactionGetByAccount(t *testing.T) {
 		txHashes = append(txHashes, tx.GetHash())
 	}
 
-	block = testMakeNewBlock(txHashes)
+	block = TestMakeNewBlock(txHashes)
 	for _, tx := range txs {
 		a, _ := tx.Serialize()
 		bt := NewBlockTransactionFromTransaction(block.Hash, tx, a)
@@ -288,7 +288,7 @@ func TestMultipleBlockTransactionGetByAccount(t *testing.T) {
 		txHashes = append(txHashes, tx.GetHash())
 	}
 
-	block = testMakeNewBlock(txHashes)
+	block = TestMakeNewBlock(txHashes)
 	for _, tx := range txs {
 		a, _ := tx.Serialize()
 		bt := NewBlockTransactionFromTransaction(block.Hash, tx, a)
@@ -332,7 +332,7 @@ func TestMultipleBlockTransactionGetByBlock(t *testing.T) {
 		txHashes0 = append(txHashes0, tx.GetHash())
 	}
 
-	block0 := testMakeNewBlock(txHashes0)
+	block0 := TestMakeNewBlock(txHashes0)
 	for _, tx := range txs0 {
 		a, _ := tx.Serialize()
 		bt := NewBlockTransactionFromTransaction(block0.Hash, tx, a)
@@ -349,7 +349,7 @@ func TestMultipleBlockTransactionGetByBlock(t *testing.T) {
 		txHashes1 = append(txHashes1, tx.GetHash())
 	}
 
-	block1 := testMakeNewBlock(txHashes1)
+	block1 := TestMakeNewBlock(txHashes1)
 	for _, tx := range txs1 {
 		a, _ := tx.Serialize()
 		bt := NewBlockTransactionFromTransaction(block1.Hash, tx, a)

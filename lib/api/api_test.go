@@ -1,4 +1,4 @@
-package sebak
+package api
 
 import (
 	"bufio"
@@ -152,7 +152,7 @@ func TestGetAccountTransactionsHandler(t *testing.T) {
 		txHashes = append(txHashes, tx.GetHash())
 	}
 
-	theBlock := testMakeNewBlock(txHashes)
+	theBlock := block.TestMakeNewBlock(txHashes)
 	for _, tx := range txs {
 		a, err := tx.Serialize()
 		require.Nil(t, err)
@@ -256,7 +256,7 @@ func TestGetAccountOperationsHandler(t *testing.T) {
 		txHashes = append(txHashes, tx.GetHash())
 	}
 
-	theBlock := testMakeNewBlock(txHashes)
+	theBlock := block.TestMakeNewBlock(txHashes)
 	for _, tx := range txs {
 		a, err := tx.Serialize()
 		require.Nil(t, err)
@@ -363,7 +363,7 @@ func TestGetTransactionByHashHandler(t *testing.T) {
 	a, err := tx.Serialize()
 	require.Nil(t, err)
 
-	theBlock := testMakeNewBlock([]string{tx.GetHash()})
+	theBlock := block.TestMakeNewBlock([]string{tx.GetHash()})
 	bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, tx, a)
 
 	// Do a Request
@@ -427,7 +427,7 @@ func TestGetTransactionsHandler(t *testing.T) {
 		txHashes = append(txHashes, tx.GetHash())
 	}
 
-	theBlock := testMakeNewBlock(txHashes)
+	theBlock := block.TestMakeNewBlock(txHashes)
 	for _, tx := range txs {
 		a, err := tx.Serialize()
 		require.Nil(t, err)

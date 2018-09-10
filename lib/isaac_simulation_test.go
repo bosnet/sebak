@@ -12,7 +12,6 @@ import (
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/round"
-	"boscoin.io/sebak/lib/transaction"
 )
 
 /*
@@ -26,7 +25,7 @@ TestISAACSimulationProposer indicates the following:
 func TestISAACSimulationProposer(t *testing.T) {
 	nodeRunners := createTestNodeRunner(5)
 
-	tx, txByte := transaction.GetTransaction(t)
+	tx, txByte := getTransaction(t)
 
 	message := common.NetworkMessage{Type: common.TransactionMessage, Data: txByte}
 

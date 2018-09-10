@@ -1,4 +1,4 @@
-package sebak
+package api
 
 import (
 	"bufio"
