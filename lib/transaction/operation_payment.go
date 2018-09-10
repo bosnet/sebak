@@ -46,4 +46,3 @@ func (o OperationBodyPayment) TargetAddress() string {
 func (o OperationBodyPayment) GetAmount() common.Amount {
 	return o.Amount
 }
-

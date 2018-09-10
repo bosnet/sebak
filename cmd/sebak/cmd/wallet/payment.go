@@ -11,7 +11,7 @@ import (
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/network"
 
-	"boscoin.io/sebak/lib/block"
+	"boscoin.io/sebak/lib/storage/block"
 	"boscoin.io/sebak/lib/transaction"
 	"github.com/spf13/cobra"
 	"github.com/stellar/go/keypair"

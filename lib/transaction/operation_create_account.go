@@ -40,4 +40,3 @@ func (o OperationBodyCreateAccount) TargetAddress() string {
 func (o OperationBodyCreateAccount) GetAmount() common.Amount {
 	return o.Amount
 }
-

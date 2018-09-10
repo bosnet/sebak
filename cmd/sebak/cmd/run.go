@@ -23,6 +23,8 @@ import (
 
 	cmdcommon "boscoin.io/sebak/cmd/sebak/common"
 
+	"boscoin.io/sebak/lib/consensus"
+	"boscoin.io/sebak/lib/node/node_runner"
 	"strconv"
 )
 
@@ -344,13 +346,13 @@ func runNode() error {
 
 	nt := network.NewHTTP2Network(networkConfig)
 
-	policy, err := sebak.NewDefaultVotingThresholdPolicy(threshold, threshold)
+	policy, err := consensus.NewDefaultVotingThresholdPolicy(threshold, threshold)
 	if err != nil {
 		log.Crit("failed to create VotingThresholdPolicy", "error", err)
 		return err
 	}
 
-	isaac, err := sebak.NewISAAC([]byte(flagNetworkID), localNode, policy)
+	isaac, err := consensus.NewISAAC([]byte(flagNetworkID), localNode, policy)
 	if err != nil {
 		log.Crit("failed to launch consensus", "error", err)
 		return err
@@ -365,8 +367,8 @@ func runNode() error {
 	// Execution group.
 	var g run.Group
 	{
-		nr, err := sebak.NewNodeRunner(flagNetworkID, localNode, policy, nt, isaac, st)
-		conf := &sebak.ISAACConfiguration{
+		nr, err := node_runner.NewNodeRunner(flagNetworkID, localNode, policy, nt, isaac, st)
+		conf := &consensus.ISAACConfiguration{
 			TimeoutINIT:       timeoutINIT,
 			TimeoutSIGN:       timeoutSIGN,
 			TimeoutACCEPT:     timeoutACCEPT,

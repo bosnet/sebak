@@ -1,0 +1,73 @@
+package block
+
+import (
+	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/network"
+	"boscoin.io/sebak/lib/node"
+	"boscoin.io/sebak/lib/round"
+	"boscoin.io/sebak/lib/transaction"
+	"github.com/stellar/go/keypair"
+)
+
+var networkID []byte = []byte("sebak-test-network")
+
+func TestMakeBlockAccount() *BlockAccount {
+	kp, _ := keypair.Random()
+	address := kp.Address()
+	balance := common.Amount(2000)
+
+	return NewBlockAccount(address, balance)
+}
+
+var (
+	kp           *keypair.Full
+	account      *BlockAccount
+	genesisBlock Block
+)
+
+func init() {
+	kp, _ = keypair.Random()
+}
+
+func createNetMemoryNetwork() (*network.MemoryNetwork, *node.LocalNode) {
+	mn := network.NewMemoryNetwork()
+
+	kp, _ := keypair.Random()
+	localNode, _ := node.NewLocalNode(kp, mn.Endpoint(), "")
+
+	mn.SetLocalNode(localNode)
+
+	return mn, localNode
+}
+
+func TestMakeNewBlock(transactions []string) Block {
+	kp, _ := keypair.Random()
+
+	return NewBlock(
+		kp.Address(),
+		round.Round{
+			BlockHeight: 0,
+			BlockHash:   "",
+		},
+		transactions,
+		common.NowISO8601(),
+	)
+}
+
+func TestMakeNewBlockOperation(networkID []byte, n int) (bos []BlockOperation) {
+	_, tx := transaction.TestMakeTransaction(networkID, n)
+
+	for _, op := range tx.B.Operations {
+		bos = append(bos, NewBlockOperationFromOperation(op, tx))
+	}
+
+	return
+}
+
+func TestMakeNewBlockTransaction(networkID []byte, n int) BlockTransaction {
+	_, tx := transaction.TestMakeTransaction(networkID, n)
+
+	block := TestMakeNewBlock([]string{tx.GetHash()})
+	a, _ := tx.Serialize()
+	return NewBlockTransactionFromTransaction(block.Hash, tx, a)
+}
