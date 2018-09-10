@@ -10,7 +10,6 @@ import (
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
-	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/round"
 	"boscoin.io/sebak/lib/storage"
@@ -54,7 +53,7 @@ func NewBallotFromJSON(data []byte) (b Ballot, err error) {
 }
 
 func (b Ballot) GetType() string {
-	return network.BallotMessage
+	return common.BallotMessage
 }
 
 func (b Ballot) GetHash() string {

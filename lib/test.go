@@ -285,7 +285,7 @@ func ReceiveBallot(t *testing.T, nodeRunner *NodeRunner, ballot *Ballot) error {
 	data, err := ballot.Serialize()
 	require.Nil(t, err)
 
-	ballotMessage := network.Message{Type: network.BallotMessage, Data: data}
+	ballotMessage := common.NetworkMessage{Type: common.BallotMessage, Data: data}
 	err = nodeRunner.handleBallotMessage(ballotMessage)
 	return err
 }

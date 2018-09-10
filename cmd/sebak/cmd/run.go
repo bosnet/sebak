@@ -30,12 +30,16 @@ const defaultNetwork string = "https"
 const defaultPort int = 12345
 const defaultHost string = "0.0.0.0"
 const defaultLogLevel logging.Lvl = logging.LvlInfo
+const defaultLogFormat string = "terminal"
 
 var (
 	flagKPSecretSeed   string = common.GetENVValue("SEBAK_SECRET_SEED", "")
 	flagNetworkID      string = common.GetENVValue("SEBAK_NETWORK_ID", "")
 	flagLogLevel       string = common.GetENVValue("SEBAK_LOG_LEVEL", defaultLogLevel.String())
-	flagLogOutput      string = common.GetENVValue("SEBAK_LOG_OUTPUT", "")
+	flagLogFormat      string = common.GetENVValue("SEBAK_LOG_FORMAT", defaultLogFormat)
+	flagLog            string = common.GetENVValue("SEBAK_LOG", "")
+	flagHTTPLog        string = common.GetENVValue("SEBAK_HTTP_LOG", "")
+	flagHTTPError      string = common.GetENVValue("SEBAK_HTTP_ERROR_LOG", "")
 	flagVerbose        bool   = common.GetENVValue("SEBAK_VERBOSE", "0") == "1"
 	flagEndpointString string = common.GetENVValue(
 		"SEBAK_ENDPOINT",
@@ -67,7 +71,7 @@ var (
 	timeoutALLCONFIRM time.Duration
 	transactionsLimit uint64
 	logLevel          logging.Lvl
-	log               logging.Logger
+	log               logging.Logger = logging.New("module", "main")
 )
 
 func init() {
@@ -123,7 +127,10 @@ func init() {
 	nodeCmd.Flags().StringVar(&flagKPSecretSeed, "secret-seed", flagKPSecretSeed, "secret seed of this node")
 	nodeCmd.Flags().StringVar(&flagNetworkID, "network-id", flagNetworkID, "network id")
 	nodeCmd.Flags().StringVar(&flagLogLevel, "log-level", flagLogLevel, "log level, {crit, error, warn, info, debug}")
-	nodeCmd.Flags().StringVar(&flagLogOutput, "log-output", flagLogOutput, "set log output file")
+	nodeCmd.Flags().StringVar(&flagLogFormat, "log-format", flagLogFormat, "log format, {terminal, json}")
+	nodeCmd.Flags().StringVar(&flagLog, "log", flagLog, "set log file")
+	nodeCmd.Flags().StringVar(&flagHTTPLog, "http-log", flagHTTPLog, "set http log file")
+	nodeCmd.Flags().StringVar(&flagHTTPError, "http-error-log", flagHTTPError, "set http error log file")
 	nodeCmd.Flags().BoolVar(&flagVerbose, "verbose", flagVerbose, "verbose")
 	nodeCmd.Flags().StringVar(&flagEndpointString, "endpoint", flagEndpointString, "endpoint uri to listen on")
 	nodeCmd.Flags().StringVar(&flagStorageConfigString, "storage", flagStorageConfigString, "storage uri")
@@ -238,20 +245,25 @@ func parseFlagsNode() {
 		cmdcommon.PrintFlagsError(nodeCmd, "--log-level", err)
 	}
 
-	logHandler := logging.StdoutHandler
+	var logFormatter logging.Format
+	switch flagLogFormat {
+	case "terminal":
+		logFormatter = logging.TerminalFormat()
+	case "json":
+		logFormatter = common.JsonFormatEx(false, true)
+	default:
+		cmdcommon.PrintFlagsError(nodeCmd, "--log-format", fmt.Errorf("'%s'", flagLogFormat))
+	}
 
-	if len(flagLogOutput) < 1 {
-		flagLogOutput = "<stdout>"
-	} else {
-		if logHandler, err = logging.FileHandler(flagLogOutput, logging.JsonFormat()); err != nil {
-			cmdcommon.PrintFlagsError(nodeCmd, "--log-output", err)
+	logHandler := logging.StreamHandler(os.Stdout, logFormatter)
+	if len(flagLog) > 0 {
+		if logHandler, err = logging.FileHandler(flagLog, logFormatter); err != nil {
+			cmdcommon.PrintFlagsError(nodeCmd, "--log", err)
 		}
 	}
 
-	logHandler = logging.CallerFileHandler(logHandler)
+	log.SetHandler(logging.LvlFilterHandler(logLevel, logging.CallerFileHandler(logHandler)))
 
-	log = logging.New("module", "main")
-	log.SetHandler(logging.LvlFilterHandler(logLevel, logHandler))
 	sebak.SetLogging(logLevel, logHandler)
 	network.SetLogging(logLevel, logHandler)
 
@@ -265,7 +277,10 @@ func parseFlagsNode() {
 	parsedFlags = append(parsedFlags, "\n\ttls-cert", flagTLSCertFile)
 	parsedFlags = append(parsedFlags, "\n\ttls-key", flagTLSKeyFile)
 	parsedFlags = append(parsedFlags, "\n\tlog-level", flagLogLevel)
-	parsedFlags = append(parsedFlags, "\n\tlog-output", flagLogOutput)
+	parsedFlags = append(parsedFlags, "\n\tlog-format", flagLogFormat)
+	parsedFlags = append(parsedFlags, "\n\tlog", flagLog)
+	parsedFlags = append(parsedFlags, "\n\thttp-log", flagHTTPLog)
+	parsedFlags = append(parsedFlags, "\n\thttp-error-log", flagHTTPError)
 	parsedFlags = append(parsedFlags, "\n\tthreshold", flagThreshold)
 	parsedFlags = append(parsedFlags, "\n\ttimeout-init", flagTimeoutINIT)
 	parsedFlags = append(parsedFlags, "\n\ttimeout-sign", flagTimeoutSIGN)
@@ -313,11 +328,21 @@ func runNode() error {
 	localNode.AddValidators(validators...)
 
 	// create network
-	nt, err := network.NewNetwork(nodeEndpoint)
+	networkConfig, err := network.NewHTTP2NetworkConfigFromEndpoint(nodeEndpoint)
 	if err != nil {
-		log.Crit("failed to create Network", "error", err)
+		log.Crit("failed to create network", "error", err)
 		return err
 	}
+	if err := networkConfig.SetLog(flagHTTPLog); err != nil {
+		log.Crit("failed to set `http-log`", "error", err)
+		return err
+	}
+	if err := networkConfig.SetErrorLog(flagHTTPError); err != nil {
+		log.Crit("failed to set `http-error-log`", "error", err)
+		return err
+	}
+
+	nt := network.NewHTTP2Network(networkConfig)
 
 	policy, err := sebak.NewDefaultVotingThresholdPolicy(threshold, threshold)
 	if err != nil {

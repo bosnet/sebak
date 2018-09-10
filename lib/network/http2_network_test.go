@@ -36,7 +36,7 @@ func getPort() string {
 }
 
 func makeTestHTTP2NetworkForTLS(endpoint *common.Endpoint) (network *HTTP2Network, err error) {
-	var config HTTP2NetworkConfig
+	var config *HTTP2NetworkConfig
 	if config, err = NewHTTP2NetworkConfigFromEndpoint(endpoint); err != nil {
 		return
 	}

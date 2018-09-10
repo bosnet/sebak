@@ -65,7 +65,7 @@ func pingAndWait(t *testing.T, c0 network.NetworkClient) {
 func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, mn *network.HTTP2Network, nodeRunner *NodeRunner) {
 	g := network.NewKeyGenerator(dirPath, certPath, keyPath)
 
-	var config network.HTTP2NetworkConfig
+	var config *network.HTTP2NetworkConfig
 	endpoint, err := common.NewEndpointFromString(fmt.Sprintf("https://localhost:%s?NodeName=n1", getPort()))
 	if err != nil {
 		t.Error(err)
@@ -114,7 +114,7 @@ func (r TestMessageBroker) Response(w io.Writer, o []byte) error {
 	return err
 }
 
-func (r TestMessageBroker) Receive(network.Message) {}
+func (r TestMessageBroker) Receive(common.NetworkMessage) {}
 
 func removeWhiteSpaces(str string) string {
 	return strings.Map(func(r rune) rune {
@@ -164,7 +164,7 @@ func (r StringResponseMessageBroker) Response(w io.Writer, _ []byte) error {
 	return err
 }
 
-func (r StringResponseMessageBroker) Receive(network.Message) {}
+func (r StringResponseMessageBroker) Receive(common.NetworkMessage) {}
 
 func TestHTTP2NetworkMessageBrokerResponseMessage(t *testing.T) {
 	_, s0, nodeRunner := createNewHTTP2Network(t)

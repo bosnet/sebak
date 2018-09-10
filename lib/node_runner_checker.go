@@ -3,7 +3,6 @@ package sebak
 import (
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
-	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
 	logging "github.com/inconshreveable/log15"
 )
@@ -34,13 +33,13 @@ type NodeRunnerHandleMessageChecker struct {
 	NodeRunner *NodeRunner
 	LocalNode  *node.LocalNode
 	NetworkID  []byte
-	Message    network.Message
+	Message    common.NetworkMessage
 
 	Transaction Transaction
 }
 
 // CheckNodeRunnerHandleMessageTransactionUnmarshal makes `Transaction` from
-// incoming `network.Message`.
+// incoming `common.NetworkMessage`.
 func CheckNodeRunnerHandleMessageTransactionUnmarshal(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*NodeRunnerHandleMessageChecker)
 
@@ -128,7 +127,7 @@ type BallotChecker struct {
 	NodeRunner         *NodeRunner
 	LocalNode          *node.LocalNode
 	NetworkID          []byte
-	Message            network.Message
+	Message            common.NetworkMessage
 	IsNew              bool
 	Ballot             Ballot
 	VotingHole         common.VotingHole
@@ -140,7 +139,7 @@ type BallotChecker struct {
 	Log logging.Logger
 }
 
-// BallotUnmarshal makes `Ballot` from network.Message.
+// BallotUnmarshal makes `Ballot` from common.NetworkMessage.
 func BallotUnmarshal(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotChecker)
 
@@ -154,7 +153,14 @@ func BallotUnmarshal(c common.Checker, args ...interface{}) (err error) {
 	}
 
 	checker.Ballot = ballot
-	checker.Log = checker.Log.New(logging.Ctx{"ballot": checker.Ballot.GetHash(), "state": checker.Ballot.State()})
+	checker.Log = checker.Log.New(logging.Ctx{
+		"ballot":   checker.Ballot.GetHash(),
+		"state":    checker.Ballot.State(),
+		"proposer": checker.Ballot.Proposer(),
+		"round":    checker.Ballot.Round(),
+		"from":     checker.Ballot.Source(),
+		"vote":     checker.Ballot.Vote(),
+	})
 	checker.Log.Debug("message is verified")
 
 	return
@@ -168,10 +174,7 @@ func BallotNotFromKnownValidators(c common.Checker, args ...interface{}) (err er
 		return
 	}
 
-	checker.Log.Debug(
-		"ballot from unknown validator",
-		"from", checker.Ballot.Source(),
-	)
+	checker.Log.Debug("ballot from unknown validator")
 
 	err = errors.ErrorBallotFromUnknownValidator
 	return
@@ -185,7 +188,7 @@ func BallotAlreadyFinished(c common.Checker, args ...interface{}) (err error) {
 	round := checker.Ballot.Round()
 	if !checker.NodeRunner.Consensus().IsAvailableRound(round) {
 		err = errors.ErrorBallotAlreadyFinished
-		checker.Log.Debug("ballot already finished", "round", round)
+		checker.Log.Debug("ballot already finished")
 		return
 	}
 
@@ -278,11 +281,7 @@ func BallotIsSameProposer(c common.Checker, args ...interface{}) (err error) {
 
 	if runningRound.Proposer != checker.Ballot.Proposer() {
 		checker.VotingHole = common.VotingNO
-		checker.Log.Debug(
-			"ballot has different proposer",
-			"proposer", runningRound.Proposer,
-			"proposed-proposer", checker.Ballot.Proposer(),
-		)
+		checker.Log.Debug("ballot has different proposer", "proposer", runningRound.Proposer)
 		return
 	}
 
@@ -307,7 +306,11 @@ func BallotCheckResult(c common.Checker, args ...interface{}) (err error) {
 	checker.FinishedVotingHole = votingHole
 
 	if checker.VotingFinished {
-		checker.Log.Debug("get result", "finished VotingHole", checker.FinishedVotingHole, "result", checker.Result)
+		checker.Log.Debug(
+			"get result",
+			"finished VotingHole", checker.FinishedVotingHole,
+			"result", checker.Result,
+		)
 	}
 
 	return

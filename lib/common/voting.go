@@ -15,6 +15,4 @@ type VotingThresholdPolicy interface {
 	SetValidators(int) error
 	Connected() int
 	SetConnected(int) error
-
-	String() string
 }

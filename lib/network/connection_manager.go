@@ -123,7 +123,7 @@ func (c *ConnectionManager) CountConnected() int {
 }
 
 func (c *ConnectionManager) connectValidators() {
-	c.log.Debug("> starting to connect to validators", "validators", c.validators)
+	c.log.Debug("starting to connect to validators", "validators", c.validators)
 	for _, v := range c.validators {
 		go c.connectingValidator(v)
 	}
@@ -204,9 +204,9 @@ func (b SimpleBroadcaster) Broadcast(message common.Message) (errs map[string]er
 			client := b.cm.GetConnection(v.Address())
 
 			var err error
-			if message.GetType() == BallotMessage {
+			if message.GetType() == common.BallotMessage {
 				_, err = client.SendBallot(message)
-			} else if message.GetType() == string(TransactionMessage) {
+			} else if message.GetType() == string(common.TransactionMessage) {
 				_, err = client.SendMessage(message)
 			} else {
 				panic("invalid message")
