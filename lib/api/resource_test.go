@@ -23,7 +23,7 @@ func TestAPIResourceAccount(t *testing.T) {
 		ra := &APIResourceAccount{
 			accountId:  ba.Address,
 			sequenceID: ba.SequenceID,
-			balance:    ba.Balance.String(),
+			balance:    ba.GetBalance().String(),
 		}
 		r := ra.Resource()
 		j, _ := json.MarshalIndent(r, "", " ")
@@ -36,7 +36,7 @@ func TestAPIResourceAccount(t *testing.T) {
 			require.Equal(t, ba.Address, m["account_id"])
 			require.Equal(t, ba.Address, m["id"])
 			require.Equal(t, ba.SequenceID, uint64(m["sequence_id"].(float64)))
-			require.Equal(t, ba.Balance.String(), m["balance"])
+			require.Equal(t, ba.GetBalance().String(), m["balance"])
 
 			l := m["_links"].(map[string]interface{})
 			require.Equal(t, strings.Replace(UrlAccounts, "{id}", ba.Address, -1), l["self"].(map[string]interface{})["href"])

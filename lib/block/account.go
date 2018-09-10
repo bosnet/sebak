@@ -71,7 +71,7 @@ func (b *BlockAccount) Save(st *storage.LevelDBBackend) (err error) {
 	bac := BlockAccountSequenceID{
 		SequenceID: b.SequenceID,
 		Address:    b.Address,
-		Balance:    b.Balance,
+		Balance:    b.GetBalance(),
 	}
 	err = bac.Save(st)
 
