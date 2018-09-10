@@ -28,9 +28,8 @@ func init() {
 	kp, _ = keypair.Random()
 }
 
-func MakeNodeRunner() (*NodeRunner, *node.LocalNode) {
-
-	_, network, localNode := network.CreateNewMemoryNetwork()
+func MakeNodeRunner(prev *network.MemoryNetwork) (*NodeRunner, *node.LocalNode) {
+	_, network, localNode := network.CreateMemoryNetwork(prev)
 
 	vth, _ := consensus.NewDefaultVotingThresholdPolicy(66, 66)
 	is, _ := consensus.NewISAAC(networkID, localNode, vth)

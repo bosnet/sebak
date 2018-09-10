@@ -65,9 +65,7 @@ func DummyMessageFromString(b []byte) (d DummyMessage, err error) {
 }
 
 func TestMemoryNetworkGetClient(t *testing.T) {
-	defer CleanUpMemoryNetwork()
-
-	_, s0, _ := CreateNewMemoryNetwork()
+	_, s0, _ := CreateMemoryNetwork(nil)
 
 	gotMessage := make(chan common.NetworkMessage)
 	go func() {
@@ -98,9 +96,7 @@ func TestMemoryNetworkGetClient(t *testing.T) {
 }
 
 func TestMemoryNetworkGetNodeInfo(t *testing.T) {
-	defer CleanUpMemoryNetwork()
-
-	_, s0, localNode := CreateNewMemoryNetwork()
+	_, s0, localNode := CreateMemoryNetwork(nil)
 
 	c0 := s0.GetClient(s0.Endpoint())
 	b, err := c0.GetNodeInfo()
@@ -123,9 +119,7 @@ func TestMemoryNetworkGetNodeInfo(t *testing.T) {
 }
 
 func TestMemoryNetworkConnect(t *testing.T) {
-	defer CleanUpMemoryNetwork()
-
-	_, s0, localNode := CreateNewMemoryNetwork()
+	_, s0, localNode := CreateMemoryNetwork(nil)
 
 	c0 := s0.GetClient(s0.Endpoint())
 	b, err := c0.Connect(localNode)

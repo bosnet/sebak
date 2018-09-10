@@ -24,7 +24,7 @@ func TestErrorBallotHasOverMaxTransactionsInBallot(t *testing.T) {
 
 	common.MaxTransactionsInBallot = 2
 
-	_, _, node := network.CreateNewMemoryNetwork()
+	_, _, node := network.CreateMemoryNetwork(nil)
 	round := round.Round{Number: 0, BlockHeight: 1, BlockHash: "hahaha", TotalTxs: 1}
 	_, tx := transaction.TestMakeTransaction(networkID, 1)
 
