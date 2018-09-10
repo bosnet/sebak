@@ -30,7 +30,7 @@ type MessageChecker struct {
 	NetworkID  []byte
 	Message    common.NetworkMessage
 
-	Log logging.Logger
+	Log         logging.Logger
 	Transaction transaction.Transaction
 }
 
