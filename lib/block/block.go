@@ -1,4 +1,4 @@
-package sebak
+package block
 
 import (
 	"encoding/json"
@@ -6,7 +6,6 @@ import (
 
 	"github.com/btcsuite/btcutil/base58"
 
-	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/round"
@@ -39,7 +38,7 @@ func (bck Block) String() string {
 	return string(encoded)
 }
 
-func MakeGenesisBlock(st *storage.LevelDBBackend, account block.BlockAccount) Block {
+func MakeGenesisBlock(st *storage.LevelDBBackend, account BlockAccount) Block {
 	proposer := "" // null proposer
 	round := round.Round{
 		Number:      0,

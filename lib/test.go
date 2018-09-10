@@ -20,7 +20,7 @@ var networkID []byte = []byte("sebak-test-network")
 var (
 	kp           *keypair.Full
 	account      *block.BlockAccount
-	genesisBlock Block
+	genesisBlock block.Block
 )
 
 func init() {
@@ -38,10 +38,10 @@ func MakeNodeRunner() (*NodeRunner, *node.LocalNode) {
 	return nodeRunner, localNode
 }
 
-func testMakeNewBlock(transactions []string) Block {
+func testMakeNewBlock(transactions []string) block.Block {
 	kp, _ := keypair.Random()
 
-	return NewBlock(
+	return block.NewBlock(
 		kp.Address(),
 		round.Round{
 			BlockHeight: 0,
@@ -52,22 +52,22 @@ func testMakeNewBlock(transactions []string) Block {
 	)
 }
 
-func TestMakeNewBlockOperation(networkID []byte, n int) (bos []BlockOperation) {
+func TestMakeNewBlockOperation(networkID []byte, n int) (bos []block.BlockOperation) {
 	_, tx := transaction.TestMakeTransaction(networkID, n)
 
 	for _, op := range tx.B.Operations {
-		bos = append(bos, NewBlockOperationFromOperation(op, tx))
+		bos = append(bos, block.NewBlockOperationFromOperation(op, tx))
 	}
 
 	return
 }
 
-func TestMakeNewBlockTransaction(networkID []byte, n int) BlockTransaction {
+func TestMakeNewBlockTransaction(networkID []byte, n int) block.BlockTransaction {
 	_, tx := transaction.TestMakeTransaction(networkID, n)
 
-	block := testMakeNewBlock([]string{tx.GetHash()})
+	theBlock := testMakeNewBlock([]string{tx.GetHash()})
 	a, _ := tx.Serialize()
-	return NewBlockTransactionFromTransaction(block.Hash, tx, a)
+	return block.NewBlockTransactionFromTransaction(theBlock.Hash, tx, a)
 }
 
 func TestGenerateNewSequenceID() uint64 {
@@ -109,8 +109,8 @@ func (c *SelfProposerThenNotProposer) Calculate(nr *NodeRunner, blockHeight uint
 	}
 }
 
-func GenerateBallot(t *testing.T, proposer *node.LocalNode, round round.Round, tx transaction.Transaction, ballotState common.BallotState, sender *node.LocalNode) *Ballot {
-	ballot := NewBallot(proposer, round, []string{tx.GetHash()})
+func GenerateBallot(t *testing.T, proposer *node.LocalNode, round round.Round, tx transaction.Transaction, ballotState common.BallotState, sender *node.LocalNode) *block.Ballot {
+	ballot := block.NewBallot(proposer, round, []string{tx.GetHash()})
 	ballot.SetVote(common.BallotStateINIT, common.VotingYES)
 	ballot.Sign(proposer.Keypair(), networkID)
 
@@ -124,8 +124,8 @@ func GenerateBallot(t *testing.T, proposer *node.LocalNode, round round.Round, t
 	return ballot
 }
 
-func GenerateEmptyTxBallot(t *testing.T, proposer *node.LocalNode, round round.Round, ballotState common.BallotState, sender *node.LocalNode) *Ballot {
-	ballot := NewBallot(proposer, round, []string{})
+func GenerateEmptyTxBallot(t *testing.T, proposer *node.LocalNode, round round.Round, ballotState common.BallotState, sender *node.LocalNode) *block.Ballot {
+	ballot := block.NewBallot(proposer, round, []string{})
 	ballot.SetVote(common.BallotStateINIT, common.VotingYES)
 	ballot.Sign(proposer.Keypair(), networkID)
 
@@ -139,7 +139,7 @@ func GenerateEmptyTxBallot(t *testing.T, proposer *node.LocalNode, round round.R
 	return ballot
 }
 
-func ReceiveBallot(t *testing.T, nodeRunner *NodeRunner, ballot *Ballot) error {
+func ReceiveBallot(t *testing.T, nodeRunner *NodeRunner, ballot *block.Ballot) error {
 	data, err := ballot.Serialize()
 	require.Nil(t, err)
 

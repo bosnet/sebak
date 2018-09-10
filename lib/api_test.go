@@ -145,18 +145,18 @@ func TestGetAccountTransactionsHandler(t *testing.T) {
 
 	var txs []transaction.Transaction
 	var txHashes []string
-	var btmap = make(map[string]BlockTransaction)
+	var btmap = make(map[string]block.BlockTransaction)
 	for i := 0; i < 5; i++ {
 		tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, kp)
 		txs = append(txs, tx)
 		txHashes = append(txHashes, tx.GetHash())
 	}
 
-	block := testMakeNewBlock(txHashes)
+	theBlock := testMakeNewBlock(txHashes)
 	for _, tx := range txs {
 		a, err := tx.Serialize()
 		require.Nil(t, err)
-		bt := NewBlockTransactionFromTransaction(block.Hash, tx, a)
+		bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, tx, a)
 		err = bt.Save(storage)
 		require.Nil(t, err)
 		btmap[bt.Hash] = bt
@@ -183,7 +183,7 @@ func TestGetAccountTransactionsHandler(t *testing.T) {
 			if !assert.Nil(t, err) {
 				panic(err)
 			}
-			bt := NewBlockTransactionFromTransaction(block.Hash, tx, a)
+			bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, tx, a)
 			err = bt.Save(storage)
 			if !assert.Nil(t, err) {
 				panic(err)
@@ -203,7 +203,7 @@ func TestGetAccountTransactionsHandler(t *testing.T) {
 		line, err := reader.ReadBytes('\n')
 		require.Nil(t, err)
 		line = bytes.Trim(line, "\n\t ")
-		var receivedBt BlockTransaction
+		var receivedBt block.BlockTransaction
 		json.Unmarshal(line, &receivedBt)
 		txS, err := btmap[receivedBt.Hash].Serialize()
 		require.Nil(t, err)
@@ -221,7 +221,7 @@ func TestGetAccountTransactionsHandler(t *testing.T) {
 	reader = bufio.NewReader(resp.Body)
 	readByte, err := ioutil.ReadAll(reader)
 	require.Nil(t, err)
-	var receivedBts []BlockTransaction
+	var receivedBts []block.BlockTransaction
 	json.Unmarshal(readByte, &receivedBts)
 
 	require.Equal(t, len(btmap), len(receivedBts), "length is not same")
@@ -249,23 +249,23 @@ func TestGetAccountOperationsHandler(t *testing.T) {
 
 	var txs []transaction.Transaction
 	var txHashes []string
-	var bomap = make(map[string]BlockOperation)
+	var bomap = make(map[string]block.BlockOperation)
 	for i := 0; i < 5; i++ {
 		tx := transaction.TestMakeTransactionWithKeypair(networkID, 3, kp)
 		txs = append(txs, tx)
 		txHashes = append(txHashes, tx.GetHash())
 	}
 
-	block := testMakeNewBlock(txHashes)
+	theBlock := testMakeNewBlock(txHashes)
 	for _, tx := range txs {
 		a, err := tx.Serialize()
 		require.Nil(t, err)
-		bt := NewBlockTransactionFromTransaction(block.Hash, tx, a)
+		bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, tx, a)
 		bt.Save(storage)
 
 		for _, boHash := range bt.Operations {
-			var bo BlockOperation
-			bo, err = GetBlockOperation(storage, boHash)
+			var bo block.BlockOperation
+			bo, err = block.GetBlockOperation(storage, boHash)
 			require.Nil(t, err)
 			bomap[bo.Hash] = bo
 		}
@@ -290,12 +290,12 @@ func TestGetAccountOperationsHandler(t *testing.T) {
 			if !assert.Nil(t, err) {
 				panic(err)
 			}
-			bt := NewBlockTransactionFromTransaction(block.Hash, tx, a)
+			bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, tx, a)
 			bt.Save(storage)
 
 			for _, boHash := range bt.Operations {
-				var bo BlockOperation
-				bo, err = GetBlockOperation(storage, boHash)
+				var bo block.BlockOperation
+				bo, err = block.GetBlockOperation(storage, boHash)
 				if !assert.Nil(t, err) {
 					panic(err)
 				}
@@ -315,7 +315,7 @@ func TestGetAccountOperationsHandler(t *testing.T) {
 		line, err := reader.ReadBytes('\n')
 		require.Nil(t, err)
 		line = bytes.Trim(line, "\n\t ")
-		var receivedBo BlockOperation
+		var receivedBo block.BlockOperation
 		json.Unmarshal(line, &receivedBo)
 		txS, err := bomap[receivedBo.Hash].Serialize()
 		require.Nil(t, err)
@@ -333,7 +333,7 @@ func TestGetAccountOperationsHandler(t *testing.T) {
 	reader = bufio.NewReader(resp2.Body)
 	readByte, err := ioutil.ReadAll(reader)
 	require.Nil(t, err)
-	var receivedBos []BlockOperation
+	var receivedBos []block.BlockOperation
 	json.Unmarshal(readByte, &receivedBos)
 
 	require.Equal(t, len(bomap), len(receivedBos), "length is not same")
@@ -363,8 +363,8 @@ func TestGetTransactionByHashHandler(t *testing.T) {
 	a, err := tx.Serialize()
 	require.Nil(t, err)
 
-	block := testMakeNewBlock([]string{tx.GetHash()})
-	bt := NewBlockTransactionFromTransaction(block.Hash, tx, a)
+	theBlock := testMakeNewBlock([]string{tx.GetHash()})
+	bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, tx, a)
 
 	// Do a Request
 	url := ts.URL + fmt.Sprintf("/transactions/%s", bt.Hash)
@@ -399,7 +399,7 @@ func TestGetTransactionByHashHandler(t *testing.T) {
 	reader = bufio.NewReader(resp2.Body)
 	readByte, err := ioutil.ReadAll(reader)
 	require.Nil(t, err)
-	var receivedBts BlockTransaction
+	var receivedBts block.BlockTransaction
 	json.Unmarshal(readByte, &receivedBts)
 
 	require.Equal(t, bt.Hash, receivedBts.Hash, "hash is not same")
@@ -420,18 +420,18 @@ func TestGetTransactionsHandler(t *testing.T) {
 
 	var txs []transaction.Transaction
 	var txHashes []string
-	var btmap = make(map[string]BlockTransaction)
+	var btmap = make(map[string]block.BlockTransaction)
 	for i := 0; i < 5; i++ {
 		_, tx := transaction.TestMakeTransaction(networkID, 1)
 		txs = append(txs, tx)
 		txHashes = append(txHashes, tx.GetHash())
 	}
 
-	block := testMakeNewBlock(txHashes)
+	theBlock := testMakeNewBlock(txHashes)
 	for _, tx := range txs {
 		a, err := tx.Serialize()
 		require.Nil(t, err)
-		bt := NewBlockTransactionFromTransaction(block.Hash, tx, a)
+		bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, tx, a)
 		err = bt.Save(storage)
 		require.Nil(t, err)
 		btmap[bt.Hash] = bt
@@ -458,7 +458,7 @@ func TestGetTransactionsHandler(t *testing.T) {
 			if !assert.Nil(t, err) {
 				panic(err)
 			}
-			bt := NewBlockTransactionFromTransaction(block.Hash, tx, a)
+			bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, tx, a)
 			err = bt.Save(storage)
 			if !assert.Nil(t, err) {
 				panic(err)
@@ -477,7 +477,7 @@ func TestGetTransactionsHandler(t *testing.T) {
 		line, err := reader.ReadBytes('\n')
 		require.Nil(t, err)
 		line = bytes.Trim(line, "\n\t ")
-		var receivedBt BlockTransaction
+		var receivedBt block.BlockTransaction
 		json.Unmarshal(line, &receivedBt)
 		txS, err := btmap[receivedBt.Hash].Serialize()
 		require.Nil(t, err)
@@ -495,7 +495,7 @@ func TestGetTransactionsHandler(t *testing.T) {
 	reader = bufio.NewReader(resp2.Body)
 	readByte, err := ioutil.ReadAll(reader)
 	require.Nil(t, err)
-	var receivedBts []BlockTransaction
+	var receivedBts []block.BlockTransaction
 	json.Unmarshal(readByte, &receivedBts)
 
 	require.Equal(t, len(receivedBts), len(receivedBts), "length is not same")

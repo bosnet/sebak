@@ -7,7 +7,6 @@ import (
 	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
 
-	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 )
 
@@ -15,7 +14,6 @@ var networkID []byte = []byte("sebak-test-network")
 
 var (
 	kp      *keypair.Full
-	account *block.BlockAccount
 )
 
 func init() {
@@ -113,7 +111,7 @@ func GetTransaction(t *testing.T) (tx Transaction, txByte []byte) {
 	kpNewAccount, _ := keypair.Random()
 
 	tx = MakeTransactionCreateAccount(kp, kpNewAccount.Address(), initialBalance)
-	tx.B.SequenceID = account.SequenceID
+	tx.B.SequenceID = 0
 	tx.Sign(kp, networkID)
 
 	var err error

@@ -6,6 +6,7 @@ import (
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/transaction"
 	logging "github.com/inconshreveable/log15"
+	"boscoin.io/sebak/lib/block"
 )
 
 type CheckerStopCloseConsensus struct {
@@ -79,13 +80,13 @@ func CheckNodeRunnerHandleMessageHistory(c common.Checker, args ...interface{}) 
 	checker := c.(*NodeRunnerHandleMessageChecker)
 
 	var found bool
-	if found, err = ExistsBlockTransactionHistory(checker.NodeRunner.Storage(), checker.Transaction.GetHash()); found && err == nil {
+	if found, err = block.ExistsBlockTransactionHistory(checker.NodeRunner.Storage(), checker.Transaction.GetHash()); found && err == nil {
 		checker.NodeRunner.Log().Debug("found in history", "transction", checker.Transaction.GetHash())
 		err = errors.ErrorNewButKnownMessage
 		return
 	}
 
-	bt := NewTransactionHistoryFromTransaction(checker.Transaction, checker.Message.Data)
+	bt := block.NewTransactionHistoryFromTransaction(checker.Transaction, checker.Message.Data)
 	if err = bt.Save(checker.NodeRunner.Storage()); err != nil {
 		return
 	}
@@ -130,7 +131,7 @@ type BallotChecker struct {
 	NetworkID          []byte
 	Message            common.NetworkMessage
 	IsNew              bool
-	Ballot             Ballot
+	Ballot             block.Ballot
 	VotingHole         common.VotingHole
 	RoundVote          *RoundVote
 	Result             RoundVoteResult
@@ -144,8 +145,8 @@ type BallotChecker struct {
 func BallotUnmarshal(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotChecker)
 
-	var ballot Ballot
-	if ballot, err = NewBallotFromJSON(checker.Message.Data); err != nil {
+	var ballot block.Ballot
+	if ballot, err = block.NewBallotFromJSON(checker.Message.Data); err != nil {
 		return
 	}
 
@@ -444,8 +445,8 @@ func ACCEPTBallotStore(c common.Checker, args ...interface{}) (err error) {
 
 	willStore := checker.FinishedVotingHole == common.VotingYES
 	if checker.FinishedVotingHole == common.VotingYES {
-		var block Block
-		block, err = FinishBallot(
+		var theBlock block.Block
+		theBlock, err = block.FinishBallot(
 			checker.NodeRunner.Storage(),
 			checker.Ballot,
 			checker.NodeRunner.Consensus().TransactionPool,

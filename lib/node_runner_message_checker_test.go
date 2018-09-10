@@ -8,6 +8,7 @@ import (
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/transaction"
+	"boscoin.io/sebak/lib/block"
 )
 
 func TestMessageChecker(t *testing.T) {
@@ -39,7 +40,7 @@ func TestMessageChecker(t *testing.T) {
 	err = SaveTransactionHistory(checker)
 	require.Nil(t, err)
 	var found bool
-	found, err = ExistsBlockTransactionHistory(checker.NodeRunner.Storage(), checker.Transaction.GetHash())
+	found, err = block.ExistsBlockTransactionHistory(checker.NodeRunner.Storage(), checker.Transaction.GetHash())
 	require.True(t, found)
 
 	err = PushIntoTransactionPool(checker)

@@ -129,7 +129,7 @@ func MakeGenesisBlock(addressStr, networkID, balanceStr, storageUri string) (str
 	)
 	account.Save(st)
 
-	sebak.MakeGenesisBlock(st, *account)
+	block.MakeGenesisBlock(st, *account)
 
 	st.Close()
 	return "", nil

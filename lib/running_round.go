@@ -4,6 +4,7 @@ import (
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/round"
+	"boscoin.io/sebak/lib/block"
 )
 
 type RunningRound struct {
@@ -15,7 +16,7 @@ type RunningRound struct {
 	Voted        map[ /* Proposer */ string]*RoundVote
 }
 
-func NewRunningRound(proposer string, ballot Ballot) (*RunningRound, error) {
+func NewRunningRound(proposer string, ballot block.Ballot) (*RunningRound, error) {
 	transactions := map[string][]string{
 		ballot.Proposer(): ballot.Transactions(),
 	}
@@ -43,7 +44,7 @@ func (rr *RunningRound) RoundVote(proposer string) (rv *RoundVote, err error) {
 	return
 }
 
-func (rr *RunningRound) IsVoted(ballot Ballot) bool {
+func (rr *RunningRound) IsVoted(ballot block.Ballot) bool {
 	roundVote, err := rr.RoundVote(ballot.Proposer())
 	if err != nil {
 		return false
@@ -52,7 +53,7 @@ func (rr *RunningRound) IsVoted(ballot Ballot) bool {
 	return roundVote.IsVoted(ballot)
 }
 
-func (rr *RunningRound) Vote(ballot Ballot) {
+func (rr *RunningRound) Vote(ballot block.Ballot) {
 	rr.Lock()
 	defer rr.Unlock()
 

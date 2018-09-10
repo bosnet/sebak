@@ -2,6 +2,7 @@ package sebak
 
 import (
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/block"
 )
 
 type RoundVoteResult map[ /* Node.Address() */ string]common.VotingHole
@@ -11,7 +12,7 @@ type RoundVote struct {
 	ACCEPT RoundVoteResult
 }
 
-func NewRoundVote(ballot Ballot) (rv *RoundVote) {
+func NewRoundVote(ballot block.Ballot) (rv *RoundVote) {
 	rv = &RoundVote{
 		SIGN:   RoundVoteResult{},
 		ACCEPT: RoundVoteResult{},
@@ -22,7 +23,7 @@ func NewRoundVote(ballot Ballot) (rv *RoundVote) {
 	return rv
 }
 
-func (rv *RoundVote) IsVoted(ballot Ballot) bool {
+func (rv *RoundVote) IsVoted(ballot block.Ballot) bool {
 	result := rv.GetResult(ballot.State())
 
 	_, found := result[ballot.Source()]
@@ -36,7 +37,7 @@ func (rv *RoundVote) IsVotedByNode(state common.BallotState, node string) bool {
 	return found
 }
 
-func (rv *RoundVote) Vote(ballot Ballot) (isNew bool, err error) {
+func (rv *RoundVote) Vote(ballot block.Ballot) (isNew bool, err error) {
 	if ballot.IsFromProposer() {
 		return
 	}

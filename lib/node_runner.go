@@ -20,6 +20,7 @@ import (
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/round"
 	"boscoin.io/sebak/lib/storage"
+	"boscoin.io/sebak/lib/block"
 )
 
 var DefaultHandleTransactionCheckerFuncs = []common.CheckerFunc{
@@ -408,8 +409,8 @@ func (nr *NodeRunner) handleBallotMessage(message common.NetworkMessage) (err er
 func (nr *NodeRunner) InitRound() {
 	// get latest blocks
 	var err error
-	var latestBlock Block
-	if latestBlock, err = GetLatestBlock(nr.storage); err != nil {
+	var latestBlock block.Block
+	if latestBlock, err = block.GetLatestBlock(nr.storage); err != nil {
 		panic(err)
 	}
 
@@ -541,7 +542,7 @@ func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) error {
 	// remove invalid transactions
 	nr.Consensus().TransactionPool.Remove(transactionsChecker.InvalidTransactions()...)
 
-	ballot := NewBallot(nr.localNode, round, transactionsChecker.ValidTransactions)
+	ballot := block.NewBallot(nr.localNode, round, transactionsChecker.ValidTransactions)
 	ballot.SetVote(common.BallotStateINIT, common.VotingYES)
 	ballot.Sign(nr.localNode.Keypair(), nr.networkID)
 

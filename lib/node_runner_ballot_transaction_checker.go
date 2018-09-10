@@ -4,6 +4,9 @@ import (
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/node"
+	"boscoin.io/sebak/lib/block"
+	"boscoin.io/sebak/lib/storage"
+	"boscoin.io/sebak/lib/transaction"
 )
 
 type BallotTransactionChecker struct {
@@ -52,7 +55,7 @@ func IsNew(c common.Checker, args ...interface{}) (err error) {
 	for _, hash := range checker.Transactions {
 		// check transaction is already stored
 		var found bool
-		if found, err = ExistBlockTransaction(checker.NodeRunner.Storage(), hash); err != nil || found {
+		if found, err = block.ExistBlockTransaction(checker.NodeRunner.Storage(), hash); err != nil || found {
 			if !checker.CheckAll {
 				err = errors.ErrorNewButKnownMessage
 				return
@@ -122,7 +125,8 @@ func BallotTransactionsSourceCheck(c common.Checker, args ...interface{}) (err e
 	for _, hash := range checker.ValidTransactions {
 		tx, _ := checker.NodeRunner.Consensus().TransactionPool.Get(hash)
 
-		if err = tx.Validate(checker.NodeRunner.Storage()); err != nil {
+
+		if err = ValidateTx(checker.NodeRunner.Storage(), tx); err != nil {
 			if !checker.CheckAll {
 				return
 			}
@@ -134,5 +138,77 @@ func BallotTransactionsSourceCheck(c common.Checker, args ...interface{}) (err e
 	err = nil
 	checker.setValidTransactions(validTransactions)
 
+	return
+}
+
+// Validate checks,
+// * source account exists
+// * sequenceID is valid
+// * source has enough balance to pay
+// * and it's `Operations`
+func ValidateTx(st *storage.LevelDBBackend, tx transaction.Transaction) (err error) {
+	// check, source exists
+	var ba *block.BlockAccount
+	if ba, err = block.GetBlockAccount(st, tx.B.Source); err != nil {
+		err = errors.ErrorBlockAccountDoesNotExists
+		return
+	}
+
+	// check, sequenceID is based on latest sequenceID
+	if !tx.IsValidSequenceID(ba.SequenceID) {
+		err = errors.ErrorTransactionInvalidSequenceID
+		return
+	}
+
+	// get the balance at sequenceID
+	var bac block.BlockAccountSequenceID
+	bac, err = block.GetBlockAccountSequenceID(st, tx.B.Source, tx.B.SequenceID)
+	if err != nil {
+		return
+	}
+
+	totalAmount := tx.TotalAmount(true)
+
+	// check, have enough balance at sequenceID
+	if bac.Balance < totalAmount {
+		err = errors.ErrorTransactionExcessAbilityToPay
+		return
+	}
+
+	for _, op := range tx.B.Operations {
+		if err = ValidateOp(st, op); err != nil {
+			return
+		}
+	}
+
+	return
+}
+
+func ValidateOp(st *storage.LevelDBBackend, op transaction.Operation) (err error) {
+	switch op.H.Type {
+	case transaction.OperationCreateAccount:
+		if _, ok := op.B.(transaction.OperationBodyCreateAccount); !ok {
+			err = errors.ErrorTypeOperationBodyNotMatched
+			return
+		}
+		var exists bool
+		if exists, err = block.ExistBlockAccount(st, op.B.(transaction.OperationBodyCreateAccount).Target); err == nil && !exists {
+			err = errors.ErrorBlockAccountDoesNotExists
+			return
+		}
+	case transaction.OperationPayment:
+		if _, ok := op.B.(transaction.OperationBodyPayment); !ok {
+			err = errors.ErrorTypeOperationBodyNotMatched
+			return
+		}
+		var exists bool
+		if exists, err = block.ExistBlockAccount(st, op.B.(transaction.OperationBodyPayment).Target); err == nil && !exists {
+			err = errors.ErrorBlockAccountDoesNotExists
+			return
+		}
+	default:
+		err = errors.ErrorUnknownOperationType
+		return
+	}
 	return
 }

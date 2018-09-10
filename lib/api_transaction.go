@@ -7,13 +7,14 @@ import (
 	"boscoin.io/sebak/lib/observer"
 
 	"github.com/gorilla/mux"
+	"boscoin.io/sebak/lib/block"
 )
 
 func (api NetworkHandlerAPI) GetTransactionsHandler(w http.ResponseWriter, r *http.Request) {
 
-	readFunc := func(cnt int) []*BlockTransaction {
-		var txs []*BlockTransaction
-		iterFunc, closeFunc := GetBlockTransactions(api.storage, false)
+	readFunc := func(cnt int) []*block.BlockTransaction {
+		var txs []*block.BlockTransaction
+		iterFunc, closeFunc := block.GetBlockTransactions(api.storage, false)
 		for {
 			t, hasNext := iterFunc()
 			if !hasNext || cnt == 0 {
@@ -49,7 +50,7 @@ func (api NetworkHandlerAPI) GetTransactionByHashHandler(w http.ResponseWriter, 
 	vars := mux.Vars(r)
 	key := vars["txid"] //TODO: validate input
 
-	found, err := ExistBlockTransaction(api.storage, key)
+	found, err := block.ExistBlockTransaction(api.storage, key)
 	if err != nil {
 		http.Error(w, "Error reading request body", http.StatusInternalServerError)
 		return
@@ -58,7 +59,7 @@ func (api NetworkHandlerAPI) GetTransactionByHashHandler(w http.ResponseWriter, 
 	var payload interface{}
 
 	if found {
-		bt, err := GetBlockTransaction(api.storage, key)
+		bt, err := block.GetBlockTransaction(api.storage, key)
 		if err != nil {
 			http.Error(w, "Error reading request body", http.StatusInternalServerError)
 			return
@@ -66,7 +67,7 @@ func (api NetworkHandlerAPI) GetTransactionByHashHandler(w http.ResponseWriter, 
 		payload = bt
 
 	} else {
-		bth, err := GetBlockTransactionHistory(api.storage, key)
+		bth, err := block.GetBlockTransactionHistory(api.storage, key)
 		if err != nil {
 			http.Error(w, "Error reading request body", http.StatusInternalServerError)
 			return

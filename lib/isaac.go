@@ -7,6 +7,7 @@ import (
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/round"
 	"boscoin.io/sebak/lib/transaction"
+	"boscoin.io/sebak/lib/block"
 )
 
 type TransactionPool struct {
@@ -122,9 +123,9 @@ type ISAAC struct {
 	NetworkID             []byte
 	Node                  *node.LocalNode
 	VotingThresholdPolicy common.VotingThresholdPolicy
-	TransactionPool       *TransactionPool
+	TransactionPool       *transaction.TransactionPool
 	RunningRounds         map[ /* Round.Hash() */ string]*RunningRound
-	LatestConfirmedBlock  Block
+	LatestConfirmedBlock  block.Block
 	LatestRound           round.Round
 }
 
@@ -133,7 +134,7 @@ func NewISAAC(networkID []byte, node *node.LocalNode, votingThresholdPolicy comm
 		NetworkID: networkID,
 		Node:      node,
 		VotingThresholdPolicy: votingThresholdPolicy,
-		TransactionPool:       NewTransactionPool(),
+		TransactionPool:       transaction.NewTransactionPool(),
 		RunningRounds:         map[string]*RunningRound{},
 	}
 
@@ -177,7 +178,7 @@ func (is *ISAAC) CloseConsensus(proposer string, round round.Round, vh common.Vo
 	return
 }
 
-func (is *ISAAC) SetLatestConsensusedBlock(block Block) {
+func (is *ISAAC) SetLatestConsensusedBlock(block block.Block) {
 	is.LatestConfirmedBlock = block
 }
 

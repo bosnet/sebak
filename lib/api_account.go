@@ -47,9 +47,9 @@ func (api NetworkHandlerAPI) GetAccountTransactionsHandler(w http.ResponseWriter
 	vars := mux.Vars(r)
 	address := vars["address"]
 
-	readFunc := func(cnt int) []*BlockTransaction {
-		var txs []*BlockTransaction
-		iterFunc, closeFunc := GetBlockTransactionsByAccount(api.storage, address, false)
+	readFunc := func(cnt int) []*block.BlockTransaction {
+		var txs []*block.BlockTransaction
+		iterFunc, closeFunc := block.GetBlockTransactionsByAccount(api.storage, address, false)
 		for {
 			t, hasNext := iterFunc()
 			if !hasNext || cnt == 0 {
@@ -86,9 +86,9 @@ func (api NetworkHandlerAPI) GetAccountOperationsHandler(w http.ResponseWriter, 
 	vars := mux.Vars(r)
 	address := vars["address"]
 
-	readFunc := func(cnt int) []*BlockOperation {
-		var txs []*BlockOperation
-		iterFunc, closeFunc := GetBlockOperationsBySource(api.storage, address, false)
+	readFunc := func(cnt int) []*block.BlockOperation {
+		var txs []*block.BlockOperation
+		iterFunc, closeFunc := block.GetBlockOperationsBySource(api.storage, address, false)
 		for {
 			t, hasNext := iterFunc()
 			if !hasNext || cnt == 0 {

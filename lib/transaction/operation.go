@@ -8,7 +8,6 @@ import (
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
-	"boscoin.io/sebak/lib/storage"
 )
 
 type OperationType string
@@ -33,14 +32,6 @@ func (o Operation) MakeHashString() string {
 
 func (o Operation) IsWellFormed(networkID []byte) (err error) {
 	if err = o.B.IsWellFormed(networkID); err != nil {
-		return
-	}
-
-	return
-}
-
-func (o Operation) Validate(st *storage.LevelDBBackend) (err error) {
-	if err = o.B.Validate(st); err != nil {
 		return
 	}
 
@@ -132,21 +123,7 @@ type OperationHeader struct {
 }
 
 type OperationBody interface {
-	Validate(*storage.LevelDBBackend) error
 	IsWellFormed([]byte) error
 	TargetAddress() string
 	GetAmount() common.Amount
-}
-
-// FinishOperation do finish the task after consensus by the type of each operation.
-func FinishOperation(st *storage.LevelDBBackend, tx Transaction, op Operation) (err error) {
-	switch op.H.Type {
-	case OperationCreateAccount:
-		return FinishOperationCreateAccount(st, tx, op)
-	case OperationPayment:
-		return FinishOperationPayment(st, tx, op)
-	default:
-		err = errors.ErrorUnknownOperationType
-		return
-	}
 }

@@ -1,4 +1,4 @@
-package sebak
+package block
 
 import (
 	"testing"
@@ -17,12 +17,12 @@ import (
 )
 
 func TestErrorBallotHasOverMaxTransactionsInBallot(t *testing.T) {
-	MaxTransactionsInBallotOrig := MaxTransactionsInBallot
+	MaxTransactionsInBallotOrig := common.MaxTransactionsInBallot
 	defer func() {
-		MaxTransactionsInBallot = MaxTransactionsInBallotOrig
+		common.MaxTransactionsInBallot = MaxTransactionsInBallotOrig
 	}()
 
-	MaxTransactionsInBallot = 2
+	common.MaxTransactionsInBallot = 2
 
 	_, _, node := network.CreateNewMemoryNetwork()
 	round := round.Round{Number: 0, BlockHeight: 1, BlockHash: "hahaha", TotalTxs: 1}
@@ -33,7 +33,7 @@ func TestErrorBallotHasOverMaxTransactionsInBallot(t *testing.T) {
 	require.Nil(t, ballot.IsWellFormed(networkID))
 
 	var txs []string
-	for i := 0; i < MaxTransactionsInBallot+1; i++ {
+	for i := 0; i < common.MaxTransactionsInBallot+1; i++ {
 		_, tx := transaction.TestMakeTransaction(networkID, 1)
 		txs = append(txs, tx.GetHash())
 	}
@@ -45,6 +45,7 @@ func TestErrorBallotHasOverMaxTransactionsInBallot(t *testing.T) {
 	require.Error(t, err, errors.ErrorBallotHasOverMaxTransactionsInBallot)
 }
 
+/*
 //	TestBallotHash checks that ballot.GetHash() makes non-empty hash.
 func TestBallotHash(t *testing.T) {
 	nodeRunners := createTestNodeRunner(1)
@@ -63,6 +64,7 @@ func TestBallotHash(t *testing.T) {
 	require.NotZero(t, len(ballot.GetHash()))
 
 }
+*/
 
 func TestBallotBadConfirmedTime(t *testing.T) {
 	kp, _ := keypair.Random()
@@ -89,7 +91,7 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 		ballot := NewBallot(node, round, []string{})
 		ballot.Sign(kp, networkID)
 
-		newConfirmed := time.Now().Add(time.Duration(2) * BallotConfirmedTimeAllowDuration)
+		newConfirmed := time.Now().Add(time.Duration(2) * common.BallotConfirmedTimeAllowDuration)
 		ballot.B.Confirmed = common.FormatISO8601(newConfirmed)
 		updateBallot(ballot)
 
@@ -101,7 +103,7 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 		ballot := NewBallot(node, round, []string{})
 		ballot.Sign(kp, networkID)
 
-		newConfirmed := time.Now().Add(time.Duration(-2) * BallotConfirmedTimeAllowDuration)
+		newConfirmed := time.Now().Add(time.Duration(-2) * common.BallotConfirmedTimeAllowDuration)
 		ballot.B.Confirmed = common.FormatISO8601(newConfirmed)
 		updateBallot(ballot)
 
@@ -113,7 +115,7 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 		ballot := NewBallot(node, round, []string{})
 		ballot.Sign(kp, networkID)
 
-		newConfirmed := time.Now().Add(time.Duration(2) * BallotConfirmedTimeAllowDuration)
+		newConfirmed := time.Now().Add(time.Duration(2) * common.BallotConfirmedTimeAllowDuration)
 		ballot.B.Proposed.Confirmed = common.FormatISO8601(newConfirmed)
 		updateBallot(ballot)
 
@@ -125,7 +127,7 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 		ballot := NewBallot(node, round, []string{})
 		ballot.Sign(kp, networkID)
 
-		newConfirmed := time.Now().Add(time.Duration(-2) * BallotConfirmedTimeAllowDuration)
+		newConfirmed := time.Now().Add(time.Duration(-2) * common.BallotConfirmedTimeAllowDuration)
 		ballot.B.Proposed.Confirmed = common.FormatISO8601(newConfirmed)
 		updateBallot(ballot)
 

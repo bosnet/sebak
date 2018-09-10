@@ -1,4 +1,4 @@
-package sebak
+package block
 
 import (
 	"encoding/json"
@@ -7,7 +7,6 @@ import (
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/stellar/go/keypair"
 
-	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/node"
@@ -72,7 +71,7 @@ func (b Ballot) String() string {
 }
 
 func (b Ballot) IsWellFormed(networkID []byte) (err error) {
-	if b.TransactionsLength() > MaxTransactionsInBallot {
+	if b.TransactionsLength() > common.MaxTransactionsInBallot {
 		err = errors.ErrorBallotHasOverMaxTransactionsInBallot
 		return
 	}
@@ -91,8 +90,8 @@ func (b Ballot) IsWellFormed(networkID []byte) (err error) {
 	}
 
 	now := time.Now()
-	timeStart := now.Add(time.Duration(-1) * BallotConfirmedTimeAllowDuration)
-	timeEnd := now.Add(BallotConfirmedTimeAllowDuration)
+	timeStart := now.Add(time.Duration(-1) * common.BallotConfirmedTimeAllowDuration)
+	timeEnd := now.Add(common.BallotConfirmedTimeAllowDuration)
 	if confirmed.Before(timeStart) || confirmed.After(timeEnd) {
 		err = errors.ErrorMessageHasIncorrectTime
 		return
@@ -240,7 +239,7 @@ func (rb BallotBody) MakeHashString() string {
 	return base58.Encode(rb.MakeHash())
 }
 
-func FinishBallot(st *storage.LevelDBBackend, ballot Ballot, transactionPool *TransactionPool) (blk Block, err error) {
+func FinishBallot(st *storage.LevelDBBackend, ballot Ballot, transactionPool *transaction.TransactionPool) (blk Block, err error) {
 	var ts *storage.LevelDBBackend
 	if ts, err = st.OpenTransaction(); err != nil {
 		return
@@ -271,14 +270,14 @@ func FinishBallot(st *storage.LevelDBBackend, ballot Ballot, transactionPool *Tr
 			return
 		}
 		for _, op := range tx.B.Operations {
-			if err = transaction.FinishOperation(ts, tx, op); err != nil {
+			if err = FinishOperation(ts, tx, op); err != nil {
 				ts.Discard()
 				return
 			}
 		}
 
-		var baSource *block.BlockAccount
-		if baSource, err = block.GetBlockAccount(ts, tx.B.Source); err != nil {
+		var baSource *BlockAccount
+		if baSource, err = GetBlockAccount(ts, tx.B.Source); err != nil {
 			err = errors.ErrorBlockAccountDoesNotExists
 			ts.Discard()
 			return
@@ -299,6 +298,69 @@ func FinishBallot(st *storage.LevelDBBackend, ballot Ballot, transactionPool *Tr
 	if err = ts.Commit(); err != nil {
 		ts.Discard()
 	}
+
+	return
+}
+
+
+// FinishOperation do finish the task after consensus by the type of each operation.
+func FinishOperation(st *storage.LevelDBBackend, tx transaction.Transaction, op transaction.Operation) (err error) {
+	switch op.H.Type {
+	case transaction.OperationCreateAccount:
+		return FinishOperationCreateAccount(st, tx, op)
+	case transaction.OperationPayment:
+		return FinishOperationPayment(st, tx, op)
+	default:
+		err = errors.ErrorUnknownOperationType
+		return
+	}
+}
+
+func FinishOperationCreateAccount(st *storage.LevelDBBackend, tx transaction.Transaction, op transaction.Operation) (err error) {
+	var baSource, baTarget *BlockAccount
+	if baSource, err = GetBlockAccount(st, tx.B.Source); err != nil {
+		err = errors.ErrorBlockAccountDoesNotExists
+		return
+	}
+	if baTarget, err = GetBlockAccount(st, op.B.TargetAddress()); err == nil {
+		err = errors.ErrorBlockAccountAlreadyExists
+		return
+	} else {
+		err = nil
+	}
+
+	baTarget = NewBlockAccount(
+		op.B.TargetAddress(),
+		op.B.GetAmount(),
+	)
+	if err = baTarget.Save(st); err != nil {
+		return
+	}
+
+	log.Debug("new account created", "source", baSource, "target", baTarget)
+
+	return
+}
+
+func FinishOperationPayment(st *storage.LevelDBBackend, tx transaction.Transaction, op transaction.Operation) (err error) {
+	var baSource, baTarget *BlockAccount
+	if baSource, err = GetBlockAccount(st, tx.B.Source); err != nil {
+		err = errors.ErrorBlockAccountDoesNotExists
+		return
+	}
+	if baTarget, err = GetBlockAccount(st, op.B.TargetAddress()); err != nil {
+		err = errors.ErrorBlockAccountDoesNotExists
+		return
+	}
+
+	if err = baTarget.Deposit(op.B.GetAmount()); err != nil {
+		return
+	}
+	if err = baTarget.Save(st); err != nil {
+		return
+	}
+
+	log.Debug("payment done", "source", baSource, "target", baTarget, "amount", op.B.GetAmount())
 
 	return
 }

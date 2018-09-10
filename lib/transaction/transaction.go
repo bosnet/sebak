@@ -6,10 +6,8 @@ import (
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/stellar/go/keypair"
 
-	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
-	"boscoin.io/sebak/lib/storage"
 )
 
 // TODO versioning
@@ -104,49 +102,6 @@ func (tx Transaction) IsWellFormed(networkID []byte) (err error) {
 	}
 	if err = common.RunChecker(checker, common.DefaultDeferFunc); err != nil {
 		return
-	}
-
-	return
-}
-
-// Validate checks,
-// * source account exists
-// * sequenceID is valid
-// * source has enough balance to pay
-// * and it's `Operations`
-func (tx Transaction) Validate(st *storage.LevelDBBackend) (err error) {
-	// check, source exists
-	var ba *block.BlockAccount
-	if ba, err = block.GetBlockAccount(st, tx.B.Source); err != nil {
-		err = errors.ErrorBlockAccountDoesNotExists
-		return
-	}
-
-	// check, sequenceID is based on latest sequenceID
-	if !tx.IsValidSequenceID(ba.SequenceID) {
-		err = errors.ErrorTransactionInvalidSequenceID
-		return
-	}
-
-	// get the balance at sequenceID
-	var bac block.BlockAccountSequenceID
-	bac, err = block.GetBlockAccountSequenceID(st, tx.B.Source, tx.B.SequenceID)
-	if err != nil {
-		return
-	}
-
-	totalAmount := tx.TotalAmount(true)
-
-	// check, have enough balance at sequenceID
-	if bac.Balance < totalAmount {
-		err = errors.ErrorTransactionExcessAbilityToPay
-		return
-	}
-
-	for _, op := range tx.B.Operations {
-		if err = op.Validate(st); err != nil {
-			return
-		}
 	}
 
 	return

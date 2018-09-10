@@ -60,7 +60,7 @@ func createTestNodeRunner(n int) []*NodeRunner {
 		st, _ := storage.NewTestMemoryLevelDBBackend()
 
 		account.Save(st)
-		genesisBlock = MakeGenesisBlock(st, *account)
+		genesisBlock = block.MakeGenesisBlock(st, *account)
 
 		nr, err := NewNodeRunner(string(networkID), v, p, ns[i], is, st)
 		if err != nil {
@@ -157,7 +157,7 @@ func createTestNodeRunnersHTTP2Network(n int) (nodeRunners []*NodeRunner, rootKP
 		nodeRunner, _ := NewNodeRunner(string(networkID), node, vth, network, is, st)
 
 		genesisAccount.Save(nodeRunner.Storage())
-		MakeGenesisBlock(st, *genesisAccount)
+		block.MakeGenesisBlock(st, *genesisAccount)
 
 		nodeRunners = append(nodeRunners, nodeRunner)
 	}
@@ -260,7 +260,7 @@ func TestNodeRunnerSaveBlock(t *testing.T) {
 	nodeRunners, _ := createTestNodeRunnersHTTP2NetworkWithReady(numberOfNodes)
 	previousBlockHeight := map[string]uint64{}
 	for _, nodeRunner := range nodeRunners {
-		bck, err := GetLatestBlock(nodeRunner.Storage())
+		bck, err := block.GetLatestBlock(nodeRunner.Storage())
 		if err != nil {
 			t.Error(err)
 			return
@@ -280,7 +280,7 @@ func TestNodeRunnerSaveBlock(t *testing.T) {
 	}
 	wg.Wait()
 	for _, nodeRunner := range nodeRunners {
-		bck, err := GetLatestBlock(nodeRunner.Storage())
+		bck, err := block.GetLatestBlock(nodeRunner.Storage())
 		if err != nil {
 			t.Error(err)
 			return

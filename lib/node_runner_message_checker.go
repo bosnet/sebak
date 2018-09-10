@@ -19,6 +19,7 @@ import (
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/transaction"
+	"boscoin.io/sebak/lib/block"
 )
 
 type MessageChecker struct {
@@ -74,13 +75,13 @@ func SaveTransactionHistory(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*MessageChecker)
 
 	var found bool
-	if found, err = ExistsBlockTransactionHistory(checker.NodeRunner.Storage(), checker.Transaction.GetHash()); found && err == nil {
+	if found, err = block.ExistsBlockTransactionHistory(checker.NodeRunner.Storage(), checker.Transaction.GetHash()); found && err == nil {
 		checker.Log.Debug("found in history")
 		err = errors.ErrorNewButKnownMessage
 		return
 	}
 
-	bt := NewTransactionHistoryFromTransaction(checker.Transaction, checker.Message.Data)
+	bt := block.NewTransactionHistoryFromTransaction(checker.Transaction, checker.Message.Data)
 	if err = bt.Save(checker.NodeRunner.Storage()); err != nil {
 		return
 	}
@@ -107,7 +108,7 @@ func MessageHasSameSource(c common.Checker, args ...interface{}) (err error) {
 func MessageValidate(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*MessageChecker)
 
-	if err = checker.Transaction.Validate(checker.NodeRunner.Storage()); err != nil {
+	if err = ValidateTx(checker.NodeRunner.Storage(), checker.Transaction); err != nil {
 		return
 	}
 

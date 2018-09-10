@@ -5,10 +5,10 @@ import (
 	"strings"
 	"testing"
 
-	"boscoin.io/sebak/lib"
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/storage"
 	"github.com/stretchr/testify/require"
+	"boscoin.io/sebak/lib/transaction"
 )
 
 func TestAPIResourceAccount(t *testing.T) {
@@ -45,10 +45,10 @@ func TestAPIResourceAccount(t *testing.T) {
 
 	// Transaction
 	{
-		_, tx := sebak.TestMakeTransaction([]byte{0x00}, 1)
+		_, tx := transaction.TestMakeTransaction([]byte{0x00}, 1)
 		a, err := tx.Serialize()
 		require.Nil(t, err)
-		bt := sebak.NewBlockTransactionFromTransaction("dummy", tx, a)
+		bt := block.NewBlockTransactionFromTransaction("dummy", tx, a)
 		bt.Save(storage)
 
 		rt := &APIResourceTransaction{
@@ -84,12 +84,12 @@ func TestAPIResourceAccount(t *testing.T) {
 
 	// Operation
 	{
-		_, tx := sebak.TestMakeTransaction([]byte{0x00}, 1)
+		_, tx := transaction.TestMakeTransaction([]byte{0x00}, 1)
 		a, err := tx.Serialize()
 		require.Nil(t, err)
-		bt := sebak.NewBlockTransactionFromTransaction("dummy", tx, a)
+		bt := block.NewBlockTransactionFromTransaction("dummy", tx, a)
 		bt.Save(storage)
-		bo, err := sebak.GetBlockOperation(storage, bt.Operations[0])
+		bo, err := block.GetBlockOperation(storage, bt.Operations[0])
 
 		ro := &APIResourceOperation{
 			hash:    bo.Hash,
@@ -120,16 +120,16 @@ func TestAPIResourceAccount(t *testing.T) {
 
 	// List
 	{
-		_, tx := sebak.TestMakeTransaction([]byte{0x00}, 3)
+		_, tx := transaction.TestMakeTransaction([]byte{0x00}, 3)
 		a, err := tx.Serialize()
 		require.Nil(t, err)
-		bt := sebak.NewBlockTransactionFromTransaction("dummy", tx, a)
+		bt := block.NewBlockTransactionFromTransaction("dummy", tx, a)
 		bt.Save(storage)
 
 		var rol []APIResource
 		for _, boHash := range bt.Operations {
-			var bo sebak.BlockOperation
-			bo, err = sebak.GetBlockOperation(storage, boHash)
+			var bo block.BlockOperation
+			bo, err = block.GetBlockOperation(storage, boHash)
 			require.Nil(t, err)
 
 			ro := &APIResourceOperation{
@@ -163,7 +163,7 @@ func TestAPIResourceAccount(t *testing.T) {
 			for _, v := range records {
 				record := v.(map[string]interface{})
 				id := record["id"].(string)
-				bo, err := sebak.GetBlockOperation(storage, id)
+				bo, err := block.GetBlockOperation(storage, id)
 				require.Nil(t, err)
 				require.Equal(t, bo.Hash, record["id"])
 				require.Equal(t, bo.Hash, record["hash"])

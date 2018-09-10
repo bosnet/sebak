@@ -4,14 +4,6 @@ import (
 	"time"
 )
 
-const (
-	// BallotConfirmedTimeAllowDuration is the duration time for ballot from
-	// other nodes. If confirmed time of ballot has too late or ahead by
-	// BallotConfirmedTimeAllowDuration, it will be considered not-wellformed.
-	// For details, `Ballot.IsWellFormed()`
-	BallotConfirmedTimeAllowDuration time.Duration = time.Minute * time.Duration(1)
-)
-
 var (
 	// TimeoutProposeNewBallot works when the consensus process is finished for
 	// a proposed `Ballot`, proposer will wait for `TimeoutProposeNewBallot` and
@@ -27,7 +19,4 @@ var (
 	// TimeoutExpireRound works if running `Round` is expired for consensus.
 	TimeoutExpireRound time.Duration = time.Second * 10
 
-	// MaxTransactionsInBallot limits the maximum number of `Transaction`s in
-	// one proposed `Ballot`.
-	MaxTransactionsInBallot int = 1000
 )
