@@ -60,18 +60,18 @@ func (sm *ISAACStateManager) TransitISAACState(round round.Round, ballotState co
 	}
 }
 
-func isTargetLater(current ISAACState, target ISAACState) (result bool) {
-	if current.round.BlockHeight > target.round.BlockHeight {
+func isTargetLater(state ISAACState, target ISAACState) (result bool) {
+	if state.round.BlockHeight > target.round.BlockHeight {
 		result = false
-	} else if current.round.BlockHeight < target.round.BlockHeight {
+	} else if state.round.BlockHeight < target.round.BlockHeight {
 		result = true
-	} else { // current.round.BlockHeight == target.round.BlockHeight
-		if current.round.Number > target.round.Number {
+	} else { // state.round.BlockHeight == target.round.BlockHeight
+		if state.round.Number > target.round.Number {
 			result = false
-		} else if current.round.Number < target.round.Number {
+		} else if state.round.Number < target.round.Number {
 			result = true
-		} else { // current.round.Number == target.round.Number
-			if current.ballotState >= target.ballotState {
+		} else { // state.round.Number == target.round.Number
+			if state.ballotState >= target.ballotState {
 				result = false
 			} else {
 				result = true

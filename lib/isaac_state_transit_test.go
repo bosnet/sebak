@@ -1,5 +1,4 @@
 // We can test that a node broadcast propose ballot or B(`EXP`) in ISAACStateManager.
-// when the timeout is expired,
 package sebak
 
 import (
