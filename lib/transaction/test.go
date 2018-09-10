@@ -13,11 +13,11 @@ import (
 var networkID []byte = []byte("sebak-test-network")
 
 var (
-	KP *keypair.Full
+	kp *keypair.Full
 )
 
 func init() {
-	KP, _ = keypair.Random()
+	kp, _ = keypair.Random()
 }
 
 func TestMakeOperationBodyPayment(amount int, addressList ...string) OperationBodyPayment {
@@ -110,9 +110,9 @@ func GetTransaction(t *testing.T) (tx Transaction, txByte []byte) {
 	initialBalance := common.Amount(1)
 	kpNewAccount, _ := keypair.Random()
 
-	tx = MakeTransactionCreateAccount(KP, kpNewAccount.Address(), initialBalance)
+	tx = MakeTransactionCreateAccount(kp, kpNewAccount.Address(), initialBalance)
 	tx.B.SequenceID = 0
-	tx.Sign(KP, networkID)
+	tx.Sign(kp, networkID)
 
 	var err error
 
