@@ -9,21 +9,6 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var memoryNetworks map[ /* endpoint */ string]*MemoryNetwork
-
-func init() {
-	memoryNetworks = map[string]*MemoryNetwork{}
-}
-
-func CleanUpMemoryNetwork() {
-	// BUG(osx): `CleanUpMemoryNetwork` causes 'runtime error: invalid memory address or nil pointer dereference'
-	//MemoryNetworks = map[string]*MemoryNetworks{}
-}
-
-func addMemoryNetwork(m *MemoryNetwork) {
-	memoryNetworks[m.Endpoint().String()] = m
-}
-
 type MemoryNetwork struct {
 	localNode  common.Serializable
 	endpoint   *common.Endpoint
@@ -31,10 +16,12 @@ type MemoryNetwork struct {
 	close      chan bool
 
 	receiveChannel chan common.NetworkMessage
+	// They all share the same map to find each other
+	peers map[ /* endpoint */ string]*MemoryNetwork
 }
 
 func (t *MemoryNetwork) GetClient(endpoint *common.Endpoint) NetworkClient {
-	n, ok := memoryNetworks[endpoint.String()]
+	n, ok := t.peers[endpoint.String()]
 	if !ok {
 		panic("Trying to get inexistant client, this is a bug in the tests!")
 	}
@@ -114,15 +101,23 @@ func CreateNewMemoryEndpoint() *common.Endpoint {
 	return &common.Endpoint{Scheme: "memory", Host: uuid.New().String()}
 }
 
-func NewMemoryNetwork() *MemoryNetwork {
+func (prev *MemoryNetwork) NewMemoryNetwork() *MemoryNetwork {
+	var peers map[string]*MemoryNetwork
+	if prev != nil {
+		peers = prev.peers
+	} else {
+		peers = make(map[string]*MemoryNetwork)
+	}
+
 	n := &MemoryNetwork{
 		endpoint:       CreateNewMemoryEndpoint(),
 		connWriter:     make(chan common.NetworkMessage),
 		receiveChannel: make(chan common.NetworkMessage),
 		close:          make(chan bool),
+		peers:          peers,
 	}
 
-	addMemoryNetwork(n)
+	n.peers[n.endpoint.String()] = n
 
 	return n
 }

@@ -34,9 +34,11 @@ func init() {
 
 func createTestNodeRunner(n int) []*NodeRunner {
 	var ns []*network.MemoryNetwork
+	var net *network.MemoryNetwork
 	var nodes []*node.LocalNode
 	for i := 0; i < n; i++ {
-		_, s, v := network.CreateNewMemoryNetwork()
+		_, s, v := network.CreateMemoryNetwork(net)
+		net = s
 		ns = append(ns, s)
 		nodes = append(nodes, v)
 	}
@@ -209,8 +211,6 @@ func createTestNodeRunnersHTTP2NetworkWithReady(n int) (nodeRunners []*NodeRunne
 }
 
 func TestCreateNodeRunner(t *testing.T) {
-	defer network.CleanUpMemoryNetwork()
-
 	numberOfNodes := 3
 	nodeRunners := createTestNodeRunnerWithReady(numberOfNodes)
 
@@ -224,8 +224,6 @@ func TestCreateNodeRunner(t *testing.T) {
 }
 
 func TestNodeRunnerCreateAccount(t *testing.T) {
-	defer network.CleanUpMemoryNetwork()
-
 	numberOfNodes := 3
 	nodeRunners := createTestNodeRunnerWithReady(numberOfNodes)
 

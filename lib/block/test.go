@@ -3,8 +3,6 @@ package block
 import (
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/consensus/round"
-	"boscoin.io/sebak/lib/network"
-	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/transaction"
 	"github.com/stellar/go/keypair"
 )
@@ -27,17 +25,6 @@ var (
 
 func init() {
 	kp, _ = keypair.Random()
-}
-
-func createNetMemoryNetwork() (*network.MemoryNetwork, *node.LocalNode) {
-	mn := network.NewMemoryNetwork()
-
-	kp, _ := keypair.Random()
-	localNode, _ := node.NewLocalNode(kp, mn.Endpoint(), "")
-
-	mn.SetLocalNode(localNode)
-
-	return mn, localNode
 }
 
 func TestMakeNewBlock(transactions []string) Block {
