@@ -14,7 +14,6 @@ type ISAACStateManager struct {
 	state         ISAACState
 	conf          *ISAACConfiguration
 	stateTransit  chan ISAACState
-	nextHeight    chan struct{}
 	stop          chan struct{}
 	transitSignal func() // `transitSignal` is function which is called when the ISAACState is changed.
 }
@@ -25,7 +24,6 @@ func NewISAACStateManager(nr *NodeRunner) *ISAACStateManager {
 		nr:   nr,
 	}
 	p.stateTransit = make(chan ISAACState)
-	p.nextHeight = make(chan struct{})
 	p.stop = make(chan struct{})
 
 	p.state = NewISAACState(
@@ -92,9 +90,10 @@ func (sm *ISAACStateManager) increaseRound() {
 }
 
 func (sm *ISAACStateManager) NextHeight() {
-	go func() {
-		sm.nextHeight <- struct{}{}
-	}()
+	round := sm.state.round
+	round.BlockHeight++
+	round.Number = 0
+	sm.TransitISAACState(round, common.BallotStateINIT)
 }
 
 // In `Start()` method a node proposes ballot.
@@ -133,12 +132,6 @@ func (sm *ISAACStateManager) Start() {
 					timer.Reset(sm.conf.TimeoutINIT)
 					log.Error("Wrong ISAACState", "ISAACState", state)
 				}
-
-			case <-sm.nextHeight:
-				round := sm.state.round
-				round.BlockHeight++
-				round.Number = 0
-				sm.TransitISAACState(round, common.BallotStateINIT)
 
 			case <-sm.stop:
 				return
