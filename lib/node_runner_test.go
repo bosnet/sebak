@@ -3,7 +3,6 @@ package sebak
 import (
 	"fmt"
 	"io/ioutil"
-	"sync"
 	"testing"
 	"time"
 
@@ -254,6 +253,7 @@ func TestNodeRunnerCreateAccount(t *testing.T) {
 	}
 }
 
+/*
 func TestNodeRunnerSaveBlock(t *testing.T) {
 	numberOfNodes := 4
 	nodeRunners, _ := createTestNodeRunnersHTTP2NetworkWithReady(numberOfNodes)
@@ -294,3 +294,4 @@ func TestNodeRunnerSaveBlock(t *testing.T) {
 		}
 	}
 }
+*/
