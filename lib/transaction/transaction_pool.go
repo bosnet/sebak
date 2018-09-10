@@ -2,7 +2,6 @@ package transaction
 
 import (
 	"boscoin.io/sebak/lib/common"
-	"github.com/zzim2x/brave-network/cli/command/transaction"
 )
 
 type TransactionPool struct {
@@ -95,15 +94,15 @@ func (tp *TransactionPool) Remove(hashes ...string) {
 	return
 }
 
-func (tp *TransactionPool) AvailableTransactions(conf *consensus.ISAACConfiguration) []string {
+func (tp *TransactionPool) AvailableTransactions(transactionLimit uint64) []string {
 	tp.Lock()
 	defer tp.Unlock()
 
-	if tp.Len() <= int(conf.TransactionsLimit) {
+	if tp.Len() <= int(transactionLimit) {
 		return tp.Hashes
 	}
 
-	return tp.Hashes[:conf.TransactionsLimit]
+	return tp.Hashes[:transactionLimit]
 }
 
 func (tp *TransactionPool) IsSameSource(source string) (found bool) {
@@ -111,4 +110,3 @@ func (tp *TransactionPool) IsSameSource(source string) (found bool) {
 
 	return
 }
-
