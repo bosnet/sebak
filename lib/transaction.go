@@ -138,7 +138,7 @@ func (tx Transaction) Validate(st *storage.LevelDBBackend) (err error) {
 	totalAmount := tx.TotalAmount(true)
 
 	// check, have enough balance at sequenceID
-	if common.MustAmountFromString(bac.Balance) < totalAmount {
+	if bac.Balance < totalAmount {
 		err = errors.ErrorTransactionExcessAbilityToPay
 		return
 	}

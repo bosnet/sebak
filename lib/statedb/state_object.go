@@ -59,8 +59,8 @@ func (so *stateObject) CodeHash() []byte {
 	return so.data.CodeHash
 }
 
-func (so *stateObject) Balance() string {
-	return so.data.Balance
+func (so *stateObject) Balance() common.Amount {
+	return so.data.GetBalance()
 }
 
 func (so *stateObject) Code() []byte {
@@ -113,9 +113,8 @@ func (so *stateObject) SetState(key, value common.Hash) {
 }
 
 func (so *stateObject) AddBalance(amount common.Amount) (err error) {
-	val := common.MustAmountFromString(so.Balance())
-	val, err = val.Add(amount)
-	so.data.Balance = val.String()
+	val, err := so.Balance().Add(amount)
+	so.data.Balance = val
 	if so.onDirty != nil {
 		so.onDirty(so.Address())
 		so.onDirty = nil
@@ -130,9 +129,8 @@ func (so *stateObject) AddBalanceWithSequenceID(amount common.Amount, sequenceID
 }
 
 func (so *stateObject) SubBalance(amount common.Amount) (err error) {
-	val := common.MustAmountFromString(so.Balance())
-	val, err = val.Sub(amount)
-	so.data.Balance = val.String()
+	val, err := so.Balance().Sub(amount)
+	so.data.Balance = val
 	if so.onDirty != nil {
 		so.onDirty(so.Address())
 		so.onDirty = nil

@@ -55,8 +55,7 @@ func TestGetAccountHandler(t *testing.T) {
 	go func() {
 		// Makes Some Events
 		for n := 1; n < 20; n++ {
-			newBalance := ba.GetBalance().MustAdd(common.Amount(n))
-			ba.Balance = newBalance.String()
+			ba.Balance = ba.GetBalance().MustAdd(common.Amount(n))
 			ba.Save(storage)
 			if n <= 10 {
 				recv <- struct{}{}

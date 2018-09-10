@@ -93,7 +93,7 @@ func init() {
 
 			// Check that account's balance is enough before sending the transaction
 			{
-				newBalance, err = common.MustAmountFromString(senderAccount.Balance).Sub(amount)
+				newBalance, err = senderAccount.Balance.Sub(amount)
 				if err == nil {
 					newBalance, err = newBalance.Sub(sebak.BaseFee)
 				}

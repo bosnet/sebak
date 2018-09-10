@@ -52,12 +52,12 @@ func (stateDB *StateDB) GetCheckPoint(addr string) uint64 {
 	}
 	panic("No such sequenceID")
 }
-func (stateDB *StateDB) GetBalance(addr string) string {
+func (stateDB *StateDB) GetBalance(addr string) common.Amount {
 	stateObject := stateDB.getStateObject(addr)
 	if stateObject != nil {
 		return stateObject.Balance()
 	}
-	return "0"
+	return 0
 }
 
 func (stateDB *StateDB) GetCode(addr string) []byte {
@@ -163,7 +163,7 @@ func (stateDB *StateDB) setStateObject(object *stateObject) {
 }
 
 func (stateDB *StateDB) createObject(addr string) (newobj *stateObject) {
-	newobj = newObject(addr, block.BlockAccount{Address: addr, Balance: "0"}, stateDB.db, stateDB.MarkStateObjectDirty)
+	newobj = newObject(addr, block.BlockAccount{Address: addr, Balance: 0}, stateDB.db, stateDB.MarkStateObjectDirty)
 	stateDB.setStateObject(newobj)
 	return newobj
 }

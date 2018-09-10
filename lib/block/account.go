@@ -27,7 +27,7 @@ const BlockAccountSequenceIDByAddressPrefix string = "bac-aa-"
 
 type BlockAccount struct {
 	Address    string
-	Balance    string
+	Balance    common.Amount
 	SequenceID uint64
 	CodeHash   []byte
 	RootHash   common.Hash
@@ -36,7 +36,7 @@ type BlockAccount struct {
 func NewBlockAccount(address string, balance common.Amount) *BlockAccount {
 	return &BlockAccount{
 		Address:    address,
-		Balance:    balance.String(),
+		Balance:    balance,
 		SequenceID: 0,
 	}
 }
@@ -146,7 +146,7 @@ func GetBlockAccountsByCreated(st *storage.LevelDBBackend, reverse bool) (func()
 }
 
 func (b *BlockAccount) GetBalance() common.Amount {
-	return common.MustAmountFromString(b.Balance)
+	return b.Balance
 }
 
 // Add fund to an account
@@ -157,7 +157,7 @@ func (b *BlockAccount) Deposit(fund common.Amount) error {
 	if val, err := b.GetBalance().Add(fund); err != nil {
 		return err
 	} else {
-		b.Balance = val.String()
+		b.Balance = val
 	}
 	return nil
 }
@@ -169,7 +169,7 @@ func (b *BlockAccount) Withdraw(fund common.Amount, sequenceID uint64) error {
 	if val, err := b.GetBalance().Sub(fund); err != nil {
 		return err
 	} else {
-		b.Balance = val.String()
+		b.Balance = val
 		b.SequenceID = sequenceID
 	}
 	return nil
@@ -187,7 +187,7 @@ func (b *BlockAccount) Withdraw(fund common.Amount, sequenceID uint64) error {
 type BlockAccountSequenceID struct {
 	SequenceID uint64
 	Address    string
-	Balance    string
+	Balance    common.Amount
 }
 
 func GetBlockAccountSequenceIDKey(address string, sequenceID uint64) string {
