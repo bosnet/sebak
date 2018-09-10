@@ -327,3 +327,41 @@ func (st *LevelDBBackend) GetIterator(prefix string, option *IteratorOptions) (f
 			iter.Release()
 		})
 }
+
+type WalkFunc func(key, value []byte) (bool, error)
+
+//TODO(anarcher): walkOption? := { prefix,cursor,reverse }
+func (st *LevelDBBackend) Walk(prefix, cursor string, reverse bool, walkFunc WalkFunc) error {
+	var dbRange *leveldbUtil.Range
+	if len(prefix) > 0 {
+		dbRange = leveldbUtil.BytesPrefix(st.makeKey(prefix))
+	}
+
+	iter := st.Core.NewIterator(dbRange, nil)
+	defer iter.Release()
+
+	var iterFunc func() bool
+	if reverse == true {
+		iterFunc = iter.Prev
+	} else {
+		iterFunc = iter.Next
+	}
+
+	if cursor == "" {
+		cursor = prefix
+	}
+
+	for ok := iter.Seek(st.makeKey(cursor)); ok; ok = iterFunc() {
+		if next, err := walkFunc(iter.Key(), iter.Value()); err != nil {
+			return err
+		} else if next == false {
+			return iter.Error()
+		}
+
+		if iter.Error() != nil {
+			return iter.Error()
+		}
+	}
+
+	return iter.Error()
+}

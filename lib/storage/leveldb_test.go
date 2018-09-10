@@ -7,9 +7,11 @@ import (
 	"math/rand"
 	"os"
 	"reflect"
+	"sort"
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
@@ -511,4 +513,54 @@ func TestLevelDBBackendTransactionDiscard(t *testing.T) {
 	}
 
 	return
+}
+
+//TODO(anarcher): SubTests
+func TestLevelDBWalk(t *testing.T) {
+	st, _ := NewTestMemoryLevelDBBackend()
+	defer st.Close()
+
+	kv := map[string]string{
+		"test-1": "1",
+		"test-2": "2",
+		"test-3": "3",
+		"test-4": "4",
+		"test-5": "5",
+	}
+	for k, v := range kv {
+		if err := st.New(k, v); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if err := st.New("notest-1", "notest-1"); err != nil {
+		t.Fatal(err)
+	}
+
+	var (
+		walkedKeys []string
+		cnt        int
+	)
+
+	err := st.Walk("test-", "test-1", false, func(k, v []byte) (bool, error) {
+		cnt++
+		walkedKeys = append(walkedKeys, string(k))
+		return true, nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if cnt != len(kv) {
+		t.Errorf("want: %v have: %v", len(kv), cnt)
+	}
+
+	var keys []string
+	for k, _ := range kv {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	require.Equal(t, keys, walkedKeys)
+
 }
