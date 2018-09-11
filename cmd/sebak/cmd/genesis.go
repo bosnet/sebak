@@ -11,7 +11,6 @@ import (
 
 	cmdcommon "boscoin.io/sebak/cmd/sebak/common"
 
-	"boscoin.io/sebak/lib"
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/storage"
@@ -129,7 +128,7 @@ func MakeGenesisBlock(addressStr, networkID, balanceStr, storageUri string) (str
 	)
 	account.Save(st)
 
-	sebak.MakeGenesisBlock(st, *account)
+	block.MakeGenesisBlock(st, *account)
 
 	st.Close()
 	return "", nil
