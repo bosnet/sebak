@@ -69,7 +69,10 @@ func (c *ConnectionManager) GetConnection(address string) (client NetworkClient)
 }
 
 func (c *ConnectionManager) Start() {
-	go c.connectValidators()
+	c.log.Debug("starting to connect to validators", "validators", c.validators)
+	for _, v := range c.validators {
+		go c.connectingValidator(v)
+	}
 }
 
 // setConnected returns `true` when the validator is newly connected or
@@ -121,13 +124,6 @@ func (c *ConnectionManager) CountConnected() int {
 		}
 	}
 	return count
-}
-
-func (c *ConnectionManager) connectValidators() {
-	c.log.Debug("starting to connect to validators", "validators", c.validators)
-	for _, v := range c.validators {
-		go c.connectingValidator(v)
-	}
 }
 
 func (c *ConnectionManager) connectingValidator(v *node.Validator) {
