@@ -1,14 +1,15 @@
 package consensus
 
 import (
+	"sync"
+
 	"boscoin.io/sebak/lib/block"
-	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/consensus/round"
 	"boscoin.io/sebak/lib/error"
 )
 
 type RunningRound struct {
-	common.SafeLock
+	sync.Mutex
 
 	Round        round.Round
 	Proposer     string                              // LocalNode's `Proposer`

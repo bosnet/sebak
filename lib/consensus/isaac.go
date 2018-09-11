@@ -2,6 +2,7 @@ package consensus
 
 import (
 	"errors"
+	"sync"
 
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
@@ -11,7 +12,7 @@ import (
 )
 
 type ISAAC struct {
-	common.SafeLock
+	sync.Mutex
 
 	NetworkID             []byte
 	Node                  *node.LocalNode
