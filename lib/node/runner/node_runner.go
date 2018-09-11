@@ -500,15 +500,13 @@ func (nr *NodeRunner) readyToProposeNewBallot(roundNumber uint64) {
 		timeout = TimeoutProposeNewBallot
 	}
 
-	timer := time.NewTimer(timeout)
-	go func() {
-		<-timer.C
-
-		if err := nr.proposeNewBallot(roundNumber); err != nil {
-			nr.log.Error("failed to proposeNewBallot", "round", roundNumber, "error", err)
-			go nr.StartNewRound(roundNumber)
-		}
-	}()
+	time.AfterFunc(timeout,
+		func() {
+			if err := nr.proposeNewBallot(roundNumber); err != nil {
+				nr.log.Error("failed to proposeNewBallot", "round", roundNumber, "error", err)
+				nr.StartNewRound(roundNumber)
+			}
+		})
 
 	return
 }
