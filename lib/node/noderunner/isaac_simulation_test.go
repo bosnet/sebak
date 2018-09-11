@@ -3,7 +3,7 @@
 	and how the state of the node changes.
 */
 
-package node_runner
+package noderunner
 
 import (
 	"testing"
@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/round"
+	"boscoin.io/sebak/lib/consensus/round"
 )
 
 /*

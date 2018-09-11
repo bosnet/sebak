@@ -3,7 +3,7 @@ package block
 import (
 	"time"
 
-	"boscoin.io/sebak/lib/round"
+	"boscoin.io/sebak/lib/consensus/round"
 )
 
 type Header struct {

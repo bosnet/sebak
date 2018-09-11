@@ -1,7 +1,7 @@
 /*
 	This file contains features that, define the actions that a node should do when it receives a message.
 	The MessageChecker struct is a data structure that is shared while the checker methods are running.
-	Checker methods are called sequentially by the RunChecker() method in the handleMessageFromClient method of node_runner.go.
+	Checker methods are called sequentially by the RunChecker() method in the handleMessageFromClient method of noderunner.go.
 	The process is as follows :
 	1. TransactionUnmarshal: Unmarshal the received message in transaction
 	2. HasTransaction: The transaction that already exists does not proceed anymore
@@ -10,7 +10,7 @@
 	5. BroadcastTransaction: Passing a transaction to all known Validators.
 */
 
-package node_runner
+package noderunner
 
 import (
 	logging "github.com/inconshreveable/log15"
@@ -18,7 +18,7 @@ import (
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/node"
-	"boscoin.io/sebak/lib/storage/block"
+	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/transaction"
 )
 

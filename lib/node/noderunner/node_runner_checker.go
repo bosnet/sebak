@@ -1,11 +1,11 @@
-package node_runner
+package noderunner
 
 import (
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/consensus"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/node"
-	"boscoin.io/sebak/lib/storage/block"
+	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/transaction"
 	logging "github.com/inconshreveable/log15"
 )

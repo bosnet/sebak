@@ -13,7 +13,7 @@ import (
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/storage"
-	"boscoin.io/sebak/lib/storage/block"
+	"boscoin.io/sebak/lib/block"
 )
 
 const (

@@ -8,7 +8,7 @@ import (
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
-	"boscoin.io/sebak/lib/round"
+	"boscoin.io/sebak/lib/consensus/round"
 	"boscoin.io/sebak/lib/storage"
 )
 

@@ -5,7 +5,7 @@
 // In this regard, it can be seen as a single node, and is used as such
 // in unit tests.
 //
-package node_runner
+package noderunner
 
 import (
 	"errors"
@@ -20,9 +20,9 @@ import (
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/network/api"
 	"boscoin.io/sebak/lib/node"
-	"boscoin.io/sebak/lib/round"
+	"boscoin.io/sebak/lib/consensus/round"
 	"boscoin.io/sebak/lib/storage"
-	"boscoin.io/sebak/lib/storage/block"
+	"boscoin.io/sebak/lib/block"
 )
 
 var DefaultHandleTransactionCheckerFuncs = []common.CheckerFunc{

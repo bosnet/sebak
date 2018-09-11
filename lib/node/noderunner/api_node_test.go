@@ -1,4 +1,4 @@
-package node_runner
+package noderunner
 
 import (
 	"fmt"
@@ -20,7 +20,7 @@ import (
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/storage"
-	"boscoin.io/sebak/lib/storage/block"
+	"boscoin.io/sebak/lib/block"
 )
 
 func getPort() string {

@@ -9,7 +9,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"boscoin.io/sebak/lib/storage/block"
+	"boscoin.io/sebak/lib/block"
 	observable "github.com/GianlucaGuarini/go-observable"
 
 	"github.com/stretchr/testify/require"

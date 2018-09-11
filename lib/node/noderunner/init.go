@@ -1,4 +1,4 @@
-package node_runner
+package noderunner
 
 import (
 	"os"
@@ -6,7 +6,7 @@ import (
 	logging "github.com/inconshreveable/log15"
 )
 
-var log logging.Logger = logging.New("module", "node_runner")
+var log logging.Logger = logging.New("module", "noderunner")
 
 func SetLogging(level logging.Lvl, handler logging.Handler) {
 	log.SetHandler(logging.LvlFilterHandler(level, handler))
