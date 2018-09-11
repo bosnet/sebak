@@ -1,4 +1,4 @@
-package api
+package resource
 
 import (
 	"encoding/json"
@@ -21,8 +21,8 @@ func TestAPIResourceAccount(t *testing.T) {
 	{
 		ba := block.TestMakeBlockAccount()
 		ba.Save(storage)
-		ra := &APIResourceAccount{
-			accountId:  ba.Address,
+		ra := &Account{
+			accountID:  ba.Address,
 			sequenceID: ba.SequenceID,
 			balance:    ba.GetBalance().String(),
 		}
@@ -40,7 +40,7 @@ func TestAPIResourceAccount(t *testing.T) {
 			require.Equal(t, ba.GetBalance().String(), m["balance"])
 
 			l := m["_links"].(map[string]interface{})
-			require.Equal(t, strings.Replace(UrlAccounts, "{id}", ba.Address, -1), l["self"].(map[string]interface{})["href"])
+			require.Equal(t, strings.Replace(URLAccounts, "{id}", ba.Address, -1), l["self"].(map[string]interface{})["href"])
 		}
 	}
 
@@ -52,7 +52,7 @@ func TestAPIResourceAccount(t *testing.T) {
 		bt := block.NewBlockTransactionFromTransaction("dummy", 0, tx, a)
 		bt.Save(storage)
 
-		rt := &APIResourceTransaction{
+		rt := &Transaction{
 			hash:       bt.Hash,
 			sequenceID: bt.SequenceID,
 			signature:  bt.Signature,
@@ -78,7 +78,7 @@ func TestAPIResourceAccount(t *testing.T) {
 			require.Equal(t, float64(len(bt.Operations)), m["operation_count"])
 
 			l := m["_links"].(map[string]interface{})
-			require.Equal(t, strings.Replace(UrlTransactions, "{id}", bt.Hash, -1), l["self"].(map[string]interface{})["href"])
+			require.Equal(t, strings.Replace(URLTransactions, "{id}", bt.Hash, -1), l["self"].(map[string]interface{})["href"])
 		}
 
 	}
@@ -92,7 +92,7 @@ func TestAPIResourceAccount(t *testing.T) {
 		bt.Save(storage)
 		bo, err := block.GetBlockOperation(storage, bt.Operations[0])
 
-		ro := &APIResourceOperation{
+		ro := &Operation{
 			hash:    bo.Hash,
 			txHash:  bo.TxHash,
 			funder:  bo.Source,
@@ -115,7 +115,7 @@ func TestAPIResourceAccount(t *testing.T) {
 			require.Equal(t, string(bo.Type), m["type"])
 			require.Equal(t, bo.Amount.String(), m["amount"])
 			l := m["_links"].(map[string]interface{})
-			require.Equal(t, strings.Replace(UrlOperations, "{id}", bo.Hash, -1), l["self"].(map[string]interface{})["href"])
+			require.Equal(t, strings.Replace(URLOperations, "{id}", bo.Hash, -1), l["self"].(map[string]interface{})["href"])
 		}
 	}
 
@@ -133,7 +133,7 @@ func TestAPIResourceAccount(t *testing.T) {
 			bo, err = block.GetBlockOperation(storage, boHash)
 			require.Nil(t, err)
 
-			ro := &APIResourceOperation{
+			ro := &Operation{
 				hash:    bo.Hash,
 				txHash:  bo.TxHash,
 				funder:  bo.Source,
@@ -145,7 +145,7 @@ func TestAPIResourceAccount(t *testing.T) {
 		}
 
 		urlneedToBeFilledByAPI := "/operations/"
-		arl := &APIResourceList{Resources: rol, SelfLink: urlneedToBeFilledByAPI}
+		arl := &ResourceList{Resources: rol, SelfLink: urlneedToBeFilledByAPI}
 		r := arl.Resource()
 		j, _ := json.MarshalIndent(r, "", " ")
 		//fmt.Printf("%s\n", j)
@@ -173,7 +173,7 @@ func TestAPIResourceAccount(t *testing.T) {
 				require.Equal(t, string(bo.Type), record["type"])
 				require.Equal(t, bo.Amount.String(), record["amount"])
 				l := record["_links"].(map[string]interface{})
-				require.Equal(t, strings.Replace(UrlOperations, "{id}", bo.Hash, -1), l["self"].(map[string]interface{})["href"])
+				require.Equal(t, strings.Replace(URLOperations, "{id}", bo.Hash, -1), l["self"].(map[string]interface{})["href"])
 			}
 		}
 	}
