@@ -259,13 +259,32 @@ func (st *LevelDBBackend) Remove(k string) (err error) {
 	return
 }
 
-func (st *LevelDBBackend) GetIterator(prefix string, reverse bool) (func() (IterItem, bool), func()) {
+type IteratorOptions struct {
+	Reverse bool
+	Cursor  []byte
+	Limit   uint64
+}
+
+func (st *LevelDBBackend) GetIterator(prefix string, option *IteratorOptions) (func() (IterItem, bool), func()) {
+	var reverse = false
+	var cursor []byte
+	var limit uint64 = 0
+	if option != nil {
+		reverse = option.Reverse
+		cursor = option.Cursor
+		limit = option.Limit
+	}
+
 	var dbRange *leveldbUtil.Range
 	if len(prefix) > 0 {
 		dbRange = leveldbUtil.BytesPrefix(st.makeKey(prefix))
 	}
 
 	iter := st.Core.NewIterator(dbRange, nil)
+
+	if cursor != nil {
+		iter.Seek(cursor)
+	}
 
 	var funcNext func() bool
 	var hasUnsent bool
@@ -278,10 +297,14 @@ func (st *LevelDBBackend) GetIterator(prefix string, reverse bool) (func() (Iter
 		hasUnsent = true
 	} else {
 		funcNext = iter.Next
-		hasUnsent = false
+		if cursor != nil {
+			hasUnsent = true
+		} else {
+			hasUnsent = false
+		}
 	}
 
-	var n int64
+	var n uint64
 	return (func() (IterItem, bool) {
 			if hasUnsent {
 				hasUnsent = false
@@ -293,6 +316,10 @@ func (st *LevelDBBackend) GetIterator(prefix string, reverse bool) (func() (Iter
 				return IterItem{}, false
 			}
 
+			if limit != 0 && n >= limit {
+				iter.Release()
+				return IterItem{}, false
+			}
 			n++
 			return IterItem{N: n, Key: iter.Key(), Value: iter.Value()}, true
 		}),

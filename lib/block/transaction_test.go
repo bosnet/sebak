@@ -16,7 +16,7 @@ func TestNewBlockTransaction(t *testing.T) {
 	_, tx := transaction.TestMakeTransaction(networkID, 1)
 	a, _ := tx.Serialize()
 	block := TestMakeNewBlock([]string{tx.GetHash()})
-	bt := NewBlockTransactionFromTransaction(block.Hash, tx, a)
+	bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, tx, a)
 
 	require.Equal(t, bt.Hash, tx.H.Hash)
 	require.Equal(t, bt.SequenceID, tx.B.SequenceID)
@@ -93,7 +93,7 @@ func TestMultipleBlockTransactionSource(t *testing.T) {
 	block := TestMakeNewBlock(txHashes)
 	for _, tx := range txs {
 		a, _ := tx.Serialize()
-		bt := NewBlockTransactionFromTransaction(block.Hash, tx, a)
+		bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, tx, a)
 		err := bt.Save(st)
 		require.Nil(t, err)
 	}
@@ -110,16 +110,16 @@ func TestMultipleBlockTransactionSource(t *testing.T) {
 	block = TestMakeNewBlock(txHashes)
 	for _, tx := range txs {
 		a, _ := tx.Serialize()
-		bt := NewBlockTransactionFromTransaction(block.Hash, tx, a)
+		bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, tx, a)
 		err := bt.Save(st)
 		require.Nil(t, err)
 	}
 
 	{
 		var saved []BlockTransaction
-		iterFunc, closeFunc := GetBlockTransactionsBySource(st, kp.Address(), false)
+		iterFunc, closeFunc := GetBlockTransactionsBySource(st, kp.Address(), nil)
 		for {
-			bo, hasNext := iterFunc()
+			bo, hasNext, _ := iterFunc()
 			if !hasNext {
 				break
 			}
@@ -137,9 +137,9 @@ func TestMultipleBlockTransactionSource(t *testing.T) {
 	{
 		// reverse order
 		var saved []BlockTransaction
-		iterFunc, closeFunc := GetBlockTransactionsBySource(st, kp.Address(), true)
+		iterFunc, closeFunc := GetBlockTransactionsBySource(st, kp.Address(), &storage.IteratorOptions{Reverse: true})
 		for {
-			bo, hasNext := iterFunc()
+			bo, hasNext, _ := iterFunc()
 			if !hasNext {
 				break
 			}
@@ -176,15 +176,15 @@ func TestMultipleBlockTransactionConfirmed(t *testing.T) {
 	block := TestMakeNewBlock(txHashes)
 	for _, tx := range txs {
 		a, _ := tx.Serialize()
-		bt := NewBlockTransactionFromTransaction(block.Hash, tx, a)
+		bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, tx, a)
 		err := bt.Save(st)
 		require.Nil(t, err)
 	}
 
 	var saved []BlockTransaction
-	iterFunc, closeFunc := GetBlockTransactionsByConfirmed(st, false)
+	iterFunc, closeFunc := GetBlockTransactionsByConfirmed(st, nil)
 	for {
-		bo, hasNext := iterFunc()
+		bo, hasNext, _ := iterFunc()
 		if !hasNext {
 			break
 		}
@@ -201,9 +201,9 @@ func TestMultipleBlockTransactionConfirmed(t *testing.T) {
 	{
 		// reverse order
 		var saved []BlockTransaction
-		iterFunc, closeFunc := GetBlockTransactionsByConfirmed(st, true)
+		iterFunc, closeFunc := GetBlockTransactionsByConfirmed(st, &storage.IteratorOptions{Reverse: true})
 		for {
-			bo, hasNext := iterFunc()
+			bo, hasNext, _ := iterFunc()
 			if !hasNext {
 				break
 			}
@@ -256,7 +256,7 @@ func TestMultipleBlockTransactionGetByAccount(t *testing.T) {
 	block := TestMakeNewBlock(txHashes)
 	for _, tx := range txs {
 		a, _ := tx.Serialize()
-		bt := NewBlockTransactionFromTransaction(block.Hash, tx, a)
+		bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, tx, a)
 		err := bt.Save(st)
 		require.Nil(t, err)
 	}
@@ -274,7 +274,7 @@ func TestMultipleBlockTransactionGetByAccount(t *testing.T) {
 	block = TestMakeNewBlock(txHashes)
 	for _, tx := range txs {
 		a, _ := tx.Serialize()
-		bt := NewBlockTransactionFromTransaction(block.Hash, tx, a)
+		bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, tx, a)
 		err := bt.Save(st)
 		require.Nil(t, err)
 	}
@@ -291,16 +291,16 @@ func TestMultipleBlockTransactionGetByAccount(t *testing.T) {
 	block = TestMakeNewBlock(txHashes)
 	for _, tx := range txs {
 		a, _ := tx.Serialize()
-		bt := NewBlockTransactionFromTransaction(block.Hash, tx, a)
+		bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, tx, a)
 		err := bt.Save(st)
 		require.Nil(t, err)
 	}
 
 	{
 		var saved []BlockTransaction
-		iterFunc, closeFunc := GetBlockTransactionsByAccount(st, kp.Address(), false)
+		iterFunc, closeFunc := GetBlockTransactionsByAccount(st, kp.Address(), nil)
 		for {
-			bo, hasNext := iterFunc()
+			bo, hasNext, _ := iterFunc()
 			if !hasNext {
 				break
 			}
@@ -335,7 +335,7 @@ func TestMultipleBlockTransactionGetByBlock(t *testing.T) {
 	block0 := TestMakeNewBlock(txHashes0)
 	for _, tx := range txs0 {
 		a, _ := tx.Serialize()
-		bt := NewBlockTransactionFromTransaction(block0.Hash, tx, a)
+		bt := NewBlockTransactionFromTransaction(block0.Hash, block0.Height, tx, a)
 		require.Nil(t, bt.Save(st))
 	}
 
@@ -352,15 +352,15 @@ func TestMultipleBlockTransactionGetByBlock(t *testing.T) {
 	block1 := TestMakeNewBlock(txHashes1)
 	for _, tx := range txs1 {
 		a, _ := tx.Serialize()
-		bt := NewBlockTransactionFromTransaction(block1.Hash, tx, a)
+		bt := NewBlockTransactionFromTransaction(block1.Hash, block1.Height, tx, a)
 		require.Nil(t, bt.Save(st))
 	}
 
 	{
 		var saved []BlockTransaction
-		iterFunc, closeFunc := GetBlockTransactionsByBlock(st, block0.Hash, false)
+		iterFunc, closeFunc := GetBlockTransactionsByBlock(st, block0.Hash, nil)
 		for {
-			bo, hasNext := iterFunc()
+			bo, hasNext, _ := iterFunc()
 			if !hasNext {
 				break
 			}
@@ -377,9 +377,9 @@ func TestMultipleBlockTransactionGetByBlock(t *testing.T) {
 
 	{
 		var saved []BlockTransaction
-		iterFunc, closeFunc := GetBlockTransactionsByBlock(st, block1.Hash, false)
+		iterFunc, closeFunc := GetBlockTransactionsByBlock(st, block1.Hash, nil)
 		for {
-			bo, hasNext := iterFunc()
+			bo, hasNext, _ := iterFunc()
 			if !hasNext {
 				break
 			}
@@ -393,4 +393,111 @@ func TestMultipleBlockTransactionGetByBlock(t *testing.T) {
 			require.Equal(t, bt.Hash, createdOrder1[i], "order mismatch")
 		}
 	}
+}
+
+func TestMultipleBlockTransactionsOrderByBlockHeightAndCursor(t *testing.T) {
+	kp, _ := keypair.Random()
+	st, _ := storage.NewTestMemoryLevelDBBackend()
+
+	numTxs := 5
+
+	// To check iteration order by height
+	var transactionOrder []string
+
+	// Make transactions with height 2 first
+	{
+		var createdOrder []string
+		txs := []transaction.Transaction{}
+		txHashes := []string{}
+		for i := 0; i < numTxs; i++ {
+			tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, kp)
+			txs = append(txs, tx)
+			createdOrder = append(createdOrder, tx.GetHash())
+			txHashes = append(txHashes, tx.GetHash())
+		}
+
+		block := TestMakeNewBlock(txHashes)
+		block.Height++
+		for _, tx := range txs {
+			a, _ := tx.Serialize()
+			bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, tx, a)
+			err := bt.Save(st)
+			require.Nil(t, err)
+		}
+		transactionOrder = append(transactionOrder, createdOrder...)
+		block.Save(st)
+	}
+
+	// Make transactions with height 1
+	{
+		var createdOrder []string
+		txs := []transaction.Transaction{}
+		txHashes := []string{}
+		for i := 0; i < numTxs; i++ {
+			tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, kp)
+			txs = append(txs, tx)
+			createdOrder = append(createdOrder, tx.GetHash())
+			txHashes = append(txHashes, tx.GetHash())
+		}
+
+		block := TestMakeNewBlock(txHashes)
+		for _, tx := range txs {
+			a, _ := tx.Serialize()
+			bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, tx, a)
+			err := bt.Save(st)
+			require.Nil(t, err)
+		}
+
+		transactionOrder = append(createdOrder, transactionOrder...)
+		block.Save(st)
+	}
+
+	var halfSaved []BlockTransaction
+	var theCursor []byte
+	// Check transaction order by block height
+	{
+		var saved []BlockTransaction
+		var cursors [][]byte
+		iterFunc, closeFunc := GetBlockTransactionsByAccount(st, kp.Address(), nil)
+		for {
+			bo, hasNext, cursor := iterFunc()
+			if !hasNext {
+				break
+			}
+			cc := make([]byte, len(cursor))
+			copy(cc, cursor)
+			cursors = append(cursors, cc)
+			saved = append(saved, bo)
+		}
+		closeFunc()
+
+		require.Equal(t, len(saved), len(transactionOrder))
+		for i, bt := range saved {
+			require.Equal(t, bt.Hash, transactionOrder[i])
+		}
+
+		halfSaved = saved[len(saved)/2:]
+		theCursor = cursors[len(saved)/2]
+	}
+
+	// Check transactions filtered by cursor
+	{
+		var saved []BlockTransaction
+		iterFunc, closeFunc := GetBlockTransactionsByAccount(st, kp.Address(), &storage.IteratorOptions{Reverse: false, Cursor: theCursor})
+		for {
+			bo, hasNext, _ := iterFunc()
+			if !hasNext {
+				break
+			}
+
+			saved = append(saved, bo)
+		}
+		closeFunc()
+
+		require.Equal(t, len(halfSaved), len(saved))
+		for i, bt := range saved {
+			require.Equal(t, bt.Hash, halfSaved[i].Hash)
+		}
+	}
+
 }

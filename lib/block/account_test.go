@@ -53,9 +53,9 @@ func TestSortMultipleBlockAccount(t *testing.T) {
 	}
 
 	var saved []string
-	iterFunc, closeFunc := GetBlockAccountAddressesByCreated(st, false)
+	iterFunc, closeFunc := GetBlockAccountAddressesByCreated(st, nil)
 	for {
-		address, hasNext := iterFunc()
+		address, hasNext, _ := iterFunc()
 		if !hasNext {
 			break
 		}
@@ -81,9 +81,9 @@ func TestGetSortedBlockAccounts(t *testing.T) {
 	}
 
 	var saved []string
-	iterFunc, closeFunc := GetBlockAccountsByCreated(st, false)
+	iterFunc, closeFunc := GetBlockAccountsByCreated(st, nil)
 	for {
-		ba, hasNext := iterFunc()
+		ba, hasNext, _ := iterFunc()
 		if !hasNext {
 			break
 		}
@@ -113,9 +113,9 @@ func TestBlockAccountSaveBlockAccountSequenceIDs(t *testing.T) {
 	}
 
 	var fetched []BlockAccountSequenceID
-	iterFunc, closeFunc := GetBlockAccountSequenceIDByAddress(st, b.Address, false)
+	iterFunc, closeFunc := GetBlockAccountSequenceIDByAddress(st, b.Address, &storage.IteratorOptions{Reverse: false})
 	for {
-		bac, hasNext := iterFunc()
+		bac, hasNext, _ := iterFunc()
 		if !hasNext {
 			break
 		}
