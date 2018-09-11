@@ -13,7 +13,7 @@ import (
 )
 
 type ConnectionManager struct {
-	sync.Mutex
+	sync.RWMutex
 
 	localNode *node.LocalNode
 	network   Network
@@ -80,17 +80,17 @@ func (c *ConnectionManager) Start() {
 func (c *ConnectionManager) setConnected(v *node.Validator, connected bool) bool {
 	c.Lock()
 	defer c.Unlock()
-	defer func() {
-		c.policy.SetConnected(c.CountConnected())
-	}()
 
 	old, found := c.connected[v.Address()]
 	c.connected[v.Address()] = connected
 
+	c.policy.SetConnected(c.countConnectedUnlocked())
 	return !found || old != connected
 }
 
 func (c *ConnectionManager) AllConnected() []string {
+	c.RLock()
+	defer c.RUnlock()
 	var connected []string
 	for address, isConnected := range c.connected {
 		if !isConnected {
@@ -117,6 +117,12 @@ func (c *ConnectionManager) AllValidators() []string {
 //   the number of validators which are currently connected
 //
 func (c *ConnectionManager) CountConnected() int {
+	c.RLock()
+	defer c.RUnlock()
+	return c.countConnectedUnlocked()
+}
+
+func (c *ConnectionManager) countConnectedUnlocked() int {
 	var count int
 	for _, isConnected := range c.connected {
 		if isConnected {
@@ -171,6 +177,8 @@ func (c *ConnectionManager) ConnectionWatcher(t Network, conn net.Conn, state ht
 }
 
 func (c *ConnectionManager) Broadcast(message common.Message) {
+	c.RLock()
+	defer c.RUnlock()
 	for address, connected := range c.connected {
 		if connected {
 			go func(v string) {
