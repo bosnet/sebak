@@ -413,7 +413,7 @@ func TestGetTransactionByHashHandler(t *testing.T) {
 	require.Nil(t, err)
 	line = bytes.Trim(line, "\n\t ")
 
-	serializedBt, err := bt.Serialize()
+	serializedBt, err := json.Marshal(resource.NewTransaction(&bt).Resource())
 	require.Nil(t, err)
 	require.Equal(t, serializedBt, line)
 
@@ -505,9 +505,14 @@ func TestGetTransactionsHandler(t *testing.T) {
 		line, err := reader.ReadBytes('\n')
 		require.Nil(t, err)
 		line = bytes.Trim(line, "\n\t ")
-		var receivedBt block.BlockTransaction
-		json.Unmarshal(line, &receivedBt)
-		txS, err := btmap[receivedBt.Hash].Serialize()
+		recv := make(map[string]interface{})
+		json.Unmarshal(line, &recv)
+		hash := recv["hash"].(string)
+
+		bt := btmap[hash]
+		r := resource.NewTransaction(&bt)
+		txS, err := json.Marshal(r.Resource())
+
 		require.Nil(t, err)
 		require.Equal(t, txS, line)
 	}

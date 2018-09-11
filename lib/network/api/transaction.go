@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"boscoin.io/sebak/lib/common/observer"
+	"boscoin.io/sebak/lib/network/api/resource"
 	"boscoin.io/sebak/lib/network/httputils"
 
 	"boscoin.io/sebak/lib/block"
@@ -13,15 +14,15 @@ import (
 
 func (api NetworkHandlerAPI) GetTransactionsHandler(w http.ResponseWriter, r *http.Request) {
 
-	readFunc := func(cnt int) []*block.BlockTransaction {
-		var txs []*block.BlockTransaction
+	readFunc := func(cnt int) []resource.APIResource {
+		var txs []resource.APIResource
 		iterFunc, closeFunc := block.GetBlockTransactions(api.storage, &storage.IteratorOptions{Reverse: false})
 		for {
 			t, hasNext, _ := iterFunc()
 			if !hasNext || cnt == 0 {
 				break
 			}
-			txs = append(txs, &t)
+			txs = append(txs, resource.NewTransaction(&t))
 			cnt--
 		}
 		closeFunc()
@@ -30,7 +31,7 @@ func (api NetworkHandlerAPI) GetTransactionsHandler(w http.ResponseWriter, r *ht
 
 	if httputils.IsEventStream(r) {
 		event := "bt-saved"
-		es := NewDefaultEventStream(w, r)
+		es := NewEventStream(w, r, renderEventStream, DefaultContentType)
 		txs := readFunc(maxNumberOfExistingData)
 		for _, tx := range txs {
 			es.Render(tx)
@@ -41,7 +42,9 @@ func (api NetworkHandlerAPI) GetTransactionsHandler(w http.ResponseWriter, r *ht
 
 	txs := readFunc(-1) // -1 is infinte. TODO: Paging support makes better this space.
 
-	if err := httputils.WriteJSON(w, 200, txs); err != nil {
+	list := resource.NewResourceList(txs, GetTransactionsHandlerPattern)
+
+	if err := httputils.WriteJSON(w, 200, list); err != nil {
 		http.Error(w, "Error reading request body", http.StatusInternalServerError)
 		return
 	}
@@ -57,7 +60,7 @@ func (api NetworkHandlerAPI) GetTransactionByHashHandler(w http.ResponseWriter, 
 		return
 	}
 
-	var payload interface{}
+	var apiResource resource.APIResource
 
 	if found {
 		bt, err := block.GetBlockTransaction(api.storage, key)
@@ -65,7 +68,7 @@ func (api NetworkHandlerAPI) GetTransactionByHashHandler(w http.ResponseWriter, 
 			http.Error(w, "Error reading request body", http.StatusInternalServerError)
 			return
 		}
-		payload = bt
+		apiResource = resource.NewTransaction(&bt)
 
 	} else {
 		bth, err := block.GetBlockTransactionHistory(api.storage, key)
@@ -73,18 +76,18 @@ func (api NetworkHandlerAPI) GetTransactionByHashHandler(w http.ResponseWriter, 
 			http.Error(w, "Error reading request body", http.StatusInternalServerError)
 			return
 		}
-		payload = bth
+		apiResource = resource.NewTransactionHistory(&bth)
 	}
 
 	if httputils.IsEventStream(r) {
 		event := "bt-saved"
-		es := NewDefaultEventStream(w, r)
-		es.Render(payload)
+		es := NewEventStream(w, r, renderEventStream, DefaultContentType)
+		es.Render(apiResource)
 		es.Run(observer.BlockTransactionObserver, event)
 		return
 	}
 
-	if err := httputils.WriteJSON(w, 200, payload); err != nil {
+	if err := httputils.WriteJSON(w, 200, apiResource); err != nil {
 		http.Error(w, "Error reading request body", http.StatusInternalServerError)
 	}
 }
