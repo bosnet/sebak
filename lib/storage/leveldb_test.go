@@ -542,7 +542,8 @@ func TestLevelDBWalk(t *testing.T) {
 		cnt        int
 	)
 
-	err := st.Walk("test-", "test-1", false, func(k, v []byte) (bool, error) {
+	walkOption := NewWalkOption("test-1", 10, false)
+	err := st.Walk("test-", walkOption, func(k, v []byte) (bool, error) {
 		cnt++
 		walkedKeys = append(walkedKeys, string(k))
 		return true, nil
