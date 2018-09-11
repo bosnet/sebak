@@ -2,7 +2,6 @@ package common
 
 import (
 	"bytes"
-	"context"
 	"crypto/tls"
 	"io"
 	"net"
@@ -16,8 +15,8 @@ import (
 type HTTP2Client struct {
 	sync.Mutex
 
-	client http.Client
-	conn   net.Conn
+	client    http.Client
+	transport *http.Transport
 }
 
 func NewHTTP2Client(timeout, idleTimeout time.Duration, keepAlive bool) (client *HTTP2Client, err error) {
@@ -25,48 +24,39 @@ func NewHTTP2Client(timeout, idleTimeout time.Duration, keepAlive bool) (client 
 		timeout, idleTimeout = 0, 0
 	}
 
-	dialer := &net.Dialer{
-		Timeout:   1 * time.Second,
-		KeepAlive: 100000 * time.Second,
-		DualStack: true,
-	}
-
-	client = &HTTP2Client{}
-
 	transport := &http.Transport{
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: true,
 		},
 		IdleConnTimeout:   idleTimeout,
 		DisableKeepAlives: !keepAlive,
-		DialContext: func(ctx context.Context, network, addr string) (conn net.Conn, err error) {
-			conn, err = dialer.DialContext(ctx, network, addr)
-
-			client.conn = conn
-			return conn, err
-		},
+		DialContext: (&net.Dialer{
+			Timeout:   1 * time.Second,
+			KeepAlive: 100000 * time.Second,
+			DualStack: true,
+		}).DialContext,
 	}
 
 	if err = http2.ConfigureTransport(transport); err != nil {
 		return
 	}
 
-	client.client = http.Client{
-		Transport: transport,
-		Timeout:   timeout,
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			return http.ErrUseLastResponse // NOTE prevent redirect
+	client = &HTTP2Client{
+		client: http.Client{
+			Transport: transport,
+			Timeout:   timeout,
+			CheckRedirect: func(req *http.Request, via []*http.Request) error {
+				return http.ErrUseLastResponse // NOTE prevent redirect
+			},
 		},
+		transport: transport,
 	}
 
 	return
 }
 
 func (c *HTTP2Client) Close() {
-	if c.conn == nil {
-		return
-	}
-	c.conn.Close()
+	c.transport.CloseIdleConnections()
 }
 
 func (c *HTTP2Client) Get(url string, headers http.Header) (response *http.Response, err error) {
