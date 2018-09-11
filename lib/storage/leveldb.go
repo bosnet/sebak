@@ -291,7 +291,7 @@ func (st *LevelDBBackend) GetIterator(prefix string, option *IteratorOptions) (f
 	if reverse {
 		if !iter.Last() {
 			iter.Release()
-			return (func() (IterItem, bool) { return IterItem{}, false }), (func() {})
+			return func() (IterItem, bool) { return IterItem{}, false }, func() {}
 		}
 		funcNext = iter.Prev
 		hasUnsent = true
@@ -305,9 +305,10 @@ func (st *LevelDBBackend) GetIterator(prefix string, option *IteratorOptions) (f
 	}
 
 	var n uint64
-	return (func() (IterItem, bool) {
+	return func() (IterItem, bool) {
 			if hasUnsent {
 				hasUnsent = false
+				n++
 				return IterItem{N: n, Key: iter.Key(), Value: iter.Value()}, true
 			}
 
@@ -317,15 +318,16 @@ func (st *LevelDBBackend) GetIterator(prefix string, option *IteratorOptions) (f
 			}
 
 			if limit != 0 && n >= limit {
-				iter.Release()
-				return IterItem{}, false
+				defer iter.Release()
+				n++
+				return IterItem{N: n, Key: iter.Key(), Value: iter.Value()}, false
 			}
 			n++
 			return IterItem{N: n, Key: iter.Key(), Value: iter.Value()}, true
-		}),
-		(func() {
+		},
+		func() {
 			iter.Release()
-		})
+		}
 }
 
 type (

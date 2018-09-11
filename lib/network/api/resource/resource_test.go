@@ -116,7 +116,7 @@ func TestResourceAccount(t *testing.T) {
 		}
 
 		urlneedToBeFilledByAPI := "/operations/"
-		arl := NewResourceList(rol, urlneedToBeFilledByAPI)
+		arl := NewResourceList(rol, urlneedToBeFilledByAPI, urlneedToBeFilledByAPI, urlneedToBeFilledByAPI)
 		r := arl.Resource()
 		j, _ := json.MarshalIndent(r, "", " ")
 

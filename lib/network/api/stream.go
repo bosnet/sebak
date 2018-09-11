@@ -47,6 +47,9 @@ var RenderJSONFunc = func(args ...interface{}) ([]byte, error) {
 		return nil, fmt.Errorf("render: value is empty") //TODO(anarcher): Error type
 	}
 	v := args[1]
+	if v == nil {
+		return nil, nil
+	}
 	bs, err := json.Marshal(v)
 	if err != nil {
 		return nil, err

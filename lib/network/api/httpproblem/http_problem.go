@@ -1,6 +1,7 @@
-package errors
+package httpproblem
 
 import (
+	"boscoin.io/sebak/lib/error"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -54,7 +55,7 @@ func NewDetailedStatusProblem(status int, detail string) problem {
 	return p
 }
 
-func NewErrorProblem(err *Error) problem {
+func NewErrorProblem(err *errors.Error) problem {
 	return problem{Type: fmt.Sprintf("%s%d", HttpProblemErrorTypePrefix, err.Code), Title: err.Message}
 }
 

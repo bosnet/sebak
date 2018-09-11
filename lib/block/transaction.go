@@ -219,7 +219,7 @@ func LoadBlockTransactionsInsideIterator(
 	return (func() (BlockTransaction, bool, []byte) {
 			item, hasNext := iterFunc()
 			if !hasNext {
-				return BlockTransaction{}, false, []byte{}
+				return BlockTransaction{}, false, item.Key
 			}
 
 			var hash string
@@ -227,7 +227,7 @@ func LoadBlockTransactionsInsideIterator(
 
 			bt, err := GetBlockTransaction(st, hash)
 			if err != nil {
-				return BlockTransaction{}, false, []byte{}
+				return BlockTransaction{}, false, item.Key
 			}
 
 			return bt, hasNext, item.Key
