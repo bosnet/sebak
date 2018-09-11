@@ -17,6 +17,9 @@ type Network interface {
 	AddWatcher(func(Network, net.Conn, http.ConnState))
 	AddHandler(string, http.HandlerFunc) *mux.Route
 
+	// Starts network handling
+	// Blocks until finished, either because of an error
+	// or because `Stop` was called
 	Start() error
 	Stop()
 	SetMessageBroker(MessageBroker)
