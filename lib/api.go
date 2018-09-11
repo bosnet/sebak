@@ -20,6 +20,7 @@ const (
 	GetAccountOperationsHandlerPattern   = "/account/{address}/operations"
 	GetTransactionsHandlerPattern        = "/transactions"
 	GetTransactionByHashHandlerPattern   = "/transactions/{txid}"
+	PostTransactionPattern               = "/transactions"
 )
 
 type NetworkHandlerNode struct {

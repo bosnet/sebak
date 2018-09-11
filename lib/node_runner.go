@@ -183,6 +183,10 @@ func (nr *NodeRunner) Ready() {
 		network.UrlPathPrefixAPI+GetTransactionByHashHandlerPattern,
 		apiHandler.GetTransactionByHashHandler,
 	).Methods("GET")
+	nr.network.AddHandler(
+		network.UrlPathPrefixAPI+PostTransactionPattern,
+		nodeHandler.MessageHandler,
+	).Methods("POST")
 
 	nr.network.Ready()
 }
