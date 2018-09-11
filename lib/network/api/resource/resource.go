@@ -4,18 +4,18 @@ import (
 	"github.com/nvellon/hal"
 )
 
-type APIResource interface {
+type Resource interface {
 	LinkSelf() string
 	Resource() *hal.Resource
 	GetMap() hal.Entry
 }
 
 type ResourceList struct {
-	Resources []APIResource
+	Resources []Resource
 	SelfLink  string
 }
 
-func NewResourceList(list []APIResource, selfLink string) *ResourceList {
+func NewResourceList(list []Resource, selfLink string) *ResourceList {
 	rl := &ResourceList{
 		Resources: list,
 		SelfLink:  selfLink,

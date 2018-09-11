@@ -14,8 +14,8 @@ import (
 
 func (api NetworkHandlerAPI) GetTransactionsHandler(w http.ResponseWriter, r *http.Request) {
 
-	readFunc := func(cnt int) []resource.APIResource {
-		var txs []resource.APIResource
+	readFunc := func(cnt int) []resource.Resource {
+		var txs []resource.Resource
 		iterFunc, closeFunc := block.GetBlockTransactions(api.storage, &storage.IteratorOptions{Reverse: false})
 		for {
 			t, hasNext, _ := iterFunc()
@@ -60,7 +60,7 @@ func (api NetworkHandlerAPI) GetTransactionByHashHandler(w http.ResponseWriter, 
 		return
 	}
 
-	var apiResource resource.APIResource
+	var apiResource resource.Resource
 
 	if found {
 		bt, err := block.GetBlockTransaction(api.storage, key)

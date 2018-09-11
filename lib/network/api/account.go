@@ -51,8 +51,8 @@ func (api NetworkHandlerAPI) GetAccountTransactionsHandler(w http.ResponseWriter
 	vars := mux.Vars(r)
 	address := vars["address"]
 
-	readFunc := func(cnt int) []resource.APIResource {
-		var txs []resource.APIResource
+	readFunc := func(cnt int) []resource.Resource {
+		var txs []resource.Resource
 		iterFunc, closeFunc := block.GetBlockTransactionsByAccount(api.storage, address, &storage.IteratorOptions{Reverse: false})
 		for {
 			t, hasNext, _ := iterFunc()
@@ -92,8 +92,8 @@ func (api NetworkHandlerAPI) GetAccountOperationsHandler(w http.ResponseWriter, 
 	vars := mux.Vars(r)
 	address := vars["address"]
 
-	readFunc := func(cnt int) []resource.APIResource {
-		var txs []resource.APIResource
+	readFunc := func(cnt int) []resource.Resource {
+		var txs []resource.Resource
 		iterFunc, closeFunc := block.GetBlockOperationsBySource(api.storage, address, &storage.IteratorOptions{Reverse: false})
 		for {
 			t, hasNext, _ := iterFunc()

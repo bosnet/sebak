@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestAPIResourceAccount(t *testing.T) {
+func TestResourceAccount(t *testing.T) {
 	storage, err := storage.NewTestMemoryLevelDBBackend()
 	require.Nil(t, err)
 	defer storage.Close()
@@ -108,7 +108,7 @@ func TestAPIResourceAccount(t *testing.T) {
 		bt := block.NewBlockTransactionFromTransaction(common.GetUniqueIDFromUUID(), 0, tx, a)
 		bt.Save(storage)
 
-		var rol []APIResource
+		var rol []Resource
 		for _, boHash := range bt.Operations {
 			var bo block.BlockOperation
 			bo, err = block.GetBlockOperation(storage, boHash)

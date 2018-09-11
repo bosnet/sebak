@@ -31,7 +31,6 @@ func (o Operation) GetMap() hal.Entry {
 }
 
 func (o Operation) Resource() *hal.Resource {
-
 	r := hal.NewResource(o, o.LinkSelf())
 	r.AddNewLink("transactions", strings.Replace(URLTransactions, "{id}", o.bo.TxHash, -1))
 	return r
