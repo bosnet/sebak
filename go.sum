@@ -44,6 +44,8 @@ github.com/matttproud/golang_protobuf_extensions v1.0.1 h1:4hp9jkHxhMHkqkrB3Ix0j
 github.com/matttproud/golang_protobuf_extensions v1.0.1/go.mod h1:D8He9yQNgCq6Z5Ld7szi9bcBfOoFv/3dc6xSMkL2PC0=
 github.com/nullstyle/go-xdr v0.0.0-20170810174627-a875e7c9fa23 h1:lhtSXe2K+fPGSqmWYYVEvxNUSTPWxjNoHjc61sywb7c=
 github.com/nullstyle/go-xdr v0.0.0-20170810174627-a875e7c9fa23/go.mod h1:sZZi9x5aHXGZ/RRp7Ne5rkvtDxZb7pd7vgVA+gmE35A=
+github.com/nvellon/hal v0.3.0 h1:0Mpwa5i+c6voWs7N7uLv2ptMqLcI+u13T7lxYnPaBdQ=
+github.com/nvellon/hal v0.3.0/go.mod h1:FfxMoXa4BbxypoTSaaXcgATT1HVnZ/LluM6CZzDNrYc=
 github.com/oklog/run v1.0.0 h1:Ru7dDtJNOyC66gQ5dQmaCa0qIsAUFY3sFpK1Xk8igrw=
 github.com/oklog/run v1.0.0/go.mod h1:dlhp/R75TPv97u0XWUtDeV/lRKWPKSdTuV0TZvrmrQA=
 github.com/onsi/ginkgo v1.6.0 h1:Ix8l273rp3QzYgXSR+c8d1fTG7UPgYkOSELPhiY/YGw=
