@@ -21,11 +21,8 @@ func TestAPIResourceAccount(t *testing.T) {
 	{
 		ba := block.TestMakeBlockAccount()
 		ba.Save(storage)
-		ra := &Account{
-			accountID:  ba.Address,
-			sequenceID: ba.SequenceID,
-			balance:    ba.GetBalance().String(),
-		}
+
+		ra := NewAccount(ba)
 		r := ra.Resource()
 		j, _ := json.MarshalIndent(r, "", " ")
 		//fmt.Printf("%s\n", j)
@@ -52,16 +49,7 @@ func TestAPIResourceAccount(t *testing.T) {
 		bt := block.NewBlockTransactionFromTransaction("dummy", 0, tx, a)
 		bt.Save(storage)
 
-		rt := &Transaction{
-			hash:       bt.Hash,
-			sequenceID: bt.SequenceID,
-			signature:  bt.Signature,
-			source:     bt.Source,
-			fee:        bt.Fee.String(),
-			amount:     bt.Amount.String(),
-			created:    bt.Created,
-			operations: bt.Operations,
-		}
+		rt := NewTransaction(&bt)
 		r := rt.Resource()
 		j, _ := json.MarshalIndent(r, "", " ")
 		//fmt.Printf("%s\n", j)
@@ -92,14 +80,7 @@ func TestAPIResourceAccount(t *testing.T) {
 		bt.Save(storage)
 		bo, err := block.GetBlockOperation(storage, bt.Operations[0])
 
-		ro := &Operation{
-			hash:    bo.Hash,
-			txHash:  bo.TxHash,
-			funder:  bo.Source,
-			account: bo.Target,
-			otype:   string(bo.Type),
-			amount:  bo.Amount.String(),
-		}
+		ro := NewOperation(&bo)
 		r := ro.Resource()
 		j, _ := json.MarshalIndent(r, "", " ")
 		//fmt.Printf("%s\n", j)
@@ -133,14 +114,7 @@ func TestAPIResourceAccount(t *testing.T) {
 			bo, err = block.GetBlockOperation(storage, boHash)
 			require.Nil(t, err)
 
-			ro := &Operation{
-				hash:    bo.Hash,
-				txHash:  bo.TxHash,
-				funder:  bo.Source,
-				account: bo.Target,
-				otype:   string(bo.Type),
-				amount:  bo.Amount.String(),
-			}
+			ro := NewOperation(&bo)
 			rol = append(rol, ro)
 		}
 

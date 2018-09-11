@@ -3,39 +3,40 @@ package resource
 import (
 	"strings"
 
+	"boscoin.io/sebak/lib/block"
 	"github.com/nvellon/hal"
 )
 
 type Transaction struct {
-	hash       string
-	sequenceID uint64
-	signature  string
-	source     string
-	fee        string
-	amount     string
-	created    string
-	operations []string
+	bt *block.BlockTransaction
+}
+
+func NewTransaction(bt *block.BlockTransaction) *Transaction {
+	t := &Transaction{
+		bt: bt,
+	}
+	return t
 }
 
 func (t Transaction) GetMap() hal.Entry {
 	return hal.Entry{
-		"id":              t.hash,
-		"hash":            t.hash,
-		"account":         t.source,
-		"fee_paid":        t.fee,
-		"sequence_id":     t.sequenceID,
-		"created_at":      t.created,
-		"operation_count": len(t.operations),
+		"id":              t.bt.Hash,
+		"hash":            t.bt.Hash,
+		"account":         t.bt.Source,
+		"fee_paid":        t.bt.Fee.String(),
+		"sequence_id":     t.bt.SequenceID,
+		"created_at":      t.bt.Created,
+		"operation_count": len(t.bt.Operations),
 	}
 }
 func (t Transaction) Resource() *hal.Resource {
 
 	r := hal.NewResource(t, t.LinkSelf())
-	r.AddLink("accounts", hal.NewLink(strings.Replace(URLAccounts, "{id}", t.source, -1)))
-	r.AddLink("operations", hal.NewLink(strings.Replace(URLTransactions, "{id}", t.hash, -1)+"/operations{?cursor,limit,order}", hal.LinkAttr{"templated": true}))
+	r.AddLink("accounts", hal.NewLink(strings.Replace(URLAccounts, "{id}", t.bt.Source, -1)))
+	r.AddLink("operations", hal.NewLink(strings.Replace(URLTransactions, "{id}", t.bt.Hash, -1)+"/operations{?cursor,limit,order}", hal.LinkAttr{"templated": true}))
 	return r
 }
 
 func (t Transaction) LinkSelf() string {
-	return strings.Replace(URLTransactions, "{id}", t.hash, -1)
+	return strings.Replace(URLTransactions, "{id}", t.bt.Hash, -1)
 }

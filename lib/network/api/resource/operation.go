@@ -3,36 +3,40 @@ package resource
 import (
 	"strings"
 
+	"boscoin.io/sebak/lib/block"
+
 	"github.com/nvellon/hal"
 )
 
 type Operation struct {
-	hash    string
-	txHash  string
-	funder  string //Source Account
-	account string //Target Account
-	otype   string
-	amount  string
+	bo *block.BlockOperation
+}
+
+func NewOperation(bo *block.BlockOperation) *Operation {
+	o := &Operation{
+		bo: bo,
+	}
+	return o
 }
 
 func (o Operation) GetMap() hal.Entry {
 	return hal.Entry{
-		"id":      o.hash,
-		"hash":    o.hash,
-		"funder":  o.funder,
-		"account": o.account,
-		"type":    o.otype,
-		"amount":  o.amount,
+		"id":      o.bo.Hash,
+		"hash":    o.bo.Hash,
+		"funder":  o.bo.Source,
+		"account": o.bo.Target,
+		"type":    o.bo.Type,
+		"amount":  o.bo.Amount.String(),
 	}
 }
 
 func (o Operation) Resource() *hal.Resource {
 
 	r := hal.NewResource(o, o.LinkSelf())
-	r.AddNewLink("transactions", strings.Replace(URLTransactions, "{id}", o.txHash, -1))
+	r.AddNewLink("transactions", strings.Replace(URLTransactions, "{id}", o.bo.TxHash, -1))
 	return r
 }
 
 func (o Operation) LinkSelf() string {
-	return strings.Replace(URLOperations, "{id}", o.hash, -1)
+	return strings.Replace(URLOperations, "{id}", o.bo.Hash, -1)
 }
