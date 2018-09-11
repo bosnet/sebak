@@ -20,14 +20,6 @@ import (
 //  * get list by `Account` and created order
 //  * get list by `Block` and created order
 
-const (
-	BlockTransactionPrefixHash      string = "bt-hash-"      // bt-hash-<BlockTransaction.Hash>
-	BlockTransactionPrefixSource    string = "bt-source-"    // bt-source-<BlockTransaction.Source>
-	BlockTransactionPrefixConfirmed string = "bt-confirmed-" // bt-confirmed-<BlockTransaction.Confirmed>
-	BlockTransactionPrefixAccount   string = "bt-account-"   // bt-account-<BlockTransaction.Source>,<BlockTransaction.Operations.Target>
-	BlockTransactionPrefixBlock     string = "bt-block-"     // bt-block-<BlockTransaction.Block>
-)
-
 // TODO(BlockTransaction): support counting
 
 type BlockTransaction struct {
@@ -183,23 +175,23 @@ func (bt BlockTransaction) Transaction() transaction.Transaction {
 }
 
 func GetBlockTransactionKeyPrefixSource(source string) string {
-	return fmt.Sprintf("%s%s-", BlockTransactionPrefixSource, source)
+	return fmt.Sprintf("%s%s-", common.BlockTransactionPrefixSource, source)
 }
 
 func GetBlockTransactionKeyPrefixConfirmed(confirmed string) string {
-	return fmt.Sprintf("%s%s-", BlockTransactionPrefixConfirmed, confirmed)
+	return fmt.Sprintf("%s%s-", common.BlockTransactionPrefixConfirmed, confirmed)
 }
 
 func GetBlockTransactionKeyPrefixAccount(accountAddress string) string {
-	return fmt.Sprintf("%s%s-", BlockTransactionPrefixAccount, accountAddress)
+	return fmt.Sprintf("%s%s-", common.BlockTransactionPrefixAccount, accountAddress)
 }
 
 func GetBlockTransactionKeyPrefixBlock(hash string) string {
-	return fmt.Sprintf("%s%s-", BlockTransactionPrefixBlock, hash)
+	return fmt.Sprintf("%s%s-", common.BlockTransactionPrefixBlock, hash)
 }
 
 func GetBlockTransactionKey(hash string) string {
-	return fmt.Sprintf("%s%s", BlockTransactionPrefixHash, hash)
+	return fmt.Sprintf("%s%s", common.BlockTransactionPrefixHash, hash)
 }
 
 func GetBlockTransaction(st *storage.LevelDBBackend, hash string) (bt BlockTransaction, err error) {
@@ -257,7 +249,7 @@ func GetBlockTransactionsByConfirmed(st *storage.LevelDBBackend, iteratorOptions
 	func() (BlockTransaction, bool, []byte),
 	func(),
 ) {
-	iterFunc, closeFunc := st.GetIterator(BlockTransactionPrefixConfirmed, iteratorOptions)
+	iterFunc, closeFunc := st.GetIterator(common.BlockTransactionPrefixConfirmed, iteratorOptions)
 
 	return LoadBlockTransactionsInsideIterator(st, iterFunc, closeFunc)
 }
