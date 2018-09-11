@@ -6,8 +6,6 @@ import (
 	"io"
 	"net/url"
 	"os"
-	"sync"
-	"sync/atomic"
 
 	"encoding/binary"
 	uuid "github.com/satori/go.uuid"
@@ -26,29 +24,6 @@ func GenerateUUID() string {
 
 func GetUniqueIDFromDate() string {
 	return NowISO8601()
-}
-
-type SafeLock struct {
-	lock  sync.Mutex
-	locks int64
-}
-
-func (l *SafeLock) Lock() {
-	if l.locks < 1 {
-		l.lock.Lock()
-	}
-	atomic.AddInt64(&l.locks, 1)
-
-	return
-}
-
-func (l *SafeLock) Unlock() {
-	atomic.AddInt64(&l.locks, -1)
-	if l.locks < 1 {
-		l.lock.Unlock()
-	}
-
-	return
 }
 
 func GetENVValue(key, defaultValue string) (v string) {

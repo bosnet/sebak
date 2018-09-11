@@ -1,11 +1,13 @@
 package transaction
 
 import (
+	"sync"
+
 	"boscoin.io/sebak/lib/common"
 )
 
 type TransactionPool struct {
-	common.SafeLock
+	sync.RWMutex
 
 	Pool    map[ /* Transaction.GetHash() */ string]Transaction
 	Hashes  []string // Transaction.GetHash()
@@ -95,8 +97,8 @@ func (tp *TransactionPool) Remove(hashes ...string) {
 }
 
 func (tp *TransactionPool) AvailableTransactions(transactionLimit int) []string {
-	tp.Lock()
-	defer tp.Unlock()
+	tp.RLock()
+	defer tp.RUnlock()
 
 	if tp.Len() <= int(transactionLimit) {
 		return tp.Hashes
