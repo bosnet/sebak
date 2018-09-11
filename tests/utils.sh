@@ -29,7 +29,7 @@ function getAccountWithBalance () # u16 port, string addr and expected balance
     balance=0
     for i in $(seq 30)
     do
-	    balance=$(getAccount $1 $2 | jq ".Balance" | sed 's/"//g')
+	    balance=$(getAccount $1 $2 | jq ".balance" | sed 's/"//g')
 	    if [ "$balance" == "$3" ];then
 		    return 0
 	    fi
