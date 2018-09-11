@@ -109,8 +109,18 @@ func (c *ConnectionManager) AllValidators() []string {
 	return append(validators, c.localNode.Address())
 }
 
+//
+// Returns:
+//   the number of validators which are currently connected
+//
 func (c *ConnectionManager) CountConnected() int {
-	return len(c.AllConnected())
+	var count int
+	for _, isConnected := range c.connected {
+		if isConnected {
+			count += 1
+		}
+	}
+	return count
 }
 
 func (c *ConnectionManager) connectValidators() {
