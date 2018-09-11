@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/error"
-	"boscoin.io/sebak/lib/observer"
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
 )

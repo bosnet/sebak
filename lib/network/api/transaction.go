@@ -3,8 +3,8 @@ package api
 import (
 	"net/http"
 
+	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/network/httputils"
-	"boscoin.io/sebak/lib/observer"
 
 	"boscoin.io/sebak/lib/block"
 	"github.com/gorilla/mux"

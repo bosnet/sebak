@@ -3,7 +3,7 @@
 	and how the state of the node changes.
 */
 
-package noderunner
+package runner
 
 import (
 	"testing"

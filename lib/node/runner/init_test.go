@@ -1,4 +1,4 @@
-package noderunner
+package runner
 
 import (
 	logging "github.com/inconshreveable/log15"

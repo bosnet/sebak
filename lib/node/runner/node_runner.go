@@ -5,7 +5,7 @@
 // In this regard, it can be seen as a single node, and is used as such
 // in unit tests.
 //
-package noderunner
+package runner
 
 import (
 	"errors"

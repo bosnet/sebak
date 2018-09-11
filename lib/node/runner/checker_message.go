@@ -10,7 +10,7 @@
 	5. BroadcastTransaction: Passing a transaction to all known Validators.
 */
 
-package noderunner
+package runner
 
 import (
 	logging "github.com/inconshreveable/log15"

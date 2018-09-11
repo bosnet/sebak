@@ -1,4 +1,4 @@
-package noderunner
+package runner
 
 import (
 	"boscoin.io/sebak/lib/block"

@@ -1,4 +1,4 @@
-package noderunner
+package runner
 
 import (
 	"io/ioutil"

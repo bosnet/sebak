@@ -24,7 +24,7 @@ import (
 
 	"boscoin.io/sebak/lib"
 	"boscoin.io/sebak/lib/consensus"
-	"boscoin.io/sebak/lib/node/noderunner"
+	"boscoin.io/sebak/lib/node/runner"
 	"strconv"
 )
 
@@ -367,7 +367,7 @@ func runNode() error {
 	// Execution group.
 	var g run.Group
 	{
-		nr, err := noderunner.NewNodeRunner(flagNetworkID, localNode, policy, nt, isaac, st)
+		nr, err := runner.NewNodeRunner(flagNetworkID, localNode, policy, nt, isaac, st)
 		conf := &consensus.ISAACConfiguration{
 			TimeoutINIT:       timeoutINIT,
 			TimeoutSIGN:       timeoutSIGN,

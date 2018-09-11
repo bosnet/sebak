@@ -3,6 +3,6 @@
 // is totally different from SCP(Stellar Cosensus Protocol).
 //
 // sebak is the old term of "SaeByeog" in Korean, which means dawn.
-package noderunner
+package runner
 
 // TODO keep the changes
