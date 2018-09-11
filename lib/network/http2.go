@@ -193,7 +193,6 @@ func (t *HTTP2Network) IsReady() bool {
 	if err != nil {
 		return false
 	}
-	defer client.Close()
 
 	h2n := NewHTTP2NetworkClient(t.Endpoint(), client)
 	if _, err := h2n.GetNodeInfo(); err != nil {
