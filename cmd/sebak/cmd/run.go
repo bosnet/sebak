@@ -40,8 +40,6 @@ var (
 	flagLogLevel       string = common.GetENVValue("SEBAK_LOG_LEVEL", defaultLogLevel.String())
 	flagLogFormat      string = common.GetENVValue("SEBAK_LOG_FORMAT", defaultLogFormat)
 	flagLog            string = common.GetENVValue("SEBAK_LOG", "")
-	flagHTTPLog        string = common.GetENVValue("SEBAK_HTTP_LOG", "")
-	flagHTTPError      string = common.GetENVValue("SEBAK_HTTP_ERROR_LOG", "")
 	flagVerbose        bool   = common.GetENVValue("SEBAK_VERBOSE", "0") == "1"
 	flagEndpointString string = common.GetENVValue(
 		"SEBAK_ENDPOINT",
@@ -131,8 +129,6 @@ func init() {
 	nodeCmd.Flags().StringVar(&flagLogLevel, "log-level", flagLogLevel, "log level, {crit, error, warn, info, debug}")
 	nodeCmd.Flags().StringVar(&flagLogFormat, "log-format", flagLogFormat, "log format, {terminal, json}")
 	nodeCmd.Flags().StringVar(&flagLog, "log", flagLog, "set log file")
-	nodeCmd.Flags().StringVar(&flagHTTPLog, "http-log", flagHTTPLog, "set http log file")
-	nodeCmd.Flags().StringVar(&flagHTTPError, "http-error-log", flagHTTPError, "set http error log file")
 	nodeCmd.Flags().BoolVar(&flagVerbose, "verbose", flagVerbose, "verbose")
 	nodeCmd.Flags().StringVar(&flagEndpointString, "endpoint", flagEndpointString, "endpoint uri to listen on")
 	nodeCmd.Flags().StringVar(&flagStorageConfigString, "storage", flagStorageConfigString, "storage uri")
@@ -207,7 +203,6 @@ func parseFlagsNode() {
 	queries.Add("TLSCertFile", flagTLSCertFile)
 	queries.Add("TLSKeyFile", flagTLSKeyFile)
 	queries.Add("IdleTimeout", "3s")
-	queries.Add("NodeName", node.MakeAlias(kp.Address()))
 	nodeEndpoint.RawQuery = queries.Encode()
 
 	if validators, err = parseFlagValidators(flagValidators); err != nil {
@@ -281,8 +276,6 @@ func parseFlagsNode() {
 	parsedFlags = append(parsedFlags, "\n\tlog-level", flagLogLevel)
 	parsedFlags = append(parsedFlags, "\n\tlog-format", flagLogFormat)
 	parsedFlags = append(parsedFlags, "\n\tlog", flagLog)
-	parsedFlags = append(parsedFlags, "\n\thttp-log", flagHTTPLog)
-	parsedFlags = append(parsedFlags, "\n\thttp-error-log", flagHTTPError)
 	parsedFlags = append(parsedFlags, "\n\tthreshold", flagThreshold)
 	parsedFlags = append(parsedFlags, "\n\ttimeout-init", flagTimeoutINIT)
 	parsedFlags = append(parsedFlags, "\n\ttimeout-sign", flagTimeoutSIGN)
@@ -330,17 +323,9 @@ func runNode() error {
 	localNode.AddValidators(validators...)
 
 	// create network
-	networkConfig, err := network.NewHTTP2NetworkConfigFromEndpoint(nodeEndpoint)
+	networkConfig, err := network.NewHTTP2NetworkConfigFromEndpoint(localNode.Alias(), nodeEndpoint)
 	if err != nil {
 		log.Crit("failed to create network", "error", err)
-		return err
-	}
-	if err := networkConfig.SetLog(flagHTTPLog); err != nil {
-		log.Crit("failed to set `http-log`", "error", err)
-		return err
-	}
-	if err := networkConfig.SetErrorLog(flagHTTPError); err != nil {
-		log.Crit("failed to set `http-error-log`", "error", err)
 		return err
 	}
 

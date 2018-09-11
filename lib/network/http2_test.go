@@ -37,7 +37,7 @@ func getPort() string {
 
 func makeTestHTTP2NetworkForTLS(endpoint *common.Endpoint) (network *HTTP2Network, err error) {
 	var config *HTTP2NetworkConfig
-	if config, err = NewHTTP2NetworkConfigFromEndpoint(endpoint); err != nil {
+	if config, err = NewHTTP2NetworkConfigFromEndpoint("showme", endpoint); err != nil {
 		return
 	}
 
@@ -82,7 +82,6 @@ func TestHTTP2NetworkTLSSupport(t *testing.T) {
 	require.NotNil(t, g)
 
 	queryValues := url.Values{}
-	queryValues.Set("NodeName", "showme")
 	queryValues.Set("TLSCertFile", g.GetCertPath())
 	queryValues.Set("TLSKeyFile", g.GetKeyPath())
 
@@ -127,7 +126,7 @@ func TestHTTP2NetworkTLSSupport(t *testing.T) {
 // will be `HTTP` server, not `HTTPS`.
 func TestHTTP2NetworkWithoutTLS(t *testing.T) {
 	endpoint, err := common.NewEndpointFromString(
-		fmt.Sprintf("http://localhost:%s?NodeName=showme", getPort()),
+		fmt.Sprintf("http://localhost:%s", getPort()),
 	)
 	require.Nil(t, err)
 

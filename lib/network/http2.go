@@ -3,16 +3,18 @@ package network
 import (
 	"fmt"
 	"io"
+	goLog "log"
 	"net"
 	"net/http"
 	"strings"
 	"time"
 
-	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	logging "github.com/inconshreveable/log15"
 	"golang.org/x/net/http2"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/node"
 )
 
 type Handlers map[string]func(http.ResponseWriter, *http.Request)
@@ -57,17 +59,22 @@ type HTTP2Network struct {
 	handlers map[string]func(http.ResponseWriter, *http.Request)
 
 	config *HTTP2NetworkConfig
+	node   *node.LocalNode
+	log    logging.Logger
 }
 
 type HandlerFunc func(w http.ResponseWriter, r *http.Request)
 
 func NewHTTP2Network(config *HTTP2NetworkConfig) (h2n *HTTP2Network) {
+	httpLog := log.New(logging.Ctx{"module": "http", "node": config.NodeName})
+	errorLog := goLog.New(HTTP2ErrorLog15Writer{httpLog}, "", 0)
+
 	server := &http.Server{
 		Addr:              config.Addr,
 		ReadTimeout:       config.ReadTimeout,
 		ReadHeaderTimeout: config.ReadHeaderTimeout,
 		WriteTimeout:      config.WriteTimeout,
-		ErrorLog:          config.ErrorLog,
+		ErrorLog:          errorLog,
 	}
 	server.SetKeepAlivesEnabled(true)
 
@@ -89,6 +96,7 @@ func NewHTTP2Network(config *HTTP2NetworkConfig) (h2n *HTTP2Network) {
 		tlsCertFile:    config.TLSCertFile,
 		tlsKeyFile:     config.TLSKeyFile,
 		receiveChannel: make(chan common.NetworkMessage),
+		log:            httpLog,
 	}
 	h2n.handlers = map[string]func(http.ResponseWriter, *http.Request){}
 	h2n.routers = map[string]*mux.Router{
@@ -141,7 +149,7 @@ func (t *HTTP2Network) setNotReadyHandler() {
 		}
 	})
 
-	t.server.Handler = handlers.CombinedLoggingHandler(t.config.Log, t.router)
+	t.server.Handler = HTTP2Log15Handler{log: t.log, handler: t.router}
 }
 
 func (t *HTTP2Network) AddHandler(pattern string, handler http.HandlerFunc) (router *mux.Route) {
@@ -173,7 +181,7 @@ func (t *HTTP2Network) MessageBroker() MessageBroker {
 }
 
 func (t *HTTP2Network) Ready() error {
-	t.server.Handler = handlers.CombinedLoggingHandler(t.config.Log, t.router)
+	t.server.Handler = HTTP2Log15Handler{log: t.log, handler: t.router}
 
 	t.ready = true
 

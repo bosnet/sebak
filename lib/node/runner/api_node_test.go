@@ -73,20 +73,20 @@ func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, mn *network.HTTP2Net
 		return
 	}
 
+	kp, _ = keypair.Random()
+	localNode, _ := node.NewLocalNode(kp, endpoint, "")
+
 	queries := endpoint.Query()
 	queries.Add("TLSCertFile", g.GetCertPath())
 	queries.Add("TLSKeyFile", g.GetKeyPath())
 	endpoint.RawQuery = queries.Encode()
 
-	config, err = network.NewHTTP2NetworkConfigFromEndpoint(endpoint)
+	config, err = network.NewHTTP2NetworkConfigFromEndpoint(localNode.Alias(), endpoint)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 	mn = network.NewHTTP2Network(config)
-
-	kp, _ = keypair.Random()
-	localNode, _ := node.NewLocalNode(kp, mn.Endpoint(), "")
 
 	p, _ := consensus.NewDefaultVotingThresholdPolicy(30, 30)
 	is, _ := consensus.NewISAAC(networkID, localNode, p)
