@@ -6,10 +6,10 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/network/httputils"
 	"boscoin.io/sebak/lib/observer"
-	"boscoin.io/sebak/lib/block"
 )
 
 func (api NetworkHandlerAPI) GetAccountHandler(w http.ResponseWriter, r *http.Request) {

@@ -2,10 +2,8 @@ package transaction
 
 import (
 	"math/rand"
-	"testing"
 
 	"github.com/stellar/go/keypair"
-	"github.com/stretchr/testify/require"
 
 	"boscoin.io/sebak/lib/common"
 )
@@ -102,22 +100,6 @@ func TestMakeTransactionWithKeypair(networkID []byte, n int, srcKp *keypair.Full
 		ops...,
 	)
 	tx.Sign(srcKp, networkID)
-
-	return
-}
-
-func GetTransaction(t *testing.T) (tx Transaction, txByte []byte) {
-	initialBalance := common.Amount(1)
-	kpNewAccount, _ := keypair.Random()
-
-	tx = MakeTransactionCreateAccount(kp, kpNewAccount.Address(), initialBalance)
-	tx.B.SequenceID = 0
-	tx.Sign(kp, networkID)
-
-	var err error
-
-	txByte, err = tx.Serialize()
-	require.Nil(t, err)
 
 	return
 }

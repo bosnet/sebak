@@ -1,8 +1,8 @@
 package statedb
 
 import (
-	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/block"
+	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/storage/statedb/trie"
 	"fmt"
 )

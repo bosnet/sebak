@@ -10,9 +10,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/storage"
-	"boscoin.io/sebak/lib/block"
 
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/transaction"

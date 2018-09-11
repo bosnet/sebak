@@ -6,13 +6,13 @@ import (
 	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
 
+	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/consensus"
+	"boscoin.io/sebak/lib/consensus/round"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
-	"boscoin.io/sebak/lib/consensus/round"
 	"boscoin.io/sebak/lib/storage"
-	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/transaction"
 )
 
@@ -37,6 +37,22 @@ func MakeNodeRunner() (*NodeRunner, *node.LocalNode) {
 	st, _ := storage.NewTestMemoryLevelDBBackend()
 	nodeRunner, _ := NewNodeRunner(string(networkID), localNode, vth, network, is, st)
 	return nodeRunner, localNode
+}
+
+func GetTransaction(t *testing.T) (tx transaction.Transaction, txByte []byte) {
+	initialBalance := common.Amount(1)
+	kpNewAccount, _ := keypair.Random()
+
+	tx = transaction.MakeTransactionCreateAccount(kp, kpNewAccount.Address(), initialBalance)
+	tx.B.SequenceID = account.SequenceID
+	tx.Sign(kp, networkID)
+
+	var err error
+
+	txByte, err = tx.Serialize()
+	require.Nil(t, err)
+
+	return
 }
 
 func TestGenerateNewSequenceID() uint64 {

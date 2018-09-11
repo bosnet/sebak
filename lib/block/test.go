@@ -2,9 +2,9 @@ package block
 
 import (
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/consensus/round"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
-	"boscoin.io/sebak/lib/consensus/round"
 	"boscoin.io/sebak/lib/transaction"
 	"github.com/stellar/go/keypair"
 )

@@ -3,10 +3,10 @@ package consensus
 import (
 	"errors"
 
-	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/node"
-	"boscoin.io/sebak/lib/consensus/round"
 	"boscoin.io/sebak/lib/block"
+	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/consensus/round"
+	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/transaction"
 )
 
@@ -24,8 +24,8 @@ type ISAAC struct {
 
 func NewISAAC(networkID []byte, node *node.LocalNode, votingThresholdPolicy common.VotingThresholdPolicy) (is *ISAAC, err error) {
 	is = &ISAAC{
-		NetworkID:             networkID,
-		Node:                  node,
+		NetworkID: networkID,
+		Node:      node,
 		VotingThresholdPolicy: votingThresholdPolicy,
 		TransactionPool:       transaction.NewTransactionPool(),
 		RunningRounds:         map[string]*RunningRound{},

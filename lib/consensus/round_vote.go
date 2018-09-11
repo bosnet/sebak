@@ -1,8 +1,8 @@
 package consensus
 
 import (
-	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/block"
+	"boscoin.io/sebak/lib/common"
 )
 
 type RoundVoteResult map[ /* Node.Address() */ string]common.VotingHole

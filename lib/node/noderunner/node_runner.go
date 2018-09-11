@@ -15,14 +15,14 @@ import (
 	logging "github.com/inconshreveable/log15"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
+	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/consensus"
+	"boscoin.io/sebak/lib/consensus/round"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/network/api"
 	"boscoin.io/sebak/lib/node"
-	"boscoin.io/sebak/lib/consensus/round"
 	"boscoin.io/sebak/lib/storage"
-	"boscoin.io/sebak/lib/block"
 )
 
 var DefaultHandleTransactionCheckerFuncs = []common.CheckerFunc{
@@ -187,7 +187,7 @@ func (nr *NodeRunner) Ready() {
 		apiHandler.GetTransactionByHashHandler,
 	).Methods("GET")
 	nr.network.AddHandler(
-		network.UrlPathPrefixAPI+PostTransactionPattern,
+		network.UrlPathPrefixAPI+api.PostTransactionPattern,
 		nodeHandler.MessageHandler,
 	).Methods("POST")
 

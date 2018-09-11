@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/block"
+	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
 	"github.com/stretchr/testify/require"
 )

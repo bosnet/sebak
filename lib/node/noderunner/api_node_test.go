@@ -15,12 +15,12 @@ import (
 	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
 
+	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/consensus"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/storage"
-	"boscoin.io/sebak/lib/block"
 )
 
 func getPort() string {

@@ -9,10 +9,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/consensus/round"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
-	"boscoin.io/sebak/lib/consensus/round"
 	"boscoin.io/sebak/lib/transaction"
 )
 
