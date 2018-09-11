@@ -113,14 +113,6 @@
   version = "v1.1.1"
 
 [[projects]]
-  digest = "1:fe47be2bd5d0196679d314fcc6e02f40a51e641c09e1541528a05cccefee9b0e"
-  name = "github.com/gorilla/handlers"
-  packages = ["."]
-  pruneopts = "NT"
-  revision = "90663712d74cb411cbef281bc1e08c19d1a76145"
-  version = "v1.3.0"
-
-[[projects]]
   digest = "1:bf5cf1d53d703332e9bd8984c69784645b73a938317bf5ace9aadf20ac49379a"
   name = "github.com/gorilla/mux"
   packages = ["."]
@@ -186,6 +178,14 @@
   packages = ["xdr3"]
   pruneopts = "NT"
   revision = "a875e7c9fa2388ce03279f6b5ba1c2ccd1f9e917"
+
+[[projects]]
+  digest = "1:1164c67de2421e9be8aa047865ca55f4269b8ca98b9b45843b6f5b6b0cc29c2d"
+  name = "github.com/nvellon/hal"
+  packages = ["."]
+  pruneopts = "NT"
+  revision = "d5526dbaf6448b3cac35d44a2fb5c2ddb0081437"
+  version = "v0.3.0"
 
 [[projects]]
   digest = "1:3b517122f3aad1ecce45a630ea912b3092b4729f25532a911d0cb2935a1f9352"
@@ -413,16 +413,15 @@
     "github.com/ethereum/go-ethereum/rlp",
     "github.com/ethereum/go-ethereum/trie",
     "github.com/google/uuid",
-    "github.com/gorilla/handlers",
     "github.com/gorilla/mux",
     "github.com/inconshreveable/log15",
-    "github.com/magiconair/properties/assert",
+    "github.com/nvellon/hal",
     "github.com/oklog/run",
-    "github.com/prometheus/client_golang/prometheus",
     "github.com/prometheus/client_golang/prometheus/promhttp",
     "github.com/satori/go.uuid",
     "github.com/spf13/cobra",
     "github.com/stellar/go/keypair",
+    "github.com/stretchr/testify/assert",
     "github.com/stretchr/testify/require",
     "github.com/syndtr/goleveldb/leveldb",
     "github.com/syndtr/goleveldb/leveldb/iterator",
