@@ -36,8 +36,8 @@ func (api NetworkHandlerAPI) GetAccountHandler(w http.ResponseWriter, r *http.Re
 
 	if httputils.IsEventStream(r) {
 		event := fmt.Sprintf("address-%s", address)
-		es := NewDefaultEventStream(w, r)
-		es.Render(blk)
+		es := NewEventStream(w, r, renderEventStream, DefaultContentType)
+		es.Render(acc)
 		es.Run(observer.BlockAccountObserver, event)
 		return
 	}
@@ -51,15 +51,15 @@ func (api NetworkHandlerAPI) GetAccountTransactionsHandler(w http.ResponseWriter
 	vars := mux.Vars(r)
 	address := vars["address"]
 
-	readFunc := func(cnt int) []*block.BlockTransaction {
-		var txs []*block.BlockTransaction
+	readFunc := func(cnt int) []resource.APIResource {
+		var txs []resource.APIResource
 		iterFunc, closeFunc := block.GetBlockTransactionsByAccount(api.storage, address, &storage.IteratorOptions{Reverse: false})
 		for {
 			t, hasNext, _ := iterFunc()
 			if !hasNext || cnt == 0 {
 				break
 			}
-			txs = append(txs, &t)
+			txs = append(txs, resource.NewTransaction(&t))
 			cnt--
 		}
 		closeFunc()
@@ -68,7 +68,7 @@ func (api NetworkHandlerAPI) GetAccountTransactionsHandler(w http.ResponseWriter
 
 	if httputils.IsEventStream(r) {
 		event := fmt.Sprintf("bt-source-%s", address)
-		es := NewDefaultEventStream(w, r)
+		es := NewEventStream(w, r, renderEventStream, DefaultContentType)
 		txs := readFunc(maxNumberOfExistingData)
 		for _, tx := range txs {
 			es.Render(tx)
@@ -79,7 +79,9 @@ func (api NetworkHandlerAPI) GetAccountTransactionsHandler(w http.ResponseWriter
 
 	txs := readFunc(-1) // -1 is infinte. TODO: Paging support makes better this space.
 
-	if err := httputils.WriteJSON(w, 200, txs); err != nil {
+	list := resource.NewResourceList(txs, GetAccountTransactionsHandlerPattern)
+
+	if err := httputils.WriteJSON(w, 200, list); err != nil {
 		http.Error(w, "Error reading request body", http.StatusInternalServerError)
 		return
 	}
@@ -90,15 +92,15 @@ func (api NetworkHandlerAPI) GetAccountOperationsHandler(w http.ResponseWriter, 
 	vars := mux.Vars(r)
 	address := vars["address"]
 
-	readFunc := func(cnt int) []*block.BlockOperation {
-		var txs []*block.BlockOperation
+	readFunc := func(cnt int) []resource.APIResource {
+		var txs []resource.APIResource
 		iterFunc, closeFunc := block.GetBlockOperationsBySource(api.storage, address, &storage.IteratorOptions{Reverse: false})
 		for {
 			t, hasNext, _ := iterFunc()
 			if !hasNext || cnt == 0 {
 				break
 			}
-			txs = append(txs, &t)
+			txs = append(txs, resource.NewOperation(&t))
 			cnt--
 		}
 		closeFunc()
@@ -107,7 +109,7 @@ func (api NetworkHandlerAPI) GetAccountOperationsHandler(w http.ResponseWriter, 
 
 	if httputils.IsEventStream(r) {
 		event := fmt.Sprintf("bo-source-%s", address)
-		es := NewDefaultEventStream(w, r)
+		es := NewEventStream(w, r, renderEventStream, DefaultContentType)
 		txs := readFunc(maxNumberOfExistingData)
 		for _, tx := range txs {
 			es.Render(tx)
@@ -117,7 +119,8 @@ func (api NetworkHandlerAPI) GetAccountOperationsHandler(w http.ResponseWriter, 
 	}
 
 	txs := readFunc(-1) //TODO paging support
-	if err := httputils.WriteJSON(w, 200, txs); err != nil {
+	list := resource.NewResourceList(txs, GetAccountOperationsHandlerPattern)
+	if err := httputils.WriteJSON(w, 200, list); err != nil {
 		http.Error(w, "Error reading request body", http.StatusInternalServerError)
 		return
 	}

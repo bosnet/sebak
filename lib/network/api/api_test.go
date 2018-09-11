@@ -12,6 +12,7 @@ import (
 
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/network/api/resource"
 	"boscoin.io/sebak/lib/storage"
 
 	"boscoin.io/sebak/lib/error"
@@ -71,11 +72,14 @@ func TestGetAccountHandler(t *testing.T) {
 		<-recv
 		line, err := reader.ReadBytes('\n')
 		require.Nil(t, err)
-		var cba = &block.BlockAccount{}
-		json.Unmarshal(line, cba)
-		require.Equal(t, ba.Address, cba.Address)
-		require.Equal(t, prev+n, cba.GetBalance())
-		prev = cba.GetBalance()
+		cba := map[string]interface{}{}
+		json.Unmarshal(line, &cba)
+		balance := common.MustAmountFromString(cba["balance"].(string))
+
+		require.Equal(t, ba.Address, cba["account_id"])
+		require.Equal(t, prev+n, balance)
+
+		prev = balance
 	}
 	<-recv // Close
 
@@ -90,9 +94,11 @@ func TestGetAccountHandler(t *testing.T) {
 	require.Nil(t, err)
 	//var cba = &block.BlockAccount{}
 	cba := map[string]interface{}{}
-	json.Unmarshal(readByte, cba)
-	require.Equal(t, ba.Address, cba["Address"], "not equal")
-	require.Equal(t, ba.GetBalance(), cba["Balance"], "not equal")
+	json.Unmarshal(readByte, &cba)
+	balance := common.MustAmountFromString(cba["balance"].(string))
+
+	require.Equal(t, ba.Address, cba["account_id"], "not equal")
+	require.Equal(t, ba.GetBalance(), balance, "not equal")
 }
 
 // Test that getting an inexisting account returns an error
@@ -204,9 +210,13 @@ func TestGetAccountTransactionsHandler(t *testing.T) {
 		line, err := reader.ReadBytes('\n')
 		require.Nil(t, err)
 		line = bytes.Trim(line, "\n\t ")
-		var receivedBt block.BlockTransaction
+		receivedBt := make(map[string]interface{})
 		json.Unmarshal(line, &receivedBt)
-		txS, err := btmap[receivedBt.Hash].Serialize()
+		hash := receivedBt["hash"].(string)
+
+		bt := btmap[hash]
+		txS, err := json.Marshal(resource.NewTransaction(&bt).Resource())
+
 		require.Nil(t, err)
 		require.Equal(t, txS, line)
 	}
@@ -217,19 +227,26 @@ func TestGetAccountTransactionsHandler(t *testing.T) {
 	require.Nil(t, err)
 	resp, err = ts.Client().Do(req)
 	require.Nil(t, err)
+
 	defer resp.Body.Close()
+
 	require.Equal(t, resp.StatusCode, 200)
 	reader = bufio.NewReader(resp.Body)
 	readByte, err := ioutil.ReadAll(reader)
 	require.Nil(t, err)
-	var receivedBts []block.BlockTransaction
+
+	receivedBts := make(map[string]interface{})
 	json.Unmarshal(readByte, &receivedBts)
-	fmt.Println(receivedBts[0])
+	_embedded := receivedBts["_embedded"].(map[string]interface{})
+	records := _embedded["records"].([]interface{})
 
-	require.Equal(t, len(btmap), len(receivedBts), "length is not same")
+	require.Equal(t, len(btmap), len(records), "length is not same")
 
-	for _, bt := range receivedBts {
-		require.Equal(t, bt.Hash, btmap[bt.Hash].Hash, "hash is not same")
+	for _, i := range records {
+		bt := i.(map[string]interface{})
+		hash := bt["hash"].(string)
+
+		require.Equal(t, hash, btmap[hash].Hash, "hash is not same")
 	}
 }
 
@@ -317,9 +334,12 @@ func TestGetAccountOperationsHandler(t *testing.T) {
 		line, err := reader.ReadBytes('\n')
 		require.Nil(t, err)
 		line = bytes.Trim(line, "\n\t ")
-		var receivedBo block.BlockOperation
+		receivedBo := make(map[string]interface{})
 		json.Unmarshal(line, &receivedBo)
-		txS, err := bomap[receivedBo.Hash].Serialize()
+		hash := receivedBo["hash"].(string)
+
+		bo := bomap[hash]
+		txS, err := json.Marshal(resource.NewOperation(&bo).Resource())
 		require.Nil(t, err)
 		require.Equal(t, txS, line)
 	}
@@ -335,13 +355,19 @@ func TestGetAccountOperationsHandler(t *testing.T) {
 	reader = bufio.NewReader(resp2.Body)
 	readByte, err := ioutil.ReadAll(reader)
 	require.Nil(t, err)
-	var receivedBos []block.BlockOperation
-	json.Unmarshal(readByte, &receivedBos)
 
-	require.Equal(t, len(bomap), len(receivedBos), "length is not same")
+	received := make(map[string]interface{})
+	json.Unmarshal(readByte, &received)
+	_embedded := received["_embedded"].(map[string]interface{})
+	records := _embedded["records"].([]interface{})
 
-	for _, bo := range receivedBos {
-		require.Equal(t, bo.Hash, bomap[bo.Hash].Hash, "hash is not same")
+	require.Equal(t, len(bomap), len(records), "length is not same")
+
+	for _, i := range records {
+		bo := i.(map[string]interface{})
+		hash := bo["hash"].(string)
+
+		require.Equal(t, hash, bomap[hash].Hash, "hash is not same")
 	}
 }
 
