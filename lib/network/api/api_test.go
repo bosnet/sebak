@@ -88,10 +88,11 @@ func TestGetAccountHandler(t *testing.T) {
 	reader = bufio.NewReader(resp.Body)
 	readByte, err := ioutil.ReadAll(reader)
 	require.Nil(t, err)
-	var cba = &block.BlockAccount{}
+	//var cba = &block.BlockAccount{}
+	cba := map[string]interface{}{}
 	json.Unmarshal(readByte, cba)
-	require.Equal(t, ba.Address, cba.Address, "not equal")
-	require.Equal(t, ba.GetBalance(), cba.GetBalance(), "not equal")
+	require.Equal(t, ba.Address, cba["Address"], "not equal")
+	require.Equal(t, ba.GetBalance(), cba["Balance"], "not equal")
 }
 
 // Test that getting an inexisting account returns an error

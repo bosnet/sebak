@@ -119,7 +119,7 @@ func TestAPIResourceAccount(t *testing.T) {
 		}
 
 		urlneedToBeFilledByAPI := "/operations/"
-		arl := &ResourceList{Resources: rol, SelfLink: urlneedToBeFilledByAPI}
+		arl := NewResourceList(rol, urlneedToBeFilledByAPI)
 		r := arl.Resource()
 		j, _ := json.MarshalIndent(r, "", " ")
 		//fmt.Printf("%s\n", j)

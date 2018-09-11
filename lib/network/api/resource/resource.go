@@ -15,6 +15,15 @@ type ResourceList struct {
 	SelfLink  string
 }
 
+func NewResourceList(list []APIResource, selfLink string) *ResourceList {
+	rl := &ResourceList{
+		Resources: list,
+		SelfLink:  selfLink,
+	}
+
+	return rl
+}
+
 func (l ResourceList) Resource() *hal.Resource {
 	rl := hal.NewResource(struct{}{}, l.LinkSelf())
 	for _, apiResource := range l.Resources {
