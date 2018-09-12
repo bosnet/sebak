@@ -6,3 +6,7 @@
 + Checkpoint: 5q1dAkXXSBNnmYZU7XWQmGGev-5q1dAkXXSBNnmYZU7XWQmGGev (string, required)
 + CodeHash: null (string)
 + RootHash: 0x0000000000000000000000000000000000000000000000000000000000000000 (string, required)
+
+
+### Transaction
++ Hash: hash (string,required)
