@@ -32,10 +32,10 @@ func TestGetTransactionByHashHandler(t *testing.T) {
 
 		readByte, err := ioutil.ReadAll(reader)
 		require.Nil(t, err)
-		var receivedBt block.BlockTransaction
-		json.Unmarshal(readByte, &receivedBt)
+		recv := make(map[string]interface{})
+		json.Unmarshal(readByte, &recv)
 
-		require.Equal(t, bt.Hash, receivedBt.Hash, "hash is not same")
+		require.Equal(t, bt.Hash, recv["hash"], "hash is not same")
 	}
 }
 
@@ -55,27 +55,23 @@ func TestGetTransactionByHashHandlerStream(t *testing.T) {
 		defer respBody.Close()
 		reader := bufio.NewReader(respBody)
 
-		recv := make(chan struct{})
-		go func() {
-			bt.Save(storage)
-			close(recv)
-		}()
 		{
-			<-recv
-			for {
-				line, err := reader.ReadBytes('\n')
-				require.Nil(t, err)
-				line = bytes.Trim(line, "\n")
-				if line == nil {
-					continue
-				}
-				serializedBt, err := bt.Serialize()
-				require.Nil(t, err)
-				require.Equal(t, serializedBt, line)
-				break
-			}
+			err = bt.Save(storage)
+			require.Nil(t, err)
 		}
 
+		for {
+			line, err := reader.ReadBytes('\n')
+			require.Nil(t, err)
+			line = bytes.Trim(line, "\n")
+			if line == nil {
+				continue
+			}
+			recv := make(map[string]interface{})
+			json.Unmarshal(line, &recv)
+			require.Equal(t, bt.Hash, recv["hash"], "hash is not same")
+			break
+		}
 	}
 }
 
@@ -131,20 +127,17 @@ func TestGetTransactionsHandlerStream(t *testing.T) {
 		reader := bufio.NewReader(respBody)
 
 		// Producer
-		recv := make(chan struct{})
-		go func() {
+		{
 			_, btList2, err := prepareTxs(storage, 1, 10, nil)
 			require.Nil(t, err)
 			btList = append(btList, btList2...)
-			close(recv)
-		}()
+		}
 		var btMap = make(map[string]block.BlockTransaction)
 		for _, bt := range btList {
 			btMap[bt.Hash] = bt
 		}
 
 		// Do stream Request to the Server
-		<-recv
 		for n := 0; n < 10; n++ {
 			line, err := reader.ReadBytes('\n')
 			require.Nil(t, err)
@@ -211,20 +204,17 @@ func TestGetTransactionsByAccountHandlerStream(t *testing.T) {
 		reader := bufio.NewReader(respBody)
 
 		// Producer
-		recv := make(chan struct{})
-		go func() {
+		{
 			_, btList2, err := prepareTxs(storage, 1, 10, kp)
 			require.Nil(t, err)
 			btList = append(btList, btList2...)
-			close(recv)
-		}()
+		}
 		var btMap = make(map[string]block.BlockTransaction)
 		for _, bt := range btList {
 			btMap[bt.Hash] = bt
 		}
 
 		// Do stream Request to the Server
-		<-recv
 		for n := 0; n < 10; n++ {
 			line, err := reader.ReadBytes('\n')
 			require.Nil(t, err)

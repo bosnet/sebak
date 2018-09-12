@@ -8,6 +8,7 @@ import (
 	"boscoin.io/sebak/lib/network/httputils"
 
 	"boscoin.io/sebak/lib/block"
+	"boscoin.io/sebak/lib/error"
 	"fmt"
 	"github.com/gorilla/mux"
 )
@@ -62,32 +63,23 @@ func (api NetworkHandlerAPI) GetTransactionByHashHandler(w http.ResponseWriter, 
 	readFunc := func() (payload interface{}, err error) {
 		found, err := block.ExistBlockTransaction(api.storage, key)
 		if err != nil {
+			return nil, err
+		}
+		if !found {
+			return nil, errors.ErrorBlockTransactionDoesNotExists
+		}
+		bt, err := block.GetBlockTransaction(api.storage, key)
+		if err != nil {
 			//http.Error(w, "Error reading request body", http.StatusInternalServerError)
-			return
+			return nil, err
 		}
-
-		if found {
-			bt, err := block.GetBlockTransaction(api.storage, key)
-			if err != nil {
-				//http.Error(w, "Error reading request body", http.StatusInternalServerError)
-				return nil, err
-			}
-			payload = bt
-
-		} else {
-			bth, err := block.GetBlockTransactionHistory(api.storage, key)
-			if err != nil {
-				//http.Error(w, "Error reading request body", http.StatusInternalServerError)
-				return nil, err
-			}
-			payload = bth
-		}
-		return
+		payload = resource.NewTransaction(&bt)
+		return payload, nil
 	}
 
 	if httputils.IsEventStream(r) {
 		event := fmt.Sprintf("hash-%s", key)
-		es := NewDefaultEventStream(w, r)
+		es := NewEventStream(w, r, renderEventStream, DefaultContentType)
 		payload, err := readFunc()
 		if err == nil {
 			es.Render(payload)
@@ -102,8 +94,11 @@ func (api NetworkHandlerAPI) GetTransactionByHashHandler(w http.ResponseWriter, 
 		if err := httputils.WriteJSON(w, 200, payload); err != nil {
 			http.Error(w, "Error reading request body", http.StatusInternalServerError)
 		}
+	} else {
+		if err := httputils.WriteJSON(w, 404, payload); err != nil {
+			http.Error(w, "Error reading request body", http.StatusInternalServerError)
+		}
 	}
-
 }
 
 func (api NetworkHandlerAPI) GetTransactionsByAccountHandler(w http.ResponseWriter, r *http.Request) {

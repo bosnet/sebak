@@ -41,6 +41,10 @@ func renderEventStream(args ...interface{}) ([]byte, error) {
 	}
 	i := args[1]
 
+	if i == nil {
+		return nil, nil
+	}
+
 	switch v := i.(type) {
 	case *block.BlockAccount:
 		r := resource.NewAccount(v)

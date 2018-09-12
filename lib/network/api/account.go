@@ -17,31 +17,43 @@ func (api NetworkHandlerAPI) GetAccountHandler(w http.ResponseWriter, r *http.Re
 	vars := mux.Vars(r)
 	address := vars["id"]
 
-	var (
-		blk *block.BlockAccount
-		err error
-	)
-
-	if blk, err = block.GetBlockAccount(api.storage, address); err != nil {
-		if err == errors.ErrorStorageRecordDoesNotExist {
-			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
-		} else {
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	readFunc := func() (payload interface{}, err error) {
+		found, err := block.ExistBlockAccount(api.storage, address)
+		if err != nil {
+			return nil, err
 		}
-		return
+		if !found {
+			return nil, errors.ErrorBlockAccountDoesNotExists
+		}
+		ba, err := block.GetBlockAccount(api.storage, address)
+		if err != nil {
+			//http.Error(w, "Error reading request body", http.StatusInternalServerError)
+			return nil, err
+		}
+		payload = resource.NewAccount(ba)
+		return payload, nil
 	}
-
-	acc := resource.NewAccount(blk)
 
 	if httputils.IsEventStream(r) {
 		event := fmt.Sprintf("address-%s", address)
 		es := NewEventStream(w, r, renderEventStream, DefaultContentType)
-		es.Render(acc)
+		payload, err := readFunc()
+		if err == nil {
+			es.Render(payload)
+		} else {
+			es.Render(nil)
+		}
 		es.Run(observer.BlockAccountObserver, event)
 		return
 	}
-
-	if err := httputils.WriteJSON(w, 200, acc); err != nil {
-		http.Error(w, "Error reading request body", http.StatusInternalServerError)
+	payload, err := readFunc()
+	if err == nil {
+		if err := httputils.WriteJSON(w, 200, payload); err != nil {
+			http.Error(w, "Error reading request body", http.StatusInternalServerError)
+		}
+	} else {
+		if err := httputils.WriteJSON(w, 404, payload); err != nil {
+			http.Error(w, "Error reading request body", http.StatusInternalServerError)
+		}
 	}
 }

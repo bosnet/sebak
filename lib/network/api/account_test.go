@@ -3,124 +3,90 @@ package api
 import (
 	"bufio"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
-	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"boscoin.io/sebak/lib/block"
-	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/storage"
 
-	"github.com/gorilla/mux"
+	"bytes"
+	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
+	"strings"
 )
 
 func TestGetAccountHandler(t *testing.T) {
-	// Setting Server
-	storage, err := storage.NewTestMemoryLevelDBBackend()
+	ts, storage, err := prepareAPIServer()
 	require.Nil(t, err)
 	defer storage.Close()
-
-	apiHandler := NetworkHandlerAPI{storage: storage}
-
-	router := mux.NewRouter()
-	router.HandleFunc(GetAccountHandlerPattern, apiHandler.GetAccountHandler).Methods("GET")
-
-	ts := httptest.NewServer(router)
 	defer ts.Close()
-
 	// Make Dummy BlockAccount
 	ba := block.TestMakeBlockAccount()
 	ba.Save(storage)
-	prev := ba.GetBalance()
-
-	// Do Request
-	url := ts.URL + fmt.Sprintf("/account/%s", ba.Address)
-	req, err := http.NewRequest("GET", url, nil)
-	require.Nil(t, err)
-	req.Header.Set("Accept", "text/event-stream")
-	resp, err := ts.Client().Do(req)
-	require.Nil(t, err)
-	defer resp.Body.Close()
-	require.Equal(t, resp.StatusCode, 200)
-	reader := bufio.NewReader(resp.Body)
-
-	recv := make(chan struct{})
-	go func() {
-		// Makes Some Events
-		for n := 1; n < 20; n++ {
-			ba.Balance = ba.GetBalance().MustAdd(common.Amount(n))
-			ba.Save(storage)
-			if n <= 10 {
-				recv <- struct{}{}
-			}
-		}
-		close(recv)
-	}()
-
-	// Do stream Request to the Server
-	var n common.Amount
-	for n = 0; n < 10; n++ {
-		<-recv
-		line, err := reader.ReadBytes('\n')
+	{
+		// Do a Request
+		url := strings.Replace(GetAccountHandlerPattern, "{id}", ba.Address, -1)
+		respBody, err := request(ts, url, false)
 		require.Nil(t, err)
-		cba := map[string]interface{}{}
-		json.Unmarshal(line, &cba)
-		balance := common.MustAmountFromString(cba["balance"].(string))
+		defer respBody.Close()
+		reader := bufio.NewReader(respBody)
 
-		require.Equal(t, ba.Address, cba["account_id"])
-		require.Equal(t, prev+n, balance)
+		readByte, err := ioutil.ReadAll(reader)
+		require.Nil(t, err)
+		recv := make(map[string]interface{})
+		json.Unmarshal(readByte, &recv)
 
-		prev = balance
+		require.Equal(t, ba.Address, recv["id"], "hash is not same")
 	}
-	<-recv // Close
+}
 
-	// No streaming
-	req, err = http.NewRequest("GET", url, nil)
+func TestGetAccountHandlerStream(t *testing.T) {
+	ts, storage, err := prepareAPIServer()
 	require.Nil(t, err)
-	resp, err = ts.Client().Do(req)
-	require.Nil(t, err)
-	defer resp.Body.Close()
-	reader = bufio.NewReader(resp.Body)
-	readByte, err := ioutil.ReadAll(reader)
-	require.Nil(t, err)
-	cba := map[string]interface{}{}
-	json.Unmarshal(readByte, &cba)
-	balance := common.MustAmountFromString(cba["balance"].(string))
+	defer storage.Close()
+	defer ts.Close()
+	// Make Dummy BlockAccount
+	ba := block.TestMakeBlockAccount()
+	{
+		// Do a Request
+		url := strings.Replace(GetAccountHandlerPattern, "{id}", ba.Address, -1)
+		respBody, err := request(ts, url, true)
+		require.Nil(t, err)
+		defer respBody.Close()
+		reader := bufio.NewReader(respBody)
 
-	require.Equal(t, ba.Address, cba["account_id"], "not equal")
-	require.Equal(t, ba.GetBalance(), balance, "not equal")
+		{
+			ba.Save(storage)
+			require.Nil(t, err)
+		}
+
+		for {
+			line, err := reader.ReadBytes('\n')
+			require.Nil(t, err)
+			line = bytes.Trim(line, "\n")
+			if line == nil {
+				continue
+			}
+			recv := make(map[string]interface{})
+			json.Unmarshal(line, &recv)
+			require.Equal(t, ba.Address, recv["id"], "hash is not same")
+			break
+		}
+	}
 }
 
 // Test that getting an inexisting account returns an error
 func TestGetNonExistentAccountHandler(t *testing.T) {
-	// Setting Server
-	storage, err := storage.NewTestMemoryLevelDBBackend()
+
+	ts, storage, err := prepareAPIServer()
 	require.Nil(t, err)
 	defer storage.Close()
-
-	apiHandler := NetworkHandlerAPI{storage: storage}
-
-	router := mux.NewRouter()
-	router.HandleFunc(GetAccountHandlerPattern, apiHandler.GetAccountHandler).Methods("GET")
-
-	ts := httptest.NewServer(router)
 	defer ts.Close()
-
-	// Do the request to an inexisting address
-	genesisAddress := "GDMZMF2EAK4E6NSZNSCJQQHQGMAOZ6UI3XQVVLMEJRFDPYHLY7PPHKLP"
-	url := ts.URL + fmt.Sprintf("/account/%s", genesisAddress)
-	req, err := http.NewRequest("GET", url, nil)
-	require.Nil(t, err)
-	req.Header.Set("Accept", "text/event-stream")
-	resp, err := ts.Client().Do(req)
-	require.Nil(t, err)
-	defer resp.Body.Close()
-	require.Equal(t, 404, resp.StatusCode)
-	reader := bufio.NewReader(resp.Body)
-	data, err := ioutil.ReadAll(reader)
-	require.Nil(t, err)
-	require.Equal(t, "Not Found\n", string(data))
+	{
+		// Do a Request
+		kp, _ := keypair.Random()
+		url := strings.Replace(GetAccountHandlerPattern, "{id}", kp.Address(), -1)
+		_, err := request(ts, url, false)
+		require.NotNil(t, err)
+		require.Equal(t, "status code 404 is not 200", err.Error())
+	}
 }

@@ -64,20 +64,18 @@ func TestGetOperationsByAccountHandlerStream(t *testing.T) {
 		reader := bufio.NewReader(respBody)
 
 		// Producer
-		recv := make(chan struct{})
-		go func() {
+		{
 			_, boList2, err := prepareOps(storage, 1, 10, kp)
 			require.Nil(t, err)
 			boList = append(boList, boList2...)
-			close(recv)
-		}()
+		}
+
 		var boMap = make(map[string]block.BlockOperation)
 		for _, bo := range boList {
 			boMap[bo.Hash] = bo
 		}
 
 		// Do stream Request to the Server
-		<-recv
 		for n := 0; n < 10; n++ {
 			line, err := reader.ReadBytes('\n')
 			require.Nil(t, err)
