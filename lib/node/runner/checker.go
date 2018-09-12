@@ -6,7 +6,6 @@ import (
 	"boscoin.io/sebak/lib/consensus"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/node"
-	"boscoin.io/sebak/lib/transaction"
 	logging "github.com/inconshreveable/log15"
 )
 
@@ -28,100 +27,6 @@ func (c CheckerStopCloseConsensus) Error() string {
 
 func (c CheckerStopCloseConsensus) Checker() common.Checker {
 	return c.checker
-}
-
-type NodeRunnerHandleMessageChecker struct {
-	common.DefaultChecker
-
-	NodeRunner *NodeRunner
-	LocalNode  *node.LocalNode
-	NetworkID  []byte
-	Message    common.NetworkMessage
-
-	Transaction transaction.Transaction
-}
-
-// CheckNodeRunnerHandleMessageTransactionUnmarshal makes `Transaction` from
-// incoming `common.NetworkMessage`.
-func CheckNodeRunnerHandleMessageTransactionUnmarshal(c common.Checker, args ...interface{}) (err error) {
-	checker := c.(*NodeRunnerHandleMessageChecker)
-
-	var tx transaction.Transaction
-	if tx, err = transaction.NewTransactionFromJSON(checker.Message.Data); err != nil {
-		return
-	}
-
-	if err = tx.IsWellFormed(checker.NetworkID); err != nil {
-		return
-	}
-
-	checker.Transaction = tx
-	checker.NodeRunner.Log().Debug("message is transaction")
-
-	return
-}
-
-// CheckNodeRunnerHandleMessageHasTransactionAlready checks transaction is in
-// `TransactionPool`.
-func CheckNodeRunnerHandleMessageHasTransactionAlready(c common.Checker, args ...interface{}) (err error) {
-	checker := c.(*NodeRunnerHandleMessageChecker)
-
-	is := checker.NodeRunner.Consensus()
-	if is.TransactionPool.Has(checker.Transaction.GetHash()) {
-		err = errors.ErrorNewButKnownMessage
-		return
-	}
-
-	return
-}
-
-// CheckNodeRunnerHandleMessageHistory checks transaction is in
-// `BlockTransactionHistory`, which has the received transaction recently.
-func CheckNodeRunnerHandleMessageHistory(c common.Checker, args ...interface{}) (err error) {
-	checker := c.(*NodeRunnerHandleMessageChecker)
-
-	var found bool
-	if found, err = block.ExistsBlockTransactionHistory(checker.NodeRunner.Storage(), checker.Transaction.GetHash()); found && err == nil {
-		checker.NodeRunner.Log().Debug("found in history", "transction", checker.Transaction.GetHash())
-		err = errors.ErrorNewButKnownMessage
-		return
-	}
-
-	bt := block.NewTransactionHistoryFromTransaction(checker.Transaction, checker.Message.Data)
-	if err = bt.Save(checker.NodeRunner.Storage()); err != nil {
-		return
-	}
-
-	checker.NodeRunner.Log().Debug("saved in history", "transaction", checker.Transaction.GetHash())
-
-	return
-}
-
-// CheckNodeRunnerHandleMessagePushIntoTransactionPool add the incoming
-// transactions into `TransactionPool`.
-func CheckNodeRunnerHandleMessagePushIntoTransactionPool(c common.Checker, args ...interface{}) (err error) {
-	checker := c.(*NodeRunnerHandleMessageChecker)
-
-	tx := checker.Transaction
-	is := checker.NodeRunner.Consensus()
-	is.TransactionPool.Add(tx)
-
-	checker.NodeRunner.Log().Debug("push transaction into transactionPool", "transaction", checker.Transaction.GetHash())
-
-	return
-}
-
-// CheckNodeRunnerHandleMessageTransactionBroadcast broadcasts the incoming
-// transaction to the other nodes.
-func CheckNodeRunnerHandleMessageTransactionBroadcast(c common.Checker, args ...interface{}) (err error) {
-	checker := c.(*NodeRunnerHandleMessageChecker)
-
-	checker.NodeRunner.Log().Debug("transaction will be broadcasted", "transaction", checker.Transaction.GetHash())
-
-	// TODO sender should be excluded
-	checker.NodeRunner.ConnectionManager().Broadcast(checker.Transaction)
-
-	return
 }
 
 type BallotChecker struct {
