@@ -32,7 +32,7 @@ func (api NetworkHandlerAPI) GetTransactionsHandler(w http.ResponseWriter, r *ht
 	}
 
 	if httputils.IsEventStream(r) {
-		event := "bt-saved"
+		event := "saved"
 		es := NewEventStream(w, r, renderEventStream, DefaultContentType)
 		txs := readFunc()
 		for _, tx := range txs {
@@ -86,7 +86,7 @@ func (api NetworkHandlerAPI) GetTransactionByHashHandler(w http.ResponseWriter, 
 	}
 
 	if httputils.IsEventStream(r) {
-		event := "bt-saved"
+		event := fmt.Sprintf("hash-%s", key)
 		es := NewDefaultEventStream(w, r)
 		payload, err := readFunc()
 		if err == nil {
@@ -127,7 +127,7 @@ func (api NetworkHandlerAPI) GetTransactionsByAccountHandler(w http.ResponseWrit
 	}
 
 	if httputils.IsEventStream(r) {
-		event := fmt.Sprintf("bt-source-%s", address)
+		event := fmt.Sprintf("source-%s", address)
 		es := NewEventStream(w, r, renderEventStream, DefaultContentType)
 		txs := readFunc()
 		for _, tx := range txs {

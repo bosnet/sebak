@@ -150,9 +150,7 @@ func (bt *BlockTransaction) Save(st *storage.LevelDBBackend) (err error) {
 		}
 	}
 	event := "saved"
-	event += " " + "bt-saved"
 	event += " " + fmt.Sprintf("source-%s", bt.Source)
-	event += " " + fmt.Sprintf("bt-source-%s", bt.Source)
 	event += " " + fmt.Sprintf("hash-%s", bt.Hash)
 	observer.BlockTransactionObserver.Trigger(event, bt)
 	bt.isSaved = true

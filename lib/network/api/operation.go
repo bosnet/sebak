@@ -31,7 +31,7 @@ func (api NetworkHandlerAPI) GetAccountOperationsHandler(w http.ResponseWriter, 
 	}
 
 	if httputils.IsEventStream(r) {
-		event := fmt.Sprintf("bo-source-%s", address)
+		event := fmt.Sprintf("source-%s", address)
 		es := NewEventStream(w, r, renderEventStream, DefaultContentType)
 		txs := readFunc()
 		for _, tx := range txs {

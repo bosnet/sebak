@@ -84,7 +84,6 @@ func (bo *BlockOperation) Save(st *storage.LevelDBBackend) (err error) {
 
 	event := "saved"
 	event += " " + fmt.Sprintf("source-%s", bo.Source)
-	event += " " + fmt.Sprintf("bo-source-%s", bo.Source)
 	event += " " + fmt.Sprintf("hash-%s", bo.Hash)
 	observer.BlockOperationObserver.Trigger(event, bo)
 
@@ -187,7 +186,7 @@ func LoadBlockOperationsInsideIterator(
 	return (func() (BlockOperation, bool, []byte) {
 			item, hasNext := iterFunc()
 			if !hasNext {
-				return BlockOperation{}, false, []byte{}
+				return BlockOperation{}, false, item.Key
 			}
 
 			var hash string
@@ -195,7 +194,7 @@ func LoadBlockOperationsInsideIterator(
 
 			bo, err := GetBlockOperation(st, hash)
 			if err != nil {
-				return BlockOperation{}, false, []byte{}
+				return BlockOperation{}, false, item.Key
 			}
 
 			return bo, hasNext, item.Key
