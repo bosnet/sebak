@@ -20,6 +20,8 @@ Transactions API
 
 + Response 200 (application/hal+json; charset=utf-8)
 
+    + Attributes (Transactions)
+
 + Response 500 (application/problem+json; charset=utf-8)
 
     + Attributes (Problem)
