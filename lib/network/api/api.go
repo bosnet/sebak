@@ -1,15 +1,18 @@
 package api
 
 import (
+	"encoding/json"
+	"fmt"
+
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/network/api/resource"
 	"boscoin.io/sebak/lib/network/httputils"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/storage"
-	"encoding/json"
-	"fmt"
 )
+
+const APIVersionV1 = "v1"
 
 // API Endpoint patterns
 const (
@@ -25,6 +28,7 @@ type NetworkHandlerAPI struct {
 	localNode *node.LocalNode
 	network   network.Network
 	storage   *storage.LevelDBBackend
+	version   string
 }
 
 func NewNetworkHandlerAPI(localNode *node.LocalNode, network network.Network, storage *storage.LevelDBBackend) *NetworkHandlerAPI {
@@ -32,7 +36,12 @@ func NewNetworkHandlerAPI(localNode *node.LocalNode, network network.Network, st
 		localNode: localNode,
 		network:   network,
 		storage:   storage,
+		version:   APIVersionV1,
 	}
+}
+
+func (api NetworkHandlerAPI) HandlerURLPattern(prefix string, pattern string) string {
+	return fmt.Sprintf("%s/%s%s", prefix, api.version, pattern)
 }
 
 func renderEventStream(args ...interface{}) ([]byte, error) {
