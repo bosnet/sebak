@@ -1,4 +1,4 @@
-package api
+package resource
 
 import (
 	"encoding/json"
@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestAPIResourceAccount(t *testing.T) {
+func TestResourceAccount(t *testing.T) {
 	storage, err := storage.NewTestMemoryLevelDBBackend()
 	require.Nil(t, err)
 	defer storage.Close()
@@ -21,14 +21,10 @@ func TestAPIResourceAccount(t *testing.T) {
 	{
 		ba := block.TestMakeBlockAccount()
 		ba.Save(storage)
-		ra := &APIResourceAccount{
-			accountId:  ba.Address,
-			sequenceID: ba.SequenceID,
-			balance:    ba.GetBalance().String(),
-		}
+
+		ra := NewAccount(ba)
 		r := ra.Resource()
 		j, _ := json.MarshalIndent(r, "", " ")
-		//fmt.Printf("%s\n", j)
 
 		{
 			var f interface{}
@@ -40,7 +36,7 @@ func TestAPIResourceAccount(t *testing.T) {
 			require.Equal(t, ba.GetBalance().String(), m["balance"])
 
 			l := m["_links"].(map[string]interface{})
-			require.Equal(t, strings.Replace(UrlAccounts, "{id}", ba.Address, -1), l["self"].(map[string]interface{})["href"])
+			require.Equal(t, strings.Replace(URLAccounts, "{id}", ba.Address, -1), l["self"].(map[string]interface{})["href"])
 		}
 	}
 
@@ -52,19 +48,9 @@ func TestAPIResourceAccount(t *testing.T) {
 		bt := block.NewBlockTransactionFromTransaction("dummy", 0, tx, a)
 		bt.Save(storage)
 
-		rt := &APIResourceTransaction{
-			hash:       bt.Hash,
-			sequenceID: bt.SequenceID,
-			signature:  bt.Signature,
-			source:     bt.Source,
-			fee:        bt.Fee.String(),
-			amount:     bt.Amount.String(),
-			created:    bt.Created,
-			operations: bt.Operations,
-		}
+		rt := NewTransaction(&bt)
 		r := rt.Resource()
 		j, _ := json.MarshalIndent(r, "", " ")
-		//fmt.Printf("%s\n", j)
 
 		{
 			var f interface{}
@@ -78,7 +64,7 @@ func TestAPIResourceAccount(t *testing.T) {
 			require.Equal(t, float64(len(bt.Operations)), m["operation_count"])
 
 			l := m["_links"].(map[string]interface{})
-			require.Equal(t, strings.Replace(UrlTransactions, "{id}", bt.Hash, -1), l["self"].(map[string]interface{})["href"])
+			require.Equal(t, strings.Replace(URLTransactions, "{id}", bt.Hash, -1), l["self"].(map[string]interface{})["href"])
 		}
 
 	}
@@ -92,17 +78,9 @@ func TestAPIResourceAccount(t *testing.T) {
 		bt.Save(storage)
 		bo, err := block.GetBlockOperation(storage, bt.Operations[0])
 
-		ro := &APIResourceOperation{
-			hash:    bo.Hash,
-			txHash:  bo.TxHash,
-			funder:  bo.Source,
-			account: bo.Target,
-			otype:   string(bo.Type),
-			amount:  bo.Amount.String(),
-		}
+		ro := NewOperation(&bo)
 		r := ro.Resource()
 		j, _ := json.MarshalIndent(r, "", " ")
-		//fmt.Printf("%s\n", j)
 
 		{
 			var f interface{}
@@ -115,7 +93,7 @@ func TestAPIResourceAccount(t *testing.T) {
 			require.Equal(t, string(bo.Type), m["type"])
 			require.Equal(t, bo.Amount.String(), m["amount"])
 			l := m["_links"].(map[string]interface{})
-			require.Equal(t, strings.Replace(UrlOperations, "{id}", bo.Hash, -1), l["self"].(map[string]interface{})["href"])
+			require.Equal(t, strings.Replace(URLOperations, "{id}", bo.Hash, -1), l["self"].(map[string]interface{})["href"])
 		}
 	}
 
@@ -127,28 +105,20 @@ func TestAPIResourceAccount(t *testing.T) {
 		bt := block.NewBlockTransactionFromTransaction(common.GetUniqueIDFromUUID(), 0, tx, a)
 		bt.Save(storage)
 
-		var rol []APIResource
+		var rol []Resource
 		for _, boHash := range bt.Operations {
 			var bo block.BlockOperation
 			bo, err = block.GetBlockOperation(storage, boHash)
 			require.Nil(t, err)
 
-			ro := &APIResourceOperation{
-				hash:    bo.Hash,
-				txHash:  bo.TxHash,
-				funder:  bo.Source,
-				account: bo.Target,
-				otype:   string(bo.Type),
-				amount:  bo.Amount.String(),
-			}
+			ro := NewOperation(&bo)
 			rol = append(rol, ro)
 		}
 
 		urlneedToBeFilledByAPI := "/operations/"
-		arl := &APIResourceList{Resources: rol, SelfLink: urlneedToBeFilledByAPI}
+		arl := NewResourceList(rol, urlneedToBeFilledByAPI)
 		r := arl.Resource()
 		j, _ := json.MarshalIndent(r, "", " ")
-		//fmt.Printf("%s\n", j)
 
 		{
 
@@ -173,7 +143,7 @@ func TestAPIResourceAccount(t *testing.T) {
 				require.Equal(t, string(bo.Type), record["type"])
 				require.Equal(t, bo.Amount.String(), record["amount"])
 				l := record["_links"].(map[string]interface{})
-				require.Equal(t, strings.Replace(UrlOperations, "{id}", bo.Hash, -1), l["self"].(map[string]interface{})["href"])
+				require.Equal(t, strings.Replace(URLOperations, "{id}", bo.Hash, -1), l["self"].(map[string]interface{})["href"])
 			}
 		}
 	}

@@ -1,12 +1,16 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
 	"github.com/GianlucaGuarini/go-observable"
 
+	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/network"
+	"boscoin.io/sebak/lib/network/api/resource"
+	"boscoin.io/sebak/lib/network/httputils"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/storage"
 )
@@ -35,6 +39,29 @@ func NewNetworkHandlerAPI(localNode *node.LocalNode, network network.Network, st
 		network:   network,
 		storage:   storage,
 	}
+}
+
+func renderEventStream(args ...interface{}) ([]byte, error) {
+	if len(args) <= 1 {
+		return nil, fmt.Errorf("render: value is empty") //TODO(anarcher): Error type
+	}
+	i := args[1]
+
+	switch v := i.(type) {
+	case *block.BlockAccount:
+		r := resource.NewAccount(v)
+		return json.Marshal(r.Resource())
+	case *block.BlockOperation:
+		r := resource.NewOperation(v)
+		return json.Marshal(r.Resource())
+	case *block.BlockTransaction:
+		r := resource.NewTransaction(v)
+		return json.Marshal(r.Resource())
+	case httputils.HALResource:
+		return json.Marshal(v.Resource())
+	}
+
+	return json.Marshal(i)
 }
 
 // Implement `Server Sent Event`

@@ -327,3 +327,72 @@ func (st *LevelDBBackend) GetIterator(prefix string, option *IteratorOptions) (f
 			iter.Release()
 		})
 }
+
+type (
+	WalkFunc   func(key, value []byte) (bool, error)
+	WalkOption struct {
+		Cursor  string
+		Limit   uint64
+		Reverse bool
+	}
+)
+
+func NewWalkOption(cursor string, limit uint64, reverse bool) *WalkOption {
+	o := &WalkOption{
+		Cursor:  cursor,
+		Limit:   limit,
+		Reverse: reverse,
+	}
+	return o
+}
+
+func (st *LevelDBBackend) Walk(prefix string, option *WalkOption, walkFunc WalkFunc) error {
+	if option == nil {
+		option = &WalkOption{
+			Cursor:  prefix,
+			Reverse: false,
+			Limit:   10,
+		}
+	}
+
+	var dbRange *leveldbUtil.Range
+	if len(prefix) > 0 {
+		dbRange = leveldbUtil.BytesPrefix(st.makeKey(prefix))
+	}
+
+	iter := st.Core.NewIterator(dbRange, nil)
+	defer iter.Release()
+
+	var iterFunc func() bool
+	if option.Reverse == true {
+		iterFunc = iter.Prev
+	} else {
+		iterFunc = iter.Next
+	}
+
+	cursor := option.Cursor
+	if cursor == "" {
+		cursor = prefix
+	}
+
+	var cnt uint64 = 0
+
+	for ok := iter.Seek(st.makeKey(cursor)); ok; ok = iterFunc() {
+		if cnt >= option.Limit {
+			return iter.Error()
+		}
+
+		if next, err := walkFunc(iter.Key(), iter.Value()); err != nil {
+			return err
+		} else if next == false {
+			return iter.Error()
+		}
+
+		if iter.Error() != nil {
+			return iter.Error()
+		}
+		cnt++
+	}
+
+	return iter.Error()
+}
