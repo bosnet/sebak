@@ -33,7 +33,7 @@ function getAccountWithBalance () # u16 port, string addr and expected balance
 	    if [ "$balance" == "$3" ];then
 		    return 0
 	    fi
-	    sleep 0.3
+	    sleep 1
     done
 
     echo $balance
