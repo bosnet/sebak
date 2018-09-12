@@ -25,7 +25,6 @@ func TestResourceAccount(t *testing.T) {
 		ra := NewAccount(ba)
 		r := ra.Resource()
 		j, _ := json.MarshalIndent(r, "", " ")
-		//fmt.Printf("%s\n", j)
 
 		{
 			var f interface{}
@@ -52,7 +51,6 @@ func TestResourceAccount(t *testing.T) {
 		rt := NewTransaction(&bt)
 		r := rt.Resource()
 		j, _ := json.MarshalIndent(r, "", " ")
-		//fmt.Printf("%s\n", j)
 
 		{
 			var f interface{}
@@ -83,7 +81,6 @@ func TestResourceAccount(t *testing.T) {
 		ro := NewOperation(&bo)
 		r := ro.Resource()
 		j, _ := json.MarshalIndent(r, "", " ")
-		//fmt.Printf("%s\n", j)
 
 		{
 			var f interface{}
@@ -122,7 +119,6 @@ func TestResourceAccount(t *testing.T) {
 		arl := NewResourceList(rol, urlneedToBeFilledByAPI)
 		r := arl.Resource()
 		j, _ := json.MarshalIndent(r, "", " ")
-		//fmt.Printf("%s\n", j)
 
 		{
 
