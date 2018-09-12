@@ -6,11 +6,11 @@ import (
 	"os"
 	"path/filepath"
 
+	logging "github.com/inconshreveable/log15"
 	"github.com/spf13/cobra"
 	"github.com/stellar/go/keypair"
 
 	cmdcommon "boscoin.io/sebak/cmd/sebak/common"
-
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/storage"
@@ -31,7 +31,7 @@ func init() {
 		Short: "initialize new network",
 		Args:  cobra.ExactArgs(1),
 		Run: func(c *cobra.Command, args []string) {
-			flagName, err := MakeGenesisBlock(args[0], flagNetworkID, flagBalance, flagStorageConfigString)
+			flagName, err := MakeGenesisBlock(args[0], flagNetworkID, flagBalance, flagStorageConfigString, log)
 			if len(flagName) != 0 || err != nil {
 				cmdcommon.PrintFlagsError(c, flagName, err)
 			}
@@ -68,7 +68,7 @@ func init() {
 //   and error is the more detailed error.
 //   Note that only one needs be non-`nil` for it to be considered an error.
 //
-func MakeGenesisBlock(addressStr, networkID, balanceStr, storageUri string) (string, error) {
+func MakeGenesisBlock(addressStr, networkID, balanceStr, storageUri string, log logging.Logger) (string, error) {
 	var balance common.Amount
 	var err error
 	var kp keypair.KP
@@ -128,7 +128,7 @@ func MakeGenesisBlock(addressStr, networkID, balanceStr, storageUri string) (str
 	)
 	account.Save(st)
 
-	block.MakeGenesisBlock(st, *account)
+	block.MakeGenesisBlock(st, *account, log)
 
 	st.Close()
 	return "", nil
