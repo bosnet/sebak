@@ -28,11 +28,13 @@ Transactions API
 
 + Parameters
     
-    + hash: `hash` (string,required) - tx's hash
+    + hash: `ghf6msRhE4jRf5DPib9UHD1msadvmZs9o53V9FQTb11` (string,required) - tx's hash
 
 ### Get Transaction [GET]
 
 + Response 200 (application/hal+json; charset=utf-8)
+
+    + Attributes (Transaction)
 
 + Response 500 (application/problem+json; charset=utf-8)
 

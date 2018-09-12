@@ -30,8 +30,9 @@ Retrieve an account by the address
 
 ### List All Trasactions for Account [GET]
 
-
 + Response 200 (application/hal+json; charset=utf-8)
+
+    + Attributes (Trasactions)
 
 + Response 500 (application/problem+json; charset=utf-8)
     
@@ -47,6 +48,8 @@ Retrieve an account by the address
 ### List All Operations for Account [GET]
 
 + Response 200 (application/hal+json; charset=utf-8)
+
+    + Attributes (Operations)
 
 + Response 500 (application/problem+json; charset=utf-8)
 
