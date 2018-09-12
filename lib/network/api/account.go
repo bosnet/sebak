@@ -11,117 +11,49 @@ import (
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/network/api/resource"
 	"boscoin.io/sebak/lib/network/httputils"
-	"boscoin.io/sebak/lib/storage"
 )
 
 func (api NetworkHandlerAPI) GetAccountHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	address := vars["address"]
+	address := vars["id"]
 
-	var (
-		blk *block.BlockAccount
-		err error
-	)
-
-	if blk, err = block.GetBlockAccount(api.storage, address); err != nil {
-		if err == errors.ErrorStorageRecordDoesNotExist {
-			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
-		} else {
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	readFunc := func() (payload interface{}, err error) {
+		found, err := block.ExistBlockAccount(api.storage, address)
+		if err != nil {
+			return nil, err
 		}
-		return
+		if !found {
+			return nil, errors.ErrorBlockAccountDoesNotExists
+		}
+		ba, err := block.GetBlockAccount(api.storage, address)
+		if err != nil {
+			//http.Error(w, "Error reading request body", http.StatusInternalServerError)
+			return nil, err
+		}
+		payload = resource.NewAccount(ba)
+		return payload, nil
 	}
-
-	acc := resource.NewAccount(blk)
 
 	if httputils.IsEventStream(r) {
 		event := fmt.Sprintf("address-%s", address)
 		es := NewEventStream(w, r, renderEventStream, DefaultContentType)
-		es.Render(acc)
+		payload, err := readFunc()
+		if err == nil {
+			es.Render(payload)
+		} else {
+			es.Render(nil)
+		}
 		es.Run(observer.BlockAccountObserver, event)
 		return
 	}
-
-	if err := httputils.WriteJSON(w, 200, acc); err != nil {
-		http.Error(w, "Error reading request body", http.StatusInternalServerError)
-	}
-}
-
-func (api NetworkHandlerAPI) GetAccountTransactionsHandler(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	address := vars["address"]
-
-	readFunc := func(cnt int) []resource.Resource {
-		var txs []resource.Resource
-		iterFunc, closeFunc := block.GetBlockTransactionsByAccount(api.storage, address, &storage.IteratorOptions{Reverse: false})
-		for {
-			t, hasNext, _ := iterFunc()
-			if !hasNext || cnt == 0 {
-				break
-			}
-			txs = append(txs, resource.NewTransaction(&t))
-			cnt--
+	payload, err := readFunc()
+	if err == nil {
+		if err := httputils.WriteJSON(w, 200, payload); err != nil {
+			http.Error(w, "Error reading request body", http.StatusInternalServerError)
 		}
-		closeFunc()
-		return txs
-	}
-
-	if httputils.IsEventStream(r) {
-		event := fmt.Sprintf("bt-source-%s", address)
-		es := NewEventStream(w, r, renderEventStream, DefaultContentType)
-		txs := readFunc(maxNumberOfExistingData)
-		for _, tx := range txs {
-			es.Render(tx)
+	} else {
+		if err := httputils.WriteJSON(w, 404, payload); err != nil {
+			http.Error(w, "Error reading request body", http.StatusInternalServerError)
 		}
-		es.Run(observer.BlockTransactionObserver, event)
-		return
-	}
-
-	txs := readFunc(-1) // -1 is infinte. TODO: Paging support makes better this space.
-
-	list := resource.NewResourceList(txs, GetAccountTransactionsHandlerPattern)
-
-	if err := httputils.WriteJSON(w, 200, list); err != nil {
-		http.Error(w, "Error reading request body", http.StatusInternalServerError)
-		return
-	}
-
-}
-
-func (api NetworkHandlerAPI) GetAccountOperationsHandler(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	address := vars["address"]
-
-	readFunc := func(cnt int) []resource.Resource {
-		var txs []resource.Resource
-		iterFunc, closeFunc := block.GetBlockOperationsBySource(api.storage, address, &storage.IteratorOptions{Reverse: false})
-		for {
-			t, hasNext, _ := iterFunc()
-			if !hasNext || cnt == 0 {
-				break
-			}
-			txs = append(txs, resource.NewOperation(&t))
-			cnt--
-		}
-		closeFunc()
-		return txs
-	}
-
-	if httputils.IsEventStream(r) {
-		event := fmt.Sprintf("bo-source-%s", address)
-		es := NewEventStream(w, r, renderEventStream, DefaultContentType)
-		txs := readFunc(maxNumberOfExistingData)
-		for _, tx := range txs {
-			es.Render(tx)
-		}
-		es.Run(observer.BlockOperationObserver, event)
-		return
-	}
-
-	txs := readFunc(-1) //TODO paging support
-	list := resource.NewResourceList(txs, GetAccountOperationsHandlerPattern)
-	if err := httputils.WriteJSON(w, 200, list); err != nil {
-		http.Error(w, "Error reading request body", http.StatusInternalServerError)
-		return
 	}
 }

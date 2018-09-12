@@ -240,7 +240,7 @@ func GetBlockAccountSequenceIDByAddress(st *storage.LevelDBBackend, address stri
 	return (func() (BlockAccountSequenceID, bool, []byte) {
 			item, hasNext := iterFunc()
 			if !hasNext {
-				return BlockAccountSequenceID{}, false, []byte{}
+				return BlockAccountSequenceID{}, false, item.Key
 			}
 
 			var key string
@@ -248,7 +248,7 @@ func GetBlockAccountSequenceIDByAddress(st *storage.LevelDBBackend, address stri
 
 			var bac BlockAccountSequenceID
 			if err := st.Get(key, &bac); err != nil {
-				return BlockAccountSequenceID{}, false, []byte{}
+				return BlockAccountSequenceID{}, false, item.Key
 			}
 			return bac, hasNext, item.Key
 

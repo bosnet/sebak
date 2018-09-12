@@ -140,7 +140,7 @@ func LoadBlocksInsideIterator(
 	return (func() (Block, bool, []byte) {
 			item, hasNext := iterFunc()
 			if !hasNext {
-				return Block{}, false, []byte{}
+				return Block{}, false, item.Key
 			}
 
 			var hash string
@@ -148,7 +148,7 @@ func LoadBlocksInsideIterator(
 
 			b, err := GetBlock(st, hash)
 			if err != nil {
-				return Block{}, false, []byte{}
+				return Block{}, false, item.Key
 			}
 
 			return b, hasNext, item.Key

@@ -150,9 +150,7 @@ func (bt *BlockTransaction) Save(st *storage.LevelDBBackend) (err error) {
 		}
 	}
 	event := "saved"
-	event += " " + "bt-saved"
 	event += " " + fmt.Sprintf("source-%s", bt.Source)
-	event += " " + fmt.Sprintf("bt-source-%s", bt.Source)
 	event += " " + fmt.Sprintf("hash-%s", bt.Hash)
 	observer.BlockTransactionObserver.Trigger(event, bt)
 	bt.isSaved = true
@@ -219,7 +217,7 @@ func LoadBlockTransactionsInsideIterator(
 	return (func() (BlockTransaction, bool, []byte) {
 			item, hasNext := iterFunc()
 			if !hasNext {
-				return BlockTransaction{}, false, []byte{}
+				return BlockTransaction{}, false, item.Key
 			}
 
 			var hash string
@@ -227,7 +225,7 @@ func LoadBlockTransactionsInsideIterator(
 
 			bt, err := GetBlockTransaction(st, hash)
 			if err != nil {
-				return BlockTransaction{}, false, []byte{}
+				return BlockTransaction{}, false, item.Key
 			}
 
 			return bt, hasNext, item.Key
