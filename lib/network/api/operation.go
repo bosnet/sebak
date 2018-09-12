@@ -10,7 +10,7 @@ import (
 	"net/http"
 )
 
-func (api NetworkHandlerAPI) GetAccountOperationsHandler(w http.ResponseWriter, r *http.Request) {
+func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	address := vars["id"]
 	iteratorOptions := parseQueryString(r)

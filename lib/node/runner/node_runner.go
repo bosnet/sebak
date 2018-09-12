@@ -176,7 +176,7 @@ func (nr *NodeRunner) Ready() {
 	).Methods("GET")
 	nr.network.AddHandler(
 		network.UrlPathPrefixAPI+api.GetAccountOperationsHandlerPattern,
-		apiHandler.GetAccountOperationsHandler,
+		apiHandler.GetOperationsByAccountHandler,
 	).Methods("GET")
 	nr.network.AddHandler(
 		network.UrlPathPrefixAPI+api.GetTransactionsHandlerPattern,
