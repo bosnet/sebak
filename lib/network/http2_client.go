@@ -22,14 +22,6 @@ var (
 )
 
 func NewHTTP2NetworkClient(endpoint *common.Endpoint, client *common.HTTP2Client) *HTTP2NetworkClient {
-	if client == nil {
-		client, _ = common.NewHTTP2Client(
-			defaultTimeout,
-			defaultIdleTimeout,
-			false,
-		)
-	}
-
 	return &HTTP2NetworkClient{endpoint: endpoint, client: client, defaultHeaders: http.Header{}}
 }
 
