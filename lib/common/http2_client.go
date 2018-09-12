@@ -83,27 +83,6 @@ func (c *HTTP2Client) Post(url string, b []byte, headers http.Header) (response 
 	return
 }
 
-func HTTP2ClientPing(client *HTTP2Client, url string, interval time.Duration) (err error) {
-
-	do := func(url string) (err error) {
-		_, err = client.Get(url, nil)
-		return
-	}
-
-	if err = do(url); err != nil {
-		return
-	}
-
-	ticker := time.NewTicker(interval)
-	for _ = range ticker.C {
-		if err = do(url); err != nil {
-			return
-		}
-	}
-
-	return
-}
-
 type HTTP2StreamWriter struct {
 	DataChannel chan []byte
 	Error       error
