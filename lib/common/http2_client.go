@@ -6,15 +6,12 @@ import (
 	"io"
 	"net"
 	"net/http"
-	"sync"
 	"time"
 
 	"golang.org/x/net/http2"
 )
 
 type HTTP2Client struct {
-	sync.Mutex
-
 	client    http.Client
 	transport *http.Transport
 }
