@@ -13,14 +13,14 @@ type HALResource interface {
 
 // WriteJSON writes the value v to the http response as json encoding
 func WriteJSON(w http.ResponseWriter, code int, v interface{}) error {
-	w.WriteHeader(code)
-
 	if h, ok := v.(HALResource); ok {
-		w.Header().Set("content-type", "application/hal+json")
+		w.Header().Set("Content-Type", "application/hal+json")
 		v = h.Resource()
 	} else {
-		w.Header().Set("content-type", "application/json")
+		w.Header().Set("Content-Type", "application/json")
 	}
+
+	w.WriteHeader(code)
 
 	bs, err := json.Marshal(v)
 	if err != nil {
