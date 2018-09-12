@@ -352,7 +352,6 @@ func runNode() error {
 	// Execution group.
 	var g run.Group
 	{
-		nr, err := runner.NewNodeRunner(flagNetworkID, localNode, policy, nt, isaac, st)
 		conf := &consensus.ISAACConfiguration{
 			TimeoutINIT:       timeoutINIT,
 			TimeoutSIGN:       timeoutSIGN,
@@ -360,7 +359,7 @@ func runNode() error {
 			TimeoutALLCONFIRM: timeoutALLCONFIRM,
 			TransactionsLimit: uint64(transactionsLimit),
 		}
-		nr.SetConf(conf)
+		nr, err := runner.NewNodeRunner(flagNetworkID, localNode, policy, nt, isaac, st, conf)
 
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)

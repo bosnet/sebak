@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/consensus"
 	"boscoin.io/sebak/lib/consensus/round"
 )
 
@@ -23,7 +24,7 @@ TestISAACSimulationProposer indicates the following:
 	4. The node receives a ballot that exceeds the threshold, and the block is confirmed.
 */
 func TestISAACSimulationProposer(t *testing.T) {
-	nodeRunners := createTestNodeRunner(5)
+	nodeRunners := createTestNodeRunner(5, consensus.NewISAACConfiguration())
 	tx, txByte := GetTransaction(t)
 
 	message := common.NetworkMessage{Type: common.TransactionMessage, Data: txByte}

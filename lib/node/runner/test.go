@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/stellar/go/keypair"
@@ -34,7 +35,8 @@ func MakeNodeRunner(prev *network.MemoryNetwork) (*NodeRunner, *node.LocalNode) 
 	vth, _ := consensus.NewDefaultVotingThresholdPolicy(66, 66)
 	is, _ := consensus.NewISAAC(networkID, localNode, vth)
 	st, _ := storage.NewTestMemoryLevelDBBackend()
-	nodeRunner, _ := NewNodeRunner(string(networkID), localNode, vth, network, is, st)
+	conf := consensus.NewISAACConfiguration()
+	nodeRunner, _ := NewNodeRunner(string(networkID), localNode, vth, network, is, st, conf)
 	return nodeRunner, localNode
 }
 
@@ -130,4 +132,35 @@ func ReceiveBallot(t *testing.T, nodeRunner *NodeRunner, ballot *block.Ballot) e
 	ballotMessage := common.NetworkMessage{Type: common.BallotMessage, Data: data}
 	err = nodeRunner.handleBallotMessage(ballotMessage)
 	return err
+}
+
+type TestBroadcaster struct {
+	sync.RWMutex
+	messages []common.Message
+	recv     chan struct{}
+}
+
+func NewTestBroadcaster(r chan struct{}) *TestBroadcaster {
+	p := &TestBroadcaster{}
+	p.messages = []common.Message{}
+	p.recv = r
+	return p
+}
+
+func (b *TestBroadcaster) Broadcast(message common.Message, _ func(string, error)) {
+	b.Lock()
+	defer b.Unlock()
+	b.messages = append(b.messages, message)
+	if b.recv != nil {
+		b.recv <- struct{}{}
+	}
+	return
+}
+
+func (b *TestBroadcaster) Messages() []common.Message {
+	b.RLock()
+	defer b.RUnlock()
+	messages := make([]common.Message, len(b.messages))
+	copy(messages, b.messages)
+	return messages
 }

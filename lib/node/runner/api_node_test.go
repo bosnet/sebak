@@ -99,7 +99,8 @@ func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, mn *network.HTTP2Net
 		account.Save(st)
 		block.MakeGenesisBlock(st, *account)
 	}
-	if nodeRunner, err = NewNodeRunner(string(networkID), localNode, p, mn, is, st); err != nil {
+	conf := consensus.NewISAACConfiguration()
+	if nodeRunner, err = NewNodeRunner(string(networkID), localNode, p, mn, is, st, conf); err != nil {
 		panic(err)
 	}
 

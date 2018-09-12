@@ -32,7 +32,7 @@ func init() {
 	tlsKey = network.NewKeyGenerator(dir, "sebak-test.crt", "sebak-test.key")
 }
 
-func createTestNodeRunner(n int) []*NodeRunner {
+func createTestNodeRunner(n int, conf *consensus.ISAACConfiguration) []*NodeRunner {
 	var ns []*network.MemoryNetwork
 	var net *network.MemoryNetwork
 	var nodes []*node.LocalNode
@@ -65,7 +65,7 @@ func createTestNodeRunner(n int) []*NodeRunner {
 		account.Save(st)
 		genesisBlock = block.MakeGenesisBlock(st, *account)
 
-		nr, err := NewNodeRunner(string(networkID), v, p, ns[i], is, st)
+		nr, err := NewNodeRunner(string(networkID), v, p, ns[i], is, st, conf)
 		if err != nil {
 			panic(err)
 		}
@@ -76,7 +76,7 @@ func createTestNodeRunner(n int) []*NodeRunner {
 }
 
 func createTestNodeRunnerWithReady(n int) []*NodeRunner {
-	nodeRunners := createTestNodeRunner(n)
+	nodeRunners := createTestNodeRunner(n, consensus.NewISAACConfiguration())
 
 	for _, nr := range nodeRunners {
 		go nr.Start()
@@ -155,7 +155,7 @@ func createTestNodeRunnersHTTP2Network(n int) (nodeRunners []*NodeRunner, rootKP
 		st, _ := storage.NewTestMemoryLevelDBBackend()
 		networkConfig, _ := network.NewHTTP2NetworkConfigFromEndpoint(node.Alias(), node.Endpoint())
 		network := network.NewHTTP2Network(networkConfig)
-		nodeRunner, _ := NewNodeRunner(string(networkID), node, vth, network, is, st)
+		nodeRunner, _ := NewNodeRunner(string(networkID), node, vth, network, is, st, consensus.NewISAACConfiguration())
 
 		genesisAccount.Save(nodeRunner.Storage())
 		block.MakeGenesisBlock(st, *genesisAccount)
@@ -222,8 +222,7 @@ func TestCreateNodeRunner(t *testing.T) {
 }
 
 func TestNodeRunnerCreateAccount(t *testing.T) {
-	numberOfNodes := 3
-	nodeRunners := createTestNodeRunnerWithReady(numberOfNodes)
+	nodeRunners := createTestNodeRunner(3, consensus.NewISAACConfiguration())
 
 	kpNewAccount, _ := keypair.Random()
 
