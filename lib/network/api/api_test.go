@@ -578,7 +578,6 @@ func TestProblem(t *testing.T) {
 		reader := bufio.NewReader(resp.Body)
 		readByte, err := ioutil.ReadAll(reader)
 		require.Nil(t, err)
-		//fmt.Printf("%s\n", readByte)
 		{
 			var f interface{}
 			json.Unmarshal(readByte, &f)
@@ -601,7 +600,6 @@ func TestProblem(t *testing.T) {
 		reader := bufio.NewReader(resp.Body)
 		readByte, err := ioutil.ReadAll(reader)
 		require.Nil(t, err)
-		//fmt.Printf("%s\n", readByte)
 		{
 			var f interface{}
 			json.Unmarshal(readByte, &f)
@@ -624,7 +622,6 @@ func TestProblem(t *testing.T) {
 		reader := bufio.NewReader(resp.Body)
 		readByte, err := ioutil.ReadAll(reader)
 		require.Nil(t, err)
-		//fmt.Printf("%s\n", readByte)
 		{
 			var f interface{}
 			json.Unmarshal(readByte, &f)
@@ -647,7 +644,6 @@ func TestProblem(t *testing.T) {
 		reader := bufio.NewReader(resp.Body)
 		readByte, err := ioutil.ReadAll(reader)
 		require.Nil(t, err)
-		//fmt.Printf("%s\n", readByte)
 		{
 			var f interface{}
 			json.Unmarshal(readByte, &f)
@@ -670,7 +666,6 @@ func TestProblem(t *testing.T) {
 		reader := bufio.NewReader(resp.Body)
 		readByte, err := ioutil.ReadAll(reader)
 		require.Nil(t, err)
-		//fmt.Printf("%s\n", readByte)
 		{
 			var f interface{}
 			json.Unmarshal(readByte, &f)
