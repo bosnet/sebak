@@ -28,11 +28,11 @@ Retrieve an account by the address
     + address: `GDVSXU343JMRBXGW3F5WLRMH6L6HFZ6IYMVMFSDUDJPNTXUGNOXC2R5Y` (string, required) - a public address
 
 
-### List All Trasactions for Account [GET]
+### List All Transactions for Account [GET]
 
 + Response 200 (application/hal+json; charset=utf-8)
 
-    + Attributes (Trasactions)
+    + Attributes (Transactions)
 
 + Response 500 (application/problem+json; charset=utf-8)
     

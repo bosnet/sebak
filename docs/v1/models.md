@@ -31,8 +31,7 @@
         + href: `/transactions/ghf6msRhE4jRf5DPib9UHD1msadvmZs9o53V9FQTb11`
 
 
-### Trasactions
-
+### Transactions
 + _embedded:
     + records:
         + _links:
@@ -58,7 +57,6 @@
         + href: /account/{address}/transactions
 
 ### Operations
-
 + _embedded:
     + records:
         + _links:
