@@ -164,32 +164,31 @@ func (nr *NodeRunner) Ready() {
 		nr.localNode,
 		nr.network,
 		nr.storage,
+		network.UrlPathPrefixAPI,
 	)
 
-	apiPrefix := network.UrlPathPrefixAPI
-
 	nr.network.AddHandler(
-		apiHandler.HandlerURLPattern(apiPrefix, api.GetAccountHandlerPattern),
+		apiHandler.HandlerURLPattern(api.GetAccountHandlerPattern),
 		apiHandler.GetAccountHandler,
 	).Methods("GET")
 	nr.network.AddHandler(
-		apiHandler.HandlerURLPattern(apiPrefix, api.GetAccountTransactionsHandlerPattern),
+		apiHandler.HandlerURLPattern(api.GetAccountTransactionsHandlerPattern),
 		apiHandler.GetTransactionsByAccountHandler,
 	).Methods("GET")
 	nr.network.AddHandler(
-		apiHandler.HandlerURLPattern(apiPrefix, api.GetAccountOperationsHandlerPattern),
+		apiHandler.HandlerURLPattern(api.GetAccountOperationsHandlerPattern),
 		apiHandler.GetOperationsByAccountHandler,
 	).Methods("GET")
 	nr.network.AddHandler(
-		apiHandler.HandlerURLPattern(apiPrefix, api.GetTransactionsHandlerPattern),
+		apiHandler.HandlerURLPattern(api.GetTransactionsHandlerPattern),
 		apiHandler.GetTransactionsHandler,
 	).Methods("GET")
 	nr.network.AddHandler(
-		apiHandler.HandlerURLPattern(apiPrefix, api.GetTransactionByHashHandlerPattern),
+		apiHandler.HandlerURLPattern(api.GetTransactionByHashHandlerPattern),
 		apiHandler.GetTransactionByHashHandler,
 	).Methods("GET")
 	nr.network.AddHandler(
-		apiHandler.HandlerURLPattern(apiPrefix, api.PostTransactionPattern),
+		apiHandler.HandlerURLPattern(api.PostTransactionPattern),
 		nodeHandler.MessageHandler,
 	).Methods("POST")
 

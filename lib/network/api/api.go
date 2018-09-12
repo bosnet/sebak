@@ -28,20 +28,22 @@ type NetworkHandlerAPI struct {
 	localNode *node.LocalNode
 	network   network.Network
 	storage   *storage.LevelDBBackend
+	urlPrefix string
 	version   string
 }
 
-func NewNetworkHandlerAPI(localNode *node.LocalNode, network network.Network, storage *storage.LevelDBBackend) *NetworkHandlerAPI {
+func NewNetworkHandlerAPI(localNode *node.LocalNode, network network.Network, storage *storage.LevelDBBackend, urlPrefix string) *NetworkHandlerAPI {
 	return &NetworkHandlerAPI{
 		localNode: localNode,
 		network:   network,
 		storage:   storage,
+		urlPrefix: urlPrefix,
 		version:   APIVersionV1,
 	}
 }
 
-func (api NetworkHandlerAPI) HandlerURLPattern(prefix string, pattern string) string {
-	return fmt.Sprintf("%s/%s%s", prefix, api.version, pattern)
+func (api NetworkHandlerAPI) HandlerURLPattern(pattern string) string {
+	return fmt.Sprintf("%s/%s%s", api.urlPrefix, api.version, pattern)
 }
 
 func renderEventStream(args ...interface{}) ([]byte, error) {
