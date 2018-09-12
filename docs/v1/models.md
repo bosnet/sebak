@@ -16,3 +16,11 @@
 
 ### Transaction
 + Hash: hash (string,required)
+
+
+### Problem
++ type: `type`
++ title: `title`
++ detail: `detail`
++ instance: `instance`
+

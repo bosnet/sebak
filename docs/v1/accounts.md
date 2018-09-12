@@ -10,14 +10,16 @@ Account API
 ### Retrieve an account [GET]
 Retrieve an account by the address
 
-+ Response 200 (application/json; charset=utf-8)
++ Response 200 (application/hal+json; charset=utf-8)
 
-       + Attributes (Account)
+    + Attributes (Account)
 
 + Response 404 (text/plain; charset=utf-8)
 
-+ Response 500 (application/json; charset=utf-8)
-
++ Response 500 (application/problem+json; charset=utf-8)
+    
+    + Attributes (Problem)
+    
 
 ## Transactions for Account [/v1/account/{address}/transactions]
 
@@ -29,9 +31,11 @@ Retrieve an account by the address
 ### List All Trasactions for Account [GET]
 
 
-+ Response 200 (application/json; charset=utf-8)
++ Response 200 (application/hal+json; charset=utf-8)
 
-+ Response 500 (application/json; charset=utf-8)
++ Response 500 (application/problem+json; charset=utf-8)
+    
+    + Attributes (Problem)
 
 
 ## Operations for Account [/v1/account/{address}/operations]
@@ -42,6 +46,9 @@ Retrieve an account by the address
 
 ### List All Operations for Account [GET]
 
-+ Response 200 (application/json; charset=utf-8)
++ Response 200 (application/hal+json; charset=utf-8)
 
++ Response 500 (application/problem+json; charset=utf-8)
+
+    + Attributes (Problem)
 
