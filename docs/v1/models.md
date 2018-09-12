@@ -31,6 +31,25 @@
         + href: `/transactions/ghf6msRhE4jRf5DPib9UHD1msadvmZs9o53V9FQTb11`
 
 
+### Transaction Payment
++ T: transaction
++ H: 
+    + version: `` - Transaction version
+    + created: `2018-01-01T00:00:00.000000000Z`
+    + hash: `2g3ZSrEnsUWeX5Mxz5uTh2b4KVpVQS7Ek2HzZd759FHn`
+    + signature: `3oWmCMNHExRQnZVEBSH16ZBgLE6ayz7t1fsjzTjAB6WpXMpkDJbhcL8KudqFFG21XmfSXnJH1BLhnBUh4p68yFeR`
++ B:
+    + source: GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ
+    + fee: 10000
+    + sequenceID: 1
+    + operations (array):
+        + (object):
+            + H: 
+                + type: "payment"
+            + B:
+                + target: GDTEPFWEITKFHSUO44NQABY2XHRBBH2UBVGJ2ZJPDREIOL2F6RAEBJE4
+                + amount: 100000000
+
 ### Transactions
 + _embedded:
     + records:

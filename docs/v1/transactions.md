@@ -4,13 +4,15 @@ Transactions API
 
 ## Transactions [/v1/transactions]
 
-### Post transaction [POST]
+### Payment transaction  [POST]
 
 + Request (application/json)
     
-    + Attributes (Transaction)
+    + Attributes (Transaction Payment)
 
-+ Response 200 (application/hal+json; charset=utf-8)
++ Response 200 (application/json; charset=utf-8)
+    
+    + Attributes (Transaction Payment)
 
 + Response 500 (application/problem+json; charset=utf-8)
 
