@@ -1,8 +1,3 @@
-//
-// ISAACConfiguration has timeout features and transaction limit.
-// The ISAACConfiguration is included in ISAACStateManager and
-// these timeout features are used in ISAAC consensus.
-//
 package consensus
 
 import (
@@ -11,6 +6,11 @@ import (
 	"boscoin.io/sebak/lib/common"
 )
 
+//
+// ISAACConfiguration has timeout features and transaction limit.
+// The ISAACConfiguration is included in ISAACStateManager and
+// these timeout features are used in ISAAC consensus.
+//
 type ISAACConfiguration struct {
 	TimeoutINIT       time.Duration
 	TimeoutSIGN       time.Duration
