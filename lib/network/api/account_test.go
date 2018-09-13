@@ -8,10 +8,11 @@ import (
 
 	"boscoin.io/sebak/lib/block"
 
-	"bytes"
+	"boscoin.io/sebak/lib/common/observer"
 	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
 	"strings"
+	"sync"
 )
 
 func TestGetAccountHandler(t *testing.T) {
@@ -40,38 +41,52 @@ func TestGetAccountHandler(t *testing.T) {
 }
 
 func TestGetAccountHandlerStream(t *testing.T) {
+	var wg sync.WaitGroup
+	wg.Add(2)
+
 	ts, storage, err := prepareAPIServer()
 	require.Nil(t, err)
 	defer storage.Close()
 	defer ts.Close()
-	// Make Dummy BlockAccount
 	ba := block.TestMakeBlockAccount()
+
+	// Wait until request registered to observer
 	{
-		// Do a Request
+		var notify = make(chan struct{})
+		go func() {
+			<-notify
+			ba.Save(storage)
+			wg.Done()
+		}()
+
+		go func() {
+			for _, ok := observer.BlockAccountObserver.Callbacks["saved"]; !ok; {
+				break
+			}
+			close(notify)
+			wg.Done()
+		}()
+	}
+
+	// Do a Request
+	var reader *bufio.Reader
+	{
 		url := strings.Replace(GetAccountHandlerPattern, "{id}", ba.Address, -1)
 		respBody, err := request(ts, url, true)
 		require.Nil(t, err)
 		defer respBody.Close()
-		reader := bufio.NewReader(respBody)
-
-		{
-			ba.Save(storage)
-			require.Nil(t, err)
-		}
-
-		for {
-			line, err := reader.ReadBytes('\n')
-			require.Nil(t, err)
-			line = bytes.Trim(line, "\n")
-			if line == nil {
-				continue
-			}
-			recv := make(map[string]interface{})
-			json.Unmarshal(line, &recv)
-			require.Equal(t, ba.Address, recv["id"], "hash is not same")
-			break
-		}
+		reader = bufio.NewReader(respBody)
 	}
+
+	// Check the output
+	{
+		line, err := reader.ReadBytes('\n')
+		require.Nil(t, err)
+		recv := make(map[string]interface{})
+		json.Unmarshal(line, &recv)
+		require.Equal(t, ba.Address, recv["id"], "hash is not same")
+	}
+	wg.Wait()
 }
 
 // Test that getting an inexisting account returns an error

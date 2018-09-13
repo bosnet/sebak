@@ -8,9 +8,12 @@ import (
 	"testing"
 
 	"boscoin.io/sebak/lib/block"
+	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/network/api/resource"
+	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
 	"strings"
+	"sync"
 )
 
 func TestGetTransactionByHashHandler(t *testing.T) {
@@ -20,16 +23,20 @@ func TestGetTransactionByHashHandler(t *testing.T) {
 	defer storage.Close()
 	defer ts.Close()
 
-	_, _, bt, err := prepareTx()
+	_, _, bt, err := prepareTxWithoutSave()
 	require.Nil(t, err)
 	bt.Save(storage)
+
+	var reader *bufio.Reader
+	// Do a Request
 	{
-		// Do a Request
 		respBody, err := request(ts, GetTransactionsHandlerPattern+"/"+bt.Hash, false)
 		require.Nil(t, err)
 		defer respBody.Close()
-		reader := bufio.NewReader(respBody)
-
+		reader = bufio.NewReader(respBody)
+	}
+	// Check the output
+	{
 		readByte, err := ioutil.ReadAll(reader)
 		require.Nil(t, err)
 		recv := make(map[string]interface{})
@@ -40,39 +47,54 @@ func TestGetTransactionByHashHandler(t *testing.T) {
 }
 
 func TestGetTransactionByHashHandlerStream(t *testing.T) {
+	var wg sync.WaitGroup
+	wg.Add(2)
 
 	ts, storage, err := prepareAPIServer()
 	require.Nil(t, err)
 	defer storage.Close()
 	defer ts.Close()
 
-	_, _, bt, err := prepareTx()
+	_, _, bt, err := prepareTxWithoutSave()
 	require.Nil(t, err)
+
+	// Wait until request registered to observer
 	{
-		// Do a Request
+		var notify = make(chan struct{})
+		go func() {
+			<-notify
+			err = bt.Save(storage)
+			require.Nil(t, err)
+			wg.Done()
+		}()
+
+		go func() {
+			for _, ok := observer.BlockTransactionObserver.Callbacks["saved"]; !ok; {
+				break
+			}
+			close(notify)
+			wg.Done()
+		}()
+	}
+
+	// Do a Request
+	var reader *bufio.Reader
+	{
 		respBody, err := request(ts, GetTransactionsHandlerPattern+"/"+bt.Hash, true)
 		require.Nil(t, err)
 		defer respBody.Close()
-		reader := bufio.NewReader(respBody)
-
-		{
-			err = bt.Save(storage)
-			require.Nil(t, err)
-		}
-
-		for {
-			line, err := reader.ReadBytes('\n')
-			require.Nil(t, err)
-			line = bytes.Trim(line, "\n")
-			if line == nil {
-				continue
-			}
-			recv := make(map[string]interface{})
-			json.Unmarshal(line, &recv)
-			require.Equal(t, bt.Hash, recv["hash"], "hash is not same")
-			break
-		}
+		reader = bufio.NewReader(respBody)
 	}
+
+	// Check the output
+	{
+		line, err := reader.ReadBytes('\n')
+		require.Nil(t, err)
+		recv := make(map[string]interface{})
+		json.Unmarshal(line, &recv)
+		require.Equal(t, bt.Hash, recv["hash"], "hash is not same")
+	}
+	wg.Wait()
 }
 
 func TestGetTransactionsHandler(t *testing.T) {
@@ -84,13 +106,17 @@ func TestGetTransactionsHandler(t *testing.T) {
 	_, btList, err := prepareTxs(storage, 0, 10, nil)
 	require.Nil(t, err)
 
+	var reader *bufio.Reader
 	{
 		// Do a Request
 		respBody, err := request(ts, GetTransactionsHandlerPattern, false)
 		require.Nil(t, err)
 		defer respBody.Close()
-		reader := bufio.NewReader(respBody)
+		reader = bufio.NewReader(respBody)
+	}
 
+	// Check the output
+	{
 		readByte, err := ioutil.ReadAll(reader)
 		require.Nil(t, err)
 
@@ -110,34 +136,54 @@ func TestGetTransactionsHandler(t *testing.T) {
 }
 
 func TestGetTransactionsHandlerStream(t *testing.T) {
+	var wg sync.WaitGroup
+	wg.Add(2)
+
 	ts, storage, err := prepareAPIServer()
 	require.Nil(t, err)
 	defer storage.Close()
 	defer ts.Close()
 
-	_, btList, err := prepareTxs(storage, 0, 10, nil)
+	var btMap = make(map[string]block.BlockTransaction)
+	kp, err := keypair.Random()
 	require.Nil(t, err)
 
-	// streaming
+	// Wait until request registered to observer
 	{
-		// Do a Request
+		var notify = make(chan struct{})
+		go func() {
+			<-notify
+			// Producer
+			var btList []block.BlockTransaction
+			_, btList, err = prepareTxsWithoutSave(0, 10, kp)
+			require.Nil(t, err)
+			for _, bt := range btList {
+				btMap[bt.Hash] = bt
+				bt.Save(storage)
+			}
+			wg.Done()
+		}()
+
+		go func() {
+			for _, ok := observer.BlockTransactionObserver.Callbacks["saved"]; !ok; {
+				break
+			}
+			close(notify)
+			wg.Done()
+		}()
+	}
+
+	// Do a Request
+	var reader *bufio.Reader
+	{
 		respBody, err := request(ts, GetTransactionsHandlerPattern, true)
 		require.Nil(t, err)
 		defer respBody.Close()
-		reader := bufio.NewReader(respBody)
+		reader = bufio.NewReader(respBody)
+	}
 
-		// Producer
-		{
-			_, btList2, err := prepareTxs(storage, 1, 10, nil)
-			require.Nil(t, err)
-			btList = append(btList, btList2...)
-		}
-		var btMap = make(map[string]block.BlockTransaction)
-		for _, bt := range btList {
-			btMap[bt.Hash] = bt
-		}
-
-		// Do stream Request to the Server
+	// Check the output
+	{
 		for n := 0; n < 10; n++ {
 			line, err := reader.ReadBytes('\n')
 			require.Nil(t, err)
@@ -151,6 +197,7 @@ func TestGetTransactionsHandlerStream(t *testing.T) {
 			require.Equal(t, txS, line)
 		}
 	}
+	wg.Wait()
 }
 
 func TestGetTransactionsByAccountHandler(t *testing.T) {
@@ -163,58 +210,83 @@ func TestGetTransactionsByAccountHandler(t *testing.T) {
 	require.Nil(t, err)
 
 	// Do a Request
-	url := strings.Replace(GetAccountTransactionsHandlerPattern, "{id}", kp.Address(), -1)
-	respBody, err := request(ts, url, false)
-	require.Nil(t, err)
-	defer respBody.Close()
-	reader := bufio.NewReader(respBody)
-
-	readByte, err := ioutil.ReadAll(reader)
-	require.Nil(t, err)
-
-	recv := make(map[string]interface{})
-	json.Unmarshal(readByte, &recv)
-	records := recv["_embedded"].(map[string]interface{})["records"].([]interface{})
-
-	require.Equal(t, len(btList), len(records), "length is not same")
-
-	for i, r := range records {
-		bt := r.(map[string]interface{})
-		hash := bt["hash"].(string)
-
-		require.Equal(t, hash, btList[i].Hash, "hash is not same")
+	var reader *bufio.Reader
+	{
+		url := strings.Replace(GetAccountTransactionsHandlerPattern, "{id}", kp.Address(), -1)
+		respBody, err := request(ts, url, false)
+		require.Nil(t, err)
+		defer respBody.Close()
+		reader = bufio.NewReader(respBody)
 	}
 
+	// Check the output
+	{
+		readByte, err := ioutil.ReadAll(reader)
+		require.Nil(t, err)
+
+		recv := make(map[string]interface{})
+		json.Unmarshal(readByte, &recv)
+		records := recv["_embedded"].(map[string]interface{})["records"].([]interface{})
+
+		require.Equal(t, len(btList), len(records), "length is not same")
+
+		for i, r := range records {
+			bt := r.(map[string]interface{})
+			hash := bt["hash"].(string)
+
+			require.Equal(t, hash, btList[i].Hash, "hash is not same")
+		}
+	}
 }
 
 func TestGetTransactionsByAccountHandlerStream(t *testing.T) {
+	var wg sync.WaitGroup
+	wg.Add(2)
+
 	ts, storage, err := prepareAPIServer()
 	require.Nil(t, err)
 	defer storage.Close()
 	defer ts.Close()
 
-	kp, btList, err := prepareTxs(storage, 0, 10, nil)
+	btMap := make(map[string]block.BlockTransaction)
+	kp, btList, err := prepareTxsWithoutSave(0, 10, nil)
 	require.Nil(t, err)
+	for _, bt := range btList {
+		btMap[bt.Hash] = bt
+	}
+
+	// Wait until request registered to observer
 	{
-		// Do a Request
+		var notify = make(chan struct{})
+		go func() {
+			<-notify
+			for _, bt := range btMap {
+				bt.Save(storage)
+			}
+			wg.Done()
+		}()
+
+		go func() {
+			for _, ok := observer.BlockTransactionObserver.Callbacks["saved"]; !ok; {
+				break
+			}
+			close(notify)
+			wg.Done()
+		}()
+	}
+
+	// Do a Request
+	var reader *bufio.Reader
+	{
 		url := strings.Replace(GetAccountTransactionsHandlerPattern, "{id}", kp.Address(), -1)
 		respBody, err := request(ts, url, true)
 		require.Nil(t, err)
 		defer respBody.Close()
-		reader := bufio.NewReader(respBody)
+		reader = bufio.NewReader(respBody)
+	}
 
-		// Producer
-		{
-			_, btList2, err := prepareTxs(storage, 1, 10, kp)
-			require.Nil(t, err)
-			btList = append(btList, btList2...)
-		}
-		var btMap = make(map[string]block.BlockTransaction)
-		for _, bt := range btList {
-			btMap[bt.Hash] = bt
-		}
-
-		// Do stream Request to the Server
+	// Check the output
+	{
 		for n := 0; n < 10; n++ {
 			line, err := reader.ReadBytes('\n')
 			require.Nil(t, err)
@@ -228,6 +300,7 @@ func TestGetTransactionsByAccountHandlerStream(t *testing.T) {
 			require.Equal(t, txS, line)
 		}
 	}
+	wg.Wait()
 }
 
 func TestGetTransactionsHandlerPage(t *testing.T) {
@@ -319,6 +392,4 @@ func TestGetTransactionsHandlerPage(t *testing.T) {
 			require.Equal(t, bt["hash"], btList[len(btList)-1-i].Hash, "hash is not same")
 		}
 	}
-
-	//TODO: cursor
 }

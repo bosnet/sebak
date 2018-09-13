@@ -35,6 +35,7 @@ func (api NetworkHandlerAPI) GetTransactionsHandler(w http.ResponseWriter, r *ht
 	if httputils.IsEventStream(r) {
 		event := "saved"
 		es := NewEventStream(w, r, renderEventStream, DefaultContentType)
+		iteratorOptions.Limit = 10
 		txs := readFunc()
 		for _, tx := range txs {
 			es.Render(tx)
@@ -43,7 +44,7 @@ func (api NetworkHandlerAPI) GetTransactionsHandler(w http.ResponseWriter, r *ht
 		return
 	}
 
-	txs := readFunc() // -1 is infinte. TODO: Paging support makes better this space.
+	txs := readFunc()
 
 	self := r.URL.String()
 	next := GetTransactionsHandlerPattern + "?" + "reverse=false&cursor=" + string(cursor)
@@ -58,7 +59,7 @@ func (api NetworkHandlerAPI) GetTransactionsHandler(w http.ResponseWriter, r *ht
 
 func (api NetworkHandlerAPI) GetTransactionByHashHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	key := vars["id"] //TODO: validate input
+	key := vars["id"]
 
 	readFunc := func() (payload interface{}, err error) {
 		found, err := block.ExistBlockTransaction(api.storage, key)
@@ -70,7 +71,6 @@ func (api NetworkHandlerAPI) GetTransactionByHashHandler(w http.ResponseWriter, 
 		}
 		bt, err := block.GetBlockTransaction(api.storage, key)
 		if err != nil {
-			//http.Error(w, "Error reading request body", http.StatusInternalServerError)
 			return nil, err
 		}
 		payload = resource.NewTransaction(&bt)
@@ -124,6 +124,7 @@ func (api NetworkHandlerAPI) GetTransactionsByAccountHandler(w http.ResponseWrit
 	if httputils.IsEventStream(r) {
 		event := fmt.Sprintf("source-%s", address)
 		es := NewEventStream(w, r, renderEventStream, DefaultContentType)
+		iteratorOptions.Limit = 10
 		txs := readFunc()
 		for _, tx := range txs {
 			es.Render(tx)
