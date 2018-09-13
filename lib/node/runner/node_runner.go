@@ -189,7 +189,7 @@ func (nr *NodeRunner) Ready() {
 	).Methods("GET")
 	nr.network.AddHandler(
 		apiHandler.HandlerURLPattern(api.GetTransactionOperationsHandlerPattern),
-		apiHandler.GetTransactionOperationsHandler,
+		apiHandler.GetOperationsByTxHashHandler,
 	).Methods("GET")
 	nr.network.AddHandler(
 		apiHandler.HandlerURLPattern(api.PostTransactionPattern),

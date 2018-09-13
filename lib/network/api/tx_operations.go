@@ -12,7 +12,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func (api NetworkHandlerAPI) GetTransactionOperationsHandler(w http.ResponseWriter, r *http.Request) {
+func (api NetworkHandlerAPI) GetOperationsByTxHashHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	hash := vars["id"]
 
