@@ -26,20 +26,20 @@ func (api NetworkHandlerAPI) GetTransactionOperationsHandler(w http.ResponseWrit
 	if httputils.IsEventStream(r) {
 		event := fmt.Sprintf("txhash-%s", hash)
 		es := NewEventStream(w, r, renderEventStream, DefaultContentType)
-		txs, _ := api.getOperationListByTxHash(hash, iterOps)
-		for _, tx := range txs {
-			es.Render(tx)
+		ops, _ := api.getOperationsByTxHash(hash, iterOps)
+		for _, op := range ops {
+			es.Render(op)
 		}
 		es.Run(observer.BlockOperationObserver, event)
 		return
 	}
 
-	txs, cursor := api.getOperationListByTxHash(hash, iterOps)
+	ops, cursor := api.getOperationsByTxHash(hash, iterOps)
 
 	self := r.URL.String()
 	next := GetTransactionOperationsHandlerPattern + "?" + "reverse=false&cursor=" + string(cursor)
 	prev := GetTransactionOperationsHandlerPattern + "?" + "reverse=true&cursor=" + string(cursor)
-	list := resource.NewResourceList(txs, self, next, prev)
+	list := resource.NewResourceList(ops, self, next, prev)
 
 	if err := httputils.WriteJSON(w, 200, list); err != nil {
 		http.Error(w, "Error reading request body", http.StatusInternalServerError)
@@ -47,7 +47,7 @@ func (api NetworkHandlerAPI) GetTransactionOperationsHandler(w http.ResponseWrit
 	}
 }
 
-func (api NetworkHandlerAPI) getOperationListByTxHash(txHash string, iterOps *storage.IteratorOptions) (txs []resource.Resource, cursor []byte) {
+func (api NetworkHandlerAPI) getOperationsByTxHash(txHash string, iterOps *storage.IteratorOptions) (txs []resource.Resource, cursor []byte) {
 	iterFunc, closeFunc := block.GetBlockOperationsByTxHash(api.storage, txHash, iterOps)
 	for {
 		o, hasNext, c := iterFunc()
