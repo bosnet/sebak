@@ -31,11 +31,7 @@ func (o Operation) MakeHashString() string {
 }
 
 func (o Operation) IsWellFormed(networkID []byte) (err error) {
-	if err = o.B.IsWellFormed(networkID); err != nil {
-		return
-	}
-
-	return
+	return o.B.IsWellFormed(networkID)
 }
 
 func (o Operation) Serialize() (encoded []byte, err error) {
