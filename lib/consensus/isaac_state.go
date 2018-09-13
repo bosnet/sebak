@@ -14,7 +14,7 @@ type ISAACState struct {
 	BallotState common.BallotState
 }
 
-func (s ISAACState) IsLater(target ISAACState) (result bool) {
+func (s ISAACState) IsLater(target ISAACState) bool {
 	if s.Round.BlockHeight != target.Round.BlockHeight {
 		return s.Round.BlockHeight < target.Round.BlockHeight
 	}

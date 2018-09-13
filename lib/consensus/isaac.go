@@ -7,6 +7,7 @@ import (
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/consensus/round"
+	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/transaction"
 )
@@ -21,15 +22,23 @@ type ISAAC struct {
 	RunningRounds         map[ /* Round.Hash() */ string]*RunningRound
 	latestConfirmedBlock  block.Block
 	LatestRound           round.Round
+	connectionManager     *network.ConnectionManager
 }
 
-func NewISAAC(networkID []byte, node *node.LocalNode, votingThresholdPolicy common.VotingThresholdPolicy) (is *ISAAC, err error) {
+// ISAAC should know network.ConnectionManager
+// because the ISAAC uses connected validators when calculating proposer
+func NewISAAC(networkID []byte, node *node.LocalNode, policy common.VotingThresholdPolicy,
+	cm *network.ConnectionManager) (is *ISAAC, err error) {
+
 	is = &ISAAC{
 		NetworkID: networkID, Node: node,
-		VotingThresholdPolicy: votingThresholdPolicy,
+		VotingThresholdPolicy: policy,
 		TransactionPool:       transaction.NewTransactionPool(),
 		RunningRounds:         map[string]*RunningRound{},
+		connectionManager:     cm,
 	}
+
+	is.connectionManager.SetBroadcaster(network.NewSimpleBroadcaster(is.ConnectionManager()))
 
 	return
 }
@@ -81,6 +90,14 @@ func (is *ISAAC) SetLatestRound(round round.Round) {
 	is.LatestRound = round
 }
 
+func (is *ISAAC) SetBroadcaster(b network.Broadcaster) {
+	is.connectionManager.SetBroadcaster(b)
+}
+
+func (is *ISAAC) ConnectionManager() *network.ConnectionManager {
+	return is.connectionManager
+}
+
 func (is *ISAAC) IsAvailableRound(round round.Round) bool {
 	// check current round is from InitRound
 	if is.LatestRound.BlockHash == "" {
@@ -106,6 +123,93 @@ func (is *ISAAC) IsAvailableRound(round round.Round) bool {
 	}
 
 	return true
+}
+
+func (is *ISAAC) IsVoted(b block.Ballot) bool {
+	is.RLock()
+	defer is.RUnlock()
+	var found bool
+
+	var runningRound *RunningRound
+	if runningRound, found = is.RunningRounds[b.Round().Hash()]; !found {
+		return false
+	}
+
+	return runningRound.IsVoted(b)
+}
+
+func (is *ISAAC) Vote(b block.Ballot) (isNew bool, err error) {
+	is.RLock()
+	defer is.RUnlock()
+	roundHash := b.Round().Hash()
+
+	var found bool
+	var runningRound *RunningRound
+	if runningRound, found = is.RunningRounds[roundHash]; !found {
+		proposer := is.ConnectionManager().CalculateProposer(
+			b.Round().BlockHeight,
+			b.Round().Number,
+		)
+
+		if runningRound, err = NewRunningRound(proposer, b); err != nil {
+			return true, err
+		}
+
+		is.RunningRounds[roundHash] = runningRound
+		isNew = true
+	} else {
+		if _, found = runningRound.Voted[b.Proposer()]; !found {
+			isNew = true
+		}
+
+		runningRound.Vote(b)
+	}
+
+	return
+}
+func (is *ISAAC) CanGetVotingResult(b block.Ballot) (RoundVoteResult, common.VotingHole, bool) {
+	is.RLock()
+	defer is.RUnlock()
+	runningRound, _ := is.RunningRounds[b.Round().Hash()]
+	if roundVote, err := runningRound.RoundVote(b.Proposer()); err == nil {
+		return roundVote.CanGetVotingResult(is.VotingThresholdPolicy, b.State())
+	} else {
+		return nil, common.VotingNOTYET, false
+	}
+}
+
+func (is *ISAAC) IsVotedByNode(b block.Ballot, node string) (bool, error) {
+	is.RLock()
+	defer is.RUnlock()
+	runningRound, _ := is.RunningRounds[b.Round().Hash()]
+	if roundVote, err := runningRound.RoundVote(b.Proposer()); err == nil {
+		return roundVote.IsVotedByNode(b.State(), node), nil
+	} else {
+		return false, err
+	}
+}
+
+func (is *ISAAC) HasRunningRound(roundHash string) bool {
+	is.RLock()
+	defer is.RUnlock()
+	_, found := is.RunningRounds[roundHash]
+	return found
+}
+
+func (is *ISAAC) HasSameProposer(b block.Ballot) bool {
+	is.RLock()
+	defer is.RUnlock()
+	if runningRound, found := is.RunningRounds[b.Round().Hash()]; found {
+		return runningRound.Proposer == b.Proposer()
+	}
+
+	return false
+}
+
+func (is *ISAAC) AddRunningRound(roundHash string, runningRound *RunningRound) {
+	is.Lock()
+	defer is.Unlock()
+	is.RunningRounds[roundHash] = runningRound
 }
 
 func (is *ISAAC) LatestConfirmedBlock() block.Block {

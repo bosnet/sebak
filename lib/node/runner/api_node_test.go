@@ -63,7 +63,7 @@ func pingAndWait(t *testing.T, c0 network.NetworkClient) {
 	}
 }
 
-func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, mn *network.HTTP2Network, nodeRunner *NodeRunner) {
+func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, n *network.HTTP2Network, nodeRunner *NodeRunner) {
 	g := network.NewKeyGenerator(dirPath, certPath, keyPath)
 
 	var config *network.HTTP2NetworkConfig
@@ -86,10 +86,19 @@ func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, mn *network.HTTP2Net
 		t.Error(err)
 		return
 	}
-	mn = network.NewHTTP2Network(config)
+	n = network.NewHTTP2Network(config)
 
 	p, _ := consensus.NewDefaultVotingThresholdPolicy(30, 30)
-	is, _ := consensus.NewISAAC(networkID, localNode, p)
+
+	connectionManager := network.NewConnectionManager(
+		localNode,
+		n,
+		p,
+		localNode.GetValidators(),
+	)
+	connectionManager.SetProposerCalculator(network.NewSimpleProposerCalculator(connectionManager))
+
+	is, _ := consensus.NewISAAC(networkID, localNode, p, connectionManager)
 	st, _ := storage.NewTestMemoryLevelDBBackend()
 	// Make the latest block
 	{
@@ -100,7 +109,7 @@ func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, mn *network.HTTP2Net
 		block.MakeGenesisBlock(st, *account)
 	}
 	conf := consensus.NewISAACConfiguration()
-	if nodeRunner, err = NewNodeRunner(string(networkID), localNode, p, mn, is, st, conf); err != nil {
+	if nodeRunner, err = NewNodeRunner(string(networkID), localNode, p, n, is, st, conf); err != nil {
 		panic(err)
 	}
 

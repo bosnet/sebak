@@ -154,7 +154,7 @@ func (sm *ISAACStateManager) resetTimer(timer *time.Timer, state common.BallotSt
 // but if not, it waits for receiving ballot from the other proposer.
 func (sm *ISAACStateManager) proposeOrWait(timer *time.Timer, state consensus.ISAACState) {
 	timer.Reset(time.Duration(1 * time.Hour))
-	proposer := sm.nr.CalculateProposer(state.Round.BlockHeight, state.Round.Number)
+	proposer := sm.nr.Consensus().ConnectionManager().CalculateProposer(state.Round.BlockHeight, state.Round.Number)
 	log.Debug("calculated proposer", "proposer", proposer)
 
 	if proposer == sm.nr.localNode.Address() {

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -15,17 +16,14 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/stellar/go/keypair"
 
+	cmdcommon "boscoin.io/sebak/cmd/sebak/common"
+	"boscoin.io/sebak/lib"
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/consensus"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
-	"boscoin.io/sebak/lib/storage"
-
-	cmdcommon "boscoin.io/sebak/cmd/sebak/common"
-
-	"boscoin.io/sebak/lib"
-	"boscoin.io/sebak/lib/consensus"
 	"boscoin.io/sebak/lib/node/runner"
-	"strconv"
+	"boscoin.io/sebak/lib/storage"
 )
 
 const defaultNetwork string = "https"
@@ -337,7 +335,15 @@ func runNode() error {
 		return err
 	}
 
-	isaac, err := consensus.NewISAAC([]byte(flagNetworkID), localNode, policy)
+	connectionManager := network.NewConnectionManager(
+		localNode,
+		nt,
+		policy,
+		localNode.GetValidators(),
+	)
+	connectionManager.SetProposerCalculator(network.NewSimpleProposerCalculator(connectionManager))
+
+	isaac, err := consensus.NewISAAC([]byte(flagNetworkID), localNode, policy, connectionManager)
 	if err != nil {
 		log.Crit("failed to launch consensus", "error", err)
 		return err

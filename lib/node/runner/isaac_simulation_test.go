@@ -32,7 +32,9 @@ func TestISAACSimulationProposer(t *testing.T) {
 	nodeRunner := nodeRunners[0]
 
 	// `nodeRunner` is proposer's runner
-	nodeRunner.SetProposerCalculator(SelfProposerCalculator{})
+	nodeRunner.Consensus().ConnectionManager().SetProposerCalculator(SelfProposerCalculator{
+		nodeRunner: nodeRunner,
+	})
 	proposer := nodeRunner.localNode
 
 	nodeRunner.Consensus().SetLatestConsensusedBlock(genesisBlock)

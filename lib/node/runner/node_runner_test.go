@@ -57,15 +57,24 @@ func createTestNodeRunner(n int, conf *consensus.ISAACConfiguration) []*NodeRunn
 	account = block.NewBlockAccount(address, balance)
 	var nodeRunners []*NodeRunner
 	for i := 0; i < n; i++ {
-		v := nodes[i]
-		p, _ := consensus.NewDefaultVotingThresholdPolicy(66, 66)
-		is, _ := consensus.NewISAAC(networkID, v, p)
+		localNode := nodes[i]
+		policy, _ := consensus.NewDefaultVotingThresholdPolicy(66, 66)
+
+		connectionManager := network.NewConnectionManager(
+			localNode,
+			ns[i],
+			policy,
+			localNode.GetValidators(),
+		)
+		connectionManager.SetProposerCalculator(network.NewSimpleProposerCalculator(connectionManager))
+
+		is, _ := consensus.NewISAAC(networkID, localNode, policy, connectionManager)
 		st, _ := storage.NewTestMemoryLevelDBBackend()
 
 		account.Save(st)
 		genesisBlock = block.MakeGenesisBlock(st, *account)
 
-		nr, err := NewNodeRunner(string(networkID), v, p, ns[i], is, st, conf)
+		nr, err := NewNodeRunner(string(networkID), localNode, policy, ns[i], is, st, conf)
 		if err != nil {
 			panic(err)
 		}
@@ -150,12 +159,21 @@ func createTestNodeRunnersHTTP2Network(n int) (nodeRunners []*NodeRunner, rootKP
 		10000000000000,
 	)
 	for _, node := range nodes {
-		vth, _ := consensus.NewDefaultVotingThresholdPolicy(66, 66)
-		is, _ := consensus.NewISAAC(networkID, node, vth)
+		policy, _ := consensus.NewDefaultVotingThresholdPolicy(66, 66)
 		st, _ := storage.NewTestMemoryLevelDBBackend()
 		networkConfig, _ := network.NewHTTP2NetworkConfigFromEndpoint(node.Alias(), node.Endpoint())
-		network := network.NewHTTP2Network(networkConfig)
-		nodeRunner, _ := NewNodeRunner(string(networkID), node, vth, network, is, st, consensus.NewISAACConfiguration())
+		n := network.NewHTTP2Network(networkConfig)
+
+		connectionManager := network.NewConnectionManager(
+			node,
+			n,
+			policy,
+			node.GetValidators(),
+		)
+		connectionManager.SetProposerCalculator(network.NewSimpleProposerCalculator(connectionManager))
+
+		is, _ := consensus.NewISAAC(networkID, node, policy, connectionManager)
+		nodeRunner, _ := NewNodeRunner(string(networkID), node, policy, n, is, st, consensus.NewISAACConfiguration())
 
 		genesisAccount.Save(nodeRunner.Storage())
 		block.MakeGenesisBlock(st, *genesisAccount)

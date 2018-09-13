@@ -19,8 +19,10 @@ func TestConnectionManagerBroadcaster(t *testing.T) {
 	recv := make(chan struct{})
 
 	b := NewTestBroadcaster(recv)
-	nr.SetBroadcaster(b)
-	nr.SetProposerCalculator(SelfProposerCalculator{})
+	nr.Consensus().SetBroadcaster(b)
+	nr.Consensus().ConnectionManager().SetProposerCalculator(SelfProposerCalculator{
+		nodeRunner: nr,
+	})
 
 	nr.Consensus().SetLatestConsensusedBlock(genesisBlock)
 
