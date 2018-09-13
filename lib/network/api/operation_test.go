@@ -51,7 +51,7 @@ func TestGetOperationsByAccountHandler(t *testing.T) {
 
 func TestGetOperationsByAccountHandlerStream(t *testing.T) {
 	var wg sync.WaitGroup
-	wg.Add(2)
+	wg.Add(1)
 
 	ts, storage, err := prepareAPIServer()
 	require.Nil(t, err)
@@ -67,22 +67,18 @@ func TestGetOperationsByAccountHandlerStream(t *testing.T) {
 
 	// Wait until request registered to observer
 	{
-		var notify = make(chan struct{})
 		go func() {
-			<-notify
+			for {
+				observer.BlockOperationObserver.RLock()
+				if len(observer.BlockOperationObserver.Callbacks) > 0 {
+					observer.BlockOperationObserver.RUnlock()
+					break
+				}
+				observer.BlockOperationObserver.RUnlock()
+			}
 			for _, bo := range boMap {
 				bo.Save(storage)
 			}
-			wg.Done()
-		}()
-
-		go func() {
-			for {
-				if len(observer.BlockOperationObserver.Callbacks) > 0 {
-					break
-				}
-			}
-			close(notify)
 			wg.Done()
 		}()
 	}

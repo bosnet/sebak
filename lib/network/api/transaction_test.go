@@ -48,7 +48,7 @@ func TestGetTransactionByHashHandler(t *testing.T) {
 
 func TestGetTransactionByHashHandlerStream(t *testing.T) {
 	var wg sync.WaitGroup
-	wg.Add(2)
+	wg.Add(1)
 
 	ts, storage, err := prepareAPIServer()
 	require.Nil(t, err)
@@ -60,21 +60,17 @@ func TestGetTransactionByHashHandlerStream(t *testing.T) {
 
 	// Wait until request registered to observer
 	{
-		var notify = make(chan struct{})
-		go func() {
-			<-notify
-			err = bt.Save(storage)
-			require.Nil(t, err)
-			wg.Done()
-		}()
-
 		go func() {
 			for {
+				observer.BlockTransactionObserver.RLock()
 				if len(observer.BlockTransactionObserver.Callbacks) > 0 {
+					observer.BlockTransactionObserver.RUnlock()
 					break
 				}
+				observer.BlockTransactionObserver.RUnlock()
 			}
-			close(notify)
+			err = bt.Save(storage)
+			require.Nil(t, err)
 			wg.Done()
 		}()
 	}
@@ -139,40 +135,36 @@ func TestGetTransactionsHandler(t *testing.T) {
 
 func TestGetTransactionsHandlerStream(t *testing.T) {
 	var wg sync.WaitGroup
-	wg.Add(2)
+	wg.Add(1)
 
 	ts, storage, err := prepareAPIServer()
 	require.Nil(t, err)
 	defer storage.Close()
 	defer ts.Close()
 
-	var btMap = make(map[string]block.BlockTransaction)
 	kp, err := keypair.Random()
 	require.Nil(t, err)
+	_, btList, err := prepareTxsWithoutSave(0, 10, kp)
+	require.Nil(t, err)
+	btMap := make(map[string]block.BlockTransaction)
+	for _, bt := range btList {
+		btMap[bt.Hash] = bt
+	}
 
 	// Wait until request registered to observer
 	{
-		var notify = make(chan struct{})
-		go func() {
-			<-notify
-			// Producer
-			var btList []block.BlockTransaction
-			_, btList, err = prepareTxsWithoutSave(0, 10, kp)
-			require.Nil(t, err)
-			for _, bt := range btList {
-				btMap[bt.Hash] = bt
-				bt.Save(storage)
-			}
-			wg.Done()
-		}()
-
 		go func() {
 			for {
+				observer.BlockTransactionObserver.RLock()
 				if len(observer.BlockTransactionObserver.Callbacks) > 0 {
+					observer.BlockTransactionObserver.RUnlock()
 					break
 				}
+				observer.BlockTransactionObserver.RUnlock()
 			}
-			close(notify)
+			for _, bt := range btMap {
+				bt.Save(storage)
+			}
 			wg.Done()
 		}()
 	}
@@ -245,7 +237,7 @@ func TestGetTransactionsByAccountHandler(t *testing.T) {
 
 func TestGetTransactionsByAccountHandlerStream(t *testing.T) {
 	var wg sync.WaitGroup
-	wg.Add(2)
+	wg.Add(1)
 
 	ts, storage, err := prepareAPIServer()
 	require.Nil(t, err)
@@ -261,22 +253,18 @@ func TestGetTransactionsByAccountHandlerStream(t *testing.T) {
 
 	// Wait until request registered to observer
 	{
-		var notify = make(chan struct{})
 		go func() {
-			<-notify
+			for {
+				observer.BlockTransactionObserver.RLock()
+				if len(observer.BlockTransactionObserver.Callbacks) > 0 {
+					observer.BlockTransactionObserver.RUnlock()
+					break
+				}
+				observer.BlockTransactionObserver.RUnlock()
+			}
 			for _, bt := range btMap {
 				bt.Save(storage)
 			}
-			wg.Done()
-		}()
-
-		go func() {
-			for {
-				if len(observer.BlockTransactionObserver.Callbacks) > 0 {
-					break
-				}
-			}
-			close(notify)
 			wg.Done()
 		}()
 	}
