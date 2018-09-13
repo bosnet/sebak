@@ -47,11 +47,13 @@ func TestISAACSimulationProposer(t *testing.T) {
 	roundNumber := uint64(0)
 	err = nodeRunner.proposeNewBallot(roundNumber)
 	require.Nil(t, err)
+
+	b := nodeRunner.Consensus().LatestConfirmedBlock()
 	round := round.Round{
 		Number:      roundNumber,
-		BlockHeight: nodeRunner.Consensus().LatestConfirmedBlock.Height,
-		BlockHash:   nodeRunner.Consensus().LatestConfirmedBlock.Hash,
-		TotalTxs:    nodeRunner.Consensus().LatestConfirmedBlock.TotalTxs,
+		BlockHeight: b.Height,
+		BlockHash:   b.Hash,
+		TotalTxs:    b.TotalTxs,
 	}
 	runningRounds := nodeRunner.Consensus().RunningRounds
 
@@ -98,7 +100,7 @@ func TestISAACSimulationProposer(t *testing.T) {
 
 	require.Equal(t, 4, len(rr.Voted[proposer.Address()].GetResult(common.BallotStateACCEPT)))
 
-	block := nodeRunner.Consensus().LatestConfirmedBlock
+	block := nodeRunner.Consensus().LatestConfirmedBlock()
 	require.Equal(t, proposer.Address(), block.Proposer)
 	require.Equal(t, 1, len(block.Transactions))
 	require.Equal(t, tx.GetHash(), block.Transactions[0])

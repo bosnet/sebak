@@ -486,11 +486,12 @@ func (nr *NodeRunner) TransitISAACState(round round.Round, ballotState common.Ba
 }
 
 func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) error {
+	b := nr.consensus.LatestConfirmedBlock()
 	round := round.Round{
 		Number:      roundNumber,
-		BlockHeight: nr.consensus.LatestConfirmedBlock.Height,
-		BlockHash:   nr.consensus.LatestConfirmedBlock.Hash,
-		TotalTxs:    nr.consensus.LatestConfirmedBlock.TotalTxs,
+		BlockHeight: b.Height,
+		BlockHash:   b.Hash,
+		TotalTxs:    b.TotalTxs,
 	}
 
 	// collect incoming transactions from `TransactionPool`

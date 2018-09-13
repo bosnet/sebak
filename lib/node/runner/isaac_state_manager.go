@@ -123,11 +123,12 @@ func (sm *ISAACStateManager) Start() {
 }
 
 func (sm *ISAACStateManager) broadcastExpiredBallot(state consensus.ISAACState) {
+	b := sm.nr.consensus.LatestConfirmedBlock()
 	round := round.Round{
 		Number:      state.Round.Number,
-		BlockHeight: sm.nr.consensus.LatestConfirmedBlock.Height,
-		BlockHash:   sm.nr.consensus.LatestConfirmedBlock.Hash,
-		TotalTxs:    sm.nr.consensus.LatestConfirmedBlock.TotalTxs,
+		BlockHeight: b.Height,
+		BlockHash:   b.Hash,
+		TotalTxs:    b.TotalTxs,
 	}
 
 	newExpiredBallot := block.NewBallot(sm.nr.localNode, round, []string{})
@@ -165,7 +166,7 @@ func (sm *ISAACStateManager) proposeOrWait(timer *time.Timer, state consensus.IS
 			timer.Reset(sm.Conf.TimeoutSIGN)
 			sm.transitSignal()
 		} else {
-			log.Error("failed to proposeNewBallot", "height", sm.nr.consensus.LatestConfirmedBlock.Height, "error", err)
+			log.Error("failed to proposeNewBallot", "height", sm.nr.consensus.LatestConfirmedBlock().Height, "error", err)
 			sm.setState(state)
 			timer.Reset(sm.Conf.TimeoutINIT)
 		}
