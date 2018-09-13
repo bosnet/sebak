@@ -19,6 +19,7 @@ func NewOperationBodyCreateAccount(target string, amount common.Amount) Operatio
 	}
 }
 
+// Implement transaction/operation : OperationBody.IsWellFormed
 func (o OperationBodyCreateAccount) IsWellFormed([]byte) (err error) {
 	if _, err = keypair.Parse(o.Target); err != nil {
 		return
