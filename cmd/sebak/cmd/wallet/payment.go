@@ -158,7 +158,7 @@ func init() {
 ///   `sebak.Transaction` = The generated `Transaction` creating the account
 ///
 func makeTransactionCreateAccount(kpSource keypair.KP, kpDest keypair.KP, amount common.Amount, seqid uint64) transaction.Transaction {
-	opb := transaction.NewOperationBodyCreateAccount(kpDest.Address(), amount)
+	opb := transaction.NewOperationBodyCreateAccount(kpDest.Address(), amount, "")
 
 	op := transaction.Operation{
 		H: transaction.OperationHeader{

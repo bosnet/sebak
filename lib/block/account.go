@@ -24,15 +24,22 @@ type BlockAccount struct {
 	Address    string
 	Balance    common.Amount
 	SequenceID uint64
-	CodeHash   []byte
-	RootHash   common.Hash
+	// An address, or "" if the account isn't frozen
+	Linked   string
+	CodeHash []byte
+	RootHash common.Hash
 }
 
 func NewBlockAccount(address string, balance common.Amount) *BlockAccount {
+	return NewBlockAccountLinked(address, balance, "")
+}
+
+func NewBlockAccountLinked(address string, balance common.Amount, linked string) *BlockAccount {
 	return &BlockAccount{
 		Address:    address,
 		Balance:    balance,
 		SequenceID: 0,
+		Linked:     linked,
 	}
 }
 
