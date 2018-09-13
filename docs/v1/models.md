@@ -4,13 +4,13 @@
 + account_id: GDMZMF2EAK4E6NSZNSCJQQHQGMAOZ6UI3XQVVLMEJRFDPYHLY7PPHKLP (string, required)
 + balance: 10000000000000000000 (string,required)
 + sequence_id: 0 (number,required)
-+ _links: 
-    + operations:
++ _links 
+    + operations
         + href: `/accounts/GDMZMF2EAK4E6NSZNSCJQQHQGMAOZ6UI3XQVVLMEJRFDPYHLY7PPHKLP/operations{?cursor,limit,order}`
         + templated: true (boolean)
-    + self:
+    + self
         + href: `/accounts/GDMZMF2EAK4E6NSZNSCJQQHQGMAOZ6UI3XQVVLMEJRFDPYHLY7PPHKLP` (string)
-    + transactions:
+    + transactions
         + href: `/accounts/GDMZMF2EAK4E6NSZNSCJQQHQGMAOZ6UI3XQVVLMEJRFDPYHLY7PPHKLP/transactions{?cursor,limit,order}` 
         + templated: true (boolean)
 
@@ -22,44 +22,44 @@
 + sequence_id: 0 (number)
 + created_at: `2018-09-12T09:08:35.157472400Z` 
 + operation_count: 1 (number)
-+ _links: 
-    + accounts:
++ _links 
+    + accounts
         + href: `/accounts/GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ`
-    + operations:
+    + operations
         + href: `/transactions/ghf6msRhE4jRf5DPib9UHD1msadvmZs9o53V9FQTb11/operations{?cursor,limit,order}`
-    + self:
+    + self
         + href: `/transactions/ghf6msRhE4jRf5DPib9UHD1msadvmZs9o53V9FQTb11`
 
 
 ### Transaction Payment
 + T: transaction
-+ H: 
++ H 
     + version: `` - Transaction version
     + created: `2018-01-01T00:00:00.000000000Z`
     + hash: `2g3ZSrEnsUWeX5Mxz5uTh2b4KVpVQS7Ek2HzZd759FHn`
     + signature: `3oWmCMNHExRQnZVEBSH16ZBgLE6ayz7t1fsjzTjAB6WpXMpkDJbhcL8KudqFFG21XmfSXnJH1BLhnBUh4p68yFeR`
-+ B:
++ B
     + source: GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ
     + fee: 10000
     + sequenceID: 1
     + operations (array):
         + (object):
-            + H: 
+            + H 
                 + type: "payment"
-            + B:
+            + B
                 + target: GDTEPFWEITKFHSUO44NQABY2XHRBBH2UBVGJ2ZJPDREIOL2F6RAEBJE4
                 + amount: 100000000
 
 ### Transactions
-+ _embedded:
-    + records:
-        + _links:
-            + accounts:
++ _embedded
+    + records
+        + _links
+            + accounts
                 + href: `/accounts/GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ`
-            + operations:
+            + operations
                 + href: `/transactions/ghf6msRhE4jRf5DPib9UHD1msadvmZs9o53V9FQTb11/operations{?cursor,limit,order}`
                 + templated: true
-            + self:
+            + self
                 + href: `/transactions/ghf6msRhE4jRf5DPib9UHD1msadvmZs9o53V9FQTb11`
         + id: ghf6msRhE4jRf5DPib9UHD1msadvmZs9o53V9FQTb11
         + hash:  ghf6msRhE4jRf5DPib9UHD1msadvmZs9o53V9FQTb11
@@ -67,21 +67,21 @@
         + fee_paid: `10000`
         + operation_count: 1
         + sequence_id: 0
-+ _links:
-    + next:
++ _links
+    + next
         + href: /account/{address}/transactions
-    + prev:
+    + prev
         + href: /account/{address}/transactions
-    + self:
+    + self
         + href: /account/{address}/transactions
 
 ### Operations
-+ _embedded:
-    + records:
-        + _links:
-            + self:
++ _embedded
+    + records
+        + _links
+            + self
                 + href: /operations/E4qTH5UmzHy2Psdxh8RaQomqJb1gcUZFVENimzV9YB8D-ghf6msRhE4jRf5DPib9UHD1msadvmZs9o53V9FQTb11
-            + transactions:
+            + transactions
                 + href: /transactions/ghf6msRhE4jRf5DPib9UHD1msadvmZs9o53V9FQTb11
         + account: GDMZMF2EAK4E6NSZNSCJQQHQGMAOZ6UI3XQVVLMEJRFDPYHLY7PPHKLP
         + amount: 1000000
@@ -89,12 +89,12 @@
         + hash: E4qTH5UmzHy2Psdxh8RaQomqJb1gcUZFVENimzV9YB8D
         + id: E4qTH5UmzHy2Psdxh8RaQomqJb1gcUZFVENimzV9YB8D
         + type: create-account
-+ _links:
-    + next:
++ _links
+    + next
         + href: /account/{address}/operations
-    + prev:
+    + prev
         + href: /account/{address}/operations
-    + self:
+    + self
         + href: /account/{address}/operations
 
 
