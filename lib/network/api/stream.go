@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/network/httputils"
 	observable "github.com/GianlucaGuarini/go-observable"
 )
 
@@ -144,7 +145,6 @@ func (s *EventStream) Start(ob *observable.Observable, events ...string) func() 
 		}
 
 		if err != nil {
-			//TODO(anarcher): We need error representation (e.g. HTTPError type?)
 			msg <- s.errMessage(err)
 		}
 		select {
@@ -172,5 +172,11 @@ func (s *EventStream) Start(ob *observable.Observable, events ...string) func() 
 }
 
 func (s *EventStream) errMessage(err error) []byte {
-	return []byte(fmt.Sprintf("{ \"err\": \"%s\"}", err.Error()))
+
+	p := httputils.NewErrorProblem(err, httputils.StatusCode(err))
+	b, err := json.Marshal(p)
+	if err != nil {
+		b = []byte{}
+	}
+	return b
 }

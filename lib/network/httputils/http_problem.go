@@ -1,8 +1,7 @@
-package httpproblem
+package httputils
 
 import (
 	"boscoin.io/sebak/lib/error"
-	"encoding/json"
 	"fmt"
 	"net/http"
 )
@@ -46,7 +45,9 @@ func NewProblem(problemType string, title string) problem {
 }
 
 func NewStatusProblem(status int) problem {
-	return problem{Type: HttpProblemDefaultType, Status: status, Title: http.StatusText(status)}
+	p := NewProblem(HttpProblemDefaultType, http.StatusText(status))
+	p.Status = status
+	return p
 }
 
 func NewDetailedStatusProblem(status int, detail string) problem {
@@ -55,12 +56,15 @@ func NewDetailedStatusProblem(status int, detail string) problem {
 	return p
 }
 
-func NewErrorProblem(err *errors.Error) problem {
-	return problem{Type: fmt.Sprintf("%s%d", HttpProblemErrorTypePrefix, err.Code), Title: err.Message}
-}
-
-func Problem(w http.ResponseWriter, detail string, status int) {
-	NewDetailedStatusProblem(status, detail).Problem(w, "", -1)
+func NewErrorProblem(err error, status int) problem {
+	var p problem
+	if e, ok := err.(*errors.Error); ok {
+		p = NewProblem(fmt.Sprintf("%s%d", HttpProblemErrorTypePrefix, e.Code), e.Message)
+	} else {
+		p = NewProblem(HttpProblemDefaultType, err.Error())
+	}
+	p.Status = status
+	return p
 }
 
 func (p problem) SetInstance(instance string) problem {
@@ -68,13 +72,12 @@ func (p problem) SetInstance(instance string) problem {
 	return p
 }
 
-func (p problem) Problem(w http.ResponseWriter, detail string, status int) {
-	if len(detail) > 0 {
-		p.Detail = detail
-	}
-	if status != -1 {
-		p.Status = status
-	}
-	b, _ := json.Marshal(p)
-	w.Write(b)
+func (p problem) SetStatus(status int) problem {
+	p.Status = status
+	return p
+}
+
+func (p problem) SetDetail(detail string) problem {
+	p.Detail = detail
+	return p
 }
