@@ -188,6 +188,10 @@ func (nr *NodeRunner) Ready() {
 		apiHandler.GetTransactionByHashHandler,
 	).Methods("GET")
 	nr.network.AddHandler(
+		apiHandler.HandlerURLPattern(api.GetTransactionOperationsHandlerPattern),
+		apiHandler.GetTransactionOperationsHandler,
+	).Methods("GET")
+	nr.network.AddHandler(
 		apiHandler.HandlerURLPattern(api.PostTransactionPattern),
 		nodeHandler.MessageHandler,
 	).Methods("POST")

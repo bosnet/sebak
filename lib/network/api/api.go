@@ -16,12 +16,13 @@ const APIVersionV1 = "v1"
 
 // API Endpoint patterns
 const (
-	GetAccountTransactionsHandlerPattern = "/account/{id}/transactions"
-	GetAccountHandlerPattern             = "/account/{id}"
-	GetAccountOperationsHandlerPattern   = "/account/{id}/operations"
-	GetTransactionsHandlerPattern        = "/transactions"
-	GetTransactionByHashHandlerPattern   = "/transactions/{id}"
-	PostTransactionPattern               = "/transactions"
+	GetAccountTransactionsHandlerPattern   = "/account/{id}/transactions"
+	GetAccountHandlerPattern               = "/account/{id}"
+	GetAccountOperationsHandlerPattern     = "/account/{id}/operations"
+	GetTransactionsHandlerPattern          = "/transactions"
+	GetTransactionByHashHandlerPattern     = "/transactions/{id}"
+	GetTransactionOperationsHandlerPattern = "/transactions/{id}/operations"
+	PostTransactionPattern                 = "/transactions"
 )
 
 type NetworkHandlerAPI struct {
