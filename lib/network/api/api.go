@@ -1,7 +1,6 @@
 package api
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"boscoin.io/sebak/lib/block"
@@ -10,6 +9,7 @@ import (
 	"boscoin.io/sebak/lib/network/httputils"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/storage"
+	"encoding/json"
 )
 
 const APIVersionV1 = "v1"

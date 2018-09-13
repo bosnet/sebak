@@ -8,9 +8,11 @@ import (
 	"testing"
 
 	"boscoin.io/sebak/lib/block"
+	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/network/api/resource"
 	"github.com/stretchr/testify/require"
 	"strings"
+	"sync"
 )
 
 func TestGetOperationsByAccountHandler(t *testing.T) {
@@ -48,33 +50,51 @@ func TestGetOperationsByAccountHandler(t *testing.T) {
 }
 
 func TestGetOperationsByAccountHandlerStream(t *testing.T) {
+	var wg sync.WaitGroup
+	wg.Add(1)
+
 	ts, storage, err := prepareAPIServer()
 	require.Nil(t, err)
 	defer storage.Close()
 	defer ts.Close()
 
-	kp, boList, err := prepareOps(storage, 0, 10, nil)
+	boMap := make(map[string]block.BlockOperation)
+	kp, boList, err := prepareOpsWithoutSave(0, 10, nil)
 	require.Nil(t, err)
+	for _, bo := range boList {
+		boMap[bo.Hash] = bo
+	}
+
+	// Wait until request registered to observer
 	{
-		// Do a Request
+		go func() {
+			for {
+				observer.BlockOperationObserver.RLock()
+				if len(observer.BlockOperationObserver.Callbacks) > 0 {
+					observer.BlockOperationObserver.RUnlock()
+					break
+				}
+				observer.BlockOperationObserver.RUnlock()
+			}
+			for _, bo := range boMap {
+				bo.Save(storage)
+			}
+			wg.Done()
+		}()
+	}
+
+	// Do a Request
+	var reader *bufio.Reader
+	{
 		url := strings.Replace(GetAccountOperationsHandlerPattern, "{id}", kp.Address(), -1)
 		respBody, err := request(ts, url, true)
 		require.Nil(t, err)
 		defer respBody.Close()
-		reader := bufio.NewReader(respBody)
+		reader = bufio.NewReader(respBody)
+	}
 
-		// Producer
-		{
-			_, boList2, err := prepareOps(storage, 1, 10, kp)
-			require.Nil(t, err)
-			boList = append(boList, boList2...)
-		}
-
-		var boMap = make(map[string]block.BlockOperation)
-		for _, bo := range boList {
-			boMap[bo.Hash] = bo
-		}
-
+	// Check the output
+	{
 		// Do stream Request to the Server
 		for n := 0; n < 10; n++ {
 			line, err := reader.ReadBytes('\n')
@@ -89,4 +109,6 @@ func TestGetOperationsByAccountHandlerStream(t *testing.T) {
 			require.Equal(t, txS, line)
 		}
 	}
+
+	wg.Wait()
 }

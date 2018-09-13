@@ -27,7 +27,6 @@ func (api NetworkHandlerAPI) GetAccountHandler(w http.ResponseWriter, r *http.Re
 		}
 		ba, err := block.GetBlockAccount(api.storage, address)
 		if err != nil {
-			//http.Error(w, "Error reading request body", http.StatusInternalServerError)
 			return nil, err
 		}
 		payload = resource.NewAccount(ba)
@@ -37,12 +36,6 @@ func (api NetworkHandlerAPI) GetAccountHandler(w http.ResponseWriter, r *http.Re
 	if httputils.IsEventStream(r) {
 		event := fmt.Sprintf("address-%s", address)
 		es := NewEventStream(w, r, renderEventStream, DefaultContentType)
-		payload, err := readFunc()
-		if err == nil {
-			es.Render(payload)
-		} else {
-			es.Render(nil)
-		}
 		es.Run(observer.BlockAccountObserver, event)
 		return
 	}
