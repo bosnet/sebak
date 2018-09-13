@@ -9,6 +9,8 @@ import (
 	"boscoin.io/sebak/lib/block"
 
 	"boscoin.io/sebak/lib/common/observer"
+	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/network/httputils"
 	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
 	"strings"
@@ -95,12 +97,20 @@ func TestGetNonExistentAccountHandler(t *testing.T) {
 	require.Nil(t, err)
 	defer storage.Close()
 	defer ts.Close()
+
+	p := httputils.NewErrorProblem(errors.ErrorBlockAccountDoesNotExists, httputils.StatusCode(errors.ErrorBlockAccountDoesNotExists))
+
 	{
 		// Do a Request
 		kp, _ := keypair.Random()
 		url := strings.Replace(GetAccountHandlerPattern, "{id}", kp.Address(), -1)
-		_, err := request(ts, url, false)
-		require.NotNil(t, err)
-		require.Equal(t, "status code 404 is not 200", err.Error())
+		respBody, err := request(ts, url, false)
+		require.Nil(t, err)
+		reader := bufio.NewReader(respBody)
+		readByte, err := ioutil.ReadAll(reader)
+		require.Nil(t, err)
+		pByte, err := json.Marshal(p)
+		require.Nil(t, err)
+		require.Equal(t, pByte, readByte)
 	}
 }

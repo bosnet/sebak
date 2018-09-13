@@ -2,9 +2,8 @@ package httputils
 
 import (
 	"encoding/json"
-	"net/http"
-
 	"github.com/nvellon/hal"
+	"net/http"
 )
 
 type HALResource interface {
@@ -16,6 +15,9 @@ func WriteJSON(w http.ResponseWriter, code int, v interface{}) error {
 	if h, ok := v.(HALResource); ok {
 		w.Header().Set("Content-Type", "application/hal+json")
 		v = h.Resource()
+	} else if e, ok := v.(error); ok {
+		w.Header().Set("Content-Type", "application/json")
+		v = NewErrorProblem(e, code)
 	} else {
 		w.Header().Set("Content-Type", "application/json")
 	}

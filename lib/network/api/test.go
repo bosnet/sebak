@@ -4,7 +4,6 @@ import (
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
-	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/stellar/go/keypair"
 	"io"
@@ -183,9 +182,6 @@ func request(ts *httptest.Server, url string, streaming bool) (io.ReadCloser, er
 	resp, err := ts.Client().Do(req)
 	if err != nil {
 		return nil, err
-	}
-	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("status code %d is not 200", resp.StatusCode)
 	}
 	return resp.Body, nil
 }

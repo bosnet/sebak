@@ -36,16 +36,21 @@ func (api NetworkHandlerAPI) GetAccountHandler(w http.ResponseWriter, r *http.Re
 	if httputils.IsEventStream(r) {
 		event := fmt.Sprintf("address-%s", address)
 		es := NewEventStream(w, r, renderEventStream, DefaultContentType)
+		payload, err := readFunc()
+		if err == nil {
+			es.Render(payload)
+		}
 		es.Run(observer.BlockAccountObserver, event)
 		return
 	}
 	payload, err := readFunc()
+
 	if err == nil {
 		if err := httputils.WriteJSON(w, 200, payload); err != nil {
 			http.Error(w, "Error reading request body", http.StatusInternalServerError)
 		}
 	} else {
-		if err := httputils.WriteJSON(w, 404, payload); err != nil {
+		if err := httputils.WriteJSON(w, httputils.StatusCode(err), err); err != nil {
 			http.Error(w, "Error reading request body", http.StatusInternalServerError)
 		}
 	}
