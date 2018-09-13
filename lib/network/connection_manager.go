@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net"
 	"net/http"
+	"sort"
 	"sync"
 	"time"
 
@@ -15,10 +16,11 @@ import (
 type ConnectionManager struct {
 	sync.RWMutex
 
-	localNode   *node.LocalNode
-	network     Network
-	policy      common.VotingThresholdPolicy
-	broadcaster Broadcaster
+	localNode          *node.LocalNode
+	network            Network
+	policy             common.VotingThresholdPolicy
+	broadcaster        Broadcaster
+	proposerCalculator ProposerCalculator
 
 	validators map[ /* nodd.Address() */ string]*node.Validator
 	clients    map[ /* nodd.Address() */ string]NetworkClient
@@ -52,6 +54,36 @@ func (c *ConnectionManager) SetBroadcaster(broadcaster Broadcaster) {
 
 type Broadcaster interface {
 	Broadcast(common.Message, func(string, error))
+}
+
+func (c *ConnectionManager) CalculateProposer(blockHeight uint64, roundNumber uint64) string {
+	return c.proposerCalculator.Calculate(blockHeight, roundNumber)
+}
+
+type ProposerCalculator interface {
+	Calculate(blockHeight uint64, roundNumber uint64) string
+}
+
+type SimpleProposerCalculator struct {
+	cm *ConnectionManager
+}
+
+func NewSimpleProposerCalculator(c *ConnectionManager) *SimpleProposerCalculator {
+	p := &SimpleProposerCalculator{
+		cm: c,
+	}
+	return p
+}
+
+func (c SimpleProposerCalculator) Calculate(blockHeight uint64, roundNumber uint64) string {
+	candidates := sort.StringSlice(c.cm.AllValidators())
+	candidates.Sort()
+
+	return candidates[(blockHeight+roundNumber)%uint64(len(candidates))]
+}
+
+func (c *ConnectionManager) SetProposerCalculator(pc ProposerCalculator) {
+	c.proposerCalculator = pc
 }
 
 func (c *ConnectionManager) GetConnection(address string) (client NetworkClient) {

@@ -135,7 +135,7 @@ func BallotVote(c common.Checker, args ...interface{}) (err error) {
 	var found bool
 	var runningRound *consensus.RunningRound
 	if runningRound, found = rr[roundHash]; !found {
-		proposer := checker.NodeRunner.CalculateProposer(
+		proposer := checker.NodeRunner.ConnectionManager().CalculateProposer(
 			checker.Ballot.Round().BlockHeight,
 			checker.Ballot.Round().Number,
 		)

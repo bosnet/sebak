@@ -9,7 +9,6 @@ package runner
 
 import (
 	"errors"
-	"sort"
 	"time"
 
 	logging "github.com/inconshreveable/log15"
@@ -67,20 +66,15 @@ var DefaultHandleACCEPTBallotCheckerFuncs = []common.CheckerFunc{
 	FinishedBallotStore,
 }
 
-type ProposerCalculator interface {
-	Calculate(nr *NodeRunner, blockHeight uint64, roundNumber uint64) string
-}
-
 type NodeRunner struct {
-	networkID          []byte
-	localNode          *node.LocalNode
-	policy             common.VotingThresholdPolicy
-	network            network.Network
-	consensus          *consensus.ISAAC
-	connectionManager  *network.ConnectionManager
-	storage            *storage.LevelDBBackend
-	proposerCalculator ProposerCalculator
-	isaacStateManager  *ISAACStateManager
+	networkID         []byte
+	localNode         *node.LocalNode
+	policy            common.VotingThresholdPolicy
+	network           network.Network
+	consensus         *consensus.ISAAC
+	connectionManager *network.ConnectionManager
+	storage           *storage.LevelDBBackend
+	isaacStateManager *ISAACStateManager
 
 	handleTransactionCheckerFuncs  []common.CheckerFunc
 	handleBaseBallotCheckerFuncs   []common.CheckerFunc
@@ -114,17 +108,9 @@ func NewNodeRunner(
 	}
 	nr.isaacStateManager = NewISAACStateManager(nr, conf)
 
-	nr.SetProposerCalculator(SimpleProposerCalculator{})
 	nr.policy.SetValidators(len(nr.localNode.GetValidators()) + 1) // including self
 
-	nr.connectionManager = network.NewConnectionManager(
-		nr.localNode,
-		nr.network,
-		nr.policy,
-		nr.localNode.GetValidators(),
-	)
-
-	nr.connectionManager.SetBroadcaster(network.NewSimpleBroadcaster(nr.ConnectionManager()))
+	nr.connectionManager = consensus.ConnectionManager()
 	nr.network.AddWatcher(nr.connectionManager.ConnectionWatcher)
 
 	nr.SetHandleTransactionCheckerFuncs(nil, DefaultHandleTransactionCheckerFuncs...)
@@ -134,24 +120,6 @@ func NewNodeRunner(
 	nr.SetHandleACCEPTBallotCheckerFuncs(DefaultHandleACCEPTBallotCheckerFuncs...)
 
 	return
-}
-
-type SimpleProposerCalculator struct {
-}
-
-func (c SimpleProposerCalculator) Calculate(nr *NodeRunner, blockHeight uint64, roundNumber uint64) string {
-	candidates := sort.StringSlice(nr.connectionManager.AllValidators())
-	candidates.Sort()
-
-	return candidates[(blockHeight+roundNumber)%uint64(len(candidates))]
-}
-
-func (nr *NodeRunner) SetProposerCalculator(c ProposerCalculator) {
-	nr.proposerCalculator = c
-}
-
-func (nr *NodeRunner) SetBroadcaster(b network.Broadcaster) {
-	nr.connectionManager.SetBroadcaster(b)
 }
 
 func (nr *NodeRunner) Ready() {
@@ -469,10 +437,6 @@ func (nr *NodeRunner) StartStateManager() {
 	nr.isaacStateManager.Start()
 	nr.isaacStateManager.NextHeight()
 	return
-}
-
-func (nr *NodeRunner) CalculateProposer(blockHeight uint64, roundNumber uint64) string {
-	return nr.proposerCalculator.Calculate(nr, blockHeight, roundNumber)
 }
 
 func (nr *NodeRunner) StopStateManager() {
