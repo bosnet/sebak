@@ -57,4 +57,7 @@ var (
 	ErrorContentTypeNotJSON                   = NewError(150, "`Content-Type` must be 'application/json'")
 	ErrorTransactionHasOverMaxOperations      = NewError(151, "too many operations in transaction")
 	ErrorOperationAmountUnderflow             = NewError(152, "invalid `Amount`: lower than 1")
+	ErrorFrozenAccountNoDeposit               = NewError(153, "frozen account can not receive payment")
+	ErrorFrozenAccountCreationWholeUnit       = NewError(154, "frozen account balance must be a whole number of units (10k)")
+	ErrorFrozenAccountMustWithdrawEverything  = NewError(155, "frozen account can only withdraw the full amount (minus tx fee)")
 )
