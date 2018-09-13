@@ -368,7 +368,6 @@ func (nr *NodeRunner) handleBallotMessage(message common.NetworkMessage) (err er
 		Ballot:         baseChecker.Ballot,
 		VotingHole:     baseChecker.VotingHole,
 		IsNew:          baseChecker.IsNew,
-		RoundVote:      baseChecker.RoundVote,
 		Log:            baseChecker.Log,
 	}
 	err = common.RunChecker(checker, nr.handleTransactionCheckerDeferFunc)
@@ -493,8 +492,8 @@ func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) error {
 	if err != nil {
 		return err
 	}
-	rr := nr.consensus.RunningRounds
-	rr[round.Hash()] = runningRound
+
+	nr.consensus.AddRunningRound(round.Hash(), runningRound)
 
 	nr.log.Debug("ballot broadcasted and voted", "runningRound", runningRound)
 
