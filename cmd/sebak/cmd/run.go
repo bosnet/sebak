@@ -22,10 +22,11 @@ import (
 
 	cmdcommon "boscoin.io/sebak/cmd/sebak/common"
 
+	"strconv"
+
 	"boscoin.io/sebak/lib"
 	"boscoin.io/sebak/lib/consensus"
 	"boscoin.io/sebak/lib/node/runner"
-	"strconv"
 )
 
 const defaultNetwork string = "https"
@@ -337,7 +338,7 @@ func runNode() error {
 		return err
 	}
 
-	isaac, err := consensus.NewISAAC([]byte(flagNetworkID), localNode, policy)
+	isaac, err := consensus.NewISAAC([]byte(flagNetworkID), localNode, policy, nt)
 	if err != nil {
 		log.Crit("failed to launch consensus", "error", err)
 		return err

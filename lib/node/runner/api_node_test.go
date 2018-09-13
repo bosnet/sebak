@@ -89,7 +89,7 @@ func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, mn *network.HTTP2Net
 	mn = network.NewHTTP2Network(config)
 
 	p, _ := consensus.NewDefaultVotingThresholdPolicy(30, 30)
-	is, _ := consensus.NewISAAC(networkID, localNode, p)
+	is, _ := consensus.NewISAAC(networkID, localNode, p, mn)
 	st, _ := storage.NewTestMemoryLevelDBBackend()
 	// Make the latest block
 	{

@@ -29,11 +29,11 @@ func init() {
 	kp, _ = keypair.Random()
 }
 
-func MakeNodeRunner(prev *network.MemoryNetwork) (*NodeRunner, *node.LocalNode) {
-	_, network, localNode := network.CreateMemoryNetwork(prev)
+func MakeNodeRunner() (*NodeRunner, *node.LocalNode) {
+	_, network, localNode := network.CreateMemoryNetwork(nil)
 
 	vth, _ := consensus.NewDefaultVotingThresholdPolicy(66, 66)
-	is, _ := consensus.NewISAAC(networkID, localNode, vth)
+	is, _ := consensus.NewISAAC(networkID, localNode, vth, nil)
 	st, _ := storage.NewTestMemoryLevelDBBackend()
 	nodeRunner, _ := NewNodeRunner(string(networkID), localNode, vth, network, is, st)
 	return nodeRunner, localNode
@@ -60,18 +60,20 @@ func TestGenerateNewSequenceID() uint64 {
 }
 
 type SelfProposerCalculator struct {
+	nodeRunner *NodeRunner
 }
 
-func (c SelfProposerCalculator) Calculate(nr *NodeRunner, _ uint64, _ uint64) string {
-	return nr.localNode.Address()
+func (c SelfProposerCalculator) Calculate(_ uint64, _ uint64) string {
+	return c.nodeRunner.localNode.Address()
 }
 
 type TheOtherProposerCalculator struct {
+	nodeRunner *NodeRunner
 }
 
-func (c TheOtherProposerCalculator) Calculate(nr *NodeRunner, _ uint64, _ uint64) string {
-	for _, v := range nr.ConnectionManager().AllValidators() {
-		if v != nr.localNode.Address() {
+func (c TheOtherProposerCalculator) Calculate(_ uint64, _ uint64) string {
+	for _, v := range c.nodeRunner.ConnectionManager().AllValidators() {
+		if v != c.nodeRunner.localNode.Address() {
 			return v
 		}
 	}
@@ -79,14 +81,15 @@ func (c TheOtherProposerCalculator) Calculate(nr *NodeRunner, _ uint64, _ uint64
 }
 
 type SelfProposerThenNotProposer struct {
+	nodeRunner *NodeRunner
 }
 
-func (c *SelfProposerThenNotProposer) Calculate(nr *NodeRunner, blockHeight uint64, roundNumber uint64) string {
+func (c *SelfProposerThenNotProposer) Calculate(blockHeight uint64, roundNumber uint64) string {
 	if blockHeight < 2 && roundNumber == 0 {
-		return nr.localNode.Address()
+		return c.nodeRunner.localNode.Address()
 	} else {
-		for _, v := range nr.ConnectionManager().AllValidators() {
-			if v != nr.localNode.Address() {
+		for _, v := range c.nodeRunner.ConnectionManager().AllValidators() {
+			if v != c.nodeRunner.localNode.Address() {
 				return v
 			}
 		}

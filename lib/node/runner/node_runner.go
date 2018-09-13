@@ -9,7 +9,6 @@ package runner
 
 import (
 	"errors"
-	"sort"
 	"time"
 
 	logging "github.com/inconshreveable/log15"
@@ -67,20 +66,15 @@ var DefaultHandleACCEPTBallotCheckerFuncs = []common.CheckerFunc{
 	FinishedBallotStore,
 }
 
-type ProposerCalculator interface {
-	Calculate(nr *NodeRunner, blockHeight uint64, roundNumber uint64) string
-}
-
 type NodeRunner struct {
-	networkID          []byte
-	localNode          *node.LocalNode
-	policy             common.VotingThresholdPolicy
-	network            network.Network
-	consensus          *consensus.ISAAC
-	connectionManager  *network.ConnectionManager
-	storage            *storage.LevelDBBackend
-	proposerCalculator ProposerCalculator
-	isaacStateManager  *ISAACStateManager
+	networkID         []byte
+	localNode         *node.LocalNode
+	policy            common.VotingThresholdPolicy
+	network           network.Network
+	consensus         *consensus.ISAAC
+	connectionManager *network.ConnectionManager
+	storage           *storage.LevelDBBackend
+	isaacStateManager *ISAACStateManager
 
 	handleTransactionCheckerFuncs  []common.CheckerFunc
 	handleBaseBallotCheckerFuncs   []common.CheckerFunc
@@ -113,17 +107,9 @@ func NewNodeRunner(
 	}
 	nr.isaacStateManager = NewISAACStateManager(nr)
 
-	nr.SetProposerCalculator(SimpleProposerCalculator{})
 	nr.policy.SetValidators(len(nr.localNode.GetValidators()) + 1) // including self
 
-	nr.connectionManager = network.NewConnectionManager(
-		nr.localNode,
-		nr.network,
-		nr.policy,
-		nr.localNode.GetValidators(),
-	)
-
-	nr.connectionManager.SetBroadcaster(network.NewSimpleBroadcaster(nr.ConnectionManager()))
+	nr.connectionManager = consensus.ConnectionManager()
 	nr.network.AddWatcher(nr.connectionManager.ConnectionWatcher)
 
 	nr.SetHandleTransactionCheckerFuncs(nil, DefaultHandleTransactionCheckerFuncs...)
@@ -135,26 +121,8 @@ func NewNodeRunner(
 	return
 }
 
-type SimpleProposerCalculator struct {
-}
-
-func (c SimpleProposerCalculator) Calculate(nr *NodeRunner, blockHeight uint64, roundNumber uint64) string {
-	candidates := sort.StringSlice(nr.connectionManager.AllValidators())
-	candidates.Sort()
-
-	return candidates[(blockHeight+roundNumber)%uint64(len(candidates))]
-}
-
-func (nr *NodeRunner) SetProposerCalculator(c ProposerCalculator) {
-	nr.proposerCalculator = c
-}
-
 func (nr *NodeRunner) SetConf(conf *consensus.ISAACConfiguration) {
 	nr.isaacStateManager.SetConf(conf)
-}
-
-func (nr *NodeRunner) SetBroadcaster(b network.Broadcaster) {
-	nr.connectionManager.SetBroadcaster(b)
 }
 
 func (nr *NodeRunner) Ready() {
@@ -399,7 +367,6 @@ func (nr *NodeRunner) handleBallotMessage(message common.NetworkMessage) (err er
 		Ballot:         baseChecker.Ballot,
 		VotingHole:     baseChecker.VotingHole,
 		IsNew:          baseChecker.IsNew,
-		RoundVote:      baseChecker.RoundVote,
 		Log:            baseChecker.Log,
 	}
 	err = common.RunChecker(checker, nr.handleTransactionCheckerDeferFunc)
@@ -470,20 +437,17 @@ func (nr *NodeRunner) StartStateManager() {
 	return
 }
 
-func (nr *NodeRunner) CalculateProposer(blockHeight uint64, roundNumber uint64) string {
-	return nr.proposerCalculator.Calculate(nr, blockHeight, roundNumber)
-}
-
 func (nr *NodeRunner) TransitISAACState(round round.Round, ballotState common.BallotState) {
 	nr.isaacStateManager.TransitISAACState(round, ballotState)
 }
 
 func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) error {
+	b := nr.consensus.LatestConfirmedBlock()
 	round := round.Round{
 		Number:      roundNumber,
-		BlockHeight: nr.consensus.LatestConfirmedBlock.Height,
-		BlockHash:   nr.consensus.LatestConfirmedBlock.Hash,
-		TotalTxs:    nr.consensus.LatestConfirmedBlock.TotalTxs,
+		BlockHeight: b.Height,
+		BlockHash:   b.Hash,
+		TotalTxs:    b.TotalTxs,
 	}
 
 	// collect incoming transactions from `TransactionPool`
@@ -521,8 +485,8 @@ func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) error {
 	if err != nil {
 		return err
 	}
-	rr := nr.consensus.RunningRounds
-	rr[round.Hash()] = runningRound
+
+	nr.consensus.AddRunningRound(round.Hash(), runningRound)
 
 	nr.log.Debug("ballot broadcasted and voted", "runningRound", runningRound)
 

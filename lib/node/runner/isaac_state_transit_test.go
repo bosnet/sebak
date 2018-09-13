@@ -22,8 +22,10 @@ func TestStateINITProposer(t *testing.T) {
 
 	recv := make(chan struct{})
 	b := NewTestBroadcaster(recv)
-	nr.SetBroadcaster(b)
-	nr.SetProposerCalculator(SelfProposerCalculator{})
+	nr.Consensus().SetBroadcaster(b)
+	nr.Consensus().SetProposerCalculator(SelfProposerCalculator{
+		nodeRunner: nr,
+	})
 
 	nr.Consensus().SetLatestConsensusedBlock(genesisBlock)
 
@@ -57,8 +59,10 @@ func TestStateINITNotProposer(t *testing.T) {
 	nr := nodeRunners[0]
 
 	b := NewTestBroadcaster(nil)
-	nr.SetBroadcaster(b)
-	nr.SetProposerCalculator(TheOtherProposerCalculator{})
+	nr.Consensus().SetBroadcaster(b)
+	nr.Consensus().SetProposerCalculator(TheOtherProposerCalculator{
+		nodeRunner: nr,
+	})
 
 	nr.Consensus().SetLatestConsensusedBlock(genesisBlock)
 
@@ -88,9 +92,11 @@ func TestStateINITTimeoutNotProposer(t *testing.T) {
 
 	recv := make(chan struct{})
 	b := NewTestBroadcaster(recv)
-	nr.SetBroadcaster(b)
-	nr.SetProposerCalculator(TheOtherProposerCalculator{})
-	proposer := nr.CalculateProposer(0, 0)
+	nr.Consensus().SetBroadcaster(b)
+	nr.Consensus().SetProposerCalculator(TheOtherProposerCalculator{
+		nodeRunner: nr,
+	})
+	proposer := nr.Consensus().CalculateProposer(0, 0)
 
 	require.NotEqual(t, nr.localNode.Address(), proposer)
 
@@ -144,9 +150,11 @@ func TestStateSIGNTimeoutProposer(t *testing.T) {
 
 	recv := make(chan struct{})
 	b := NewTestBroadcaster(recv)
-	nr.SetBroadcaster(b)
-	nr.SetProposerCalculator(SelfProposerCalculator{})
-	proposer := nr.CalculateProposer(0, 0)
+	nr.Consensus().SetBroadcaster(b)
+	nr.Consensus().SetProposerCalculator(SelfProposerCalculator{
+		nodeRunner: nr,
+	})
+	proposer := nr.Consensus().CalculateProposer(0, 0)
 
 	require.Equal(t, nr.localNode.Address(), proposer)
 
@@ -208,9 +216,11 @@ func TestStateSIGNTimeoutNotProposer(t *testing.T) {
 
 	recv := make(chan struct{})
 	b := NewTestBroadcaster(recv)
-	nr.SetBroadcaster(b)
-	nr.SetProposerCalculator(TheOtherProposerCalculator{})
-	proposer := nr.CalculateProposer(0, 0)
+	nr.Consensus().SetBroadcaster(b)
+	nr.Consensus().SetProposerCalculator(TheOtherProposerCalculator{
+		nodeRunner: nr,
+	})
+	proposer := nr.Consensus().CalculateProposer(0, 0)
 
 	require.NotEqual(t, nr.localNode.Address(), proposer)
 
@@ -267,13 +277,15 @@ func TestStateACCEPTTimeoutProposerThenNotProposer(t *testing.T) {
 
 	recv := make(chan struct{})
 	b := NewTestBroadcaster(recv)
-	nr.SetBroadcaster(b)
-	nr.SetProposerCalculator(&SelfProposerThenNotProposer{})
+	nr.Consensus().SetBroadcaster(b)
+	nr.Consensus().SetProposerCalculator(&SelfProposerThenNotProposer{
+		nodeRunner: nr,
+	})
 
-	proposer := nr.CalculateProposer(0, 0)
+	proposer := nr.Consensus().CalculateProposer(0, 0)
 	require.Equal(t, nr.localNode.Address(), proposer)
 
-	proposer = nr.CalculateProposer(0, 1)
+	proposer = nr.Consensus().CalculateProposer(0, 1)
 	require.NotEqual(t, nr.localNode.Address(), proposer)
 
 	nr.Consensus().SetLatestConsensusedBlock(genesisBlock)
@@ -333,8 +345,10 @@ func TestStateTransitFromTimeoutInitToAccept(t *testing.T) {
 
 	recvBroadcast := make(chan struct{})
 	b := NewTestBroadcaster(recvBroadcast)
-	nr.SetBroadcaster(b)
-	nr.SetProposerCalculator(TheOtherProposerCalculator{})
+	nr.Consensus().SetBroadcaster(b)
+	nr.Consensus().SetProposerCalculator(TheOtherProposerCalculator{
+		nodeRunner: nr,
+	})
 
 	nr.Consensus().SetLatestConsensusedBlock(genesisBlock)
 
@@ -380,8 +394,10 @@ func TestStateTransitFromTimeoutSignToAccept(t *testing.T) {
 
 	recv := make(chan struct{})
 	b := NewTestBroadcaster(recv)
-	nr.SetBroadcaster(b)
-	nr.SetProposerCalculator(SelfProposerCalculator{})
+	nr.Consensus().SetBroadcaster(b)
+	nr.Consensus().SetProposerCalculator(SelfProposerCalculator{
+		nodeRunner: nr,
+	})
 
 	nr.Consensus().SetLatestConsensusedBlock(genesisBlock)
 

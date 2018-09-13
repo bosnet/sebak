@@ -9,7 +9,7 @@ import (
 )
 
 type RunningRound struct {
-	sync.Mutex
+	sync.RWMutex
 
 	Round        round.Round
 	Proposer     string                              // LocalNode's `Proposer`
@@ -46,12 +46,13 @@ func (rr *RunningRound) RoundVote(proposer string) (rv *RoundVote, err error) {
 }
 
 func (rr *RunningRound) IsVoted(ballot block.Ballot) bool {
-	roundVote, err := rr.RoundVote(ballot.Proposer())
-	if err != nil {
+	rr.RLock()
+	defer rr.RUnlock()
+	if roundVote, found := rr.Voted[ballot.Proposer()]; !found {
 		return false
+	} else {
+		return roundVote.IsVoted(ballot)
 	}
-
-	return roundVote.IsVoted(ballot)
 }
 
 func (rr *RunningRound) Vote(ballot block.Ballot) {

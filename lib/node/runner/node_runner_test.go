@@ -59,7 +59,7 @@ func createTestNodeRunner(n int) []*NodeRunner {
 	for i := 0; i < n; i++ {
 		v := nodes[i]
 		p, _ := consensus.NewDefaultVotingThresholdPolicy(66, 66)
-		is, _ := consensus.NewISAAC(networkID, v, p)
+		is, _ := consensus.NewISAAC(networkID, v, p, ns[i])
 		st, _ := storage.NewTestMemoryLevelDBBackend()
 
 		account.Save(st)
@@ -151,10 +151,10 @@ func createTestNodeRunnersHTTP2Network(n int) (nodeRunners []*NodeRunner, rootKP
 	)
 	for _, node := range nodes {
 		vth, _ := consensus.NewDefaultVotingThresholdPolicy(66, 66)
-		is, _ := consensus.NewISAAC(networkID, node, vth)
 		st, _ := storage.NewTestMemoryLevelDBBackend()
 		networkConfig, _ := network.NewHTTP2NetworkConfigFromEndpoint(node.Alias(), node.Endpoint())
 		network := network.NewHTTP2Network(networkConfig)
+		is, _ := consensus.NewISAAC(networkID, node, vth, network)
 		nodeRunner, _ := NewNodeRunner(string(networkID), node, vth, network, is, st)
 
 		genesisAccount.Save(nodeRunner.Storage())

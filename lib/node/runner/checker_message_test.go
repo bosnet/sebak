@@ -21,7 +21,7 @@ func TestMessageChecker(t *testing.T) {
 	}
 
 	validMessage := common.NetworkMessage{Type: common.TransactionMessage, Data: b}
-	nodeRunner, localNode := MakeNodeRunner(nil)
+	nodeRunner, localNode := MakeNodeRunner()
 	checker := &MessageChecker{
 		DefaultChecker: common.DefaultChecker{},
 		NodeRunner:     nodeRunner,
@@ -83,7 +83,7 @@ func TestMessageCheckerWithInvalidMessage(t *testing.T) {
 	}
 
 	invalidMessage := common.NetworkMessage{Type: common.TransactionMessage, Data: b}
-	nodeRunner, localNode := MakeNodeRunner(nil)
+	nodeRunner, localNode := MakeNodeRunner()
 	checker := &MessageChecker{
 		NodeRunner: nodeRunner,
 		LocalNode:  localNode,
