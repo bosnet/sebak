@@ -30,10 +30,12 @@ func NewResourceList(list []Resource, selfLink, nextLink, prevLink string) *Reso
 
 func (l ResourceList) Resource() *hal.Resource {
 	rl := hal.NewResource(struct{}{}, l.LinkSelf())
+
+	var rCollection hal.ResourceCollection
 	for _, apiResource := range l.Resources {
-		r := apiResource.Resource()
-		rl.Embed("records", r)
+		rCollection = append(rCollection, apiResource.Resource())
 	}
+	rl.EmbedCollection("records", rCollection)
 	rl.AddLink("prev", hal.NewLink(l.LinkPrev())) //TODO: set prev/next url
 	rl.AddLink("next", hal.NewLink(l.LinkNext()))
 

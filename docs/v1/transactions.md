@@ -44,3 +44,19 @@ Transactions API
 
     + Attributes (Problem)
 
+## Operations for Trasaction [/v1/transactions/{hash}/operations]
+
++ Parameters
+    
+    + hash: `ghf6msRhE4jRf5DPib9UHD1msadvmZs9o53V9FQTb11` (string,required) - Transaction hash
+
+#### Get operations of transaction [GET]
+
++ Response 200 (application/hal+json; charset=utf-8)
+    
+    + Attributes (Operations)
+
++ Response 500 (application/problem+json; charset=utf-8)
+
+    + Attributes (Problem)
+

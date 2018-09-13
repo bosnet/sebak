@@ -1,14 +1,15 @@
 package api
 
 import (
+	"io"
+	"net/http"
+	"net/http/httptest"
+
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
 	"github.com/gorilla/mux"
 	"github.com/stellar/go/keypair"
-	"io"
-	"net/http"
-	"net/http/httptest"
 )
 
 var networkID []byte = []byte("sebak-test-network")
@@ -34,6 +35,7 @@ func prepareAPIServer() (*httptest.Server, *storage.LevelDBBackend, error) {
 	router.HandleFunc(GetAccountHandlerPattern, apiHandler.GetAccountHandler).Methods("GET")
 	router.HandleFunc(GetAccountHandlerPattern, apiHandler.GetAccountHandler).Methods("GET")
 	router.HandleFunc(GetAccountHandlerPattern, apiHandler.GetAccountHandler).Methods("GET")
+	router.HandleFunc(GetTransactionOperationsHandlerPattern, apiHandler.GetOperationsByTxHashHandler).Methods("GET")
 	ts := httptest.NewServer(router)
 	return ts, storage, nil
 }
