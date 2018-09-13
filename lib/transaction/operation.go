@@ -128,7 +128,18 @@ type OperationHeader struct {
 }
 
 type OperationBody interface {
-	IsWellFormed([]byte) error
+	//
+	// Check that this transaction is self consistent
+	//
+	// This routine is used by the transaction checker and thus is part of consensus
+	//
+	// Params:
+	//   networkid = Network id this operation was emitted on
+	//
+	// Returns:
+	//   An `error` if that transaction is invalid, `nil` otherwise
+	//
+	IsWellFormed(networkid []byte) error
 	TargetAddress() string
 	GetAmount() common.Amount
 }
