@@ -10,12 +10,14 @@ import (
 type OperationBodyCreateAccount struct {
 	Target string        `json:"target"`
 	Amount common.Amount `json:"amount"`
+	Linked string        `json:"linked,omitempty"`
 }
 
-func NewOperationBodyCreateAccount(target string, amount common.Amount) OperationBodyCreateAccount {
+func NewOperationBodyCreateAccount(target string, amount common.Amount, linked string) OperationBodyCreateAccount {
 	return OperationBodyCreateAccount{
 		Target: target,
 		Amount: amount,
+		Linked: linked,
 	}
 }
 
