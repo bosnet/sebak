@@ -3,12 +3,15 @@ package consensus
 import (
 	"encoding/json"
 	"math"
+	"sync"
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
 )
 
 type ISAACVotingThresholdPolicy struct {
+	sync.RWMutex
+
 	sign   int
 	accept int
 
@@ -31,6 +34,9 @@ func (vt *ISAACVotingThresholdPolicy) SetValidators(n int) error {
 }
 
 func (vt *ISAACVotingThresholdPolicy) Connected() int {
+	vt.RLock()
+	defer vt.RUnlock()
+
 	return vt.connected
 }
 
@@ -38,6 +44,9 @@ func (vt *ISAACVotingThresholdPolicy) SetConnected(n int) error {
 	if n < 1 {
 		return errors.ErrorVotingThresholdInvalidValidators
 	}
+
+	vt.Lock()
+	defer vt.Unlock()
 
 	vt.connected = n
 
@@ -69,6 +78,9 @@ func (vt *ISAACVotingThresholdPolicy) Threshold(state common.BallotState) int {
 }
 
 func (vt *ISAACVotingThresholdPolicy) MarshalJSON() ([]byte, error) {
+	vt.RLock()
+	defer vt.RUnlock()
+
 	return json.Marshal(map[string]interface{}{
 		"sign":       vt.sign,
 		"accept":     vt.accept,
