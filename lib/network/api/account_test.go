@@ -60,8 +60,10 @@ func TestGetAccountHandlerStream(t *testing.T) {
 		}()
 
 		go func() {
-			for _, ok := observer.BlockAccountObserver.Callbacks["saved"]; !ok; {
-				break
+			for {
+				if len(observer.BlockAccountObserver.Callbacks) > 0 {
+					break
+				}
 			}
 			close(notify)
 			wg.Done()

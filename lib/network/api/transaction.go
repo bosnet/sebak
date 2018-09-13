@@ -80,12 +80,6 @@ func (api NetworkHandlerAPI) GetTransactionByHashHandler(w http.ResponseWriter, 
 	if httputils.IsEventStream(r) {
 		event := fmt.Sprintf("hash-%s", key)
 		es := NewEventStream(w, r, renderEventStream, DefaultContentType)
-		payload, err := readFunc()
-		if err == nil {
-			es.Render(payload)
-		} else {
-			es.Render(nil)
-		}
 		es.Run(observer.BlockTransactionObserver, event)
 		return
 	}

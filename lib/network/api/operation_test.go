@@ -77,8 +77,10 @@ func TestGetOperationsByAccountHandlerStream(t *testing.T) {
 		}()
 
 		go func() {
-			for _, ok := observer.BlockOperationObserver.Callbacks["saved"]; !ok; {
-				break
+			for {
+				if len(observer.BlockOperationObserver.Callbacks) > 0 {
+					break
+				}
 			}
 			close(notify)
 			wg.Done()

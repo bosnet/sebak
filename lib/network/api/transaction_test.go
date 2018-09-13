@@ -69,8 +69,10 @@ func TestGetTransactionByHashHandlerStream(t *testing.T) {
 		}()
 
 		go func() {
-			for _, ok := observer.BlockTransactionObserver.Callbacks["saved"]; !ok; {
-				break
+			for {
+				if len(observer.BlockTransactionObserver.Callbacks) > 0 {
+					break
+				}
 			}
 			close(notify)
 			wg.Done()
@@ -165,8 +167,10 @@ func TestGetTransactionsHandlerStream(t *testing.T) {
 		}()
 
 		go func() {
-			for _, ok := observer.BlockTransactionObserver.Callbacks["saved"]; !ok; {
-				break
+			for {
+				if len(observer.BlockTransactionObserver.Callbacks) > 0 {
+					break
+				}
 			}
 			close(notify)
 			wg.Done()
@@ -267,8 +271,10 @@ func TestGetTransactionsByAccountHandlerStream(t *testing.T) {
 		}()
 
 		go func() {
-			for _, ok := observer.BlockTransactionObserver.Callbacks["saved"]; !ok; {
-				break
+			for {
+				if len(observer.BlockTransactionObserver.Callbacks) > 0 {
+					break
+				}
 			}
 			close(notify)
 			wg.Done()

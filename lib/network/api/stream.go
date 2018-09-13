@@ -6,10 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/network/api/resource"
-	"boscoin.io/sebak/lib/network/httputils"
 	observable "github.com/GianlucaGuarini/go-observable"
 )
 
@@ -42,33 +39,6 @@ var RenderSerializableFunc = func(args ...interface{}) ([]byte, error) {
 		return nil, err
 	}
 	return bs, nil
-}
-
-func renderEventStream(args ...interface{}) ([]byte, error) {
-	if len(args) <= 1 {
-		return nil, fmt.Errorf("render: value is empty") //TODO(anarcher): Error type
-	}
-	i := args[1]
-
-	if i == nil {
-		return nil, nil
-	}
-
-	switch v := i.(type) {
-	case *block.BlockAccount:
-		r := resource.NewAccount(v)
-		return json.Marshal(r.Resource())
-	case *block.BlockOperation:
-		r := resource.NewOperation(v)
-		return json.Marshal(r.Resource())
-	case *block.BlockTransaction:
-		r := resource.NewTransaction(v)
-		return json.Marshal(r.Resource())
-	case httputils.HALResource:
-		return json.Marshal(v.Resource())
-	}
-
-	return json.Marshal(i)
 }
 
 // NewDefaultEventStream uses RenderJSONFunc by default
