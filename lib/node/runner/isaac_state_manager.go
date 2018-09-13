@@ -187,6 +187,8 @@ func (sm *ISAACStateManager) Start() {
 					sm.transitSignal()
 					timer.Reset(sm.Conf.TimeoutACCEPT)
 				case ballot.StateALLCONFIRM:
+					sm.setState(state)
+					sm.transitSignal()
 					sm.SetBlockTimeBuffer()
 					sm.NextHeight()
 				case ballot.StateNONE:
@@ -240,13 +242,33 @@ func (sm *ISAACStateManager) proposeOrWait(timer *time.Timer, state consensus.IS
 
 	if proposer == sm.nr.localNode.Address() {
 		time.Sleep(sm.blockTimeBuffer)
-		if err := sm.nr.proposeNewBallot(state.Round.Number); err == nil {
+		if b, err := sm.nr.proposeNewBallot(state.Round.Number); err == nil {
 			log.Debug("propose new ballot", "proposer", proposer, "round", state.Round, "ballotState", ballot.StateSIGN)
-			state.BallotState = ballot.StateSIGN
-			sm.setState(state)
 
-			timer.Reset(sm.Conf.TimeoutSIGN)
-			sm.transitSignal()
+			if sm.nr.Consensus().IsSelfMode() {
+				var theBlock block.Block
+				theBlock, err = finishBallot(
+					sm.nr.Storage(),
+					b,
+					sm.nr.Consensus().TransactionPool,
+					sm.nr.Log(),
+				)
+				if err != nil {
+					return
+				}
+
+				sm.nr.Consensus().SetLatestConsensusedBlock(theBlock)
+				sm.nr.Log().Debug("ballot was stored in selfMode", "block", theBlock)
+
+				sm.TransitISAACState(state.Round, ballot.StateALLCONFIRM)
+				sm.nr.Consensus().CloseConsensus(proposer, state.Round, ballot.VotingYES)
+			} else {
+				state.BallotState = ballot.StateSIGN
+				sm.setState(state)
+
+				timer.Reset(sm.Conf.TimeoutSIGN)
+				sm.transitSignal()
+			}
 		} else {
 			log.Error("failed to proposeNewBallot", "height", sm.nr.consensus.LatestConfirmedBlock().Height, "error", err)
 			sm.setState(state)

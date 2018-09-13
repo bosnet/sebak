@@ -103,7 +103,7 @@ func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, n *network.HTTP2Netw
 		localNode.GetValidators(),
 	)
 
-	is, _ := consensus.NewISAAC(networkID, localNode, p, connectionManager)
+	is, _ := consensus.NewISAAC(networkID, localNode, p, connectionManager, false)
 	st := storage.NewTestStorage()
 	// Make the latest block
 	{
@@ -231,6 +231,7 @@ func TestGetNodeInfoHandler(t *testing.T) {
 		localNode,
 		nil,
 		network.NewValidatorConnectionManager(localNode, nil, nil, nil),
+		false,
 	)
 
 	var config *network.HTTP2NetworkConfig

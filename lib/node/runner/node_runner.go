@@ -412,31 +412,33 @@ func (nr *NodeRunner) InitRound() {
 	nr.consensus.SetLatestConsensusedBlock(latestBlock)
 	nr.consensus.SetLatestRound(round.Round{})
 
-	ticker := time.NewTicker(time.Millisecond * 5)
-	for _ = range ticker.C {
-		var notFound bool
-		connected := nr.connectionManager.AllConnected()
-		if len(connected) < 1 {
-			continue
-		}
+	if !nr.Consensus().IsSelfMode() {
+		ticker := time.NewTicker(time.Millisecond * 5)
+		for _ = range ticker.C {
+			var notFound bool
+			connected := nr.connectionManager.AllConnected()
+			if len(connected) < 1 {
+				continue
+			}
 
-		for address, _ := range nr.localNode.GetValidators() {
-			if _, found := common.InStringArray(connected, address); !found {
-				notFound = true
+			for address, _ := range nr.localNode.GetValidators() {
+				if _, found := common.InStringArray(connected, address); !found {
+					notFound = true
+					break
+				}
+			}
+			if !notFound {
+				ticker.Stop()
 				break
 			}
 		}
-		if !notFound {
-			ticker.Stop()
-			break
-		}
-	}
 
-	nr.log.Debug(
-		"caught up network and connected to all validators",
-		"connected", nr.Policy().Connected(),
-		"validators", nr.Policy().Validators(),
-	)
+		nr.log.Debug(
+			"caught up network and connected to all validators",
+			"connected", nr.Policy().Connected(),
+			"validators", nr.Policy().Validators(),
+		)
+	}
 
 	nr.StartStateManager()
 }
@@ -462,7 +464,7 @@ func (nr *NodeRunner) TransitISAACState(round round.Round, ballotState ballot.St
 	nr.isaacStateManager.TransitISAACState(round, ballotState)
 }
 
-func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) error {
+func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) (ballot.Ballot, error) {
 	b := nr.consensus.LatestConfirmedBlock()
 	round := round.Round{
 		Number:      roundNumber,
@@ -502,5 +504,5 @@ func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) error {
 
 	nr.ConnectionManager().Broadcast(*theBallot)
 
-	return nr.consensus.AddRunningRound(round.Hash(), *theBallot)
+	return *theBallot, nr.consensus.AddRunningRound(round.Hash(), *theBallot)
 }

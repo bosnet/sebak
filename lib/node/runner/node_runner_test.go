@@ -67,7 +67,7 @@ func createTestNodeRunner(n int, conf *consensus.ISAACConfiguration) []*NodeRunn
 			localNode.GetValidators(),
 		)
 
-		is, _ := consensus.NewISAAC(networkID, localNode, policy, connectionManager)
+		is, _ := consensus.NewISAAC(networkID, localNode, policy, connectionManager, false)
 		st := storage.NewTestStorage()
 
 		account.Save(st)
@@ -170,7 +170,7 @@ func createTestNodeRunnersHTTP2Network(n int) (nodeRunners []*NodeRunner, rootKP
 			node.GetValidators(),
 		)
 
-		is, _ := consensus.NewISAAC(networkID, node, policy, connectionManager)
+		is, _ := consensus.NewISAAC(networkID, node, policy, connectionManager, false)
 
 		genesisAccount.Save(st)
 		block.MakeGenesisBlock(st, *genesisAccount)

@@ -22,6 +22,7 @@ type ISAAC struct {
 	proposerSelector     ProposerSelector
 	log                  logging.Logger
 	policy               ballot.VotingThresholdPolicy
+	selfMode             bool
 
 	NetworkID       []byte
 	Node            *node.LocalNode
@@ -33,7 +34,7 @@ type ISAAC struct {
 // ISAAC should know network.ConnectionManager
 // because the ISAAC uses connected validators when calculating proposer
 func NewISAAC(networkID []byte, node *node.LocalNode, p ballot.VotingThresholdPolicy,
-	cm network.ConnectionManager) (is *ISAAC, err error) {
+	cm network.ConnectionManager, selfMode bool) (is *ISAAC, err error) {
 
 	is = &ISAAC{
 		NetworkID:         networkID,
@@ -44,9 +45,14 @@ func NewISAAC(networkID []byte, node *node.LocalNode, p ballot.VotingThresholdPo
 		connectionManager: cm,
 		proposerSelector:  SequentialSelector{cm},
 		log:               log.New(logging.Ctx{"node": node.Alias()}),
+		selfMode:          selfMode,
 	}
 
 	return
+}
+
+func (is *ISAAC) IsSelfMode() bool {
+	return is.selfMode
 }
 
 func (is *ISAAC) CloseConsensus(proposer string, round round.Round, vh ballot.VotingHole) (err error) {

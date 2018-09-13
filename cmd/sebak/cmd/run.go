@@ -50,6 +50,7 @@ var (
 	flagTimeoutACCEPT       string = common.GetENVValue("SEBAK_TIMEOUT_ACCEPT", "2")
 	flagBlockTime           string = common.GetENVValue("SEBAK_BLOCK_TIME", "5")
 	flagTransactionsLimit   string = common.GetENVValue("SEBAK_TRANSACTIONS_LIMIT", "1000")
+	selfMode                bool   = false
 )
 
 var (
@@ -142,10 +143,21 @@ func init() {
 	rootCmd.AddCommand(nodeCmd)
 }
 
+func isSelfMode(v string) (bool, string) {
+	splitted := strings.Fields(v)
+	if len(splitted) == 1 && strings.ToLower(splitted[0]) == "self" {
+		return true, ""
+	}
+	return false, v
+}
+
 func parseFlagValidators(v string) (vs []*node.Validator, err error) {
 	splitted := strings.Fields(v)
 	if len(splitted) < 1 {
 		return
+	}
+
+	if len(splitted) == 1 && strings.ToLower(splitted[0]) == "self" {
 	}
 
 	for _, v := range splitted {
@@ -211,6 +223,8 @@ func parseFlagsNode() {
 	queries.Add("IdleTimeout", "3s")
 	bindEndpoint.RawQuery = queries.Encode()
 
+	selfMode, flagValidators = isSelfMode(flagValidators)
+
 	if validators, err = parseFlagValidators(flagValidators); err != nil {
 		cmdcommon.PrintFlagsError(nodeCmd, "--validators", err)
 	}
@@ -271,7 +285,7 @@ func parseFlagsNode() {
 	consensus.SetLogging(logLevel, logHandler)
 	network.SetLogging(logLevel, logHandler)
 
-	log.Info("Starting Sebak")
+	log.Info("Starting Sebak", "selfMode", selfMode)
 
 	// print flags
 	parsedFlags := []interface{}{}
@@ -353,7 +367,7 @@ func runNode() error {
 		localNode.GetValidators(),
 	)
 
-	isaac, err := consensus.NewISAAC([]byte(flagNetworkID), localNode, policy, connectionManager)
+	isaac, err := consensus.NewISAAC([]byte(flagNetworkID), localNode, policy, connectionManager, selfMode)
 	if err != nil {
 		log.Crit("failed to launch consensus", "error", err)
 		return err
