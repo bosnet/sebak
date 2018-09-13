@@ -39,7 +39,6 @@ type BallotChecker struct {
 	IsNew              bool
 	Ballot             block.Ballot
 	VotingHole         common.VotingHole
-	RoundVote          *consensus.RoundVote
 	Result             consensus.RoundVoteResult
 	VotingFinished     bool
 	FinishedVotingHole common.VotingHole
@@ -106,17 +105,8 @@ func BallotAlreadyFinished(c common.Checker, args ...interface{}) (err error) {
 // BallotAlreadyVoted checks the node of ballot voted.
 func BallotAlreadyVoted(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotChecker)
-	rr := checker.NodeRunner.Consensus().RunningRounds
-
-	var found bool
-	var runningRound *consensus.RunningRound
-	if runningRound, found = rr[checker.Ballot.Round().Hash()]; !found {
-		return
-	}
-
-	if runningRound.IsVoted(checker.Ballot) {
+	if checker.NodeRunner.Consensus().IsVoted(checker.Ballot) {
 		err = errors.ErrorBallotAlreadyVoted
-		return
 	}
 
 	return
@@ -128,40 +118,8 @@ func BallotAlreadyVoted(c common.Checker, args ...interface{}) (err error) {
 func BallotVote(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotChecker)
 
-	roundHash := checker.Ballot.Round().Hash()
-	rr := checker.NodeRunner.Consensus().RunningRounds
-
-	var isNew bool
-	var found bool
-	var runningRound *consensus.RunningRound
-	if runningRound, found = rr[roundHash]; !found {
-		proposer := checker.NodeRunner.ConnectionManager().CalculateProposer(
-			checker.Ballot.Round().BlockHeight,
-			checker.Ballot.Round().Number,
-		)
-
-		runningRound, err = consensus.NewRunningRound(proposer, checker.Ballot)
-		if err != nil {
-			return
-		}
-
-		rr[roundHash] = runningRound
-		isNew = true
-	} else {
-		if _, found = runningRound.Voted[checker.Ballot.Proposer()]; !found {
-			isNew = true
-		}
-
-		runningRound.Vote(checker.Ballot)
-	}
-
-	checker.IsNew = isNew
-	checker.RoundVote, err = runningRound.RoundVote(checker.Ballot.Proposer())
-	if err != nil {
-		return
-	}
-
-	checker.Log.Debug("ballot voted", "runningRound", runningRound, "new", isNew)
+	checker.IsNew, err = checker.NodeRunner.Consensus().Vote(checker.Ballot)
+	checker.Log.Debug("ballot voted", "ballot", checker.Ballot, "new", checker.IsNew)
 
 	return
 }
@@ -179,17 +137,14 @@ func BallotIsSameProposer(c common.Checker, args ...interface{}) (err error) {
 		return
 	}
 
-	rr := checker.NodeRunner.Consensus().RunningRounds
-	var runningRound *consensus.RunningRound
-	var found bool
-	if runningRound, found = rr[checker.Ballot.Round().Hash()]; !found {
+	if !checker.NodeRunner.Consensus().HasRunningRound(checker.Ballot.Round().Hash()) {
 		err = errors.New("`RunningRound` not found")
 		return
 	}
 
-	if runningRound.Proposer != checker.Ballot.Proposer() {
+	if !checker.NodeRunner.Consensus().HasSameProposer(checker.Ballot) {
 		checker.VotingHole = common.VotingNO
-		checker.Log.Debug("ballot has different proposer", "proposer", runningRound.Proposer)
+		checker.Log.Debug("ballot has different proposer", "proposer", checker.Ballot.Proposer())
 		return
 	}
 
@@ -204,10 +159,7 @@ func BallotCheckResult(c common.Checker, args ...interface{}) (err error) {
 		return
 	}
 
-	result, votingHole, finished := checker.RoundVote.CanGetVotingResult(
-		checker.NodeRunner.Consensus().VotingThresholdPolicy,
-		checker.Ballot.State(),
-	)
+	result, votingHole, finished := checker.NodeRunner.Consensus().CanGetVotingResult(checker.Ballot)
 
 	checker.Result = result
 	checker.VotingFinished = finished
@@ -239,8 +191,9 @@ func INITBallotValidateTransactions(c common.Checker, args ...interface{}) (err 
 	if !checker.IsNew || checker.VotingFinished {
 		return
 	}
-
-	if checker.RoundVote.IsVotedByNode(checker.Ballot.State(), checker.LocalNode.Address()) {
+	var voted bool
+	voted, err = checker.NodeRunner.Consensus().IsVotedByNode(checker.Ballot, checker.LocalNode.Address())
+	if voted || err != nil {
 		err = errors.ErrorBallotAlreadyVoted
 		return
 	}
@@ -295,15 +248,12 @@ func SIGNBallotBroadcast(c common.Checker, args ...interface{}) (err error) {
 	newBallot.SetVote(common.BallotStateSIGN, checker.VotingHole)
 	newBallot.Sign(checker.LocalNode.Keypair(), checker.NetworkID)
 
-	rr := checker.NodeRunner.Consensus().RunningRounds
-
-	var runningRound *consensus.RunningRound
-	var found bool
-	if runningRound, found = rr[checker.Ballot.Round().Hash()]; !found {
+	if !checker.NodeRunner.Consensus().HasRunningRound(checker.Ballot.Round().Hash()) {
 		err = errors.New("RunningRound not found")
 		return
+
 	}
-	runningRound.Vote(newBallot)
+	checker.NodeRunner.Consensus().Vote(newBallot)
 
 	checker.NodeRunner.ConnectionManager().Broadcast(newBallot)
 	checker.Log.Debug("ballot will be broadcasted", "newBallot", newBallot)
@@ -335,15 +285,12 @@ func ACCEPTBallotBroadcast(c common.Checker, args ...interface{}) (err error) {
 	newBallot.SetVote(common.BallotStateACCEPT, checker.FinishedVotingHole)
 	newBallot.Sign(checker.LocalNode.Keypair(), checker.NetworkID)
 
-	rr := checker.NodeRunner.Consensus().RunningRounds
-	var runningRound *consensus.RunningRound
-	var found bool
-	if runningRound, found = rr[checker.Ballot.Round().Hash()]; !found {
+	if !checker.NodeRunner.Consensus().HasRunningRound(checker.Ballot.Round().Hash()) {
 		err = errors.New("RunningRound not found")
 		return
-	}
-	runningRound.Vote(newBallot)
 
+	}
+	checker.NodeRunner.Consensus().Vote(newBallot)
 	checker.NodeRunner.ConnectionManager().Broadcast(newBallot)
 	checker.Log.Debug("ballot will be broadcasted", "newBallot", newBallot)
 
