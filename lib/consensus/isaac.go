@@ -12,14 +12,14 @@ import (
 )
 
 type ISAAC struct {
-	sync.Mutex
+	sync.RWMutex
 
 	NetworkID             []byte
 	Node                  *node.LocalNode
 	VotingThresholdPolicy common.VotingThresholdPolicy
 	TransactionPool       *transaction.TransactionPool
 	RunningRounds         map[ /* Round.Hash() */ string]*RunningRound
-	LatestConfirmedBlock  block.Block
+	latestConfirmedBlock  block.Block
 	LatestRound           round.Round
 }
 
@@ -74,7 +74,7 @@ func (is *ISAAC) CloseConsensus(proposer string, round round.Round, vh common.Vo
 }
 
 func (is *ISAAC) SetLatestConsensusedBlock(block block.Block) {
-	is.LatestConfirmedBlock = block
+	is.latestConfirmedBlock = block
 }
 
 func (is *ISAAC) SetLatestRound(round round.Round) {
@@ -87,15 +87,15 @@ func (is *ISAAC) IsAvailableRound(round round.Round) bool {
 		return true
 	}
 
-	if round.BlockHeight < is.LatestConfirmedBlock.Height {
+	if round.BlockHeight < is.latestConfirmedBlock.Height {
 		return false
-	} else if round.BlockHeight == is.LatestConfirmedBlock.Height {
-		if round.BlockHash != is.LatestConfirmedBlock.Hash {
+	} else if round.BlockHeight == is.latestConfirmedBlock.Height {
+		if round.BlockHash != is.latestConfirmedBlock.Hash {
 			return false
 		}
 	} else {
 		// TODO if incoming round.BlockHeight is bigger than
-		// LatestConfirmedBlock.Height and this round confirmed successfully,
+		// latestConfirmedBlock.Height and this round confirmed successfully,
 		// this node will get into sync state
 	}
 
@@ -106,4 +106,10 @@ func (is *ISAAC) IsAvailableRound(round round.Round) bool {
 	}
 
 	return true
+}
+
+func (is *ISAAC) LatestConfirmedBlock() block.Block {
+	is.RLock()
+	defer is.RUnlock()
+	return is.latestConfirmedBlock
 }
