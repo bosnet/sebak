@@ -9,6 +9,7 @@ import (
 )
 
 type OperationBodyCreateAccount struct {
+	OperationBodyImpl
 	Target string        `json:"target"`
 	Amount common.Amount `json:"amount"`
 }

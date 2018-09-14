@@ -10,6 +10,7 @@ import (
 )
 
 type OperationBodyPayment struct {
+	OperationBodyImpl
 	Target string        `json:"target"`
 	Amount common.Amount `json:"amount"`
 }

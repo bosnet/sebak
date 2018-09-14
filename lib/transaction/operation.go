@@ -15,6 +15,9 @@ type OperationType string
 const (
 	OperationCreateAccount OperationType = "create-account"
 	OperationPayment                     = "payment"
+	OperationVotingResult                = "voting-result"
+	OperationProposal                    = "proposal"
+	OperationMembership                  = "membership"
 )
 
 type Operation struct {
@@ -126,4 +129,21 @@ type OperationBody interface {
 	IsWellFormed([]byte) error
 	TargetAddress() string
 	GetAmount() common.Amount
+}
+
+type OperationBodyImpl struct {
+}
+
+func (ob OperationBodyImpl) IsWellFormed(networkID []byte) (err error) {
+	err = nil
+	return
+}
+
+func (ob OperationBodyImpl) TargetAddress() string {
+	return "none"
+}
+
+func (ob OperationBodyImpl) GetAmount() (a common.Amount) {
+	a = 0
+	return
 }

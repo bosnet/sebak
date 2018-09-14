@@ -22,7 +22,7 @@ func TestMakeHashOfOperationBodyPayment(t *testing.T) {
 	}
 	hashed := op.MakeHashString()
 
-	expected := "8AALKhfgCu2w3ZtbESXHG5ko93Jb1L1yCmFopoJubQh9"
+	expected := "ARoxeSi5HqbyqbMhanSiDC3PjTvAf2B2vb5h5g63fxLF"
 	require.Equal(t, hashed, expected)
 }
 
