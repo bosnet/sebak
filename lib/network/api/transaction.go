@@ -7,9 +7,10 @@ import (
 	"boscoin.io/sebak/lib/network/api/resource"
 	"boscoin.io/sebak/lib/network/httputils"
 
+	"fmt"
+
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/error"
-	"fmt"
 	"github.com/gorilla/mux"
 )
 
@@ -138,7 +139,7 @@ func (api NetworkHandlerAPI) GetTransactionsByAccountHandler(w http.ResponseWrit
 	list := resource.NewResourceList(txs, self, next, prev)
 
 	if err := httputils.WriteJSON(w, 200, list); err != nil {
-		http.Error(w, "Error reading request body", http.StatusInternalServerError)
+		httputils.WriteJSONError(w, err)
 		return
 	}
 }
