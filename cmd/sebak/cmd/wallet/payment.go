@@ -250,7 +250,7 @@ func getSenderDetails(conn *network.HTTP2NetworkClient, sender keypair.KP) (bloc
 	var retBody []byte
 
 	//response, err = c.client.Post(u.String(), body, headers)
-	if retBody, err = conn.Get("/api/v1/account/" + sender.Address()); err != nil {
+	if retBody, err = conn.Get("/api/v1/accounts/" + sender.Address()); err != nil {
 		return ba, err
 	}
 
