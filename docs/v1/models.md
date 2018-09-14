@@ -63,17 +63,17 @@
                 + href: `/transactions/ghf6msRhE4jRf5DPib9UHD1msadvmZs9o53V9FQTb11`
         + id: ghf6msRhE4jRf5DPib9UHD1msadvmZs9o53V9FQTb11
         + hash:  ghf6msRhE4jRf5DPib9UHD1msadvmZs9o53V9FQTb11
-        + account: GDVSXU343JMRBXGW3F5WLRMH6L6HFZ6IYMVMFSDUDJPNTXUGNOXC2R5Y
+        + account: GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ
         + fee_paid: `10000`
         + operation_count: 1
         + sequence_id: 0
 + _links
     + next
-        + href: /account/{address}/transactions
+        + href: /account/GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ/transactions
     + prev
-        + href: /account/{address}/transactions
+        + href: /account/GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ/transactions
     + self
-        + href: /account/{address}/transactions
+        + href: /account/GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ/transactions
 
 ### Operations
 + _embedded
@@ -83,7 +83,7 @@
                 + href: /operations/E4qTH5UmzHy2Psdxh8RaQomqJb1gcUZFVENimzV9YB8D-ghf6msRhE4jRf5DPib9UHD1msadvmZs9o53V9FQTb11
             + transactions
                 + href: /transactions/ghf6msRhE4jRf5DPib9UHD1msadvmZs9o53V9FQTb11
-        + account: GDMZMF2EAK4E6NSZNSCJQQHQGMAOZ6UI3XQVVLMEJRFDPYHLY7PPHKLP
+        + account: GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ
         + amount: 1000000
         + funder: GDPWP7BOOMEKK6DUQELQD7H5NEENPLDTQQWYOIBSFS65WH7DNG7UWVKB
         + hash: E4qTH5UmzHy2Psdxh8RaQomqJb1gcUZFVENimzV9YB8D
@@ -91,16 +91,20 @@
         + type: create-account
 + _links
     + next
-        + href: /account/{address}/operations
+        + href: /account/GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ/operations
     + prev
-        + href: /account/{address}/operations
+        + href: /account/GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ/operations
     + self
-        + href: /account/{address}/operations
+        + href: /account/GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ/operations
 
 
 ### Problem
-+ type: `type`
-+ title: `title`
-+ detail: `detail`
-+ instance: `instance`
++ status:  500 (number)
++ title: `problem error message `
++ type: `https://boscoin.io/sebak/error/{error_code}`
 
+
+### Problem NotFound
++ status: 400 (number)
++ title: `does not exists` 
++ type: `https://boscoin.io/sebak/error/128`
