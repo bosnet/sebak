@@ -6,15 +6,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stellar/go/keypair"
+	"github.com/stretchr/testify/require"
+
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/consensus"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/storage"
-
-	"boscoin.io/sebak/lib/consensus"
-	"boscoin.io/sebak/lib/transaction"
-	"github.com/stellar/go/keypair"
 )
 
 var (
@@ -226,46 +226,38 @@ func createTestNodeRunnersHTTP2NetworkWithReady(n int) (nodeRunners []*NodeRunne
 	return
 }
 
+// Check that createTestNodeRunner creates the appropriate number of node runners.
 func TestCreateNodeRunner(t *testing.T) {
-	numberOfNodes := 3
-	nodeRunners := createTestNodeRunnerWithReady(numberOfNodes)
-
-	for _, nr := range nodeRunners {
-		defer nr.Stop()
-	}
-
-	if len(nodeRunners) != 3 {
-		t.Error("failed to create `NodeRunner`s")
-	}
-}
-
-func TestNodeRunnerCreateAccount(t *testing.T) {
 	nodeRunners := createTestNodeRunner(3, consensus.NewISAACConfiguration())
 
-	kpNewAccount, _ := keypair.Random()
+	require.Equal(t, 3, len(nodeRunners))
+}
 
-	nr0 := nodeRunners[0]
+// Check that when a node receives transaction, the node broadcasts it to validators
+func TestNodeRunnerTransactionBroadcast(t *testing.T) {
+	nodeRunners := createTestNodeRunner(3, consensus.NewISAACConfiguration())
 
-	client := nr0.Network().GetClient(nr0.Node().Endpoint())
+	tx, txByte := GetTransaction(t)
 
-	initialBalance := common.Amount(1)
-	tx := transaction.MakeTransactionCreateAccount(kp, kpNewAccount.Address(), initialBalance)
-	tx.B.SequenceID = account.SequenceID
-	tx.Sign(kp, networkID)
+	message := common.NetworkMessage{Type: common.TransactionMessage, Data: txByte}
 
-	client.SendMessage(tx)
+	nodeRunner := nodeRunners[0]
 
-	time.Sleep(time.Second)
+	nodeRunner.ConnectionManager().SetProposerCalculator(SelfProposerCalculator{
+		nodeRunner: nodeRunner,
+	})
 
-	for _, nr := range nodeRunners {
-		nr.Stop()
-	}
+	nodeRunner.Consensus().SetLatestConsensusedBlock(genesisBlock)
+	b := nodeRunner.Consensus().LatestConfirmedBlock()
+	require.Equal(t, uint64(1), b.Height)
+	require.Equal(t, uint64(0), b.TotalTxs)
 
-	for i, nr := range nodeRunners {
-		if !nr.Consensus().TransactionPool.Has(tx.GetHash()) {
-			t.Error("failed to broadcast message", "node", nr.Node(), "index", i)
-		}
-	}
+	var err error
+	err = nodeRunner.handleTransaction(message)
+
+	require.Nil(t, err)
+	require.True(t, nodeRunner.Consensus().TransactionPool.Has(tx.GetHash()))
+
 }
 
 /*
