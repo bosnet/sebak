@@ -14,7 +14,9 @@ Retrieve an account by the address
 
     + Attributes (Account)
 
-+ Response 404 (text/plain; charset=utf-8)
++ Response 404 (application/problem+json; charset=utf-8)
+
+    + Attributes (Problem NotFound)
 
 + Response 500 (application/problem+json; charset=utf-8)
     
