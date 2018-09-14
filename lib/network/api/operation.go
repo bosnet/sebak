@@ -1,13 +1,14 @@
 package api
 
 import (
+	"fmt"
+	"net/http"
+
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/network/api/resource"
 	"boscoin.io/sebak/lib/network/httputils"
-	"fmt"
 	"github.com/gorilla/mux"
-	"net/http"
 )
 
 func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter, r *http.Request) {
@@ -48,7 +49,7 @@ func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter
 	list := resource.NewResourceList(txs, self, next, prev)
 
 	if err := httputils.WriteJSON(w, 200, list); err != nil {
-		http.Error(w, "Error reading request body", http.StatusInternalServerError)
+		httputils.WriteJSONError(w, err)
 		return
 	}
 }

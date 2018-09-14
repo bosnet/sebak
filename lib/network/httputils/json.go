@@ -2,12 +2,22 @@ package httputils
 
 import (
 	"encoding/json"
-	"github.com/nvellon/hal"
 	"net/http"
+
+	"github.com/nvellon/hal"
 )
 
 type HALResource interface {
 	Resource() *hal.Resource
+}
+
+// WriteJSONError writes the error to the http response as json encoding
+func WriteJSONError(w http.ResponseWriter, err error) {
+	code := StatusCode(err) //TODO(anarcher): ErrorStateCode is more suitable?
+
+	if err := WriteJSON(w, code, err); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
 // WriteJSON writes the value v to the http response as json encoding
@@ -16,7 +26,7 @@ func WriteJSON(w http.ResponseWriter, code int, v interface{}) error {
 		w.Header().Set("Content-Type", "application/hal+json")
 		v = h.Resource()
 	} else if e, ok := v.(error); ok {
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Content-Type", "application/problem+json")
 		v = NewErrorProblem(e, code)
 	} else {
 		w.Header().Set("Content-Type", "application/json")

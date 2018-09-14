@@ -43,15 +43,14 @@ func (api NetworkHandlerAPI) GetAccountHandler(w http.ResponseWriter, r *http.Re
 		es.Run(observer.BlockAccountObserver, event)
 		return
 	}
-	payload, err := readFunc()
 
-	if err == nil {
-		if err := httputils.WriteJSON(w, 200, payload); err != nil {
-			http.Error(w, "Error reading request body", http.StatusInternalServerError)
-		}
-	} else {
-		if err := httputils.WriteJSON(w, httputils.StatusCode(err), err); err != nil {
-			http.Error(w, "Error reading request body", http.StatusInternalServerError)
-		}
+	payload, err := readFunc()
+	if err != nil {
+		httputils.WriteJSONError(w, err)
+		return
+	}
+
+	if err := httputils.WriteJSON(w, 200, payload); err != nil {
+		httputils.WriteJSONError(w, err)
 	}
 }

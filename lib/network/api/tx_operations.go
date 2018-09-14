@@ -42,7 +42,7 @@ func (api NetworkHandlerAPI) GetOperationsByTxHashHandler(w http.ResponseWriter,
 	list := resource.NewResourceList(ops, self, next, prev)
 
 	if err := httputils.WriteJSON(w, 200, list); err != nil {
-		http.Error(w, "Error reading request body", http.StatusInternalServerError)
+		httputils.WriteJSONError(w, err)
 		return
 	}
 }
