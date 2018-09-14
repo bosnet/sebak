@@ -22,10 +22,10 @@ import (
 
 	cmdcommon "boscoin.io/sebak/cmd/sebak/common"
 
-	"strconv"
-
+	"boscoin.io/sebak/lib"
 	"boscoin.io/sebak/lib/consensus"
 	"boscoin.io/sebak/lib/node/runner"
+	"strconv"
 )
 
 const defaultNetwork string = "https"
@@ -94,7 +94,7 @@ func init() {
 				if len(csv) == 2 {
 					balanceStr = csv[1]
 				}
-				flagName, err := MakeGenesisBlock(csv[0], flagNetworkID, balanceStr, flagStorageConfigString, log)
+				flagName, err := MakeGenesisBlock(csv[0], flagNetworkID, balanceStr, flagStorageConfigString)
 				if len(flagName) != 0 || err != nil {
 					cmdcommon.PrintFlagsError(c, flagName, err)
 				}
@@ -261,7 +261,7 @@ func parseFlagsNode() {
 
 	log.SetHandler(logging.LvlFilterHandler(logLevel, logging.CallerFileHandler(logHandler)))
 
-	runner.SetLogging(logLevel, logHandler)
+	sebak.SetLogging(logLevel, logHandler)
 	network.SetLogging(logLevel, logHandler)
 
 	log.Info("Starting Sebak")
