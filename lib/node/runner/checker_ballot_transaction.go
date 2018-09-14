@@ -181,7 +181,7 @@ func ValidateTx(st *storage.LevelDBBackend, tx transaction.Transaction) (err err
 				return
 			}
 		}
-		return
+		break
 
 	case transaction.TransactionIssue:
 		for _, op := range tx.B.Operations {
@@ -189,13 +189,12 @@ func ValidateTx(st *storage.LevelDBBackend, tx transaction.Transaction) (err err
 				return
 			}
 		}
-		return
+		break
 
 	default:
 		err = errors.ErrorUnknownTransactionType
-		return
+		break
 	}
-
 	return
 }
 
