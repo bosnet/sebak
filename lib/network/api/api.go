@@ -3,22 +3,23 @@ package api
 import (
 	"fmt"
 
+	"encoding/json"
+
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/network/api/resource"
 	"boscoin.io/sebak/lib/network/httputils"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/storage"
-	"encoding/json"
 )
 
 const APIVersionV1 = "v1"
 
 // API Endpoint patterns
 const (
-	GetAccountTransactionsHandlerPattern   = "/account/{id}/transactions"
-	GetAccountHandlerPattern               = "/account/{id}"
-	GetAccountOperationsHandlerPattern     = "/account/{id}/operations"
+	GetAccountTransactionsHandlerPattern   = "/accounts/{id}/transactions"
+	GetAccountHandlerPattern               = "/accounts/{id}"
+	GetAccountOperationsHandlerPattern     = "/accounts/{id}/operations"
 	GetTransactionsHandlerPattern          = "/transactions"
 	GetTransactionByHashHandlerPattern     = "/transactions/{id}"
 	GetTransactionOperationsHandlerPattern = "/transactions/{id}/operations"

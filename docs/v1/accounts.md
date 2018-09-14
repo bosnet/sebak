@@ -1,7 +1,7 @@
 # Group Accounts
 Account API
 
-## Account Details [/v1/account/{address}]
+## Account Details [/v1/accounts/{address}]
 
 + Parameters
 
@@ -23,7 +23,7 @@ Retrieve an account by the address
     + Attributes (Problem)
     
 
-## Transactions for Account [/v1/account/{address}/transactions]
+## Transactions for Account [/v1/accounts/{address}/transactions]
 
 + Parameters
 
@@ -41,7 +41,7 @@ Retrieve an account by the address
     + Attributes (Problem)
 
 
-## Operations for Account [/v1/account/{address}/operations]
+## Operations for Account [/v1/accounts/{address}/operations]
 
 + Parameters
 
