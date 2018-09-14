@@ -1,11 +1,11 @@
-package network
+package sebak
 
 import (
 	"boscoin.io/sebak/lib/common"
 	logging "github.com/inconshreveable/log15"
 )
 
-var log logging.Logger = logging.New("module", "network")
+var log logging.Logger = logging.New("module", "sebak")
 
 func init() {
 	common.SetLogging(log, common.DefaultLogLevel, common.DefaultLogHandler)
