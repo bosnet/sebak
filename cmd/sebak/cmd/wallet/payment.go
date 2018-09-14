@@ -175,7 +175,7 @@ func makeTransactionCreateAccount(kpSource keypair.KP, kpDest keypair.KP, amount
 	}
 
 	tx := transaction.Transaction{
-		T: "transaction",
+		T: transaction.TransactionBasic,
 		H: transaction.TransactionHeader{
 			Created: common.NowISO8601(),
 			Hash:    txBody.MakeHashString(),
@@ -219,7 +219,7 @@ func makeTransactionPayment(kpSource keypair.KP, kpDest keypair.KP, amount commo
 	}
 
 	tx := transaction.Transaction{
-		T: "transaction",
+		T: transaction.TransactionBasic,
 		H: transaction.TransactionHeader{
 			Created: common.NowISO8601(),
 			Hash:    txBody.MakeHashString(),

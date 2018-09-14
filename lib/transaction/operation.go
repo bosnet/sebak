@@ -15,6 +15,7 @@ type OperationType string
 const (
 	OperationCreateAccount OperationType = "create-account"
 	OperationPayment                     = "payment"
+	OperationIssuance                    = "issuance"
 )
 
 type Operation struct {
@@ -85,6 +86,13 @@ func NewOperationFromInterface(oj OperationFromJSON) (op Operation, err error) {
 			return
 		}
 		op.B = NewOperationBodyPayment(body["target"].(string), amount)
+	case OperationIssuance:
+		var amount common.Amount
+		amount, err = common.AmountFromString(fmt.Sprintf("%v", body["amount"]))
+		if err != nil {
+			return
+		}
+		op.B = NewOperationBodyIssuance(body["target"].(string), amount)
 	}
 
 	return
@@ -103,6 +111,11 @@ func NewOperation(t OperationType, body OperationBody) (op Operation, err error)
 		}
 	case OperationPayment:
 		if _, ok := body.(OperationBodyPayment); !ok {
+			err = errors.ErrorTypeOperationBodyNotMatched
+			return
+		}
+	case OperationIssuance:
+		if _, ok := body.(OperationBodyIssuance); !ok {
 			err = errors.ErrorTypeOperationBodyNotMatched
 			return
 		}

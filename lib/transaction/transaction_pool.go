@@ -51,6 +51,21 @@ func (tp *TransactionPool) Add(tx Transaction) bool {
 	return true
 }
 
+func (tp *TransactionPool) AddAtFirst(tx Transaction) bool {
+	if _, found := tp.Pool[tx.GetHash()]; found {
+		return false
+	}
+
+	tp.Lock()
+	defer tp.Unlock()
+
+	tp.Pool[tx.GetHash()] = tx
+	tp.Hashes = append([]string{tx.GetHash()}, tp.Hashes...)
+	tp.Sources[tx.Source()] = true
+
+	return true
+}
+
 func (tp *TransactionPool) Remove(hashes ...string) {
 	if len(hashes) < 1 {
 		return

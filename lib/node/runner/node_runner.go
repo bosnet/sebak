@@ -78,6 +78,7 @@ type NodeRunner struct {
 	connectionManager  *network.ConnectionManager
 	storage            *storage.LevelDBBackend
 	proposerCalculator ProposerCalculator
+	issuancePolicy     *IssuancePool
 
 	handleTransactionCheckerFuncs  []common.CheckerFunc
 	handleBaseBallotCheckerFuncs   []common.CheckerFunc
@@ -114,6 +115,7 @@ func NewNodeRunner(
 	nr.SetProposerCalculator(SimpleProposerCalculator{})
 	nr.policy.SetValidators(len(nr.localNode.GetValidators()) + 1) // including self
 
+	nr.issuancePolicy = NewIssuancePool()
 	nr.connectionManager = network.NewConnectionManager(
 		nr.localNode,
 		nr.network,
@@ -522,6 +524,21 @@ func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) error {
 		BlockHeight: nr.consensus.LatestConfirmedBlock.Height,
 		BlockHash:   nr.consensus.LatestConfirmedBlock.Hash,
 		TotalTxs:    nr.consensus.LatestConfirmedBlock.TotalTxs,
+	}
+
+	// check issuance policy.
+	// make the issue transaction and add it to the first position of transaction pool
+	txissue, avail := nr.issuancePolicy.Issue(round.BlockHeight)
+	if avail {
+		//is it required to be signed?
+
+		nr.consensus.TransactionPool.AddAtFirst(txissue)
+		// check the transaction
+		if err := txissue.IsWellFormed(nr.networkID); err != nil {
+			//
+		}
+		// broadcast it to others
+		nr.ConnectionManager().Broadcast(txissue)
 	}
 
 	// collect incoming transactions from `TransactionPool`

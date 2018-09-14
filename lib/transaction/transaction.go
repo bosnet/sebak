@@ -11,6 +11,10 @@ import (
 )
 
 // TODO versioning
+const (
+	TransactionBasic string = "transaction"
+	TransactionIssue        = "transactionIssue"
+)
 
 type Transaction struct {
 	T string
@@ -72,7 +76,7 @@ func NewTransaction(source string, sequenceID uint64, ops ...Operation) (tx Tran
 	}
 
 	tx = Transaction{
-		T: "transaction",
+		T: TransactionBasic,
 		H: TransactionHeader{
 			Created: common.NowISO8601(),
 			Hash:    txBody.MakeHashString(),
@@ -92,11 +96,27 @@ var TransactionWellFormedCheckerFuncs = []common.CheckerFunc{
 	CheckTransactionHashMatch,
 }
 
+var TransactionIssueWellFormedCheckerFuncs = []common.CheckerFunc{
+	CheckTransactionOperation,
+	CheckTransactionIsssueVerifySignature,
+	CheckTransactionHashMatch,
+}
+
 func (tx Transaction) IsWellFormed(networkID []byte) (err error) {
 	// TODO check `Version` format with SemVer
+	var defaultChecker common.DefaultChecker
 
+	switch tx.T {
+	case TransactionBasic:
+		defaultChecker = common.DefaultChecker{Funcs: TransactionWellFormedCheckerFuncs}
+	case TransactionIssue:
+		defaultChecker = common.DefaultChecker{Funcs: TransactionIssueWellFormedCheckerFuncs}
+	default:
+		err = errors.ErrorUnknownTransactionType
+		return
+	}
 	checker := &TransactionChecker{
-		DefaultChecker: common.DefaultChecker{Funcs: TransactionWellFormedCheckerFuncs},
+		DefaultChecker: defaultChecker,
 		NetworkID:      networkID,
 		Transaction:    tx,
 	}

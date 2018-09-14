@@ -146,38 +146,54 @@ func BallotTransactionsSourceCheck(c common.Checker, args ...interface{}) (err e
 // * source has enough balance to pay
 // * and it's `Operations`
 func ValidateTx(st *storage.LevelDBBackend, tx transaction.Transaction) (err error) {
-	// check, source exists
-	var ba *block.BlockAccount
-	if ba, err = block.GetBlockAccount(st, tx.B.Source); err != nil {
-		err = errors.ErrorBlockAccountDoesNotExists
-		return
-	}
-
-	// check, sequenceID is based on latest sequenceID
-	if !tx.IsValidSequenceID(ba.SequenceID) {
-		err = errors.ErrorTransactionInvalidSequenceID
-		return
-	}
-
-	// get the balance at sequenceID
-	var bac block.BlockAccountSequenceID
-	bac, err = block.GetBlockAccountSequenceID(st, tx.B.Source, tx.B.SequenceID)
-	if err != nil {
-		return
-	}
-
-	totalAmount := tx.TotalAmount(true)
-
-	// check, have enough balance at sequenceID
-	if bac.Balance < totalAmount {
-		err = errors.ErrorTransactionExcessAbilityToPay
-		return
-	}
-
-	for _, op := range tx.B.Operations {
-		if err = ValidateOp(st, op); err != nil {
+	switch tx.T {
+	case transaction.TransactionBasic:
+		// check, source exists
+		var ba *block.BlockAccount
+		if ba, err = block.GetBlockAccount(st, tx.B.Source); err != nil {
+			err = errors.ErrorBlockAccountDoesNotExists
 			return
 		}
+
+		// check, sequenceID is based on latest sequenceID
+		if !tx.IsValidSequenceID(ba.SequenceID) {
+			err = errors.ErrorTransactionInvalidSequenceID
+			return
+		}
+
+		// get the balance at sequenceID
+		var bac block.BlockAccountSequenceID
+		bac, err = block.GetBlockAccountSequenceID(st, tx.B.Source, tx.B.SequenceID)
+		if err != nil {
+			return
+		}
+
+		totalAmount := tx.TotalAmount(true)
+
+		// check, have enough balance at sequenceID
+		if bac.Balance < totalAmount {
+			err = errors.ErrorTransactionExcessAbilityToPay
+			return
+		}
+
+		for _, op := range tx.B.Operations {
+			if err = ValidateOp(st, op); err != nil {
+				return
+			}
+		}
+		return
+
+	case transaction.TransactionIssue:
+		for _, op := range tx.B.Operations {
+			if err = ValidateOp(st, op); err != nil {
+				return
+			}
+		}
+		return
+
+	default:
+		err = errors.ErrorUnknownTransactionType
+		return
 	}
 
 	return
@@ -202,6 +218,16 @@ func ValidateOp(st *storage.LevelDBBackend, op transaction.Operation) (err error
 		}
 		var exists bool
 		if exists, err = block.ExistBlockAccount(st, op.B.(transaction.OperationBodyPayment).Target); err == nil && !exists {
+			err = errors.ErrorBlockAccountDoesNotExists
+			return
+		}
+	case transaction.OperationIssuance:
+		if _, ok := op.B.(transaction.OperationBodyIssuance); !ok {
+			err = errors.ErrorTypeOperationBodyNotMatched
+			return
+		}
+		var exists bool
+		if exists, err = block.ExistBlockAccount(st, op.B.(transaction.OperationBodyIssuance).Target); err == nil && !exists {
 			err = errors.ErrorBlockAccountDoesNotExists
 			return
 		}
