@@ -23,7 +23,7 @@ type LocalNode struct {
 
 	keypair *keypair.Full
 
-	state      NodeState
+	state      State
 	alias      string
 	endpoint   *common.Endpoint
 	validators map[ /* Node.Address() */ string]*Validator
@@ -36,7 +36,7 @@ func NewLocalNode(kp *keypair.Full, endpoint *common.Endpoint, alias string) (n 
 
 	n = &LocalNode{
 		keypair:    kp,
-		state:      NodeStateNONE,
+		state:      StateNONE,
 		alias:      alias,
 		endpoint:   endpoint,
 		validators: map[string]*Validator{},
@@ -68,24 +68,24 @@ func (n *LocalNode) DeepEqual(a Node) bool {
 	return true
 }
 
-func (n *LocalNode) State() NodeState {
+func (n *LocalNode) State() State {
 	return n.state
 }
 
 func (n *LocalNode) SetBooting() {
-	n.state = NodeStateBOOTING
+	n.state = StateBOOTING
 }
 
 func (n *LocalNode) SetSync() {
-	n.state = NodeStateSYNC
+	n.state = StateSYNC
 }
 
 func (n *LocalNode) SetConsensus() {
-	n.state = NodeStateCONSENSUS
+	n.state = StateCONSENSUS
 }
 
 func (n *LocalNode) SetTerminating() {
-	n.state = NodeStateTERMINATING
+	n.state = StateTERMINATING
 }
 
 func (n *LocalNode) Address() string {

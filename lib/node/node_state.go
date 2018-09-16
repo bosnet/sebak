@@ -4,19 +4,19 @@ import (
 	"fmt"
 )
 
-type NodeState uint
+type State uint
 
 const (
-	NodeStateNONE NodeState = iota
-	NodeStateBOOTING
-	NodeStateSYNC
-	NodeStateCONSENSUS
-	NodeStateTERMINATING
+	StateNONE State = iota
+	StateBOOTING
+	StateSYNC
+	StateCONSENSUS
+	StateTERMINATING
 )
 
-var NodeInitState = NodeStateNONE
+var NodeInitState = StateNONE
 
-func (s NodeState) String() string {
+func (s State) String() string {
 	switch s {
 	case 0:
 		return "NONE"
@@ -33,11 +33,11 @@ func (s NodeState) String() string {
 	return ""
 }
 
-func (s NodeState) MarshalJSON() ([]byte, error) {
+func (s State) MarshalJSON() ([]byte, error) {
 	return []byte(fmt.Sprintf("\"%s\"", s.String())), nil
 }
 
-func (s *NodeState) UnmarshalJSON(b []byte) (err error) {
+func (s *State) UnmarshalJSON(b []byte) (err error) {
 	var c int
 	switch string(b[1 : len(b)-1]) {
 	case "NONE":
@@ -52,7 +52,7 @@ func (s *NodeState) UnmarshalJSON(b []byte) (err error) {
 		c = 4
 	}
 
-	*s = NodeState(c)
+	*s = State(c)
 
 	return
 }

@@ -7,58 +7,58 @@ import (
 )
 
 func TestNodeInitState(t *testing.T) {
-	require.Equal(t, NodeInitState, NodeStateNONE)
+	require.Equal(t, NodeInitState, StateNONE)
 }
 
 func TestNodeStateString(t *testing.T) {
-	require.Equal(t, NodeStateNONE.String(), "NONE")
-	require.Equal(t, NodeStateBOOTING.String(), "BOOTING")
-	require.Equal(t, NodeStateSYNC.String(), "SYNC")
-	require.Equal(t, NodeStateCONSENSUS.String(), "CONSENSUS")
-	require.Equal(t, NodeStateTERMINATING.String(), "TERMINATING")
+	require.Equal(t, StateNONE.String(), "NONE")
+	require.Equal(t, StateBOOTING.String(), "BOOTING")
+	require.Equal(t, StateSYNC.String(), "SYNC")
+	require.Equal(t, StateCONSENSUS.String(), "CONSENSUS")
+	require.Equal(t, StateTERMINATING.String(), "TERMINATING")
 }
 
 func TestNodeStateMarshalJSON(t *testing.T) {
-	ret, err := NodeStateNONE.MarshalJSON()
+	ret, err := StateNONE.MarshalJSON()
 	require.Equal(t, err, nil)
 	require.Equal(t, "\"NONE\"", string(ret))
 
-	ret, err = NodeStateBOOTING.MarshalJSON()
+	ret, err = StateBOOTING.MarshalJSON()
 	require.Equal(t, err, nil)
 	require.Equal(t, "\"BOOTING\"", string(ret))
 
-	ret, err = NodeStateSYNC.MarshalJSON()
+	ret, err = StateSYNC.MarshalJSON()
 	require.Equal(t, err, nil)
 	require.Equal(t, "\"SYNC\"", string(ret))
 
-	ret, err = NodeStateCONSENSUS.MarshalJSON()
+	ret, err = StateCONSENSUS.MarshalJSON()
 	require.Equal(t, err, nil)
 	require.Equal(t, "\"CONSENSUS\"", string(ret))
 
-	ret, err = NodeStateTERMINATING.MarshalJSON()
+	ret, err = StateTERMINATING.MarshalJSON()
 	require.Equal(t, err, nil)
 	require.Equal(t, "\"TERMINATING\"", string(ret))
 }
 
 func TestNodeStateUnmarshalJSON(t *testing.T) {
-	ns := NodeStateNONE
-	nodeStateByteArray, _ := NodeStateNONE.MarshalJSON()
+	ns := StateNONE
+	nodeStateByteArray, _ := StateNONE.MarshalJSON()
 	ns.UnmarshalJSON(nodeStateByteArray)
-	require.Equal(t, NodeStateNONE, ns)
+	require.Equal(t, StateNONE, ns)
 
-	nodeStateByteArray, _ = NodeStateBOOTING.MarshalJSON()
+	nodeStateByteArray, _ = StateBOOTING.MarshalJSON()
 	ns.UnmarshalJSON(nodeStateByteArray)
-	require.Equal(t, NodeStateBOOTING, ns)
+	require.Equal(t, StateBOOTING, ns)
 
-	nodeStateByteArray, _ = NodeStateSYNC.MarshalJSON()
+	nodeStateByteArray, _ = StateSYNC.MarshalJSON()
 	ns.UnmarshalJSON(nodeStateByteArray)
-	require.Equal(t, NodeStateSYNC, ns)
+	require.Equal(t, StateSYNC, ns)
 
-	nodeStateByteArray, _ = NodeStateCONSENSUS.MarshalJSON()
+	nodeStateByteArray, _ = StateCONSENSUS.MarshalJSON()
 	ns.UnmarshalJSON(nodeStateByteArray)
-	require.Equal(t, NodeStateCONSENSUS, ns)
+	require.Equal(t, StateCONSENSUS, ns)
 
-	nodeStateByteArray, _ = NodeStateTERMINATING.MarshalJSON()
+	nodeStateByteArray, _ = StateTERMINATING.MarshalJSON()
 	ns.UnmarshalJSON(nodeStateByteArray)
-	require.Equal(t, NodeStateTERMINATING, ns)
+	require.Equal(t, StateTERMINATING, ns)
 }
