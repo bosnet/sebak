@@ -103,7 +103,7 @@ func TestValidatorNewValidatorFromString(t *testing.T) {
 
 	require.Equal(t, "v1", validator.Alias())
 	require.Equal(t, "https://localhost:5000", validator.Endpoint().String())
-	require.Equal(t, NodeStateNONE, validator.State())
+	require.Equal(t, StateNONE, validator.State())
 }
 
 func TestValidatorUnMarshalJSON(t *testing.T) {
@@ -126,5 +126,5 @@ func TestValidatorUnMarshalJSON(t *testing.T) {
 
 	require.Equal(t, "v1", validator.Alias())
 	require.Equal(t, "https://localhost:5000", validator.Endpoint().String())
-	require.Equal(t, NodeStateNONE, validator.State())
+	require.Equal(t, StateNONE, validator.State())
 }

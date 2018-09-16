@@ -12,7 +12,7 @@ type Node interface {
 	Equal(Node) bool
 	DeepEqual(Node) bool
 	Serialize() ([]byte, error)
-	State() NodeState
+	State() State
 	SetBooting()
 	SetSync()
 	SetConsensus()

@@ -22,13 +22,13 @@ type ValidatorFromJSON struct {
 	Alias    string           `json:"alias"`
 	Address  string           `json:"address"`
 	Endpoint *common.Endpoint `json:"endpoint"`
-	State    NodeState        `json:"state"`
+	State    State            `json:"state"`
 }
 
 type Validator struct {
 	sync.Mutex
 
-	state    NodeState
+	state    State
 	alias    string
 	address  string
 	endpoint *common.Endpoint
@@ -57,24 +57,24 @@ func (v *Validator) DeepEqual(a Node) bool {
 	return true
 }
 
-func (v *Validator) State() NodeState {
+func (v *Validator) State() State {
 	return v.state
 }
 
 func (v *Validator) SetBooting() {
-	v.state = NodeStateBOOTING
+	v.state = StateBOOTING
 }
 
 func (v *Validator) SetSync() {
-	v.state = NodeStateSYNC
+	v.state = StateSYNC
 }
 
 func (v *Validator) SetConsensus() {
-	v.state = NodeStateCONSENSUS
+	v.state = StateCONSENSUS
 }
 
 func (v *Validator) SetTerminating() {
-	v.state = NodeStateTERMINATING
+	v.state = StateTERMINATING
 }
 
 func (v *Validator) Address() string {
@@ -130,7 +130,7 @@ func NewValidator(address string, endpoint *common.Endpoint, alias string) (v *V
 	}
 
 	v = &Validator{
-		state:    NodeStateNONE,
+		state:    StateNONE,
 		alias:    alias,
 		address:  address,
 		endpoint: endpoint,

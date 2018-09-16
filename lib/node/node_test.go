@@ -18,19 +18,19 @@ func TestNodeStateChange(t *testing.T) {
 
 	node, _ := NewLocalNode(kp, endpoint, "")
 
-	require.Equal(t, NodeStateNONE, node.State())
+	require.Equal(t, StateNONE, node.State())
 
 	node.SetBooting()
-	require.Equal(t, NodeStateBOOTING, node.State())
+	require.Equal(t, StateBOOTING, node.State())
 
 	node.SetSync()
-	require.Equal(t, NodeStateSYNC, node.State())
+	require.Equal(t, StateSYNC, node.State())
 
 	node.SetConsensus()
-	require.Equal(t, NodeStateCONSENSUS, node.State())
+	require.Equal(t, StateCONSENSUS, node.State())
 
 	node.SetTerminating()
-	require.Equal(t, NodeStateTERMINATING, node.State())
+	require.Equal(t, StateTERMINATING, node.State())
 
 }
 
