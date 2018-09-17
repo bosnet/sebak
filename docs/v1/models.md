@@ -17,7 +17,7 @@
 ### Transaction
 + hash: `ghf6msRhE4jRf5DPib9UHD1msadvmZs9o53V9FQTb11` (string,required)
 + source: `GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ` (string,required) 
-+ fee: `10000` (string,required)
++ fee: `10000` (string,required) - when user sent money to another account, fee have to be charged. 
 + sequence_id: 0 (number)
 + created: `2018-09-12T09:08:35.157472400Z` - transaction created time. 
 + operation_count: 1 (number)
@@ -38,14 +38,14 @@
     + hash: `2g3ZSrEnsUWeX5Mxz5uTh2b4KVpVQS7Ek2HzZd759FHn`
     + signature: `3oWmCMNHExRQnZVEBSH16ZBgLE6ayz7t1fsjzTjAB6WpXMpkDJbhcL8KudqFFG21XmfSXnJH1BLhnBUh4p68yFeR`
 + B
-    + source: GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ
-    + fee: 10000
-    + sequenceID: 1
+    + source: GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ - Account's Public address that send BOSCoin to other account. 
+    + fee: 10000 
+    + sequenceID: 1 
     + operations (array):
         + (object):
-            + H 
+            + H - Operation Header
                 + type: "payment"
-            + B
+            + B - Operation Body
                 + target: GDTEPFWEITKFHSUO44NQABY2XHRBBH2UBVGJ2ZJPDREIOL2F6RAEBJE4
                 + amount: 100000000
 
@@ -62,7 +62,7 @@
                 + href: `/transactions/ghf6msRhE4jRf5DPib9UHD1msadvmZs9o53V9FQTb11`
         + hash:  ghf6msRhE4jRf5DPib9UHD1msadvmZs9o53V9FQTb11
         + account: GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ - Account's public address.
-        + fee: `10000` - when user sent money to another account, fee have to be charged. 
+        + fee: `10000` (string,required) - when user sent money to another account, fee have to be charged. 
         + operation_count: 1
         + sequence_id: 0
 + _links
@@ -82,7 +82,7 @@
             + transactions
                 + href: /transactions/ghf6msRhE4jRf5DPib9UHD1msadvmZs9o53V9FQTb11
         + source: GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ - Account that send money to target. 
-        + amount: 1000000 - BOSCoin amount in its account.
+        + amount: 1000000 - BOSCoin amount to send.
         + target: GDPWP7BOOMEKK6DUQELQD7H5NEENPLDTQQWYOIBSFS65WH7DNG7UWVKB - Account that receive money from source
         + hash: E4qTH5UmzHy2Psdxh8RaQomqJb1gcUZFVENimzV9YB8D
         + type: create-account
