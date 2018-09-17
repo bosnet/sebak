@@ -21,10 +21,9 @@ func NewOperation(bo *block.BlockOperation) *Operation {
 
 func (o Operation) GetMap() hal.Entry {
 	return hal.Entry{
-		"id":      o.bo.Hash,
 		"hash":    o.bo.Hash,
-		"funder":  o.bo.Source,
-		"account": o.bo.Target,
+		"source":  o.bo.Source,
+		"target": o.bo.Target,
 		"type":    o.bo.Type,
 		"amount":  o.bo.Amount.String(),
 	}

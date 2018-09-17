@@ -20,9 +20,8 @@ func NewTransactionHistory(bt *block.BlockTransactionHistory) *TransactionHistor
 
 func (t TransactionHistory) GetMap() hal.Entry {
 	return hal.Entry{
-		"id":        t.bt.Hash,
 		"hash":      t.bt.Hash,
-		"account":   t.bt.Source,
+		"source":    t.bt.Source,
 		"confirmed": t.bt.Confirmed,
 		"created":   t.bt.Created,
 		"message":   t.bt.Message,
