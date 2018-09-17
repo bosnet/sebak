@@ -132,10 +132,7 @@ func TestLevelDBBackendGetRaw(t *testing.T) {
 	st, _ := NewTestMemoryLevelDBBackend()
 	defer st.Close()
 
-	key := "showme"
-	input := "findme"
-
-	st.New(key, input)
+	st.New("showme", "input")
 
 	// when record does not exist, it should return ErrorStorageRecordDoesNotExist
 	if _, err := st.GetRaw("vacuum"); err != errors.ErrorStorageRecordDoesNotExist {
@@ -303,7 +300,7 @@ func TestLevelDBIterator(t *testing.T) {
 	}
 
 	var collected []string
-	it, closeFunc := st.GetIterator("", &IteratorOptions{Reverse: false})
+	it, closeFunc := st.GetIterator("", &DefaultListOptions{reverse: false})
 	for {
 		v, hasNext := it()
 		if !hasNext {
@@ -345,7 +342,7 @@ func TestLevelDBIteratorSeek(t *testing.T) {
 	expected = expected[100:]
 
 	var collected []string
-	it, closeFunc := st.GetIterator("", &IteratorOptions{Reverse: false, Cursor: []byte(fmt.Sprintf("%03d", 100))})
+	it, closeFunc := st.GetIterator("", &DefaultListOptions{reverse: false, cursor: []byte(fmt.Sprintf("%03d", 100))})
 	for {
 		v, hasNext := it()
 		if !hasNext {
@@ -382,7 +379,7 @@ func TestLevelDBIteratorLimit(t *testing.T) {
 	expected = expected[:100]
 
 	var collected []string
-	it, closeFunc := st.GetIterator("", &IteratorOptions{Reverse: false, Limit: 100})
+	it, closeFunc := st.GetIterator("", &DefaultListOptions{reverse: false, limit: 100})
 	for {
 		v, hasNext := it()
 		if !hasNext {
@@ -417,7 +414,7 @@ func TestLevelDBIteratorReverseOrder(t *testing.T) {
 	}
 
 	var collected []string
-	it, closeFunc := st.GetIterator("", &IteratorOptions{Reverse: true})
+	it, closeFunc := st.GetIterator("", &DefaultListOptions{reverse: true})
 	for {
 		v, hasNext := it()
 		if !hasNext {

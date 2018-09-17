@@ -29,16 +29,29 @@ type LevelDBBackend struct {
 	Core LevelDBCore
 }
 
+func setLevelDBCoreError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	return errors.NewError(
+		errors.ErrorStorageCoreError.Code,
+		fmt.Sprintf("%s: %s", errors.ErrorStorageCoreError.Message, err.Error()),
+	)
+}
+
 func (st *LevelDBBackend) Init(config *Config) (err error) {
 	var db *leveldb.DB
 
 	if config.Scheme == "file" {
 		if db, err = leveldb.OpenFile(config.Path, nil); err != nil {
+			err = setLevelDBCoreError(err)
 			return
 		}
 	} else if config.Scheme == "memory" {
 		sto := leveldbStorage.NewMemStorage()
 		if db, err = leveldb.Open(sto, nil); err != nil {
+			err = setLevelDBCoreError(err)
 			return
 		}
 	}
@@ -61,6 +74,7 @@ func (st *LevelDBBackend) OpenTransaction() (*LevelDBBackend, error) {
 
 	transaction, err := st.Core.(*leveldb.DB).OpenTransaction()
 	if err != nil {
+		err = setLevelDBCoreError(err)
 		return nil, err
 	}
 
@@ -73,7 +87,7 @@ func (st *LevelDBBackend) OpenTransaction() (*LevelDBBackend, error) {
 func (st *LevelDBBackend) Discard() error {
 	ts, ok := st.Core.(*leveldb.Transaction)
 	if !ok {
-		return errors.New("this is not *leveldb.Transaction")
+		return setLevelDBCoreError(errors.New("this is not *leveldb.Transaction"))
 	}
 
 	ts.Discard()
@@ -83,10 +97,10 @@ func (st *LevelDBBackend) Discard() error {
 func (st *LevelDBBackend) Commit() error {
 	ts, ok := st.Core.(*leveldb.Transaction)
 	if !ok {
-		return errors.New("this is not *leveldb.Transaction")
+		return setLevelDBCoreError(errors.New("this is not *leveldb.Transaction"))
 	}
 
-	return ts.Commit()
+	return setLevelDBCoreError(ts.Commit())
 }
 
 func (st *LevelDBBackend) makeKey(key string) []byte {
@@ -94,19 +108,28 @@ func (st *LevelDBBackend) makeKey(key string) []byte {
 }
 
 func (st *LevelDBBackend) Has(k string) (bool, error) {
-	return st.Core.Has(st.makeKey(k), nil)
+	ok, err := st.Core.Has(st.makeKey(k), nil)
+	if err != nil {
+		if err == leveldb.ErrNotFound {
+			return false, nil
+		}
+		return false, setLevelDBCoreError(err)
+	}
+
+	return ok, nil
 }
 
 func (st *LevelDBBackend) GetRaw(k string) (b []byte, err error) {
 	var exists bool
-	if exists, err = st.Has(k); !exists || err != nil {
-		if !exists || err == leveldb.ErrNotFound {
+	if exists, err = st.Has(k); err != nil || !exists {
+		if !exists {
 			err = errors.ErrorStorageRecordDoesNotExist
 		}
 		return
 	}
 
 	b, err = st.Core.Get(st.makeKey(k), nil)
+	err = setLevelDBCoreError(err)
 
 	return
 }
@@ -118,6 +141,7 @@ func (st *LevelDBBackend) Get(k string, i interface{}) (err error) {
 	}
 
 	if err = json.Unmarshal(b, &i); err != nil {
+		err = setLevelDBCoreError(err)
 		return
 	}
 
@@ -133,25 +157,27 @@ func (st *LevelDBBackend) New(k string, v interface{}) (err error) {
 		encoded, err = common.EncodeJSONValue(v)
 	}
 	if err != nil {
+		err = setLevelDBCoreError(err)
 		return
 	}
 
 	var exists bool
 	if exists, err = st.Has(k); exists || err != nil {
 		if exists {
-			err = fmt.Errorf("key, '%s' already exists", k)
+			err = errors.ErrorStorageRecordAlreadyExists
+			return
 		}
 		return
 	}
 
-	err = st.Core.Put(st.makeKey(k), encoded, nil)
+	err = setLevelDBCoreError(st.Core.Put(st.makeKey(k), encoded, nil))
 
 	return
 }
 
 func (st *LevelDBBackend) News(vs ...Item) (err error) {
 	if len(vs) < 1 {
-		err = errors.New("empty values")
+		err = setLevelDBCoreError(errors.New("empty values"))
 		return
 	}
 
@@ -159,7 +185,7 @@ func (st *LevelDBBackend) News(vs ...Item) (err error) {
 	for _, v := range vs {
 		if exists, err = st.Has(v.Key); exists || err != nil {
 			if exists {
-				err = fmt.Errorf("found existing key, '%s'", v.Key)
+				err = errors.ErrorStorageRecordAlreadyExists
 			}
 			return
 		}
@@ -169,13 +195,14 @@ func (st *LevelDBBackend) News(vs ...Item) (err error) {
 	for _, v := range vs {
 		var encoded []byte
 		if encoded, err = common.EncodeJSONValue(v); err != nil {
+			err = setLevelDBCoreError(err)
 			return
 		}
 
 		batch.Put(st.makeKey(v.Key), encoded)
 	}
 
-	err = st.Core.Write(batch, nil)
+	err = setLevelDBCoreError(st.Core.Write(batch, nil))
 
 	return
 }
@@ -183,40 +210,27 @@ func (st *LevelDBBackend) News(vs ...Item) (err error) {
 func (st *LevelDBBackend) Set(k string, v interface{}) (err error) {
 	var encoded []byte
 	if encoded, err = common.EncodeJSONValue(v); err != nil {
+		err = setLevelDBCoreError(err)
 		return
 	}
 
 	var exists bool
 	if exists, err = st.Has(k); !exists || err != nil {
 		if !exists {
-			err = fmt.Errorf("key, '%s' does not exists", k)
+			err = errors.ErrorStorageRecordDoesNotExist
+			return
 		}
 		return
 	}
 
-	err = st.Core.Put(st.makeKey(k), encoded, nil)
+	err = setLevelDBCoreError(st.Core.Put(st.makeKey(k), encoded, nil))
 
-	return
-}
-
-func (st *LevelDBBackend) put(k string, v interface{}) (err error) {
-	var encoded []byte
-	serializable, ok := v.(common.Serializable)
-	if ok {
-		encoded, err = serializable.Serialize()
-	} else {
-		encoded, err = common.EncodeJSONValue(v)
-	}
-	if err != nil {
-		return
-	}
-	err = st.Core.Put(st.makeKey(k), encoded, nil)
 	return
 }
 
 func (st *LevelDBBackend) Sets(vs ...Item) (err error) {
 	if len(vs) < 1 {
-		err = errors.New("empty values")
+		err = setLevelDBCoreError(errors.New("empty values"))
 		return
 	}
 
@@ -224,7 +238,8 @@ func (st *LevelDBBackend) Sets(vs ...Item) (err error) {
 	for _, v := range vs {
 		if exists, err = st.Has(v.Key); !exists || err != nil {
 			if !exists {
-				err = fmt.Errorf("not found key, '%s'", v.Key)
+				err = errors.ErrorStorageRecordDoesNotExist
+				return
 			}
 			return
 		}
@@ -234,13 +249,14 @@ func (st *LevelDBBackend) Sets(vs ...Item) (err error) {
 	for _, v := range vs {
 		var encoded []byte
 		if encoded, err = common.EncodeJSONValue(v); err != nil {
+			err = setLevelDBCoreError(err)
 			return
 		}
 
 		batch.Put(st.makeKey(v.Key), encoded)
 	}
 
-	err = st.Core.Write(batch, nil)
+	err = setLevelDBCoreError(st.Core.Write(batch, nil))
 
 	return
 }
@@ -249,30 +265,25 @@ func (st *LevelDBBackend) Remove(k string) (err error) {
 	var exists bool
 	if exists, err = st.Has(k); !exists || err != nil {
 		if !exists {
-			err = fmt.Errorf("key, '%s' does not exists", k)
+			err = errors.ErrorStorageRecordDoesNotExist
+			return
 		}
 		return
 	}
 
-	err = st.Core.Delete(st.makeKey(k), nil)
+	err = setLevelDBCoreError(st.Core.Delete(st.makeKey(k), nil))
 
 	return
 }
 
-type IteratorOptions struct {
-	Reverse bool
-	Cursor  []byte
-	Limit   uint64
-}
-
-func (st *LevelDBBackend) GetIterator(prefix string, option *IteratorOptions) (func() (IterItem, bool), func()) {
+func (st *LevelDBBackend) GetIterator(prefix string, option ListOptions) (func() (IterItem, bool), func()) {
 	var reverse = false
 	var cursor []byte
 	var limit uint64 = 0
 	if option != nil {
-		reverse = option.Reverse
-		cursor = option.Cursor
-		limit = option.Limit
+		reverse = option.Reverse()
+		cursor = option.Cursor()
+		limit = option.Limit()
 	}
 
 	var dbRange *leveldbUtil.Range

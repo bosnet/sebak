@@ -47,7 +47,7 @@ func (s *StateDB) Remove(k string) error {
 }
 
 func (s *StateDB) GetIterator(prefix string, reverse bool) (func() (IterItem, bool), func()) {
-	return s.levelDB.GetIterator(prefix, &IteratorOptions{Reverse: reverse})
+	return s.levelDB.GetIterator(prefix, &DefaultListOptions{reverse: reverse})
 }
 
 func (s *StateDB) News(vs ...Item) error {

@@ -137,7 +137,7 @@ func TestMultipleBlockTransactionSource(t *testing.T) {
 	{
 		// reverse order
 		var saved []BlockTransaction
-		iterFunc, closeFunc := GetBlockTransactionsBySource(st, kp.Address(), &storage.IteratorOptions{Reverse: true})
+		iterFunc, closeFunc := GetBlockTransactionsBySource(st, kp.Address(), storage.NewDefaultListOptions(true, nil, uint64(numTxs)))
 		for {
 			bo, hasNext, _ := iterFunc()
 			if !hasNext {
@@ -201,7 +201,7 @@ func TestMultipleBlockTransactionConfirmed(t *testing.T) {
 	{
 		// reverse order
 		var saved []BlockTransaction
-		iterFunc, closeFunc := GetBlockTransactionsByConfirmed(st, &storage.IteratorOptions{Reverse: true})
+		iterFunc, closeFunc := GetBlockTransactionsByConfirmed(st, storage.NewDefaultListOptions(true, nil, uint64(numTxs)))
 		for {
 			bo, hasNext, _ := iterFunc()
 			if !hasNext {
@@ -483,7 +483,7 @@ func TestMultipleBlockTransactionsOrderByBlockHeightAndCursor(t *testing.T) {
 	// Check transactions filtered by cursor
 	{
 		var saved []BlockTransaction
-		iterFunc, closeFunc := GetBlockTransactionsByAccount(st, kp.Address(), &storage.IteratorOptions{Reverse: false, Cursor: theCursor})
+		iterFunc, closeFunc := GetBlockTransactionsByAccount(st, kp.Address(), storage.NewDefaultListOptions(false, theCursor, uint64(numTxs)))
 		for {
 			bo, hasNext, _ := iterFunc()
 			if !hasNext {

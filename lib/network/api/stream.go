@@ -24,6 +24,7 @@ type EventStream struct {
 	writer      http.ResponseWriter
 	flusher     http.Flusher
 	err         error
+	rendered    bool
 }
 
 type RenderFunc func(args ...interface{}) ([]byte, error)
@@ -72,8 +73,6 @@ func NewEventStream(w http.ResponseWriter, r *http.Request, renderFunc RenderFun
 		contentType: ct,
 	}
 
-	w.Header().Set("Content-Type", es.contentType)
-
 	flusher, ok := w.(http.Flusher)
 	if !ok {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -90,6 +89,7 @@ func (s *EventStream) Render(args ...interface{}) {
 	if s.err != nil {
 		return
 	}
+
 	var bs []byte
 	var renderArgs []interface{}
 	renderArgs = append(renderArgs, "pre")
@@ -98,6 +98,11 @@ func (s *EventStream) Render(args ...interface{}) {
 		bs = s.errMessage(err)
 	} else {
 		bs = payload
+	}
+
+	if !s.rendered {
+		s.writer.Header().Set("Content-Type", s.contentType)
+		s.rendered = true
 	}
 
 	fmt.Fprintf(s.writer, "%s\n", bs)

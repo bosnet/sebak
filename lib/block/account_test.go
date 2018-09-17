@@ -103,9 +103,10 @@ func TestBlockAccountSaveBlockAccountSequenceIDs(t *testing.T) {
 	b := TestMakeBlockAccount()
 	b.Save(st)
 
+	expectedSavedLength := 10
 	var saved []BlockAccount
 	saved = append(saved, *b)
-	for i := 0; i < 10; i++ {
+	for i := 0; i < expectedSavedLength-len(saved); i++ {
 		b.SequenceID = rand.Uint64()
 		b.Save(st)
 
@@ -113,7 +114,8 @@ func TestBlockAccountSaveBlockAccountSequenceIDs(t *testing.T) {
 	}
 
 	var fetched []BlockAccountSequenceID
-	iterFunc, closeFunc := GetBlockAccountSequenceIDByAddress(st, b.Address, &storage.IteratorOptions{Reverse: false})
+	options := storage.NewDefaultListOptions(false, nil, uint64(expectedSavedLength))
+	iterFunc, closeFunc := GetBlockAccountSequenceIDByAddress(st, b.Address, options)
 	for {
 		bac, hasNext, _ := iterFunc()
 		if !hasNext {
@@ -123,10 +125,11 @@ func TestBlockAccountSaveBlockAccountSequenceIDs(t *testing.T) {
 	}
 	closeFunc()
 
-	for i := 0; i < len(saved); i++ {
-		require.Equal(t, saved[i].Address, fetched[i].Address)
-		require.Equal(t, saved[i].GetBalance(), fetched[i].Balance)
-		require.Equal(t, saved[i].SequenceID, fetched[i].SequenceID)
+	require.Equal(t, len(saved), len(fetched))
+	for i, b := range saved {
+		require.Equal(t, b.Address, fetched[i].Address)
+		require.Equal(t, b.GetBalance(), fetched[i].Balance)
+		require.Equal(t, b.SequenceID, fetched[i].SequenceID)
 	}
 }
 func TestBlockAccountObserver(t *testing.T) {

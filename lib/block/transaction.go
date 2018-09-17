@@ -115,11 +115,11 @@ func (bt *BlockTransaction) Save(st *storage.LevelDBBackend) (err error) {
 	key := GetBlockTransactionKey(bt.Hash)
 
 	var exists bool
-	exists, err = st.Has(key)
-	if err != nil {
+	if exists, err = st.Has(key); exists || err != nil {
+		if exists {
+			return errors.ErrorBlockAlreadyExists
+		}
 		return
-	} else if exists {
-		return errors.ErrorBlockAlreadyExists
 	}
 
 	bt.Confirmed = common.NowISO8601()
@@ -234,37 +234,37 @@ func LoadBlockTransactionsInsideIterator(
 		})
 }
 
-func GetBlockTransactionsBySource(st *storage.LevelDBBackend, source string, iteratorOptions *storage.IteratorOptions) (
+func GetBlockTransactionsBySource(st *storage.LevelDBBackend, source string, options storage.ListOptions) (
 	func() (BlockTransaction, bool, []byte),
 	func(),
 ) {
-	iterFunc, closeFunc := st.GetIterator(GetBlockTransactionKeyPrefixSource(source), iteratorOptions)
+	iterFunc, closeFunc := st.GetIterator(GetBlockTransactionKeyPrefixSource(source), options)
 
 	return LoadBlockTransactionsInsideIterator(st, iterFunc, closeFunc)
 }
 
-func GetBlockTransactionsByConfirmed(st *storage.LevelDBBackend, iteratorOptions *storage.IteratorOptions) (
+func GetBlockTransactionsByConfirmed(st *storage.LevelDBBackend, options storage.ListOptions) (
 	func() (BlockTransaction, bool, []byte),
 	func(),
 ) {
-	iterFunc, closeFunc := st.GetIterator(common.BlockTransactionPrefixConfirmed, iteratorOptions)
+	iterFunc, closeFunc := st.GetIterator(common.BlockTransactionPrefixConfirmed, options)
 
 	return LoadBlockTransactionsInsideIterator(st, iterFunc, closeFunc)
 }
 
-func GetBlockTransactionsByAccount(st *storage.LevelDBBackend, accountAddress string, iteratorOptions *storage.IteratorOptions) (
+func GetBlockTransactionsByAccount(st *storage.LevelDBBackend, accountAddress string, options storage.ListOptions) (
 	func() (BlockTransaction, bool, []byte),
 	func(),
 ) {
-	iterFunc, closeFunc := st.GetIterator(GetBlockTransactionKeyPrefixAccount(accountAddress), iteratorOptions)
+	iterFunc, closeFunc := st.GetIterator(GetBlockTransactionKeyPrefixAccount(accountAddress), options)
 	return LoadBlockTransactionsInsideIterator(st, iterFunc, closeFunc)
 }
 
-func GetBlockTransactionsByBlock(st *storage.LevelDBBackend, hash string, iteratorOptions *storage.IteratorOptions) (
+func GetBlockTransactionsByBlock(st *storage.LevelDBBackend, hash string, options storage.ListOptions) (
 	func() (BlockTransaction, bool, []byte),
 	func(),
 ) {
-	iterFunc, closeFunc := st.GetIterator(GetBlockTransactionKeyPrefixBlock(hash), iteratorOptions)
+	iterFunc, closeFunc := st.GetIterator(GetBlockTransactionKeyPrefixBlock(hash), options)
 	return LoadBlockTransactionsInsideIterator(st, iterFunc, closeFunc)
 }
 

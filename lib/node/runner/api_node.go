@@ -8,11 +8,21 @@ import (
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
+	"boscoin.io/sebak/lib/storage"
 )
 
 type NetworkHandlerNode struct {
 	localNode *node.LocalNode
 	network   network.Network
+	storage   *storage.LevelDBBackend
+}
+
+func NewNetworkHandlerNode(localNode *node.LocalNode, network network.Network, storage *storage.LevelDBBackend) *NetworkHandlerNode {
+	return &NetworkHandlerNode{
+		localNode: localNode,
+		network:   network,
+		storage:   storage,
+	}
 }
 
 func (api NetworkHandlerNode) NodeInfoHandler(w http.ResponseWriter, r *http.Request) {
@@ -31,6 +41,7 @@ func (api NetworkHandlerNode) ConnectHandler(w http.ResponseWriter, r *http.Requ
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Error reading request body", http.StatusInternalServerError)
+		return
 	}
 
 	api.network.MessageBroker().Receive(common.NetworkMessage{Type: common.ConnectMessage, Data: body})
