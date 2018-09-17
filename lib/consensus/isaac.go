@@ -125,7 +125,7 @@ func (is *ISAAC) IsAvailableRound(round round.Round) bool {
 	return true
 }
 
-func (is *ISAAC) IsVoted(b block.Ballot) bool {
+func (is *ISAAC) IsVoted(b ballot.Ballot) bool {
 	is.RLock()
 	defer is.RUnlock()
 	var found bool
@@ -138,7 +138,7 @@ func (is *ISAAC) IsVoted(b block.Ballot) bool {
 	return runningRound.IsVoted(b)
 }
 
-func (is *ISAAC) Vote(b block.Ballot) (isNew bool, err error) {
+func (is *ISAAC) Vote(b ballot.Ballot) (isNew bool, err error) {
 	is.RLock()
 	defer is.RUnlock()
 	roundHash := b.Round().Hash()
@@ -167,7 +167,7 @@ func (is *ISAAC) Vote(b block.Ballot) (isNew bool, err error) {
 
 	return
 }
-func (is *ISAAC) CanGetVotingResult(b block.Ballot) (RoundVoteResult, ballot.VotingHole, bool) {
+func (is *ISAAC) CanGetVotingResult(b ballot.Ballot) (RoundVoteResult, ballot.VotingHole, bool) {
 	is.RLock()
 	defer is.RUnlock()
 	runningRound, _ := is.RunningRounds[b.Round().Hash()]
@@ -178,7 +178,7 @@ func (is *ISAAC) CanGetVotingResult(b block.Ballot) (RoundVoteResult, ballot.Vot
 	}
 }
 
-func (is *ISAAC) IsVotedByNode(b block.Ballot, node string) (bool, error) {
+func (is *ISAAC) IsVotedByNode(b ballot.Ballot, node string) (bool, error) {
 	is.RLock()
 	defer is.RUnlock()
 	runningRound, _ := is.RunningRounds[b.Round().Hash()]
@@ -196,7 +196,7 @@ func (is *ISAAC) HasRunningRound(roundHash string) bool {
 	return found
 }
 
-func (is *ISAAC) HasSameProposer(b block.Ballot) bool {
+func (is *ISAAC) HasSameProposer(b ballot.Ballot) bool {
 	is.RLock()
 	defer is.RUnlock()
 	if runningRound, found := is.RunningRounds[b.Round().Hash()]; found {

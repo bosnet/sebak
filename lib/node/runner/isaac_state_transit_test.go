@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"boscoin.io/sebak/lib/ballot"
-	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/consensus"
 )
 
@@ -42,7 +41,7 @@ func TestStateINITProposer(t *testing.T) {
 	require.Equal(t, 1, len(b.Messages()))
 	for _, message := range b.Messages() {
 		// This message must be proposed ballot
-		b, ok := message.(block.Ballot)
+		b, ok := message.(ballot.Ballot)
 		require.True(t, ok)
 		require.Equal(t, nr.localNode.Address(), b.Proposer())
 	}
@@ -116,7 +115,7 @@ func TestStateINITTimeoutNotProposer(t *testing.T) {
 	require.Equal(t, 1, len(b.Messages()))
 	init, sign, accept := 0, 0, 0
 	for _, message := range b.Messages() {
-		b, ok := message.(block.Ballot)
+		b, ok := message.(ballot.Ballot)
 		require.True(t, ok)
 		require.Equal(t, 0, len(b.Transactions()))
 		switch b.State() {
@@ -177,7 +176,7 @@ func TestStateSIGNTimeoutProposer(t *testing.T) {
 
 	init, sign, accept := 0, 0, 0
 	for _, message := range b.Messages() {
-		b, ok := message.(block.Ballot)
+		b, ok := message.(ballot.Ballot)
 		require.True(t, ok)
 		require.Equal(t, 0, len(b.Transactions()))
 		switch b.State() {
@@ -239,7 +238,7 @@ func TestStateSIGNTimeoutNotProposer(t *testing.T) {
 
 	init, sign, accept := 0, 0, 0
 	for _, message := range b.Messages() {
-		b, ok := message.(block.Ballot)
+		b, ok := message.(ballot.Ballot)
 		require.True(t, ok)
 		require.Equal(t, 0, len(b.Transactions()))
 		switch b.State() {
@@ -301,7 +300,7 @@ func TestStateACCEPTTimeoutProposerThenNotProposer(t *testing.T) {
 	require.Equal(t, 2, len(b.Messages()))
 	init, sign, accept := 0, 0, 0
 	for _, message := range b.Messages() {
-		b, ok := message.(block.Ballot)
+		b, ok := message.(ballot.Ballot)
 		require.True(t, ok)
 		require.Equal(t, 0, len(b.Transactions()))
 		switch b.State() {
@@ -365,7 +364,7 @@ func TestStateTransitFromTimeoutInitToAccept(t *testing.T) {
 	require.Equal(t, 1, len(b.Messages()))
 
 	for _, message := range b.Messages() {
-		b, ok := message.(block.Ballot)
+		b, ok := message.(ballot.Ballot)
 		require.True(t, ok)
 		require.Equal(t, nr.localNode.Address(), b.Proposer())
 		require.Equal(t, ballot.StateACCEPT, b.State())
@@ -406,7 +405,7 @@ func TestStateTransitFromTimeoutSignToAccept(t *testing.T) {
 
 	require.Equal(t, 1, len(b.Messages()))
 	for _, message := range b.Messages() {
-		b, ok := message.(block.Ballot)
+		b, ok := message.(ballot.Ballot)
 		require.True(t, ok)
 		require.Equal(t, nr.localNode.Address(), b.Proposer())
 		require.Equal(t, ballot.StateINIT, b.State())
@@ -418,7 +417,7 @@ func TestStateTransitFromTimeoutSignToAccept(t *testing.T) {
 
 	require.Equal(t, 2, len(b.Messages()))
 	for _, message := range b.Messages() {
-		b, ok := message.(block.Ballot)
+		b, ok := message.(ballot.Ballot)
 		require.True(t, ok)
 		require.Equal(t, nr.localNode.Address(), b.Proposer())
 		require.Equal(t, ballot.StateINIT, b.State())

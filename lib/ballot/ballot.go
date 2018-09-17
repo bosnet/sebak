@@ -1,4 +1,4 @@
-package block
+package ballot
 
 import (
 	"encoding/json"
@@ -7,13 +7,10 @@ import (
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/stellar/go/keypair"
 
-	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/consensus/round"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/node"
-	"boscoin.io/sebak/lib/storage"
-	"boscoin.io/sebak/lib/transaction"
 )
 
 type Ballot struct {
@@ -29,12 +26,12 @@ func NewBallot(localNode *node.LocalNode, round round.Round, transactions []stri
 			Round:        round,
 			Transactions: transactions,
 		},
-		State: ballot.StateINIT,
-		Vote:  ballot.VotingNOTYET,
+		State: StateINIT,
+		Vote:  VotingNOTYET,
 	}
 
 	if len(transactions) < 1 {
-		body.Vote = ballot.VotingYES
+		body.Vote = VotingYES
 	}
 
 	b = &Ballot{
@@ -137,7 +134,7 @@ func (b Ballot) ProposerConfirmed() string {
 	return b.B.Proposed.Confirmed
 }
 
-func (b Ballot) Vote() ballot.VotingHole {
+func (b Ballot) Vote() VotingHole {
 	return b.B.Vote
 }
 
@@ -145,7 +142,7 @@ func (b *Ballot) SetSource(source string) {
 	b.B.Source = source
 }
 
-func (b *Ballot) SetVote(state ballot.State, vote ballot.VotingHole) {
+func (b *Ballot) SetVote(state State, vote VotingHole) {
 	b.B.State = state
 	b.B.Vote = vote
 }
@@ -206,7 +203,7 @@ func (b Ballot) IsFromProposer() bool {
 	return b.B.Source == b.B.Proposed.Proposer
 }
 
-func (b Ballot) State() ballot.State {
+func (b Ballot) State() State {
 	return b.B.State
 }
 
@@ -227,8 +224,8 @@ type BallotBody struct {
 	Confirmed string             `json:"confirmed"` // created time, ISO8601
 	Proposed  BallotBodyProposed `json:"proposed"`
 	Source    string             `json:"source"`
-	State     ballot.State       `json:"state"`
-	Vote      ballot.VotingHole  `json:"vote"`
+	State     State              `json:"state"`
+	Vote      VotingHole         `json:"vote"`
 	Reason    *errors.Error      `json:"reason"`
 }
 
@@ -238,129 +235,4 @@ func (rb BallotBody) MakeHash() []byte {
 
 func (rb BallotBody) MakeHashString() string {
 	return base58.Encode(rb.MakeHash())
-}
-
-func FinishBallot(st *storage.LevelDBBackend, ballot Ballot, transactionPool *transaction.TransactionPool) (blk Block, err error) {
-	var ts *storage.LevelDBBackend
-	if ts, err = st.OpenTransaction(); err != nil {
-		return
-	}
-
-	transactions := map[string]transaction.Transaction{}
-	for _, hash := range ballot.B.Proposed.Transactions {
-		tx, found := transactionPool.Get(hash)
-		if !found {
-			err = errors.ErrorTransactionNotFound
-			return
-		}
-		transactions[hash] = tx
-	}
-
-	blk = NewBlockFromBallot(ballot)
-	if err = blk.Save(ts); err != nil {
-		return
-	}
-
-	for _, hash := range ballot.B.Proposed.Transactions {
-		tx := transactions[hash]
-		raw, _ := json.Marshal(tx)
-
-		bt := NewBlockTransactionFromTransaction(blk.Hash, blk.Height, tx, raw)
-		if err = bt.Save(ts); err != nil {
-			ts.Discard()
-			return
-		}
-		for _, op := range tx.B.Operations {
-			if err = FinishOperation(ts, tx, op); err != nil {
-				ts.Discard()
-				return
-			}
-		}
-
-		var baSource *BlockAccount
-		if baSource, err = GetBlockAccount(ts, tx.B.Source); err != nil {
-			err = errors.ErrorBlockAccountDoesNotExists
-			ts.Discard()
-			return
-		}
-
-		if err = baSource.Withdraw(tx.TotalAmount(true), tx.NextSequenceID()); err != nil {
-			ts.Discard()
-			return
-		}
-
-		if err = baSource.Save(ts); err != nil {
-			ts.Discard()
-			return
-		}
-
-	}
-
-	if err = ts.Commit(); err != nil {
-		ts.Discard()
-	}
-
-	return
-}
-
-// FinishOperation do finish the task after consensus by the type of each operation.
-func FinishOperation(st *storage.LevelDBBackend, tx transaction.Transaction, op transaction.Operation) (err error) {
-	switch op.H.Type {
-	case transaction.OperationCreateAccount:
-		return FinishOperationCreateAccount(st, tx, op)
-	case transaction.OperationPayment:
-		return FinishOperationPayment(st, tx, op)
-	default:
-		err = errors.ErrorUnknownOperationType
-		return
-	}
-}
-
-func FinishOperationCreateAccount(st *storage.LevelDBBackend, tx transaction.Transaction, op transaction.Operation) (err error) {
-	var baSource, baTarget *BlockAccount
-	if baSource, err = GetBlockAccount(st, tx.B.Source); err != nil {
-		err = errors.ErrorBlockAccountDoesNotExists
-		return
-	}
-	if baTarget, err = GetBlockAccount(st, op.B.TargetAddress()); err == nil {
-		err = errors.ErrorBlockAccountAlreadyExists
-		return
-	} else {
-		err = nil
-	}
-
-	baTarget = NewBlockAccount(
-		op.B.TargetAddress(),
-		op.B.GetAmount(),
-	)
-	if err = baTarget.Save(st); err != nil {
-		return
-	}
-
-	log.Debug("new account created", "source", baSource, "target", baTarget)
-
-	return
-}
-
-func FinishOperationPayment(st *storage.LevelDBBackend, tx transaction.Transaction, op transaction.Operation) (err error) {
-	var baSource, baTarget *BlockAccount
-	if baSource, err = GetBlockAccount(st, tx.B.Source); err != nil {
-		err = errors.ErrorBlockAccountDoesNotExists
-		return
-	}
-	if baTarget, err = GetBlockAccount(st, op.B.TargetAddress()); err != nil {
-		err = errors.ErrorBlockAccountDoesNotExists
-		return
-	}
-
-	if err = baTarget.Deposit(op.B.GetAmount()); err != nil {
-		return
-	}
-	if err = baTarget.Save(st); err != nil {
-		return
-	}
-
-	log.Debug("payment done", "source", baSource, "target", baTarget, "amount", op.B.GetAmount())
-
-	return
 }

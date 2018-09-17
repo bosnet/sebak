@@ -3,7 +3,7 @@ package consensus
 import (
 	"sync"
 
-	"boscoin.io/sebak/lib/block"
+	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/consensus/round"
 	"boscoin.io/sebak/lib/error"
 )
@@ -17,7 +17,7 @@ type RunningRound struct {
 	Voted        map[ /* Proposer */ string]*RoundVote
 }
 
-func NewRunningRound(proposer string, ballot block.Ballot) (*RunningRound, error) {
+func NewRunningRound(proposer string, ballot ballot.Ballot) (*RunningRound, error) {
 	transactions := map[string][]string{
 		ballot.Proposer(): ballot.Transactions(),
 	}
@@ -45,7 +45,7 @@ func (rr *RunningRound) RoundVote(proposer string) (rv *RoundVote, err error) {
 	return
 }
 
-func (rr *RunningRound) IsVoted(ballot block.Ballot) bool {
+func (rr *RunningRound) IsVoted(ballot ballot.Ballot) bool {
 	rr.RLock()
 	defer rr.RUnlock()
 	if roundVote, found := rr.Voted[ballot.Proposer()]; !found {
@@ -55,7 +55,7 @@ func (rr *RunningRound) IsVoted(ballot block.Ballot) bool {
 	}
 }
 
-func (rr *RunningRound) Vote(ballot block.Ballot) {
+func (rr *RunningRound) Vote(ballot ballot.Ballot) {
 	rr.Lock()
 	defer rr.Unlock()
 

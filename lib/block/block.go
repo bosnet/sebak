@@ -6,6 +6,7 @@ import (
 
 	"github.com/btcsuite/btcutil/base58"
 
+	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/consensus/round"
 	"boscoin.io/sebak/lib/error"
@@ -71,12 +72,12 @@ func NewBlock(proposer string, round round.Round, transactions []string, confirm
 	return *b
 }
 
-func NewBlockFromBallot(ballot Ballot) Block {
+func NewBlockFromBallot(b ballot.Ballot) Block {
 	return NewBlock(
-		ballot.Proposer(),
-		ballot.Round(),
-		ballot.Transactions(),
-		ballot.ProposerConfirmed(),
+		b.Proposer(),
+		b.Round(),
+		b.Transactions(),
+		b.ProposerConfirmed(),
 	)
 }
 
