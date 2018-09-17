@@ -1,4 +1,4 @@
-package block
+package ballot
 
 import (
 	"testing"
@@ -11,10 +11,11 @@ import (
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/consensus/round"
 	"boscoin.io/sebak/lib/error"
-	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/transaction"
 )
+
+var networkID []byte = []byte("sebak-test-network")
 
 func TestErrorBallotHasOverMaxTransactionsInBallot(t *testing.T) {
 	MaxTransactionsInBallotOrig := common.MaxTransactionsInBallot
@@ -24,7 +25,10 @@ func TestErrorBallotHasOverMaxTransactionsInBallot(t *testing.T) {
 
 	common.MaxTransactionsInBallot = 2
 
-	_, _, node := network.CreateMemoryNetwork(nil)
+	kp, _ := keypair.Random()
+	endpoint, _ := common.NewEndpointFromString("https://localhost:1000")
+	node, _ := node.NewLocalNode(kp, endpoint, "")
+
 	round := round.Round{Number: 0, BlockHeight: 1, BlockHash: "hahaha", TotalTxs: 1}
 	_, tx := transaction.TestMakeTransaction(networkID, 1)
 

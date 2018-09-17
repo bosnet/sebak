@@ -108,8 +108,8 @@ func (c *SelfProposerThenNotProposer) Calculate(blockHeight uint64, roundNumber 
 	}
 }
 
-func GenerateBallot(t *testing.T, proposer *node.LocalNode, round round.Round, tx transaction.Transaction, ballotState ballot.State, sender *node.LocalNode) *block.Ballot {
-	b := block.NewBallot(proposer, round, []string{tx.GetHash()})
+func GenerateBallot(t *testing.T, proposer *node.LocalNode, round round.Round, tx transaction.Transaction, ballotState ballot.State, sender *node.LocalNode) *ballot.Ballot {
+	b := ballot.NewBallot(proposer, round, []string{tx.GetHash()})
 	b.SetVote(ballot.StateINIT, ballot.VotingYES)
 	b.Sign(proposer.Keypair(), networkID)
 
@@ -123,8 +123,8 @@ func GenerateBallot(t *testing.T, proposer *node.LocalNode, round round.Round, t
 	return b
 }
 
-func GenerateEmptyTxBallot(t *testing.T, proposer *node.LocalNode, round round.Round, ballotState ballot.State, sender *node.LocalNode) *block.Ballot {
-	b := block.NewBallot(proposer, round, []string{})
+func GenerateEmptyTxBallot(t *testing.T, proposer *node.LocalNode, round round.Round, ballotState ballot.State, sender *node.LocalNode) *ballot.Ballot {
+	b := ballot.NewBallot(proposer, round, []string{})
 	b.SetVote(ballot.StateINIT, ballot.VotingYES)
 	b.Sign(proposer.Keypair(), networkID)
 
@@ -138,7 +138,7 @@ func GenerateEmptyTxBallot(t *testing.T, proposer *node.LocalNode, round round.R
 	return b
 }
 
-func ReceiveBallot(t *testing.T, nodeRunner *NodeRunner, ballot *block.Ballot) error {
+func ReceiveBallot(t *testing.T, nodeRunner *NodeRunner, ballot *ballot.Ballot) error {
 	data, err := ballot.Serialize()
 	require.Nil(t, err)
 

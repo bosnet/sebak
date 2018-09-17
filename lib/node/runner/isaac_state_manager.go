@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"boscoin.io/sebak/lib/ballot"
-	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/consensus"
 	"boscoin.io/sebak/lib/consensus/round"
 )
@@ -131,7 +130,7 @@ func (sm *ISAACStateManager) broadcastExpiredBallot(state consensus.ISAACState) 
 		TotalTxs:    b.TotalTxs,
 	}
 
-	newExpiredBallot := block.NewBallot(sm.nr.localNode, round, []string{})
+	newExpiredBallot := ballot.NewBallot(sm.nr.localNode, round, []string{})
 	newExpiredBallot.SetVote(state.BallotState.Next(), ballot.VotingEXP)
 	newExpiredBallot.Sign(sm.nr.localNode.Keypair(), sm.nr.networkID)
 
