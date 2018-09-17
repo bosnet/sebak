@@ -11,11 +11,15 @@ import (
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/network/api/resource"
 	"boscoin.io/sebak/lib/network/httputils"
+	"boscoin.io/sebak/lib/storage"
 )
 
 func (api NetworkHandlerAPI) GetTransactionsHandler(w http.ResponseWriter, r *http.Request) {
-
-	iteratorOptions := parseQueryString(r)
+	iteratorOptions, err := storage.NewDefaultListOptionsFromQuery(r.URL.Query())
+	if err != nil {
+		http.Error(w, errors.ErrorInvalidQueryString.Error(), http.StatusBadRequest)
+		return
+	}
 	var cursor []byte
 	readFunc := func() []resource.Resource {
 		var txs []resource.Resource
@@ -35,7 +39,7 @@ func (api NetworkHandlerAPI) GetTransactionsHandler(w http.ResponseWriter, r *ht
 	if httputils.IsEventStream(r) {
 		event := "saved"
 		es := NewEventStream(w, r, renderEventStream, DefaultContentType)
-		iteratorOptions.Limit = 10
+		iteratorOptions.SetLimit(10)
 		txs := readFunc()
 		for _, tx := range txs {
 			es.Render(tx)
@@ -102,7 +106,11 @@ func (api NetworkHandlerAPI) GetTransactionByHashHandler(w http.ResponseWriter, 
 func (api NetworkHandlerAPI) GetTransactionsByAccountHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	address := vars["id"]
-	iteratorOptions := parseQueryString(r)
+	iteratorOptions, err := storage.NewDefaultListOptionsFromQuery(r.URL.Query())
+	if err != nil {
+		http.Error(w, errors.ErrorInvalidQueryString.Error(), http.StatusBadRequest)
+		return
+	}
 	var cursor []byte
 	readFunc := func() []resource.Resource {
 		var txs []resource.Resource
@@ -122,7 +130,7 @@ func (api NetworkHandlerAPI) GetTransactionsByAccountHandler(w http.ResponseWrit
 	if httputils.IsEventStream(r) {
 		event := fmt.Sprintf("source-%s", address)
 		es := NewEventStream(w, r, renderEventStream, DefaultContentType)
-		iteratorOptions.Limit = 10
+		iteratorOptions.SetLimit(10)
 		txs := readFunc()
 		for _, tx := range txs {
 			es.Render(tx)

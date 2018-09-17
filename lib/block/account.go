@@ -101,8 +101,8 @@ func GetBlockAccount(st *storage.LevelDBBackend, address string) (b *BlockAccoun
 	return
 }
 
-func GetBlockAccountAddressesByCreated(st *storage.LevelDBBackend, iteratorOptions *storage.IteratorOptions) (func() (string, bool, []byte), func()) {
-	iterFunc, closeFunc := st.GetIterator(common.BlockAccountPrefixCreated, iteratorOptions)
+func GetBlockAccountAddressesByCreated(st *storage.LevelDBBackend, options storage.ListOptions) (func() (string, bool, []byte), func()) {
+	iterFunc, closeFunc := st.GetIterator(common.BlockAccountPrefixCreated, options)
 
 	return (func() (string, bool, []byte) {
 			item, hasNext := iterFunc()
@@ -118,8 +118,8 @@ func GetBlockAccountAddressesByCreated(st *storage.LevelDBBackend, iteratorOptio
 		})
 }
 
-func GetBlockAccountsByCreated(st *storage.LevelDBBackend, iteratorOptions *storage.IteratorOptions) (func() (*BlockAccount, bool, []byte), func()) {
-	iterFunc, closeFunc := GetBlockAccountAddressesByCreated(st, iteratorOptions)
+func GetBlockAccountsByCreated(st *storage.LevelDBBackend, options storage.ListOptions) (func() (*BlockAccount, bool, []byte), func()) {
+	iterFunc, closeFunc := GetBlockAccountAddressesByCreated(st, options)
 
 	return (func() (*BlockAccount, bool, []byte) {
 			address, hasNext, cursor := iterFunc()
@@ -233,9 +233,9 @@ func GetBlockAccountSequenceID(st *storage.LevelDBBackend, address string, seque
 	return
 }
 
-func GetBlockAccountSequenceIDByAddress(st *storage.LevelDBBackend, address string, iteratorOptions *storage.IteratorOptions) (func() (BlockAccountSequenceID, bool, []byte), func()) {
+func GetBlockAccountSequenceIDByAddress(st *storage.LevelDBBackend, address string, options storage.ListOptions) (func() (BlockAccountSequenceID, bool, []byte), func()) {
 	prefix := GetBlockAccountSequenceIDByAddressKeyPrefix(address)
-	iterFunc, closeFunc := st.GetIterator(prefix, iteratorOptions)
+	iterFunc, closeFunc := st.GetIterator(prefix, options)
 
 	return (func() (BlockAccountSequenceID, bool, []byte) {
 			item, hasNext := iterFunc()

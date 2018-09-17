@@ -204,29 +204,29 @@ func LoadBlockOperationsInsideIterator(
 		})
 }
 
-func GetBlockOperationsByTxHash(st *storage.LevelDBBackend, txHash string, iteratorOptions *storage.IteratorOptions) (
+func GetBlockOperationsByTxHash(st *storage.LevelDBBackend, txHash string, options storage.ListOptions) (
 	func() (BlockOperation, bool, []byte),
 	func(),
 ) {
-	iterFunc, closeFunc := st.GetIterator(GetBlockOperationKeyPrefixTxHash(txHash), iteratorOptions)
+	iterFunc, closeFunc := st.GetIterator(GetBlockOperationKeyPrefixTxHash(txHash), options)
 
 	return LoadBlockOperationsInsideIterator(st, iterFunc, closeFunc)
 }
 
-func GetBlockOperationsBySource(st *storage.LevelDBBackend, source string, iteratorOptions *storage.IteratorOptions) (
+func GetBlockOperationsBySource(st *storage.LevelDBBackend, source string, options storage.ListOptions) (
 	func() (BlockOperation, bool, []byte),
 	func(),
 ) {
-	iterFunc, closeFunc := st.GetIterator(GetBlockOperationKeyPrefixSource(source), iteratorOptions)
+	iterFunc, closeFunc := st.GetIterator(GetBlockOperationKeyPrefixSource(source), options)
 
 	return LoadBlockOperationsInsideIterator(st, iterFunc, closeFunc)
 }
 
-func GetBlockOperationsByTarget(st *storage.LevelDBBackend, target string, iteratorOptions *storage.IteratorOptions) (
+func GetBlockOperationsByTarget(st *storage.LevelDBBackend, target string, options storage.ListOptions) (
 	func() (BlockOperation, bool, []byte),
 	func(),
 ) {
-	iterFunc, closeFunc := st.GetIterator(GetBlockOperationKeyPrefixTarget(target), iteratorOptions)
+	iterFunc, closeFunc := st.GetIterator(GetBlockOperationKeyPrefixTarget(target), options)
 
 	return LoadBlockOperationsInsideIterator(st, iterFunc, closeFunc)
 }

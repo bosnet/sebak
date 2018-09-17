@@ -50,4 +50,8 @@ var (
 	ErrorBallotAlreadyVoted                   = NewError(143, "ballot already voted")
 	ErrorBallotHasOverMaxTransactionsInBallot = NewError(144, "too many transactions in ballot")
 	ErrorMessageHasIncorrectTime              = NewError(145, "time in message is not correct")
+	ErrorInvalidQueryString                   = NewError(146, "found invalid query string")
+	ErrorInvalidContentType                   = NewError(147, "found invalid 'Content-Type'")
+	ErrorStorageRecordAlreadyExists           = NewError(148, "record already exists in storage")
+	ErrorStorageCoreError                     = NewError(149, "storage error")
 )
