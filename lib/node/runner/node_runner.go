@@ -170,7 +170,7 @@ func (nr *NodeRunner) Start() (err error) {
 	nr.log.Debug("NodeRunner started")
 	nr.Ready()
 
-	go nr.handleMessage()
+	go nr.handleMessages()
 	go nr.ConnectValidators()
 	go nr.InitRound()
 
@@ -270,34 +270,40 @@ func (nr *NodeRunner) SetHandleMessageCheckerDeferFunc(f common.CheckerDeferFunc
 	nr.handleTransactionCheckerDeferFunc = f
 }
 
-func (nr *NodeRunner) handleMessage() {
+// Read from the network channel and forwards to `handleMessage`
+func (nr *NodeRunner) handleMessages() {
 	for message := range nr.network.ReceiveMessage() {
-		var err error
+		nr.handleMessage(message)
+	}
+}
 
-		if message.IsEmpty() {
-			nr.log.Error("got empty message")
-			continue
-		}
-		switch message.Type {
-		case common.ConnectMessage:
-			if _, err := node.NewValidatorFromString(message.Data); err != nil {
-				nr.log.Error("invalid validator data was received", "data", message.Data, "error", err)
-				continue
-			}
-		case common.TransactionMessage:
-			err = nr.handleTransaction(message)
-		case common.BallotMessage:
-			err = nr.handleBallotMessage(message)
-		default:
-			err = errors.New("got unknown message")
-		}
+// Handles a single message received from a client
+func (nr *NodeRunner) handleMessage(message common.NetworkMessage) {
+	var err error
 
-		if err != nil {
-			if _, ok := err.(common.CheckerStop); ok {
-				continue
-			}
-			nr.log.Error("failed to handle message", "message", message.Head(50), "error", err)
+	if message.IsEmpty() {
+		nr.log.Error("got empty message")
+		return
+	}
+	switch message.Type {
+	case common.ConnectMessage:
+		if _, err := node.NewValidatorFromString(message.Data); err != nil {
+			nr.log.Error("invalid validator data was received", "data", message.Data, "error", err)
+			return
 		}
+	case common.TransactionMessage:
+		err = nr.handleTransaction(message)
+	case common.BallotMessage:
+		err = nr.handleBallotMessage(message)
+	default:
+		err = errors.New("got unknown message")
+	}
+
+	if err != nil {
+		if _, ok := err.(common.CheckerStop); ok {
+			return
+		}
+		nr.log.Error("failed to handle message", "message", message.Head(50), "error", err)
 	}
 }
 

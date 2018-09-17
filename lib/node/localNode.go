@@ -57,17 +57,6 @@ func (n *LocalNode) Equal(a Node) bool {
 	return false
 }
 
-func (n *LocalNode) DeepEqual(a Node) bool {
-	if !n.Equal(a) {
-		return false
-	}
-	if n.Endpoint().String() != a.Endpoint().String() {
-		return false
-	}
-
-	return true
-}
-
 func (n *LocalNode) State() State {
 	return n.state
 }
@@ -98,10 +87,6 @@ func (n *LocalNode) Keypair() *keypair.Full {
 
 func (n *LocalNode) Alias() string {
 	return n.alias
-}
-
-func (n *LocalNode) SetAlias(s string) {
-	n.alias = s
 }
 
 func (n *LocalNode) Endpoint() *common.Endpoint {

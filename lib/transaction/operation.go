@@ -66,28 +66,33 @@ func NewOperationFromBytes(b []byte) (op Operation, err error) {
 	return
 }
 
-func NewOperationFromInterface(oj OperationFromJSON) (op Operation, err error) {
+func NewOperationFromInterface(oj OperationFromJSON) (Operation, error) {
+	var op Operation
 	op.H = oj.H
 
 	body := oj.B.(map[string]interface{})
 	switch op.H.Type {
 	case OperationCreateAccount:
-		var amount common.Amount
-		amount, err = common.AmountFromString(fmt.Sprintf("%v", body["amount"]))
-		if err != nil {
-			return
+		if amount, err := common.AmountFromString(fmt.Sprintf("%v", body["amount"])); err != nil {
+			return Operation{}, err
+		} else if target, is_target := body["target"].(string); !is_target {
+			return Operation{}, errors.ErrorInvalidOperation
+		} else {
+			op.B = NewOperationBodyCreateAccount(target, amount)
 		}
-		op.B = NewOperationBodyCreateAccount(body["target"].(string), amount)
 	case OperationPayment:
-		var amount common.Amount
-		amount, err = common.AmountFromString(fmt.Sprintf("%v", body["amount"]))
-		if err != nil {
-			return
+		if amount, err := common.AmountFromString(fmt.Sprintf("%v", body["amount"])); err != nil {
+			return Operation{}, err
+		} else if target, is_target := body["target"].(string); !is_target {
+			return Operation{}, errors.ErrorInvalidOperation
+		} else {
+			op.B = NewOperationBodyPayment(target, amount)
 		}
-		op.B = NewOperationBodyPayment(body["target"].(string), amount)
+	default:
+		return Operation{}, errors.ErrorInvalidOperation
 	}
 
-	return
+	return op, nil
 }
 
 func NewOperation(t OperationType, body OperationBody) (op Operation, err error) {

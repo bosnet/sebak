@@ -46,17 +46,6 @@ func (v *Validator) Equal(a Node) bool {
 	return false
 }
 
-func (v *Validator) DeepEqual(a Node) bool {
-	if !v.Equal(a) {
-		return false
-	}
-	if v.Endpoint().String() != a.Endpoint().String() {
-		return false
-	}
-
-	return true
-}
-
 func (v *Validator) State() State {
 	return v.state
 }
@@ -83,10 +72,6 @@ func (v *Validator) Address() string {
 
 func (v *Validator) Alias() string {
 	return v.alias
-}
-
-func (v *Validator) SetAlias(s string) {
-	v.alias = s
 }
 
 func (v *Validator) Endpoint() *common.Endpoint {
