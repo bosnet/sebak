@@ -6,18 +6,13 @@ Install [aglio](https://github.com/danielgtaylor/aglio):
 
 ```
 brew install node
-npm config set prefix '~/.npm-global'
-export PATH=~/.npm-global/bin:$PATH
-npm install -g aglio
 ```
-
-- https://docs.npmjs.com/getting-started/fixing-npm-permissions
 
 
 Generate HTML document:
 
 ```
-~/.npm-global/bin/aglio -i ./API.md -o api.html
+npx aglio -i ./API.md -o api.html
 ```
 
 Serve HTML document:
