@@ -1,12 +1,10 @@
 package block
 
 import (
-	logging "github.com/inconshreveable/log15"
-	"github.com/stellar/go/keypair"
-
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/consensus/round"
 	"boscoin.io/sebak/lib/transaction"
+	"github.com/stellar/go/keypair"
 )
 
 var networkID []byte = []byte("sebak-test-network")
@@ -40,7 +38,6 @@ func TestMakeNewBlock(transactions []string) Block {
 		},
 		transactions,
 		common.NowISO8601(),
-		logging.New("module", "test"),
 	)
 }
 

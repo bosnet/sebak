@@ -1,17 +1,12 @@
 package runner
 
 import (
-	"encoding/json"
-
-	logging "github.com/inconshreveable/log15"
-
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/consensus"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/node"
-	"boscoin.io/sebak/lib/storage"
-	"boscoin.io/sebak/lib/transaction"
+	logging "github.com/inconshreveable/log15"
 )
 
 type CheckerStopCloseConsensus struct {
@@ -212,7 +207,6 @@ func BallotCheckResult(c common.Checker, args ...interface{}) (err error) {
 	result, votingHole, finished := checker.RoundVote.CanGetVotingResult(
 		checker.NodeRunner.Consensus().VotingThresholdPolicy,
 		checker.Ballot.State(),
-		checker.Log,
 	)
 
 	checker.Result = result
@@ -358,11 +352,10 @@ func ACCEPTBallotStore(c common.Checker, args ...interface{}) (err error) {
 	willStore := checker.FinishedVotingHole == common.VotingYES
 	if checker.FinishedVotingHole == common.VotingYES {
 		var theBlock block.Block
-		theBlock, err = finishBallot(
+		theBlock, err = block.FinishBallot(
 			checker.NodeRunner.Storage(),
 			checker.Ballot,
 			checker.NodeRunner.Consensus().TransactionPool,
-			checker.Log,
 		)
 		if err != nil {
 			return
@@ -382,153 +375,6 @@ func ACCEPTBallotStore(c common.Checker, args ...interface{}) (err error) {
 		checker.FinishedVotingHole,
 	)
 	checker.NodeRunner.CloseConsensus(checker.Ballot, willStore)
-
-	return
-}
-
-func finishBallot(st *storage.LevelDBBackend, ballot block.Ballot, transactionPool *transaction.TransactionPool, log logging.Logger) (blk block.Block, err error) {
-	var ts *storage.LevelDBBackend
-	if ts, err = st.OpenTransaction(); err != nil {
-		return
-	}
-
-	transactions := map[string]transaction.Transaction{}
-	for _, hash := range ballot.B.Proposed.Transactions {
-		tx, found := transactionPool.Get(hash)
-		if !found {
-			err = errors.ErrorTransactionNotFound
-			return
-		}
-		transactions[hash] = tx
-	}
-
-	blk = block.NewBlockFromBallot(ballot, log)
-
-	if err = blk.Save(ts); err != nil {
-		return
-	}
-
-	for _, hash := range ballot.B.Proposed.Transactions {
-		tx := transactions[hash]
-		raw, _ := json.Marshal(tx)
-
-		bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, tx, raw)
-		if err = bt.Save(ts); err != nil {
-			ts.Discard()
-			return
-		}
-		for _, op := range tx.B.Operations {
-			if err = finishOperation(ts, tx, op, log); err != nil {
-				ts.Discard()
-				return
-			}
-		}
-
-		var baSource *block.BlockAccount
-		if baSource, err = block.GetBlockAccount(ts, tx.B.Source); err != nil {
-			err = errors.ErrorBlockAccountDoesNotExists
-			ts.Discard()
-			return
-		}
-
-		if err = baSource.Withdraw(tx.TotalAmount(true), tx.NextSequenceID()); err != nil {
-			ts.Discard()
-			return
-		}
-
-		if err = baSource.Save(ts); err != nil {
-			ts.Discard()
-			return
-		}
-
-	}
-
-	if err = ts.Commit(); err != nil {
-		ts.Discard()
-	}
-
-	return
-}
-
-// finishOperation do finish the task after consensus by the type of each operation.
-func finishOperation(st *storage.LevelDBBackend, tx transaction.Transaction, op transaction.Operation, log logging.Logger) (err error) {
-	switch op.H.Type {
-	case transaction.OperationCreateAccount:
-		return finishOperationCreateAccount(st, tx, op, log)
-	case transaction.OperationPayment:
-		return finishOperationPayment(st, tx, op, log)
-	case transaction.OperationIssuance:
-		return finishOperationIssuance(st, tx, op, log)
-	default:
-		err = errors.ErrorUnknownOperationType
-		return
-	}
-}
-
-func finishOperationCreateAccount(st *storage.LevelDBBackend, tx transaction.Transaction, op transaction.Operation, log logging.Logger) (err error) {
-	var baSource, baTarget *block.BlockAccount
-	if baSource, err = block.GetBlockAccount(st, tx.B.Source); err != nil {
-		err = errors.ErrorBlockAccountDoesNotExists
-		return
-	}
-	if baTarget, err = block.GetBlockAccount(st, op.B.TargetAddress()); err == nil {
-		err = errors.ErrorBlockAccountAlreadyExists
-		return
-	} else {
-		err = nil
-	}
-
-	baTarget = block.NewBlockAccount(
-		op.B.TargetAddress(),
-		op.B.GetAmount(),
-	)
-	if err = baTarget.Save(st); err != nil {
-		return
-	}
-
-	log.Debug("new account created", "source", baSource, "target", baTarget)
-
-	return
-}
-
-func finishOperationPayment(st *storage.LevelDBBackend, tx transaction.Transaction, op transaction.Operation, log logging.Logger) (err error) {
-	var baSource, baTarget *block.BlockAccount
-	if baSource, err = block.GetBlockAccount(st, tx.B.Source); err != nil {
-		err = errors.ErrorBlockAccountDoesNotExists
-		return
-	}
-	if baTarget, err = block.GetBlockAccount(st, op.B.TargetAddress()); err != nil {
-		err = errors.ErrorBlockAccountDoesNotExists
-		return
-	}
-
-	if err = baTarget.Deposit(op.B.GetAmount()); err != nil {
-		return
-	}
-	if err = baTarget.Save(st); err != nil {
-		return
-	}
-
-	log.Debug("payment done", "source", baSource, "target", baTarget, "amount", op.B.GetAmount())
-
-	return
-}
-
-func finishOperationIssuance(st *storage.LevelDBBackend, tx transaction.Transaction, op transaction.Operation, log logging.Logger) (err error) {
-	var baTarget *block.BlockAccount
-	if baTarget, err = block.GetBlockAccount(st, op.B.TargetAddress()); err != nil {
-		err = errors.ErrorBlockAccountDoesNotExists
-		return
-	}
-
-	if err = baTarget.Deposit(op.B.GetAmount()); err != nil {
-		return
-	}
-	if err = baTarget.Save(st); err != nil {
-		return
-	}
-
-	log.Debug("payment done", "target", baTarget, "amount", op.B.GetAmount())
 
 	return
 }

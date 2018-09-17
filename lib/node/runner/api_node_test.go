@@ -12,7 +12,6 @@ import (
 	"strconv"
 	"time"
 
-	logging "github.com/inconshreveable/log15"
 	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
 
@@ -98,7 +97,7 @@ func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, mn *network.HTTP2Net
 		balance := common.BaseFee.MustAdd(common.BaseFee)
 		account := block.NewBlockAccount(address, balance)
 		account.Save(st)
-		block.MakeGenesisBlock(st, *account, logging.New("module", "test"))
+		block.MakeGenesisBlock(st, *account)
 	}
 	if nodeRunner, err = NewNodeRunner(string(networkID), localNode, p, mn, is, st); err != nil {
 		panic(err)

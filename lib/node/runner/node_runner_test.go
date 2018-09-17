@@ -6,16 +6,15 @@ import (
 	"testing"
 	"time"
 
-	logging "github.com/inconshreveable/log15"
-	"github.com/stellar/go/keypair"
-
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/consensus"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/storage"
+
+	"boscoin.io/sebak/lib/consensus"
 	"boscoin.io/sebak/lib/transaction"
+	"github.com/stellar/go/keypair"
 )
 
 var (
@@ -64,7 +63,7 @@ func createTestNodeRunner(n int) []*NodeRunner {
 		st, _ := storage.NewTestMemoryLevelDBBackend()
 
 		account.Save(st)
-		genesisBlock = block.MakeGenesisBlock(st, *account, logging.New("module", "test"))
+		genesisBlock = block.MakeGenesisBlock(st, *account)
 
 		nr, err := NewNodeRunner(string(networkID), v, p, ns[i], is, st)
 		if err != nil {
@@ -159,7 +158,7 @@ func createTestNodeRunnersHTTP2Network(n int) (nodeRunners []*NodeRunner, rootKP
 		nodeRunner, _ := NewNodeRunner(string(networkID), node, vth, network, is, st)
 
 		genesisAccount.Save(nodeRunner.Storage())
-		block.MakeGenesisBlock(st, *genesisAccount, logging.New("module", "test"))
+		block.MakeGenesisBlock(st, *genesisAccount)
 
 		nodeRunners = append(nodeRunners, nodeRunner)
 	}

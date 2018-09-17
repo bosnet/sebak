@@ -32,7 +32,7 @@ func (o OperationBodyPayment) IsWellFormed([]byte) (err error) {
 	}
 
 	if int64(o.Amount) < 1 {
-		err = fmt.Errorf("invalid `Amount`: lower than 1")
+		err = fmt.Errorf("invalid `Amount`")
 		return
 	}
 

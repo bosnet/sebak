@@ -16,7 +16,7 @@ function getAccount () # u16 port, string addr
     echo $(curl --insecure \
                   --request GET \
                   --header "Accept: application/json" \
-                  https://127.0.0.1:${1}/api/v1/account/${2} \
+                  https://127.0.0.1:${1}/api/v1/accounts/${2} \
                   2>/dev/null)
 }
 

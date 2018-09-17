@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	DefaultLogLevel   logging.Lvl     = logging.LvlInfo
+	DefaultLogLevel   logging.Lvl     = logging.LvlError
 	DefaultLogHandler logging.Handler = logging.StreamHandler(os.Stdout, logging.TerminalFormat())
 )
 
