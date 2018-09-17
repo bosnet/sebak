@@ -9,7 +9,6 @@ type Node interface {
 	Alias() string
 	Endpoint() *common.Endpoint
 	Equal(Node) bool
-	DeepEqual(Node) bool
 	Serialize() ([]byte, error)
 	State() State
 	SetBooting()

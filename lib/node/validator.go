@@ -46,17 +46,6 @@ func (v *Validator) Equal(a Node) bool {
 	return false
 }
 
-func (v *Validator) DeepEqual(a Node) bool {
-	if !v.Equal(a) {
-		return false
-	}
-	if v.Endpoint().String() != a.Endpoint().String() {
-		return false
-	}
-
-	return true
-}
-
 func (v *Validator) State() State {
 	return v.state
 }

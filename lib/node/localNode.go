@@ -57,17 +57,6 @@ func (n *LocalNode) Equal(a Node) bool {
 	return false
 }
 
-func (n *LocalNode) DeepEqual(a Node) bool {
-	if !n.Equal(a) {
-		return false
-	}
-	if n.Endpoint().String() != a.Endpoint().String() {
-		return false
-	}
-
-	return true
-}
-
 func (n *LocalNode) State() State {
 	return n.state
 }
