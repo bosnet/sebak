@@ -37,7 +37,7 @@ func TestGetAccountHandler(t *testing.T) {
 		recv := make(map[string]interface{})
 		json.Unmarshal(readByte, &recv)
 
-		require.Equal(t, ba.Address, recv["id"], "hash is not same")
+		require.Equal(t, ba.Address, recv["address"], "address is not same")
 	}
 }
 
@@ -84,7 +84,7 @@ func TestGetAccountHandlerStream(t *testing.T) {
 		require.Nil(t, err)
 		recv := make(map[string]interface{})
 		json.Unmarshal(line, &recv)
-		require.Equal(t, key, recv["id"], "hash is not same")
+		require.Equal(t, key, recv["address"], "address is not same")
 	}
 	wg.Wait()
 }

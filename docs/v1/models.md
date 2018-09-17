@@ -1,7 +1,7 @@
 ## Data Structures
 
 ### Account
-+ account_id: GDMZMF2EAK4E6NSZNSCJQQHQGMAOZ6UI3XQVVLMEJRFDPYHLY7PPHKLP (string, required)
++ address: GDMZMF2EAK4E6NSZNSCJQQHQGMAOZ6UI3XQVVLMEJRFDPYHLY7PPHKLP (string, required)
 + balance: 10000000000000000000 (string,required)
 + sequence_id: 0 (number,required)
 + _links 
