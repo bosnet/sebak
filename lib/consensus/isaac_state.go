@@ -5,13 +5,13 @@
 package consensus
 
 import (
-	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/consensus/round"
 )
 
 type ISAACState struct {
 	Round       round.Round
-	BallotState common.BallotState
+	BallotState ballot.State
 }
 
 func (s ISAACState) IsLater(target ISAACState) bool {

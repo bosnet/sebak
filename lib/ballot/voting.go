@@ -1,4 +1,4 @@
-package common
+package ballot
 
 type VotingHole string
 
@@ -10,7 +10,7 @@ const (
 )
 
 type VotingThresholdPolicy interface {
-	Threshold(BallotState) int
+	Threshold(State) int
 	Validators() int
 	SetValidators(int) error
 	Connected() int

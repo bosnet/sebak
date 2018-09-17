@@ -4,8 +4,8 @@ import (
 	"sync"
 	"time"
 
+	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/block"
-	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/consensus"
 	"boscoin.io/sebak/lib/consensus/round"
 )
@@ -36,7 +36,7 @@ func NewISAACStateManager(nr *NodeRunner, conf *consensus.ISAACConfiguration) *I
 			Number:      0,
 			BlockHeight: 0,
 		},
-		BallotState: common.BallotStateINIT,
+		BallotState: ballot.StateINIT,
 	}
 
 	p.transitSignal = func() {}
@@ -48,7 +48,7 @@ func (sm *ISAACStateManager) SetTransitSignal(f func()) {
 	sm.transitSignal = f
 }
 
-func (sm *ISAACStateManager) TransitISAACState(round round.Round, ballotState common.BallotState) {
+func (sm *ISAACStateManager) TransitISAACState(round round.Round, ballotState ballot.State) {
 	sm.RLock()
 	current := sm.state
 	sm.RUnlock()
@@ -68,14 +68,14 @@ func (sm *ISAACStateManager) TransitISAACState(round round.Round, ballotState co
 func (sm *ISAACStateManager) IncreaseRound() {
 	round := sm.State().Round
 	round.Number++
-	sm.TransitISAACState(round, common.BallotStateINIT)
+	sm.TransitISAACState(round, ballot.StateINIT)
 }
 
 func (sm *ISAACStateManager) NextHeight() {
 	round := sm.State().Round
 	round.BlockHeight++
 	round.Number = 0
-	sm.TransitISAACState(round, common.BallotStateINIT)
+	sm.TransitISAACState(round, ballot.StateINIT)
 }
 
 // In `Start()` method a node proposes ballot.
@@ -87,7 +87,7 @@ func (sm *ISAACStateManager) Start() {
 		for {
 			select {
 			case <-timer.C:
-				if sm.State().BallotState == common.BallotStateACCEPT {
+				if sm.State().BallotState == ballot.StateACCEPT {
 					sm.IncreaseRound()
 					break
 				}
@@ -98,19 +98,19 @@ func (sm *ISAACStateManager) Start() {
 
 			case state := <-sm.stateTransit:
 				switch state.BallotState {
-				case common.BallotStateINIT:
+				case ballot.StateINIT:
 					sm.proposeOrWait(timer, state)
-				case common.BallotStateSIGN:
+				case ballot.StateSIGN:
 					sm.setState(state)
 					sm.transitSignal()
 					timer.Reset(sm.Conf.TimeoutSIGN)
-				case common.BallotStateACCEPT:
+				case ballot.StateACCEPT:
 					sm.setState(state)
 					sm.transitSignal()
 					timer.Reset(sm.Conf.TimeoutACCEPT)
-				case common.BallotStateALLCONFIRM:
+				case ballot.StateALLCONFIRM:
 					sm.NextHeight()
-				case common.BallotStateNONE:
+				case ballot.StateNONE:
 					timer.Reset(sm.Conf.TimeoutINIT)
 					log.Error("Wrong ISAACState", "ISAACState", state)
 				}
@@ -132,19 +132,19 @@ func (sm *ISAACStateManager) broadcastExpiredBallot(state consensus.ISAACState) 
 	}
 
 	newExpiredBallot := block.NewBallot(sm.nr.localNode, round, []string{})
-	newExpiredBallot.SetVote(state.BallotState.Next(), common.VotingEXP)
+	newExpiredBallot.SetVote(state.BallotState.Next(), ballot.VotingEXP)
 	newExpiredBallot.Sign(sm.nr.localNode.Keypair(), sm.nr.networkID)
 
 	sm.nr.ConnectionManager().Broadcast(*newExpiredBallot)
 }
 
-func (sm *ISAACStateManager) resetTimer(timer *time.Timer, state common.BallotState) {
+func (sm *ISAACStateManager) resetTimer(timer *time.Timer, state ballot.State) {
 	switch state {
-	case common.BallotStateINIT:
+	case ballot.StateINIT:
 		timer.Reset(sm.Conf.TimeoutINIT)
-	case common.BallotStateSIGN:
+	case ballot.StateSIGN:
 		timer.Reset(sm.Conf.TimeoutSIGN)
-	case common.BallotStateACCEPT:
+	case ballot.StateACCEPT:
 		timer.Reset(sm.Conf.TimeoutACCEPT)
 	}
 }
@@ -159,8 +159,8 @@ func (sm *ISAACStateManager) proposeOrWait(timer *time.Timer, state consensus.IS
 
 	if proposer == sm.nr.localNode.Address() {
 		if err := sm.nr.proposeNewBallot(state.Round.Number); err == nil {
-			log.Debug("propose new ballot", "proposer", proposer, "round", state.Round, "ballotState", common.BallotStateSIGN)
-			state.BallotState = common.BallotStateSIGN
+			log.Debug("propose new ballot", "proposer", proposer, "round", state.Round, "ballotState", ballot.StateSIGN)
+			state.BallotState = ballot.StateSIGN
 			sm.setState(state)
 
 			timer.Reset(sm.Conf.TimeoutSIGN)
@@ -191,7 +191,7 @@ func (sm *ISAACStateManager) setState(state consensus.ISAACState) {
 	return
 }
 
-func (sm *ISAACStateManager) setBallotState(ballotState common.BallotState) {
+func (sm *ISAACStateManager) setBallotState(ballotState ballot.State) {
 	sm.Lock()
 	defer sm.Unlock()
 	sm.state.BallotState = ballotState

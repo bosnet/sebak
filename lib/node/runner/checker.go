@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/consensus"
@@ -38,10 +39,10 @@ type BallotChecker struct {
 	Message            common.NetworkMessage
 	IsNew              bool
 	Ballot             block.Ballot
-	VotingHole         common.VotingHole
+	VotingHole         ballot.VotingHole
 	Result             consensus.RoundVoteResult
 	VotingFinished     bool
-	FinishedVotingHole common.VotingHole
+	FinishedVotingHole ballot.VotingHole
 
 	Log logging.Logger
 }
@@ -129,7 +130,7 @@ func BallotVote(c common.Checker, args ...interface{}) (err error) {
 func BallotIsSameProposer(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotChecker)
 
-	if checker.VotingHole != common.VotingNOTYET {
+	if checker.VotingHole != ballot.VotingNOTYET {
 		return
 	}
 
@@ -143,7 +144,7 @@ func BallotIsSameProposer(c common.Checker, args ...interface{}) (err error) {
 	}
 
 	if !checker.NodeRunner.Consensus().HasSameProposer(checker.Ballot) {
-		checker.VotingHole = common.VotingNO
+		checker.VotingHole = ballot.VotingNO
 		checker.Log.Debug("ballot has different proposer", "proposer", checker.Ballot.Proposer())
 		return
 	}
@@ -198,12 +199,12 @@ func INITBallotValidateTransactions(c common.Checker, args ...interface{}) (err 
 		return
 	}
 
-	if checker.VotingHole != common.VotingNOTYET {
+	if checker.VotingHole != ballot.VotingNOTYET {
 		return
 	}
 
 	if checker.Ballot.TransactionsLength() < 1 {
-		checker.VotingHole = common.VotingYES
+		checker.VotingHole = ballot.VotingYES
 		return
 	}
 
@@ -213,13 +214,13 @@ func INITBallotValidateTransactions(c common.Checker, args ...interface{}) (err 
 		LocalNode:      checker.LocalNode,
 		NetworkID:      checker.NetworkID,
 		Transactions:   checker.Ballot.Transactions(),
-		VotingHole:     common.VotingNOTYET,
+		VotingHole:     ballot.VotingNOTYET,
 	}
 
 	err = common.RunChecker(transactionsChecker, common.DefaultDeferFunc)
 	if err != nil {
 		if _, ok := err.(common.CheckerErrorStop); !ok {
-			checker.VotingHole = common.VotingNO
+			checker.VotingHole = ballot.VotingNO
 			checker.Log.Debug("failed to handle transactions of ballot", "error", err)
 			err = nil
 			return
@@ -227,10 +228,10 @@ func INITBallotValidateTransactions(c common.Checker, args ...interface{}) (err 
 		err = nil
 	}
 
-	if transactionsChecker.VotingHole == common.VotingNO {
-		checker.VotingHole = common.VotingNO
+	if transactionsChecker.VotingHole == ballot.VotingNO {
+		checker.VotingHole = ballot.VotingNO
 	} else {
-		checker.VotingHole = common.VotingYES
+		checker.VotingHole = ballot.VotingYES
 	}
 
 	return
@@ -245,7 +246,7 @@ func SIGNBallotBroadcast(c common.Checker, args ...interface{}) (err error) {
 
 	newBallot := checker.Ballot
 	newBallot.SetSource(checker.LocalNode.Address())
-	newBallot.SetVote(common.BallotStateSIGN, checker.VotingHole)
+	newBallot.SetVote(ballot.StateSIGN, checker.VotingHole)
 	newBallot.Sign(checker.LocalNode.Keypair(), checker.NetworkID)
 
 	if !checker.NodeRunner.Consensus().HasRunningRound(checker.Ballot.Round().Hash()) {
@@ -267,7 +268,7 @@ func TransitStateToSIGN(c common.Checker, args ...interface{}) (err error) {
 	if !checker.IsNew {
 		return
 	}
-	checker.NodeRunner.TransitISAACState(checker.Ballot.Round(), common.BallotStateSIGN)
+	checker.NodeRunner.TransitISAACState(checker.Ballot.Round(), ballot.StateSIGN)
 
 	return
 }
@@ -282,7 +283,7 @@ func ACCEPTBallotBroadcast(c common.Checker, args ...interface{}) (err error) {
 
 	newBallot := checker.Ballot
 	newBallot.SetSource(checker.LocalNode.Address())
-	newBallot.SetVote(common.BallotStateACCEPT, checker.FinishedVotingHole)
+	newBallot.SetVote(ballot.StateACCEPT, checker.FinishedVotingHole)
 	newBallot.Sign(checker.LocalNode.Keypair(), checker.NetworkID)
 
 	if !checker.NodeRunner.Consensus().HasRunningRound(checker.Ballot.Round().Hash()) {
@@ -303,7 +304,7 @@ func TransitStateToACCEPT(c common.Checker, args ...interface{}) (err error) {
 	if !checker.VotingFinished {
 		return
 	}
-	checker.NodeRunner.TransitISAACState(checker.Ballot.Round(), common.BallotStateACCEPT)
+	checker.NodeRunner.TransitISAACState(checker.Ballot.Round(), ballot.StateACCEPT)
 
 	return
 }
@@ -316,7 +317,7 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) (err error) {
 	if !checker.VotingFinished {
 		return
 	}
-	if checker.FinishedVotingHole == common.VotingYES {
+	if checker.FinishedVotingHole == ballot.VotingYES {
 		var theBlock block.Block
 		theBlock, err = block.FinishBallot(
 			checker.NodeRunner.Storage(),
@@ -329,7 +330,7 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) (err error) {
 
 		checker.NodeRunner.Consensus().SetLatestConsensusedBlock(theBlock)
 		checker.Log.Debug("ballot was stored", "block", theBlock)
-		checker.NodeRunner.TransitISAACState(checker.Ballot.Round(), common.BallotStateALLCONFIRM)
+		checker.NodeRunner.TransitISAACState(checker.Ballot.Round(), ballot.StateALLCONFIRM)
 
 		err = NewCheckerStopCloseConsensus(checker, "ballot got consensus and will be stored")
 	} else {

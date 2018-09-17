@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/node"
 	logging "github.com/inconshreveable/log15"
@@ -18,7 +19,7 @@ type ConnectionManager struct {
 
 	localNode          *node.LocalNode
 	network            Network
-	policy             common.VotingThresholdPolicy
+	policy             ballot.VotingThresholdPolicy
 	broadcaster        Broadcaster
 	proposerCalculator ProposerCalculator
 
@@ -32,7 +33,7 @@ type ConnectionManager struct {
 func NewConnectionManager(
 	localNode *node.LocalNode,
 	network Network,
-	policy common.VotingThresholdPolicy,
+	policy ballot.VotingThresholdPolicy,
 	validators map[string]*node.Validator,
 ) *ConnectionManager {
 	return &ConnectionManager{

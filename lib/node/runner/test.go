@@ -7,6 +7,7 @@ import (
 	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
 
+	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/consensus"
@@ -107,34 +108,34 @@ func (c *SelfProposerThenNotProposer) Calculate(blockHeight uint64, roundNumber 
 	}
 }
 
-func GenerateBallot(t *testing.T, proposer *node.LocalNode, round round.Round, tx transaction.Transaction, ballotState common.BallotState, sender *node.LocalNode) *block.Ballot {
-	ballot := block.NewBallot(proposer, round, []string{tx.GetHash()})
-	ballot.SetVote(common.BallotStateINIT, common.VotingYES)
-	ballot.Sign(proposer.Keypair(), networkID)
+func GenerateBallot(t *testing.T, proposer *node.LocalNode, round round.Round, tx transaction.Transaction, ballotState ballot.State, sender *node.LocalNode) *block.Ballot {
+	b := block.NewBallot(proposer, round, []string{tx.GetHash()})
+	b.SetVote(ballot.StateINIT, ballot.VotingYES)
+	b.Sign(proposer.Keypair(), networkID)
 
-	ballot.SetSource(sender.Address())
-	ballot.SetVote(ballotState, common.VotingYES)
-	ballot.Sign(sender.Keypair(), networkID)
+	b.SetSource(sender.Address())
+	b.SetVote(ballotState, ballot.VotingYES)
+	b.Sign(sender.Keypair(), networkID)
 
-	err := ballot.IsWellFormed(networkID)
+	err := b.IsWellFormed(networkID)
 	require.Nil(t, err)
 
-	return ballot
+	return b
 }
 
-func GenerateEmptyTxBallot(t *testing.T, proposer *node.LocalNode, round round.Round, ballotState common.BallotState, sender *node.LocalNode) *block.Ballot {
-	ballot := block.NewBallot(proposer, round, []string{})
-	ballot.SetVote(common.BallotStateINIT, common.VotingYES)
-	ballot.Sign(proposer.Keypair(), networkID)
+func GenerateEmptyTxBallot(t *testing.T, proposer *node.LocalNode, round round.Round, ballotState ballot.State, sender *node.LocalNode) *block.Ballot {
+	b := block.NewBallot(proposer, round, []string{})
+	b.SetVote(ballot.StateINIT, ballot.VotingYES)
+	b.Sign(proposer.Keypair(), networkID)
 
-	ballot.SetSource(sender.Address())
-	ballot.SetVote(ballotState, common.VotingYES)
-	ballot.Sign(sender.Keypair(), networkID)
+	b.SetSource(sender.Address())
+	b.SetVote(ballotState, ballot.VotingYES)
+	b.Sign(sender.Keypair(), networkID)
 
-	err := ballot.IsWellFormed(networkID)
+	err := b.IsWellFormed(networkID)
 	require.Nil(t, err)
 
-	return ballot
+	return b
 }
 
 func ReceiveBallot(t *testing.T, nodeRunner *NodeRunner, ballot *block.Ballot) error {

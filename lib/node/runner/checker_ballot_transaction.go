@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
@@ -17,7 +18,7 @@ type BallotTransactionChecker struct {
 	NetworkID  []byte
 
 	Transactions         []string
-	VotingHole           common.VotingHole
+	VotingHole           ballot.VotingHole
 	ValidTransactions    []string
 	validTransactionsMap map[string]bool
 	CheckAll             bool
