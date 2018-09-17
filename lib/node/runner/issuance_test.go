@@ -22,8 +22,6 @@ func makeIssuancePF() {
 
 }
 
-func TestIssuanceTiming(t *testing.T) {
-
 }
 
 func TestIssuanceTransaction(t *testing.T) {
