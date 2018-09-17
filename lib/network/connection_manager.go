@@ -23,9 +23,9 @@ type ConnectionManager struct {
 	broadcaster        Broadcaster
 	proposerCalculator ProposerCalculator
 
-	validators map[ /* nodd.Address() */ string]*node.Validator
-	clients    map[ /* nodd.Address() */ string]NetworkClient
-	connected  map[ /* nodd.Address() */ string]bool
+	validators map[ /* node.Address() */ string]*node.Validator
+	clients    map[ /* node.Address() */ string]NetworkClient
+	connected  map[ /* node.Address() */ string]bool
 
 	log logging.Logger
 }
