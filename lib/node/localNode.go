@@ -100,10 +100,6 @@ func (n *LocalNode) Alias() string {
 	return n.alias
 }
 
-func (n *LocalNode) SetAlias(s string) {
-	n.alias = s
-}
-
 func (n *LocalNode) Endpoint() *common.Endpoint {
 	return n.endpoint
 }

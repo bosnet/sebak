@@ -85,10 +85,6 @@ func (v *Validator) Alias() string {
 	return v.alias
 }
 
-func (v *Validator) SetAlias(s string) {
-	v.alias = s
-}
-
 func (v *Validator) Endpoint() *common.Endpoint {
 	return v.endpoint
 }
