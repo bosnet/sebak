@@ -1,17 +1,16 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 
-	"boscoin.io/sebak/lib/common/observer"
-	"boscoin.io/sebak/lib/network/api/resource"
-	"boscoin.io/sebak/lib/network/httputils"
-
-	"fmt"
+	"github.com/gorilla/mux"
 
 	"boscoin.io/sebak/lib/block"
+	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/error"
-	"github.com/gorilla/mux"
+	"boscoin.io/sebak/lib/network/api/resource"
+	"boscoin.io/sebak/lib/network/httputils"
 )
 
 func (api NetworkHandlerAPI) GetTransactionsHandler(w http.ResponseWriter, r *http.Request) {

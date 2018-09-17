@@ -4,17 +4,16 @@ import (
 	"bufio"
 	"encoding/json"
 	"io/ioutil"
+	"strings"
+	"sync"
 	"testing"
 
 	"boscoin.io/sebak/lib/block"
-
 	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/network/httputils"
 	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
-	"strings"
-	"sync"
 )
 
 func TestGetAccountHandler(t *testing.T) {

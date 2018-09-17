@@ -4,8 +4,8 @@ import (
 	"errors"
 	"sync"
 
+	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/block"
-	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/consensus/round"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
@@ -17,7 +17,7 @@ type ISAAC struct {
 
 	NetworkID             []byte
 	Node                  *node.LocalNode
-	VotingThresholdPolicy common.VotingThresholdPolicy
+	VotingThresholdPolicy ballot.VotingThresholdPolicy
 	TransactionPool       *transaction.TransactionPool
 	RunningRounds         map[ /* Round.Hash() */ string]*RunningRound
 	latestConfirmedBlock  block.Block
@@ -27,7 +27,7 @@ type ISAAC struct {
 
 // ISAAC should know network.ConnectionManager
 // because the ISAAC uses connected validators when calculating proposer
-func NewISAAC(networkID []byte, node *node.LocalNode, policy common.VotingThresholdPolicy,
+func NewISAAC(networkID []byte, node *node.LocalNode, policy ballot.VotingThresholdPolicy,
 	cm *network.ConnectionManager) (is *ISAAC, err error) {
 
 	is = &ISAAC{
@@ -43,13 +43,13 @@ func NewISAAC(networkID []byte, node *node.LocalNode, policy common.VotingThresh
 	return
 }
 
-func (is *ISAAC) CloseConsensus(proposer string, round round.Round, vh common.VotingHole) (err error) {
+func (is *ISAAC) CloseConsensus(proposer string, round round.Round, vh ballot.VotingHole) (err error) {
 	is.Lock()
 	defer is.Unlock()
 
 	is.SetLatestRound(round)
 
-	if vh == common.VotingNOTYET {
+	if vh == ballot.VotingNOTYET {
 		err = errors.New("invalid VotingHole, `VotingNOTYET`")
 		return
 	}
@@ -60,7 +60,7 @@ func (is *ISAAC) CloseConsensus(proposer string, round round.Round, vh common.Vo
 		return
 	}
 
-	if vh == common.VotingNO {
+	if vh == ballot.VotingNO {
 		delete(rr.Transactions, proposer)
 		delete(rr.Voted, proposer)
 
@@ -167,14 +167,14 @@ func (is *ISAAC) Vote(b block.Ballot) (isNew bool, err error) {
 
 	return
 }
-func (is *ISAAC) CanGetVotingResult(b block.Ballot) (RoundVoteResult, common.VotingHole, bool) {
+func (is *ISAAC) CanGetVotingResult(b block.Ballot) (RoundVoteResult, ballot.VotingHole, bool) {
 	is.RLock()
 	defer is.RUnlock()
 	runningRound, _ := is.RunningRounds[b.Round().Hash()]
 	if roundVote, err := runningRound.RoundVote(b.Proposer()); err == nil {
 		return roundVote.CanGetVotingResult(is.VotingThresholdPolicy, b.State())
 	} else {
-		return nil, common.VotingNOTYET, false
+		return nil, ballot.VotingNOTYET, false
 	}
 }
 

@@ -3,7 +3,7 @@ package consensus
 import (
 	"time"
 
-	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/ballot"
 )
 
 //
@@ -32,13 +32,13 @@ func NewISAACConfiguration() *ISAACConfiguration {
 	return &p
 }
 
-func (n *ISAACConfiguration) GetTimeout(ballotState common.BallotState) time.Duration {
+func (n *ISAACConfiguration) GetTimeout(ballotState ballot.State) time.Duration {
 	switch ballotState {
-	case common.BallotStateINIT:
+	case ballot.StateINIT:
 		return n.TimeoutINIT
-	case common.BallotStateSIGN:
+	case ballot.StateSIGN:
 		return n.TimeoutSIGN
-	case common.BallotStateACCEPT:
+	case ballot.StateACCEPT:
 		return n.TimeoutACCEPT
 	default:
 		return 0

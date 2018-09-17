@@ -5,7 +5,7 @@ import (
 	"math"
 	"sync"
 
-	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/error"
 )
 
@@ -53,12 +53,12 @@ func (vt *ISAACVotingThresholdPolicy) SetConnected(n int) error {
 	return nil
 }
 
-func (vt *ISAACVotingThresholdPolicy) Threshold(state common.BallotState) int {
+func (vt *ISAACVotingThresholdPolicy) Threshold(state ballot.State) int {
 	var t int
 	switch state {
-	case common.BallotStateSIGN:
+	case ballot.StateSIGN:
 		t = vt.sign
-	case common.BallotStateACCEPT:
+	case ballot.StateACCEPT:
 		t = vt.accept
 	}
 
@@ -66,7 +66,7 @@ func (vt *ISAACVotingThresholdPolicy) Threshold(state common.BallotState) int {
 	threshold := int(math.Ceil(v))
 
 	// in SIGN state, proposer assumes to say VotingYES
-	if state == common.BallotStateSIGN {
+	if state == ballot.StateSIGN {
 		threshold = threshold - 1
 	}
 

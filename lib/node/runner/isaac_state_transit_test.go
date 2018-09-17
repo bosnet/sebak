@@ -7,8 +7,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/block"
-	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/consensus"
 )
 
@@ -108,10 +108,10 @@ func TestStateINITTimeoutNotProposer(t *testing.T) {
 
 	nr.StartStateManager()
 	defer nr.StopStateManager()
-	require.Equal(t, common.BallotStateINIT, nr.isaacStateManager.State().BallotState)
+	require.Equal(t, ballot.StateINIT, nr.isaacStateManager.State().BallotState)
 
 	<-recv
-	require.Equal(t, common.BallotStateSIGN, nr.isaacStateManager.State().BallotState)
+	require.Equal(t, ballot.StateSIGN, nr.isaacStateManager.State().BallotState)
 
 	require.Equal(t, 1, len(b.Messages()))
 	init, sign, accept := 0, 0, 0
@@ -120,12 +120,12 @@ func TestStateINITTimeoutNotProposer(t *testing.T) {
 		require.True(t, ok)
 		require.Equal(t, 0, len(b.Transactions()))
 		switch b.State() {
-		case common.BallotStateINIT:
+		case ballot.StateINIT:
 			init++
-		case common.BallotStateSIGN:
+		case ballot.StateSIGN:
 			sign++
-			require.Equal(t, common.VotingEXP, b.Vote())
-		case common.BallotStateACCEPT:
+			require.Equal(t, ballot.VotingEXP, b.Vote())
+		case ballot.StateACCEPT:
 			accept++
 		}
 	}
@@ -166,13 +166,13 @@ func TestStateSIGNTimeoutProposer(t *testing.T) {
 	nr.StartStateManager()
 	defer nr.StopStateManager()
 
-	require.Equal(t, common.BallotStateINIT, nr.isaacStateManager.State().BallotState)
+	require.Equal(t, ballot.StateINIT, nr.isaacStateManager.State().BallotState)
 
 	<-recv
 	require.Equal(t, 1, len(b.Messages()))
 
 	<-recv
-	require.Equal(t, common.BallotStateACCEPT, nr.isaacStateManager.State().BallotState)
+	require.Equal(t, ballot.StateACCEPT, nr.isaacStateManager.State().BallotState)
 	require.Equal(t, 2, len(b.Messages()))
 
 	init, sign, accept := 0, 0, 0
@@ -181,15 +181,15 @@ func TestStateSIGNTimeoutProposer(t *testing.T) {
 		require.True(t, ok)
 		require.Equal(t, 0, len(b.Transactions()))
 		switch b.State() {
-		case common.BallotStateINIT:
+		case ballot.StateINIT:
 			init++
-			require.Equal(t, common.VotingYES, b.Vote())
-		case common.BallotStateSIGN:
+			require.Equal(t, ballot.VotingYES, b.Vote())
+		case ballot.StateSIGN:
 			sign++
-			require.Equal(t, common.VotingEXP, b.Vote())
-		case common.BallotStateACCEPT:
+			require.Equal(t, ballot.VotingEXP, b.Vote())
+		case ballot.StateACCEPT:
 			accept++
-			require.Equal(t, common.VotingEXP, b.Vote())
+			require.Equal(t, ballot.VotingEXP, b.Vote())
 		}
 	}
 	require.Equal(t, 1, init)
@@ -243,15 +243,15 @@ func TestStateSIGNTimeoutNotProposer(t *testing.T) {
 		require.True(t, ok)
 		require.Equal(t, 0, len(b.Transactions()))
 		switch b.State() {
-		case common.BallotStateINIT:
+		case ballot.StateINIT:
 			init++
-			require.Equal(t, common.VotingYES, b.Vote())
-		case common.BallotStateSIGN:
+			require.Equal(t, ballot.VotingYES, b.Vote())
+		case ballot.StateSIGN:
 			sign++
-			require.Equal(t, common.VotingEXP, b.Vote())
-		case common.BallotStateACCEPT:
+			require.Equal(t, ballot.VotingEXP, b.Vote())
+		case ballot.StateACCEPT:
 			accept++
-			require.Equal(t, common.VotingEXP, b.Vote())
+			require.Equal(t, ballot.VotingEXP, b.Vote())
 		}
 	}
 	require.Equal(t, 0, init)
@@ -305,14 +305,14 @@ func TestStateACCEPTTimeoutProposerThenNotProposer(t *testing.T) {
 		require.True(t, ok)
 		require.Equal(t, 0, len(b.Transactions()))
 		switch b.State() {
-		case common.BallotStateINIT:
+		case ballot.StateINIT:
 			init++
-			require.Equal(t, b.Vote(), common.VotingYES)
-		case common.BallotStateSIGN:
+			require.Equal(t, b.Vote(), ballot.VotingYES)
+		case ballot.StateSIGN:
 			sign++
-		case common.BallotStateACCEPT:
+		case ballot.StateACCEPT:
 			accept++
-			require.Equal(t, b.Vote(), common.VotingEXP)
+			require.Equal(t, b.Vote(), ballot.VotingEXP)
 		}
 	}
 
@@ -355,11 +355,11 @@ func TestStateTransitFromTimeoutInitToAccept(t *testing.T) {
 	nr.StartStateManager()
 	defer nr.StopStateManager()
 	<-recvTransit
-	require.Equal(t, common.BallotStateINIT, nr.isaacStateManager.State().BallotState)
+	require.Equal(t, ballot.StateINIT, nr.isaacStateManager.State().BallotState)
 
-	nr.TransitISAACState(nr.isaacStateManager.State().Round, common.BallotStateSIGN)
+	nr.TransitISAACState(nr.isaacStateManager.State().Round, ballot.StateSIGN)
 	<-recvTransit
-	require.Equal(t, common.BallotStateSIGN, nr.isaacStateManager.State().BallotState)
+	require.Equal(t, ballot.StateSIGN, nr.isaacStateManager.State().BallotState)
 
 	<-recvBroadcast
 	require.Equal(t, 1, len(b.Messages()))
@@ -368,8 +368,8 @@ func TestStateTransitFromTimeoutInitToAccept(t *testing.T) {
 		b, ok := message.(block.Ballot)
 		require.True(t, ok)
 		require.Equal(t, nr.localNode.Address(), b.Proposer())
-		require.Equal(t, common.BallotStateACCEPT, b.State())
-		require.Equal(t, common.VotingEXP, b.Vote())
+		require.Equal(t, ballot.StateACCEPT, b.State())
+		require.Equal(t, ballot.VotingEXP, b.Vote())
 	}
 }
 
@@ -409,11 +409,11 @@ func TestStateTransitFromTimeoutSignToAccept(t *testing.T) {
 		b, ok := message.(block.Ballot)
 		require.True(t, ok)
 		require.Equal(t, nr.localNode.Address(), b.Proposer())
-		require.Equal(t, common.BallotStateINIT, b.State())
-		require.Equal(t, common.VotingYES, b.Vote())
+		require.Equal(t, ballot.StateINIT, b.State())
+		require.Equal(t, ballot.VotingYES, b.Vote())
 	}
 
-	nr.TransitISAACState(nr.isaacStateManager.State().Round, common.BallotStateACCEPT)
+	nr.TransitISAACState(nr.isaacStateManager.State().Round, ballot.StateACCEPT)
 	<-recv
 
 	require.Equal(t, 2, len(b.Messages()))
@@ -421,7 +421,7 @@ func TestStateTransitFromTimeoutSignToAccept(t *testing.T) {
 		b, ok := message.(block.Ballot)
 		require.True(t, ok)
 		require.Equal(t, nr.localNode.Address(), b.Proposer())
-		require.Equal(t, common.BallotStateINIT, b.State())
-		require.Equal(t, common.VotingYES, b.Vote())
+		require.Equal(t, ballot.StateINIT, b.State())
+		require.Equal(t, ballot.VotingYES, b.Vote())
 	}
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/stellar/go/keypair"
 
+	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/consensus/round"
 	"boscoin.io/sebak/lib/error"
@@ -28,12 +29,12 @@ func NewBallot(localNode *node.LocalNode, round round.Round, transactions []stri
 			Round:        round,
 			Transactions: transactions,
 		},
-		State: common.BallotStateINIT,
-		Vote:  common.VotingNOTYET,
+		State: ballot.StateINIT,
+		Vote:  ballot.VotingNOTYET,
 	}
 
 	if len(transactions) < 1 {
-		body.Vote = common.VotingYES
+		body.Vote = ballot.VotingYES
 	}
 
 	b = &Ballot{
@@ -136,7 +137,7 @@ func (b Ballot) ProposerConfirmed() string {
 	return b.B.Proposed.Confirmed
 }
 
-func (b Ballot) Vote() common.VotingHole {
+func (b Ballot) Vote() ballot.VotingHole {
 	return b.B.Vote
 }
 
@@ -144,7 +145,7 @@ func (b *Ballot) SetSource(source string) {
 	b.B.Source = source
 }
 
-func (b *Ballot) SetVote(state common.BallotState, vote common.VotingHole) {
+func (b *Ballot) SetVote(state ballot.State, vote ballot.VotingHole) {
 	b.B.State = state
 	b.B.Vote = vote
 }
@@ -205,7 +206,7 @@ func (b Ballot) IsFromProposer() bool {
 	return b.B.Source == b.B.Proposed.Proposer
 }
 
-func (b Ballot) State() common.BallotState {
+func (b Ballot) State() ballot.State {
 	return b.B.State
 }
 
@@ -226,8 +227,8 @@ type BallotBody struct {
 	Confirmed string             `json:"confirmed"` // created time, ISO8601
 	Proposed  BallotBodyProposed `json:"proposed"`
 	Source    string             `json:"source"`
-	State     common.BallotState `json:"state"`
-	Vote      common.VotingHole  `json:"vote"`
+	State     ballot.State       `json:"state"`
+	Vote      ballot.VotingHole  `json:"vote"`
 	Reason    *errors.Error      `json:"reason"`
 }
 

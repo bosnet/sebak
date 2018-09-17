@@ -14,6 +14,7 @@ import (
 	logging "github.com/inconshreveable/log15"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
+	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/consensus"
@@ -69,7 +70,7 @@ var DefaultHandleACCEPTBallotCheckerFuncs = []common.CheckerFunc{
 type NodeRunner struct {
 	networkID         []byte
 	localNode         *node.LocalNode
-	policy            common.VotingThresholdPolicy
+	policy            ballot.VotingThresholdPolicy
 	network           network.Network
 	consensus         *consensus.ISAAC
 	connectionManager *network.ConnectionManager
@@ -91,7 +92,7 @@ type NodeRunner struct {
 func NewNodeRunner(
 	networkID string,
 	localNode *node.LocalNode,
-	policy common.VotingThresholdPolicy,
+	policy ballot.VotingThresholdPolicy,
 	n network.Network,
 	consensus *consensus.ISAAC,
 	storage *storage.LevelDBBackend,
@@ -217,7 +218,7 @@ func (nr *NodeRunner) Storage() *storage.LevelDBBackend {
 	return nr.storage
 }
 
-func (nr *NodeRunner) Policy() common.VotingThresholdPolicy {
+func (nr *NodeRunner) Policy() ballot.VotingThresholdPolicy {
 	return nr.policy
 }
 
@@ -339,7 +340,7 @@ func (nr *NodeRunner) handleBallotMessage(message common.NetworkMessage) (err er
 		NetworkID:      nr.networkID,
 		Message:        message,
 		Log:            nr.Log(),
-		VotingHole:     common.VotingNOTYET,
+		VotingHole:     ballot.VotingNOTYET,
 	}
 	err = common.RunChecker(baseChecker, nr.handleTransactionCheckerDeferFunc)
 	if err != nil {
@@ -351,11 +352,11 @@ func (nr *NodeRunner) handleBallotMessage(message common.NetworkMessage) (err er
 
 	var checkerFuncs []common.CheckerFunc
 	switch baseChecker.Ballot.State() {
-	case common.BallotStateINIT:
+	case ballot.StateINIT:
 		checkerFuncs = DefaultHandleINITBallotCheckerFuncs
-	case common.BallotStateSIGN:
+	case ballot.StateSIGN:
 		checkerFuncs = DefaultHandleSIGNBallotCheckerFuncs
-	case common.BallotStateACCEPT:
+	case ballot.StateACCEPT:
 		checkerFuncs = DefaultHandleACCEPTBallotCheckerFuncs
 	}
 
@@ -444,7 +445,7 @@ func (nr *NodeRunner) StopStateManager() {
 	return
 }
 
-func (nr *NodeRunner) TransitISAACState(round round.Round, ballotState common.BallotState) {
+func (nr *NodeRunner) TransitISAACState(round round.Round, ballotState ballot.State) {
 	nr.isaacStateManager.TransitISAACState(round, ballotState)
 }
 
@@ -468,7 +469,7 @@ func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) error {
 		NetworkID:      nr.networkID,
 		Transactions:   availableTransactions,
 		CheckAll:       true,
-		VotingHole:     common.VotingNOTYET,
+		VotingHole:     ballot.VotingNOTYET,
 	}
 
 	if err := common.RunChecker(transactionsChecker, common.DefaultDeferFunc); err != nil {
@@ -480,15 +481,15 @@ func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) error {
 	// remove invalid transactions
 	nr.Consensus().TransactionPool.Remove(transactionsChecker.InvalidTransactions()...)
 
-	ballot := block.NewBallot(nr.localNode, round, transactionsChecker.ValidTransactions)
-	ballot.SetVote(common.BallotStateINIT, common.VotingYES)
-	ballot.Sign(nr.localNode.Keypair(), nr.networkID)
+	theBallot := block.NewBallot(nr.localNode, round, transactionsChecker.ValidTransactions)
+	theBallot.SetVote(ballot.StateINIT, ballot.VotingYES)
+	theBallot.Sign(nr.localNode.Keypair(), nr.networkID)
 
-	nr.log.Debug("new ballot created", "ballot", ballot)
+	nr.log.Debug("new ballot created", "ballot", theBallot)
 
-	nr.ConnectionManager().Broadcast(*ballot)
+	nr.ConnectionManager().Broadcast(*theBallot)
 
-	runningRound, err := consensus.NewRunningRound(nr.localNode.Address(), *ballot)
+	runningRound, err := consensus.NewRunningRound(nr.localNode.Address(), *theBallot)
 	if err != nil {
 		return err
 	}

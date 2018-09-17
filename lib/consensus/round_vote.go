@@ -1,11 +1,11 @@
 package consensus
 
 import (
+	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/block"
-	"boscoin.io/sebak/lib/common"
 )
 
-type RoundVoteResult map[ /* Node.Address() */ string]common.VotingHole
+type RoundVoteResult map[ /* Node.Address() */ string]ballot.VotingHole
 
 type RoundVote struct {
 	SIGN   RoundVoteResult
@@ -30,7 +30,7 @@ func (rv *RoundVote) IsVoted(ballot block.Ballot) bool {
 	return found
 }
 
-func (rv *RoundVote) IsVotedByNode(state common.BallotState, node string) bool {
+func (rv *RoundVote) IsVotedByNode(state ballot.State, node string) bool {
 	result := rv.GetResult(state)
 
 	_, found := result[node]
@@ -49,40 +49,40 @@ func (rv *RoundVote) Vote(ballot block.Ballot) (isNew bool, err error) {
 	return
 }
 
-func (rv *RoundVote) GetResult(state common.BallotState) (result RoundVoteResult) {
+func (rv *RoundVote) GetResult(state ballot.State) (result RoundVoteResult) {
 	if !state.IsValidForVote() {
 		return
 	}
 
 	switch state {
-	case common.BallotStateSIGN:
+	case ballot.StateSIGN:
 		result = rv.SIGN
-	case common.BallotStateACCEPT:
+	case ballot.StateACCEPT:
 		result = rv.ACCEPT
 	}
 
 	return result
 }
 
-func (rv *RoundVote) CanGetVotingResult(policy common.VotingThresholdPolicy, state common.BallotState) (RoundVoteResult, common.VotingHole, bool) {
+func (rv *RoundVote) CanGetVotingResult(policy ballot.VotingThresholdPolicy, state ballot.State) (RoundVoteResult, ballot.VotingHole, bool) {
 	threshold := policy.Threshold(state)
 	if threshold < 1 {
-		return RoundVoteResult{}, common.VotingNOTYET, false
+		return RoundVoteResult{}, ballot.VotingNOTYET, false
 	}
 
 	result := rv.GetResult(state)
 	if len(result) < int(threshold) {
-		return result, common.VotingNOTYET, false
+		return result, ballot.VotingNOTYET, false
 	}
 
 	var yes, no, expired int
 	for _, votingHole := range result {
 		switch votingHole {
-		case common.VotingYES:
+		case ballot.VotingYES:
 			yes++
-		case common.VotingNO:
+		case ballot.VotingNO:
 			no++
-		case common.VotingEXP:
+		case ballot.VotingEXP:
 			expired++
 		}
 	}
@@ -97,17 +97,17 @@ func (rv *RoundVote) CanGetVotingResult(policy common.VotingThresholdPolicy, sta
 		"state", state,
 	)
 
-	if state == common.BallotStateSIGN {
+	if state == ballot.StateSIGN {
 		if yes >= threshold {
-			return result, common.VotingYES, true
+			return result, ballot.VotingYES, true
 		} else if no >= threshold+1 {
-			return result, common.VotingNO, true
+			return result, ballot.VotingNO, true
 		}
-	} else if state == common.BallotStateACCEPT {
+	} else if state == ballot.StateACCEPT {
 		if yes >= threshold {
-			return result, common.VotingYES, true
+			return result, ballot.VotingYES, true
 		} else if no >= threshold {
-			return result, common.VotingNO, true
+			return result, ballot.VotingNO, true
 		}
 	} else {
 		// do nothing
@@ -117,10 +117,10 @@ func (rv *RoundVote) CanGetVotingResult(policy common.VotingThresholdPolicy, sta
 	total := policy.Validators()
 	voted := yes + no + expired
 	if cannotBeOver(total-voted, threshold, yes, no) { // draw
-		return result, common.VotingEXP, true
+		return result, ballot.VotingEXP, true
 	}
 
-	return result, common.VotingNOTYET, false
+	return result, ballot.VotingNOTYET, false
 }
 
 func cannotBeOver(remain, threshold, yes, no int) bool {
