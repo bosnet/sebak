@@ -16,7 +16,7 @@ Retrieve an account by the address
 
 + Response 404 (application/problem+json; charset=utf-8)
 
-    + Attributes (Problem NotFound)
+    + Attributes (Problem Not Found)
 
 + Response 500 (application/problem+json; charset=utf-8)
     
