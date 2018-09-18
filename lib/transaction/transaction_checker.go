@@ -90,24 +90,6 @@ func CheckTransactionVerifySignature(c common.Checker, args ...interface{}) (err
 	return
 }
 
-func CheckTransactionIsssueVerifySignature(c common.Checker, args ...interface{}) (err error) {
-	checker := c.(*TransactionChecker)
-
-	//get the proposer keypair and verify it
-	var kp keypair.KP
-	if kp, err = keypair.Parse(checker.Transaction.B.Source); err != nil {
-		return
-	}
-	err = kp.Verify(
-		append(checker.NetworkID, []byte(checker.Transaction.H.Hash)...),
-		base58.Decode(checker.Transaction.H.Signature),
-	)
-	if err != nil {
-		return
-	}
-	return
-}
-
 func CheckTransactionHashMatch(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*TransactionChecker)
 	if checker.Transaction.H.Hash != checker.Transaction.B.MakeHashString() {

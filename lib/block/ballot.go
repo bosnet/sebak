@@ -309,6 +309,8 @@ func FinishOperation(st *storage.LevelDBBackend, tx transaction.Transaction, op 
 		return FinishOperationCreateAccount(st, tx, op)
 	case transaction.OperationPayment:
 		return FinishOperationPayment(st, tx, op)
+	case transaction.OperationIssuance:
+		return FinishOperationIssuance(st, tx, op)
 	default:
 		err = errors.ErrorUnknownOperationType
 		return
@@ -360,6 +362,25 @@ func FinishOperationPayment(st *storage.LevelDBBackend, tx transaction.Transacti
 	}
 
 	log.Debug("payment done", "source", baSource, "target", baTarget, "amount", op.B.GetAmount())
+
+	return
+}
+
+func FinishOperationIssuance(st *storage.LevelDBBackend, tx transaction.Transaction, op transaction.Operation) (err error) {
+	var baTarget *BlockAccount
+	if baTarget, err = GetBlockAccount(st, op.B.TargetAddress()); err != nil {
+		err = errors.ErrorBlockAccountDoesNotExists
+		return
+	}
+
+	if err = baTarget.Deposit(op.B.GetAmount()); err != nil {
+		return
+	}
+	if err = baTarget.Save(st); err != nil {
+		return
+	}
+
+	log.Debug("payment done", "target", baTarget, "amount", op.B.GetAmount())
 
 	return
 }

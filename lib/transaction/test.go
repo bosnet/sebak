@@ -66,7 +66,7 @@ func TestMakeTransaction(networkID []byte, n int) (kp *keypair.Full, tx Transact
 	}
 
 	tx = Transaction{
-		T: "transaction",
+		T: TransactionBasic,
 		H: TransactionHeader{
 			Created: common.NowISO8601(),
 			Hash:    txBody.MakeHashString(),
@@ -122,7 +122,7 @@ func MakeTransactionCreateAccount(kpSource *keypair.Full, target string, amount 
 	}
 
 	tx = Transaction{
-		T: "transaction",
+		T: TransactionBasic,
 		H: TransactionHeader{
 			Created: common.NowISO8601(),
 			Hash:    txBody.MakeHashString(),

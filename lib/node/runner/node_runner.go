@@ -236,6 +236,10 @@ func (nr *NodeRunner) Consensus() *consensus.ISAAC {
 	return nr.consensus
 }
 
+func (nr *NodeRunner) IssuancePolicy() *IssuancePool {
+	return nr.issuancePolicy
+}
+
 func (nr *NodeRunner) ConnectionManager() *network.ConnectionManager {
 	return nr.connectionManager
 }
@@ -528,17 +532,16 @@ func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) error {
 
 	// check issuance policy.
 	// make the issue transaction and add it to the first position of transaction pool
-	txissue, avail := nr.issuancePolicy.Issue(round.BlockHeight)
+	txissue, avail := nr.issuancePolicy.Issue(nr.consensus.LatestConfirmedBlock.Height+1, nr.localNode.Keypair())
 	if avail {
 		//is it required to be signed?
-
-		nr.consensus.TransactionPool.AddAtFirst(txissue)
+		txissue.Sign(nr.localNode.Keypair(), nr.networkID)
 		// check the transaction
 		if err := txissue.IsWellFormed(nr.networkID); err != nil {
-			//
+			nr.consensus.TransactionPool.AddAtFirst(txissue)
 		}
 		// broadcast it to others
-		nr.ConnectionManager().Broadcast(txissue)
+		//nr.ConnectionManager().Broadcast(txissue)
 	}
 
 	// collect incoming transactions from `TransactionPool`

@@ -3,6 +3,12 @@ package runner
 import (
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/transaction"
+	logging "github.com/inconshreveable/log15"
+	"github.com/stellar/go/keypair"
+)
+
+const (
+	InflationCommonBudget string = "inflation-common-bugdet"
 )
 
 type Issuance struct {
@@ -49,7 +55,7 @@ func (i *Issuance) GetHash() string {
 func (i *Issuance) Issue(height uint64) (op transaction.Operation, available bool) {
 	available = true
 
-	if (i.hEnd < height) || ((height-i.hStart)%i.hInterval) != 0 {
+	if (i.hStart > height) || (i.hEnd < height) || ((height-i.hStart)%i.hInterval) != 0 {
 		available = false
 		return
 	}
@@ -64,17 +70,35 @@ func (i *Issuance) Issue(height uint64) (op transaction.Operation, available boo
 	return
 }
 
+func newIssuanceCommonBudget() *Issuance {
+	// and add the default inflation for common budget
+	hash := InflationCommonBudget
+	start := uint64(0)
+	end := uint64(10000000000000000)
+	interval := uint64(1)
+	unit := common.Amount(50)
+	total := common.Amount(0)
+	kp := keypair.Master(hash)
+	address := kp.Address()
+	return NewIssuance(hash, start, end, interval, unit, total, address)
+}
+
 type IssuancePool struct {
 	Pool   map[ /* Issuance.GetHash() */ string]Issuance
 	Hashes []string /* Issuance.GetHash() */
+	log    logging.Logger
 }
 
 func NewIssuancePool() *IssuancePool {
-	return &IssuancePool{
+	ip := &IssuancePool{
 		Pool:   map[string]Issuance{},
 		Hashes: []string{},
+		log:    log.New(logging.Ctx{"runner": "issuance"}),
 	}
+
 	// and add the default inflation for common budget
+	ip.Add(*newIssuanceCommonBudget())
+	return ip
 
 }
 func (ip *IssuancePool) Len() int {
@@ -120,7 +144,7 @@ func (ip *IssuancePool) Validate(height uint64, tx transaction.Transaction) (val
 	return
 }
 
-func (ip *IssuancePool) Issue(height uint64) (tx transaction.Transaction, available bool) {
+func (ip *IssuancePool) Issue(height uint64, kpProposer keypair.KP) (tx transaction.Transaction, available bool) {
 	var ops []transaction.Operation
 
 	for _, hash := range ip.Hashes {
@@ -137,14 +161,14 @@ func (ip *IssuancePool) Issue(height uint64) (tx transaction.Transaction, availa
 	if len(ops) > 0 {
 		available = true
 		txBody := transaction.TransactionBody{
-			Source:     "",
+			Source:     kpProposer.Address(),
 			Fee:        common.Amount(0),
-			SequenceID: 0,
+			SequenceID: uint64(0),
 			Operations: ops,
 		}
 
 		tx = transaction.Transaction{
-			T: "transaction-ex",
+			T: transaction.TransactionIssue,
 			H: transaction.TransactionHeader{
 				Created: common.NowISO8601(),
 				Hash:    txBody.MakeHashString(),

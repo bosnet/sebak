@@ -13,7 +13,7 @@ import (
 // TODO versioning
 const (
 	TransactionBasic string = "transaction"
-	TransactionIssue        = "transactionIssue"
+	TransactionIssue        = "transaction-issue"
 )
 
 type Transaction struct {
@@ -98,7 +98,7 @@ var TransactionWellFormedCheckerFuncs = []common.CheckerFunc{
 
 var TransactionIssueWellFormedCheckerFuncs = []common.CheckerFunc{
 	CheckTransactionOperation,
-	CheckTransactionIsssueVerifySignature,
+	CheckTransactionVerifySignature,
 	CheckTransactionHashMatch,
 }
 
