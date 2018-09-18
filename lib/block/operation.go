@@ -162,7 +162,7 @@ func (bo BlockOperation) NewBlockOperationPeersKey() string {
 	)
 }
 
-func ExistBlockOperation(st *storage.LevelDBBackend, hash string) (bool, error) {
+func ExistsBlockOperation(st *storage.LevelDBBackend, hash string) (bool, error) {
 	return st.Has(GetBlockOperationKey(hash))
 }
 

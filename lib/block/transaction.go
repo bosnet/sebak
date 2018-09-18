@@ -201,7 +201,7 @@ func GetBlockTransaction(st *storage.LevelDBBackend, hash string) (bt BlockTrans
 	return
 }
 
-func ExistBlockTransaction(st *storage.LevelDBBackend, hash string) (bool, error) {
+func ExistsBlockTransaction(st *storage.LevelDBBackend, hash string) (bool, error) {
 	return st.Has(GetBlockTransactionKey(hash))
 }
 

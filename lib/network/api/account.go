@@ -18,7 +18,7 @@ func (api NetworkHandlerAPI) GetAccountHandler(w http.ResponseWriter, r *http.Re
 	address := vars["id"]
 
 	readFunc := func() (payload interface{}, err error) {
-		found, err := block.ExistBlockAccount(api.storage, address)
+		found, err := block.ExistsBlockAccount(api.storage, address)
 		if err != nil {
 			return nil, err
 		}
