@@ -160,12 +160,12 @@ func (b *BlockAccount) Deposit(fund common.Amount) error {
 // Remove fund from an account
 //
 // If the amount would make the account go negative, an `error` is returned.
-func (b *BlockAccount) Withdraw(fund common.Amount, sequenceID uint64) error {
+func (b *BlockAccount) Withdraw(fund common.Amount) error {
 	if val, err := b.GetBalance().Sub(fund); err != nil {
 		return err
 	} else {
 		b.Balance = val
-		b.SequenceID = sequenceID
+		b.SequenceID += 1
 	}
 	return nil
 }
