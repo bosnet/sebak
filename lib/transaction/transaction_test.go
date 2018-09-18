@@ -3,11 +3,12 @@ package transaction
 import (
 	"testing"
 
-	"boscoin.io/sebak/lib/common"
-
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
+
+	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/error"
 )
 
 func TestLoadTransactionFromJSON(t *testing.T) {
@@ -86,4 +87,19 @@ func TestIsWellFormedTransactionWithInvalidSignature(t *testing.T) {
 
 	err = tx.IsWellFormed(networkID)
 	require.NotNil(t, err)
+}
+
+func TestIsWellFormedTransactionMaxOperationsInTransaction(t *testing.T) {
+	var err error
+
+	MaxOperationsInTransaction := common.MaxOperationsInTransaction
+	defer func() {
+		common.MaxOperationsInTransaction = MaxOperationsInTransaction
+	}()
+	common.MaxOperationsInTransaction = 2
+
+	_, tx := TestMakeTransaction(networkID, common.MaxOperationsInTransaction+1)
+	err = tx.IsWellFormed(networkID)
+	require.NotNil(t, err)
+	require.Equal(t, errors.ErrorTransactionHasOverMaxOperationsInTransaction.Code, err.(*errors.Error).Code)
 }
