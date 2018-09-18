@@ -2,7 +2,6 @@ package runner
 
 import (
 	"testing"
-	"time"
 
 	"boscoin.io/sebak/lib/consensus"
 	"github.com/stretchr/testify/require"
@@ -10,7 +9,6 @@ import (
 
 func TestConnectionManagerBroadcaster(t *testing.T) {
 	conf := consensus.NewISAACConfiguration()
-	conf.TimeoutALLCONFIRM = 1 * time.Millisecond
 
 	recv := make(chan struct{})
 	nr, _, cm := createNodeRunnerForTesting(3, conf, recv)

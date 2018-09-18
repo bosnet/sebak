@@ -50,7 +50,7 @@ var (
 	flagTimeoutINIT         string = common.GetENVValue("SEBAK_TIMEOUT_INIT", "2")
 	flagTimeoutSIGN         string = common.GetENVValue("SEBAK_TIMEOUT_SIGN", "2")
 	flagTimeoutACCEPT       string = common.GetENVValue("SEBAK_TIMEOUT_ACCEPT", "2")
-	flagTimeoutALLCONFIRM   string = common.GetENVValue("SEBAK_TIMEOUT_ALLCONFIRM", "2")
+	flagBlockTime           string = common.GetENVValue("SEBAK_BLOCK_TIME", "5")
 	flagTransactionsLimit   string = common.GetENVValue("SEBAK_TRANSACTIONS_LIMIT", "1000")
 )
 
@@ -65,7 +65,7 @@ var (
 	timeoutINIT       time.Duration
 	timeoutSIGN       time.Duration
 	timeoutACCEPT     time.Duration
-	timeoutALLCONFIRM time.Duration
+	blockTime         time.Duration
 	transactionsLimit uint64
 	logLevel          logging.Lvl
 	log               logging.Logger = logging.New("module", "main")
@@ -136,7 +136,7 @@ func init() {
 	nodeCmd.Flags().StringVar(&flagTimeoutINIT, "timeout-init", flagTimeoutINIT, "timeout of the init state")
 	nodeCmd.Flags().StringVar(&flagTimeoutSIGN, "timeout-sign", flagTimeoutSIGN, "timeout of the sign state")
 	nodeCmd.Flags().StringVar(&flagTimeoutACCEPT, "timeout-accept", flagTimeoutACCEPT, "timeout of the accept state")
-	nodeCmd.Flags().StringVar(&flagTimeoutALLCONFIRM, "timeout-allconfirm", flagTimeoutALLCONFIRM, "timeout of the allconfirm state")
+	nodeCmd.Flags().StringVar(&flagBlockTime, "block-time", flagBlockTime, "block creation time")
 	nodeCmd.Flags().StringVar(&flagTransactionsLimit, "transactions-limit", flagTransactionsLimit, "transactions limit in a ballot")
 
 	rootCmd.AddCommand(nodeCmd)
@@ -219,10 +219,10 @@ func parseFlagsNode() {
 		cmdcommon.PrintFlagsError(nodeCmd, "--storage", err)
 	}
 
-	timeoutINIT = getTimeout(flagTimeoutINIT, "--timeout-init")
-	timeoutSIGN = getTimeout(flagTimeoutSIGN, "--timeout-sign")
-	timeoutACCEPT = getTimeout(flagTimeoutACCEPT, "--timeout-accept")
-	timeoutALLCONFIRM = getTimeout(flagTimeoutALLCONFIRM, "--timeout-allconfirm")
+	timeoutINIT = getTime(flagTimeoutINIT, "--timeout-init")
+	timeoutSIGN = getTime(flagTimeoutSIGN, "--timeout-sign")
+	timeoutACCEPT = getTime(flagTimeoutACCEPT, "--timeout-accept")
+	blockTime = getTime(flagBlockTime, "--block-time")
 
 	if transactionsLimit, err = strconv.ParseUint(flagTransactionsLimit, 10, 64); err != nil {
 		cmdcommon.PrintFlagsError(nodeCmd, "--transactions-limit", err)
@@ -278,7 +278,7 @@ func parseFlagsNode() {
 	parsedFlags = append(parsedFlags, "\n\ttimeout-init", flagTimeoutINIT)
 	parsedFlags = append(parsedFlags, "\n\ttimeout-sign", flagTimeoutSIGN)
 	parsedFlags = append(parsedFlags, "\n\ttimeout-accept", flagTimeoutACCEPT)
-	parsedFlags = append(parsedFlags, "\n\ttimeout-allconfirm", flagTimeoutALLCONFIRM)
+	parsedFlags = append(parsedFlags, "\n\tblock-time", flagBlockTime)
 	parsedFlags = append(parsedFlags, "\n\ttransactions-limit", flagTransactionsLimit)
 
 	var vl []interface{}
@@ -298,7 +298,7 @@ func parseFlagsNode() {
 	}
 }
 
-func getTimeout(timeoutStr string, errMessage string) time.Duration {
+func getTime(timeoutStr string, errMessage string) time.Duration {
 	var timeoutDuration time.Duration
 	if tmpUint64, err := strconv.ParseUint(flagTimeoutINIT, 10, 64); err != nil {
 		cmdcommon.PrintFlagsError(nodeCmd, errMessage, err)
@@ -361,7 +361,7 @@ func runNode() error {
 			TimeoutINIT:       timeoutINIT,
 			TimeoutSIGN:       timeoutSIGN,
 			TimeoutACCEPT:     timeoutACCEPT,
-			TimeoutALLCONFIRM: timeoutALLCONFIRM,
+			BlockTime:         blockTime,
 			TransactionsLimit: uint64(transactionsLimit),
 		}
 		nr, err := runner.NewNodeRunner(flagNetworkID, localNode, policy, nt, isaac, st, conf)

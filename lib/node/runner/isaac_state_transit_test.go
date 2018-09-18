@@ -19,7 +19,7 @@ func TestStateINITProposer(t *testing.T) {
 	conf.TimeoutINIT = time.Hour
 	conf.TimeoutSIGN = time.Hour
 	conf.TimeoutACCEPT = time.Hour
-	conf.TimeoutALLCONFIRM = time.Hour
+	conf.BlockTime = time.Hour
 
 	recv := make(chan struct{})
 	nr, _, cm := createNodeRunnerForTesting(3, conf, recv)
@@ -48,7 +48,7 @@ func TestStateINITNotProposer(t *testing.T) {
 	conf.TimeoutINIT = time.Hour
 	conf.TimeoutSIGN = time.Hour
 	conf.TimeoutACCEPT = time.Hour
-	conf.TimeoutALLCONFIRM = time.Hour
+	conf.BlockTime = time.Hour
 
 	recv := make(chan struct{})
 	nr, _, _ := createNodeRunnerForTesting(3, conf, recv)
@@ -76,7 +76,7 @@ func TestStateINITTimeoutNotProposer(t *testing.T) {
 	conf.TimeoutINIT = 200 * time.Millisecond
 	conf.TimeoutSIGN = time.Hour
 	conf.TimeoutACCEPT = time.Hour
-	conf.TimeoutALLCONFIRM = time.Hour
+	conf.BlockTime = time.Hour
 
 	recv := make(chan struct{})
 	nr, _, _ := createNodeRunnerForTesting(3, conf, recv)
@@ -130,7 +130,7 @@ func TestStateSIGNTimeoutProposer(t *testing.T) {
 	conf.TimeoutINIT = time.Hour
 	conf.TimeoutSIGN = 200 * time.Millisecond
 	conf.TimeoutACCEPT = time.Hour
-	conf.TimeoutALLCONFIRM = time.Hour
+	conf.BlockTime = time.Hour
 
 	recv := make(chan struct{})
 	nr, _, cm := createNodeRunnerForTesting(3, conf, recv)
@@ -188,7 +188,7 @@ func TestStateSIGNTimeoutNotProposer(t *testing.T) {
 	conf.TimeoutINIT = 200 * time.Millisecond
 	conf.TimeoutSIGN = 200 * time.Millisecond
 	conf.TimeoutACCEPT = time.Hour
-	conf.TimeoutALLCONFIRM = time.Hour
+	conf.BlockTime = time.Hour
 
 	recv := make(chan struct{})
 	nr, _, _ := createNodeRunnerForTesting(3, conf, recv)
@@ -245,7 +245,7 @@ func TestStateACCEPTTimeoutProposerThenNotProposer(t *testing.T) {
 	conf.TimeoutINIT = time.Hour
 	conf.TimeoutSIGN = 200 * time.Millisecond
 	conf.TimeoutACCEPT = 200 * time.Millisecond
-	conf.TimeoutALLCONFIRM = time.Hour
+	conf.BlockTime = time.Hour
 
 	recv := make(chan struct{})
 	nr, _, _ := createNodeRunnerForTesting(3, conf, recv)
@@ -304,7 +304,7 @@ func TestStateTransitFromTimeoutInitToAccept(t *testing.T) {
 	conf.TimeoutINIT = time.Hour
 	conf.TimeoutSIGN = 200 * time.Millisecond
 	conf.TimeoutACCEPT = 200 * time.Millisecond
-	conf.TimeoutALLCONFIRM = 200 * time.Millisecond
+	conf.BlockTime = 200 * time.Millisecond
 
 	recvBroadcast := make(chan struct{})
 	nr, _, _ := createNodeRunnerForTesting(3, conf, recvBroadcast)
@@ -354,7 +354,7 @@ func TestStateTransitFromTimeoutSignToAccept(t *testing.T) {
 	conf.TimeoutINIT = time.Hour
 	conf.TimeoutSIGN = time.Hour
 	conf.TimeoutACCEPT = 200 * time.Millisecond
-	conf.TimeoutALLCONFIRM = 200 * time.Millisecond
+	conf.BlockTime = time.Hour
 
 	recv := make(chan struct{})
 	nr, _, cm := createNodeRunnerForTesting(3, conf, recv)
