@@ -96,17 +96,17 @@ func (p *HelperTestGetBlocksHandler) Done() {
 	p.st.Close()
 }
 
-func (p *HelperTestGetBlocksHandler) UnmarshalFromResponseBody(body io.ReadCloser) (
-	rbs map[GetBlocksDataType][]interface{},
+func unmarshalFromNodeItemResponseBody(body io.ReadCloser) (
+	rbs map[NodeItemDataType][]interface{},
 	err error,
 ) {
 	defer body.Close()
 
-	rbs = map[GetBlocksDataType][]interface{}{}
+	rbs = map[NodeItemDataType][]interface{}{}
 
 	sc := bufio.NewScanner(body)
 	for sc.Scan() {
-		var itemType GetBlocksDataType
+		var itemType NodeItemDataType
 		var b interface{}
 		itemType, b, err = UnmarshalGetBlocksHandlerItem(sc.Bytes())
 
@@ -134,12 +134,12 @@ func TestGetBlocksHandler(t *testing.T) {
 	require.Nil(t, err)
 
 	require.Equal(t, http.StatusOK, resp.StatusCode)
-	rbs, err := p.UnmarshalFromResponseBody(resp.Body)
+	rbs, err := unmarshalFromNodeItemResponseBody(resp.Body)
 	require.Nil(t, err)
-	require.Equal(t, len(p.blocks), len(rbs[GetBlocksDataTypeHeader]))
+	require.Equal(t, len(p.blocks), len(rbs[NodeItemBlockHeader]))
 
 	for i, b := range p.blocks {
-		rb := rbs[GetBlocksDataTypeHeader][i].(block.Header)
+		rb := rbs[NodeItemBlockHeader][i].(block.Header)
 		require.Equal(t, b.Height, rb.Height)
 
 		s, _ := b.Header.Serialize()
@@ -165,12 +165,12 @@ func TestGetBlocksHandlerOptions(t *testing.T) {
 		resp, _ := p.server.Client().Do(req)
 
 		require.Equal(t, http.StatusOK, resp.StatusCode)
-		rbs, err := p.UnmarshalFromResponseBody(resp.Body)
+		rbs, err := unmarshalFromNodeItemResponseBody(resp.Body)
 		require.Nil(t, err)
-		require.Equal(t, len(p.blocks), len(rbs[GetBlocksDataTypeBlock]))
+		require.Equal(t, len(p.blocks), len(rbs[NodeItemBlock]))
 
 		for i, b := range p.blocks {
-			rb := rbs[GetBlocksDataTypeBlock][i].(block.Block)
+			rb := rbs[NodeItemBlock][i].(block.Block)
 			require.Equal(t, b.Hash, rb.Hash)
 
 			s, _ := b.Serialize()
@@ -189,12 +189,12 @@ func TestGetBlocksHandlerOptions(t *testing.T) {
 		resp, _ := p.server.Client().Do(req)
 
 		require.Equal(t, http.StatusOK, resp.StatusCode)
-		rbs, err := p.UnmarshalFromResponseBody(resp.Body)
+		rbs, err := unmarshalFromNodeItemResponseBody(resp.Body)
 		require.Nil(t, err)
-		require.Equal(t, int(options.Limit()), len(rbs[GetBlocksDataTypeBlock]))
+		require.Equal(t, int(options.Limit()), len(rbs[NodeItemBlock]))
 
 		for i, b := range p.blocks[:options.Limit()] {
-			rb := rbs[GetBlocksDataTypeBlock][i].(block.Block)
+			rb := rbs[NodeItemBlock][i].(block.Block)
 			require.Equal(t, b.Hash, rb.Hash)
 
 			s, _ := b.Serialize()
@@ -213,12 +213,12 @@ func TestGetBlocksHandlerOptions(t *testing.T) {
 		resp, _ := p.server.Client().Do(req)
 
 		require.Equal(t, http.StatusOK, resp.StatusCode)
-		rbs, err := p.UnmarshalFromResponseBody(resp.Body)
+		rbs, err := unmarshalFromNodeItemResponseBody(resp.Body)
 		require.Nil(t, err)
-		require.Equal(t, len(p.blocks), len(rbs[GetBlocksDataTypeBlock]))
+		require.Equal(t, len(p.blocks), len(rbs[NodeItemBlock]))
 
 		for i, b := range p.blocks {
-			rb := rbs[GetBlocksDataTypeBlock][len(p.blocks)-1-i].(block.Block)
+			rb := rbs[NodeItemBlock][len(p.blocks)-1-i].(block.Block)
 			require.Equal(t, b.Hash, rb.Hash)
 
 			s, _ := b.Serialize()
@@ -240,12 +240,12 @@ func TestGetBlocksHandlerOptions(t *testing.T) {
 		resp, _ := p.server.Client().Do(req)
 
 		require.Equal(t, http.StatusOK, resp.StatusCode)
-		rbs, err := p.UnmarshalFromResponseBody(resp.Body)
+		rbs, err := unmarshalFromNodeItemResponseBody(resp.Body)
 		require.Nil(t, err)
-		require.Equal(t, len(expectedBlocks), len(rbs[GetBlocksDataTypeBlock]))
+		require.Equal(t, len(expectedBlocks), len(rbs[NodeItemBlock]))
 
 		for i, b := range expectedBlocks {
-			rb := rbs[GetBlocksDataTypeBlock][i].(block.Block)
+			rb := rbs[NodeItemBlock][i].(block.Block)
 			require.Equal(t, b.Hash, rb.Hash)
 
 			s, _ := b.Serialize()
@@ -387,13 +387,13 @@ func TestGetBlocksHandlerWithHeightRange(t *testing.T) {
 		resp, _ := p.server.Client().Do(req)
 
 		require.Equal(t, http.StatusOK, resp.StatusCode)
-		rbs, err := p.UnmarshalFromResponseBody(resp.Body)
+		rbs, err := unmarshalFromNodeItemResponseBody(resp.Body)
 		require.Nil(t, err)
-		require.Equal(t, expectedLength, len(rbs[GetBlocksDataTypeBlock]))
+		require.Equal(t, expectedLength, len(rbs[NodeItemBlock]))
 
 		for i := 1; i < 1+expectedLength; i++ {
 			b := p.blocks[i]
-			rb := rbs[GetBlocksDataTypeBlock][i-1].(block.Block)
+			rb := rbs[NodeItemBlock][i-1].(block.Block)
 			require.Equal(t, b.Height, rb.Height)
 			require.Equal(t, b.Hash, rb.Hash)
 
@@ -420,12 +420,12 @@ func TestGetBlocksHandlerWithInvalidHeightRange(t *testing.T) {
 
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 
-		rbs, err := p.UnmarshalFromResponseBody(resp.Body)
+		rbs, err := unmarshalFromNodeItemResponseBody(resp.Body)
 		require.Nil(t, err)
-		require.Equal(t, len(p.blocks), len(rbs[GetBlocksDataTypeHeader]))
+		require.Equal(t, len(p.blocks), len(rbs[NodeItemBlockHeader]))
 
 		for i, b := range p.blocks {
-			rb := rbs[GetBlocksDataTypeHeader][i].(block.Header)
+			rb := rbs[NodeItemBlockHeader][i].(block.Header)
 			require.Equal(t, b.Height, rb.Height)
 
 			s, _ := b.Header.Serialize()
@@ -505,9 +505,9 @@ func TestGetBlocksHandlerWithInvalidHeightRange(t *testing.T) {
 		resp, _ := p.server.Client().Do(req)
 
 		require.Equal(t, http.StatusOK, resp.StatusCode)
-		rbs, err := p.UnmarshalFromResponseBody(resp.Body)
+		rbs, err := unmarshalFromNodeItemResponseBody(resp.Body)
 		require.Nil(t, err)
-		require.Equal(t, int(expectedLength), len(rbs[GetBlocksDataTypeHeader]))
+		require.Equal(t, int(expectedLength), len(rbs[NodeItemBlockHeader]))
 	}
 }
 
@@ -528,12 +528,12 @@ func TestGetBlocksHandlerWithModeBlock(t *testing.T) {
 		require.Nil(t, err)
 
 		require.Equal(t, http.StatusOK, resp.StatusCode)
-		rbs, err := p.UnmarshalFromResponseBody(resp.Body)
+		rbs, err := unmarshalFromNodeItemResponseBody(resp.Body)
 		require.Nil(t, err)
-		require.Equal(t, len(p.blocks), len(rbs[GetBlocksDataTypeBlock]))
+		require.Equal(t, len(p.blocks), len(rbs[NodeItemBlock]))
 
 		for i, b := range p.blocks {
-			rb := rbs[GetBlocksDataTypeBlock][i].(block.Block)
+			rb := rbs[NodeItemBlock][i].(block.Block)
 			require.Equal(t, b.Hash, rb.Hash)
 
 			s, _ := b.Serialize()
@@ -560,12 +560,12 @@ func TestGetBlocksHandlerWithModeHeader(t *testing.T) {
 		require.Nil(t, err)
 
 		require.Equal(t, http.StatusOK, resp.StatusCode)
-		rbs, err := p.UnmarshalFromResponseBody(resp.Body)
+		rbs, err := unmarshalFromNodeItemResponseBody(resp.Body)
 		require.Nil(t, err)
-		require.Equal(t, len(p.blocks), len(rbs[GetBlocksDataTypeHeader]))
+		require.Equal(t, len(p.blocks), len(rbs[NodeItemBlockHeader]))
 
 		for i, b := range p.blocks {
-			rb := rbs[GetBlocksDataTypeHeader][i].(block.Header)
+			rb := rbs[NodeItemBlockHeader][i].(block.Header)
 			require.Equal(t, b.Height, rb.Height)
 
 			s, _ := b.Header.Serialize()
@@ -590,12 +590,12 @@ func TestGetBlocksHandlerWithModeFull(t *testing.T) {
 		require.Nil(t, err)
 
 		require.Equal(t, http.StatusOK, resp.StatusCode)
-		rbs, err := p.UnmarshalFromResponseBody(resp.Body)
+		rbs, err := unmarshalFromNodeItemResponseBody(resp.Body)
 		require.Nil(t, err)
-		require.Equal(t, len(p.blocks), len(rbs[GetBlocksDataTypeBlock]))
+		require.Equal(t, len(p.blocks), len(rbs[NodeItemBlock]))
 
 		for i, b := range p.blocks {
-			rb := rbs[GetBlocksDataTypeBlock][i].(block.Block)
+			rb := rbs[NodeItemBlock][i].(block.Block)
 			require.Equal(t, b.Hash, rb.Hash)
 
 			s, _ := b.Serialize()
@@ -607,7 +607,7 @@ func TestGetBlocksHandlerWithModeFull(t *testing.T) {
 		for _, b := range p.blocks {
 			expectedNumberOfTransactions += len(b.Transactions)
 		}
-		require.Equal(t, expectedNumberOfTransactions, len(rbs[GetBlocksDataTypeTransaction]))
+		require.Equal(t, expectedNumberOfTransactions, len(rbs[NodeItemBlockTransaction]))
 
 		var expectedNumberOfOperations int
 		var txInxdex int
@@ -617,7 +617,7 @@ func TestGetBlocksHandlerWithModeFull(t *testing.T) {
 				tx, _ := block.GetBlockTransaction(p.st, txHash)
 				expectedNumberOfOperations += len(tx.Operations)
 
-				rtx := rbs[GetBlocksDataTypeTransaction][txInxdex].(block.BlockTransaction)
+				rtx := rbs[NodeItemBlockTransaction][txInxdex].(block.BlockTransaction)
 				require.Equal(t, tx.Hash, rtx.Hash)
 
 				s, _ := tx.Serialize()
@@ -627,7 +627,7 @@ func TestGetBlocksHandlerWithModeFull(t *testing.T) {
 				for _, opHash := range tx.Operations {
 					op, _ := block.GetBlockOperation(p.st, opHash)
 
-					rop := rbs[GetBlocksDataTypeOperation][opInxdex].(block.BlockOperation)
+					rop := rbs[NodeItemBlockOperation][opInxdex].(block.BlockOperation)
 					require.Equal(t, op.Hash, rop.Hash)
 
 					s, _ := op.Serialize()
@@ -640,7 +640,7 @@ func TestGetBlocksHandlerWithModeFull(t *testing.T) {
 				txInxdex++
 			}
 		}
-		require.Equal(t, expectedNumberOfOperations, len(rbs[GetBlocksDataTypeOperation]))
+		require.Equal(t, expectedNumberOfOperations, len(rbs[NodeItemBlockOperation]))
 	}
 }
 
