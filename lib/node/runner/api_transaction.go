@@ -67,7 +67,7 @@ func (nh NetworkHandlerNode) GetNodeTransactionsHandler(w http.ResponseWriter, r
 			continue
 		}
 
-		if exists, err := block.ExistBlockTransaction(nh.storage, hash); err != nil {
+		if exists, err := block.ExistsBlockTransaction(nh.storage, hash); err != nil {
 			nh.renderNodeItem(w, NodeItemError, err)
 			return
 		} else if !exists {
