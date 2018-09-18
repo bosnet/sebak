@@ -84,7 +84,7 @@ func NewTransaction(source string, sequenceID uint64, ops ...Operation) (tx Tran
 }
 
 var TransactionWellFormedCheckerFuncs = []common.CheckerFunc{
-	CheckTransactionMaxOperations,
+	CheckTransactionOverOperationsLimit,
 	CheckTransactionSequenceID,
 	CheckTransactionSource,
 	CheckTransactionBaseFee,
