@@ -21,9 +21,7 @@ func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter
 	address := vars["id"]
 	options, err := storage.NewDefaultListOptionsFromQuery(r.URL.Query())
 
-	oTypeStr := r.URL.Query().Get("type")
-	var oType transaction.OperationType
-	oType = transaction.OperationType(oTypeStr)
+	oType := transaction.OperationType(r.URL.Query().Get("type"))
 
 	if err != nil {
 		http.Error(w, errors.ErrorInvalidQueryString.Error(), http.StatusBadRequest)
