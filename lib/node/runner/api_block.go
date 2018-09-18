@@ -44,7 +44,7 @@ func (nh NetworkHandlerNode) GetBlocksHandler(w http.ResponseWriter, r *http.Req
 		options.SetCursor([]byte(cursorBlock.NewBlockKeyConfirmed()))
 	}
 
-	var bs []interface{}
+	var bs []*block.Block
 	if len(options.Hashes) > 0 {
 		for _, hash := range options.Hashes {
 			if exists, err := block.ExistsBlock(nh.storage, hash); err != nil {
@@ -113,10 +113,10 @@ func (nh NetworkHandlerNode) GetBlocksHandler(w http.ResponseWriter, r *http.Req
 		var itemType NodeItemDataType
 		if options.Mode == GetBlocksOptionsModeHeader {
 			itemType = NodeItemBlockHeader
-			nh.renderNodeItem(w, itemType, b.(*block.Block).Header)
+			nh.renderNodeItem(w, itemType, b.Header)
 		} else {
 			itemType = NodeItemBlock
-			nh.renderNodeItem(w, itemType, b.(*block.Block))
+			nh.renderNodeItem(w, itemType, b)
 		}
 
 		if options.Mode == GetBlocksOptionsModeFull {
@@ -124,8 +124,7 @@ func (nh NetworkHandlerNode) GetBlocksHandler(w http.ResponseWriter, r *http.Req
 			var tx block.BlockTransaction
 			var op block.BlockOperation
 
-			bk := b.(*block.Block)
-			for _, t := range bk.Transactions {
+			for _, t := range b.Transactions {
 				if tx, err = block.GetBlockTransaction(nh.storage, t); err != nil {
 					nh.renderNodeItem(w, NodeItemError, err)
 					continue
