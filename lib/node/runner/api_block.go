@@ -150,6 +150,9 @@ func UnmarshalNodeItemResponse(d []byte) (itemType NodeItemDataType, b interface
 	sc := bufio.NewScanner(bytes.NewReader(d))
 	sc.Split(bufio.ScanWords)
 	sc.Scan()
+	if err = sc.Err(); err != nil {
+		return
+	}
 
 	unmarshal := func(o interface{}) error {
 		if err := json.Unmarshal(d[len(sc.Bytes())+1:], o); err != nil {
