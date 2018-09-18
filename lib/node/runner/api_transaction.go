@@ -2,6 +2,7 @@ package runner
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -82,6 +83,7 @@ func (nh NetworkHandlerNode) GetNodeTransactionsHandler(w http.ResponseWriter, r
 			nh.renderNodeItem(w, NodeItemError, err)
 			return
 		}
+		fmt.Println(">>", string(btx.Message))
 		nh.writeNodeItem(w, NodeItemTransaction, btx.Message)
 	}
 

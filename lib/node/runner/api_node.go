@@ -20,11 +20,12 @@ type NetworkHandlerNode struct {
 	consensus *consensus.ISAAC
 }
 
-func NewNetworkHandlerNode(localNode *node.LocalNode, network network.Network, storage *storage.LevelDBBackend) *NetworkHandlerNode {
+func NewNetworkHandlerNode(localNode *node.LocalNode, network network.Network, storage *storage.LevelDBBackend, consensus *consensus.ISAAC) *NetworkHandlerNode {
 	return &NetworkHandlerNode{
 		localNode: localNode,
 		network:   network,
 		storage:   storage,
+		consensus: consensus,
 	}
 }
 
