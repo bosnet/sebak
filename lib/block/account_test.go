@@ -20,7 +20,7 @@ func TestSaveNewBlockAccount(t *testing.T) {
 	err := b.Save(st)
 	require.Nil(t, err)
 
-	exists, err := ExistBlockAccount(st, b.Address)
+	exists, err := ExistsBlockAccount(st, b.Address)
 	require.Nil(t, err)
 	require.Equal(t, exists, true, "BlockAccount does not exists")
 }

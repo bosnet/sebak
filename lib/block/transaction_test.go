@@ -63,7 +63,7 @@ func TestBlockTransactionSaveExisting(t *testing.T) {
 	err := bt.Save(st)
 	require.Nil(t, err)
 
-	exists, err := ExistBlockTransaction(st, bt.Hash)
+	exists, err := ExistsBlockTransaction(st, bt.Hash)
 	require.Nil(t, err)
 	require.Equal(t, exists, true)
 

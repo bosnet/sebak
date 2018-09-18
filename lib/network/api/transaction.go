@@ -66,7 +66,7 @@ func (api NetworkHandlerAPI) GetTransactionByHashHandler(w http.ResponseWriter, 
 	key := vars["id"]
 
 	readFunc := func() (payload interface{}, err error) {
-		found, err := block.ExistBlockTransaction(api.storage, key)
+		found, err := block.ExistsBlockTransaction(api.storage, key)
 		if err != nil {
 			return nil, err
 		}

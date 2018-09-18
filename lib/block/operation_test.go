@@ -51,7 +51,7 @@ func TestBlockOperationSaveExisting(t *testing.T) {
 	bo := bos[0]
 	bo.Save(st)
 
-	exists, err := ExistBlockOperation(st, bos[0].Hash)
+	exists, err := ExistsBlockOperation(st, bos[0].Hash)
 	require.Nil(t, err)
 	require.Equal(t, exists, true)
 

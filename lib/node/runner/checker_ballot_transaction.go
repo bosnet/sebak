@@ -56,7 +56,7 @@ func IsNew(c common.Checker, args ...interface{}) (err error) {
 	for _, hash := range checker.Transactions {
 		// check transaction is already stored
 		var found bool
-		if found, err = block.ExistBlockTransaction(checker.NodeRunner.Storage(), hash); err != nil || found {
+		if found, err = block.ExistsBlockTransaction(checker.NodeRunner.Storage(), hash); err != nil || found {
 			if !checker.CheckAll {
 				err = errors.ErrorNewButKnownMessage
 				return
@@ -192,7 +192,7 @@ func ValidateOp(st *storage.LevelDBBackend, op transaction.Operation) (err error
 			return
 		}
 		var exists bool
-		if exists, err = block.ExistBlockAccount(st, op.B.(transaction.OperationBodyCreateAccount).Target); err == nil && exists {
+		if exists, err = block.ExistsBlockAccount(st, op.B.(transaction.OperationBodyCreateAccount).Target); err == nil && exists {
 			err = errors.ErrorBlockAccountAlreadyExists
 			return
 		}
@@ -202,7 +202,7 @@ func ValidateOp(st *storage.LevelDBBackend, op transaction.Operation) (err error
 			return
 		}
 		var exists bool
-		if exists, err = block.ExistBlockAccount(st, op.B.(transaction.OperationBodyPayment).Target); err == nil && !exists {
+		if exists, err = block.ExistsBlockAccount(st, op.B.(transaction.OperationBodyPayment).Target); err == nil && !exists {
 			err = errors.ErrorBlockAccountDoesNotExists
 			return
 		}

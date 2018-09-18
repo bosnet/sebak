@@ -89,7 +89,7 @@ func GetBlockAccountCreatedKey(created string) string {
 	return fmt.Sprintf("%s%s", common.BlockAccountPrefixCreated, created)
 }
 
-func ExistBlockAccount(st *storage.LevelDBBackend, address string) (exists bool, err error) {
+func ExistsBlockAccount(st *storage.LevelDBBackend, address string) (exists bool, err error) {
 	return st.Has(GetBlockAccountKey(address))
 }
 
