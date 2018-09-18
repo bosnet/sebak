@@ -108,7 +108,7 @@ func unmarshalFromNodeItemResponseBody(body io.ReadCloser) (
 	for sc.Scan() {
 		var itemType NodeItemDataType
 		var b interface{}
-		itemType, b, err = UnmarshalGetBlocksHandlerItem(sc.Bytes())
+		itemType, b, err = UnmarshalNodeItemResponse(sc.Bytes())
 
 		rbs[itemType] = append(rbs[itemType], b)
 	}

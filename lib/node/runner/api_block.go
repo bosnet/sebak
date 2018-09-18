@@ -146,7 +146,7 @@ func (nh NetworkHandlerNode) GetBlocksHandler(w http.ResponseWriter, r *http.Req
 	return
 }
 
-func UnmarshalGetBlocksHandlerItem(d []byte) (itemType NodeItemDataType, b interface{}, err error) {
+func UnmarshalNodeItemResponse(d []byte) (itemType NodeItemDataType, b interface{}, err error) {
 	sc := bufio.NewScanner(bytes.NewReader(d))
 	sc.Split(bufio.ScanWords)
 	sc.Scan()
