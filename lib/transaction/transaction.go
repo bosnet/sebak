@@ -55,6 +55,9 @@ func NewTransactionFromJSON(b []byte) (tx Transaction, err error) {
 		Operations: operations,
 	}
 
+	// Set the hash
+	tx.H.Hash = tx.B.MakeHashString()
+
 	return
 }
 
@@ -90,7 +93,6 @@ var TransactionWellFormedCheckerFuncs = []common.CheckerFunc{
 	CheckTransactionBaseFee,
 	CheckTransactionOperation,
 	CheckTransactionVerifySignature,
-	CheckTransactionHashMatch,
 }
 
 func (tx Transaction) IsWellFormed(networkID []byte) (err error) {
@@ -173,9 +175,12 @@ func (tx *Transaction) Sign(kp keypair.KP, networkID []byte) {
 }
 
 type TransactionHeader struct {
-	Version   string `json:"version"`
-	Created   string `json:"created"`
-	Hash      string `json:"hash"`
+	Version string `json:"version"`
+	Created string `json:"created"`
+	// Hash of this transaction
+	// This is cached and not serialized when sent, because the remote node
+	// has to validate it anyway.
+	Hash      string `json:"-"`
 	Signature string `json:"signature"`
 }
 

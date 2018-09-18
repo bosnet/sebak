@@ -71,7 +71,7 @@ func TestMessageChecker(t *testing.T) {
 	require.Equal(t, err, errors.ErrorNewButKnownMessage)
 }
 
-func TestMessageCheckerWithInvalidMessage(t *testing.T) {
+func TestMessageCheckerWithInvalidHash(t *testing.T) {
 	_, invalidTx := transaction.TestMakeTransaction(networkID, 1)
 	invalidTx.H.Hash = "wrong hash"
 
@@ -92,11 +92,10 @@ func TestMessageCheckerWithInvalidMessage(t *testing.T) {
 	}
 
 	err = TransactionUnmarshal(checker)
-	require.EqualError(t, err, errors.ErrorSignatureVerificationFailed.Message)
+	require.Nil(t, err)
 
 	checker.Message.Data = []byte{}
 	err = TransactionUnmarshal(checker)
 	require.EqualError(t, err, "unexpected end of JSON input")
 	require.NotEqual(t, checker.Transaction, invalidTx)
-
 }

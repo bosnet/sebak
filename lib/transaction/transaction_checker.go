@@ -100,13 +100,3 @@ func CheckTransactionVerifySignature(c common.Checker, args ...interface{}) (err
 	}
 	return
 }
-
-func CheckTransactionHashMatch(c common.Checker, args ...interface{}) (err error) {
-	checker := c.(*TransactionChecker)
-	if checker.Transaction.H.Hash != checker.Transaction.B.MakeHashString() {
-		err = errors.ErrorHashDoesNotMatch
-		return
-	}
-
-	return
-}
