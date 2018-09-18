@@ -395,7 +395,7 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 			return
 		}
 
-		if err = baSource.Withdraw(tx.TotalAmount(true), tx.NextSequenceID()); err != nil {
+		if err = baSource.Withdraw(tx.TotalAmount(true)); err != nil {
 			ts.Discard()
 			return
 		}
