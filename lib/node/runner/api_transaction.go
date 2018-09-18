@@ -2,7 +2,6 @@ package runner
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -50,12 +49,12 @@ func (nh NetworkHandlerNode) GetNodeTransactionsHandler(w http.ResponseWriter, r
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("X-SEBAK-RESULT-COUNT", string(len(hashes)))
 
-	unknown := map[string]bool{}
+	unknown := map[string]struct{}{}
 
 	// check in `TransactionPool`
 	for _, hash := range hashes {
 		if tx, found := nh.consensus.TransactionPool.Get(hash); !found {
-			unknown[hash] = true
+			unknown[hash] = struct{}{}
 			continue
 		} else {
 			nh.renderNodeItem(w, NodeItemTransaction, tx)
@@ -68,14 +67,12 @@ func (nh NetworkHandlerNode) GetNodeTransactionsHandler(w http.ResponseWriter, r
 			continue
 		}
 
-		if exists, err := block.ExistBlockTransaction(nh.storage, hash); !exists || err != nil {
-			if !exists {
-				err := errors.ErrorTransactionNotFound.Clone().SetData("hash", hash)
-				nh.renderNodeItem(w, NodeItemError, err)
-				continue
-			}
+		if exists, err := block.ExistBlockTransaction(nh.storage, hash); err != nil {
 			nh.renderNodeItem(w, NodeItemError, err)
 			return
+		} else if !exists {
+			nh.renderNodeItem(w, NodeItemError, errors.ErrorTransactionNotFound.Clone().SetData("hash", hash))
+			continue
 		}
 
 		btx, err := block.GetBlockTransaction(nh.storage, hash)
@@ -83,7 +80,6 @@ func (nh NetworkHandlerNode) GetNodeTransactionsHandler(w http.ResponseWriter, r
 			nh.renderNodeItem(w, NodeItemError, err)
 			return
 		}
-		fmt.Println(">>", string(btx.Message))
 		nh.writeNodeItem(w, NodeItemTransaction, btx.Message)
 	}
 
