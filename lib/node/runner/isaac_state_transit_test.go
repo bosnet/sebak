@@ -21,16 +21,8 @@ func TestStateINITProposer(t *testing.T) {
 	conf.TimeoutACCEPT = time.Hour
 	conf.TimeoutALLCONFIRM = time.Hour
 
-	nodeRunners := createTestNodeRunner(3, conf)
-
-	nr := nodeRunners[0]
-
 	recv := make(chan struct{})
-	b := NewTestBroadcaster(recv)
-	nr.Consensus().SetBroadcaster(b)
-	nr.Consensus().ConnectionManager().SetProposerCalculator(SelfProposerCalculator{
-		nodeRunner: nr,
-	})
+	nr, _, cm := createNodeRunnerForTesting(3, conf, recv)
 
 	nr.Consensus().SetLatestConsensusedBlock(genesisBlock)
 
@@ -38,8 +30,8 @@ func TestStateINITProposer(t *testing.T) {
 	defer nr.StopStateManager()
 
 	<-recv
-	require.Equal(t, 1, len(b.Messages()))
-	for _, message := range b.Messages() {
+	require.Equal(t, 1, len(cm.Messages()))
+	for _, message := range cm.Messages() {
 		// This message must be proposed ballot
 		b, ok := message.(ballot.Ballot)
 		require.True(t, ok)
@@ -58,15 +50,12 @@ func TestStateINITNotProposer(t *testing.T) {
 	conf.TimeoutACCEPT = time.Hour
 	conf.TimeoutALLCONFIRM = time.Hour
 
-	nodeRunners := createTestNodeRunner(3, conf)
+	recv := make(chan struct{})
+	nr, _, _ := createNodeRunnerForTesting(3, conf, recv)
+	nr.Consensus().SetProposerSelector(OtherSelector{nr.ConnectionManager()})
 
-	nr := nodeRunners[0]
-
-	b := NewTestBroadcaster(nil)
-	nr.Consensus().SetBroadcaster(b)
-	nr.Consensus().ConnectionManager().SetProposerCalculator(TheOtherProposerCalculator{
-		nodeRunner: nr,
-	})
+	cm, ok := nr.Consensus().ConnectionManager().(*TestConnectionManager)
+	require.True(t, ok)
 
 	nr.Consensus().SetLatestConsensusedBlock(genesisBlock)
 
@@ -74,7 +63,7 @@ func TestStateINITNotProposer(t *testing.T) {
 	defer nr.StopStateManager()
 	time.Sleep(1 * time.Second)
 
-	require.Equal(t, 0, len(b.Messages()))
+	require.Equal(t, 0, len(cm.Messages()))
 }
 
 // 1. All 3 Nodes.
@@ -89,17 +78,14 @@ func TestStateINITTimeoutNotProposer(t *testing.T) {
 	conf.TimeoutACCEPT = time.Hour
 	conf.TimeoutALLCONFIRM = time.Hour
 
-	nodeRunners := createTestNodeRunner(3, conf)
-
-	nr := nodeRunners[0]
-
 	recv := make(chan struct{})
-	b := NewTestBroadcaster(recv)
-	nr.Consensus().SetBroadcaster(b)
-	nr.Consensus().ConnectionManager().SetProposerCalculator(TheOtherProposerCalculator{
-		nodeRunner: nr,
-	})
-	proposer := nr.Consensus().ConnectionManager().CalculateProposer(0, 0)
+	nr, _, _ := createNodeRunnerForTesting(3, conf, recv)
+	nr.Consensus().SetProposerSelector(OtherSelector{nr.ConnectionManager()})
+
+	cm, ok := nr.Consensus().ConnectionManager().(*TestConnectionManager)
+	require.True(t, ok)
+
+	proposer := nr.Consensus().SelectProposer(0, 0)
 
 	require.NotEqual(t, nr.localNode.Address(), proposer)
 
@@ -112,9 +98,9 @@ func TestStateINITTimeoutNotProposer(t *testing.T) {
 	<-recv
 	require.Equal(t, ballot.StateSIGN, nr.isaacStateManager.State().BallotState)
 
-	require.Equal(t, 1, len(b.Messages()))
+	require.Equal(t, 1, len(cm.Messages()))
 	init, sign, accept := 0, 0, 0
-	for _, message := range b.Messages() {
+	for _, message := range cm.Messages() {
 		b, ok := message.(ballot.Ballot)
 		require.True(t, ok)
 		require.Equal(t, 0, len(b.Transactions()))
@@ -146,17 +132,10 @@ func TestStateSIGNTimeoutProposer(t *testing.T) {
 	conf.TimeoutACCEPT = time.Hour
 	conf.TimeoutALLCONFIRM = time.Hour
 
-	nodeRunners := createTestNodeRunner(3, conf)
-
-	nr := nodeRunners[0]
-
 	recv := make(chan struct{})
-	b := NewTestBroadcaster(recv)
-	nr.Consensus().SetBroadcaster(b)
-	nr.Consensus().ConnectionManager().SetProposerCalculator(SelfProposerCalculator{
-		nodeRunner: nr,
-	})
-	proposer := nr.Consensus().ConnectionManager().CalculateProposer(0, 0)
+	nr, _, cm := createNodeRunnerForTesting(3, conf, recv)
+
+	proposer := nr.Consensus().SelectProposer(0, 0)
 
 	require.Equal(t, nr.localNode.Address(), proposer)
 
@@ -168,14 +147,14 @@ func TestStateSIGNTimeoutProposer(t *testing.T) {
 	require.Equal(t, ballot.StateINIT, nr.isaacStateManager.State().BallotState)
 
 	<-recv
-	require.Equal(t, 1, len(b.Messages()))
+	require.Equal(t, 1, len(cm.Messages()))
 
 	<-recv
 	require.Equal(t, ballot.StateACCEPT, nr.isaacStateManager.State().BallotState)
-	require.Equal(t, 2, len(b.Messages()))
+	require.Equal(t, 2, len(cm.Messages()))
 
 	init, sign, accept := 0, 0, 0
-	for _, message := range b.Messages() {
+	for _, message := range cm.Messages() {
 		b, ok := message.(ballot.Ballot)
 		require.True(t, ok)
 		require.Equal(t, 0, len(b.Transactions()))
@@ -211,17 +190,14 @@ func TestStateSIGNTimeoutNotProposer(t *testing.T) {
 	conf.TimeoutACCEPT = time.Hour
 	conf.TimeoutALLCONFIRM = time.Hour
 
-	nodeRunners := createTestNodeRunner(3, conf)
-
-	nr := nodeRunners[0]
-
 	recv := make(chan struct{})
-	b := NewTestBroadcaster(recv)
-	nr.Consensus().SetBroadcaster(b)
-	nr.Consensus().ConnectionManager().SetProposerCalculator(TheOtherProposerCalculator{
-		nodeRunner: nr,
-	})
-	proposer := nr.Consensus().ConnectionManager().CalculateProposer(0, 0)
+	nr, _, _ := createNodeRunnerForTesting(3, conf, recv)
+	nr.Consensus().SetProposerSelector(OtherSelector{nr.ConnectionManager()})
+
+	cm, ok := nr.Consensus().ConnectionManager().(*TestConnectionManager)
+	require.True(t, ok)
+
+	proposer := nr.Consensus().SelectProposer(0, 0)
 
 	require.NotEqual(t, nr.localNode.Address(), proposer)
 
@@ -231,13 +207,13 @@ func TestStateSIGNTimeoutNotProposer(t *testing.T) {
 	defer nr.StopStateManager()
 
 	<-recv
-	require.Equal(t, 1, len(b.Messages()))
+	require.Equal(t, 1, len(cm.Messages()))
 
 	<-recv
-	require.Equal(t, 2, len(b.Messages()))
+	require.Equal(t, 2, len(cm.Messages()))
 
 	init, sign, accept := 0, 0, 0
-	for _, message := range b.Messages() {
+	for _, message := range cm.Messages() {
 		b, ok := message.(ballot.Ballot)
 		require.True(t, ok)
 		require.Equal(t, 0, len(b.Transactions()))
@@ -271,21 +247,17 @@ func TestStateACCEPTTimeoutProposerThenNotProposer(t *testing.T) {
 	conf.TimeoutACCEPT = 200 * time.Millisecond
 	conf.TimeoutALLCONFIRM = time.Hour
 
-	nodeRunners := createTestNodeRunner(3, conf)
-
-	nr := nodeRunners[0]
-
 	recv := make(chan struct{})
-	b := NewTestBroadcaster(recv)
-	nr.Consensus().SetBroadcaster(b)
-	nr.Consensus().ConnectionManager().SetProposerCalculator(&SelfProposerThenNotProposer{
-		nodeRunner: nr,
-	})
+	nr, _, _ := createNodeRunnerForTesting(3, conf, recv)
+	nr.Consensus().SetProposerSelector(SelfThenOtherSelector{nr.ConnectionManager()})
 
-	proposer := nr.Consensus().ConnectionManager().CalculateProposer(0, 0)
+	cm, ok := nr.Consensus().ConnectionManager().(*TestConnectionManager)
+	require.True(t, ok)
+
+	proposer := nr.Consensus().SelectProposer(0, 0)
 	require.Equal(t, nr.localNode.Address(), proposer)
 
-	proposer = nr.Consensus().ConnectionManager().CalculateProposer(0, 1)
+	proposer = nr.Consensus().SelectProposer(0, 1)
 	require.NotEqual(t, nr.localNode.Address(), proposer)
 
 	nr.Consensus().SetLatestConsensusedBlock(genesisBlock)
@@ -294,12 +266,12 @@ func TestStateACCEPTTimeoutProposerThenNotProposer(t *testing.T) {
 	defer nr.StopStateManager()
 
 	<-recv
-	require.Equal(t, 1, len(b.Messages()))
+	require.Equal(t, 1, len(cm.Messages()))
 
 	<-recv
-	require.Equal(t, 2, len(b.Messages()))
+	require.Equal(t, 2, len(cm.Messages()))
 	init, sign, accept := 0, 0, 0
-	for _, message := range b.Messages() {
+	for _, message := range cm.Messages() {
 		b, ok := message.(ballot.Ballot)
 		require.True(t, ok)
 		require.Equal(t, 0, len(b.Transactions()))
@@ -334,20 +306,17 @@ func TestStateTransitFromTimeoutInitToAccept(t *testing.T) {
 	conf.TimeoutACCEPT = 200 * time.Millisecond
 	conf.TimeoutALLCONFIRM = 200 * time.Millisecond
 
-	nodeRunners := createTestNodeRunner(3, conf)
-	nr := nodeRunners[0]
+	recvBroadcast := make(chan struct{})
+	nr, _, _ := createNodeRunnerForTesting(3, conf, recvBroadcast)
+	nr.Consensus().SetProposerSelector(OtherSelector{nr.ConnectionManager()})
 
 	recvTransit := make(chan struct{})
 	nr.isaacStateManager.SetTransitSignal(func() {
 		recvTransit <- struct{}{}
 	})
 
-	recvBroadcast := make(chan struct{})
-	b := NewTestBroadcaster(recvBroadcast)
-	nr.Consensus().SetBroadcaster(b)
-	nr.Consensus().ConnectionManager().SetProposerCalculator(TheOtherProposerCalculator{
-		nodeRunner: nr,
-	})
+	cm, ok := nr.Consensus().ConnectionManager().(*TestConnectionManager)
+	require.True(t, ok)
 
 	nr.Consensus().SetLatestConsensusedBlock(genesisBlock)
 
@@ -361,9 +330,9 @@ func TestStateTransitFromTimeoutInitToAccept(t *testing.T) {
 	require.Equal(t, ballot.StateSIGN, nr.isaacStateManager.State().BallotState)
 
 	<-recvBroadcast
-	require.Equal(t, 1, len(b.Messages()))
+	require.Equal(t, 1, len(cm.Messages()))
 
-	for _, message := range b.Messages() {
+	for _, message := range cm.Messages() {
 		b, ok := message.(ballot.Ballot)
 		require.True(t, ok)
 		require.Equal(t, nr.localNode.Address(), b.Proposer())
@@ -387,15 +356,8 @@ func TestStateTransitFromTimeoutSignToAccept(t *testing.T) {
 	conf.TimeoutACCEPT = 200 * time.Millisecond
 	conf.TimeoutALLCONFIRM = 200 * time.Millisecond
 
-	nodeRunners := createTestNodeRunner(3, conf)
-	nr := nodeRunners[0]
-
 	recv := make(chan struct{})
-	b := NewTestBroadcaster(recv)
-	nr.Consensus().SetBroadcaster(b)
-	nr.Consensus().ConnectionManager().SetProposerCalculator(SelfProposerCalculator{
-		nodeRunner: nr,
-	})
+	nr, _, cm := createNodeRunnerForTesting(3, conf, recv)
 
 	nr.Consensus().SetLatestConsensusedBlock(genesisBlock)
 
@@ -403,8 +365,8 @@ func TestStateTransitFromTimeoutSignToAccept(t *testing.T) {
 	defer nr.StopStateManager()
 	<-recv
 
-	require.Equal(t, 1, len(b.Messages()))
-	for _, message := range b.Messages() {
+	require.Equal(t, 1, len(cm.Messages()))
+	for _, message := range cm.Messages() {
 		b, ok := message.(ballot.Ballot)
 		require.True(t, ok)
 		require.Equal(t, nr.localNode.Address(), b.Proposer())
@@ -415,8 +377,8 @@ func TestStateTransitFromTimeoutSignToAccept(t *testing.T) {
 	nr.TransitISAACState(nr.isaacStateManager.State().Round, ballot.StateACCEPT)
 	<-recv
 
-	require.Equal(t, 2, len(b.Messages()))
-	for _, message := range b.Messages() {
+	require.Equal(t, 2, len(cm.Messages()))
+	for _, message := range cm.Messages() {
 		b, ok := message.(ballot.Ballot)
 		require.True(t, ok)
 		require.Equal(t, nr.localNode.Address(), b.Proposer())
