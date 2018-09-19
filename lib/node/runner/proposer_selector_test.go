@@ -7,18 +7,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// In TestProposerCalculator test, the proposer is always the node itself because of SelfProposerCalculator.
-func TestProposerCalculator(t *testing.T) {
+// In TestProposerSelector test, the proposer is always the node itself because of SelfProposerCalculator.
+func TestProposerSelector(t *testing.T) {
 	nodeRunners := createTestNodeRunner(1, consensus.NewISAACConfiguration())
 
 	nodeRunner := nodeRunners[0]
-	nodeRunner.Consensus().ConnectionManager().SetProposerCalculator(SelfProposerCalculator{
-		nodeRunner: nodeRunner,
-	})
 
-	require.Equal(t, nodeRunner.localNode.Address(), nodeRunner.Consensus().ConnectionManager().CalculateProposer(1, 0))
-	require.Equal(t, nodeRunner.localNode.Address(), nodeRunner.Consensus().ConnectionManager().CalculateProposer(2, 0))
-	require.Equal(t, nodeRunner.localNode.Address(), nodeRunner.Consensus().ConnectionManager().CalculateProposer(2, 1))
+	require.Equal(t, nodeRunner.localNode.Address(), nodeRunner.Consensus().SelectProposer(1, 0))
+	require.Equal(t, nodeRunner.localNode.Address(), nodeRunner.Consensus().SelectProposer(2, 0))
+	require.Equal(t, nodeRunner.localNode.Address(), nodeRunner.Consensus().SelectProposer(2, 1))
 }
 
 // All 3 nodes have the same proposer at each round
@@ -40,9 +37,9 @@ func TestNodesHaveSameProposers(t *testing.T) {
 
 	for i := uint64(0); i < maximumBlockHeight; i++ {
 		for j := uint64(0); j < maximumRoundNumber; j++ {
-			proposers0[i*maximumRoundNumber] = nr0.Consensus().ConnectionManager().CalculateProposer(i, j)
-			proposers1[i*maximumRoundNumber] = nr1.Consensus().ConnectionManager().CalculateProposer(i, j)
-			proposers2[i*maximumRoundNumber] = nr2.Consensus().ConnectionManager().CalculateProposer(i, j)
+			proposers0[i*maximumRoundNumber] = nr0.Consensus().SelectProposer(i, j)
+			proposers1[i*maximumRoundNumber] = nr1.Consensus().SelectProposer(i, j)
+			proposers2[i*maximumRoundNumber] = nr2.Consensus().SelectProposer(i, j)
 		}
 	}
 

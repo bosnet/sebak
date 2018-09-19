@@ -1,7 +1,6 @@
 package runner
 
 import (
-	"sync"
 	"testing"
 
 	"github.com/stellar/go/keypair"
@@ -35,13 +34,12 @@ func MakeNodeRunner() (*NodeRunner, *node.LocalNode) {
 
 	policy, _ := consensus.NewDefaultVotingThresholdPolicy(66, 66)
 
-	connectionManager := network.NewConnectionManager(
+	connectionManager := network.NewValidatorConnectionManager(
 		localNode,
 		n,
 		policy,
 		localNode.GetValidators(),
 	)
-	connectionManager.SetProposerCalculator(network.NewSimpleProposerCalculator(connectionManager))
 
 	is, _ := consensus.NewISAAC(networkID, localNode, policy, connectionManager)
 	st, _ := storage.NewTestMemoryLevelDBBackend()
@@ -68,44 +66,6 @@ func GetTransaction(t *testing.T) (tx transaction.Transaction, txByte []byte) {
 
 func TestGenerateNewSequenceID() uint64 {
 	return 0
-}
-
-type SelfProposerCalculator struct {
-	nodeRunner *NodeRunner
-}
-
-func (c SelfProposerCalculator) Calculate(_ uint64, _ uint64) string {
-	return c.nodeRunner.localNode.Address()
-}
-
-type TheOtherProposerCalculator struct {
-	nodeRunner *NodeRunner
-}
-
-func (c TheOtherProposerCalculator) Calculate(_ uint64, _ uint64) string {
-	for _, v := range c.nodeRunner.ConnectionManager().AllValidators() {
-		if v != c.nodeRunner.localNode.Address() {
-			return v
-		}
-	}
-	panic("There is no the other validators")
-}
-
-type SelfProposerThenNotProposer struct {
-	nodeRunner *NodeRunner
-}
-
-func (c *SelfProposerThenNotProposer) Calculate(blockHeight uint64, roundNumber uint64) string {
-	if blockHeight < 2 && roundNumber == 0 {
-		return c.nodeRunner.localNode.Address()
-	} else {
-		for _, v := range c.nodeRunner.ConnectionManager().AllValidators() {
-			if v != c.nodeRunner.localNode.Address() {
-				return v
-			}
-		}
-		panic("There is no the other validators")
-	}
 }
 
 func GenerateBallot(t *testing.T, proposer *node.LocalNode, round round.Round, tx transaction.Transaction, ballotState ballot.State, sender *node.LocalNode) *ballot.Ballot {
@@ -147,33 +107,50 @@ func ReceiveBallot(t *testing.T, nodeRunner *NodeRunner, ballot *ballot.Ballot) 
 	return err
 }
 
-type TestBroadcaster struct {
-	sync.RWMutex
-	messages []common.Message
-	recv     chan struct{}
-}
-
-func NewTestBroadcaster(r chan struct{}) *TestBroadcaster {
-	p := &TestBroadcaster{}
-	p.messages = []common.Message{}
-	p.recv = r
-	return p
-}
-
-func (b *TestBroadcaster) Broadcast(message common.Message, _ func(string, error)) {
-	b.Lock()
-	defer b.Unlock()
-	b.messages = append(b.messages, message)
-	if b.recv != nil {
-		b.recv <- struct{}{}
+func createNodeRunnerForTesting(n int, conf *consensus.ISAACConfiguration, recv chan struct{}) (*NodeRunner, []*node.LocalNode, *TestConnectionManager) {
+	var ns []*network.MemoryNetwork
+	var net *network.MemoryNetwork
+	var nodes []*node.LocalNode
+	for i := 0; i < n; i++ {
+		_, s, v := network.CreateMemoryNetwork(net)
+		net = s
+		ns = append(ns, s)
+		nodes = append(nodes, v)
 	}
-	return
-}
 
-func (b *TestBroadcaster) Messages() []common.Message {
-	b.RLock()
-	defer b.RUnlock()
-	messages := make([]common.Message, len(b.messages))
-	copy(messages, b.messages)
-	return messages
+	for j := 0; j < n; j++ {
+		if j == 0 {
+			continue
+		}
+		nodes[0].AddValidators(nodes[j].ConvertToValidator())
+	}
+
+	address := kp.Address()
+	balance := common.BaseFee.MustAdd(1)
+	account = block.NewBlockAccount(address, balance)
+
+	localNode := nodes[0]
+	policy, _ := consensus.NewDefaultVotingThresholdPolicy(66, 66)
+
+	connectionManager := NewTestConnectionManager(
+		localNode,
+		ns[0],
+		policy,
+		localNode.GetValidators(),
+		recv,
+	)
+
+	is, _ := consensus.NewISAAC(networkID, localNode, policy, connectionManager)
+	is.SetProposerSelector(SelfSelector{connectionManager})
+	st, _ := storage.NewTestMemoryLevelDBBackend()
+
+	account.Save(st)
+	genesisBlock = block.MakeGenesisBlock(st, *account)
+
+	nr, err := NewNodeRunner(string(networkID), localNode, policy, ns[0], is, st, conf)
+	if err != nil {
+		panic(err)
+	}
+
+	return nr, nodes, connectionManager
 }

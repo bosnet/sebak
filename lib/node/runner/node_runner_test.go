@@ -60,13 +60,12 @@ func createTestNodeRunner(n int, conf *consensus.ISAACConfiguration) []*NodeRunn
 		localNode := nodes[i]
 		policy, _ := consensus.NewDefaultVotingThresholdPolicy(66, 66)
 
-		connectionManager := network.NewConnectionManager(
+		connectionManager := network.NewValidatorConnectionManager(
 			localNode,
 			ns[i],
 			policy,
 			localNode.GetValidators(),
 		)
-		connectionManager.SetProposerCalculator(network.NewSimpleProposerCalculator(connectionManager))
 
 		is, _ := consensus.NewISAAC(networkID, localNode, policy, connectionManager)
 		st, _ := storage.NewTestMemoryLevelDBBackend()
@@ -164,13 +163,12 @@ func createTestNodeRunnersHTTP2Network(n int) (nodeRunners []*NodeRunner, rootKP
 		networkConfig, _ := network.NewHTTP2NetworkConfigFromEndpoint(node.Alias(), node.Endpoint())
 		n := network.NewHTTP2Network(networkConfig)
 
-		connectionManager := network.NewConnectionManager(
+		connectionManager := network.NewValidatorConnectionManager(
 			node,
 			n,
 			policy,
 			node.GetValidators(),
 		)
-		connectionManager.SetProposerCalculator(network.NewSimpleProposerCalculator(connectionManager))
 
 		is, _ := consensus.NewISAAC(networkID, node, policy, connectionManager)
 		nodeRunner, _ := NewNodeRunner(string(networkID), node, policy, n, is, st, consensus.NewISAACConfiguration())
@@ -242,10 +240,6 @@ func TestNodeRunnerTransactionBroadcast(t *testing.T) {
 	message := common.NetworkMessage{Type: common.TransactionMessage, Data: txByte}
 
 	nodeRunner := nodeRunners[0]
-
-	nodeRunner.ConnectionManager().SetProposerCalculator(SelfProposerCalculator{
-		nodeRunner: nodeRunner,
-	})
 
 	nodeRunner.Consensus().SetLatestConsensusedBlock(genesisBlock)
 	b := nodeRunner.Consensus().LatestConfirmedBlock()

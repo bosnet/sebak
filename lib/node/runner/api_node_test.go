@@ -90,13 +90,12 @@ func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, n *network.HTTP2Netw
 
 	p, _ := consensus.NewDefaultVotingThresholdPolicy(30, 30)
 
-	connectionManager := network.NewConnectionManager(
+	connectionManager := network.NewValidatorConnectionManager(
 		localNode,
 		n,
 		p,
 		localNode.GetValidators(),
 	)
-	connectionManager.SetProposerCalculator(network.NewSimpleProposerCalculator(connectionManager))
 
 	is, _ := consensus.NewISAAC(networkID, localNode, p, connectionManager)
 	st, _ := storage.NewTestMemoryLevelDBBackend()

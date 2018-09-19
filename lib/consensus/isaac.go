@@ -22,23 +22,24 @@ type ISAAC struct {
 	RunningRounds         map[ /* Round.Hash() */ string]*RunningRound
 	latestConfirmedBlock  block.Block
 	LatestRound           round.Round
-	connectionManager     *network.ConnectionManager
+	connectionManager     network.ConnectionManager
+	proposerSelector      ProposerSelector
 }
 
 // ISAAC should know network.ConnectionManager
 // because the ISAAC uses connected validators when calculating proposer
 func NewISAAC(networkID []byte, node *node.LocalNode, policy ballot.VotingThresholdPolicy,
-	cm *network.ConnectionManager) (is *ISAAC, err error) {
+	cm network.ConnectionManager) (is *ISAAC, err error) {
 
 	is = &ISAAC{
-		NetworkID: networkID, Node: node,
+		NetworkID:             networkID,
+		Node:                  node,
 		VotingThresholdPolicy: policy,
 		TransactionPool:       transaction.NewTransactionPool(),
 		RunningRounds:         map[string]*RunningRound{},
 		connectionManager:     cm,
+		proposerSelector:      SequentialSelector{cm},
 	}
-
-	is.connectionManager.SetBroadcaster(network.NewSimpleBroadcaster(is.ConnectionManager()))
 
 	return
 }
@@ -90,12 +91,16 @@ func (is *ISAAC) SetLatestRound(round round.Round) {
 	is.LatestRound = round
 }
 
-func (is *ISAAC) SetBroadcaster(b network.Broadcaster) {
-	is.connectionManager.SetBroadcaster(b)
+func (is *ISAAC) SetProposerSelector(p ProposerSelector) {
+	is.proposerSelector = p
 }
 
-func (is *ISAAC) ConnectionManager() *network.ConnectionManager {
+func (is *ISAAC) ConnectionManager() network.ConnectionManager {
 	return is.connectionManager
+}
+
+func (is *ISAAC) SelectProposer(blockHeight uint64, roundNumber uint64) string {
+	return is.proposerSelector.Select(blockHeight, roundNumber)
 }
 
 func (is *ISAAC) IsAvailableRound(round round.Round) bool {
@@ -146,7 +151,7 @@ func (is *ISAAC) Vote(b ballot.Ballot) (isNew bool, err error) {
 	var found bool
 	var runningRound *RunningRound
 	if runningRound, found = is.RunningRounds[roundHash]; !found {
-		proposer := is.ConnectionManager().CalculateProposer(
+		proposer := is.SelectProposer(
 			b.Round().BlockHeight,
 			b.Round().Number,
 		)

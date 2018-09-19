@@ -12,17 +12,8 @@ func TestConnectionManagerBroadcaster(t *testing.T) {
 	conf := consensus.NewISAACConfiguration()
 	conf.TimeoutALLCONFIRM = 1 * time.Millisecond
 
-	nodeRunners := createTestNodeRunner(3, conf)
-
-	nr := nodeRunners[0]
-
 	recv := make(chan struct{})
-
-	b := NewTestBroadcaster(recv)
-	nr.Consensus().SetBroadcaster(b)
-	nr.Consensus().ConnectionManager().SetProposerCalculator(SelfProposerCalculator{
-		nodeRunner: nr,
-	})
+	nr, _, cm := createNodeRunnerForTesting(3, conf, recv)
 
 	nr.Consensus().SetLatestConsensusedBlock(genesisBlock)
 
@@ -30,5 +21,5 @@ func TestConnectionManagerBroadcaster(t *testing.T) {
 	defer nr.StopStateManager()
 
 	<-recv
-	require.Equal(t, 1, len(b.Messages()))
+	require.Equal(t, 1, len(cm.Messages()))
 }
