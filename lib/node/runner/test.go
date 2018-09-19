@@ -53,7 +53,7 @@ func GetTransaction(t *testing.T) (tx transaction.Transaction, txByte []byte) {
 	kpNewAccount, _ := keypair.Random()
 
 	tx = transaction.MakeTransactionCreateAccount(kp, kpNewAccount.Address(), initialBalance)
-	tx.B.SequenceID = account.SequenceID
+	tx.B.SequenceID = uint64(0)
 	tx.Sign(kp, networkID)
 
 	var err error
@@ -151,6 +151,7 @@ func createNodeRunnerForTesting(n int, conf *consensus.ISAACConfiguration, recv 
 	if err != nil {
 		panic(err)
 	}
+	nr.isaacStateManager.blockTimeBuffer = 0
 
 	return nr, nodes, connectionManager
 }

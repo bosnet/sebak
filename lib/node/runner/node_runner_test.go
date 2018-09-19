@@ -171,11 +171,11 @@ func createTestNodeRunnersHTTP2Network(n int) (nodeRunners []*NodeRunner, rootKP
 		)
 
 		is, _ := consensus.NewISAAC(networkID, node, policy, connectionManager)
-		nodeRunner, _ := NewNodeRunner(string(networkID), node, policy, n, is, st, consensus.NewISAACConfiguration())
 
-		genesisAccount.Save(nodeRunner.Storage())
+		genesisAccount.Save(st)
 		block.MakeGenesisBlock(st, *genesisAccount)
 
+		nodeRunner, _ := NewNodeRunner(string(networkID), node, policy, n, is, st, consensus.NewISAACConfiguration())
 		nodeRunners = append(nodeRunners, nodeRunner)
 	}
 
