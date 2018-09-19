@@ -141,11 +141,24 @@ func BallotTransactionsSourceCheck(c common.Checker, args ...interface{}) (err e
 	return
 }
 
-// Validate checks,
-// * source account exists
-// * sequenceID is valid
-// * source has enough balance to pay
-// * and it's `Operations`
+//
+// Validate the entirety of a transaction
+//
+// This function is critical for consensus, as it defines the validation rules for a transaction.
+// It is executed whenever a transaction is received.
+//
+// As it is run on every single transaction, it should be as fast as possible,
+// thus any new code should carefully consider when it takes place.
+// Consider putting cheap, frequent errors first.
+//
+// Note that if we get to this function, it means the transaction is known to be
+// well-formed (e.g. the signature is legit).
+//
+// Params:
+//   st = Storage backend to use (e.g. to access the blocks)
+//        Only ever read from, never written to.
+//   tx = Transaction to check
+//
 func ValidateTx(st *storage.LevelDBBackend, tx transaction.Transaction) (err error) {
 	// check, source exists
 	var ba *block.BlockAccount
@@ -184,6 +197,17 @@ func ValidateTx(st *storage.LevelDBBackend, tx transaction.Transaction) (err err
 	return
 }
 
+//
+// Validate an operation
+//
+// This function is critical for consensus, as it defines the validation rules for an operation,
+// and by extension a transaction. It is called from ValidateTx.
+//
+// Params:
+//   st = Storage backend to use (e.g. to access the blocks)
+//        Only ever read from, never written to.
+//   tx = Transaction to check
+//
 func ValidateOp(st *storage.LevelDBBackend, op transaction.Operation) (err error) {
 	switch op.H.Type {
 	case transaction.OperationCreateAccount:
