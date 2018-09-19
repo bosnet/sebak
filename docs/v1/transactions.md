@@ -4,7 +4,9 @@ Transactions API
 
 ## Transactions [/v1/transactions]
 
+
 ### Payment transaction  [POST]
+//TODO: How to make a transaction and sign
 
 + Request (application/json)
     
@@ -18,7 +20,19 @@ Transactions API
 
     + Attributes (Problem)
 
+## Transactions [/v1/transactions?limit={limit}&reverse={reverse}&cursor={cursor}]
++ Parameters
+    
+    + limit: `100` (integer, optional)
+    
+    + reverse: `false` (string, optional)
+    
+    + cursor: `` (string, optional)
+
 ### Retrieve transactions [GET]
+<p> Retrieve all valid transactions </p>
+
+<p> Streaming mode supported with header "Accept": "text/event-stream" </p>
 
 + Response 200 (application/hal+json; charset=utf-8)
 
@@ -28,12 +42,18 @@ Transactions API
 
     + Attributes (Problem)
 
-## Transaction [/v1/transactions/{hash}]
+## Transaction [/v1/transactions/{hash}?limit={limit}&reverse={reverse}&cursor={cursor}]
 
 + Parameters
     
     + hash: `ghf6msRhE4jRf5DPib9UHD1msadvmZs9o53V9FQTb11` (string,required) - tx's hash
-
+    
+    + limit: `100` (integer, optional)
+    
+    + reverse: `false` (string, optional)
+    
+    + cursor: `` (string, optional)
+    
 ### Get Transaction [GET]
 
 + Response 200 (application/hal+json; charset=utf-8)
@@ -44,11 +64,17 @@ Transactions API
 
     + Attributes (Problem)
 
-## Operations for Trasaction [/v1/transactions/{hash}/operations]
+## Operations for Trasaction [/v1/transactions/{hash}/operations?limit={limit}&reverse={reverse}&cursor={cursor}]
 
 + Parameters
     
     + hash: `ghf6msRhE4jRf5DPib9UHD1msadvmZs9o53V9FQTb11` (string,required) - Transaction hash
+    
+    + limit: `100` (integer, optional)
+        
+    + reverse: `false` (string, optional)
+        
+    + cursor: `` (string, optional)
 
 #### Get operations of transaction [GET]
 
