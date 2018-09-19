@@ -68,7 +68,7 @@ func createTestNodeRunner(n int, conf *consensus.ISAACConfiguration) []*NodeRunn
 		)
 
 		is, _ := consensus.NewISAAC(networkID, localNode, policy, connectionManager)
-		st, _ := storage.NewTestMemoryLevelDBBackend()
+		st := storage.NewTestStorage()
 
 		account.Save(st)
 		genesisBlock = block.MakeGenesisBlock(st, *account)
@@ -159,7 +159,7 @@ func createTestNodeRunnersHTTP2Network(n int) (nodeRunners []*NodeRunner, rootKP
 	)
 	for _, node := range nodes {
 		policy, _ := consensus.NewDefaultVotingThresholdPolicy(66, 66)
-		st, _ := storage.NewTestMemoryLevelDBBackend()
+		st := storage.NewTestStorage()
 		networkConfig, _ := network.NewHTTP2NetworkConfigFromEndpoint(node.Alias(), node.Endpoint())
 		n := network.NewHTTP2Network(networkConfig)
 

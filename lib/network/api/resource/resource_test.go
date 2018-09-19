@@ -13,8 +13,7 @@ import (
 )
 
 func TestResourceAccount(t *testing.T) {
-	storage, err := storage.NewTestMemoryLevelDBBackend()
-	require.Nil(t, err)
+	storage := storage.NewTestStorage()
 	defer storage.Close()
 
 	// Account

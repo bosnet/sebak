@@ -27,7 +27,7 @@ type HelperTestGetBlocksHandler struct {
 }
 
 func (p *HelperTestGetBlocksHandler) Prepare() {
-	p.st, _ = storage.NewTestMemoryLevelDBBackend()
+	p.st = storage.NewTestStorage()
 
 	apiHandler := NetworkHandlerNode{storage: p.st}
 

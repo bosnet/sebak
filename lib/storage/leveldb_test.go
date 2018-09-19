@@ -2,46 +2,18 @@ package storage
 
 import (
 	"fmt"
-	"io/ioutil"
-	"math"
-	"math/rand"
-	"os"
 	"reflect"
 	"sort"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
 )
 
-func TestLevelDBBackendInitFileStorage(t *testing.T) {
-	path, _ := ioutil.TempDir("/tmp", "sebak")
-	defer CleanDB(path)
-
-	st := &LevelDBBackend{}
-	defer st.Close()
-
-	config, _ := NewConfigFromString("memory://")
-	if err := st.Init(config); err != nil {
-		t.Errorf("failed to initialize file db: %v", err)
-	}
-}
-
-func TestLevelDBBackendInitMemStorage(t *testing.T) {
-	st := &LevelDBBackend{}
-	defer st.Close()
-
-	config, _ := NewConfigFromString("memory://")
-	if err := st.Init(config); err != nil {
-		t.Errorf("failed to initialize mem db: %v", err)
-	}
-}
-
 func TestLevelDBBackendNew(t *testing.T) {
-	st, _ := NewTestMemoryLevelDBBackend()
+	st := NewTestStorage()
 	defer st.Close()
 
 	key := "showme"
@@ -74,7 +46,7 @@ func TestLevelDBBackendNew(t *testing.T) {
 }
 
 func TestLevelDBBackendNews(t *testing.T) {
-	st, _ := NewTestMemoryLevelDBBackend()
+	st := NewTestStorage()
 	defer st.Close()
 
 	input := map[string]int{}
@@ -105,7 +77,7 @@ func TestLevelDBBackendNews(t *testing.T) {
 }
 
 func TestLevelDBBackendHas(t *testing.T) {
-	st, _ := NewTestMemoryLevelDBBackend()
+	st := NewTestStorage()
 	defer st.Close()
 
 	key := "showme"
@@ -129,7 +101,7 @@ func TestLevelDBBackendHas(t *testing.T) {
 }
 
 func TestLevelDBBackendGetRaw(t *testing.T) {
-	st, _ := NewTestMemoryLevelDBBackend()
+	st := NewTestStorage()
 	defer st.Close()
 
 	st.New("showme", "input")
@@ -141,7 +113,7 @@ func TestLevelDBBackendGetRaw(t *testing.T) {
 }
 
 func TestLevelDBBackendSet(t *testing.T) {
-	st, _ := NewTestMemoryLevelDBBackend()
+	st := NewTestStorage()
 	defer st.Close()
 
 	key := "showme"
@@ -161,7 +133,7 @@ func TestLevelDBBackendSet(t *testing.T) {
 }
 
 func TestLevelDBBackendRemove(t *testing.T) {
-	st, _ := NewTestMemoryLevelDBBackend()
+	st := NewTestStorage()
 	defer st.Close()
 
 	key := "showme"
@@ -184,106 +156,8 @@ func TestLevelDBBackendRemove(t *testing.T) {
 	}
 }
 
-func newTestFileLevelDBBackend() (st LevelDBBackend, path string, err error) {
-	path, _ = ioutil.TempDir("/tmp", "sebak")
-
-	config, _ := NewConfigFromString("memory://")
-	if err = st.Init(config); err != nil {
-		return
-	}
-
-	return
-}
-
-func generateData() map[string]string {
-	d := map[string]string{}
-
-	for i := 0; i < rand.Intn(100); i++ {
-		d[uuid.New().String()] = uuid.New().String()
-	}
-
-	return d
-}
-
-func TestLevelDBNewPerformanceSimple(t *testing.T) {
-	st, path, err := newTestFileLevelDBBackend()
-	defer st.Close()
-	if err != nil {
-		t.Errorf("failed to create leveldb: %v", err)
-		return
-	}
-	defer CleanDB(path)
-
-	var keys []string
-	data := map[string]map[string]string{}
-
-	for i := 0; i < int(math.Pow(10, 1)); i++ {
-		key := uuid.New().String()
-		d := generateData()
-		keys = append(keys, key)
-		data[key] = d
-
-		if err := st.New(key, d); err != nil {
-			t.Errorf("failed to `New`: %v", err)
-			return
-		}
-	}
-
-	for _, key := range keys {
-		fetched := map[string]string{}
-
-		if err := st.Get(key, &fetched); err != nil {
-			t.Errorf("failed to `Get`: %v", err)
-			return
-		}
-
-		if !reflect.DeepEqual(data[key], fetched) {
-			t.Errorf("fetched data from `Get` does not match")
-			return
-		}
-	}
-}
-
-func TestLevelDBNewPerformanceCheckKeyExists(t *testing.T) {
-	st, path, err := newTestFileLevelDBBackend()
-	defer st.Close()
-	if err != nil {
-		t.Errorf("failed to create leveldb: %v", err)
-		return
-	}
-	defer CleanDB(path)
-
-	var keys []string
-
-	for i := int64(0); i < int64(math.Pow(10, 4)); i++ {
-		key := uuid.New().String()
-		d := generateData()
-
-		if err := st.New(key, d); err != nil {
-			t.Errorf("failed to `New`: %v", err)
-			return
-		}
-
-		if i%1000 == 0 {
-			keys = append(keys, key)
-		}
-	}
-
-	for _, key := range keys {
-		exists, err := st.Has(key)
-		if err != nil {
-			t.Errorf("failed to `Has`: %v", err)
-			return
-		}
-		if !exists {
-			t.Errorf("inserted data was not found")
-			return
-		}
-	}
-}
-
 func TestLevelDBIterator(t *testing.T) {
-	st, _ := NewTestMemoryLevelDBBackend()
+	st := NewTestStorage()
 	defer st.Close()
 
 	total := 300
@@ -326,7 +200,7 @@ func TestLevelDBIterator(t *testing.T) {
 }
 
 func TestLevelDBIteratorSeek(t *testing.T) {
-	st, _ := NewTestMemoryLevelDBBackend()
+	st := NewTestStorage()
 	defer st.Close()
 
 	total := 300
@@ -363,7 +237,7 @@ func TestLevelDBIteratorSeek(t *testing.T) {
 }
 
 func TestLevelDBIteratorLimit(t *testing.T) {
-	st, _ := NewTestMemoryLevelDBBackend()
+	st := NewTestStorage()
 	defer st.Close()
 
 	total := 300
@@ -400,7 +274,7 @@ func TestLevelDBIteratorLimit(t *testing.T) {
 }
 
 func TestLevelDBIteratorReverseOrder(t *testing.T) {
-	st, _ := NewTestMemoryLevelDBBackend()
+	st := NewTestStorage()
 	defer st.Close()
 
 	total := 30
@@ -435,10 +309,7 @@ func TestLevelDBIteratorReverseOrder(t *testing.T) {
 }
 
 func TestLevelDBBackendTransactionNew(t *testing.T) {
-	dbpath := fmt.Sprintf("/tmp/%s", common.GetUniqueIDFromUUID())
-	defer os.RemoveAll(dbpath)
-
-	st, _ := NewTestFileLevelDBBackend(dbpath)
+	st := NewTestStorage()
 	defer st.Close()
 
 	ts, _ := st.OpenTransaction()
@@ -476,10 +347,7 @@ func TestLevelDBBackendTransactionNew(t *testing.T) {
 }
 
 func TestLevelDBBackendTransactionDiscard(t *testing.T) {
-	dbpath := fmt.Sprintf("/tmp/%s", common.GetUniqueIDFromUUID())
-	defer os.RemoveAll(dbpath)
-
-	st, _ := NewTestFileLevelDBBackend(dbpath)
+	st := NewTestStorage()
 	defer st.Close()
 
 	ts, _ := st.OpenTransaction()
@@ -514,7 +382,7 @@ func TestLevelDBBackendTransactionDiscard(t *testing.T) {
 
 //TODO(anarcher): SubTests
 func TestLevelDBWalk(t *testing.T) {
-	st, _ := NewTestMemoryLevelDBBackend()
+	st := NewTestStorage()
 	defer st.Close()
 
 	kv := map[string]string{

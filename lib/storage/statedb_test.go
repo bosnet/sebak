@@ -5,10 +5,7 @@ import (
 )
 
 func newTestStateDB(t *testing.T) (*LevelDBBackend, *LevelDBBackend, *StateDB) {
-	st, err := NewTestMemoryLevelDBBackend()
-	if err != nil {
-		t.Fatal(err)
-	}
+	st := NewTestStorage()
 	ts, err := st.OpenTransaction()
 	if err != nil {
 		t.Fatal(err)

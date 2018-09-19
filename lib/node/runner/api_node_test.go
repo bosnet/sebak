@@ -98,7 +98,7 @@ func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, n *network.HTTP2Netw
 	)
 
 	is, _ := consensus.NewISAAC(networkID, localNode, p, connectionManager)
-	st, _ := storage.NewTestMemoryLevelDBBackend()
+	st := storage.NewTestStorage()
 	// Make the latest block
 	{
 		address := kp.Address()
