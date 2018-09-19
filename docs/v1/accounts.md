@@ -5,7 +5,7 @@ Account API
 
 + Parameters
 
-    + address: `GDVSXU343JMRBXGW3F5WLRMH6L6HFZ6IYMVMFSDUDJPNTXUGNOXC2R5Y` (string, required) - a public address
+    + address: `GDVSXU343JMRBXGW3F5WLRMH6L6HFZ6IYMVMFSDUDJPNTXUGNOXC2R5Y` (string, required) - An account's public address
 
 ### Retrieve an account [GET]
 Retrieve an account by the address
@@ -27,7 +27,7 @@ Retrieve an account by the address
 
 + Parameters
 
-    + address: `GDVSXU343JMRBXGW3F5WLRMH6L6HFZ6IYMVMFSDUDJPNTXUGNOXC2R5Y` (string, required) - a public address
+    + address: `GDVSXU343JMRBXGW3F5WLRMH6L6HFZ6IYMVMFSDUDJPNTXUGNOXC2R5Y` (string, required) - An account's public address
 
 
 ### List All Transactions for Account [GET]
@@ -45,7 +45,7 @@ Retrieve an account by the address
 
 + Parameters
 
-    + address: `GDVSXU343JMRBXGW3F5WLRMH6L6HFZ6IYMVMFSDUDJPNTXUGNOXC2R5Y` (string, required) - a public address
+    + address: `GDVSXU343JMRBXGW3F5WLRMH6L6HFZ6IYMVMFSDUDJPNTXUGNOXC2R5Y` (string, required) - An account's public address
 
 ### List All Operations for Account [GET]
 

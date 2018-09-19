@@ -48,7 +48,7 @@ Transactions API
 
 + Parameters
     
-    + hash: `ghf6msRhE4jRf5DPib9UHD1msadvmZs9o53V9FQTb11` (string,required) - Transaction hash
+    + hash: `ghf6msRhE4jRf5DPib9UHD1msadvmZs9o53V9FQTb11` (string,required) - Transaction's hash
 
 #### Get operations of transaction [GET]
 
