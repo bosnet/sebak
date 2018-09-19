@@ -25,7 +25,7 @@ func TestNewBlockOperationFromOperation(t *testing.T) {
 }
 
 func TestBlockOperationSaveAndGet(t *testing.T) {
-	st, _ := storage.NewTestMemoryLevelDBBackend()
+	st := storage.NewTestStorage()
 
 	bos := TestMakeNewBlockOperation(networkID, 1)
 	if err := bos[0].Save(st); err != nil {
@@ -45,7 +45,7 @@ func TestBlockOperationSaveAndGet(t *testing.T) {
 }
 
 func TestBlockOperationSaveExisting(t *testing.T) {
-	st, _ := storage.NewTestMemoryLevelDBBackend()
+	st := storage.NewTestStorage()
 
 	bos := TestMakeNewBlockOperation(networkID, 1)
 	bo := bos[0]
@@ -61,7 +61,7 @@ func TestBlockOperationSaveExisting(t *testing.T) {
 }
 
 func TestGetSortedBlockOperationsByTxHash(t *testing.T) {
-	st, _ := storage.NewTestMemoryLevelDBBackend()
+	st := storage.NewTestStorage()
 
 	// create 30 `BlockOperation`
 	var txHashes []string
@@ -97,7 +97,7 @@ func TestGetSortedBlockOperationsByTxHash(t *testing.T) {
 }
 
 func TestBlockOperationSaveByTransacton(t *testing.T) {
-	st, _ := storage.NewTestMemoryLevelDBBackend()
+	st := storage.NewTestStorage()
 
 	_, tx := transaction.TestMakeTransaction(networkID, 10)
 	block := TestMakeNewBlock([]string{tx.GetHash()})

@@ -12,7 +12,7 @@ import (
 
 func TestStateDB(t *testing.T) {
 	var Root = common.Hash{}
-	st, _ := storage.NewTestMemoryLevelDBBackend()
+	st := storage.NewTestStorage()
 
 	var keyHash = common.BytesToHash(common.MakeHash([]byte("key")))
 	var valueHash = common.BytesToHash(common.MakeHash([]byte("value")))

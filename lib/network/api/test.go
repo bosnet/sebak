@@ -19,11 +19,7 @@ const (
 )
 
 func prepareAPIServer() (*httptest.Server, *storage.LevelDBBackend, error) {
-	storage, err := storage.NewTestMemoryLevelDBBackend()
-	if err != nil {
-		return nil, nil, err
-	}
-
+	storage := storage.NewTestStorage()
 	apiHandler := NetworkHandlerAPI{storage: storage}
 
 	router := mux.NewRouter()

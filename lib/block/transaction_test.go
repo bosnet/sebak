@@ -37,7 +37,7 @@ func TestNewBlockTransaction(t *testing.T) {
 }
 
 func TestBlockTransactionSaveAndGet(t *testing.T) {
-	st, _ := storage.NewTestMemoryLevelDBBackend()
+	st := storage.NewTestStorage()
 
 	bt := TestMakeNewBlockTransaction(networkID, 1)
 	err := bt.Save(st)
@@ -57,7 +57,7 @@ func TestBlockTransactionSaveAndGet(t *testing.T) {
 }
 
 func TestBlockTransactionSaveExisting(t *testing.T) {
-	st, _ := storage.NewTestMemoryLevelDBBackend()
+	st := storage.NewTestStorage()
 
 	bt := TestMakeNewBlockTransaction(networkID, 1)
 	err := bt.Save(st)
@@ -75,7 +75,7 @@ func TestBlockTransactionSaveExisting(t *testing.T) {
 func TestMultipleBlockTransactionSource(t *testing.T) {
 	kp, _ := keypair.Random()
 	kpAnother, _ := keypair.Random()
-	st, _ := storage.NewTestMemoryLevelDBBackend()
+	st := storage.NewTestStorage()
 
 	numTxs := 10
 
@@ -159,7 +159,7 @@ func TestMultipleBlockTransactionSource(t *testing.T) {
 
 func TestMultipleBlockTransactionConfirmed(t *testing.T) {
 	kp, _ := keypair.Random()
-	st, _ := storage.NewTestMemoryLevelDBBackend()
+	st := storage.NewTestStorage()
 
 	numTxs := 10
 
@@ -222,7 +222,7 @@ func TestMultipleBlockTransactionConfirmed(t *testing.T) {
 }
 
 func TestBlockTransactionMultipleSave(t *testing.T) {
-	st, _ := storage.NewTestMemoryLevelDBBackend()
+	st := storage.NewTestStorage()
 
 	bt := TestMakeNewBlockTransaction(networkID, 1)
 	err := bt.Save(st)
@@ -239,7 +239,7 @@ func TestBlockTransactionMultipleSave(t *testing.T) {
 func TestMultipleBlockTransactionGetByAccount(t *testing.T) {
 	kp, _ := keypair.Random()
 	kpAnother, _ := keypair.Random()
-	st, _ := storage.NewTestMemoryLevelDBBackend()
+	st := storage.NewTestStorage()
 
 	numTxs := 5
 
@@ -318,7 +318,7 @@ func TestMultipleBlockTransactionGetByAccount(t *testing.T) {
 
 func TestMultipleBlockTransactionGetByBlock(t *testing.T) {
 	kp, _ := keypair.Random()
-	st, _ := storage.NewTestMemoryLevelDBBackend()
+	st := storage.NewTestStorage()
 
 	numTxs := 5
 
@@ -397,7 +397,7 @@ func TestMultipleBlockTransactionGetByBlock(t *testing.T) {
 
 func TestMultipleBlockTransactionsOrderByBlockHeightAndCursor(t *testing.T) {
 	kp, _ := keypair.Random()
-	st, _ := storage.NewTestMemoryLevelDBBackend()
+	st := storage.NewTestStorage()
 
 	numTxs := 5
 
@@ -499,5 +499,4 @@ func TestMultipleBlockTransactionsOrderByBlockHeightAndCursor(t *testing.T) {
 			require.Equal(t, bt.Hash, halfSaved[i].Hash)
 		}
 	}
-
 }

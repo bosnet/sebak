@@ -42,7 +42,7 @@ func MakeNodeRunner() (*NodeRunner, *node.LocalNode) {
 	)
 
 	is, _ := consensus.NewISAAC(networkID, localNode, policy, connectionManager)
-	st, _ := storage.NewTestMemoryLevelDBBackend()
+	st := storage.NewTestStorage()
 	conf := consensus.NewISAACConfiguration()
 	nodeRunner, _ := NewNodeRunner(string(networkID), localNode, policy, n, is, st, conf)
 	return nodeRunner, localNode
@@ -142,7 +142,7 @@ func createNodeRunnerForTesting(n int, conf *consensus.ISAACConfiguration, recv 
 
 	is, _ := consensus.NewISAAC(networkID, localNode, policy, connectionManager)
 	is.SetProposerSelector(SelfSelector{connectionManager})
-	st, _ := storage.NewTestMemoryLevelDBBackend()
+	st := storage.NewTestStorage()
 
 	account.Save(st)
 	genesisBlock = block.MakeGenesisBlock(st, *account)

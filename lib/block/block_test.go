@@ -10,7 +10,7 @@ import (
 )
 
 func TestBlockConfirmedOrdering(t *testing.T) {
-	st, _ := storage.NewTestMemoryLevelDBBackend()
+	st := storage.NewTestStorage()
 
 	var inserted []Block
 	for i := 0; i < 10; i++ {
@@ -66,7 +66,7 @@ func TestBlockConfirmedOrdering(t *testing.T) {
 }
 
 func TestBlockHeightOrdering(t *testing.T) {
-	st, _ := storage.NewTestMemoryLevelDBBackend()
+	st := storage.NewTestStorage()
 
 	// save Block, but Height will be shuffled
 	numberOfBlocks := 10
