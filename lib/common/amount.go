@@ -19,10 +19,10 @@ import (
 
 const (
 	// 10,000,000 units == 1 BOSCoin
-	amountPerCoin Amount = 10000000
+	AmountPerCoin Amount = 10000000
 	// The maximum possible supply of coins within any network
 	// It is 10 trillions BOSCoin, or 100,000,000,000,000,000,000 in `Amount`
-	MaximumBalance Amount = 1000000000000 * amountPerCoin
+	MaximumBalance Amount = 1000000000000 * AmountPerCoin
 	// An invalid valid, used to make an instance unusable
 	invalidValue = Amount(MaximumBalance + 1)
 )
