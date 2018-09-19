@@ -55,7 +55,7 @@ for dir in ${TEST_DIRS}; do
     DOCKER_CONTAINERS="${DOCKER_CONTAINERS} ${NODE1} ${NODE2} ${NODE3}"
 
     # Give them a bit of time
-    sleep 10
+    sleep 1
 
     # Run the tests
     docker run --rm --network host ${TESTS_DOCKER_IMAGE} ${dir}
