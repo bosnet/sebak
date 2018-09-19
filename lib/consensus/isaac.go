@@ -89,6 +89,8 @@ func (is *ISAAC) CloseConsensus(proposer string, round round.Round, vh ballot.Vo
 }
 
 func (is *ISAAC) SetLatestConsensusedBlock(block block.Block) {
+	is.Lock()
+	defer is.Unlock()
 	is.latestConfirmedBlock = block
 }
 
@@ -217,10 +219,17 @@ func (is *ISAAC) HasSameProposer(b ballot.Ballot) bool {
 	return false
 }
 
-func (is *ISAAC) AddRunningRound(roundHash string, runningRound *RunningRound) {
+func (is *ISAAC) AddRunningRound(roundHash string, theBallot ballot.Ballot) error {
 	is.Lock()
 	defer is.Unlock()
+	runningRound, err := NewRunningRound(is.Node.Address(), theBallot)
+	if err != nil {
+		return err
+	}
 	is.RunningRounds[roundHash] = runningRound
+	log.Debug("ballot broadcasted and voted", "runningRound", runningRound)
+
+	return err
 }
 
 func (is *ISAAC) LatestConfirmedBlock() block.Block {

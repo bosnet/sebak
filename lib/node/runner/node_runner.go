@@ -488,14 +488,5 @@ func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) error {
 
 	nr.ConnectionManager().Broadcast(*theBallot)
 
-	runningRound, err := consensus.NewRunningRound(nr.localNode.Address(), *theBallot)
-	if err != nil {
-		return err
-	}
-
-	nr.consensus.AddRunningRound(round.Hash(), runningRound)
-
-	nr.log.Debug("ballot broadcasted and voted", "runningRound", runningRound)
-
-	return nil
+	return nr.consensus.AddRunningRound(round.Hash(), *theBallot)
 }
