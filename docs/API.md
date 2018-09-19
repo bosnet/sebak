@@ -6,8 +6,10 @@ SEBAK, the next BOScoin Tokennet with ISAAC consensus protocol
 
 <!-- partial(v1/accounts.md) -->
 <!-- partial(v1/models.md) -->
-<!-- partial(/v1/transactions.md) -->
+<!-- partial(v1/transactions.md) -->
 
 <!-- include(v1/accounts.md) -->
 <!-- include(v1/transactions.md) -->
 <!-- include(v1/models.md) -->
+<!-- include(v1/operations.md) -->
+
