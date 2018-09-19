@@ -25,85 +25,80 @@ TestISAACSimulationProposer indicates the following:
 	4. The node receives a ballot that exceeds the threshold, and the block is confirmed.
 */
 func TestISAACSimulationProposer(t *testing.T) {
-	nodeRunners := createTestNodeRunner(5, consensus.NewISAACConfiguration())
+	nr, nodes, _ := createNodeRunnerForTesting(5, consensus.NewISAACConfiguration(), nil)
 	tx, txByte := GetTransaction(t)
 
 	message := common.NetworkMessage{Type: common.TransactionMessage, Data: txByte}
 
-	nodeRunner := nodeRunners[0]
+	// `nr` is proposer's runner
+	proposer := nr.localNode
 
-	// `nodeRunner` is proposer's runner
-	nodeRunner.Consensus().ConnectionManager().SetProposerCalculator(SelfProposerCalculator{
-		nodeRunner: nodeRunner,
-	})
-	proposer := nodeRunner.localNode
-
-	nodeRunner.Consensus().SetLatestConsensusedBlock(genesisBlock)
+	nr.Consensus().SetLatestConsensusedBlock(genesisBlock)
 
 	var err error
-	err = nodeRunner.handleTransaction(message)
+	err = nr.handleTransaction(message)
 
 	require.Nil(t, err)
-	require.True(t, nodeRunner.Consensus().TransactionPool.Has(tx.GetHash()))
+	require.True(t, nr.Consensus().TransactionPool.Has(tx.GetHash()))
 
-	// Generate proposed ballot in nodeRunner
+	// Generate proposed ballot in nr
 	roundNumber := uint64(0)
-	err = nodeRunner.proposeNewBallot(roundNumber)
+	err = nr.proposeNewBallot(roundNumber)
 	require.Nil(t, err)
 
-	b := nodeRunner.Consensus().LatestConfirmedBlock()
+	b := nr.Consensus().LatestConfirmedBlock()
 	round := round.Round{
 		Number:      roundNumber,
 		BlockHeight: b.Height,
 		BlockHash:   b.Hash,
 		TotalTxs:    b.TotalTxs,
 	}
-	runningRounds := nodeRunner.Consensus().RunningRounds
+	runningRounds := nr.Consensus().RunningRounds
 
 	// Check that the transaction is in RunningRounds
 	rr := runningRounds[round.Hash()]
 	txHashs := rr.Transactions[proposer.Address()]
 	require.Equal(t, tx.GetHash(), txHashs[0])
 
-	ballotSIGN1 := GenerateBallot(t, proposer, round, tx, ballot.StateSIGN, nodeRunners[1].localNode)
-	err = ReceiveBallot(t, nodeRunner, ballotSIGN1)
+	ballotSIGN1 := GenerateBallot(t, proposer, round, tx, ballot.StateSIGN, nodes[1])
+	err = ReceiveBallot(t, nr, ballotSIGN1)
 	require.Nil(t, err)
 
-	ballotSIGN2 := GenerateBallot(t, proposer, round, tx, ballot.StateSIGN, nodeRunners[2].localNode)
-	err = ReceiveBallot(t, nodeRunner, ballotSIGN2)
+	ballotSIGN2 := GenerateBallot(t, proposer, round, tx, ballot.StateSIGN, nodes[2])
+	err = ReceiveBallot(t, nr, ballotSIGN2)
 	require.Nil(t, err)
 
-	ballotSIGN3 := GenerateBallot(t, proposer, round, tx, ballot.StateSIGN, nodeRunners[3].localNode)
-	err = ReceiveBallot(t, nodeRunner, ballotSIGN3)
+	ballotSIGN3 := GenerateBallot(t, proposer, round, tx, ballot.StateSIGN, nodes[3])
+	err = ReceiveBallot(t, nr, ballotSIGN3)
 	require.Nil(t, err)
 
-	ballotSIGN4 := GenerateBallot(t, proposer, round, tx, ballot.StateSIGN, nodeRunners[4].localNode)
-	err = ReceiveBallot(t, nodeRunner, ballotSIGN4)
+	ballotSIGN4 := GenerateBallot(t, proposer, round, tx, ballot.StateSIGN, nodes[4])
+	err = ReceiveBallot(t, nr, ballotSIGN4)
 	require.Nil(t, err)
 
 	require.Equal(t, 4, len(rr.Voted[proposer.Address()].GetResult(ballot.StateSIGN)))
 
-	ballotACCEPT1 := GenerateBallot(t, proposer, round, tx, ballot.StateACCEPT, nodeRunners[1].localNode)
-	err = ReceiveBallot(t, nodeRunner, ballotACCEPT1)
+	ballotACCEPT1 := GenerateBallot(t, proposer, round, tx, ballot.StateACCEPT, nodes[1])
+	err = ReceiveBallot(t, nr, ballotACCEPT1)
 	require.Nil(t, err)
 
-	ballotACCEPT2 := GenerateBallot(t, proposer, round, tx, ballot.StateACCEPT, nodeRunners[2].localNode)
-	err = ReceiveBallot(t, nodeRunner, ballotACCEPT2)
+	ballotACCEPT2 := GenerateBallot(t, proposer, round, tx, ballot.StateACCEPT, nodes[2])
+	err = ReceiveBallot(t, nr, ballotACCEPT2)
 	require.Nil(t, err)
 
-	ballotACCEPT3 := GenerateBallot(t, proposer, round, tx, ballot.StateACCEPT, nodeRunners[3].localNode)
-	err = ReceiveBallot(t, nodeRunner, ballotACCEPT3)
+	ballotACCEPT3 := GenerateBallot(t, proposer, round, tx, ballot.StateACCEPT, nodes[3])
+	err = ReceiveBallot(t, nr, ballotACCEPT3)
 	require.Nil(t, err)
 
-	ballotACCEPT4 := GenerateBallot(t, proposer, round, tx, ballot.StateACCEPT, nodeRunners[4].localNode)
-	err = ReceiveBallot(t, nodeRunner, ballotACCEPT4)
+	ballotACCEPT4 := GenerateBallot(t, proposer, round, tx, ballot.StateACCEPT, nodes[4])
+	err = ReceiveBallot(t, nr, ballotACCEPT4)
 
 	_, ok := err.(CheckerStopCloseConsensus)
 	require.True(t, ok)
 
 	require.Equal(t, 4, len(rr.Voted[proposer.Address()].GetResult(ballot.StateACCEPT)))
 
-	block := nodeRunner.Consensus().LatestConfirmedBlock()
+	block := nr.Consensus().LatestConfirmedBlock()
 	require.Equal(t, proposer.Address(), block.Proposer)
 	require.Equal(t, 1, len(block.Transactions))
 	require.Equal(t, tx.GetHash(), block.Transactions[0])

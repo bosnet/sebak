@@ -73,7 +73,7 @@ type NodeRunner struct {
 	policy            ballot.VotingThresholdPolicy
 	network           network.Network
 	consensus         *consensus.ISAAC
-	connectionManager *network.ConnectionManager
+	connectionManager network.ConnectionManager
 	storage           *storage.LevelDBBackend
 	isaacStateManager *ISAACStateManager
 
@@ -202,7 +202,7 @@ func (nr *NodeRunner) Consensus() *consensus.ISAAC {
 	return nr.consensus
 }
 
-func (nr *NodeRunner) ConnectionManager() *network.ConnectionManager {
+func (nr *NodeRunner) ConnectionManager() network.ConnectionManager {
 	return nr.connectionManager
 }
 

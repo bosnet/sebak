@@ -335,13 +335,12 @@ func runNode() error {
 		return err
 	}
 
-	connectionManager := network.NewConnectionManager(
+	connectionManager := network.NewValidatorConnectionManager(
 		localNode,
 		nt,
 		policy,
 		localNode.GetValidators(),
 	)
-	connectionManager.SetProposerCalculator(network.NewSimpleProposerCalculator(connectionManager))
 
 	isaac, err := consensus.NewISAAC([]byte(flagNetworkID), localNode, policy, connectionManager)
 	if err != nil {
