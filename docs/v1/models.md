@@ -2,7 +2,7 @@
 
 ### Account
 + address: GDMZMF2EAK4E6NSZNSCJQQHQGMAOZ6UI3XQVVLMEJRFDPYHLY7PPHKLP (string, required) - The account’s public key encoded into a base32 string representation.
-+ balance: 10000000000000000000 (string,required) - GON. 1 BOS = 1,000,000 GON
++ balance: 10000000000000000000 (string,required) - GON. 1 BOS = 10,000,000 GON
 + sequence_id: 0 (number,required) - The Current sequence number. It needed to submitting a transaction from this account
 + _links 
     + operations
