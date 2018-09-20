@@ -92,8 +92,16 @@ func TestIsWellFormedTransactionWithInvalidSignature(t *testing.T) {
 func TestIsWellFormedTransactionMaxOperationsInTransaction(t *testing.T) {
 	var err error
 
-	_, tx := TestMakeTransaction(networkID, common.MaxOperationsInTransaction+1)
-	err = tx.IsWellFormed(networkID)
-	require.NotNil(t, err)
-	require.Equal(t, errors.ErrorTransactionHasOverMaxOperations.Code, err.(*errors.Error).Code)
+	{ // over common.MaxOperationsInTransaction
+		_, tx := TestMakeTransaction(networkID, common.MaxOperationsInTransaction+1)
+		err = tx.IsWellFormed(networkID)
+		require.NotNil(t, err)
+		require.Equal(t, errors.ErrorTransactionHasOverMaxOperations.Code, err.(*errors.Error).Code)
+	}
+
+	{ // common.MaxOperationsInTransaction
+		_, tx := TestMakeTransaction(networkID, common.MaxOperationsInTransaction)
+		err = tx.IsWellFormed(networkID)
+		require.Nil(t, err)
+	}
 }
