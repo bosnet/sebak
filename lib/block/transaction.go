@@ -147,10 +147,11 @@ func (bt *BlockTransaction) Save(st *storage.LevelDBBackend) (err error) {
 		if err = bo.Save(st); err != nil {
 			return
 		}
-
-		target := op.B.TargetAddress()
-		if err = st.New(bt.NewBlockTransactionKeyByAccount(target), bt.Hash); err != nil {
-			return
+		if pop, ok := op.B.(transaction.OperationBodyPayable); ok {
+			target := pop.TargetAddress()
+			if err = st.New(bt.NewBlockTransactionKeyByAccount(target), bt.Hash); err != nil {
+				return
+			}
 		}
 	}
 	event := "saved"

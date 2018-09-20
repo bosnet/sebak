@@ -5,9 +5,9 @@ import (
 
 	"boscoin.io/sebak/lib/common"
 
+	"encoding/json"
 	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
-	"encoding/json"
 )
 
 func TestMakeHashOfOperationBodyPayment(t *testing.T) {

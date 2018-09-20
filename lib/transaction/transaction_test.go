@@ -18,13 +18,11 @@ func TestLoadTransaction(t *testing.T) {
 	b, err := tx.Serialize()
 	require.Nil(t, err)
 
-
 	var tx2 Transaction
 	json.Unmarshal(b, &tx2)
 	t.Log(tx2)
 	require.Nil(t, err)
 }
-
 
 func TestIsWellFormedTransaction(t *testing.T) {
 	_, tx := TestMakeTransaction(networkID, 1)
@@ -75,7 +73,11 @@ func TestIsWellFormedTransactionWithTargetAddressIsSameWithSourceAddress(t *test
 	var err error
 
 	_, tx := TestMakeTransaction(networkID, 1)
-	tx.B.Source = tx.B.Operations[0].B.TargetAddress()
+	if pop, ok := tx.B.Operations[0].B.(OperationBodyPayable); ok {
+		tx.B.Source = pop.TargetAddress()
+	} else {
+		require.True(t, ok)
+	}
 	err = tx.IsWellFormed(networkID)
 	require.NotNil(t, err, "Transaction to self should be rejected")
 }

@@ -12,8 +12,10 @@ import (
 type OperationType string
 
 const (
-	OperationCreateAccount OperationType = "create-account"
-	OperationPayment                     = "payment"
+	OperationCreateAccount        OperationType = "create-account"
+	OperationPayment                            = "payment"
+	OperationCongressVoting                     = "cv"
+	OperationCongressVotingResult               = "cvr"
 )
 
 type Operation struct {
@@ -38,9 +40,13 @@ type OperationBody interface {
 	//   An `error` if that transaction is invalid, `nil` otherwise
 	//
 	IsWellFormed([]byte) error
+	Serialize() ([]byte, error)
+}
+
+type OperationBodyPayable interface {
+	OperationBody
 	TargetAddress() string
 	GetAmount() common.Amount
-	Serialize() ([]byte, error)
 }
 
 func (o Operation) MakeHash() []byte {
@@ -70,7 +76,7 @@ type OperationEnvelop struct {
 	B interface{}
 }
 
-func (o *Operation) UnmarshalJSON(b []byte) (err error){
+func (o *Operation) UnmarshalJSON(b []byte) (err error) {
 	var envelop json.RawMessage
 	oj := OperationEnvelop{
 		B: &envelop,
@@ -90,6 +96,18 @@ func (o *Operation) UnmarshalJSON(b []byte) (err error){
 		o.B = body
 	case OperationPayment:
 		var body OperationBodyPayment
+		if err = json.Unmarshal(envelop, &body); err != nil {
+			return
+		}
+		o.B = body
+	case OperationCongressVoting:
+		var body OperationBodyCongressVoting
+		if err = json.Unmarshal(envelop, &body); err != nil {
+			return
+		}
+		o.B = body
+	case OperationCongressVotingResult:
+		var body OperationBodyCongressVotingResult
 		if err = json.Unmarshal(envelop, &body); err != nil {
 			return
 		}

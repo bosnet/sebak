@@ -19,7 +19,7 @@ import (
 //  * get list by `Target` and created order
 
 type BlockOperation struct {
-	Hash   string
+	Hash string
 
 	OpHash string
 	TxHash string
