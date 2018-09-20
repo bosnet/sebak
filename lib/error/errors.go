@@ -55,4 +55,5 @@ var (
 	ErrorStorageRecordAlreadyExists           = NewError(148, "record already exists in storage")
 	ErrorStorageCoreError                     = NewError(149, "storage error")
 	ErrorContentTypeNotJSON                   = NewError(150, "`Content-Type` must be 'application/json'")
+	ErrorTransactionHasOverMaxOperations      = NewError(151, "too many operations in transaction")
 )

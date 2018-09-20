@@ -27,6 +27,17 @@ func CheckTransactionSource(c common.Checker, args ...interface{}) (err error) {
 	return
 }
 
+func CheckTransactionOverOperationsLimit(c common.Checker, args ...interface{}) (err error) {
+	checker := c.(*TransactionChecker)
+
+	if len(checker.Transaction.B.Operations) > common.MaxOperationsInTransaction {
+		err = errors.ErrorTransactionHasOverMaxOperations
+		return
+	}
+
+	return
+}
+
 func CheckTransactionSequenceID(c common.Checker, args ...interface{}) (err error) {
 	//checker := c.(*TransactionChecker)
 	return
