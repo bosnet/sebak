@@ -56,4 +56,5 @@ var (
 	ErrorStorageCoreError                     = NewError(149, "storage error")
 	ErrorContentTypeNotJSON                   = NewError(150, "`Content-Type` must be 'application/json'")
 	ErrorTransactionHasOverMaxOperations      = NewError(151, "too many operations in transaction")
+	ErrorOperationAmountUnderflow             = NewError(152, "invalid `Amount`: lower than 1")
 )
