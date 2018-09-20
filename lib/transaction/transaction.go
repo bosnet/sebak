@@ -18,47 +18,26 @@ type Transaction struct {
 	B TransactionBody
 }
 
-type TransactionFromJSON struct {
-	T string
-	H TransactionHeader
-	B TransactionBodyFromJSON
+type TransactionHeader struct {
+	Version   string `json:"version"`
+	Created   string `json:"created"`
+	Hash      string `json:"hash"`
+	Signature string `json:"signature"`
 }
 
-type TransactionBodyFromJSON struct {
-	Source     string              `json:"source"`
-	Fee        common.Amount       `json:"fee"`
-	SequenceID uint64              `json:"sequenceid"`
-	Operations []OperationFromJSON `json:"operations"`
+type TransactionBody struct {
+	Source     string        `json:"source"`
+	Fee        common.Amount `json:"fee"`
+	SequenceID uint64        `json:"sequenceID"`
+	Operations []Operation   `json:"operations"`
 }
 
-func NewTransactionFromJSON(b []byte) (tx Transaction, err error) {
-	var txt TransactionFromJSON
-	if err = json.Unmarshal(b, &txt); err != nil {
-		return
-	}
+func (tb TransactionBody) MakeHash() []byte {
+	return common.MustMakeObjectHash(tb)
+}
 
-	var operations []Operation
-	for _, o := range txt.B.Operations {
-		var op Operation
-		if op, err = NewOperationFromInterface(o); err != nil {
-			return
-		}
-		operations = append(operations, op)
-	}
-
-	tx.T = txt.T
-	tx.H = txt.H
-	tx.B = TransactionBody{
-		Source:     txt.B.Source,
-		Fee:        txt.B.Fee,
-		SequenceID: txt.B.SequenceID,
-		Operations: operations,
-	}
-
-	// Set the hash
-	tx.H.Hash = tx.B.MakeHashString()
-
-	return
+func (tb TransactionBody) MakeHashString() string {
+	return base58.Encode(tb.MakeHash())
 }
 
 func NewTransaction(source string, sequenceID uint64, ops ...Operation) (tx Transaction, err error) {
@@ -172,29 +151,4 @@ func (tx *Transaction) Sign(kp keypair.KP, networkID []byte) {
 	tx.H.Signature = base58.Encode(signature)
 
 	return
-}
-
-type TransactionHeader struct {
-	Version string `json:"version"`
-	Created string `json:"created"`
-	// Hash of this transaction
-	// This is cached and not serialized when sent, because the remote node
-	// has to validate it anyway.
-	Hash      string `json:"-"`
-	Signature string `json:"signature"`
-}
-
-type TransactionBody struct {
-	Source     string        `json:"source"`
-	Fee        common.Amount `json:"fee"`
-	SequenceID uint64        `json:"sequenceID"`
-	Operations []Operation   `json:"operations"`
-}
-
-func (tb TransactionBody) MakeHash() []byte {
-	return common.MustMakeObjectHash(tb)
-}
-
-func (tb TransactionBody) MakeHashString() string {
-	return base58.Encode(tb.MakeHash())
 }

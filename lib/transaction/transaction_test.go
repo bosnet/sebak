@@ -9,17 +9,22 @@ import (
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
+	"encoding/json"
 )
 
-func TestLoadTransactionFromJSON(t *testing.T) {
+func TestLoadTransaction(t *testing.T) {
 	_, tx := TestMakeTransaction(networkID, 1)
 
 	b, err := tx.Serialize()
 	require.Nil(t, err)
 
-	_, err = NewTransactionFromJSON(b)
+
+	var tx2 Transaction
+	json.Unmarshal(b, &tx2)
+	t.Log(tx2)
 	require.Nil(t, err)
 }
+
 
 func TestIsWellFormedTransaction(t *testing.T) {
 	_, tx := TestMakeTransaction(networkID, 1)

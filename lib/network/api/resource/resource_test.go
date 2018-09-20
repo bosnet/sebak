@@ -86,9 +86,7 @@ func TestResourceAccount(t *testing.T) {
 			m := f.(map[string]interface{})
 			require.Equal(t, bo.Hash, m["hash"])
 			require.Equal(t, bo.Source, m["source"])
-			require.Equal(t, bo.Target, m["target"])
 			require.Equal(t, string(bo.Type), m["type"])
-			require.Equal(t, bo.Amount.String(), m["amount"])
 			l := m["_links"].(map[string]interface{})
 			require.Equal(t, strings.Replace(URLOperations, "{id}", bo.Hash, -1), l["self"].(map[string]interface{})["href"])
 		}
@@ -135,9 +133,7 @@ func TestResourceAccount(t *testing.T) {
 				require.Nil(t, err)
 				require.Equal(t, bo.Hash, record["hash"])
 				require.Equal(t, bo.Source, record["source"])
-				require.Equal(t, bo.Target, record["target"])
 				require.Equal(t, string(bo.Type), record["type"])
-				require.Equal(t, bo.Amount.String(), record["amount"])
 				l := record["_links"].(map[string]interface{})
 				require.Equal(t, strings.Replace(URLOperations, "{id}", bo.Hash, -1), l["self"].(map[string]interface{})["href"])
 			}

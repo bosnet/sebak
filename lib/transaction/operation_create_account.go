@@ -5,6 +5,7 @@ import (
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
+	"encoding/json"
 )
 
 type OperationBodyCreateAccount struct {
@@ -19,6 +20,10 @@ func NewOperationBodyCreateAccount(target string, amount common.Amount, linked s
 		Amount: amount,
 		Linked: linked,
 	}
+}
+
+func (o OperationBodyCreateAccount) Serialize() (encoded []byte, err error) {
+	return json.Marshal(o)
 }
 
 // Implement transaction/operation : OperationBody.IsWellFormed
