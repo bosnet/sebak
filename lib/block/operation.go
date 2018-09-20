@@ -20,6 +20,8 @@ import (
 
 type BlockOperation struct {
 	Hash   string
+
+	OpHash string
 	TxHash string
 
 	Type   transaction.OperationType
@@ -32,8 +34,8 @@ type BlockOperation struct {
 	blockHeight uint64
 }
 
-func NewBlockOperationKey(op transaction.Operation, tx transaction.Transaction) string {
-	return fmt.Sprintf("%s-%s", op.MakeHashString(), tx.GetHash())
+func NewBlockOperationKey(opHash, txHash string) string {
+	return fmt.Sprintf("%s-%s", opHash, txHash)
 }
 
 func NewBlockOperationFromOperation(op transaction.Operation, tx transaction.Transaction, blockHeight uint64) (BlockOperation, error) {
@@ -41,9 +43,15 @@ func NewBlockOperationFromOperation(op transaction.Operation, tx transaction.Tra
 	if err != nil {
 		return BlockOperation{}, err
 	}
+
+	opHash := op.MakeHashString()
+	txHash := tx.GetHash()
+
 	return BlockOperation{
-		Hash:   NewBlockOperationKey(op, tx),
-		TxHash: tx.H.Hash,
+		Hash: NewBlockOperationKey(opHash, txHash),
+
+		OpHash: opHash,
+		TxHash: txHash,
 
 		Type:   op.H.Type,
 		Source: tx.B.Source,
@@ -69,7 +77,7 @@ func (bo *BlockOperation) Save(st *storage.LevelDBBackend) (err error) {
 		return errors.ErrorBlockAlreadyExists
 	}
 
-	if err = st.New(GetBlockOperationKey(bo.Hash), bo); err != nil {
+	if err = st.New(key, bo); err != nil {
 		return
 	}
 	if err = st.New(bo.NewBlockOperationTxHashKey(), bo.Hash); err != nil {
@@ -108,14 +116,6 @@ func GetBlockOperationKeyPrefixTxHash(txHash string) string {
 
 func GetBlockOperationKeyPrefixSource(source string) string {
 	return fmt.Sprintf("%s%s-", common.BlockOperationPrefixSource, source)
-}
-
-func GetBlockOperationKeyPrefixTarget(target string) string {
-	return fmt.Sprintf("%s%s-", common.BlockOperationPrefixTarget, target)
-}
-
-func GetBlockOperationKeyPrefixPeers(one, two string) string {
-	return fmt.Sprintf("%s%s%s-", common.BlockOperationPrefixPeers, one, two)
 }
 
 func (bo BlockOperation) NewBlockOperationTxHashKey() string {

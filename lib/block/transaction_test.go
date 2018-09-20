@@ -27,7 +27,7 @@ func TestNewBlockTransaction(t *testing.T) {
 
 	var opHashes []string
 	for _, op := range tx.B.Operations {
-		opHashes = append(opHashes, NewBlockOperationKey(op, tx))
+		opHashes = append(opHashes, NewBlockOperationKey(op.MakeHashString(), tx.GetHash()))
 	}
 	for i, opHash := range bt.Operations {
 		require.Equal(t, opHash, opHashes[i])
