@@ -32,7 +32,7 @@ type HelperTestGetNodeTransactionsHandler struct {
 }
 
 func (p *HelperTestGetNodeTransactionsHandler) Prepare() {
-	p.st, _ = storage.NewTestMemoryLevelDBBackend()
+	p.st = storage.NewTestStorage()
 
 	kp, _ := keypair.Random()
 	endpoint, _ := common.NewEndpointFromString(
@@ -43,7 +43,7 @@ func (p *HelperTestGetNodeTransactionsHandler) Prepare() {
 		networkID,
 		localNode,
 		nil,
-		network.NewConnectionManager(localNode, nil, nil, nil),
+		network.NewValidatorConnectionManager(localNode, nil, nil, nil),
 	)
 	p.consensus = isaac
 	apiHandler := NetworkHandlerNode{storage: p.st, consensus: isaac}
