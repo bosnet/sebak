@@ -2,11 +2,11 @@ package transaction
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/stellar/go/keypair"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/error"
 )
 
 type OperationBodyPayment struct {
@@ -32,7 +32,7 @@ func (o OperationBodyPayment) IsWellFormed([]byte) (err error) {
 	}
 
 	if int64(o.Amount) < 1 {
-		err = fmt.Errorf("invalid `Amount`: lower than 1")
+		err = errors.ErrorOperationAmountUnderflow
 		return
 	}
 
