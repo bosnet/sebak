@@ -1,6 +1,8 @@
 package consensus
 
 import (
+	logging "github.com/inconshreveable/log15"
+
 	"boscoin.io/sebak/lib/ballot"
 )
 
@@ -63,7 +65,7 @@ func (rv *RoundVote) GetResult(state ballot.State) (result RoundVoteResult) {
 	return result
 }
 
-func (rv *RoundVote) CanGetVotingResult(policy ballot.VotingThresholdPolicy, state ballot.State) (RoundVoteResult, ballot.VotingHole, bool) {
+func (rv *RoundVote) CanGetVotingResult(policy ballot.VotingThresholdPolicy, state ballot.State, log logging.Logger) (RoundVoteResult, ballot.VotingHole, bool) {
 	threshold := policy.Threshold(state)
 	if threshold < 1 {
 		return RoundVoteResult{}, ballot.VotingNOTYET, false

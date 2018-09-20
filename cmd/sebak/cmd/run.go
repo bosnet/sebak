@@ -17,7 +17,6 @@ import (
 	"github.com/stellar/go/keypair"
 
 	cmdcommon "boscoin.io/sebak/cmd/sebak/common"
-	"boscoin.io/sebak/lib"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/consensus"
 	"boscoin.io/sebak/lib/network"
@@ -92,7 +91,7 @@ func init() {
 				if len(csv) == 2 {
 					balanceStr = csv[1]
 				}
-				flagName, err := MakeGenesisBlock(csv[0], flagNetworkID, balanceStr, flagStorageConfigString)
+				flagName, err := MakeGenesisBlock(csv[0], flagNetworkID, balanceStr, flagStorageConfigString, log)
 				if len(flagName) != 0 || err != nil {
 					cmdcommon.PrintFlagsError(c, flagName, err)
 				}
@@ -259,7 +258,8 @@ func parseFlagsNode() {
 
 	log.SetHandler(logging.LvlFilterHandler(logLevel, logging.CallerFileHandler(logHandler)))
 
-	sebak.SetLogging(logLevel, logHandler)
+	runner.SetLogging(logLevel, logHandler)
+	consensus.SetLogging(logLevel, logHandler)
 	network.SetLogging(logLevel, logHandler)
 
 	log.Info("Starting Sebak")

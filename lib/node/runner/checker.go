@@ -3,6 +3,8 @@ package runner
 import (
 	"encoding/json"
 
+	logging "github.com/inconshreveable/log15"
+
 	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
@@ -11,7 +13,6 @@ import (
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
-	logging "github.com/inconshreveable/log15"
 )
 
 type CheckerStopCloseConsensus struct {
@@ -327,6 +328,7 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) (err error) {
 			checker.NodeRunner.Storage(),
 			checker.Ballot,
 			checker.NodeRunner.Consensus().TransactionPool,
+			checker.Log,
 		)
 		if err != nil {
 			return
@@ -351,7 +353,7 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) (err error) {
 	return
 }
 
-func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *transaction.TransactionPool) (blk block.Block, err error) {
+func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *transaction.TransactionPool, log logging.Logger) (blk block.Block, err error) {
 	var ts *storage.LevelDBBackend
 	if ts, err = st.OpenTransaction(); err != nil {
 		return
@@ -367,7 +369,9 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 		transactions[hash] = tx
 	}
 
-	blk = block.NewBlockFromBallot(b)
+	blk = block.NewBlockFromBallot(b, log)
+	log.Info("NewBlock created", "block", blk)
+
 	if err = blk.Save(ts); err != nil {
 		return
 	}
@@ -382,7 +386,7 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 			return
 		}
 		for _, op := range tx.B.Operations {
-			if err = finishOperation(ts, tx, op); err != nil {
+			if err = finishOperation(ts, tx, op, log); err != nil {
 				ts.Discard()
 				return
 			}
@@ -415,19 +419,19 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 }
 
 // finishOperation do finish the task after consensus by the type of each operation.
-func finishOperation(st *storage.LevelDBBackend, tx transaction.Transaction, op transaction.Operation) (err error) {
+func finishOperation(st *storage.LevelDBBackend, tx transaction.Transaction, op transaction.Operation, log logging.Logger) (err error) {
 	switch op.H.Type {
 	case transaction.OperationCreateAccount:
-		return finishOperationCreateAccount(st, tx, op)
+		return finishOperationCreateAccount(st, tx, op, log)
 	case transaction.OperationPayment:
-		return finishOperationPayment(st, tx, op)
+		return finishOperationPayment(st, tx, op, log)
 	default:
 		err = errors.ErrorUnknownOperationType
 		return
 	}
 }
 
-func finishOperationCreateAccount(st *storage.LevelDBBackend, tx transaction.Transaction, op transaction.Operation) (err error) {
+func finishOperationCreateAccount(st *storage.LevelDBBackend, tx transaction.Transaction, op transaction.Operation, log logging.Logger) (err error) {
 	var baSource, baTarget *block.BlockAccount
 	if baSource, err = block.GetBlockAccount(st, tx.B.Source); err != nil {
 		err = errors.ErrorBlockAccountDoesNotExists
@@ -453,7 +457,7 @@ func finishOperationCreateAccount(st *storage.LevelDBBackend, tx transaction.Tra
 	return
 }
 
-func finishOperationPayment(st *storage.LevelDBBackend, tx transaction.Transaction, op transaction.Operation) (err error) {
+func finishOperationPayment(st *storage.LevelDBBackend, tx transaction.Transaction, op transaction.Operation, log logging.Logger) (err error) {
 	var baSource, baTarget *block.BlockAccount
 	if baSource, err = block.GetBlockAccount(st, tx.B.Source); err != nil {
 		err = errors.ErrorBlockAccountDoesNotExists
