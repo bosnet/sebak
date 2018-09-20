@@ -96,7 +96,7 @@ func TestIsWellFormedTransactionMaxOperationsInTransaction(t *testing.T) {
 		_, tx := TestMakeTransaction(networkID, common.MaxOperationsInTransaction+1)
 		err = tx.IsWellFormed(networkID)
 		require.NotNil(t, err)
-		require.Equal(t, errors.ErrorTransactionHasOverMaxOperations.Code, err.(*errors.Error).Code)
+		require.Equal(t, errors.ErrorTransactionHasOverMaxOperations, err)
 	}
 
 	{ // common.MaxOperationsInTransaction
