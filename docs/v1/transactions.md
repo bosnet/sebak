@@ -42,19 +42,16 @@ Transactions API
 
     + Attributes (Problem)
 
-## Transaction [/v1/transactions/{hash}?limit={limit}&reverse={reverse}&cursor={cursor}]
+## Transaction [/v1/transactions/{hash}]
 
 + Parameters
     
     + hash: `ghf6msRhE4jRf5DPib9UHD1msadvmZs9o53V9FQTb11` (string,required) - tx's hash
     
-    + limit: `100` (integer, optional)
-    
-    + reverse: `false` (string, optional)
-    
-    + cursor: `` (string, optional)
-    
 ### Get Transaction [GET]
+<p> Retrieve a transaction by transaction hash </p>
+
+<p> Streaming mode supported with header "Accept": "text/event-stream" </p>
 
 + Response 200 (application/hal+json; charset=utf-8)
 

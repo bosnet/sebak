@@ -39,6 +39,7 @@ Account API
 
 ### List All Transactions for Account [GET]
 <p> Retrieve all valid transactions that affected by the account </p>
+
 <p> Streaming mode supported with header "Accept": "text/event-stream" </p>
 
 + Response 200 (application/hal+json; charset=utf-8)
@@ -52,6 +53,7 @@ Account API
 
 ## Operations for Account [/v1/accounts/{address}/operations?limit={limit}&reverse={reverse}&cursor={cursor}]
 <p> Retrieve all operations that were included in valid transactions that affected by the account </p>
+
 <p> Streaming mode supported with header "Accept": "text/event-stream" </p>
 
 + Parameters
