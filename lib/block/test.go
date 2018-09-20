@@ -1,10 +1,11 @@
 package block
 
 import (
+	"github.com/stellar/go/keypair"
+
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/consensus/round"
 	"boscoin.io/sebak/lib/transaction"
-	"github.com/stellar/go/keypair"
 )
 
 var networkID []byte = []byte("sebak-test-network")

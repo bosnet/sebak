@@ -94,7 +94,7 @@ func NewNodeRunner(
 	localNode *node.LocalNode,
 	policy ballot.VotingThresholdPolicy,
 	n network.Network,
-	consensus *consensus.ISAAC,
+	c *consensus.ISAAC,
 	storage *storage.LevelDBBackend,
 	conf *consensus.ISAACConfiguration,
 ) (nr *NodeRunner, err error) {
@@ -103,7 +103,7 @@ func NewNodeRunner(
 		localNode: localNode,
 		policy:    policy,
 		network:   n,
-		consensus: consensus,
+		consensus: c,
 		storage:   storage,
 		log:       log.New(logging.Ctx{"node": localNode.Alias()}),
 	}
@@ -111,7 +111,7 @@ func NewNodeRunner(
 
 	nr.policy.SetValidators(len(nr.localNode.GetValidators()) + 1) // including self
 
-	nr.connectionManager = consensus.ConnectionManager()
+	nr.connectionManager = c.ConnectionManager()
 	nr.network.AddWatcher(nr.connectionManager.ConnectionWatcher)
 
 	nr.SetHandleTransactionCheckerFuncs(nil, DefaultHandleTransactionCheckerFuncs...)
@@ -304,7 +304,7 @@ func (nr *NodeRunner) handleMessage(message common.NetworkMessage) {
 		if _, ok := err.(common.CheckerStop); ok {
 			return
 		}
-		nr.log.Error("failed to handle message", "message", message.Head(50), "error", err)
+		nr.log.Debug("failed to handle message", "message", message.Head(50), "error", err)
 	}
 }
 
@@ -344,7 +344,7 @@ func (nr *NodeRunner) handleBallotMessage(message common.NetworkMessage) (err er
 	err = common.RunChecker(baseChecker, nr.handleTransactionCheckerDeferFunc)
 	if err != nil {
 		if _, ok := err.(common.CheckerErrorStop); !ok {
-			nr.log.Error("failed to handle ballot", "error", err, "state", "")
+			nr.log.Debug("failed to handle ballot", "error", err, "state", "")
 			return
 		}
 	}
@@ -379,7 +379,7 @@ func (nr *NodeRunner) handleBallotMessage(message common.NetworkMessage) (err er
 				"reason", stopped.Error(),
 			)
 		} else {
-			nr.log.Error("failed to handle ballot", "error", err, "state", baseChecker.Ballot.State())
+			nr.log.Debug("failed to handle ballot", "error", err, "state", baseChecker.Ballot.State())
 			return
 		}
 	}

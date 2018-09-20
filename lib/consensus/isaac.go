@@ -4,6 +4,8 @@ import (
 	"errors"
 	"sync"
 
+	logging "github.com/inconshreveable/log15"
+
 	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/consensus/round"
@@ -24,6 +26,8 @@ type ISAAC struct {
 	LatestRound           round.Round
 	connectionManager     network.ConnectionManager
 	proposerSelector      ProposerSelector
+
+	log logging.Logger
 }
 
 // ISAAC should know network.ConnectionManager
@@ -39,6 +43,7 @@ func NewISAAC(networkID []byte, node *node.LocalNode, policy ballot.VotingThresh
 		RunningRounds:         map[string]*RunningRound{},
 		connectionManager:     cm,
 		proposerSelector:      SequentialSelector{cm},
+		log:                   log.New(logging.Ctx{"node": node.Alias()}),
 	}
 
 	return
@@ -172,12 +177,13 @@ func (is *ISAAC) Vote(b ballot.Ballot) (isNew bool, err error) {
 
 	return
 }
+
 func (is *ISAAC) CanGetVotingResult(b ballot.Ballot) (RoundVoteResult, ballot.VotingHole, bool) {
 	is.RLock()
 	defer is.RUnlock()
 	runningRound, _ := is.RunningRounds[b.Round().Hash()]
 	if roundVote, err := runningRound.RoundVote(b.Proposer()); err == nil {
-		return roundVote.CanGetVotingResult(is.VotingThresholdPolicy, b.State())
+		return roundVote.CanGetVotingResult(is.VotingThresholdPolicy, b.State(), is.log)
 	} else {
 		return nil, ballot.VotingNOTYET, false
 	}

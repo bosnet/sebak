@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/btcsuite/btcutil/base58"
+	logging "github.com/inconshreveable/log15"
 
 	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/common"
@@ -71,14 +72,11 @@ func NewBlock(proposer string, round round.Round, transactions []string, confirm
 		Confirmed:    confirmed,
 	}
 
-	log.Debug("NewBlock created", "PrevTotalTxs", round.TotalTxs, "txs", len(transactions), "TotalTxs", b.Header.TotalTxs)
-
 	b.Hash = base58.Encode(common.MustMakeObjectHash(b))
-
 	return *b
 }
 
-func NewBlockFromBallot(b ballot.Ballot) Block {
+func NewBlockFromBallot(b ballot.Ballot, log logging.Logger) Block {
 	return NewBlock(
 		b.Proposer(),
 		b.Round(),
