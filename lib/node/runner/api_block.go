@@ -8,18 +8,20 @@ import (
 
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/transaction"
 )
 
 const GetBlocksPattern = "/blocks"
 
-type GetBlocksDataType string
+type NodeItemDataType string
 
 const (
-	GetBlocksDataTypeBlock       GetBlocksDataType = "block"
-	GetBlocksDataTypeHeader      GetBlocksDataType = "header"
-	GetBlocksDataTypeTransaction GetBlocksDataType = "transaction"
-	GetBlocksDataTypeOperation   GetBlocksDataType = "operation"
-	GetBlocksDataTypeError       GetBlocksDataType = "error"
+	NodeItemBlock            NodeItemDataType = "block"
+	NodeItemBlockHeader      NodeItemDataType = "block-header"
+	NodeItemBlockTransaction NodeItemDataType = "block-transaction"
+	NodeItemBlockOperation   NodeItemDataType = "block-operation"
+	NodeItemTransaction      NodeItemDataType = "transaction"
+	NodeItemError            NodeItemDataType = "error"
 )
 
 func (nh NetworkHandlerNode) GetBlocksHandler(w http.ResponseWriter, r *http.Request) {
@@ -42,7 +44,7 @@ func (nh NetworkHandlerNode) GetBlocksHandler(w http.ResponseWriter, r *http.Req
 		options.SetCursor([]byte(cursorBlock.NewBlockKeyConfirmed()))
 	}
 
-	var bs []interface{}
+	var bs []*block.Block
 	if len(options.Hashes) > 0 {
 		for _, hash := range options.Hashes {
 			if exists, err := block.ExistsBlock(nh.storage, hash); err != nil {
@@ -108,13 +110,13 @@ func (nh NetworkHandlerNode) GetBlocksHandler(w http.ResponseWriter, r *http.Req
 	w.Header().Set("X-SEBAK-RESULT-COUNT", string(len(bs)))
 
 	for _, b := range bs {
-		var itemType GetBlocksDataType
+		var itemType NodeItemDataType
 		if options.Mode == GetBlocksOptionsModeHeader {
-			itemType = GetBlocksDataTypeHeader
-			renderGetBlocksItem(w, itemType, b.(*block.Block).Header)
+			itemType = NodeItemBlockHeader
+			nh.renderNodeItem(w, itemType, b.Header)
 		} else {
-			itemType = GetBlocksDataTypeBlock
-			renderGetBlocksItem(w, itemType, b.(*block.Block))
+			itemType = NodeItemBlock
+			nh.renderNodeItem(w, itemType, b)
 		}
 
 		if options.Mode == GetBlocksOptionsModeFull {
@@ -122,20 +124,19 @@ func (nh NetworkHandlerNode) GetBlocksHandler(w http.ResponseWriter, r *http.Req
 			var tx block.BlockTransaction
 			var op block.BlockOperation
 
-			bk := b.(*block.Block)
-			for _, t := range bk.Transactions {
+			for _, t := range b.Transactions {
 				if tx, err = block.GetBlockTransaction(nh.storage, t); err != nil {
-					renderGetBlocksItem(w, GetBlocksDataTypeError, err)
+					nh.renderNodeItem(w, NodeItemError, err)
 					continue
 				}
-				renderGetBlocksItem(w, GetBlocksDataTypeTransaction, tx)
+				nh.renderNodeItem(w, NodeItemBlockTransaction, tx)
 
 				for _, opHash := range tx.Operations {
 					if op, err = block.GetBlockOperation(nh.storage, opHash); err != nil {
-						renderGetBlocksItem(w, GetBlocksDataTypeError, err)
+						nh.renderNodeItem(w, NodeItemError, err)
 						continue
 					}
-					renderGetBlocksItem(w, GetBlocksDataTypeOperation, op)
+					nh.renderNodeItem(w, NodeItemBlockOperation, op)
 				}
 			}
 		}
@@ -144,20 +145,13 @@ func (nh NetworkHandlerNode) GetBlocksHandler(w http.ResponseWriter, r *http.Req
 	return
 }
 
-func renderGetBlocksItem(w http.ResponseWriter, itemType GetBlocksDataType, o interface{}) {
-	s, err := json.Marshal(o)
-	if err != nil {
-		itemType = GetBlocksDataTypeError
-		s = []byte(err.Error())
-	}
-
-	w.Write(append([]byte(itemType+" "), append(s, '\n')...))
-}
-
-func UnmarshalGetBlocksHandlerItem(d []byte) (itemType GetBlocksDataType, b interface{}, err error) {
+func UnmarshalNodeItemResponse(d []byte) (itemType NodeItemDataType, b interface{}, err error) {
 	sc := bufio.NewScanner(bytes.NewReader(d))
 	sc.Split(bufio.ScanWords)
 	sc.Scan()
+	if err = sc.Err(); err != nil {
+		return
+	}
 
 	unmarshal := func(o interface{}) error {
 		if err := json.Unmarshal(d[len(sc.Bytes())+1:], o); err != nil {
@@ -166,25 +160,29 @@ func UnmarshalGetBlocksHandlerItem(d []byte) (itemType GetBlocksDataType, b inte
 		return nil
 	}
 
-	itemType = GetBlocksDataType(sc.Text())
+	itemType = NodeItemDataType(sc.Text())
 	switch itemType {
-	case GetBlocksDataTypeBlock:
+	case NodeItemBlock:
 		var t block.Block
 		err = unmarshal(&t)
 		b = t
-	case GetBlocksDataTypeHeader:
+	case NodeItemBlockHeader:
 		var t block.Header
 		err = unmarshal(&t)
 		b = t
-	case GetBlocksDataTypeTransaction:
+	case NodeItemBlockTransaction:
 		var t block.BlockTransaction
 		err = unmarshal(&t)
 		b = t
-	case GetBlocksDataTypeOperation:
+	case NodeItemBlockOperation:
 		var t block.BlockOperation
 		err = unmarshal(&t)
 		b = t
-	case GetBlocksDataTypeError:
+	case NodeItemTransaction:
+		var t transaction.Transaction
+		err = unmarshal(&t)
+		b = t
+	case NodeItemError:
 		var t errors.Error
 		err = unmarshal(&t)
 		b = t

@@ -1,11 +1,13 @@
 package runner
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"strings"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/consensus"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/storage"
@@ -15,14 +17,30 @@ type NetworkHandlerNode struct {
 	localNode *node.LocalNode
 	network   network.Network
 	storage   *storage.LevelDBBackend
+	consensus *consensus.ISAAC
 }
 
-func NewNetworkHandlerNode(localNode *node.LocalNode, network network.Network, storage *storage.LevelDBBackend) *NetworkHandlerNode {
+func NewNetworkHandlerNode(localNode *node.LocalNode, network network.Network, storage *storage.LevelDBBackend, consensus *consensus.ISAAC) *NetworkHandlerNode {
 	return &NetworkHandlerNode{
 		localNode: localNode,
 		network:   network,
 		storage:   storage,
+		consensus: consensus,
 	}
+}
+
+func (api NetworkHandlerNode) renderNodeItem(w http.ResponseWriter, itemType NodeItemDataType, o interface{}) {
+	s, err := json.Marshal(o)
+	if err != nil {
+		itemType = NodeItemError
+		s = []byte(err.Error())
+	}
+
+	api.writeNodeItem(w, itemType, s)
+}
+
+func (api NetworkHandlerNode) writeNodeItem(w http.ResponseWriter, itemType NodeItemDataType, s []byte) {
+	w.Write(append([]byte(itemType+" "), append(s, '\n')...))
 }
 
 func (api NetworkHandlerNode) NodeInfoHandler(w http.ResponseWriter, r *http.Request) {

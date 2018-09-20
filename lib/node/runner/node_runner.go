@@ -124,7 +124,7 @@ func NewNodeRunner(
 }
 
 func (nr *NodeRunner) Ready() {
-	nodeHandler := NewNetworkHandlerNode(nr.localNode, nr.network, nr.storage)
+	nodeHandler := NewNetworkHandlerNode(nr.localNode, nr.network, nr.storage, nr.consensus)
 	apiHandler := api.NewNetworkHandlerAPI(nr.localNode, nr.network, nr.storage, network.UrlPathPrefixAPI)
 
 	nr.network.AddHandler(network.UrlPathPrefixNode+"/", nodeHandler.NodeInfoHandler)
@@ -132,6 +132,7 @@ func (nr *NodeRunner) Ready() {
 	nr.network.AddHandler(network.UrlPathPrefixNode+"/message", nodeHandler.MessageHandler)
 	nr.network.AddHandler(network.UrlPathPrefixNode+"/ballot", nodeHandler.BallotHandler)
 	nr.network.AddHandler(network.UrlPathPrefixNode+GetBlocksPattern, nodeHandler.GetBlocksHandler).Methods("GET", "POST")
+	nr.network.AddHandler(network.UrlPathPrefixNode+GetTransactionPattern, nodeHandler.GetNodeTransactionsHandler).Methods("GET", "POST")
 	nr.network.AddHandler("/metrics", promhttp.Handler().ServeHTTP)
 
 	nr.network.AddHandler(

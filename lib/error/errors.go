@@ -54,4 +54,5 @@ var (
 	ErrorInvalidContentType                   = NewError(147, "found invalid 'Content-Type'")
 	ErrorStorageRecordAlreadyExists           = NewError(148, "record already exists in storage")
 	ErrorStorageCoreError                     = NewError(149, "storage error")
+	ErrorContentTypeNotJSON                   = NewError(150, "`Content-Type` must be 'application/json'")
 )
