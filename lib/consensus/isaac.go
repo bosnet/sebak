@@ -17,33 +17,33 @@ import (
 type ISAAC struct {
 	sync.RWMutex
 
-	NetworkID             []byte
-	Node                  *node.LocalNode
-	VotingThresholdPolicy ballot.VotingThresholdPolicy
-	TransactionPool       *transaction.TransactionPool
-	RunningRounds         map[ /* Round.Hash() */ string]*RunningRound
-	latestConfirmedBlock  block.Block
-	LatestRound           round.Round
-	connectionManager     network.ConnectionManager
-	proposerSelector      ProposerSelector
+	latestConfirmedBlock block.Block
+	connectionManager    network.ConnectionManager
+	proposerSelector     ProposerSelector
+	log                  logging.Logger
+	policy               ballot.VotingThresholdPolicy
 
-	log logging.Logger
+	NetworkID       []byte
+	Node            *node.LocalNode
+	TransactionPool *transaction.TransactionPool
+	RunningRounds   map[ /* Round.Hash() */ string]*RunningRound
+	LatestRound     round.Round
 }
 
 // ISAAC should know network.ConnectionManager
 // because the ISAAC uses connected validators when calculating proposer
-func NewISAAC(networkID []byte, node *node.LocalNode, policy ballot.VotingThresholdPolicy,
+func NewISAAC(networkID []byte, node *node.LocalNode, p ballot.VotingThresholdPolicy,
 	cm network.ConnectionManager) (is *ISAAC, err error) {
 
 	is = &ISAAC{
-		NetworkID:             networkID,
-		Node:                  node,
-		VotingThresholdPolicy: policy,
-		TransactionPool:       transaction.NewTransactionPool(),
-		RunningRounds:         map[string]*RunningRound{},
-		connectionManager:     cm,
-		proposerSelector:      SequentialSelector{cm},
-		log:                   log.New(logging.Ctx{"node": node.Alias()}),
+		NetworkID:         networkID,
+		Node:              node,
+		policy:            p,
+		TransactionPool:   transaction.NewTransactionPool(),
+		RunningRounds:     map[string]*RunningRound{},
+		connectionManager: cm,
+		proposerSelector:  SequentialSelector{cm},
+		log:               log.New(logging.Ctx{"node": node.Alias()}),
 	}
 
 	return
@@ -183,7 +183,7 @@ func (is *ISAAC) CanGetVotingResult(b ballot.Ballot) (RoundVoteResult, ballot.Vo
 	defer is.RUnlock()
 	runningRound, _ := is.RunningRounds[b.Round().Hash()]
 	if roundVote, err := runningRound.RoundVote(b.Proposer()); err == nil {
-		return roundVote.CanGetVotingResult(is.VotingThresholdPolicy, b.State(), is.log)
+		return roundVote.CanGetVotingResult(is.policy, b.State(), is.log)
 	} else {
 		return nil, ballot.VotingNOTYET, false
 	}
