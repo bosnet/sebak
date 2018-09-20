@@ -92,12 +92,6 @@ func TestIsWellFormedTransactionWithInvalidSignature(t *testing.T) {
 func TestIsWellFormedTransactionMaxOperationsInTransaction(t *testing.T) {
 	var err error
 
-	MaxOperationsInTransaction := common.MaxOperationsInTransaction
-	defer func() {
-		common.MaxOperationsInTransaction = MaxOperationsInTransaction
-	}()
-	common.MaxOperationsInTransaction = 2
-
 	_, tx := TestMakeTransaction(networkID, common.MaxOperationsInTransaction+1)
 	err = tx.IsWellFormed(networkID)
 	require.NotNil(t, err)
