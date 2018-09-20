@@ -55,6 +55,7 @@ func NewISAACStateManager(nr *NodeRunner, conf *consensus.ISAACConfiguration) *I
 }
 
 func (sm *ISAACStateManager) SetBlockTimeBuffer() {
+	sm.nr.Log().Debug("begin ISAACStateManager.SetBlockTimeBuffer()", "ISAACState", sm.State())
 	b := sm.nr.Consensus().LatestConfirmedBlock()
 	ballotProposedTime := getBallotProposedTime(b.Confirmed)
 	sm.blockTimeBuffer = calculateBlockTimeBuffer(
@@ -62,6 +63,15 @@ func (sm *ISAACStateManager) SetBlockTimeBuffer() {
 		calculateAverageBlockTime(sm.genesis, b.Height),
 		time.Now().Sub(ballotProposedTime),
 		1*time.Second,
+	)
+	sm.nr.Log().Debug(
+		"calculated blockTimeBuffer",
+		"blockTimeBuffer", sm.blockTimeBuffer,
+		"blockTime", sm.Conf.BlockTime,
+		"genesis", sm.genesis,
+		"height", b.Height,
+		"confirmed", b.Confirmed,
+		"now", time.Now(),
 	)
 
 	return
@@ -130,12 +140,14 @@ func (sm *ISAACStateManager) TransitISAACState(round round.Round, ballotState ba
 
 func (sm *ISAACStateManager) IncreaseRound() {
 	round := sm.State().Round
+	sm.nr.Log().Debug("begin ISAACStateManager.IncreaseRound()", round)
 	round.Number++
 	sm.TransitISAACState(round, ballot.StateINIT)
 }
 
 func (sm *ISAACStateManager) NextHeight() {
 	round := sm.State().Round
+	sm.nr.Log().Debug("begin ISAACStateManager.NextHeight()", round)
 	round.BlockHeight++
 	round.Number = 0
 	sm.TransitISAACState(round, ballot.StateINIT)
@@ -145,11 +157,13 @@ func (sm *ISAACStateManager) NextHeight() {
 // Or it sets or resets timeout. If it is expired, it broadcasts B(`EXP`).
 // And it manages the node round.
 func (sm *ISAACStateManager) Start() {
+	sm.nr.Log().Debug("begin ISAACStateManager.Start()", "ISAACState", sm.State())
 	go func() {
 		timer := time.NewTimer(time.Duration(1 * time.Hour))
 		for {
 			select {
 			case <-timer.C:
+				sm.nr.Log().Debug("timeout", "ISAACState", sm.State())
 				if sm.State().BallotState == ballot.StateACCEPT {
 					sm.SetBlockTimeBuffer()
 					sm.IncreaseRound()
@@ -188,6 +202,7 @@ func (sm *ISAACStateManager) Start() {
 }
 
 func (sm *ISAACStateManager) broadcastExpiredBallot(state consensus.ISAACState) {
+	sm.nr.Log().Debug("begin broadcastExpiredBallot", "ISAACState", state)
 	b := sm.nr.consensus.LatestConfirmedBlock()
 	round := round.Round{
 		Number:      state.Round.Number,
@@ -200,6 +215,7 @@ func (sm *ISAACStateManager) broadcastExpiredBallot(state consensus.ISAACState) 
 	newExpiredBallot.SetVote(state.BallotState.Next(), ballot.VotingEXP)
 	newExpiredBallot.Sign(sm.nr.localNode.Keypair(), sm.nr.networkID)
 
+	sm.nr.Log().Debug("broadcast", "ballot", *newExpiredBallot)
 	sm.nr.ConnectionManager().Broadcast(*newExpiredBallot)
 }
 
@@ -252,6 +268,7 @@ func (sm *ISAACStateManager) State() consensus.ISAACState {
 func (sm *ISAACStateManager) setState(state consensus.ISAACState) {
 	sm.Lock()
 	defer sm.Unlock()
+	sm.nr.Log().Debug("begin ISAACStateManager.setState()", "state", state)
 	sm.state = state
 
 	return
@@ -260,6 +277,7 @@ func (sm *ISAACStateManager) setState(state consensus.ISAACState) {
 func (sm *ISAACStateManager) setBallotState(ballotState ballot.State) {
 	sm.Lock()
 	defer sm.Unlock()
+	sm.nr.Log().Debug("begin ISAACStateManager.setBallotState()", "ballotState", ballotState)
 	sm.state.BallotState = ballotState
 
 	return
