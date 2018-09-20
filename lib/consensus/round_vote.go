@@ -94,7 +94,6 @@ func (rv *RoundVote) CanGetVotingResult(policy ballot.VotingThresholdPolicy, sta
 		"yes", yes,
 		"no", no,
 		"expired", expired,
-		"policy", policy,
 		"state", state,
 	)
 
