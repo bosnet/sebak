@@ -8,6 +8,7 @@ import (
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/common/observer"
+	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/storage"
 
 	"github.com/stretchr/testify/require"
@@ -23,6 +24,31 @@ func TestSaveNewBlockAccount(t *testing.T) {
 	exists, err := ExistsBlockAccount(st, b.Address)
 	require.Nil(t, err)
 	require.Equal(t, exists, true, "BlockAccount does not exists")
+}
+
+func TestNewBlockAccountWithInsufficientAmount(t *testing.T) {
+	st := storage.NewTestStorage()
+
+	{ // insufficient
+		b := TestMakeBlockAccount()
+		b.Balance = common.BaseReserve - 1
+		err := b.Save(st)
+		require.Equal(t, errors.ErrorInsufficientAmountNewAccount, err)
+	}
+
+	{ // sufficient
+		b := TestMakeBlockAccount()
+		b.Balance = common.BaseReserve
+		err := b.Save(st)
+		require.Nil(t, err)
+	}
+
+	{ // sufficient
+		b := TestMakeBlockAccount()
+		b.Balance = common.BaseReserve + 1
+		err := b.Save(st)
+		require.Nil(t, err)
+	}
 }
 
 func TestSaveExistingBlockAccount(t *testing.T) {
