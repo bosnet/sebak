@@ -5,20 +5,20 @@ import (
 )
 
 type BallotStamps struct {
-	Hash   string
-	urls   []string
+	Hash string
+	urls []string
 }
 
 type Voters struct {
-	Hash   string
-	urls   []string
+	Hash string
+	urls []string
 }
 
 type Result struct {
-	Count  uint64
-	Yes    uint64
-	No     uint64
-	ABS    uint64
+	Count uint64
+	Yes   uint64
+	No    uint64
+	ABS   uint64
 }
 
 type OperationBodyCongressVotingResult struct {

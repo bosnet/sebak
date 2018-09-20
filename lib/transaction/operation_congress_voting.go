@@ -5,13 +5,13 @@ import (
 )
 
 type Voting struct {
-	Start        string
-	End          string
+	Start string
+	End   string
 }
 
 type OperationBodyCongressVoting struct {
-	Contract     string
-	Voting       Voting
+	Contract string
+	Voting   Voting
 }
 
 func (o OperationBodyCongressVoting) Serialize() (encoded []byte, err error) {
@@ -22,4 +22,3 @@ func (o OperationBodyCongressVoting) Serialize() (encoded []byte, err error) {
 func (o OperationBodyCongressVoting) IsWellFormed([]byte) (err error) {
 	return
 }
-

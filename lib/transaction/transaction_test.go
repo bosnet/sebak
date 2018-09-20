@@ -3,13 +3,13 @@ package transaction
 import (
 	"testing"
 
+	"boscoin.io/sebak/lib/common"
+
+	"encoding/json"
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
-
-	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
-	"encoding/json"
 )
 
 func TestLoadTransaction(t *testing.T) {
