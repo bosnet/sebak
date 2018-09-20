@@ -139,7 +139,11 @@ func (bt *BlockTransaction) Save(st *storage.LevelDBBackend) (err error) {
 		return
 	}
 	for _, op := range bt.transaction.B.Operations {
-		bo := NewBlockOperationFromOperation(op, bt.transaction, bt.blockHeight)
+		var bo BlockOperation
+		bo, err = NewBlockOperationFromOperation(op, bt.transaction, bt.blockHeight)
+		if err != nil {
+			return
+		}
 		if err = bo.Save(st); err != nil {
 			return
 		}

@@ -3,7 +3,6 @@ package block
 import (
 	"encoding/json"
 	"fmt"
-	"sort"
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/common/observer"
@@ -25,8 +24,7 @@ type BlockOperation struct {
 
 	Type   transaction.OperationType
 	Source string
-	Target string
-	Amount common.Amount
+	Body   []byte
 
 	// transaction will be used only for `Save` time.
 	transaction transaction.Transaction
@@ -38,20 +36,23 @@ func NewBlockOperationKey(op transaction.Operation, tx transaction.Transaction) 
 	return fmt.Sprintf("%s-%s", op.MakeHashString(), tx.GetHash())
 }
 
-func NewBlockOperationFromOperation(op transaction.Operation, tx transaction.Transaction, blockHeight uint64) BlockOperation {
+func NewBlockOperationFromOperation(op transaction.Operation, tx transaction.Transaction, blockHeight uint64) (BlockOperation, error) {
+	body, err := op.B.Serialize()
+	if err != nil {
+		return BlockOperation{}, err
+	}
 	return BlockOperation{
 		Hash:   NewBlockOperationKey(op, tx),
 		TxHash: tx.H.Hash,
 
 		Type:   op.H.Type,
 		Source: tx.B.Source,
-		Target: op.B.TargetAddress(),
-		Amount: op.B.GetAmount(),
+		Body:   body,
 
 		transaction: tx,
 
 		blockHeight: blockHeight,
-	}
+	}, nil
 }
 
 func (bo *BlockOperation) Save(st *storage.LevelDBBackend) (err error) {
@@ -75,9 +76,6 @@ func (bo *BlockOperation) Save(st *storage.LevelDBBackend) (err error) {
 		return
 	}
 	if err = st.New(bo.NewBlockOperationSourceKey(), bo.Hash); err != nil {
-		return
-	}
-	if err = st.New(bo.NewBlockOperationTargetKey(), bo.Hash); err != nil {
 		return
 	}
 	bo.isSaved = true
@@ -140,28 +138,6 @@ func (bo BlockOperation) NewBlockOperationSourceKey() string {
 	)
 }
 
-func (bo BlockOperation) NewBlockOperationTargetKey() string {
-	return fmt.Sprintf(
-		"%s%s%s%s",
-		GetBlockOperationKeyPrefixTarget(bo.Target),
-		common.EncodeUint64ToByteSlice(bo.blockHeight),
-		common.EncodeUint64ToByteSlice(bo.transaction.B.SequenceID),
-		common.GetUniqueIDFromUUID(),
-	)
-}
-
-func (bo BlockOperation) NewBlockOperationPeersKey() string {
-	addresses := []string{bo.Target, bo.Source}
-	sort.Strings(addresses)
-	return fmt.Sprintf(
-		"%s%s%s%s",
-		GetBlockOperationKeyPrefixPeers(addresses[0], addresses[1]),
-		common.EncodeUint64ToByteSlice(bo.blockHeight),
-		common.EncodeUint64ToByteSlice(bo.transaction.B.SequenceID),
-		common.GetUniqueIDFromUUID(),
-	)
-}
-
 func ExistsBlockOperation(st *storage.LevelDBBackend, hash string) (bool, error) {
 	return st.Has(GetBlockOperationKey(hash))
 }
@@ -218,15 +194,6 @@ func GetBlockOperationsBySource(st *storage.LevelDBBackend, source string, optio
 	func(),
 ) {
 	iterFunc, closeFunc := st.GetIterator(GetBlockOperationKeyPrefixSource(source), options)
-
-	return LoadBlockOperationsInsideIterator(st, iterFunc, closeFunc)
-}
-
-func GetBlockOperationsByTarget(st *storage.LevelDBBackend, target string, options storage.ListOptions) (
-	func() (BlockOperation, bool, []byte),
-	func(),
-) {
-	iterFunc, closeFunc := st.GetIterator(GetBlockOperationKeyPrefixTarget(target), options)
 
 	return LoadBlockOperationsInsideIterator(st, iterFunc, closeFunc)
 }

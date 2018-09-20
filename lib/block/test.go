@@ -46,7 +46,11 @@ func TestMakeNewBlockOperation(networkID []byte, n int) (bos []BlockOperation) {
 	_, tx := transaction.TestMakeTransaction(networkID, n)
 
 	for _, op := range tx.B.Operations {
-		bos = append(bos, NewBlockOperationFromOperation(op, tx, 0))
+		bo, err := NewBlockOperationFromOperation(op, tx, 0)
+		if err != nil {
+			panic(err)
+		}
+		bos = append(bos, bo)
 	}
 
 	return
