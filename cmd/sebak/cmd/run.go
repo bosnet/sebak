@@ -219,10 +219,10 @@ func parseFlagsNode() {
 		cmdcommon.PrintFlagsError(nodeCmd, "--storage", err)
 	}
 
-	timeoutINIT = getTime(flagTimeoutINIT, "--timeout-init")
-	timeoutSIGN = getTime(flagTimeoutSIGN, "--timeout-sign")
-	timeoutACCEPT = getTime(flagTimeoutACCEPT, "--timeout-accept")
-	blockTime = getTime(flagBlockTime, "--block-time")
+	timeoutINIT = getTime(flagTimeoutINIT, 2*time.Second, "--timeout-init")
+	timeoutSIGN = getTime(flagTimeoutSIGN, 2*time.Second, "--timeout-sign")
+	timeoutACCEPT = getTime(flagTimeoutACCEPT, 2*time.Second, "--timeout-accept")
+	blockTime = getTime(flagBlockTime, 5*time.Second, "--block-time")
 
 	if transactionsLimit, err = strconv.ParseUint(flagTransactionsLimit, 10, 64); err != nil {
 		cmdcommon.PrintFlagsError(nodeCmd, "--transactions-limit", err)
@@ -298,7 +298,7 @@ func parseFlagsNode() {
 	}
 }
 
-func getTime(timeoutStr string, errMessage string) time.Duration {
+func getTime(timeoutStr string, defaultValue time.Duration, errMessage string) time.Duration {
 	var timeoutDuration time.Duration
 	if tmpUint64, err := strconv.ParseUint(flagTimeoutINIT, 10, 64); err != nil {
 		cmdcommon.PrintFlagsError(nodeCmd, errMessage, err)
@@ -306,7 +306,7 @@ func getTime(timeoutStr string, errMessage string) time.Duration {
 		timeoutDuration = time.Duration(tmpUint64) * time.Second
 	}
 	if timeoutDuration == 0 {
-		timeoutDuration = 2 * time.Second
+		timeoutDuration = defaultValue
 	}
 	return timeoutDuration
 }
