@@ -41,7 +41,7 @@ func NewISAACStateManager(nr *NodeRunner, conf *consensus.ISAACConfiguration) *I
 		stop:            make(chan struct{}),
 		blockTimeBuffer: 2 * time.Second,
 		transitSignal:   func() {},
-		Conf:            consensus.NewISAACConfiguration(),
+		Conf:            conf,
 	}
 
 	genesisHeight := uint64(1)
