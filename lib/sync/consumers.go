@@ -1,8 +1,8 @@
 package sync
 
-var _ ValidationLayer = (*MultiConsumer)(nil)
+var _ ValidationLayer = (*Consumers)(nil)
 
-type MultiConsumer struct {
+type Consumers struct {
 	consumers []Consumer
 
 	message  <-chan *Message
@@ -11,8 +11,8 @@ type MultiConsumer struct {
 	stops []chan chan struct{}
 }
 
-func NewMultiConsumer(cs ...Consumer) *MultiConsumer {
-	c := &MultiConsumer{
+func NewConsumers(cs ...Consumer) *Consumers {
+	c := &Consumers{
 		consumers: cs,
 		message:   nil,
 		response:  make(chan *Response),
@@ -22,7 +22,7 @@ func NewMultiConsumer(cs ...Consumer) *MultiConsumer {
 	return c
 }
 
-func (c *MultiConsumer) Stop() error {
+func (c *Consumers) Stop() error {
 	for _, stop := range c.stops {
 		c := make(chan struct{})
 		stop <- c
@@ -32,16 +32,16 @@ func (c *MultiConsumer) Stop() error {
 	return nil
 }
 
-func (c *MultiConsumer) Consume(msg <-chan *Message) error {
+func (c *Consumers) Consume(msg <-chan *Message) error {
 	c.message = msg
 	return nil
 }
 
-func (c *MultiConsumer) Response() <-chan *Response {
+func (c *Consumers) Response() <-chan *Response {
 	return c.response
 }
 
-func (c *MultiConsumer) startConsumers() {
+func (c *Consumers) startConsumers() {
 	for _, cs := range c.consumers {
 		stop := make(chan chan struct{})
 		c.startConsumer(cs, stop)
@@ -49,7 +49,7 @@ func (c *MultiConsumer) startConsumers() {
 	}
 }
 
-func (c *MultiConsumer) startConsumer(cs Consumer, stop chan chan struct{}) {
+func (c *Consumers) startConsumer(cs Consumer, stop chan chan struct{}) {
 	cs.Consume(c.message)
 	respCh := cs.Response()
 	go func() {

@@ -1,8 +1,8 @@
 package sync
 
-var _ FetchLayer = (*MultiProcessor)(nil)
+var _ FetchLayer = (*Processors)(nil)
 
-type MultiProcessor struct {
+type Processors struct {
 	processors []Processor
 
 	message  chan *Message
@@ -15,8 +15,8 @@ type MultiProcessor struct {
 	stop      chan chan struct{}
 }
 
-func NewMultiProcessor(ps ...Processor) *MultiProcessor {
-	p := &MultiProcessor{
+func NewProcessors(ps ...Processor) *Processors {
+	p := &Processors{
 		processors:      ps,
 		message:         make(chan *Message),
 		response:        nil,
@@ -29,7 +29,7 @@ func NewMultiProcessor(ps ...Processor) *MultiProcessor {
 }
 
 // Stopper
-func (p *MultiProcessor) Stop() error {
+func (p *Processors) Stop() error {
 	for _, stop := range p.stopProcs {
 		c := make(chan struct{})
 		stop <- c
@@ -39,24 +39,24 @@ func (p *MultiProcessor) Stop() error {
 }
 
 // Producer
-func (p *MultiProcessor) Produce(response <-chan *Response) {
+func (p *Processors) Produce(response <-chan *Response) {
 	p.response = response
 }
 
-func (p *MultiProcessor) Message() <-chan *Message {
+func (p *Processors) Message() <-chan *Message {
 	return p.message
 }
 
 // Consumer
-func (p *MultiProcessor) Consume(msg <-chan *Message) error {
+func (p *Processors) Consume(msg <-chan *Message) error {
 	p.incomingMessage = msg
 	return nil
 }
-func (p *MultiProcessor) Response() <-chan *Response {
+func (p *Processors) Response() <-chan *Response {
 	return p.procsResponse
 }
 
-func (p *MultiProcessor) startProcessors() {
+func (p *Processors) startProcessors() {
 	for _, proc := range p.processors {
 		stop := make(chan chan struct{})
 		p.startProcessor(proc, stop)
@@ -64,7 +64,7 @@ func (p *MultiProcessor) startProcessors() {
 	}
 }
 
-func (p *MultiProcessor) startProcessor(proc Processor, stop chan chan struct{}) {
+func (p *Processors) startProcessor(proc Processor, stop chan chan struct{}) {
 	proc.Consume(p.incomingMessage)
 	proc.Produce(p.response)
 	msgCh := proc.Message()
