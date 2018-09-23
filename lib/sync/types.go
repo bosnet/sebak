@@ -1,6 +1,10 @@
 package sync
 
-import "boscoin.io/sebak/lib/block"
+import (
+	"net/http"
+
+	"boscoin.io/sebak/lib/block"
+)
 
 type Producer interface {
 	Produce(<-chan *Response)
@@ -21,6 +25,7 @@ type Message struct {
 	BlockHeight uint64
 	Block       *block.Block
 	Txs         []*block.BlockTransaction
+	Ops         []*block.BlockOperation
 }
 
 type Response struct {
@@ -39,12 +44,16 @@ type Stopper interface {
 	Stop() error
 }
 
-type FetchLayer interface {
+type Fetcher interface {
 	Processor
 	Stopper
 }
 
-type ValidationLayer interface {
+type Validator interface {
 	Consumer
 	Stopper
+}
+
+type Doer interface {
+	Do(*http.Request) (*http.Response, error)
 }

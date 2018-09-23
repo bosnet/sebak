@@ -1,6 +1,6 @@
 package sync
 
-var _ FetchLayer = (*Processors)(nil)
+var _ Fetcher = (*Processors)(nil)
 
 type Processors struct {
 	processors []Processor

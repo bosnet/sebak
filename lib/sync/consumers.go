@@ -1,6 +1,6 @@
 package sync
 
-var _ ValidationLayer = (*Consumers)(nil)
+var _ Validator = (*Consumers)(nil)
 
 type Consumers struct {
 	consumers []Consumer
