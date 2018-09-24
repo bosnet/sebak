@@ -32,11 +32,12 @@ func (m *Manager) Stop() error {
 	return nil
 }
 
-func (m *Manager) Produce(resp <-chan *Response) {
+func (m *Manager) SetResponse(resp <-chan *Response) error {
 	m.response = resp
+	return nil
 }
 
-func (m *Manager) Message() <-chan *Message {
+func (m *Manager) Produce() <-chan *Message {
 	return m.messages
 }
 

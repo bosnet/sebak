@@ -66,11 +66,12 @@ func (f *BlockFullFetcher) Stop() error {
 
 // Producer
 
-func (f *BlockFullFetcher) Produce(res <-chan *Response) {
+func (f *BlockFullFetcher) SetResponse(res <-chan *Response) error {
 	f.response = res
+	return nil
 }
 
-func (f *BlockFullFetcher) Message() <-chan *Message {
+func (f *BlockFullFetcher) Produce() <-chan *Message {
 	return f.messages
 }
 

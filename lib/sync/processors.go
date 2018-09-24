@@ -39,11 +39,12 @@ func (p *Processors) Stop() error {
 }
 
 // Producer
-func (p *Processors) Produce(response <-chan *Response) {
+func (p *Processors) SetResponse(response <-chan *Response) error {
 	p.response = response
+	return nil
 }
 
-func (p *Processors) Message() <-chan *Message {
+func (p *Processors) Produce() <-chan *Message {
 	return p.message
 }
 
@@ -66,8 +67,8 @@ func (p *Processors) startProcessors() {
 
 func (p *Processors) startProcessor(proc Processor, stop chan chan struct{}) {
 	proc.Consume(p.incomingMessage)
-	proc.Produce(p.response)
-	msgCh := proc.Message()
+	proc.SetResponse(p.response)
+	msgCh := proc.Produce()
 	respCh := proc.Response()
 	stopCh := stop
 	go func() {

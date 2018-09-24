@@ -6,9 +6,13 @@ import (
 	"boscoin.io/sebak/lib/block"
 )
 
+type Stopper interface {
+	Stop() error
+}
+
 type Producer interface {
-	Produce(<-chan *Response)
-	Message() <-chan *Message
+	Produce() <-chan *Message
+	SetResponse(<-chan *Response) error
 }
 
 type Consumer interface {
@@ -38,10 +42,6 @@ func (r Response) Err() error {
 }
 func (r Response) Message() *Message {
 	return r.msg
-}
-
-type Stopper interface {
-	Stop() error
 }
 
 type Fetcher interface {

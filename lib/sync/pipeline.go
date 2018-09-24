@@ -1,9 +1,11 @@
 package sync
 
 func Pipeline(p Producer, c Consumer) error {
-	p.Produce(c.Response())
-	return c.Consume(p.Message())
-	// c.Consume(p.Produce())
-	// p.SetResponse(c.Response())
-	// or p.ProduceResponse(c.ConsumeResponse())
+	if err := c.Consume(p.Produce()); err != nil {
+		return err
+	}
+	if err := p.SetResponse(c.Response()); err != nil {
+		return err
+	}
+	return nil
 }
