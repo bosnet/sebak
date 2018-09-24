@@ -71,7 +71,7 @@ func createTestNodeRunner(n int, conf *consensus.ISAACConfiguration) []*NodeRunn
 		st := storage.NewTestStorage()
 
 		account.Save(st)
-		genesisBlock = block.MakeGenesisBlock(st, *account)
+		genesisBlock, _ = block.MakeGenesisBlock(st, *account, networkID)
 
 		nr, err := NewNodeRunner(string(networkID), localNode, policy, ns[i], is, st, conf)
 		if err != nil {
@@ -173,7 +173,7 @@ func createTestNodeRunnersHTTP2Network(n int) (nodeRunners []*NodeRunner, rootKP
 		is, _ := consensus.NewISAAC(networkID, node, policy, connectionManager)
 
 		genesisAccount.Save(st)
-		block.MakeGenesisBlock(st, *genesisAccount)
+		block.MakeGenesisBlock(st, *genesisAccount, networkID)
 
 		nodeRunner, _ := NewNodeRunner(string(networkID), node, policy, n, is, st, consensus.NewISAACConfiguration())
 		nodeRunners = append(nodeRunners, nodeRunner)
@@ -244,7 +244,7 @@ func TestNodeRunnerTransactionBroadcast(t *testing.T) {
 	nodeRunner.Consensus().SetLatestConsensusedBlock(genesisBlock)
 	b := nodeRunner.Consensus().LatestConfirmedBlock()
 	require.Equal(t, uint64(1), b.Height)
-	require.Equal(t, uint64(0), b.TotalTxs)
+	require.Equal(t, uint64(1), b.TotalTxs)
 
 	var err error
 	err = nodeRunner.handleTransaction(message)

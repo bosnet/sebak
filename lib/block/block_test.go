@@ -5,7 +5,11 @@ import (
 	"testing"
 	"time"
 
+	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/storage"
+	"boscoin.io/sebak/lib/transaction"
+	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
 )
 
@@ -96,5 +100,129 @@ func TestBlockHeightOrdering(t *testing.T) {
 			rs, _ := fetched[i].Serialize()
 			require.Equal(t, s, rs)
 		}
+	}
+}
+
+// TestMakeGenesisBlock basically tests MakeGenesisBlock can make genesis block,
+// and further with genesis block, genesis account can be found.
+func TestMakeGenesisBlock(t *testing.T) {
+	st := storage.NewTestStorage()
+	defer st.Close()
+
+	kp, _ := keypair.Random()
+	balance := common.Amount(100)
+	account := NewBlockAccount(kp.Address(), balance)
+	err := account.Save(st)
+	require.Nil(t, err)
+
+	bk, err := MakeGenesisBlock(st, *account, networkID)
+	require.Nil(t, err)
+	require.Equal(t, uint64(1), bk.Height)
+	require.Equal(t, 1, len(bk.Transactions))
+	require.Equal(t, uint64(0), bk.Round.Number)
+	require.Equal(t, "", bk.Round.BlockHash)
+	require.Equal(t, uint64(0), bk.Round.BlockHeight)
+	require.Equal(t, "", bk.Proposer)
+	require.Equal(t, common.GenesisBlockConfirmedTime, bk.Confirmed)
+
+	// transaction
+	{
+		exists, err := ExistsBlockTransaction(st, bk.Transactions[0])
+		require.Nil(t, err)
+		require.True(t, exists)
+	}
+
+	bt, err := GetBlockTransaction(st, bk.Transactions[0])
+	require.Nil(t, err)
+
+	require.Equal(t, account.SequenceID, bt.SequenceID)
+	require.Equal(t, common.Amount(0), bt.Fee)
+	require.Equal(t, 1, len(bt.Operations))
+	require.Equal(t, account.Address, bt.Source)
+	require.Equal(t, bk.Hash, bt.Block)
+
+	// operation
+	{
+		exists, err := ExistsBlockOperation(st, bt.Operations[0])
+		require.Nil(t, err)
+		require.True(t, exists)
+	}
+	bo, err := GetBlockOperation(st, bt.Operations[0])
+	require.Nil(t, err)
+	require.Equal(t, bt.Hash, bo.TxHash)
+	require.Equal(t, transaction.OperationCreateAccount, bo.Type)
+	require.Equal(t, account.Address, bo.Source)
+	require.Equal(t, account.Address, bo.Target)
+	require.Equal(t, account.Balance, bo.Amount)
+}
+
+func TestMakeGenesisBlockOverride(t *testing.T) {
+	st := storage.NewTestStorage()
+	defer st.Close()
+
+	{ // create genesis block
+		kp, _ := keypair.Random()
+		balance := common.Amount(100)
+		account := NewBlockAccount(kp.Address(), balance)
+		err := account.Save(st)
+		require.Nil(t, err)
+
+		bk, err := MakeGenesisBlock(st, *account, networkID)
+		require.Nil(t, err)
+		require.Equal(t, uint64(1), bk.Height)
+	}
+
+	{ // try again to create genesis block
+		kp, _ := keypair.Random()
+		balance := common.Amount(100)
+		account := NewBlockAccount(kp.Address(), balance)
+		err := account.Save(st)
+		require.Nil(t, err)
+
+		_, err = MakeGenesisBlock(st, *account, networkID)
+		require.Equal(t, errors.ErrorBlockAlreadyExists, err)
+	}
+}
+
+func TestMakeGenesisBlockFindGenesisAccount(t *testing.T) {
+	st := storage.NewTestStorage()
+	defer st.Close()
+
+	// create genesis block
+	kp, _ := keypair.Random()
+	balance := common.Amount(100)
+	account := NewBlockAccount(kp.Address(), balance)
+	account.Save(st)
+
+	{
+		bk, err := MakeGenesisBlock(st, *account, networkID)
+		require.Nil(t, err)
+		require.Equal(t, uint64(1), bk.Height)
+	}
+
+	// find genesis account
+	{ // with `Operation`
+		bk, _ := GetBlockByHeight(st, 1)
+		bt, _ := GetBlockTransaction(st, bk.Transactions[0])
+		bo, _ := GetBlockOperation(st, bt.Operations[0])
+
+		genesisAccount, err := GetBlockAccount(st, bo.Target)
+		require.Nil(t, err)
+
+		require.Equal(t, account.Address, genesisAccount.Address)
+		require.Equal(t, account.Balance, genesisAccount.Balance)
+		require.Equal(t, account.SequenceID, genesisAccount.SequenceID)
+	}
+
+	{ // with `Transaction`
+		bk, _ := GetBlockByHeight(st, 1)
+		bt, _ := GetBlockTransaction(st, bk.Transactions[0])
+
+		genesisAccount, err := GetBlockAccount(st, bt.Source)
+		require.Nil(t, err)
+
+		require.Equal(t, account.Address, genesisAccount.Address)
+		require.Equal(t, account.Balance, genesisAccount.Balance)
+		require.Equal(t, account.SequenceID, genesisAccount.SequenceID)
 	}
 }

@@ -13,6 +13,7 @@ import (
 	"boscoin.io/sebak/lib/consensus/round"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/storage"
+	"boscoin.io/sebak/lib/transaction"
 )
 
 const (
@@ -41,26 +42,74 @@ func (bck Block) String() string {
 	return string(encoded)
 }
 
-func MakeGenesisBlock(st *storage.LevelDBBackend, account BlockAccount) Block {
-	proposer := "" // null proposer
-	round := round.Round{
-		Number:      0,
-		BlockHeight: 0,
-		BlockHash:   base58.Encode(common.MustMakeObjectHash(account)),
-		TotalTxs:    0,
+// MakeGenesisBlock makes genesis block from genesis account and transaction.
+// The genesis block has different part from the other Block
+// * `Block.Proposer` is empty
+// * `Block.Round` is empty
+// * `Block.Confirmed` is `common.GenesisBlockConfirmedTime`
+// * has only one `Transaction`
+//
+// This Transaction is different from other normal Transaction;
+// * must have only one `Operation`, `OperationCreateAccount`
+// * `Transaction.B.Source` is same with `OperationCreateAccount.Target`
+// * `Transaction.B.Fee` is 0
+// * `OperationCreateAccount.Amount` is same with balance of genesis account
+// * `OperationCreateAccount.Target` is genesis account
+func MakeGenesisBlock(st *storage.LevelDBBackend, account BlockAccount, networdID []byte) (blk Block, err error) {
+	var exists bool
+	if exists, err = ExistsBlockByHeight(st, 1); exists || err != nil {
+		if exists {
+			err = errors.ErrorBlockAlreadyExists
+		}
+
+		return
 	}
-	transactions := []string{}
-	confirmed := ""
 
-	b := NewBlock(
-		proposer,
-		round,
+	// create create-account transaction.
+	opb := transaction.NewOperationBodyCreateAccount(account.Address, account.Balance)
+	op := transaction.Operation{
+		H: transaction.OperationHeader{
+			Type: transaction.OperationCreateAccount,
+		},
+		B: opb,
+	}
+
+	txBody := transaction.TransactionBody{
+		Source:     account.Address,
+		Fee:        0,
+		SequenceID: account.SequenceID,
+		Operations: []transaction.Operation{op},
+	}
+
+	tx := transaction.Transaction{
+		T: "transaction",
+		H: transaction.TransactionHeader{
+			Created: common.GenesisBlockConfirmedTime,
+			Hash:    txBody.MakeHashString(),
+		},
+		B: txBody,
+	}
+	tx.Sign(kp, []byte(networdID))
+
+	transactions := []string{tx.GetHash()}
+
+	blk = NewBlock(
+		"",
+		round.Round{}, // empty round
 		transactions,
-		confirmed,
+		common.GenesisBlockConfirmedTime,
 	)
-	b.Save(st)
+	if err = blk.Save(st); err != nil {
+		return
+	}
 
-	return b
+	raw, _ := tx.Serialize()
+	bt := NewBlockTransactionFromTransaction(blk.Hash, blk.Height, tx, raw)
+	if err = bt.Save(st); err != nil {
+		return
+	}
+
+	return
 }
 
 func NewBlock(proposer string, round round.Round, transactions []string, confirmed string) Block {

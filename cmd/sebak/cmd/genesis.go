@@ -116,6 +116,7 @@ func MakeGenesisBlock(addressStr, networkID, balanceStr, storageUri string, log 
 	if err != nil {
 		return "--storage", fmt.Errorf("failed to initialize storage: %v", err)
 	}
+	defer st.Close()
 
 	// check account does not exists
 	if _, err = block.GetBlockAccount(st, kp.Address()); err == nil {
@@ -126,11 +127,16 @@ func MakeGenesisBlock(addressStr, networkID, balanceStr, storageUri string, log 
 		kp.Address(),
 		balance,
 	)
-	account.Save(st)
+	if err := account.Save(st); err != nil {
+		return "<public key>", fmt.Errorf("failed to create genesis account: %v", err)
+	}
 
-	b := block.MakeGenesisBlock(st, *account)
+	b, err := block.MakeGenesisBlock(st, *account, []byte(flagNetworkID))
+	if err != nil {
+		return "<public key>", fmt.Errorf("failed to create genesis block: %v", err)
+	}
+
 	log.Info("GenesisBlock created", "block", b)
 
-	st.Close()
 	return "", nil
 }

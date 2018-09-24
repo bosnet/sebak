@@ -145,7 +145,7 @@ func createNodeRunnerForTesting(n int, conf *consensus.ISAACConfiguration, recv 
 	st := storage.NewTestStorage()
 
 	account.Save(st)
-	genesisBlock = block.MakeGenesisBlock(st, *account)
+	genesisBlock, _ = block.MakeGenesisBlock(st, *account, networkID)
 
 	nr, err := NewNodeRunner(string(networkID), localNode, policy, ns[0], is, st, conf)
 	if err != nil {
