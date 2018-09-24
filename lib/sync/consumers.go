@@ -18,6 +18,7 @@ func NewConsumers(cs ...Consumer) *Consumers {
 		response:  make(chan *Response),
 		stops:     make([]chan chan struct{}, 0, len(cs)),
 	}
+	c.startConsumers()
 
 	return c
 }
