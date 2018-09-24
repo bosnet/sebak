@@ -97,7 +97,5 @@ func (b Builder) Manager() *Manager {
 	Pipeline(m, fetcher)
 	Pipeline(fetcher, validator)
 
-	go m.loop()
-
 	return m
 }

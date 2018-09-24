@@ -25,6 +25,11 @@ type Manager struct {
 	stop chan chan struct{}
 }
 
+func (m *Manager) Run() error {
+	m.loop()
+	return nil
+}
+
 func (m *Manager) Stop() error {
 	c := make(chan struct{})
 	m.stop <- c
