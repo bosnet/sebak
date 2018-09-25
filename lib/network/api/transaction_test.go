@@ -7,13 +7,14 @@ import (
 	"io/ioutil"
 	"testing"
 
+	"strings"
+	"sync"
+
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/network/api/resource"
 	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
-	"strings"
-	"sync"
 )
 
 func TestGetTransactionByHashHandler(t *testing.T) {

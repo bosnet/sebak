@@ -51,8 +51,8 @@ func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter
 
 	txs := readFunc() //TODO paging support
 	self := r.URL.String()
-	next := GetAccountOperationsHandlerPattern + "?" + options.SetCursor(cursor).SetReverse(false).URLValues().Encode()
-	prev := GetAccountOperationsHandlerPattern + "?" + options.SetReverse(true).URLValues().Encode()
+	next := GetAccountOperationsHandlerPattern + "?" + options.SetCursor(cursor).SetReverse(false).Encode()
+	prev := GetAccountOperationsHandlerPattern + "?" + options.SetReverse(true).Encode()
 	list := resource.NewResourceList(txs, self, next, prev)
 
 	if err := httputils.WriteJSON(w, 200, list); err != nil {

@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"boscoin.io/sebak/lib/block"
+	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/network/api/resource"
 	"boscoin.io/sebak/lib/transaction"
@@ -67,7 +68,7 @@ func TestGetOperationsByTxHashHandlerStream(t *testing.T) {
 	require.Nil(t, err)
 
 	tx := transaction.TestMakeTransactionWithKeypair(networkID, 10, kp)
-	bt := block.NewBlockTransactionFromTransaction("block-hash", 1, tx, nil)
+	bt := block.NewBlockTransactionFromTransaction("block-hash", 1, common.NowISO8601(), tx, nil)
 
 	boMap := make(map[string]block.BlockOperation)
 	for _, op := range tx.B.Operations {

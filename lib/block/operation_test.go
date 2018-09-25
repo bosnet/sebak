@@ -102,7 +102,7 @@ func TestBlockOperationSaveByTransacton(t *testing.T) {
 
 	_, tx := transaction.TestMakeTransaction(networkID, 10)
 	block := TestMakeNewBlock([]string{tx.GetHash()})
-	bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, tx, common.MustJSONMarshal(tx))
+	bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, block.Confirmed, tx, common.MustJSONMarshal(tx))
 	err := bt.Save(st)
 	require.Nil(t, err)
 

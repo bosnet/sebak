@@ -99,7 +99,7 @@ func (p *HelperTestGetNodeTransactionsHandler) createBlock() block.Block {
 
 	for _, tx := range txs {
 		b, _ := tx.Serialize()
-		btx := block.NewBlockTransactionFromTransaction(bk.Hash, bk.Height, tx, b)
+		btx := block.NewBlockTransactionFromTransaction(bk.Hash, bk.Height, bk.Confirmed, tx, b)
 		if err = btx.Save(p.st); err != nil {
 			panic(err)
 		}

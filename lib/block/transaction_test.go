@@ -16,7 +16,7 @@ func TestNewBlockTransaction(t *testing.T) {
 	_, tx := transaction.TestMakeTransaction(networkID, 1)
 	a, _ := tx.Serialize()
 	block := TestMakeNewBlock([]string{tx.GetHash()})
-	bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, tx, a)
+	bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, block.Confirmed, tx, a)
 
 	require.Equal(t, bt.Hash, tx.H.Hash)
 	require.Equal(t, bt.SequenceID, tx.B.SequenceID)
@@ -93,7 +93,7 @@ func TestMultipleBlockTransactionSource(t *testing.T) {
 	block := TestMakeNewBlock(txHashes)
 	for _, tx := range txs {
 		a, _ := tx.Serialize()
-		bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, tx, a)
+		bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, block.Confirmed, tx, a)
 		err := bt.Save(st)
 		require.Nil(t, err)
 	}
@@ -110,7 +110,7 @@ func TestMultipleBlockTransactionSource(t *testing.T) {
 	block = TestMakeNewBlock(txHashes)
 	for _, tx := range txs {
 		a, _ := tx.Serialize()
-		bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, tx, a)
+		bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, block.Confirmed, tx, a)
 		err := bt.Save(st)
 		require.Nil(t, err)
 	}
@@ -176,7 +176,7 @@ func TestMultipleBlockTransactionConfirmed(t *testing.T) {
 	block := TestMakeNewBlock(txHashes)
 	for _, tx := range txs {
 		a, _ := tx.Serialize()
-		bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, tx, a)
+		bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, block.Confirmed, tx, a)
 		err := bt.Save(st)
 		require.Nil(t, err)
 	}
@@ -256,7 +256,7 @@ func TestMultipleBlockTransactionGetByAccount(t *testing.T) {
 	block := TestMakeNewBlock(txHashes)
 	for _, tx := range txs {
 		a, _ := tx.Serialize()
-		bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, tx, a)
+		bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, block.Confirmed, tx, a)
 		err := bt.Save(st)
 		require.Nil(t, err)
 	}
@@ -274,7 +274,7 @@ func TestMultipleBlockTransactionGetByAccount(t *testing.T) {
 	block = TestMakeNewBlock(txHashes)
 	for _, tx := range txs {
 		a, _ := tx.Serialize()
-		bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, tx, a)
+		bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, block.Confirmed, tx, a)
 		err := bt.Save(st)
 		require.Nil(t, err)
 	}
@@ -291,7 +291,7 @@ func TestMultipleBlockTransactionGetByAccount(t *testing.T) {
 	block = TestMakeNewBlock(txHashes)
 	for _, tx := range txs {
 		a, _ := tx.Serialize()
-		bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, tx, a)
+		bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, block.Confirmed, tx, a)
 		err := bt.Save(st)
 		require.Nil(t, err)
 	}
@@ -335,7 +335,7 @@ func TestMultipleBlockTransactionGetByBlock(t *testing.T) {
 	block0 := TestMakeNewBlock(txHashes0)
 	for _, tx := range txs0 {
 		a, _ := tx.Serialize()
-		bt := NewBlockTransactionFromTransaction(block0.Hash, block0.Height, tx, a)
+		bt := NewBlockTransactionFromTransaction(block0.Hash, block0.Height, block0.Confirmed, tx, a)
 		require.Nil(t, bt.Save(st))
 	}
 
@@ -352,7 +352,7 @@ func TestMultipleBlockTransactionGetByBlock(t *testing.T) {
 	block1 := TestMakeNewBlock(txHashes1)
 	for _, tx := range txs1 {
 		a, _ := tx.Serialize()
-		bt := NewBlockTransactionFromTransaction(block1.Hash, block1.Height, tx, a)
+		bt := NewBlockTransactionFromTransaction(block1.Hash, block1.Height, block1.Confirmed, tx, a)
 		require.Nil(t, bt.Save(st))
 	}
 
@@ -420,7 +420,7 @@ func TestMultipleBlockTransactionsOrderByBlockHeightAndCursor(t *testing.T) {
 		block.Height++
 		for _, tx := range txs {
 			a, _ := tx.Serialize()
-			bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, tx, a)
+			bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, block.Confirmed, tx, a)
 			err := bt.Save(st)
 			require.Nil(t, err)
 		}
@@ -443,7 +443,7 @@ func TestMultipleBlockTransactionsOrderByBlockHeightAndCursor(t *testing.T) {
 		block := TestMakeNewBlock(txHashes)
 		for _, tx := range txs {
 			a, _ := tx.Serialize()
-			bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, tx, a)
+			bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, block.Confirmed, tx, a)
 			err := bt.Save(st)
 			require.Nil(t, err)
 		}

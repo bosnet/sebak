@@ -380,7 +380,7 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 		tx := transactions[hash]
 		raw, _ := json.Marshal(tx)
 
-		bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, tx, raw)
+		bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.Confirmed, tx, raw)
 		if err = bt.Save(ts); err != nil {
 			ts.Discard()
 			return
