@@ -147,7 +147,7 @@ func (sm *ISAACStateManager) IncreaseRound() {
 
 func (sm *ISAACStateManager) NextHeight() {
 	round := sm.State().Round
-	sm.nr.Log().Debug("begin ISAACStateManager.NextHeight()", round)
+	sm.nr.Log().Debug("begin ISAACStateManager.NextHeight()", "round", round)
 	round.BlockHeight++
 	round.Number = 0
 	sm.TransitISAACState(round, ballot.StateINIT)
