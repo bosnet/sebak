@@ -10,19 +10,24 @@ import (
 var _ Producer = (*Manager)(nil)
 var _ Stopper = (*Manager)(nil)
 
+type AfterFunc = func(time.Duration) <-chan time.Time
+
 type Manager struct {
 	fetcherLayer    Fetcher
 	validationLayer Validator
 
-	retryTimeout  time.Duration
+	retryInterval time.Duration
 	checkInterval time.Duration
+
+	afterFunc AfterFunc
 
 	storage *storage.LevelDBBackend
 
 	messages chan *Message
-	response <-chan *Response
+	response chan *Response
 
-	stop chan chan struct{}
+	stopLoop chan chan struct{}
+	stopResp chan chan struct{}
 }
 
 func (m *Manager) Run() error {
@@ -31,14 +36,31 @@ func (m *Manager) Run() error {
 }
 
 func (m *Manager) Stop() error {
-	c := make(chan struct{})
-	m.stop <- c
-	<-c
+	{
+		c := make(chan struct{})
+		m.stopResp <- c
+		<-c
+	}
+	{
+		c := make(chan struct{})
+		m.stopLoop <- c
+		<-c
+	}
 	return nil
 }
 
-func (m *Manager) SetResponse(resp <-chan *Response) error {
-	m.response = resp
+func (m *Manager) SetResponse(respc <-chan *Response) error {
+	go func() {
+		for {
+			select {
+			case resp := <-respc:
+				m.response <- resp
+			case s := <-m.stopResp:
+				close(s)
+				return
+			}
+		}
+	}()
 	return nil
 }
 
@@ -47,31 +69,38 @@ func (m *Manager) Produce() <-chan *Message {
 }
 
 func (m *Manager) loop() {
-	timer := time.NewTimer(m.checkInterval)
-	var syncBlockHeight uint64
+	checkc := m.afterFunc(m.checkInterval)
+	syncBlockHeight := m.checkBlockHeight(0)
 	for {
 		select {
-		case <-timer.C:
-			blk, err := block.GetLatestBlock(m.storage)
-			if err != nil {
-				//TODO: logging
-				continue
-			}
-			newHeight := blk.Height + 1
-			if newHeight > syncBlockHeight {
-				msg := &Message{
-					BlockHeight: newHeight,
-				}
-				m.messages <- msg
-				syncBlockHeight = newHeight
-			}
+		case <-checkc:
+			syncBlockHeight = m.checkBlockHeight(syncBlockHeight)
+			checkc = m.afterFunc(m.checkInterval)
 		case resp := <-m.response:
-			time.AfterFunc(m.retryTimeout, func() {
+			go func() {
+				retryc := m.afterFunc(m.retryInterval)
+				<-retryc
 				m.messages <- resp.Message()
-			})
-		case c := <-m.stop:
+			}()
+		case c := <-m.stopLoop:
 			close(c)
 			return
 		}
 	}
+}
+
+func (m *Manager) checkBlockHeight(height uint64) uint64 {
+	blk, err := block.GetLatestBlock(m.storage)
+	if err != nil {
+		//TODO: logging
+	}
+	newHeight := blk.Height + 1
+	if newHeight > height {
+		msg := &Message{
+			BlockHeight: newHeight,
+		}
+		m.messages <- msg
+		return newHeight
+	}
+	return height
 }

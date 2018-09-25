@@ -59,6 +59,9 @@ func NewBlockFullFetcher(nw network.Network, cManager *network.ConnectionManager
 // Stopper
 
 func (f *BlockFullFetcher) Stop() error {
+	c := make(chan struct{})
+	f.stop <- c
+	<-c
 
 	return nil
 }

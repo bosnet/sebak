@@ -12,7 +12,7 @@ const (
 	MaxValidator             = 20
 	FetchTimeout             = 1 * time.Minute
 	ValidationTimeout        = 2 * time.Minute
-	RetryTimeout             = 10 * time.Second
+	RetryInterval            = 10 * time.Second
 	CheckBlockHeightInterval = 1 * time.Second
 )
 
@@ -21,7 +21,7 @@ type Builder struct {
 	MaxValidator             int
 	FetchTimeout             time.Duration
 	ValidationTimeout        time.Duration
-	RetryTimeout             time.Duration
+	RetryInterval            time.Duration
 	CheckBlockHeightInterval time.Duration
 
 	network           network.Network
@@ -35,7 +35,7 @@ func NewBuilder(ldb *storage.LevelDBBackend, network network.Network, connection
 		MaxValidator:             MaxValidator,
 		FetchTimeout:             FetchTimeout,
 		ValidationTimeout:        ValidationTimeout,
-		RetryTimeout:             RetryTimeout,
+		RetryInterval:            RetryInterval,
 		CheckBlockHeightInterval: CheckBlockHeightInterval,
 
 		network:           network,
@@ -87,11 +87,14 @@ func (b Builder) Manager() *Manager {
 		fetcherLayer:    fetcher,
 		validationLayer: validator,
 
-		retryTimeout:  b.RetryTimeout,
+		retryInterval: b.RetryInterval,
 		checkInterval: b.CheckBlockHeightInterval,
 
-		storage: b.storage,
-		stop:    make(chan chan struct{}),
+		afterFunc: time.After,
+
+		storage:  b.storage,
+		stopLoop: make(chan chan struct{}),
+		stopResp: make(chan chan struct{}),
 	}
 
 	Pipeline(m, fetcher)
