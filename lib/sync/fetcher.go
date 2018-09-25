@@ -53,7 +53,6 @@ func NewBlockFullFetcher(nw network.Network, cManager *network.ConnectionManager
 	for _, o := range opts {
 		o(f)
 	}
-	go f.loop()
 	return f
 }
 
@@ -79,6 +78,7 @@ func (f *BlockFullFetcher) Produce() <-chan *Message {
 
 func (f *BlockFullFetcher) Consume(msg <-chan *Message) error {
 	f.reqmsg = msg
+	go f.loop()
 	return nil
 }
 

@@ -29,3 +29,26 @@ func TestConsumer(t *testing.T) {
 
 	wg.Wait()
 }
+
+func TestConsumers(t *testing.T) {
+	var wg sync.WaitGroup
+	msg := make(chan *Message)
+
+	c := NewMockConsumer()
+	cs := NewConsumers(c)
+	cs.Consume(msg)
+	defer cs.Stop()
+
+	reqmsg := &Message{
+		BlockHeight: 1,
+	}
+
+	go func() {
+		defer wg.Done()
+		msg := <-c.Message()
+		require.NotNil(t, msg)
+		require.Equal(t, msg, reqmsg)
+	}()
+
+	wg.Wait()
+}

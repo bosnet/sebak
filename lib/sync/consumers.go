@@ -18,7 +18,6 @@ func NewConsumers(cs ...Consumer) *Consumers {
 		response:  make(chan *Response),
 		stops:     make([]chan chan struct{}, 0, len(cs)),
 	}
-	c.startConsumers()
 
 	return c
 }
@@ -35,6 +34,7 @@ func (c *Consumers) Stop() error {
 
 func (c *Consumers) Consume(msg <-chan *Message) error {
 	c.message = msg
+	c.startConsumers()
 	return nil
 }
 
@@ -45,23 +45,20 @@ func (c *Consumers) Response() <-chan *Response {
 func (c *Consumers) startConsumers() {
 	for _, cs := range c.consumers {
 		stop := make(chan chan struct{})
-		c.startConsumer(cs, stop)
+		go c.startConsumer(cs, stop)
 		c.stops = append(c.stops, stop)
 	}
 }
 
 func (c *Consumers) startConsumer(cs Consumer, stop chan chan struct{}) {
 	cs.Consume(c.message)
-	respCh := cs.Response()
-	go func() {
-		for {
-			select {
-			case resp := <-respCh:
-				c.response <- resp
-			case s := <-stop:
-				close(s)
-				return
-			}
+	for {
+		select {
+		case resp := <-cs.Response():
+			c.response <- resp
+		case s := <-stop:
+			close(s)
+			return
 		}
-	}()
+	}
 }

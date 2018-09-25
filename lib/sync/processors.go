@@ -24,7 +24,6 @@ func NewProcessors(ps ...Processor) *Processors {
 		procsResponse:   make(chan *Response),
 		stopProcs:       make([]chan chan struct{}, 0, len(ps)),
 	}
-	p.startProcessors()
 	return p
 }
 
@@ -51,6 +50,7 @@ func (p *Processors) Produce() <-chan *Message {
 // Consumer
 func (p *Processors) Consume(msg <-chan *Message) error {
 	p.incomingMessage = msg
+	p.startProcessors()
 	return nil
 }
 func (p *Processors) Response() <-chan *Response {
@@ -60,7 +60,7 @@ func (p *Processors) Response() <-chan *Response {
 func (p *Processors) startProcessors() {
 	for _, proc := range p.processors {
 		stop := make(chan chan struct{})
-		p.startProcessor(proc, stop)
+		go p.startProcessor(proc, stop)
 		p.stopProcs = append(p.stopProcs, stop)
 	}
 }
@@ -68,18 +68,15 @@ func (p *Processors) startProcessors() {
 func (p *Processors) startProcessor(proc Processor, stop chan chan struct{}) {
 	proc.Consume(p.incomingMessage)
 	proc.SetResponse(p.response)
-	msgCh := proc.Produce()
-	respCh := proc.Response()
-	stopCh := stop
-	go func() {
+	for {
 		select {
-		case msg := <-msgCh:
+		case msg := <-proc.Produce():
 			p.message <- msg
-		case resp := <-respCh:
+		case resp := <-proc.Response():
 			p.procsResponse <- resp
-		case c := <-stopCh:
+		case c := <-stop:
 			close(c)
 			return
 		}
-	}()
+	}
 }
