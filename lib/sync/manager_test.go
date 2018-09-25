@@ -13,7 +13,7 @@ func TestManager(t *testing.T) {
 	tickc := make(chan time.Time)
 	c := NewMockConsumer()
 	p := NewMockProcessor()
-	st, _ := storage.NewTestMemoryLevelDBBackend()
+	st := storage.NewTestStorage()
 
 	//TODO(anarhcer): NewTestManager and NewManager?
 	m := &Manager{

@@ -25,11 +25,11 @@ type Builder struct {
 	CheckBlockHeightInterval time.Duration
 
 	network           network.Network
-	connectionManager *network.ConnectionManager
+	connectionManager network.ConnectionManager
 	storage           *storage.LevelDBBackend
 }
 
-func NewBuilder(ldb *storage.LevelDBBackend, network network.Network, connectionManager *network.ConnectionManager) Builder {
+func NewBuilder(ldb *storage.LevelDBBackend, network network.Network, connectionManager network.ConnectionManager) Builder {
 	return Builder{
 		MaxFetcher:               MaxFetcher,
 		MaxValidator:             MaxValidator,

@@ -17,7 +17,7 @@ import (
 
 type BlockFullFetcher struct {
 	network           network.Network
-	connectionManager *network.ConnectionManager
+	connectionManager network.ConnectionManager
 	apiClient         Doer
 
 	fetchTimeout time.Duration
@@ -35,7 +35,7 @@ type BlockFullFetcherOption = func(f *BlockFullFetcher)
 
 var _ Fetcher = (*BlockFullFetcher)(nil)
 
-func NewBlockFullFetcher(nw network.Network, cManager *network.ConnectionManager, opts ...BlockFullFetcherOption) *BlockFullFetcher {
+func NewBlockFullFetcher(nw network.Network, cManager network.ConnectionManager, opts ...BlockFullFetcherOption) *BlockFullFetcher {
 	f := &BlockFullFetcher{
 		network:           nw,
 		connectionManager: cManager,
@@ -109,8 +109,8 @@ func (f *BlockFullFetcher) loop() {
 func (f *BlockFullFetcher) fetch(msg *Message) {
 	//TODO: fetch block using block node api
 	bh := msg.BlockHeight
-	nclient := f.pickRandomNode()
-	apiURL, err := url.Parse(nclient.Endpoint().String())
+	addr := f.pickRandomNode()
+	apiURL, err := url.Parse(addr)
 	if err != nil {
 		f.errorResponse(msg, err)
 		return
@@ -147,17 +147,17 @@ func (f *BlockFullFetcher) fetch(msg *Message) {
 		return
 	}
 
-	blk, ok := items[runner.GetBlocksDataTypeBlock]
+	blk, ok := items[runner.NodeItemBlock]
 	if !ok || len(blk) <= 0 {
 		f.errorResponse(msg, err)
 		return
 	}
-	txs, ok := items[runner.GetBlocksDataTypeTransaction]
+	txs, ok := items[runner.NodeItemBlockTransaction]
 	if !ok {
 		f.errorResponse(msg, err)
 		return
 	}
-	ops, ok := items[runner.GetBlocksDataTypeOperation]
+	ops, ok := items[runner.NodeItemBlockOperation]
 	if !ok {
 		f.errorResponse(msg, err)
 		return
@@ -174,12 +174,12 @@ func (f *BlockFullFetcher) fetch(msg *Message) {
 	f.messages <- msg
 }
 
-func (f *BlockFullFetcher) unmarshalResp(body io.ReadCloser) (map[runner.GetBlocksDataType][]interface{}, error) {
-	items := map[runner.GetBlocksDataType][]interface{}{}
+func (f *BlockFullFetcher) unmarshalResp(body io.ReadCloser) (map[runner.NodeItemDataType][]interface{}, error) {
+	items := map[runner.NodeItemDataType][]interface{}{}
 
 	sc := bufio.NewScanner(body)
 	for sc.Scan() {
-		itemType, b, err := runner.UnmarshalGetBlocksHandlerItem(sc.Bytes())
+		itemType, b, err := runner.UnmarshalNodeItemResponse(sc.Bytes())
 		if err != nil {
 			return nil, err
 		}
@@ -193,10 +193,10 @@ func (f *BlockFullFetcher) unmarshalResp(body io.ReadCloser) (map[runner.GetBloc
 }
 
 // pickRandomNode choose one node by random. It is very protype for choosing fetching which node
-func (f *BlockFullFetcher) pickRandomNode() network.NetworkClient {
+func (f *BlockFullFetcher) pickRandomNode() string {
 	ac := f.connectionManager.AllConnected()
 	idx := rand.Intn(len(ac))
-	return f.connectionManager.GetConnection(ac[idx])
+	return ac[idx]
 }
 
 func (f *BlockFullFetcher) errorResponse(msg *Message, err error) {
