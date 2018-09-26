@@ -25,23 +25,21 @@ import (
 	"boscoin.io/sebak/lib/storage"
 )
 
-const defaultNetwork string = "https"
-const defaultPort int = 12345
-const defaultHost string = "0.0.0.0"
-const defaultLogLevel logging.Lvl = logging.LvlInfo
-const defaultLogFormat string = "terminal"
+const (
+	defaultLogLevel  logging.Lvl = logging.LvlInfo
+	defaultLogFormat string      = "terminal"
+	defaultBindURL   string      = "https://0.0.0.0:12345"
+)
 
 var (
-	flagKPSecretSeed   string = common.GetENVValue("SEBAK_SECRET_SEED", "")
-	flagNetworkID      string = common.GetENVValue("SEBAK_NETWORK_ID", "")
-	flagLogLevel       string = common.GetENVValue("SEBAK_LOG_LEVEL", defaultLogLevel.String())
-	flagLogFormat      string = common.GetENVValue("SEBAK_LOG_FORMAT", defaultLogFormat)
-	flagLog            string = common.GetENVValue("SEBAK_LOG", "")
-	flagVerbose        bool   = common.GetENVValue("SEBAK_VERBOSE", "0") == "1"
-	flagEndpointString string = common.GetENVValue(
-		"SEBAK_ENDPOINT",
-		fmt.Sprintf("%s://%s:%d", defaultNetwork, defaultHost, defaultPort),
-	)
+	flagKPSecretSeed        string = common.GetENVValue("SEBAK_SECRET_SEED", "")
+	flagNetworkID           string = common.GetENVValue("SEBAK_NETWORK_ID", "")
+	flagLogLevel            string = common.GetENVValue("SEBAK_LOG_LEVEL", defaultLogLevel.String())
+	flagLogFormat           string = common.GetENVValue("SEBAK_LOG_FORMAT", defaultLogFormat)
+	flagLog                 string = common.GetENVValue("SEBAK_LOG", "")
+	flagVerbose             bool   = common.GetENVValue("SEBAK_VERBOSE", "0") == "1"
+	flagBindURL             string = common.GetENVValue("SEBAK_BIND", defaultBindURL)
+	flagPublishURL          string = common.GetENVValue("SEBAK_PUBLISH", "")
 	flagStorageConfigString string
 	flagTLSCertFile         string = common.GetENVValue("SEBAK_TLS_CERT", "sebak.crt")
 	flagTLSKeyFile          string = common.GetENVValue("SEBAK_TLS_KEY", "sebak.key")
@@ -58,7 +56,8 @@ var (
 	nodeCmd *cobra.Command
 
 	kp                *keypair.Full
-	nodeEndpoint      *common.Endpoint
+	bindEndpoint      *common.Endpoint
+	publishEndpoint   *common.Endpoint
 	storageConfig     *storage.Config
 	validators        []*node.Validator
 	threshold         int
@@ -127,7 +126,8 @@ func init() {
 	nodeCmd.Flags().StringVar(&flagLogFormat, "log-format", flagLogFormat, "log format, {terminal, json}")
 	nodeCmd.Flags().StringVar(&flagLog, "log", flagLog, "set log file")
 	nodeCmd.Flags().BoolVar(&flagVerbose, "verbose", flagVerbose, "verbose")
-	nodeCmd.Flags().StringVar(&flagEndpointString, "endpoint", flagEndpointString, "endpoint uri to listen on")
+	nodeCmd.Flags().StringVar(&flagBindURL, "bind", flagBindURL, "bind to listen on")
+	nodeCmd.Flags().StringVar(&flagPublishURL, "publish", flagPublishURL, "endpoint url for other nodes")
 	nodeCmd.Flags().StringVar(&flagStorageConfigString, "storage", flagStorageConfigString, "storage uri")
 	nodeCmd.Flags().StringVar(&flagTLSCertFile, "tls-cert", flagTLSCertFile, "tls certificate file")
 	nodeCmd.Flags().StringVar(&flagTLSKeyFile, "tls-key", flagTLSKeyFile, "tls key file")
@@ -180,14 +180,23 @@ func parseFlagsNode() {
 		kp = parsedKP.(*keypair.Full)
 	}
 
-	if p, err := common.ParseEndpoint(flagEndpointString); err != nil {
-		cmdcommon.PrintFlagsError(nodeCmd, "--endpoint", err)
+	if p, err := common.ParseEndpoint(flagBindURL); err != nil {
+		cmdcommon.PrintFlagsError(nodeCmd, "--bind", err)
 	} else {
-		nodeEndpoint = p
-		flagEndpointString = nodeEndpoint.String()
+		bindEndpoint = p
+		flagBindURL = bindEndpoint.String()
 	}
 
-	if strings.ToLower(nodeEndpoint.Scheme) == "https" {
+	if len(flagPublishURL) > 0 {
+		if p, err := common.ParseEndpoint(flagPublishURL); err != nil {
+			cmdcommon.PrintFlagsError(nodeCmd, "--publish", err)
+		} else {
+			publishEndpoint = p
+			flagPublishURL = publishEndpoint.String()
+		}
+	}
+
+	if strings.ToLower(bindEndpoint.Scheme) == "https" {
 		if _, err = os.Stat(flagTLSCertFile); os.IsNotExist(err) {
 			cmdcommon.PrintFlagsError(nodeCmd, "--tls-cert", err)
 		}
@@ -196,11 +205,11 @@ func parseFlagsNode() {
 		}
 	}
 
-	queries := nodeEndpoint.Query()
+	queries := bindEndpoint.Query()
 	queries.Add("TLSCertFile", flagTLSCertFile)
 	queries.Add("TLSKeyFile", flagTLSKeyFile)
 	queries.Add("IdleTimeout", "3s")
-	nodeEndpoint.RawQuery = queries.Encode()
+	bindEndpoint.RawQuery = queries.Encode()
 
 	if validators, err = parseFlagValidators(flagValidators); err != nil {
 		cmdcommon.PrintFlagsError(nodeCmd, "--validators", err)
@@ -208,10 +217,10 @@ func parseFlagsNode() {
 
 	for _, n := range validators {
 		if n.Address() == kp.Address() {
-			cmdcommon.PrintFlagsError(nodeCmd, "--validator", fmt.Errorf("duplicated public address found"))
+			cmdcommon.PrintFlagsError(nodeCmd, "--validators", fmt.Errorf("duplicated public address found"))
 		}
-		if n.Endpoint() == nodeEndpoint {
-			cmdcommon.PrintFlagsError(nodeCmd, "--validator", fmt.Errorf("duplicated endpoint found"))
+		if n.Endpoint() == bindEndpoint {
+			cmdcommon.PrintFlagsError(nodeCmd, "--validators", fmt.Errorf("duplicated endpoint found"))
 		}
 	}
 
@@ -267,7 +276,8 @@ func parseFlagsNode() {
 	// print flags
 	parsedFlags := []interface{}{}
 	parsedFlags = append(parsedFlags, "\n\tnetwork-id", flagNetworkID)
-	parsedFlags = append(parsedFlags, "\n\tendpoint", flagEndpointString)
+	parsedFlags = append(parsedFlags, "\n\tbind", flagBindURL)
+	parsedFlags = append(parsedFlags, "\n\tpublish", flagBindURL)
 	parsedFlags = append(parsedFlags, "\n\tstorage", flagStorageConfigString)
 	parsedFlags = append(parsedFlags, "\n\ttls-cert", flagTLSCertFile)
 	parsedFlags = append(parsedFlags, "\n\ttls-key", flagTLSKeyFile)
@@ -313,15 +323,16 @@ func getTime(timeoutStr string, defaultValue time.Duration, errMessage string) t
 
 func runNode() error {
 	// create current Node
-	localNode, err := node.NewLocalNode(kp, nodeEndpoint, "")
+	localNode, err := node.NewLocalNode(kp, bindEndpoint, "")
 	if err != nil {
 		log.Error("failed to launch main node", "error", err)
 		return err
 	}
 	localNode.AddValidators(validators...)
+	localNode.SetPublishEndpoint(publishEndpoint)
 
 	// create network
-	networkConfig, err := network.NewHTTP2NetworkConfigFromEndpoint(localNode.Alias(), nodeEndpoint)
+	networkConfig, err := network.NewHTTP2NetworkConfigFromEndpoint(localNode.Alias(), bindEndpoint)
 	if err != nil {
 		log.Crit("failed to create network", "error", err)
 		return err

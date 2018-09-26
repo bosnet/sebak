@@ -1,8 +1,13 @@
 package runner
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 	"unicode"
@@ -12,6 +17,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/gorilla/mux"
 	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
 
@@ -210,4 +216,76 @@ func TestHTTP2NetworkConnect(t *testing.T) {
 	returnStr := removeWhiteSpaces(string(returnMsg))
 
 	require.Equal(t, returnStr, nodeStr, "The connectNode and the return should be the same.")
+}
+
+// TestGetNodeInfoHandler checks `NodeInfoHandler`
+func TestGetNodeInfoHandler(t *testing.T) {
+	st := storage.NewTestStorage()
+	defer st.Close()
+
+	kp, _ := keypair.Random()
+	endpoint, _ := common.NewEndpointFromString("http://localhost:12345")
+	localNode, _ := node.NewLocalNode(kp, endpoint, "")
+	isaac, _ := consensus.NewISAAC(
+		networkID,
+		localNode,
+		nil,
+		network.NewValidatorConnectionManager(localNode, nil, nil, nil),
+	)
+
+	var config *network.HTTP2NetworkConfig
+
+	config, _ = network.NewHTTP2NetworkConfigFromEndpoint(localNode.Alias(), endpoint)
+	nt := network.NewHTTP2Network(config)
+
+	apiHandler := NetworkHandlerNode{storage: st, consensus: isaac, network: nt, localNode: localNode}
+
+	router := mux.NewRouter()
+	router.HandleFunc(NodeInfoHandlerPattern, apiHandler.NodeInfoHandler).Methods("GET")
+
+	server := httptest.NewServer(router)
+	defer server.Close()
+
+	{ // without setting PublishEndpoint, `endpoint` of response should be requested URL
+		u, _ := url.Parse(server.URL)
+		u.Path = NodeInfoHandlerPattern
+
+		req, err := http.NewRequest("GET", u.String(), nil)
+		require.Nil(t, err)
+		resp, err := server.Client().Do(req)
+		require.Nil(t, err)
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+
+		body, _ := ioutil.ReadAll(resp.Body)
+		resp.Body.Close()
+
+		var received map[string]interface{}
+		err = json.Unmarshal(body, &received)
+		require.Nil(t, err)
+
+		require.Equal(t, server.URL, received["endpoint"])
+	}
+
+	{ // with setting PublishEndpoint, `endpoint` of response should be requested URL
+		publishEndpoint, _ := common.NewEndpointFromString("https://9.9.9.9:54321")
+		localNode.SetPublishEndpoint(publishEndpoint)
+
+		u, _ := url.Parse(server.URL)
+		u.Path = NodeInfoHandlerPattern
+
+		req, err := http.NewRequest("GET", u.String(), nil)
+		require.Nil(t, err)
+		resp, err := server.Client().Do(req)
+		require.Nil(t, err)
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+
+		body, _ := ioutil.ReadAll(resp.Body)
+		resp.Body.Close()
+
+		var received map[string]interface{}
+		err = json.Unmarshal(body, &received)
+		require.Nil(t, err)
+
+		require.Equal(t, publishEndpoint.String(), received["endpoint"])
+	}
 }

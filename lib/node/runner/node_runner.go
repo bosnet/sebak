@@ -124,17 +124,31 @@ func NewNodeRunner(
 }
 
 func (nr *NodeRunner) Ready() {
-	nodeHandler := NewNetworkHandlerNode(nr.localNode, nr.network, nr.storage, nr.consensus)
-	apiHandler := api.NewNetworkHandlerAPI(nr.localNode, nr.network, nr.storage, network.UrlPathPrefixAPI)
+	// node handlers
+	nodeHandler := NewNetworkHandlerNode(
+		nr.localNode,
+		nr.network,
+		nr.storage,
+		nr.consensus,
+		network.UrlPathPrefixNode,
+	)
 
-	nr.network.AddHandler(network.UrlPathPrefixNode+"/", nodeHandler.NodeInfoHandler)
-	nr.network.AddHandler(network.UrlPathPrefixNode+"/connect", nodeHandler.ConnectHandler)
-	nr.network.AddHandler(network.UrlPathPrefixNode+"/message", nodeHandler.MessageHandler)
-	nr.network.AddHandler(network.UrlPathPrefixNode+"/ballot", nodeHandler.BallotHandler)
-	nr.network.AddHandler(network.UrlPathPrefixNode+GetBlocksPattern, nodeHandler.GetBlocksHandler).Methods("GET", "POST")
-	nr.network.AddHandler(network.UrlPathPrefixNode+GetTransactionPattern, nodeHandler.GetNodeTransactionsHandler).Methods("GET", "POST")
+	nr.network.AddHandler(nodeHandler.HandlerURLPattern(NodeInfoHandlerPattern), nodeHandler.NodeInfoHandler)
+	nr.network.AddHandler(nodeHandler.HandlerURLPattern(ConnectHandlerPattern), nodeHandler.ConnectHandler).Methods("POST")
+	nr.network.AddHandler(nodeHandler.HandlerURLPattern(MessageHandlerPattern), nodeHandler.MessageHandler).Methods("POST")
+	nr.network.AddHandler(nodeHandler.HandlerURLPattern(BallotHandlerPattern), nodeHandler.BallotHandler).Methods("POST")
+	nr.network.AddHandler(
+		nodeHandler.HandlerURLPattern(GetBlocksPattern),
+		nodeHandler.GetBlocksHandler,
+	).Methods("GET", "POST")
+	nr.network.AddHandler(
+		nodeHandler.HandlerURLPattern(GetTransactionPattern),
+		nodeHandler.GetNodeTransactionsHandler,
+	).Methods("GET", "POST")
 	nr.network.AddHandler("/metrics", promhttp.Handler().ServeHTTP)
 
+	// api handlers
+	apiHandler := api.NewNetworkHandlerAPI(nr.localNode, nr.network, nr.storage, network.UrlPathPrefixAPI)
 	nr.network.AddHandler(
 		apiHandler.HandlerURLPattern(api.GetAccountHandlerPattern),
 		apiHandler.GetAccountHandler,
