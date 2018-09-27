@@ -66,7 +66,7 @@ func MakeGenesisBlock(st *storage.LevelDBBackend, account BlockAccount, networdI
 	}
 
 	// create create-account transaction.
-	opb := transaction.NewOperationBodyCreateAccount(account.Address, account.Balance)
+	opb := transaction.NewOperationBodyCreateAccount(account.Address, account.Balance, "")
 	op := transaction.Operation{
 		H: transaction.OperationHeader{
 			Type: transaction.OperationCreateAccount,
