@@ -310,7 +310,7 @@ func parseFlagsNode() {
 
 func getTime(timeoutStr string, defaultValue time.Duration, errMessage string) time.Duration {
 	var timeoutDuration time.Duration
-	if tmpUint64, err := strconv.ParseUint(flagTimeoutINIT, 10, 64); err != nil {
+	if tmpUint64, err := strconv.ParseUint(timeoutStr, 10, 64); err != nil {
 		cmdcommon.PrintFlagsError(nodeCmd, errMessage, err)
 	} else {
 		timeoutDuration = time.Duration(tmpUint64) * time.Second
