@@ -12,10 +12,8 @@ import (
 type OperationType string
 
 const (
-	OperationCreateAccount        OperationType = "create-account"
-	OperationPayment                            = "payment"
-	OperationCongressVoting                     = "cv"
-	OperationCongressVotingResult               = "cvr"
+	OperationCreateAccount OperationType = "create-account"
+	OperationPayment                     = "payment"
 )
 
 type Operation struct {
@@ -96,18 +94,6 @@ func (o *Operation) UnmarshalJSON(b []byte) (err error) {
 		o.B = body
 	case OperationPayment:
 		var body OperationBodyPayment
-		if err = json.Unmarshal(envelop, &body); err != nil {
-			return
-		}
-		o.B = body
-	case OperationCongressVoting:
-		var body OperationBodyCongressVoting
-		if err = json.Unmarshal(envelop, &body); err != nil {
-			return
-		}
-		o.B = body
-	case OperationCongressVotingResult:
-		var body OperationBodyCongressVotingResult
 		if err = json.Unmarshal(envelop, &body); err != nil {
 			return
 		}
