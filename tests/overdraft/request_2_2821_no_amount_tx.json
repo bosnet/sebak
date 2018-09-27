@@ -2,13 +2,13 @@
   "T": "transaction",
   "H": {
     "version": "",
-    "created": "2018-09-19T04:26:41.304736300Z",
-    "signature": "43efdDCVdc3MrvH5cKfKn88CYV9oGnPGNzcYRtycEPvWjoZRMZkCNZ6H6kaGpGRSL7SUkuS5YaR2QYsbEbpLQYGV"
+    "created": "2018-09-27T16:11:35.177557660+09:00",
+    "signature": "28p4QQ52UCCiioSmQv6d76f5mdcxfbfkVYtfYayzx4G2cPJDKE6j8mkiQakT5SfFDDYTzkLVvMbY69j81rKHRQRZ"
   },
   "B": {
     "source": "GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ",
     "fee": "10000",
-    "sequenceID": 1,
+    "sequenceID": 0,
     "operations": [
       {
         "H": {

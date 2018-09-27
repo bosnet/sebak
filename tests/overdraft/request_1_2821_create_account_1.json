@@ -2,8 +2,8 @@
   "T": "transaction",
   "H": {
     "version": "",
-    "created": "2018-09-27T13:36:36.681446053+09:00",
-    "signature": "5KBNgAvHxjv5RhVpJGRSQA9dY2UfRYGZw7xo6sCoQwECQnatDKJCP9hJF4regsWhi4sPgbVc68PxtAC11hLEMa3U"
+    "created": "2018-09-27T16:10:22.834422889+09:00",
+    "signature": "5XyAvGuXqVfvWeaMdpsNDHmm6zxM4fV7ZfayuaT82AnougeFYMwvaswWxFWhSRBHdsGjmLTAVcZaWfhYNKKbLnBP"
   },
   "B": {
     "source": "GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ",
@@ -12,7 +12,7 @@
     "operations": [
       {
         "H": {
-          "type": "create-account"
+          "type": "payment"
         },
         "B": {
           "target": "GDTEPFWEITKFHSUO44NQABY2XHRBBH2UBVGJ2ZJPDREIOL2F6RAEBJE4",
