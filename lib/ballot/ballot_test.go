@@ -139,3 +139,13 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 		require.Error(t, err, errors.ErrorMessageHasIncorrectTime)
 	}
 }
+
+func TestBallotEmptyHash(t *testing.T) {
+	kp, _ := keypair.Random()
+	localNode, _ := node.NewLocalNode(kp, &common.Endpoint{}, "")
+	r := round.Round{}
+	b := NewBallot(localNode, r, []string{})
+	b.Sign(kp, networkID)
+
+	require.True(t, len(b.GetHash()) > 0)
+}
