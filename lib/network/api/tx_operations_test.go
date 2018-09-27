@@ -47,12 +47,10 @@ func TestGetOperationsByTxHashHandler(t *testing.T) {
 	for _, r := range records {
 		item := r.(map[string]interface{})
 		hash := item["hash"].(string)
-		amount := item["amount"].(string)
 
 		bo, err := block.GetBlockOperation(storage, hash)
 		require.Nil(t, err)
 		require.NotNil(t, bo)
-		require.Equal(t, amount, bo.Amount.String())
 	}
 }
 
@@ -73,7 +71,8 @@ func TestGetOperationsByTxHashHandlerStream(t *testing.T) {
 
 	boMap := make(map[string]block.BlockOperation)
 	for _, op := range tx.B.Operations {
-		bo := block.NewBlockOperationFromOperation(op, tx, 0)
+		bo, err := block.NewBlockOperationFromOperation(op, tx, 0)
+		require.Nil(t, err)
 		boMap[bo.Hash] = bo
 	}
 

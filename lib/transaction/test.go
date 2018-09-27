@@ -65,6 +65,8 @@ func TestMakeTransaction(networkID []byte, n int) (kp *keypair.Full, tx Transact
 		Operations: ops,
 	}
 
+	txBody.MakeHashString()
+
 	tx = Transaction{
 		T: "transaction",
 		H: TransactionHeader{

@@ -20,6 +20,7 @@ import (
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/transaction"
+	"encoding/json"
 )
 
 type MessageChecker struct {
@@ -40,7 +41,7 @@ func TransactionUnmarshal(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*MessageChecker)
 
 	var tx transaction.Transaction
-	if tx, err = transaction.NewTransactionFromJSON(checker.Message.Data); err != nil {
+	if err = json.Unmarshal(checker.Message.Data, &tx); err != nil {
 		return
 	}
 

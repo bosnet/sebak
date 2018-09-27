@@ -5,6 +5,7 @@ import (
 
 	"boscoin.io/sebak/lib/common"
 
+	"encoding/json"
 	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
 )
@@ -44,6 +45,7 @@ func TestSerializeOperation(t *testing.T) {
 	require.Nil(t, err)
 	require.Equal(t, len(b) > 0, true)
 
-	_, err = NewOperationFromBytes(b)
+	var o Operation
+	err = json.Unmarshal(b, &o)
 	require.Nil(t, err)
 }

@@ -15,13 +15,15 @@ func TestNewBlockOperationFromOperation(t *testing.T) {
 	_, tx := transaction.TestMakeTransaction(networkID, 1)
 
 	op := tx.B.Operations[0]
-	bo := NewBlockOperationFromOperation(op, tx, 0)
+	bo, err := NewBlockOperationFromOperation(op, tx, 0)
+	require.Nil(t, err)
 
 	require.Equal(t, bo.Type, op.H.Type)
 	require.Equal(t, bo.TxHash, tx.H.Hash)
 	require.Equal(t, bo.Source, tx.B.Source)
-	require.Equal(t, bo.Target, op.B.TargetAddress())
-	require.Equal(t, bo.Amount, op.B.GetAmount())
+	encoded, err := op.B.Serialize()
+	require.Nil(t, err)
+	require.Equal(t, bo.Body, encoded)
 }
 
 func TestBlockOperationSaveAndGet(t *testing.T) {
@@ -40,8 +42,7 @@ func TestBlockOperationSaveAndGet(t *testing.T) {
 	require.Equal(t, bo.Type, fetched.Type)
 	require.Equal(t, bo.Hash, fetched.Hash)
 	require.Equal(t, bo.Source, fetched.Source)
-	require.Equal(t, bo.Target, fetched.Target)
-	require.Equal(t, bo.Amount, fetched.Amount)
+	require.Equal(t, bo.Body, fetched.Body)
 }
 
 func TestBlockOperationSaveExisting(t *testing.T) {
@@ -122,7 +123,8 @@ func TestBlockOperationSaveByTransacton(t *testing.T) {
 		require.Equal(t, bo.Type, op.H.Type)
 		require.Equal(t, bo.TxHash, tx.H.Hash)
 		require.Equal(t, bo.Source, tx.B.Source)
-		require.Equal(t, bo.Target, op.B.TargetAddress())
-		require.Equal(t, bo.Amount, op.B.GetAmount())
+		encoded, err := op.B.Serialize()
+		require.Nil(t, err)
+		require.Equal(t, bo.Body, encoded)
 	}
 }

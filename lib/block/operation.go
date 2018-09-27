@@ -3,7 +3,6 @@ package block
 import (
 	"encoding/json"
 	"fmt"
-	"sort"
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/common/observer"
@@ -20,13 +19,14 @@ import (
 //  * get list by `Target` and created order
 
 type BlockOperation struct {
-	Hash   string
+	Hash string
+
+	OpHash string
 	TxHash string
 
 	Type   transaction.OperationType
 	Source string
-	Target string
-	Amount common.Amount
+	Body   []byte
 
 	// transaction will be used only for `Save` time.
 	transaction transaction.Transaction
@@ -34,24 +34,33 @@ type BlockOperation struct {
 	blockHeight uint64
 }
 
-func NewBlockOperationKey(op transaction.Operation, tx transaction.Transaction) string {
-	return fmt.Sprintf("%s-%s", op.MakeHashString(), tx.GetHash())
+func NewBlockOperationKey(opHash, txHash string) string {
+	return fmt.Sprintf("%s-%s", opHash, txHash)
 }
 
-func NewBlockOperationFromOperation(op transaction.Operation, tx transaction.Transaction, blockHeight uint64) BlockOperation {
+func NewBlockOperationFromOperation(op transaction.Operation, tx transaction.Transaction, blockHeight uint64) (BlockOperation, error) {
+	body, err := op.B.Serialize()
+	if err != nil {
+		return BlockOperation{}, err
+	}
+
+	opHash := op.MakeHashString()
+	txHash := tx.GetHash()
+
 	return BlockOperation{
-		Hash:   NewBlockOperationKey(op, tx),
-		TxHash: tx.H.Hash,
+		Hash: NewBlockOperationKey(opHash, txHash),
+
+		OpHash: opHash,
+		TxHash: txHash,
 
 		Type:   op.H.Type,
 		Source: tx.B.Source,
-		Target: op.B.TargetAddress(),
-		Amount: op.B.GetAmount(),
+		Body:   body,
 
 		transaction: tx,
 
 		blockHeight: blockHeight,
-	}
+	}, nil
 }
 
 func (bo *BlockOperation) Save(st *storage.LevelDBBackend) (err error) {
@@ -68,16 +77,13 @@ func (bo *BlockOperation) Save(st *storage.LevelDBBackend) (err error) {
 		return errors.ErrorBlockAlreadyExists
 	}
 
-	if err = st.New(GetBlockOperationKey(bo.Hash), bo); err != nil {
+	if err = st.New(key, bo); err != nil {
 		return
 	}
 	if err = st.New(bo.NewBlockOperationTxHashKey(), bo.Hash); err != nil {
 		return
 	}
 	if err = st.New(bo.NewBlockOperationSourceKey(), bo.Hash); err != nil {
-		return
-	}
-	if err = st.New(bo.NewBlockOperationTargetKey(), bo.Hash); err != nil {
 		return
 	}
 	bo.isSaved = true
@@ -112,14 +118,6 @@ func GetBlockOperationKeyPrefixSource(source string) string {
 	return fmt.Sprintf("%s%s-", common.BlockOperationPrefixSource, source)
 }
 
-func GetBlockOperationKeyPrefixTarget(target string) string {
-	return fmt.Sprintf("%s%s-", common.BlockOperationPrefixTarget, target)
-}
-
-func GetBlockOperationKeyPrefixPeers(one, two string) string {
-	return fmt.Sprintf("%s%s%s-", common.BlockOperationPrefixPeers, one, two)
-}
-
 func (bo BlockOperation) NewBlockOperationTxHashKey() string {
 	return fmt.Sprintf(
 		"%s%s%s%s",
@@ -134,28 +132,6 @@ func (bo BlockOperation) NewBlockOperationSourceKey() string {
 	return fmt.Sprintf(
 		"%s%s%s%s",
 		GetBlockOperationKeyPrefixSource(bo.Source),
-		common.EncodeUint64ToByteSlice(bo.blockHeight),
-		common.EncodeUint64ToByteSlice(bo.transaction.B.SequenceID),
-		common.GetUniqueIDFromUUID(),
-	)
-}
-
-func (bo BlockOperation) NewBlockOperationTargetKey() string {
-	return fmt.Sprintf(
-		"%s%s%s%s",
-		GetBlockOperationKeyPrefixTarget(bo.Target),
-		common.EncodeUint64ToByteSlice(bo.blockHeight),
-		common.EncodeUint64ToByteSlice(bo.transaction.B.SequenceID),
-		common.GetUniqueIDFromUUID(),
-	)
-}
-
-func (bo BlockOperation) NewBlockOperationPeersKey() string {
-	addresses := []string{bo.Target, bo.Source}
-	sort.Strings(addresses)
-	return fmt.Sprintf(
-		"%s%s%s%s",
-		GetBlockOperationKeyPrefixPeers(addresses[0], addresses[1]),
 		common.EncodeUint64ToByteSlice(bo.blockHeight),
 		common.EncodeUint64ToByteSlice(bo.transaction.B.SequenceID),
 		common.GetUniqueIDFromUUID(),
@@ -218,15 +194,6 @@ func GetBlockOperationsBySource(st *storage.LevelDBBackend, source string, optio
 	func(),
 ) {
 	iterFunc, closeFunc := st.GetIterator(GetBlockOperationKeyPrefixSource(source), options)
-
-	return LoadBlockOperationsInsideIterator(st, iterFunc, closeFunc)
-}
-
-func GetBlockOperationsByTarget(st *storage.LevelDBBackend, target string, options storage.ListOptions) (
-	func() (BlockOperation, bool, []byte),
-	func(),
-) {
-	iterFunc, closeFunc := st.GetIterator(GetBlockOperationKeyPrefixTarget(target), options)
 
 	return LoadBlockOperationsInsideIterator(st, iterFunc, closeFunc)
 }

@@ -3,21 +3,24 @@ package transaction
 import (
 	"testing"
 
+	"boscoin.io/sebak/lib/common"
+
+	"boscoin.io/sebak/lib/error"
+	"encoding/json"
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
-
-	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/error"
 )
 
-func TestLoadTransactionFromJSON(t *testing.T) {
+func TestLoadTransaction(t *testing.T) {
 	_, tx := TestMakeTransaction(networkID, 1)
 
 	b, err := tx.Serialize()
 	require.Nil(t, err)
 
-	_, err = NewTransactionFromJSON(b)
+	var tx2 Transaction
+	json.Unmarshal(b, &tx2)
+	t.Log(tx2)
 	require.Nil(t, err)
 }
 
@@ -70,7 +73,11 @@ func TestIsWellFormedTransactionWithTargetAddressIsSameWithSourceAddress(t *test
 	var err error
 
 	_, tx := TestMakeTransaction(networkID, 1)
-	tx.B.Source = tx.B.Operations[0].B.TargetAddress()
+	if pop, ok := tx.B.Operations[0].B.(OperationBodyPayable); ok {
+		tx.B.Source = pop.TargetAddress()
+	} else {
+		require.True(t, ok)
+	}
 	err = tx.IsWellFormed(networkID)
 	require.NotNil(t, err, "Transaction to self should be rejected")
 }

@@ -74,7 +74,10 @@ func prepareOpsWithoutSave(blockHeight uint64, count int, kp *keypair.Full) (*ke
 	theBlock.Height += blockHeight
 	for _, tx := range txs {
 		for _, op := range tx.B.Operations {
-			bo := block.NewBlockOperationFromOperation(op, tx, theBlock.Height)
+			bo, err := block.NewBlockOperationFromOperation(op, tx, theBlock.Height)
+			if err != nil {
+				panic(err)
+			}
 			boList = append(boList, bo)
 		}
 	}

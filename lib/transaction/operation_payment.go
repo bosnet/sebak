@@ -22,8 +22,7 @@ func NewOperationBodyPayment(target string, amount common.Amount) OperationBodyP
 }
 
 func (o OperationBodyPayment) Serialize() (encoded []byte, err error) {
-	encoded, err = json.Marshal(o)
-	return
+	return json.Marshal(o)
 }
 
 // Implement transaction/operation : OperationBody.IsWellFormed

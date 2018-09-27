@@ -18,46 +18,47 @@ type Transaction struct {
 	B TransactionBody
 }
 
-type TransactionFromJSON struct {
+type transactionEnvelop struct {
 	T string
 	H TransactionHeader
-	B TransactionBodyFromJSON
+	B TransactionBody
 }
 
-type TransactionBodyFromJSON struct {
-	Source     string              `json:"source"`
-	Fee        common.Amount       `json:"fee"`
-	SequenceID uint64              `json:"sequenceid"`
-	Operations []OperationFromJSON `json:"operations"`
+type TransactionHeader struct {
+	Version string `json:"version"`
+	Created string `json:"created"`
+	// Hash of this transaction
+	// This is cached and not serialized when sent, because the remote node
+	// has to validate it anyway.
+	Hash      string `json:"-"`
+	Signature string `json:"signature"`
 }
 
-func NewTransactionFromJSON(b []byte) (tx Transaction, err error) {
-	var txt TransactionFromJSON
-	if err = json.Unmarshal(b, &txt); err != nil {
+type TransactionBody struct {
+	Source     string        `json:"source"`
+	Fee        common.Amount `json:"fee"`
+	SequenceID uint64        `json:"sequenceid"`
+	Operations []Operation   `json:"operations"`
+}
+
+func (tb TransactionBody) MakeHash() []byte {
+	return common.MustMakeObjectHash(tb)
+}
+
+func (tb TransactionBody) MakeHashString() string {
+	return base58.Encode(tb.MakeHash())
+}
+
+func (t *Transaction) UnmarshalJSON(b []byte) (err error) {
+	var tj transactionEnvelop
+	if err = json.Unmarshal(b, &tj); err != nil {
 		return
 	}
 
-	var operations []Operation
-	for _, o := range txt.B.Operations {
-		var op Operation
-		if op, err = NewOperationFromInterface(o); err != nil {
-			return
-		}
-		operations = append(operations, op)
-	}
-
-	tx.T = txt.T
-	tx.H = txt.H
-	tx.B = TransactionBody{
-		Source:     txt.B.Source,
-		Fee:        txt.B.Fee,
-		SequenceID: txt.B.SequenceID,
-		Operations: operations,
-	}
-
-	// Set the hash
-	tx.H.Hash = tx.B.MakeHashString()
-
+	t.T = tj.T
+	t.H = tj.H
+	t.B = tj.B
+	t.H.Hash = t.B.MakeHashString()
 	return
 }
 
@@ -144,7 +145,9 @@ func (tx Transaction) TotalAmount(withFee bool) common.Amount {
 	// (the sum of its Operations should not exceed the maximum supply)
 	var amount common.Amount
 	for _, op := range tx.B.Operations {
-		amount = amount.MustAdd(op.B.GetAmount())
+		if pop, ok := op.B.(OperationBodyPayable); ok {
+			amount = amount.MustAdd(pop.GetAmount())
+		}
 	}
 
 	// TODO: This isn't checked anywhere yet
@@ -172,29 +175,4 @@ func (tx *Transaction) Sign(kp keypair.KP, networkID []byte) {
 	tx.H.Signature = base58.Encode(signature)
 
 	return
-}
-
-type TransactionHeader struct {
-	Version string `json:"version"`
-	Created string `json:"created"`
-	// Hash of this transaction
-	// This is cached and not serialized when sent, because the remote node
-	// has to validate it anyway.
-	Hash      string `json:"-"`
-	Signature string `json:"signature"`
-}
-
-type TransactionBody struct {
-	Source     string        `json:"source"`
-	Fee        common.Amount `json:"fee"`
-	SequenceID uint64        `json:"sequenceID"`
-	Operations []Operation   `json:"operations"`
-}
-
-func (tb TransactionBody) MakeHash() []byte {
-	return common.MustMakeObjectHash(tb)
-}
-
-func (tb TransactionBody) MakeHashString() string {
-	return base58.Encode(tb.MakeHash())
 }

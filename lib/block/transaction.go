@@ -45,7 +45,7 @@ type BlockTransaction struct {
 func NewBlockTransactionFromTransaction(blockHash string, blockHeight uint64, tx transaction.Transaction, message []byte) BlockTransaction {
 	var opHashes []string
 	for _, op := range tx.B.Operations {
-		opHashes = append(opHashes, NewBlockOperationKey(op, tx))
+		opHashes = append(opHashes, NewBlockOperationKey(op.MakeHashString(), tx.GetHash()))
 	}
 
 	return BlockTransaction{
@@ -139,14 +139,19 @@ func (bt *BlockTransaction) Save(st *storage.LevelDBBackend) (err error) {
 		return
 	}
 	for _, op := range bt.transaction.B.Operations {
-		bo := NewBlockOperationFromOperation(op, bt.transaction, bt.blockHeight)
+		var bo BlockOperation
+		bo, err = NewBlockOperationFromOperation(op, bt.transaction, bt.blockHeight)
+		if err != nil {
+			return
+		}
 		if err = bo.Save(st); err != nil {
 			return
 		}
-
-		target := op.B.TargetAddress()
-		if err = st.New(bt.NewBlockTransactionKeyByAccount(target), bt.Hash); err != nil {
-			return
+		if pop, ok := op.B.(transaction.OperationBodyPayable); ok {
+			target := pop.TargetAddress()
+			if err = st.New(bt.NewBlockTransactionKeyByAccount(target), bt.Hash); err != nil {
+				return
+			}
 		}
 	}
 	event := "saved"
