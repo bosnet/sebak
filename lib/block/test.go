@@ -13,7 +13,7 @@ var networkID []byte = []byte("sebak-test-network")
 func TestMakeBlockAccount() *BlockAccount {
 	kp, _ := keypair.Random()
 	address := kp.Address()
-	balance := common.Amount(2000)
+	balance := common.Amount(common.BaseReserve)
 
 	return NewBlockAccount(address, balance)
 }

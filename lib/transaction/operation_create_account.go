@@ -37,6 +37,11 @@ func (o OperationBodyCreateAccount) IsWellFormed([]byte) (err error) {
 		return
 	}
 
+	if o.Amount < common.BaseReserve {
+		err = errors.ErrorInsufficientAmountNewAccount
+		return
+	}
+
 	return
 }
 
