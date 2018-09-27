@@ -152,8 +152,16 @@ func TestMakeGenesisBlock(t *testing.T) {
 	require.Equal(t, bt.Hash, bo.TxHash)
 	require.Equal(t, transaction.OperationCreateAccount, bo.Type)
 	require.Equal(t, account.Address, bo.Source)
-	require.Equal(t, account.Address, bo.Target)
-	require.Equal(t, account.Balance, bo.Amount)
+
+	{
+		opb, err := bo.LoadBody()
+		require.Nil(t, err)
+
+		opbp := opb.(transaction.OperationBodyPayable)
+
+		require.Equal(t, account.Address, opbp.TargetAddress())
+		require.Equal(t, account.Balance, opbp.GetAmount())
+	}
 }
 
 func TestMakeGenesisBlockOverride(t *testing.T) {
@@ -206,7 +214,12 @@ func TestMakeGenesisBlockFindGenesisAccount(t *testing.T) {
 		bt, _ := GetBlockTransaction(st, bk.Transactions[0])
 		bo, _ := GetBlockOperation(st, bt.Operations[0])
 
-		genesisAccount, err := GetBlockAccount(st, bo.Target)
+		opb, err := bo.LoadBody()
+		require.Nil(t, err)
+
+		opbp := opb.(transaction.OperationBodyPayable)
+
+		genesisAccount, err := GetBlockAccount(st, opbp.TargetAddress())
 		require.Nil(t, err)
 
 		require.Equal(t, account.Address, genesisAccount.Address)
