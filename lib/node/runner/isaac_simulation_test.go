@@ -33,7 +33,7 @@ func TestISAACSimulationProposer(t *testing.T) {
 	// `nr` is proposer's runner
 	proposer := nr.localNode
 
-	nr.Consensus().SetLatestConsensusedBlock(genesisBlock)
+	nr.Consensus().SetLatestBlock(genesisBlock)
 
 	var err error
 	err = nr.handleTransaction(message)
@@ -46,7 +46,7 @@ func TestISAACSimulationProposer(t *testing.T) {
 	_, err = nr.proposeNewBallot(roundNumber)
 	require.Nil(t, err)
 
-	b := nr.Consensus().LatestConfirmedBlock()
+	b := nr.Consensus().LatestBlock()
 	round := round.Round{
 		Number:      roundNumber,
 		BlockHeight: b.Height,
@@ -94,7 +94,7 @@ func TestISAACSimulationProposer(t *testing.T) {
 
 	require.Equal(t, 4, len(rr.Voted[proposer.Address()].GetResult(ballot.StateACCEPT)))
 
-	block := nr.Consensus().LatestConfirmedBlock()
+	block := nr.Consensus().LatestBlock()
 	require.Equal(t, proposer.Address(), block.Proposer)
 	require.Equal(t, 1, len(block.Transactions))
 	require.Equal(t, tx.GetHash(), block.Transactions[0])

@@ -15,7 +15,7 @@ func TestISAACBallotWithEmptyTransaction(t *testing.T) {
 	conf := consensus.NewISAACConfiguration()
 	nr, _, _ := createNodeRunnerForTesting(1, conf, nil)
 
-	latestBlock := nr.Consensus().LatestConfirmedBlock()
+	latestBlock := nr.Consensus().LatestBlock()
 	round := round.Round{
 		Number:      0,
 		BlockHeight: latestBlock.Height,
@@ -35,8 +35,8 @@ func TestISAACBallotWithEmptyTransactionVoting(t *testing.T) {
 	// `nodeRunner` is proposer's runner
 	proposer := nr.localNode
 
-	nr.Consensus().SetLatestConsensusedBlock(genesisBlock)
-	latestBlock := nr.Consensus().LatestConfirmedBlock()
+	nr.Consensus().SetLatestBlock(genesisBlock)
+	latestBlock := nr.Consensus().LatestBlock()
 	require.Equal(t, uint64(1), latestBlock.Height)
 	require.Equal(t, uint64(1), latestBlock.TotalTxs)
 
@@ -93,9 +93,9 @@ func TestISAACBallotWithEmptyTransactionVoting(t *testing.T) {
 
 	require.Equal(t, 4, len(rr.Voted[proposer.Address()].GetResult(ballot.StateACCEPT)))
 
-	lastConfirmedBlock := nr.Consensus().LatestConfirmedBlock()
-	require.Equal(t, proposer.Address(), lastConfirmedBlock.Proposer)
-	require.Equal(t, uint64(2), lastConfirmedBlock.Height)
-	require.Equal(t, uint64(1), lastConfirmedBlock.TotalTxs)
-	require.Equal(t, 0, len(lastConfirmedBlock.Transactions))
+	latestBlock = nr.Consensus().LatestBlock()
+	require.Equal(t, proposer.Address(), latestBlock.Proposer)
+	require.Equal(t, uint64(2), latestBlock.Height)
+	require.Equal(t, uint64(1), latestBlock.TotalTxs)
+	require.Equal(t, 0, len(latestBlock.Transactions))
 }

@@ -38,7 +38,7 @@ func TestSelfMode(t *testing.T) {
 
 	<-recv
 	require.Equal(t, ballot.StateALLCONFIRM, nr.isaacStateManager.State().BallotState)
-	require.Equal(t, uint64(2), isaac.LatestConfirmedBlock().Height)
+	require.Equal(t, uint64(2), isaac.LatestBlock().Height)
 
 	<-recv
 	require.Equal(t, ballot.StateINIT, nr.isaacStateManager.State().BallotState)
@@ -51,5 +51,5 @@ func TestSelfMode(t *testing.T) {
 
 	<-recv
 	require.Equal(t, ballot.StateALLCONFIRM, nr.isaacStateManager.State().BallotState)
-	require.Equal(t, uint64(3), isaac.LatestConfirmedBlock().Height)
+	require.Equal(t, uint64(3), isaac.LatestBlock().Height)
 }

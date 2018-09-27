@@ -243,8 +243,8 @@ func TestNodeRunnerTransactionBroadcast(t *testing.T) {
 
 	nodeRunner := nodeRunners[0]
 
-	nodeRunner.Consensus().SetLatestConsensusedBlock(genesisBlock)
-	b := nodeRunner.Consensus().LatestConfirmedBlock()
+	nodeRunner.Consensus().SetLatestBlock(genesisBlock)
+	b := nodeRunner.Consensus().LatestBlock()
 	require.Equal(t, uint64(1), b.Height)
 	require.Equal(t, uint64(1), b.TotalTxs)
 
