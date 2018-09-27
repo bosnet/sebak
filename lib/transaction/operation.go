@@ -69,14 +69,14 @@ func (o Operation) String() string {
 	return string(encoded)
 }
 
-type OperationEnvelop struct {
+type operationEnvelop struct {
 	H OperationHeader
 	B interface{}
 }
 
 func (o *Operation) UnmarshalJSON(b []byte) (err error) {
 	var envelop json.RawMessage
-	oj := OperationEnvelop{
+	oj := operationEnvelop{
 		B: &envelop,
 	}
 	if err = json.Unmarshal(b, &oj); err != nil {

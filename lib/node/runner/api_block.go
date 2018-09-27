@@ -179,7 +179,9 @@ func UnmarshalNodeItemResponse(d []byte) (itemType NodeItemDataType, b interface
 		err = unmarshal(&t)
 		b = t
 	case NodeItemTransaction:
-		b, err = transaction.NewTransactionFromJSON(d[len(sc.Bytes())+1:])
+		var t transaction.Transaction
+		err = unmarshal(&t)
+		b = t
 	case NodeItemError:
 		var t errors.Error
 		err = unmarshal(&t)

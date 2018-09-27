@@ -422,13 +422,13 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 func finishOperation(st *storage.LevelDBBackend, tx transaction.Transaction, op transaction.Operation, log logging.Logger) (err error) {
 	switch op.H.Type {
 	case transaction.OperationCreateAccount:
-		pop, ok := op.B.(transaction.OperationBodyPayable)
+		pop, ok := op.B.(transaction.OperationBodyCreateAccount)
 		if !ok {
 			return errors.ErrorUnknownOperationType
 		}
 		return finishOperationCreateAccount(st, tx, pop, log)
 	case transaction.OperationPayment:
-		pop, ok := op.B.(transaction.OperationBodyPayable)
+		pop, ok := op.B.(transaction.OperationBodyPayment)
 		if !ok {
 			return errors.ErrorUnknownOperationType
 		}
@@ -439,7 +439,7 @@ func finishOperation(st *storage.LevelDBBackend, tx transaction.Transaction, op 
 	}
 }
 
-func finishOperationCreateAccount(st *storage.LevelDBBackend, tx transaction.Transaction, op transaction.OperationBodyPayable, log logging.Logger) (err error) {
+func finishOperationCreateAccount(st *storage.LevelDBBackend, tx transaction.Transaction, op transaction.OperationBodyCreateAccount, log logging.Logger) (err error) {
 
 	var baSource, baTarget *block.BlockAccount
 	if baSource, err = block.GetBlockAccount(st, tx.B.Source); err != nil {
@@ -453,9 +453,10 @@ func finishOperationCreateAccount(st *storage.LevelDBBackend, tx transaction.Tra
 		err = nil
 	}
 
-	baTarget = block.NewBlockAccount(
+	baTarget = block.NewBlockAccountLinked(
 		op.TargetAddress(),
 		op.GetAmount(),
+		op.Linked,
 	)
 	if err = baTarget.Save(st); err != nil {
 		return
@@ -466,7 +467,7 @@ func finishOperationCreateAccount(st *storage.LevelDBBackend, tx transaction.Tra
 	return
 }
 
-func finishOperationPayment(st *storage.LevelDBBackend, tx transaction.Transaction, op transaction.OperationBodyPayable, log logging.Logger) (err error) {
+func finishOperationPayment(st *storage.LevelDBBackend, tx transaction.Transaction, op transaction.OperationBodyPayment, log logging.Logger) (err error) {
 
 	var baSource, baTarget *block.BlockAccount
 	if baSource, err = block.GetBlockAccount(st, tx.B.Source); err != nil {

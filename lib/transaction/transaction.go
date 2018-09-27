@@ -18,17 +18,26 @@ type Transaction struct {
 	B TransactionBody
 }
 
+type transactionEnvelop struct {
+	T string
+	H TransactionHeader
+	B TransactionBody
+}
+
 type TransactionHeader struct {
-	Version   string `json:"version"`
-	Created   string `json:"created"`
-	Hash      string `json:"hash"`
+	Version string `json:"version"`
+	Created string `json:"created"`
+	// Hash of this transaction
+	// This is cached and not serialized when sent, because the remote node
+	// has to validate it anyway.
+	Hash      string `json:"-"`
 	Signature string `json:"signature"`
 }
 
 type TransactionBody struct {
 	Source     string        `json:"source"`
 	Fee        common.Amount `json:"fee"`
-	SequenceID uint64        `json:"sequenceID"`
+	SequenceID uint64        `json:"sequenceid"`
 	Operations []Operation   `json:"operations"`
 }
 
@@ -38,6 +47,19 @@ func (tb TransactionBody) MakeHash() []byte {
 
 func (tb TransactionBody) MakeHashString() string {
 	return base58.Encode(tb.MakeHash())
+}
+
+func (t *Transaction) UnmarshalJSON(b []byte) (err error) {
+	var tj transactionEnvelop
+	if err = json.Unmarshal(b, &tj); err != nil {
+		return
+	}
+
+	t.T = tj.T
+	t.H = tj.H
+	t.B = tj.B
+	t.H.Hash = t.B.MakeHashString()
+	return
 }
 
 func NewTransaction(source string, sequenceID uint64, ops ...Operation) (tx Transaction, err error) {
