@@ -55,9 +55,14 @@ func (c *Consumers) startConsumer(cs Consumer, stop chan chan struct{}) {
 	for {
 		select {
 		case resp := <-cs.Response():
-			c.response <- resp
-		case s := <-stop:
-			close(s)
+			select {
+			case c.response <- resp:
+			case s := <-stop:
+				close(s)
+				return
+			}
+		case c := <-stop:
+			close(c)
 			return
 		}
 	}

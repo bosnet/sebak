@@ -71,9 +71,19 @@ func (p *Processors) startProcessor(proc Processor, stop chan chan struct{}) {
 	for {
 		select {
 		case msg := <-proc.Produce():
-			p.message <- msg
+			select {
+			case p.message <- msg:
+			case c := <-stop:
+				close(c)
+				return
+			}
 		case resp := <-proc.Response():
-			p.procsResponse <- resp
+			select {
+			case p.procsResponse <- resp:
+			case c := <-stop:
+				close(c)
+				return
+			}
 		case c := <-stop:
 			close(c)
 			return

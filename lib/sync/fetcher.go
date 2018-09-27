@@ -28,7 +28,8 @@ type BlockFullFetcher struct {
 	messages chan *Message
 	response <-chan *Response
 
-	stop chan chan struct{}
+	stop   chan chan struct{}
+	cancel chan chan struct{}
 }
 
 type BlockFullFetcherOption = func(f *BlockFullFetcher)
@@ -47,7 +48,8 @@ func NewBlockFullFetcher(nw network.Network, cManager network.ConnectionManager,
 		messages: make(chan *Message),
 		response: make(chan *Response),
 
-		stop: make(chan chan struct{}),
+		stop:   make(chan chan struct{}),
+		cancel: make(chan chan struct{}),
 	}
 
 	for _, o := range opts {
@@ -98,6 +100,9 @@ func (f *BlockFullFetcher) loop() {
 			if resp.Err() != nil {
 				f.fetch(resp.Message())
 			}
+		case c := <-f.cancel:
+			close(c)
+			return
 		case c := <-f.stop:
 			close(c)
 			return
@@ -133,6 +138,7 @@ func (f *BlockFullFetcher) fetch(msg *Message) {
 	defer resp.Body.Close()
 	if err != nil {
 		f.errorResponse(msg, err)
+		return
 	}
 	if resp.StatusCode == http.StatusNotFound {
 		//TODO:
@@ -171,7 +177,11 @@ func (f *BlockFullFetcher) fetch(msg *Message) {
 		msg.Ops = append(msg.Ops, op.(*block.BlockOperation))
 	}
 
-	f.messages <- msg
+	select {
+	case f.messages <- msg:
+	case c := <-f.stop:
+		f.cancel <- c
+	}
 }
 
 func (f *BlockFullFetcher) unmarshalResp(body io.ReadCloser) (map[runner.NodeItemDataType][]interface{}, error) {
@@ -200,8 +210,13 @@ func (f *BlockFullFetcher) pickRandomNode() string {
 }
 
 func (f *BlockFullFetcher) errorResponse(msg *Message, err error) {
-	f.reqresp <- &Response{
+	resp := &Response{
 		err: err,
 		msg: msg,
+	}
+	select {
+	case f.reqresp <- resp:
+	case c := <-f.stop:
+		f.cancel <- c
 	}
 }

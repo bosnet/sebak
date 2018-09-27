@@ -28,6 +28,7 @@ type Manager struct {
 
 	stopLoop chan chan struct{}
 	stopResp chan chan struct{}
+	cancel   chan chan struct{}
 }
 
 func (m *Manager) Run() error {
@@ -71,6 +72,7 @@ func (m *Manager) Produce() <-chan *Message {
 func (m *Manager) loop() {
 	checkc := m.afterFunc(m.checkInterval)
 	syncBlockHeight := m.checkBlockHeight(0)
+	cancel := make(chan struct{})
 	for {
 		select {
 		case <-checkc:
@@ -79,10 +81,22 @@ func (m *Manager) loop() {
 		case resp := <-m.response:
 			go func() {
 				retryc := m.afterFunc(m.retryInterval)
-				<-retryc
-				m.messages <- resp.Message()
+				select {
+				case <-retryc:
+				case <-cancel:
+					return
+				}
+				select {
+				case m.messages <- resp.Message():
+				case <-cancel:
+					return
+				}
 			}()
+		case c := <-m.cancel:
+			close(c)
+			return
 		case c := <-m.stopLoop:
+			close(cancel)
 			close(c)
 			return
 		}
@@ -99,7 +113,11 @@ func (m *Manager) checkBlockHeight(height uint64) uint64 {
 		msg := &Message{
 			BlockHeight: newHeight,
 		}
-		m.messages <- msg
+		select {
+		case m.messages <- msg:
+		case c := <-m.stopLoop:
+			m.cancel <- c
+		}
 		return newHeight
 	}
 	return height

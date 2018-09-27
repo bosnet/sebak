@@ -17,7 +17,8 @@ type BlockValidator struct {
 	messages  <-chan *Message
 	responses chan *Response
 
-	stop chan chan struct{}
+	stop   chan chan struct{}
+	cancel chan chan struct{}
 }
 
 type BlockValidatorOption func(*BlockValidator)
@@ -32,6 +33,7 @@ func NewBlockValidator(nw network.Network, ldb *storage.LevelDBBackend, opts ...
 		messages:  nil,
 		responses: make(chan *Response),
 		stop:      make(chan chan struct{}),
+		cancel:    make(chan chan struct{}),
 	}
 
 	for _, opt := range opts {
@@ -78,6 +80,9 @@ func (v *BlockValidator) loop() {
 			if err := v.save(msg); err != nil {
 				v.errorResponse(msg, fmt.Errorf("storage err:"))
 			}
+		case c := <-v.cancel:
+			close(c)
+			return
 		case c := <-v.stop:
 			close(c)
 			return
@@ -114,8 +119,13 @@ func (v *BlockValidator) save(msg *Message) error {
 }
 
 func (v *BlockValidator) errorResponse(msg *Message, err error) {
-	v.responses <- &Response{
+	resp := &Response{
 		msg: msg,
 		err: err,
+	}
+	select {
+	case v.responses <- resp:
+	case c := <-v.stop:
+		v.cancel <- c
 	}
 }
