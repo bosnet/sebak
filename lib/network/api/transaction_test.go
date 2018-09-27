@@ -5,10 +5,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"io/ioutil"
-	"testing"
-
 	"strings"
 	"sync"
+	"testing"
 
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common/observer"
