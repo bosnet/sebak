@@ -56,7 +56,7 @@ func NewISAACStateManager(nr *NodeRunner, conf *consensus.ISAACConfiguration) *I
 
 func (sm *ISAACStateManager) SetBlockTimeBuffer() {
 	sm.nr.Log().Debug("begin ISAACStateManager.SetBlockTimeBuffer()", "ISAACState", sm.State())
-	b := sm.nr.Consensus().LatestConfirmedBlock()
+	b := sm.nr.Consensus().LatestBlock()
 	ballotProposedTime := getBallotProposedTime(b.Confirmed)
 	sm.blockTimeBuffer = calculateBlockTimeBuffer(
 		sm.Conf.BlockTime,
@@ -207,7 +207,7 @@ func (sm *ISAACStateManager) Start() {
 
 func (sm *ISAACStateManager) broadcastExpiredBallot(state consensus.ISAACState) {
 	sm.nr.Log().Debug("begin broadcastExpiredBallot", "ISAACState", state)
-	b := sm.nr.consensus.LatestConfirmedBlock()
+	b := sm.nr.consensus.LatestBlock()
 	round := round.Round{
 		Number:      state.Round.Number,
 		BlockHeight: b.Height,
@@ -249,7 +249,7 @@ func (sm *ISAACStateManager) proposeOrWait(timer *time.Timer, state consensus.IS
 		if _, err := sm.nr.proposeNewBallot(state.Round.Number); err == nil {
 			log.Debug("propose new ballot", "proposer", proposer, "round", state.Round, "ballotState", ballot.StateSIGN)
 		} else {
-			log.Error("failed to proposeNewBallot", "height", sm.nr.consensus.LatestConfirmedBlock().Height, "error", err)
+			log.Error("failed to proposeNewBallot", "height", sm.nr.consensus.LatestBlock().Height, "error", err)
 		}
 		timer.Reset(sm.Conf.TimeoutINIT)
 	} else {

@@ -17,11 +17,11 @@ import (
 type ISAAC struct {
 	sync.RWMutex
 
-	latestConfirmedBlock block.Block
-	connectionManager    network.ConnectionManager
-	proposerSelector     ProposerSelector
-	log                  logging.Logger
-	policy               ballot.VotingThresholdPolicy
+	latestBlock       block.Block
+	connectionManager network.ConnectionManager
+	proposerSelector  ProposerSelector
+	log               logging.Logger
+	policy            ballot.VotingThresholdPolicy
 
 	NetworkID       []byte
 	Node            *node.LocalNode
@@ -88,10 +88,10 @@ func (is *ISAAC) CloseConsensus(proposer string, round round.Round, vh ballot.Vo
 	return
 }
 
-func (is *ISAAC) SetLatestConsensusedBlock(block block.Block) {
+func (is *ISAAC) SetLatestBlock(block block.Block) {
 	is.Lock()
 	defer is.Unlock()
-	is.latestConfirmedBlock = block
+	is.latestBlock = block
 }
 
 func (is *ISAAC) SetLatestRound(round round.Round) {
@@ -116,15 +116,15 @@ func (is *ISAAC) IsAvailableRound(round round.Round) bool {
 		return true
 	}
 
-	if round.BlockHeight < is.latestConfirmedBlock.Height {
+	if round.BlockHeight < is.latestBlock.Height {
 		return false
-	} else if round.BlockHeight == is.latestConfirmedBlock.Height {
-		if round.BlockHash != is.latestConfirmedBlock.Hash {
+	} else if round.BlockHeight == is.latestBlock.Height {
+		if round.BlockHash != is.latestBlock.Hash {
 			return false
 		}
 	} else {
 		// TODO if incoming round.BlockHeight is bigger than
-		// latestConfirmedBlock.Height and this round confirmed successfully,
+		// latestBlock.Height and this round confirmed successfully,
 		// this node will get into sync state
 	}
 
@@ -219,8 +219,8 @@ func (is *ISAAC) HasSameProposer(b ballot.Ballot) bool {
 	return false
 }
 
-func (is *ISAAC) LatestConfirmedBlock() block.Block {
+func (is *ISAAC) LatestBlock() block.Block {
 	is.RLock()
 	defer is.RUnlock()
-	return is.latestConfirmedBlock
+	return is.latestBlock
 }

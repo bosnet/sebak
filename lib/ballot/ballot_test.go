@@ -73,9 +73,9 @@ func TestBallotHash(t *testing.T) {
 
 	round := round.Round{
 		Number:      0,
-		BlockHeight: nodeRunner.Consensus().LatestConfirmedBlock.Height,
-		BlockHash:   nodeRunner.Consensus().LatestConfirmedBlock.Hash,
-		TotalTxs:    nodeRunner.Consensus().LatestConfirmedBlock.TotalTxs,
+		BlockHeight: nodeRunner.Consensus().LatestBlock.Height,
+		BlockHash:   nodeRunner.Consensus().LatestBlock.Hash,
+		TotalTxs:    nodeRunner.Consensus().LatestBlock.TotalTxs,
 	}
 
 	ballot := NewBallot(nodeRunner.localNode, round, []string{})

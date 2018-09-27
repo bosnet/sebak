@@ -17,7 +17,7 @@ func TestBlockTime(t *testing.T) {
 
 	time.Sleep(sec)
 
-	latestBlock := nr.Consensus().LatestConfirmedBlock()
+	latestBlock := nr.Consensus().LatestBlock()
 	latestHeight := latestBlock.Height
 	blockTimes := make([]time.Time, latestHeight)
 	for i := 0; i < int(latestHeight); i++ {
