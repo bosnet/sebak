@@ -61,6 +61,10 @@ func NewMockProducer() *MockProducer {
 	return p
 }
 
+func (p *MockProducer) Stop() error {
+	return nil
+}
+
 func (p *MockProducer) Produce() <-chan *Message {
 	return p.msgc
 }

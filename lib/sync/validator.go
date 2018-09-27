@@ -40,8 +40,6 @@ func NewBlockValidator(nw network.Network, ldb *storage.LevelDBBackend, opts ...
 		opt(v)
 	}
 
-	go v.loop()
-
 	return v
 }
 
@@ -54,6 +52,7 @@ func (v *BlockValidator) Stop() error {
 
 func (v *BlockValidator) Consume(msg <-chan *Message) error {
 	v.messages = msg
+	go v.loop()
 	return nil
 }
 
@@ -79,6 +78,17 @@ func (v *BlockValidator) loop() {
 			}
 			if err := v.save(msg); err != nil {
 				v.errorResponse(msg, fmt.Errorf("storage err:"))
+			}
+			//OK, return response without err
+			resp := &Response{
+				err: nil,
+				msg: msg,
+			}
+			select {
+			case v.responses <- resp:
+			case c := <-v.stop:
+				close(c)
+				return
 			}
 		case c := <-v.cancel:
 			close(c)
@@ -111,7 +121,7 @@ func (v *BlockValidator) save(msg *Message) error {
 		}
 	}
 
-	blk := msg.Block
+	blk := *msg.Block
 	if err := blk.Save(v.storage); err != nil {
 		return err
 	}
