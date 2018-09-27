@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
@@ -144,4 +145,23 @@ func ParseEndpoint(endpoint string) (u *Endpoint, err error) {
 	u = (*Endpoint)(parsed)
 
 	return
+}
+
+func RequestURLFromRequest(r *http.Request) *url.URL {
+	scheme := "http"
+	if r.TLS != nil {
+		scheme = "https"
+	}
+
+	return &url.URL{
+		Scheme:     scheme,
+		Opaque:     r.URL.Opaque,
+		User:       r.URL.User,
+		Host:       r.Host,
+		Path:       r.URL.Path,
+		RawPath:    r.URL.RawPath,
+		ForceQuery: r.URL.ForceQuery,
+		RawQuery:   r.URL.RawQuery,
+		Fragment:   r.URL.Fragment,
+	}
 }

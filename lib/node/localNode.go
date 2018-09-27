@@ -23,23 +23,24 @@ type LocalNode struct {
 
 	keypair *keypair.Full
 
-	state      State
-	alias      string
-	endpoint   *common.Endpoint
-	validators map[ /* Node.Address() */ string]*Validator
+	state           State
+	alias           string
+	bindEndpoint    *common.Endpoint
+	publishEndpoint *common.Endpoint
+	validators      map[ /* Node.Address() */ string]*Validator
 }
 
-func NewLocalNode(kp *keypair.Full, endpoint *common.Endpoint, alias string) (n *LocalNode, err error) {
+func NewLocalNode(kp *keypair.Full, bindEndpoint *common.Endpoint, alias string) (n *LocalNode, err error) {
 	if len(alias) < 1 {
 		alias = MakeAlias(kp.Address())
 	}
 
 	n = &LocalNode{
-		keypair:    kp,
-		state:      StateNONE,
-		alias:      alias,
-		endpoint:   endpoint,
-		validators: map[string]*Validator{},
+		keypair:      kp,
+		state:        StateNONE,
+		alias:        alias,
+		bindEndpoint: bindEndpoint,
+		validators:   map[string]*Validator{},
 	}
 
 	return
@@ -90,7 +91,19 @@ func (n *LocalNode) Alias() string {
 }
 
 func (n *LocalNode) Endpoint() *common.Endpoint {
-	return n.endpoint
+	return n.bindEndpoint
+}
+
+func (n *LocalNode) BindEndpoint() *common.Endpoint {
+	return n.bindEndpoint
+}
+
+func (n *LocalNode) PublishEndpoint() *common.Endpoint {
+	return n.publishEndpoint
+}
+
+func (n *LocalNode) SetPublishEndpoint(endpoint *common.Endpoint) {
+	n.publishEndpoint = endpoint
 }
 
 func (n *LocalNode) HasValidators(address string) bool {

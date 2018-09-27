@@ -2,6 +2,7 @@ package runner
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -13,20 +14,33 @@ import (
 	"boscoin.io/sebak/lib/storage"
 )
 
+const (
+	NodeInfoHandlerPattern string = "/"
+	ConnectHandlerPattern  string = "/connect"
+	MessageHandlerPattern  string = "/message"
+	BallotHandlerPattern   string = "/ballot"
+)
+
 type NetworkHandlerNode struct {
 	localNode *node.LocalNode
 	network   network.Network
 	storage   *storage.LevelDBBackend
 	consensus *consensus.ISAAC
+	urlPrefix string
 }
 
-func NewNetworkHandlerNode(localNode *node.LocalNode, network network.Network, storage *storage.LevelDBBackend, consensus *consensus.ISAAC) *NetworkHandlerNode {
+func NewNetworkHandlerNode(localNode *node.LocalNode, network network.Network, storage *storage.LevelDBBackend, consensus *consensus.ISAAC, urlPrefix string) *NetworkHandlerNode {
 	return &NetworkHandlerNode{
 		localNode: localNode,
 		network:   network,
 		storage:   storage,
 		consensus: consensus,
+		urlPrefix: urlPrefix,
 	}
+}
+
+func (api NetworkHandlerNode) HandlerURLPattern(pattern string) string {
+	return fmt.Sprintf("%s%s", api.urlPrefix, pattern)
 }
 
 func (api NetworkHandlerNode) renderNodeItem(w http.ResponseWriter, itemType NodeItemDataType, o interface{}) {
@@ -44,17 +58,16 @@ func (api NetworkHandlerNode) writeNodeItem(w http.ResponseWriter, itemType Node
 }
 
 func (api NetworkHandlerNode) NodeInfoHandler(w http.ResponseWriter, r *http.Request) {
-	o, _ := api.localNode.Serialize()
-	api.network.MessageBroker().Response(w, o)
+	b, err := NodeInfoWithRequest(api.localNode, r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	api.network.MessageBroker().Response(w, b)
 }
 
 func (api NetworkHandlerNode) ConnectHandler(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
-
-	if r.Method != "POST" {
-		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
-		return
-	}
 
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -63,18 +76,18 @@ func (api NetworkHandlerNode) ConnectHandler(w http.ResponseWriter, r *http.Requ
 	}
 
 	api.network.MessageBroker().Receive(common.NetworkMessage{Type: common.ConnectMessage, Data: body})
-	o, _ := api.localNode.Serialize()
-	api.network.MessageBroker().Response(w, o)
+
+	b, err := NodeInfoWithRequest(api.localNode, r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	api.network.MessageBroker().Response(w, b)
 }
 
 func (api NetworkHandlerNode) MessageHandler(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
-	if r.Method != "POST" {
-		// TODO use http-problem spec
-		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
-		return
-	}
 	if ct := r.Header.Get("Content-Type"); strings.ToLower(ct) != "application/json" {
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
@@ -83,6 +96,7 @@ func (api NetworkHandlerNode) MessageHandler(w http.ResponseWriter, r *http.Requ
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Error reading request body", http.StatusInternalServerError)
+		return
 	}
 
 	api.network.MessageBroker().Receive(common.NetworkMessage{Type: common.TransactionMessage, Data: body})
@@ -90,10 +104,8 @@ func (api NetworkHandlerNode) MessageHandler(w http.ResponseWriter, r *http.Requ
 }
 
 func (api NetworkHandlerNode) BallotHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
-		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
-		return
-	}
+	defer r.Body.Close()
+
 	if ct := r.Header.Get("Content-Type"); strings.ToLower(ct) != "application/json" {
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
@@ -102,10 +114,34 @@ func (api NetworkHandlerNode) BallotHandler(w http.ResponseWriter, r *http.Reque
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Error reading request body", http.StatusInternalServerError)
+		return
 	}
 
 	api.network.MessageBroker().Receive(common.NetworkMessage{Type: common.BallotMessage, Data: body})
 	api.network.MessageBroker().Response(w, body)
 
+	return
+}
+
+func NodeInfoWithRequest(localNode *node.LocalNode, r *http.Request) (b []byte, err error) {
+	var endpoint string
+	if localNode.PublishEndpoint() != nil {
+		endpoint = localNode.PublishEndpoint().String()
+	} else {
+		rUrl := common.RequestURLFromRequest(r)
+		rUrl.Path = ""
+		rUrl.RawQuery = ""
+		endpoint = rUrl.String()
+	}
+
+	info := map[string]interface{}{
+		"address":    localNode.Address(),
+		"alias":      localNode.Alias(),
+		"endpoint":   endpoint,
+		"state":      localNode.State().String(),
+		"validators": localNode.GetValidators(),
+	}
+
+	b, err = json.Marshal(info)
 	return
 }
