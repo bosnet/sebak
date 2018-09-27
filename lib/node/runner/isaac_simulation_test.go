@@ -33,7 +33,7 @@ func TestISAACSimulationProposer(t *testing.T) {
 	// `nr` is proposer's runner
 	proposer := nr.localNode
 
-	nr.Consensus().SetLatestConsensusedBlock(genesisBlock)
+	nr.Consensus().SetLatestConfirmedBlock(genesisBlock)
 
 	var err error
 	err = nr.handleTransaction(message)

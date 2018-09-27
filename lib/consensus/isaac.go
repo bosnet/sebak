@@ -88,7 +88,7 @@ func (is *ISAAC) CloseConsensus(proposer string, round round.Round, vh ballot.Vo
 	return
 }
 
-func (is *ISAAC) SetLatestConsensusedBlock(block block.Block) {
+func (is *ISAAC) SetLatestConfirmedBlock(block block.Block) {
 	is.Lock()
 	defer is.Unlock()
 	is.latestConfirmedBlock = block

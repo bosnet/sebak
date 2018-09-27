@@ -335,7 +335,7 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) (err error) {
 			return
 		}
 
-		checker.NodeRunner.Consensus().SetLatestConsensusedBlock(theBlock)
+		checker.NodeRunner.Consensus().SetLatestConfirmedBlock(theBlock)
 		checker.Log.Debug("ballot was stored", "block", theBlock)
 		checker.NodeRunner.TransitISAACState(checker.Ballot.Round(), ballot.StateALLCONFIRM)
 

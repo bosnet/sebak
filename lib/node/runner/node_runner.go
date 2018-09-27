@@ -409,7 +409,7 @@ func (nr *NodeRunner) InitRound() {
 		panic(err)
 	}
 
-	nr.consensus.SetLatestConsensusedBlock(latestBlock)
+	nr.consensus.SetLatestConfirmedBlock(latestBlock)
 	nr.consensus.SetLatestRound(round.Round{})
 
 	ticker := time.NewTicker(time.Millisecond * 5)

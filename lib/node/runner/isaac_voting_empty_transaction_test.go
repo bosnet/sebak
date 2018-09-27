@@ -35,7 +35,7 @@ func TestISAACBallotWithEmptyTransactionVoting(t *testing.T) {
 	// `nodeRunner` is proposer's runner
 	proposer := nr.localNode
 
-	nr.Consensus().SetLatestConsensusedBlock(genesisBlock)
+	nr.Consensus().SetLatestConfirmedBlock(genesisBlock)
 	latestBlock := nr.Consensus().LatestConfirmedBlock()
 	require.Equal(t, uint64(1), latestBlock.Height)
 	require.Equal(t, uint64(1), latestBlock.TotalTxs)
