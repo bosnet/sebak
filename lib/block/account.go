@@ -6,7 +6,6 @@ import (
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/common/observer"
-	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/storage"
 )
 
@@ -60,11 +59,6 @@ func (b *BlockAccount) Save(st *storage.LevelDBBackend) (err error) {
 	if exists {
 		err = st.Set(key, b)
 	} else {
-		if b.Balance < common.BaseReserve {
-			err = errors.ErrorInsufficientAmountNewAccount
-			return
-		}
-
 		err = st.New(key, b)
 		createdKey := GetBlockAccountCreatedKey(common.GetUniqueIDFromUUID())
 		err = st.New(createdKey, b.Address)
