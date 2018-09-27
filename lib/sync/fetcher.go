@@ -3,6 +3,7 @@ package sync
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"math/rand"
@@ -12,6 +13,7 @@ import (
 
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/network"
+	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/node/runner"
 )
 
@@ -114,12 +116,13 @@ func (f *BlockFullFetcher) loop() {
 func (f *BlockFullFetcher) fetch(msg *Message) {
 	//TODO: fetch block using block node api
 	bh := msg.BlockHeight
-	addr := f.pickRandomNode()
-	apiURL, err := url.Parse(addr)
-	if err != nil {
-		f.errorResponse(msg, err)
+	n := f.pickRandomNode()
+	if n == nil {
+		f.errorResponse(msg, errors.New("node not found "))
 		return
 	}
+	ep := n.Endpoint()
+	apiURL := url.URL(*ep)
 	apiURL.Path = runner.GetBlocksPattern
 	apiURL.Query().Set("height-range", fmt.Sprintf("%d-%d", bh, bh+1))
 	apiURL.Query().Set("mode", "full")
@@ -153,28 +156,25 @@ func (f *BlockFullFetcher) fetch(msg *Message) {
 		return
 	}
 
-	blk, ok := items[runner.NodeItemBlock]
-	if !ok || len(blk) <= 0 {
+	blocks, ok := items[runner.NodeItemBlock]
+	if !ok || len(blocks) <= 0 {
 		f.errorResponse(msg, err)
 		return
 	}
+	//TODO(anarcher): check items
 	txs, ok := items[runner.NodeItemBlockTransaction]
-	if !ok {
-		f.errorResponse(msg, err)
-		return
-	}
 	ops, ok := items[runner.NodeItemBlockOperation]
-	if !ok {
-		f.errorResponse(msg, err)
-		return
-	}
 
-	msg.Block = blk[0].(*block.Block)
+	blk := blocks[0].(block.Block)
+	msg.Block = &blk
+
 	for _, tx := range txs {
-		msg.Txs = append(msg.Txs, tx.(*block.BlockTransaction))
+		bt := tx.(block.BlockTransaction)
+		msg.Txs = append(msg.Txs, &bt)
 	}
 	for _, op := range ops {
-		msg.Ops = append(msg.Ops, op.(*block.BlockOperation))
+		op := op.(block.BlockOperation)
+		msg.Ops = append(msg.Ops, &op)
 	}
 
 	select {
@@ -203,10 +203,11 @@ func (f *BlockFullFetcher) unmarshalResp(body io.ReadCloser) (map[runner.NodeIte
 }
 
 // pickRandomNode choose one node by random. It is very protype for choosing fetching which node
-func (f *BlockFullFetcher) pickRandomNode() string {
+func (f *BlockFullFetcher) pickRandomNode() node.Node {
 	ac := f.connectionManager.AllConnected()
 	idx := rand.Intn(len(ac))
-	return ac[idx]
+	node := f.connectionManager.GetNode(ac[idx])
+	return node
 }
 
 func (f *BlockFullFetcher) errorResponse(msg *Message, err error) {

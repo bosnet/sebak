@@ -95,6 +95,7 @@ func (b Builder) Manager() *Manager {
 		storage:  b.storage,
 		stopLoop: make(chan chan struct{}),
 		stopResp: make(chan chan struct{}),
+		cancel:   make(chan chan struct{}),
 	}
 
 	Pipeline(m, fetcher)
