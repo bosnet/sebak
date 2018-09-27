@@ -108,7 +108,7 @@ func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, n *network.HTTP2Netw
 	// Make the latest block
 	{
 		address := kp.Address()
-		balance := common.BaseFee.MustAdd(common.BaseFee)
+		balance := common.BaseFee.MustAdd(common.BaseReserve)
 		account := block.NewBlockAccount(address, balance)
 		account.Save(st)
 		block.MakeGenesisBlock(st, *account)

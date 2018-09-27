@@ -49,7 +49,7 @@ func MakeNodeRunner() (*NodeRunner, *node.LocalNode) {
 }
 
 func GetTransaction(t *testing.T) (tx transaction.Transaction, txByte []byte) {
-	initialBalance := common.Amount(1)
+	initialBalance := common.Amount(common.BaseReserve)
 	kpNewAccount, _ := keypair.Random()
 
 	tx = transaction.MakeTransactionCreateAccount(kp, kpNewAccount.Address(), initialBalance)
@@ -126,7 +126,7 @@ func createNodeRunnerForTesting(n int, conf *consensus.ISAACConfiguration, recv 
 	}
 
 	address := kp.Address()
-	balance := common.BaseFee.MustAdd(1)
+	balance := common.BaseFee.MustAdd(common.BaseReserve)
 	account = block.NewBlockAccount(address, balance)
 
 	localNode := nodes[0]

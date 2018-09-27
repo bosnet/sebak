@@ -53,7 +53,7 @@ func createTestNodeRunner(n int, conf *consensus.ISAACConfiguration) []*NodeRunn
 	}
 
 	address := kp.Address()
-	balance := common.BaseFee.MustAdd(1)
+	balance := common.BaseFee.MustAdd(common.BaseReserve)
 	account = block.NewBlockAccount(address, balance)
 	var nodeRunners []*NodeRunner
 	for i := 0; i < n; i++ {

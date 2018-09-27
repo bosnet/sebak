@@ -6,6 +6,10 @@ const (
 	// BaseFee is the default transaction fee, if fee is lower than BaseFee, the
 	// transaction will fail validation.
 	BaseFee Amount = 10000
+
+	// BaseReserve is minimum amount of balance for new account. By default, it
+	// is `0.1` BOS.
+	BaseReserve Amount = 1000000
 )
 
 var (
