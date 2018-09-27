@@ -23,6 +23,7 @@ import (
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/node/runner"
 	"boscoin.io/sebak/lib/storage"
+	"boscoin.io/sebak/lib/sync"
 )
 
 const (
@@ -390,6 +391,17 @@ func runNode() error {
 			return nil
 		}, func(error) {
 			nr.Stop()
+		})
+	}
+	{
+		builder := sync.NewBuilder(st, nt, connectionManager)
+		//TODO(anarcher): Setting sync
+		syncer := builder.Manager()
+
+		g.Add(func() error {
+			return syncer.Run()
+		}, func(error) {
+			syncer.Stop()
 		})
 	}
 	{
