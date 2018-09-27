@@ -6,6 +6,7 @@ import (
 
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/storage"
+	"github.com/inconshreveable/log15"
 )
 
 type BlockValidator struct {
@@ -19,6 +20,8 @@ type BlockValidator struct {
 
 	stop   chan chan struct{}
 	cancel chan chan struct{}
+
+	logger log15.Logger
 }
 
 type BlockValidatorOption func(*BlockValidator)
@@ -34,6 +37,8 @@ func NewBlockValidator(nw network.Network, ldb *storage.LevelDBBackend, opts ...
 		responses: make(chan *Response),
 		stop:      make(chan chan struct{}),
 		cancel:    make(chan chan struct{}),
+
+		logger: NopLogger(),
 	}
 
 	for _, opt := range opts {

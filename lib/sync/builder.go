@@ -4,7 +4,10 @@ import (
 	"time"
 
 	"boscoin.io/sebak/lib/network"
+	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/storage"
+
+	"github.com/inconshreveable/log15"
 )
 
 const (
@@ -24,12 +27,15 @@ type Builder struct {
 	RetryInterval            time.Duration
 	CheckBlockHeightInterval time.Duration
 
+	localNode         *node.LocalNode
 	network           network.Network
 	connectionManager network.ConnectionManager
 	storage           *storage.LevelDBBackend
+
+	logger log15.Logger
 }
 
-func NewBuilder(ldb *storage.LevelDBBackend, network network.Network, connectionManager network.ConnectionManager) Builder {
+func NewBuilder(localNode *node.LocalNode, ldb *storage.LevelDBBackend, network network.Network, connectionManager network.ConnectionManager) Builder {
 	return Builder{
 		MaxFetcher:               MaxFetcher,
 		MaxValidator:             MaxValidator,
@@ -41,6 +47,8 @@ func NewBuilder(ldb *storage.LevelDBBackend, network network.Network, connection
 		network:           network,
 		connectionManager: connectionManager,
 		storage:           ldb,
+
+		logger: log.New(log15.Ctx{"node": localNode.Alias()}),
 	}
 }
 
@@ -50,6 +58,7 @@ func (b Builder) BlockFullFetchers() []Fetcher {
 	for i := 0; i < b.MaxFetcher; i++ {
 		fs = append(fs, NewBlockFullFetcher(b.network, b.connectionManager, func(f *BlockFullFetcher) {
 			f.fetchTimeout = b.FetchTimeout
+			f.logger = b.logger.New(log15.Ctx{"component": "fetcher"})
 		}))
 	}
 
@@ -62,6 +71,7 @@ func (b Builder) BlockValidators() []Validator {
 	for i := 0; i < b.MaxValidator; i++ {
 		vs = append(vs, NewBlockValidator(b.network, b.storage, func(v *BlockValidator) {
 			v.validationTimeout = b.ValidationTimeout
+			v.logger = b.logger.New(log15.Ctx{"component": "validator"})
 		}))
 	}
 
@@ -96,6 +106,8 @@ func (b Builder) Manager() *Manager {
 		stopLoop: make(chan chan struct{}),
 		stopResp: make(chan chan struct{}),
 		cancel:   make(chan chan struct{}),
+
+		logger: b.logger.New(log15.Ctx{"component": "manager"}),
 	}
 
 	Pipeline(m, fetcher)

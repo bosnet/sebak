@@ -15,6 +15,8 @@ import (
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/node/runner"
+
+	"github.com/inconshreveable/log15"
 )
 
 type BlockFullFetcher struct {
@@ -32,6 +34,8 @@ type BlockFullFetcher struct {
 
 	stop   chan chan struct{}
 	cancel chan chan struct{}
+
+	logger log15.Logger
 }
 
 type BlockFullFetcherOption = func(f *BlockFullFetcher)
@@ -52,6 +56,8 @@ func NewBlockFullFetcher(nw network.Network, cManager network.ConnectionManager,
 
 		stop:   make(chan chan struct{}),
 		cancel: make(chan chan struct{}),
+
+		logger: NopLogger(),
 	}
 
 	for _, o := range opts {

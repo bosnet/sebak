@@ -5,6 +5,8 @@ import (
 
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/storage"
+
+	"github.com/inconshreveable/log15"
 )
 
 var _ Producer = (*Manager)(nil)
@@ -29,6 +31,8 @@ type Manager struct {
 	stopLoop chan chan struct{}
 	stopResp chan chan struct{}
 	cancel   chan chan struct{}
+
+	logger log15.Logger
 }
 
 func (m *Manager) Run() error {
@@ -47,6 +51,7 @@ func (m *Manager) Stop() error {
 		m.stopLoop <- c
 		<-c
 	}
+	m.logger.Info("Stopped")
 	return nil
 }
 
@@ -79,7 +84,13 @@ func (m *Manager) loop() {
 			syncBlockHeight = m.checkBlockHeight(syncBlockHeight)
 			checkc = m.afterFunc(m.checkInterval)
 		case resp := <-m.response:
+			if resp.Err() == nil {
+				continue
+			}
 			go func() {
+				msg := resp.Message()
+				m.logger.Info("Retry response", "height", msg.BlockHeight)
+
 				retryc := m.afterFunc(m.retryInterval)
 				select {
 				case <-retryc:
@@ -113,6 +124,7 @@ func (m *Manager) checkBlockHeight(height uint64) uint64 {
 		msg := &Message{
 			BlockHeight: newHeight,
 		}
+		m.logger.Info("Starting sync", "height", newHeight)
 		select {
 		case m.messages <- msg:
 		case c := <-m.stopLoop:
@@ -120,5 +132,6 @@ func (m *Manager) checkBlockHeight(height uint64) uint64 {
 		}
 		return newHeight
 	}
+	m.logger.Info("Current sync", "height", height)
 	return height
 }

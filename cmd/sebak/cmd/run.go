@@ -271,6 +271,7 @@ func parseFlagsNode() {
 	runner.SetLogging(logLevel, logHandler)
 	consensus.SetLogging(logLevel, logHandler)
 	network.SetLogging(logLevel, logHandler)
+	sync.SetLogging(logLevel, logHandler)
 
 	log.Info("Starting Sebak")
 
@@ -394,7 +395,7 @@ func runNode() error {
 		})
 	}
 	{
-		builder := sync.NewBuilder(st, nt, connectionManager)
+		builder := sync.NewBuilder(localNode, st, nt, connectionManager)
 		//TODO(anarcher): Setting sync
 		syncer := builder.Manager()
 

@@ -31,6 +31,8 @@ func TestManager(t *testing.T) {
 
 		stopLoop: make(chan chan struct{}),
 		stopResp: make(chan chan struct{}),
+
+		logger: NopLogger(),
 	}
 	defer m.Stop()
 
