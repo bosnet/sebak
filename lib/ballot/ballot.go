@@ -10,7 +10,6 @@ import (
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/consensus/round"
 	"boscoin.io/sebak/lib/error"
-	"boscoin.io/sebak/lib/node"
 )
 
 type Ballot struct {
@@ -18,11 +17,11 @@ type Ballot struct {
 	B BallotBody
 }
 
-func NewBallot(localNode *node.LocalNode, round round.Round, transactions []string) (b *Ballot) {
+func NewBallot(fromAddress string, round round.Round, transactions []string) (b *Ballot) {
 	body := BallotBody{
-		Source: localNode.Address(),
+		Source: fromAddress,
 		Proposed: BallotBodyProposed{
-			Proposer:     localNode.Address(),
+			Proposer:     fromAddress,
 			Round:        round,
 			Transactions: transactions,
 		},
