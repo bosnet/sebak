@@ -104,7 +104,7 @@ func MakeGenesisBlock(st *storage.LevelDBBackend, account BlockAccount, networdI
 	}
 
 	raw, _ := tx.Serialize()
-	bt := NewBlockTransactionFromTransaction(blk.Hash, blk.Height, tx, raw)
+	bt := NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.Confirmed, tx, raw)
 	if err = bt.Save(st); err != nil {
 		return
 	}
