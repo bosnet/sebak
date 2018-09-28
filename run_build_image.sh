@@ -2,7 +2,7 @@
 
 set -xe
 cd -- `dirname ${BASH_SOURCE[0]}`
-ROOT_DIR="../.."
+ROOT_DIR="."
 NODE_NAME="SEBAKNODE"
 IMAGE_TAG="sebak:test"
 
