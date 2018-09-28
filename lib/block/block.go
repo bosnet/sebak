@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/btcsuite/btcutil/base58"
-	logging "github.com/inconshreveable/log15"
 
 	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/common"
@@ -125,7 +124,7 @@ func NewBlock(proposer string, round round.Round, transactions []string, confirm
 	return *b
 }
 
-func NewBlockFromBallot(b ballot.Ballot, log logging.Logger) Block {
+func NewBlockFromBallot(b ballot.Ballot) Block {
 	return NewBlock(
 		b.Proposer(),
 		b.Round(),
