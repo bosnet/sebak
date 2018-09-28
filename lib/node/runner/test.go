@@ -41,7 +41,7 @@ func MakeNodeRunner() (*NodeRunner, *node.LocalNode) {
 		localNode.GetValidators(),
 	)
 
-	is, _ := consensus.NewISAAC(networkID, localNode, policy, connectionManager)
+	is, _ := consensus.NewISAAC(networkID, localNode, policy, connectionManager, false)
 	st := storage.NewTestStorage()
 	conf := consensus.NewISAACConfiguration()
 	nodeRunner, _ := NewNodeRunner(string(networkID), localNode, policy, n, is, st, conf)
@@ -140,7 +140,7 @@ func createNodeRunnerForTesting(n int, conf *consensus.ISAACConfiguration, recv 
 		recv,
 	)
 
-	is, _ := consensus.NewISAAC(networkID, localNode, policy, connectionManager)
+	is, _ := consensus.NewISAAC(networkID, localNode, policy, connectionManager, false)
 	is.SetProposerSelector(SelfSelector{connectionManager})
 	st := storage.NewTestStorage()
 
@@ -154,4 +154,39 @@ func createNodeRunnerForTesting(n int, conf *consensus.ISAACConfiguration, recv 
 	nr.isaacStateManager.blockTimeBuffer = 0
 
 	return nr, nodes, connectionManager
+}
+
+func createSelfModeNodeRunner(conf *consensus.ISAACConfiguration, recv chan struct{}) (*NodeRunner, *TestConnectionManager) {
+	var net *network.MemoryNetwork
+	_, s, v := network.CreateMemoryNetwork(net)
+
+	address := kp.Address()
+	balance := common.BaseFee.MustAdd(1)
+	account = block.NewBlockAccount(address, balance)
+
+	localNode := v
+	policy, _ := consensus.NewDefaultVotingThresholdPolicy(66, 66)
+
+	connectionManager := NewTestConnectionManager(
+		localNode,
+		s,
+		policy,
+		localNode.GetValidators(),
+		recv,
+	)
+
+	is, _ := consensus.NewISAAC(networkID, localNode, policy, connectionManager, true)
+	is.SetProposerSelector(SelfSelector{connectionManager})
+	st := storage.NewTestStorage()
+
+	account.Save(st)
+	genesisBlock = block.MakeGenesisBlock(st, *account)
+
+	nr, err := NewNodeRunner(string(networkID), localNode, policy, s, is, st, conf)
+	if err != nil {
+		panic(err)
+	}
+	nr.isaacStateManager.blockTimeBuffer = 0
+
+	return nr, connectionManager
 }

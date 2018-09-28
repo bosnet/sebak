@@ -45,6 +45,7 @@ func (p *HelperTestGetNodeTransactionsHandler) Prepare() {
 		localNode,
 		nil,
 		network.NewValidatorConnectionManager(localNode, nil, nil, nil),
+		false,
 	)
 	p.consensus = isaac
 	apiHandler := NetworkHandlerNode{storage: p.st, consensus: isaac}
