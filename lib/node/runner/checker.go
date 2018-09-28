@@ -329,6 +329,7 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) (err error) {
 			checker.Ballot,
 			checker.NodeRunner.Consensus().TransactionPool,
 			checker.Log,
+			checker.NodeRunner.Log(),
 		)
 		if err != nil {
 			return
@@ -353,7 +354,7 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) (err error) {
 	return
 }
 
-func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *transaction.TransactionPool, log logging.Logger) (blk block.Block, err error) {
+func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *transaction.TransactionPool, log, infoLog logging.Logger) (blk block.Block, err error) {
 	var ts *storage.LevelDBBackend
 	if ts, err = st.OpenTransaction(); err != nil {
 		return
@@ -370,8 +371,14 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 	}
 
 	blk = block.NewBlockFromBallot(b)
-	log.Info("NewBlock created", "height", blk.Height, "block", blk)
-
+	log.Debug("NewBlock created", "block", blk)
+	infoLog.Info("NewBlock created",
+		"height", blk.Height,
+		"round", blk.Round.Number,
+		"timestamp", blk.Header.Timestamp,
+		"total-txs", blk.Round.TotalTxs,
+		"proposer", blk.Proposer,
+	)
 	if err = blk.Save(ts); err != nil {
 		return
 	}
