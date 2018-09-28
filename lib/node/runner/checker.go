@@ -369,7 +369,7 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 		transactions[hash] = tx
 	}
 
-	blk = block.NewBlockFromBallot(b, log)
+	blk = block.NewBlockFromBallot(b)
 	log.Info("NewBlock created", "height", blk.Height, "block", blk)
 
 	if err = blk.Save(ts); err != nil {
