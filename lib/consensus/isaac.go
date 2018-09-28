@@ -26,7 +26,7 @@ type ISAAC struct {
 	NetworkID       []byte
 	Node            *node.LocalNode
 	TransactionPool *transaction.TransactionPool
-	RunningRounds   map[ /* Round.Hash() */ string]*RunningRound
+	RunningRounds   map[ /* Round.BlockHeight */ uint64]*RunningRound
 	LatestRound     round.Round
 }
 
@@ -40,7 +40,7 @@ func NewISAAC(networkID []byte, node *node.LocalNode, p ballot.VotingThresholdPo
 		Node:              node,
 		policy:            p,
 		TransactionPool:   transaction.NewTransactionPool(),
-		RunningRounds:     map[string]*RunningRound{},
+		RunningRounds:     map[uint64]*RunningRound{},
 		connectionManager: cm,
 		proposerSelector:  SequentialSelector{cm},
 		log:               log.New(logging.Ctx{"node": node.Alias()}),
@@ -60,8 +60,7 @@ func (is *ISAAC) CloseConsensus(proposer string, round round.Round, vh ballot.Vo
 		return
 	}
 
-	roundHash := round.Hash()
-	rr, found := is.RunningRounds[roundHash]
+	rr, found := is.RunningRounds[round.BlockHeight]
 	if !found {
 		return
 	}
@@ -75,7 +74,7 @@ func (is *ISAAC) CloseConsensus(proposer string, round round.Round, vh ballot.Vo
 
 	is.TransactionPool.Remove(rr.Transactions[proposer]...)
 
-	delete(is.RunningRounds, roundHash)
+	delete(is.RunningRounds, round.BlockHeight)
 
 	// remove all the same rounds
 	for hash, runningRound := range is.RunningRounds {
@@ -143,7 +142,7 @@ func (is *ISAAC) IsVoted(b ballot.Ballot) bool {
 	var found bool
 
 	var runningRound *RunningRound
-	if runningRound, found = is.RunningRounds[b.Round().Hash()]; !found {
+	if runningRound, found = is.RunningRounds[b.Round().BlockHeight]; !found {
 		return false
 	}
 
@@ -153,11 +152,11 @@ func (is *ISAAC) IsVoted(b ballot.Ballot) bool {
 func (is *ISAAC) Vote(b ballot.Ballot) (isNew bool, err error) {
 	is.RLock()
 	defer is.RUnlock()
-	roundHash := b.Round().Hash()
+	blockHeight := b.Round().BlockHeight
 
 	var found bool
 	var runningRound *RunningRound
-	if runningRound, found = is.RunningRounds[roundHash]; !found {
+	if runningRound, found = is.RunningRounds[blockHeight]; !found {
 		proposer := is.SelectProposer(
 			b.Round().BlockHeight,
 			b.Round().Number,
@@ -167,7 +166,7 @@ func (is *ISAAC) Vote(b ballot.Ballot) (isNew bool, err error) {
 			return true, err
 		}
 
-		is.RunningRounds[roundHash] = runningRound
+		is.RunningRounds[blockHeight] = runningRound
 		isNew = true
 	} else {
 		if _, found = runningRound.Voted[b.Proposer()]; !found {
@@ -183,7 +182,7 @@ func (is *ISAAC) Vote(b ballot.Ballot) (isNew bool, err error) {
 func (is *ISAAC) CanGetVotingResult(b ballot.Ballot) (RoundVoteResult, ballot.VotingHole, bool) {
 	is.RLock()
 	defer is.RUnlock()
-	runningRound, _ := is.RunningRounds[b.Round().Hash()]
+	runningRound, _ := is.RunningRounds[b.Round().BlockHeight]
 	if roundVote, err := runningRound.RoundVote(b.Proposer()); err == nil {
 		return roundVote.CanGetVotingResult(is.policy, b.State(), is.log)
 	} else {
@@ -194,7 +193,7 @@ func (is *ISAAC) CanGetVotingResult(b ballot.Ballot) (RoundVoteResult, ballot.Vo
 func (is *ISAAC) IsVotedByNode(b ballot.Ballot, node string) (bool, error) {
 	is.RLock()
 	defer is.RUnlock()
-	runningRound, _ := is.RunningRounds[b.Round().Hash()]
+	runningRound, _ := is.RunningRounds[b.Round().BlockHeight]
 	if roundVote, err := runningRound.RoundVote(b.Proposer()); err == nil {
 		return roundVote.IsVotedByNode(b.State(), node), nil
 	} else {
@@ -202,31 +201,31 @@ func (is *ISAAC) IsVotedByNode(b ballot.Ballot, node string) (bool, error) {
 	}
 }
 
-func (is *ISAAC) HasRunningRound(roundHash string) bool {
+func (is *ISAAC) HasRunningRound(blockHeight uint64) bool {
 	is.RLock()
 	defer is.RUnlock()
-	_, found := is.RunningRounds[roundHash]
+	_, found := is.RunningRounds[blockHeight]
 	return found
 }
 
 func (is *ISAAC) HasSameProposer(b ballot.Ballot) bool {
 	is.RLock()
 	defer is.RUnlock()
-	if runningRound, found := is.RunningRounds[b.Round().Hash()]; found {
+	if runningRound, found := is.RunningRounds[b.Round().BlockHeight]; found {
 		return runningRound.Proposer == b.Proposer()
 	}
 
 	return false
 }
 
-func (is *ISAAC) AddRunningRound(roundHash string, theBallot ballot.Ballot) error {
+func (is *ISAAC) AddRunningRound(blockHeight uint64, theBallot ballot.Ballot) error {
 	is.Lock()
 	defer is.Unlock()
 	runningRound, err := NewRunningRound(is.Node.Address(), theBallot)
 	if err != nil {
 		return err
 	}
-	is.RunningRounds[roundHash] = runningRound
+	is.RunningRounds[blockHeight] = runningRound
 	log.Debug("ballot broadcasted and voted", "runningRound", runningRound)
 
 	return err

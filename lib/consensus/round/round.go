@@ -1,10 +1,6 @@
 package round
 
-import (
-	"github.com/btcsuite/btcutil/base58"
-
-	"boscoin.io/sebak/lib/common"
-)
+import "strconv"
 
 type Round struct {
 	Number      uint64 `json:"number"`       // round sequence number
@@ -14,5 +10,6 @@ type Round struct {
 }
 
 func (r Round) Hash() string {
-	return base58.Encode(common.MustMakeObjectHash(r))
+	// return base58.Encode(common.MustMakeObjectHash(r))
+	return strconv.FormatUint(r.BlockHeight, 10)
 }

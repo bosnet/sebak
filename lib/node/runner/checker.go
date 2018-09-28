@@ -143,7 +143,7 @@ func BallotIsSameProposer(c common.Checker, args ...interface{}) (err error) {
 		return
 	}
 
-	if !checker.NodeRunner.Consensus().HasRunningRound(checker.Ballot.Round().Hash()) {
+	if !checker.NodeRunner.Consensus().HasRunningRound(checker.Ballot.Round().BlockHeight) {
 		err = errors.New("`RunningRound` not found")
 		return
 	}
@@ -254,7 +254,7 @@ func SIGNBallotBroadcast(c common.Checker, args ...interface{}) (err error) {
 	newBallot.SetVote(ballot.StateSIGN, checker.VotingHole)
 	newBallot.Sign(checker.LocalNode.Keypair(), checker.NetworkID)
 
-	if !checker.NodeRunner.Consensus().HasRunningRound(checker.Ballot.Round().Hash()) {
+	if !checker.NodeRunner.Consensus().HasRunningRound(checker.Ballot.Round().BlockHeight) {
 		err = errors.New("RunningRound not found")
 		return
 
@@ -295,7 +295,7 @@ func ACCEPTBallotBroadcast(c common.Checker, args ...interface{}) (err error) {
 	newBallot.SetVote(ballot.StateACCEPT, checker.FinishedVotingHole)
 	newBallot.Sign(checker.LocalNode.Keypair(), checker.NetworkID)
 
-	if !checker.NodeRunner.Consensus().HasRunningRound(checker.Ballot.Round().Hash()) {
+	if !checker.NodeRunner.Consensus().HasRunningRound(checker.Ballot.Round().BlockHeight) {
 		err = errors.New("RunningRound not found")
 		return
 

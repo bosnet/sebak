@@ -502,5 +502,5 @@ func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) error {
 
 	nr.ConnectionManager().Broadcast(*theBallot)
 
-	return nr.consensus.AddRunningRound(round.Hash(), *theBallot)
+	return nr.consensus.AddRunningRound(round.BlockHeight, *theBallot)
 }

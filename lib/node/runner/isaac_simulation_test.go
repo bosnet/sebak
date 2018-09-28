@@ -56,7 +56,7 @@ func TestISAACSimulationProposer(t *testing.T) {
 	runningRounds := nr.Consensus().RunningRounds
 
 	// Check that the transaction is in RunningRounds
-	rr := runningRounds[round.Hash()]
+	rr := runningRounds[round.BlockHeight]
 	txHashs := rr.Transactions[proposer.Address()]
 	require.Equal(t, tx.GetHash(), txHashs[0])
 
