@@ -47,7 +47,7 @@ func NewISAACStateManager(nr *NodeRunner, conf *consensus.ISAACConfiguration) *I
 	genesisHeight := uint64(1)
 	genesisBlock, err := block.GetBlockByHeight(nr.storage, genesisHeight)
 	if err != nil {
-		nr.log.Error("Cannot get genesis block from storage", "height", genesisHeight)
+		nr.log.Error("Cannot get genesis block from storage", "height", genesisHeight, "error", err)
 	}
 	p.genesis = genesisBlock.Header.Timestamp
 

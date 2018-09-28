@@ -41,20 +41,31 @@ func (bck Block) String() string {
 	return string(encoded)
 }
 
-// MakeGenesisBlock makes genesis block from genesis account and transaction.
-// The genesis block has different part from the other Block
+// MakeInitialBlock makes special block from special account and transaction
+// like genssis or common block.
+//
+// The special block has different part from the other Block
 // * `Block.Proposer` is empty
-// * `Block.Round` is empty
 // * `Block.Confirmed` is `common.GenesisBlockConfirmedTime`
 // * has only one `Transaction`
 //
 // This Transaction is different from other normal Transaction;
-// * must have only one `Operation`, `OperationCreateAccount`
-// * `Transaction.B.Source` is same with `OperationCreateAccount.Target`
+// * must have only two `Operation`, `OperationCreateAccount`
+// * The first `Operation` is for genesis account
+//   * `OperationCreateAccount.Amount` is same with balance of genesis account
+//   * `OperationCreateAccount.Target` is genesis account
+// * The next `Operation` is for common account
+//   * `OperationCreateAccount.Amount` is 0
+//   * `OperationCreateAccount.Target` is common account
+// * `Transaction.B.Source` is same with `OperationCreateAccount.Target` of
+// genesis account
 // * `Transaction.B.Fee` is 0
-// * `OperationCreateAccount.Amount` is same with balance of genesis account
-// * `OperationCreateAccount.Target` is genesis account
-func MakeGenesisBlock(st *storage.LevelDBBackend, account BlockAccount, networdID []byte) (blk Block, err error) {
+func MakeInitialBlock(st *storage.LevelDBBackend, genesisAccount BlockAccount, commonAccount BlockAccount, networdID []byte) (blk Block, err error) {
+	if genesisAccount.Address == commonAccount.Address {
+		err = fmt.Errorf("genesis account and common account are same.")
+		return
+	}
+
 	var exists bool
 	if exists, err = ExistsBlockByHeight(st, 1); exists || err != nil {
 		if exists {
@@ -65,19 +76,34 @@ func MakeGenesisBlock(st *storage.LevelDBBackend, account BlockAccount, networdI
 	}
 
 	// create create-account transaction.
-	opb := transaction.NewOperationBodyCreateAccount(account.Address, account.Balance, "")
-	op := transaction.Operation{
-		H: transaction.OperationHeader{
-			Type: transaction.OperationCreateAccount,
-		},
-		B: opb,
+	var ops []transaction.Operation
+	{
+		opb := transaction.NewOperationBodyCreateAccount(genesisAccount.Address, genesisAccount.Balance, "")
+		op := transaction.Operation{
+			H: transaction.OperationHeader{
+				Type: transaction.OperationCreateAccount,
+			},
+			B: opb,
+		}
+		ops = append(ops, op)
+	}
+
+	{
+		opb := transaction.NewOperationBodyCreateAccount(commonAccount.Address, commonAccount.Balance, "")
+		op := transaction.Operation{
+			H: transaction.OperationHeader{
+				Type: transaction.OperationCreateAccount,
+			},
+			B: opb,
+		}
+		ops = append(ops, op)
 	}
 
 	txBody := transaction.TransactionBody{
-		Source:     account.Address,
+		Source:     genesisAccount.Address,
 		Fee:        0,
-		SequenceID: account.SequenceID,
-		Operations: []transaction.Operation{op},
+		SequenceID: genesisAccount.SequenceID,
+		Operations: ops,
 	}
 
 	tx := transaction.Transaction{
@@ -94,7 +120,7 @@ func MakeGenesisBlock(st *storage.LevelDBBackend, account BlockAccount, networdI
 
 	blk = NewBlock(
 		"",
-		round.Round{}, // empty round
+		round.Round{},
 		transactions,
 		common.GenesisBlockConfirmedTime,
 	)

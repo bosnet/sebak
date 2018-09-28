@@ -8,7 +8,6 @@
 package runner
 
 import (
-	"errors"
 	"time"
 
 	logging "github.com/inconshreveable/log15"
@@ -19,6 +18,7 @@ import (
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/consensus"
 	"boscoin.io/sebak/lib/consensus/round"
+	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/network/api"
 	"boscoin.io/sebak/lib/node"
@@ -87,6 +87,8 @@ type NodeRunner struct {
 	handleBallotCheckerDeferFunc      common.CheckerDeferFunc
 
 	log logging.Logger
+
+	commonAccountAddress string
 }
 
 func NewNodeRunner(
@@ -119,6 +121,36 @@ func NewNodeRunner(
 	nr.SetHandleINITBallotCheckerFuncs(DefaultHandleINITBallotCheckerFuncs...)
 	nr.SetHandleSIGNBallotCheckerFuncs(DefaultHandleSIGNBallotCheckerFuncs...)
 	nr.SetHandleACCEPTBallotCheckerFuncs(DefaultHandleACCEPTBallotCheckerFuncs...)
+
+	{ // find common account
+		var bk block.Block
+		if bk, err = block.GetBlockByHeight(nr.storage, common.GenesisBlockHeight); err != nil {
+			return
+		} else if len(bk.Transactions) < 1 {
+			err = errors.ErrorBlockAccountDoesNotExists
+			return
+		}
+
+		var bt block.BlockTransaction
+		if bt, err = block.GetBlockTransaction(nr.storage, bk.Transactions[0]); err != nil {
+			return
+		} else if len(bt.Operations) < 2 {
+			err = errors.ErrorBlockAccountDoesNotExists
+			return
+		}
+
+		var bo block.BlockOperation
+		if bo, err = block.GetBlockOperation(nr.storage, bt.Operations[1]); err != nil {
+			return
+		}
+
+		var commonAccount *block.BlockAccount
+		if commonAccount, err = block.GetBlockAccount(nr.storage, bo.Target); err != nil {
+			return
+		}
+
+		nr.commonAccountAddress = commonAccount.Address
+	}
 
 	return
 }

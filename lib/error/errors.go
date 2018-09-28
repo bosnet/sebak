@@ -62,4 +62,5 @@ var (
 	ErrorFrozenAccountMustWithdrawEverything  = NewError(155, "frozen account can only withdraw the full amount (minus tx fee)")
 	ErrorInsufficientAmountNewAccount         = NewError(156, "insufficient amount for new account")
 	ErrorOperationBodyInsufficient            = NewError(157, "operation body insufficient")
+	ErrorOperationAmountOverflow              = NewError(158, "invalid `Amount`: over than expected")
 )

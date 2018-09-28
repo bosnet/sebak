@@ -122,9 +122,15 @@ func createNodeRunnerForTesting(n int, conf *consensus.ISAACConfiguration, recv 
 		nodes[0].AddValidators(nodes[j].ConvertToValidator())
 	}
 
-	address := kp.Address()
-	balance := common.BaseFee.MustAdd(common.BaseReserve)
-	account = block.NewBlockAccount(address, balance)
+	st := storage.NewTestStorage()
+
+	balance := common.BaseFee.MustAdd(1)
+	genesisAccount := block.NewBlockAccount(kp.Address(), balance)
+	genesisAccount.Save(st)
+
+	commonKP, _ := keypair.Random()
+	commonAccount := block.NewBlockAccount(commonKP.Address(), 0)
+	commonAccount.Save(st)
 
 	localNode := nodes[0]
 	policy, _ := consensus.NewDefaultVotingThresholdPolicy(66)
@@ -138,10 +144,8 @@ func createNodeRunnerForTesting(n int, conf *consensus.ISAACConfiguration, recv 
 
 	is, _ := consensus.NewISAAC(networkID, localNode, policy, connectionManager)
 	is.SetProposerSelector(SelfSelector{connectionManager})
-	st := storage.NewTestStorage()
 
-	account.Save(st)
-	genesisBlock, _ = block.MakeGenesisBlock(st, *account, networkID)
+	genesisBlock, _ = block.MakeInitialBlock(st, *genesisAccount, *commonAccount, networkID)
 
 	nr, err := NewNodeRunner(string(networkID), localNode, policy, ns[0], is, st, conf)
 	if err != nil {
