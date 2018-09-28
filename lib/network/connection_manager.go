@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/node"
 )
 
 type ConnectionManager interface {
@@ -15,4 +16,5 @@ type ConnectionManager interface {
 	AllConnected() []string
 	AllValidators() []string
 	CountConnected() int
+	GetNode(address string) node.Node
 }

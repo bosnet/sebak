@@ -23,6 +23,7 @@ import (
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/node/runner"
 	"boscoin.io/sebak/lib/storage"
+	"boscoin.io/sebak/lib/sync"
 )
 
 const (
@@ -270,6 +271,7 @@ func parseFlagsNode() {
 	runner.SetLogging(logLevel, logHandler)
 	consensus.SetLogging(logLevel, logHandler)
 	network.SetLogging(logLevel, logHandler)
+	sync.SetLogging(logLevel, logHandler)
 
 	log.Info("Starting Sebak")
 
@@ -390,6 +392,17 @@ func runNode() error {
 			return nil
 		}, func(error) {
 			nr.Stop()
+		})
+	}
+	{
+		builder := sync.NewBuilder(localNode, st, nt, connectionManager)
+		//TODO(anarcher): Setting sync
+		syncer := builder.Manager()
+
+		g.Add(func() error {
+			return syncer.Run()
+		}, func(error) {
+			syncer.Stop()
 		})
 	}
 	{

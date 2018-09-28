@@ -50,6 +50,18 @@ func (c *ValidatorConnectionManager) GetNodeAddress() string {
 	return c.localNode.Address()
 }
 
+func (c *ValidatorConnectionManager) GetNode(address string) node.Node {
+	c.Lock()
+	defer c.Unlock()
+
+	validator, ok := c.validators[address]
+	if !ok {
+		return nil
+	}
+
+	return validator
+}
+
 func (c *ValidatorConnectionManager) GetConnection(address string) (client NetworkClient) {
 	c.Lock()
 	defer c.Unlock()
