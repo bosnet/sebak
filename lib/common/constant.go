@@ -10,6 +10,10 @@ const (
 	// BaseReserve is minimum amount of balance for new account. By default, it
 	// is `0.1` BOS.
 	BaseReserve Amount = 1000000
+
+	// GenesisBlockConfirmedTime is the time for the confirmed time of genesis
+	// block. This time is of the first commit of SEBAK.
+	GenesisBlockConfirmedTime string = "2018-04-17T5:07:31.000000000Z"
 )
 
 var (

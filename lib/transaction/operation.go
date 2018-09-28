@@ -85,21 +85,33 @@ func (o *Operation) UnmarshalJSON(b []byte) (err error) {
 
 	o.H = oj.H
 
-	switch oj.H.Type {
-	case OperationCreateAccount:
-		var body OperationBodyCreateAccount
-		if err = json.Unmarshal(envelop, &body); err != nil {
-			return
-		}
-		o.B = body
-	case OperationPayment:
-		var body OperationBodyPayment
-		if err = json.Unmarshal(envelop, &body); err != nil {
-			return
-		}
-		o.B = body
-	default:
-		return errors.ErrorInvalidOperation
+	var body OperationBody
+	if body, err = UnmarshalOperationBodyJSON(oj.H.Type, envelop); err != nil {
+		return
 	}
+	o.B = body
+
+	return
+}
+
+func UnmarshalOperationBodyJSON(t OperationType, b []byte) (body OperationBody, err error) {
+	switch t {
+	case OperationCreateAccount:
+		var ob OperationBodyCreateAccount
+		if err = json.Unmarshal(b, &ob); err != nil {
+			return
+		}
+		body = ob
+	case OperationPayment:
+		var ob OperationBodyPayment
+		if err = json.Unmarshal(b, &ob); err != nil {
+			return
+		}
+		body = ob
+	default:
+		err = errors.ErrorInvalidOperation
+		return
+	}
+
 	return
 }
