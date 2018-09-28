@@ -57,7 +57,7 @@ func TestBlockFullFetcher(t *testing.T) {
 		return resp, nil
 	}
 
-	f := NewBlockFullFetcher(nw, cm, func(f *BlockFullFetcher) {
+	f := NewBlockFullFetcher(nw, cm, st, func(f *BlockFullFetcher) {
 		f.apiClient = mockDoer{
 			handleFunc: apiHandlerFunc,
 		}

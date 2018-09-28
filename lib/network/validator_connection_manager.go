@@ -54,13 +54,8 @@ func (c *ValidatorConnectionManager) GetNode(address string) node.Node {
 	c.Lock()
 	defer c.Unlock()
 
-	_, ok := c.clients[address]
-	if ok {
-		return nil
-	}
-
-	var validator *node.Validator
-	if validator, ok = c.validators[address]; !ok {
+	validator, ok := c.validators[address]
+	if !ok {
 		return nil
 	}
 

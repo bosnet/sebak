@@ -15,6 +15,7 @@ import (
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/node/runner"
+	"boscoin.io/sebak/lib/storage"
 
 	"github.com/inconshreveable/log15"
 )
@@ -23,6 +24,7 @@ type BlockFullFetcher struct {
 	network           network.Network
 	connectionManager network.ConnectionManager
 	apiClient         Doer
+	storage           *storage.LevelDBBackend
 
 	fetchTimeout time.Duration
 
@@ -42,11 +44,12 @@ type BlockFullFetcherOption = func(f *BlockFullFetcher)
 
 var _ Fetcher = (*BlockFullFetcher)(nil)
 
-func NewBlockFullFetcher(nw network.Network, cManager network.ConnectionManager, opts ...BlockFullFetcherOption) *BlockFullFetcher {
+func NewBlockFullFetcher(nw network.Network, cManager network.ConnectionManager, st *storage.LevelDBBackend, opts ...BlockFullFetcherOption) *BlockFullFetcher {
 	f := &BlockFullFetcher{
 		network:           nw,
 		connectionManager: cManager,
 		apiClient:         &http.Client{},
+		storage:           st,
 
 		reqmsg:  nil,
 		reqresp: make(chan *Response),
@@ -103,10 +106,16 @@ func (f *BlockFullFetcher) loop() {
 	for {
 		select {
 		case msg := <-f.reqmsg:
-			f.logger.Debug("Recv msg for fetch", "height", msg.BlockHeight)
+			f.logger.Info("Receive message ", "height", msg.BlockHeight)
+			exists := f.existsBlockHeight(msg.BlockHeight)
+			if exists {
+				f.logger.Info("Block already exists", "height", msg.BlockHeight)
+				continue
+			}
 			f.fetch(msg)
 		case resp := <-f.response:
 			if resp.Err() != nil {
+				f.logger.Error("Receive Response", "err", resp.Err(), "height", resp.Message().BlockHeight) //TODO(anarcher): resp
 				f.fetch(resp.Message())
 			}
 		case c := <-f.cancel:
@@ -125,15 +134,19 @@ func (f *BlockFullFetcher) fetch(msg *Message) {
 	//TODO: fetch block using block node api
 	bh := msg.BlockHeight
 	n := f.pickRandomNode()
+	f.logger.Info("Try to fetch from", "node", n, "height", msg.BlockHeight)
 	if n == nil {
 		f.errorResponse(msg, errors.New("node not found "))
 		return
 	}
 	ep := n.Endpoint()
 	apiURL := url.URL(*ep)
-	apiURL.Path = runner.GetBlocksPattern
-	apiURL.Query().Set("height-range", fmt.Sprintf("%d-%d", bh, bh+1))
-	apiURL.Query().Set("mode", "full")
+	apiURL.Path = network.UrlPathPrefixNode + runner.GetBlocksPattern
+	q := apiURL.Query()
+	q.Set("height-range", fmt.Sprintf("%d-%d", bh, bh+1))
+	q.Set("mode", "full")
+	apiURL.RawQuery = q.Encode()
+	f.logger.Debug("apiClient", "url", apiURL.String())
 
 	req, err := http.NewRequest("GET", apiURL.String(), nil)
 	if err != nil {
@@ -146,7 +159,11 @@ func (f *BlockFullFetcher) fetch(msg *Message) {
 	req = req.WithContext(ctx)
 
 	resp, err := f.apiClient.Do(req)
-	defer resp.Body.Close()
+	defer func() {
+		if resp != nil && resp.Body != nil {
+			resp.Body.Close()
+		}
+	}()
 	if err != nil {
 		f.errorResponse(msg, err)
 		return
@@ -164,8 +181,11 @@ func (f *BlockFullFetcher) fetch(msg *Message) {
 		return
 	}
 
+	f.logger.Info("Get items", "items", len(items), "height", msg.BlockHeight)
+
 	blocks, ok := items[runner.NodeItemBlock]
 	if !ok || len(blocks) <= 0 {
+		err := errors.New("block not found in resp")
 		f.errorResponse(msg, err)
 		return
 	}
@@ -214,7 +234,6 @@ func (f *BlockFullFetcher) unmarshalResp(body io.ReadCloser) (map[runner.NodeIte
 // pickRandomNode choose one node by random. It is very protype for choosing fetching which node
 func (f *BlockFullFetcher) pickRandomNode() node.Node {
 	ac := f.connectionManager.AllConnected()
-	f.logger.Debug("allconnected", "nodes", ac)
 	if len(ac) <= 0 {
 		return nil
 	}
@@ -234,4 +253,13 @@ func (f *BlockFullFetcher) errorResponse(msg *Message, err error) {
 	case c := <-f.stop:
 		f.cancel <- c
 	}
+}
+
+func (f *BlockFullFetcher) existsBlockHeight(height uint64) bool {
+	exists, err := block.ExistsBlockByHeight(f.storage, height)
+	if err != nil {
+		f.logger.Error("block.ExistsBlockByHeight", "err", err)
+		return false
+	}
+	return exists
 }

@@ -1,11 +1,13 @@
 package sync
 
 import (
-	"fmt"
 	"time"
 
+	"boscoin.io/sebak/lib/block"
+	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/storage"
+
 	"github.com/inconshreveable/log15"
 )
 
@@ -77,12 +79,20 @@ func (v *BlockValidator) loop() {
 			//		v.saveTxs()
 			//		v.saveBlock()
 			// ...
+			v.logger.Info("Receive message", "height", msg.BlockHeight)
+			exists := v.existsBlockHeight(msg.BlockHeight)
+			if exists {
+				v.logger.Info("Block already exists", "height", msg.BlockHeight)
+				continue
+			}
+
 			if err := v.validate(msg); err != nil {
-				v.errorResponse(msg, fmt.Errorf("validation err:"))
+				v.errorResponse(msg, err)
 				continue
 			}
 			if err := v.save(msg); err != nil {
-				v.errorResponse(msg, fmt.Errorf("storage err:"))
+				v.errorResponse(msg, err)
+				continue
 			}
 			//OK, return response without err
 			resp := &Response{
@@ -113,21 +123,39 @@ func (v *BlockValidator) validate(msg *Message) error {
 
 func (v *BlockValidator) save(msg *Message) error {
 	//TODO(anarcher): using leveldb.Tx or leveldb.Batch?
+	height := msg.BlockHeight
+	exists, err := block.ExistsBlockByHeight(v.storage, height)
+	if err != nil {
+		return err
+	}
+	if exists == true {
+		v.logger.Info("This block exists", "height", height)
+		return nil
+	}
 
 	for _, op := range msg.Ops {
 		if err := op.Save(v.storage); err != nil {
+			if err == errors.ErrorBlockAlreadyExists {
+				return nil
+			}
 			return err
 		}
 	}
 
 	for _, tx := range msg.Txs {
 		if err := tx.Save(v.storage); err != nil {
+			if err == errors.ErrorBlockAlreadyExists {
+				return nil
+			}
 			return err
 		}
 	}
 
 	blk := *msg.Block
 	if err := blk.Save(v.storage); err != nil {
+		if err == errors.ErrorBlockAlreadyExists {
+			return nil
+		}
 		return err
 	}
 
@@ -145,4 +173,13 @@ func (v *BlockValidator) errorResponse(msg *Message, err error) {
 	case c := <-v.stop:
 		v.cancel <- c
 	}
+}
+
+func (v *BlockValidator) existsBlockHeight(height uint64) bool {
+	exists, err := block.ExistsBlockByHeight(v.storage, height)
+	if err != nil {
+		v.logger.Error("block.ExistsBlockByHeight", "err", err)
+		return false
+	}
+	return exists
 }

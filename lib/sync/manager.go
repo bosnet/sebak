@@ -93,6 +93,12 @@ func (m *Manager) loop() {
 				msg := resp.Message()
 				m.logger.Info("Retry response", "height", msg.BlockHeight)
 
+				currBlockHeight := m.currBlockHeight()
+				if currBlockHeight > 0 && msg.BlockHeight <= currBlockHeight {
+					m.logger.Info("sync block height is old", "sync/height", msg.BlockHeight, "db/height", currBlockHeight)
+					return
+				}
+
 				retryc := m.afterFunc(m.retryInterval)
 				select {
 				case <-retryc:
@@ -107,10 +113,8 @@ func (m *Manager) loop() {
 			}()
 		case c := <-m.cancel:
 			close(c)
-			m.logger.Info("<-m.cancel")
 			return
 		case c := <-m.stopLoop:
-			m.logger.Info("<-m.stopLoop")
 			close(cancel)
 			close(c)
 			return
@@ -137,6 +141,14 @@ func (m *Manager) checkBlockHeight(height uint64) uint64 {
 		m.logger.Info("Starting sync", "height", newHeight)
 		return newHeight
 	}
-	m.logger.Info("Current sync", "height", height)
 	return height
+}
+
+func (m *Manager) currBlockHeight() uint64 {
+	blk, err := block.GetLatestBlock(m.storage)
+	if err != nil {
+		m.logger.Error("block.GetLatestBlock", "err", err)
+		return 0
+	}
+	return blk.Height
 }

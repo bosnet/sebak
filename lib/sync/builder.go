@@ -56,7 +56,7 @@ func (b Builder) BlockFullFetchers() []Fetcher {
 	var fs []Fetcher
 
 	for i := 0; i < b.MaxFetcher; i++ {
-		fs = append(fs, NewBlockFullFetcher(b.network, b.connectionManager, func(f *BlockFullFetcher) {
+		fs = append(fs, NewBlockFullFetcher(b.network, b.connectionManager, b.storage, func(f *BlockFullFetcher) {
 			f.fetchTimeout = b.FetchTimeout
 			f.logger = b.logger.New(log15.Ctx{"component": "fetcher"})
 		}))
