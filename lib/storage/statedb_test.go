@@ -16,14 +16,6 @@ func newTestStateDB(t *testing.T) (*LevelDBBackend, *LevelDBBackend, *StateDB) {
 	return st, ts, sdb
 }
 
-func TestStateDBInterface(t *testing.T) {
-	var sdb DBBackend
-	_, _, sdb = newTestStateDB(t)
-	if _, err := sdb.Has("hello"); err != nil {
-		t.Error(err)
-	}
-}
-
 func TestStateDBNewCommit(t *testing.T) {
 
 	st, _, sdb := newTestStateDB(t)
