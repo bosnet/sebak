@@ -18,6 +18,7 @@ type ListOptions interface {
 	SetLimit(uint64) ListOptions
 	Template() string
 	URLValues() url.Values
+	Encode() string
 }
 
 type DefaultListOptions struct {
@@ -112,4 +113,8 @@ func (o DefaultListOptions) URLValues() url.Values {
 	}
 
 	return v
+}
+
+func (o DefaultListOptions) Encode() string {
+	return o.URLValues().Encode()
 }

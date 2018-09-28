@@ -113,7 +113,7 @@ func prepareTxs(storage *storage.LevelDBBackend, blockHeight uint64, count int, 
 		if err != nil {
 			return nil, nil, err
 		}
-		bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, theBlock.Height, tx, a)
+		bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, theBlock.Height, theBlock.Confirmed, tx, a)
 		err = bt.Save(storage)
 		if err != nil {
 			return nil, nil, err
@@ -147,7 +147,7 @@ func prepareTxsWithoutSave(blockHeight uint64, count int, kp *keypair.Full) (*ke
 		if err != nil {
 			return nil, nil, err
 		}
-		bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, theBlock.Height, tx, a)
+		bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, theBlock.Height, theBlock.Confirmed, tx, a)
 		btList = append(btList, bt)
 	}
 	return kp, btList, nil
@@ -166,7 +166,7 @@ func prepareTxWithoutSave() (*keypair.Full, *transaction.Transaction, *block.Blo
 	}
 
 	theBlock := block.TestMakeNewBlock([]string{tx.GetHash()})
-	bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, theBlock.Height, tx, a)
+	bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, theBlock.Height, theBlock.Confirmed, tx, a)
 	return kp, &tx, &bt, nil
 }
 

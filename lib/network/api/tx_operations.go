@@ -23,7 +23,7 @@ func (api NetworkHandlerAPI) GetOperationsByTxHashHandler(w http.ResponseWriter,
 		return
 	}
 
-	iteratorOptions, err := storage.NewDefaultListOptionsFromQuery(r.URL.Query())
+	options, err := storage.NewDefaultListOptionsFromQuery(r.URL.Query())
 	if err != nil {
 		http.Error(w, errors.ErrorInvalidQueryString.Error(), http.StatusBadRequest)
 		return
@@ -32,7 +32,7 @@ func (api NetworkHandlerAPI) GetOperationsByTxHashHandler(w http.ResponseWriter,
 	if httputils.IsEventStream(r) {
 		event := fmt.Sprintf("txhash-%s", hash)
 		es := NewEventStream(w, r, renderEventStream, DefaultContentType)
-		ops, _ := api.getOperationsByTxHash(hash, iteratorOptions)
+		ops, _ := api.getOperationsByTxHash(hash, options)
 		for _, op := range ops {
 			es.Render(op)
 		}
@@ -40,11 +40,11 @@ func (api NetworkHandlerAPI) GetOperationsByTxHashHandler(w http.ResponseWriter,
 		return
 	}
 
-	ops, cursor := api.getOperationsByTxHash(hash, iteratorOptions)
+	ops, cursor := api.getOperationsByTxHash(hash, options)
 
 	self := r.URL.String()
-	next := GetTransactionOperationsHandlerPattern + "?" + "reverse=false&cursor=" + string(cursor)
-	prev := GetTransactionOperationsHandlerPattern + "?" + "reverse=true&cursor=" + string(cursor)
+	next := GetTransactionOperationsHandlerPattern + "?" + options.SetCursor(cursor).SetReverse(false).Encode()
+	prev := GetTransactionOperationsHandlerPattern + "?" + options.SetReverse(true).Encode()
 	list := resource.NewResourceList(ops, self, next, prev)
 
 	if err := httputils.WriteJSON(w, 200, list); err != nil {

@@ -5,6 +5,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"io/ioutil"
+	"strings"
+	"sync"
 	"testing"
 
 	"boscoin.io/sebak/lib/block"
@@ -12,8 +14,6 @@ import (
 	"boscoin.io/sebak/lib/network/api/resource"
 	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
-	"strings"
-	"sync"
 )
 
 func TestGetTransactionByHashHandler(t *testing.T) {

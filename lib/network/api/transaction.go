@@ -15,7 +15,7 @@ import (
 )
 
 func (api NetworkHandlerAPI) GetTransactionsHandler(w http.ResponseWriter, r *http.Request) {
-	iteratorOptions, err := storage.NewDefaultListOptionsFromQuery(r.URL.Query())
+	options, err := storage.NewDefaultListOptionsFromQuery(r.URL.Query())
 	if err != nil {
 		http.Error(w, errors.ErrorInvalidQueryString.Error(), http.StatusBadRequest)
 		return
@@ -23,7 +23,7 @@ func (api NetworkHandlerAPI) GetTransactionsHandler(w http.ResponseWriter, r *ht
 	var cursor []byte
 	readFunc := func() []resource.Resource {
 		var txs []resource.Resource
-		iterFunc, closeFunc := block.GetBlockTransactions(api.storage, iteratorOptions)
+		iterFunc, closeFunc := block.GetBlockTransactions(api.storage, options)
 		for {
 			t, hasNext, c := iterFunc()
 			cursor = c
@@ -39,7 +39,7 @@ func (api NetworkHandlerAPI) GetTransactionsHandler(w http.ResponseWriter, r *ht
 	if httputils.IsEventStream(r) {
 		event := "saved"
 		es := NewEventStream(w, r, renderEventStream, DefaultContentType)
-		iteratorOptions.SetLimit(10)
+		options.SetLimit(10)
 		txs := readFunc()
 		for _, tx := range txs {
 			es.Render(tx)
@@ -51,8 +51,8 @@ func (api NetworkHandlerAPI) GetTransactionsHandler(w http.ResponseWriter, r *ht
 	txs := readFunc()
 
 	self := r.URL.String()
-	next := GetTransactionsHandlerPattern + "?" + "reverse=false&cursor=" + string(cursor)
-	prev := GetTransactionsHandlerPattern + "?" + "reverse=true&cursor=" + string(cursor)
+	next := GetTransactionsHandlerPattern + "?" + options.SetCursor(cursor).SetReverse(false).Encode()
+	prev := GetTransactionsHandlerPattern + "?" + options.SetReverse(true).Encode()
 	list := resource.NewResourceList(txs, self, next, prev)
 
 	if err := httputils.WriteJSON(w, 200, list); err != nil {
@@ -106,7 +106,7 @@ func (api NetworkHandlerAPI) GetTransactionByHashHandler(w http.ResponseWriter, 
 func (api NetworkHandlerAPI) GetTransactionsByAccountHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	address := vars["id"]
-	iteratorOptions, err := storage.NewDefaultListOptionsFromQuery(r.URL.Query())
+	options, err := storage.NewDefaultListOptionsFromQuery(r.URL.Query())
 	if err != nil {
 		http.Error(w, errors.ErrorInvalidQueryString.Error(), http.StatusBadRequest)
 		return
@@ -114,7 +114,7 @@ func (api NetworkHandlerAPI) GetTransactionsByAccountHandler(w http.ResponseWrit
 	var cursor []byte
 	readFunc := func() []resource.Resource {
 		var txs []resource.Resource
-		iterFunc, closeFunc := block.GetBlockTransactionsByAccount(api.storage, address, iteratorOptions)
+		iterFunc, closeFunc := block.GetBlockTransactionsByAccount(api.storage, address, options)
 		for {
 			t, hasNext, c := iterFunc()
 			cursor = c
@@ -130,7 +130,7 @@ func (api NetworkHandlerAPI) GetTransactionsByAccountHandler(w http.ResponseWrit
 	if httputils.IsEventStream(r) {
 		event := fmt.Sprintf("source-%s", address)
 		es := NewEventStream(w, r, renderEventStream, DefaultContentType)
-		iteratorOptions.SetLimit(10)
+		options.SetLimit(10)
 		txs := readFunc()
 		for _, tx := range txs {
 			es.Render(tx)
@@ -141,8 +141,8 @@ func (api NetworkHandlerAPI) GetTransactionsByAccountHandler(w http.ResponseWrit
 
 	txs := readFunc()
 	self := r.URL.String()
-	next := GetAccountTransactionsHandlerPattern + "?" + "reverse=false&cursor=" + string(cursor)
-	prev := GetAccountTransactionsHandlerPattern + "?" + "reverse=true&cursor=" + string(cursor)
+	next := GetAccountTransactionsHandlerPattern + "?" + options.SetCursor(cursor).SetReverse(false).Encode()
+	prev := GetAccountTransactionsHandlerPattern + "?" + options.SetReverse(true).Encode()
 	list := resource.NewResourceList(txs, self, next, prev)
 
 	if err := httputils.WriteJSON(w, 200, list); err != nil {

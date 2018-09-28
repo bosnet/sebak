@@ -42,7 +42,7 @@ type BlockTransaction struct {
 	blockHeight uint64
 }
 
-func NewBlockTransactionFromTransaction(blockHash string, blockHeight uint64, tx transaction.Transaction, message []byte) BlockTransaction {
+func NewBlockTransactionFromTransaction(blockHash string, blockHeight uint64, confirmed string, tx transaction.Transaction, message []byte) BlockTransaction {
 	var opHashes []string
 	for _, op := range tx.B.Operations {
 		opHashes = append(opHashes, NewBlockOperationKey(op.MakeHashString(), tx.GetHash()))
@@ -58,8 +58,9 @@ func NewBlockTransactionFromTransaction(blockHash string, blockHeight uint64, tx
 		Operations: opHashes,
 		Amount:     tx.TotalAmount(true),
 
-		Created: tx.H.Created,
-		Message: message,
+		Confirmed: confirmed,
+		Created:   tx.H.Created,
+		Message:   message,
 
 		transaction: tx,
 
@@ -79,10 +80,8 @@ func (bt BlockTransaction) NewBlockTransactionKeySource() string {
 
 func (bt BlockTransaction) NewBlockTransactionKeyConfirmed() string {
 	return fmt.Sprintf(
-		"%s%s%s%s",
+		"%s%s",
 		GetBlockTransactionKeyPrefixConfirmed(bt.Confirmed),
-		common.EncodeUint64ToByteSlice(bt.blockHeight),
-		common.EncodeUint64ToByteSlice(bt.SequenceID),
 		common.GetUniqueIDFromUUID(),
 	)
 }
@@ -122,7 +121,6 @@ func (bt *BlockTransaction) Save(st *storage.LevelDBBackend) (err error) {
 		return
 	}
 
-	bt.Confirmed = common.NowISO8601()
 	if err = st.New(GetBlockTransactionKey(bt.Hash), bt); err != nil {
 		return
 	}
