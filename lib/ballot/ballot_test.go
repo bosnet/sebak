@@ -32,7 +32,7 @@ func TestErrorBallotHasOverMaxTransactionsInBallot(t *testing.T) {
 	round := round.Round{Number: 0, BlockHeight: 1, BlockHash: "hahaha", TotalTxs: 1}
 	_, tx := transaction.TestMakeTransaction(networkID, 1)
 
-	ballot := NewBallot(node, round, []string{tx.GetHash()})
+	ballot := NewBallot(node.Address(), round, []string{tx.GetHash()})
 	ballot.Sign(node.Keypair(), networkID)
 	require.Nil(t, ballot.IsWellFormed(networkID))
 
@@ -42,7 +42,7 @@ func TestErrorBallotHasOverMaxTransactionsInBallot(t *testing.T) {
 		txs = append(txs, tx.GetHash())
 	}
 
-	ballot = NewBallot(node, round, txs)
+	ballot = NewBallot(node.Address(), round, txs)
 	ballot.Sign(node.Keypair(), networkID)
 
 	err := ballot.IsWellFormed(networkID)
@@ -84,7 +84,7 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 	}
 
 	{
-		ballot := NewBallot(node, round, []string{})
+		ballot := NewBallot(node.Address(), round, []string{})
 		ballot.Sign(kp, networkID)
 
 		err := ballot.IsWellFormed(networkID)
@@ -92,7 +92,7 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 	}
 
 	{ // bad `Ballot.B.Confirmed` time; too ahead
-		ballot := NewBallot(node, round, []string{})
+		ballot := NewBallot(node.Address(), round, []string{})
 		ballot.Sign(kp, networkID)
 
 		newConfirmed := time.Now().Add(time.Duration(2) * common.BallotConfirmedTimeAllowDuration)
@@ -104,7 +104,7 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 	}
 
 	{ // bad `Ballot.B.Confirmed` time; too behind
-		ballot := NewBallot(node, round, []string{})
+		ballot := NewBallot(node.Address(), round, []string{})
 		ballot.Sign(kp, networkID)
 
 		newConfirmed := time.Now().Add(time.Duration(-2) * common.BallotConfirmedTimeAllowDuration)
@@ -116,7 +116,7 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 	}
 
 	{ // bad `Ballot.B.Proposed.Confirmed` time; too ahead
-		ballot := NewBallot(node, round, []string{})
+		ballot := NewBallot(node.Address(), round, []string{})
 		ballot.Sign(kp, networkID)
 
 		newConfirmed := time.Now().Add(time.Duration(2) * common.BallotConfirmedTimeAllowDuration)
@@ -128,7 +128,7 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 	}
 
 	{ // bad `Ballot.B.Proposed.Confirmed` time; too behind
-		ballot := NewBallot(node, round, []string{})
+		ballot := NewBallot(node.Address(), round, []string{})
 		ballot.Sign(kp, networkID)
 
 		newConfirmed := time.Now().Add(time.Duration(-2) * common.BallotConfirmedTimeAllowDuration)
@@ -144,7 +144,7 @@ func TestBallotEmptyHash(t *testing.T) {
 	kp, _ := keypair.Random()
 	node, _ := node.NewLocalNode(kp, &common.Endpoint{}, "")
 	r := round.Round{}
-	b := NewBallot(node, r, []string{})
+	b := NewBallot(node.Address(), r, []string{})
 	b.Sign(kp, networkID)
 
 	require.True(t, len(b.GetHash()) > 0)

@@ -69,7 +69,7 @@ func TestGenerateNewSequenceID() uint64 {
 }
 
 func GenerateBallot(t *testing.T, proposer *node.LocalNode, round round.Round, tx transaction.Transaction, ballotState ballot.State, sender *node.LocalNode) *ballot.Ballot {
-	b := ballot.NewBallot(proposer, round, []string{tx.GetHash()})
+	b := ballot.NewBallot(proposer.Address(), round, []string{tx.GetHash()})
 	b.SetVote(ballot.StateINIT, ballot.VotingYES)
 	b.Sign(proposer.Keypair(), networkID)
 
@@ -84,7 +84,7 @@ func GenerateBallot(t *testing.T, proposer *node.LocalNode, round round.Round, t
 }
 
 func GenerateEmptyTxBallot(t *testing.T, proposer *node.LocalNode, round round.Round, ballotState ballot.State, sender *node.LocalNode) *ballot.Ballot {
-	b := ballot.NewBallot(proposer, round, []string{})
+	b := ballot.NewBallot(proposer.Address(), round, []string{})
 	b.SetVote(ballot.StateINIT, ballot.VotingYES)
 	b.Sign(proposer.Keypair(), networkID)
 
