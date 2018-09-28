@@ -142,9 +142,9 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 
 func TestBallotEmptyHash(t *testing.T) {
 	kp, _ := keypair.Random()
-	localNode, _ := node.NewLocalNode(kp, &common.Endpoint{}, "")
+	node, _ := node.NewLocalNode(kp, &common.Endpoint{}, "")
 	r := round.Round{}
-	b := NewBallot(localNode, r, []string{})
+	b := NewBallot(node, r, []string{})
 	b.Sign(kp, networkID)
 
 	require.True(t, len(b.GetHash()) > 0)
