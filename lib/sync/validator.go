@@ -112,7 +112,7 @@ func (v *BlockValidator) validate(msg *Message) error {
 }
 
 func (v *BlockValidator) save(msg *Message) error {
-	//TODO: using leveldb.Tx or leveldb.Batch?
+	//TODO(anarcher): using leveldb.Tx or leveldb.Batch?
 
 	for _, op := range msg.Ops {
 		if err := op.Save(v.storage); err != nil {
@@ -130,6 +130,8 @@ func (v *BlockValidator) save(msg *Message) error {
 	if err := blk.Save(v.storage); err != nil {
 		return err
 	}
+
+	v.logger.Info("Save block", "height", msg.BlockHeight)
 	return nil
 }
 

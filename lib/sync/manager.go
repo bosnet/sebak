@@ -41,6 +41,7 @@ func (m *Manager) Run() error {
 }
 
 func (m *Manager) Stop() error {
+	m.logger.Debug("Stopping")
 	{
 		c := make(chan struct{})
 		m.stopResp <- c
@@ -77,7 +78,8 @@ func (m *Manager) Produce() <-chan *Message {
 func (m *Manager) loop() {
 	checkc := m.afterFunc(m.checkInterval)
 	syncBlockHeight := m.checkBlockHeight(0)
-	cancel := make(chan struct{})
+	cancel := make(chan struct{}, 1)
+
 	for {
 		select {
 		case <-checkc:
@@ -105,8 +107,10 @@ func (m *Manager) loop() {
 			}()
 		case c := <-m.cancel:
 			close(c)
+			m.logger.Info("<-m.cancel")
 			return
 		case c := <-m.stopLoop:
+			m.logger.Info("<-m.stopLoop")
 			close(cancel)
 			close(c)
 			return
@@ -124,12 +128,13 @@ func (m *Manager) checkBlockHeight(height uint64) uint64 {
 		msg := &Message{
 			BlockHeight: newHeight,
 		}
-		m.logger.Info("Starting sync", "height", newHeight)
+
 		select {
 		case m.messages <- msg:
 		case c := <-m.stopLoop:
 			m.cancel <- c
 		}
+		m.logger.Info("Starting sync", "height", newHeight)
 		return newHeight
 	}
 	m.logger.Info("Current sync", "height", height)

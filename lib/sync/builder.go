@@ -101,8 +101,11 @@ func (b Builder) Manager() *Manager {
 		checkInterval: b.CheckBlockHeightInterval,
 
 		afterFunc: time.After,
+		storage:   b.storage,
 
-		storage:  b.storage,
+		messages: make(chan *Message),
+		response: make(chan *Response),
+
 		stopLoop: make(chan chan struct{}),
 		stopResp: make(chan chan struct{}),
 		cancel:   make(chan chan struct{}),

@@ -103,6 +103,7 @@ func (f *BlockFullFetcher) loop() {
 	for {
 		select {
 		case msg := <-f.reqmsg:
+			f.logger.Debug("Recv msg for fetch", "height", msg.BlockHeight)
 			f.fetch(msg)
 		case resp := <-f.response:
 			if resp.Err() != nil {
@@ -120,6 +121,7 @@ func (f *BlockFullFetcher) loop() {
 }
 
 func (f *BlockFullFetcher) fetch(msg *Message) {
+	f.logger.Debug("Fetch start", "height", msg.BlockHeight)
 	//TODO: fetch block using block node api
 	bh := msg.BlockHeight
 	n := f.pickRandomNode()
@@ -151,7 +153,7 @@ func (f *BlockFullFetcher) fetch(msg *Message) {
 	}
 	if resp.StatusCode == http.StatusNotFound {
 		//TODO:
-		err := fmt.Errorf("not found")
+		err := errors.New("block not found")
 		f.errorResponse(msg, err)
 		return
 	}
@@ -188,6 +190,7 @@ func (f *BlockFullFetcher) fetch(msg *Message) {
 	case c := <-f.stop:
 		f.cancel <- c
 	}
+	f.logger.Debug("Fetched", "height", msg.BlockHeight)
 }
 
 func (f *BlockFullFetcher) unmarshalResp(body io.ReadCloser) (map[runner.NodeItemDataType][]interface{}, error) {
@@ -211,12 +214,17 @@ func (f *BlockFullFetcher) unmarshalResp(body io.ReadCloser) (map[runner.NodeIte
 // pickRandomNode choose one node by random. It is very protype for choosing fetching which node
 func (f *BlockFullFetcher) pickRandomNode() node.Node {
 	ac := f.connectionManager.AllConnected()
+	f.logger.Debug("allconnected", "nodes", ac)
+	if len(ac) <= 0 {
+		return nil
+	}
 	idx := rand.Intn(len(ac))
 	node := f.connectionManager.GetNode(ac[idx])
 	return node
 }
 
 func (f *BlockFullFetcher) errorResponse(msg *Message, err error) {
+	f.logger.Error("Error response", "err", err, "height", msg.BlockHeight)
 	resp := &Response{
 		err: err,
 		msg: msg,
