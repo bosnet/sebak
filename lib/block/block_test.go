@@ -154,7 +154,7 @@ func TestMakeGenesisBlock(t *testing.T) {
 	require.Equal(t, account.Address, bo.Source)
 
 	{
-		opb, err := bo.LoadBody()
+		opb, err := transaction.UnmarshalOperationBodyJSON(bo.Type, bo.Body)
 		require.Nil(t, err)
 
 		opbp := opb.(transaction.OperationBodyPayable)
@@ -214,7 +214,7 @@ func TestMakeGenesisBlockFindGenesisAccount(t *testing.T) {
 		bt, _ := GetBlockTransaction(st, bk.Transactions[0])
 		bo, _ := GetBlockOperation(st, bt.Operations[0])
 
-		opb, err := bo.LoadBody()
+		opb, err := transaction.UnmarshalOperationBodyJSON(bo.Type, bo.Body)
 		require.Nil(t, err)
 
 		opbp := opb.(transaction.OperationBodyPayable)

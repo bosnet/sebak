@@ -138,10 +138,6 @@ func (bo BlockOperation) NewBlockOperationSourceKey() string {
 	)
 }
 
-func (bo BlockOperation) LoadBody() (body transaction.OperationBody, err error) {
-	return transaction.UnmarshalOperationBodyJSON(bo.Type, bo.Body)
-}
-
 func ExistsBlockOperation(st *storage.LevelDBBackend, hash string) (bool, error) {
 	return st.Has(GetBlockOperationKey(hash))
 }
