@@ -14,6 +14,11 @@ type SequentialSelector struct {
 	cm network.ConnectionManager
 }
 
+func NewSequentialSelector(cm network.ConnectionManager) SequentialSelector {
+	p := SequentialSelector{cm}
+	return p
+}
+
 func (s SequentialSelector) Select(blockHeight uint64, roundNumber uint64) string {
 	candidates := sort.StringSlice(s.cm.AllValidators())
 	candidates.Sort()

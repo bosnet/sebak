@@ -6,20 +6,20 @@ package consensus
 
 import (
 	"boscoin.io/sebak/lib/ballot"
-	"boscoin.io/sebak/lib/consensus/round"
 )
 
 type ISAACState struct {
-	Round       round.Round
+	Height      uint64
+	Round       uint64
 	BallotState ballot.State
 }
 
 func (s ISAACState) IsLater(target ISAACState) bool {
-	if s.Round.BlockHeight != target.Round.BlockHeight {
-		return s.Round.BlockHeight < target.Round.BlockHeight
+	if s.Height != target.Height {
+		return s.Height < target.Height
 	}
-	if s.Round.Number != target.Round.Number {
-		return s.Round.Number < target.Round.Number
+	if s.Round != target.Round {
+		return s.Round < target.Round
 	}
 	return s.BallotState < target.BallotState
 }

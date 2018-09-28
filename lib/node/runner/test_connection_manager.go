@@ -37,9 +37,11 @@ func (c *TestConnectionManager) Broadcast(message common.Message) {
 	c.Lock()
 	defer c.Unlock()
 	c.messages = append(c.messages, message)
-	if c.recv != nil {
-		c.recv <- struct{}{}
-	}
+	go func() {
+		if c.recv != nil {
+			c.recv <- struct{}{}
+		}
+	}()
 	return
 }
 
@@ -49,6 +51,12 @@ func (c *TestConnectionManager) Messages() []common.Message {
 	messages := make([]common.Message, len(c.messages))
 	copy(messages, c.messages)
 	return messages
+}
+
+func (c *TestConnectionManager) Flush() {
+	c.Lock()
+	defer c.Unlock()
+	c.messages = []common.Message{}
 }
 
 type SelfSelector struct {

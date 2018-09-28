@@ -316,9 +316,10 @@ func TestStateTransitFromTimeoutInitToAccept(t *testing.T) {
 	nr.StartStateManager()
 	defer nr.StopStateManager()
 	<-recvTransit
-	require.Equal(t, ballot.StateINIT, nr.isaacStateManager.State().BallotState)
+	state := nr.isaacStateManager.State()
+	require.Equal(t, ballot.StateINIT, state.BallotState)
 
-	nr.TransitISAACState(nr.isaacStateManager.State().Round, ballot.StateSIGN)
+	nr.TransitISAACState(state.Height, state.Round, ballot.StateSIGN)
 	<-recvTransit
 	require.Equal(t, ballot.StateSIGN, nr.isaacStateManager.State().BallotState)
 
@@ -366,7 +367,8 @@ func TestStateTransitFromTimeoutSignToAccept(t *testing.T) {
 		require.Equal(t, ballot.VotingYES, b.Vote())
 	}
 
-	nr.TransitISAACState(nr.isaacStateManager.State().Round, ballot.StateACCEPT)
+	state := nr.isaacStateManager.State()
+	nr.TransitISAACState(state.Height, state.Round, ballot.StateACCEPT)
 	<-recv
 
 	require.Equal(t, 2, len(cm.Messages()))
