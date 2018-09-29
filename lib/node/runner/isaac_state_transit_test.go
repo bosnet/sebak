@@ -23,7 +23,7 @@ func TestStateINITProposer(t *testing.T) {
 	recv := make(chan struct{})
 	nr, _, cm := createNodeRunnerForTesting(3, conf, recv)
 
-	nr.Consensus().SetLatestConsensusedBlock(genesisBlock)
+	nr.Consensus().SetLatestConfirmedBlock(genesisBlock)
 
 	nr.StartStateManager()
 	defer nr.StopStateManager()
@@ -55,7 +55,7 @@ func TestStateINITNotProposer(t *testing.T) {
 	cm, ok := nr.Consensus().ConnectionManager().(*TestConnectionManager)
 	require.True(t, ok)
 
-	nr.Consensus().SetLatestConsensusedBlock(genesisBlock)
+	nr.Consensus().SetLatestConfirmedBlock(genesisBlock)
 
 	nr.StartStateManager()
 	defer nr.StopStateManager()
@@ -86,7 +86,7 @@ func TestStateINITTimeoutNotProposer(t *testing.T) {
 
 	require.NotEqual(t, nr.localNode.Address(), proposer)
 
-	nr.Consensus().SetLatestConsensusedBlock(genesisBlock)
+	nr.Consensus().SetLatestConfirmedBlock(genesisBlock)
 
 	nr.StartStateManager()
 	defer nr.StopStateManager()
@@ -135,7 +135,7 @@ func TestStateSIGNTimeoutProposer(t *testing.T) {
 
 	require.Equal(t, nr.localNode.Address(), proposer)
 
-	nr.Consensus().SetLatestConsensusedBlock(genesisBlock)
+	nr.Consensus().SetLatestConfirmedBlock(genesisBlock)
 
 	nr.StartStateManager()
 	defer nr.StopStateManager()
@@ -196,7 +196,7 @@ func TestStateSIGNTimeoutNotProposer(t *testing.T) {
 
 	require.NotEqual(t, nr.localNode.Address(), proposer)
 
-	nr.Consensus().SetLatestConsensusedBlock(genesisBlock)
+	nr.Consensus().SetLatestConfirmedBlock(genesisBlock)
 
 	nr.StartStateManager()
 	defer nr.StopStateManager()
@@ -254,7 +254,7 @@ func TestStateACCEPTTimeoutProposerThenNotProposer(t *testing.T) {
 	proposer = nr.Consensus().SelectProposer(0, 1)
 	require.NotEqual(t, nr.localNode.Address(), proposer)
 
-	nr.Consensus().SetLatestConsensusedBlock(genesisBlock)
+	nr.Consensus().SetLatestConfirmedBlock(genesisBlock)
 
 	nr.StartStateManager()
 	defer nr.StopStateManager()
@@ -311,14 +311,15 @@ func TestStateTransitFromTimeoutInitToAccept(t *testing.T) {
 	cm, ok := nr.Consensus().ConnectionManager().(*TestConnectionManager)
 	require.True(t, ok)
 
-	nr.Consensus().SetLatestConsensusedBlock(genesisBlock)
+	nr.Consensus().SetLatestConfirmedBlock(genesisBlock)
 
 	nr.StartStateManager()
 	defer nr.StopStateManager()
 	<-recvTransit
-	require.Equal(t, ballot.StateINIT, nr.isaacStateManager.State().BallotState)
+	state := nr.isaacStateManager.State()
+	require.Equal(t, ballot.StateINIT, state.BallotState)
 
-	nr.TransitISAACState(nr.isaacStateManager.State().Round, ballot.StateSIGN)
+	nr.TransitISAACState(state.Height, state.Round, ballot.StateSIGN)
 	<-recvTransit
 	require.Equal(t, ballot.StateSIGN, nr.isaacStateManager.State().BallotState)
 
@@ -351,7 +352,7 @@ func TestStateTransitFromTimeoutSignToAccept(t *testing.T) {
 	recv := make(chan struct{})
 	nr, _, cm := createNodeRunnerForTesting(3, conf, recv)
 
-	nr.Consensus().SetLatestConsensusedBlock(genesisBlock)
+	nr.Consensus().SetLatestConfirmedBlock(genesisBlock)
 
 	nr.StartStateManager()
 	defer nr.StopStateManager()
@@ -366,7 +367,8 @@ func TestStateTransitFromTimeoutSignToAccept(t *testing.T) {
 		require.Equal(t, ballot.VotingYES, b.Vote())
 	}
 
-	nr.TransitISAACState(nr.isaacStateManager.State().Round, ballot.StateACCEPT)
+	state := nr.isaacStateManager.State()
+	nr.TransitISAACState(state.Height, state.Round, ballot.StateACCEPT)
 	<-recv
 
 	require.Equal(t, 2, len(cm.Messages()))

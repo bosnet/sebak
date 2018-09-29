@@ -143,7 +143,7 @@ func BallotIsSameProposer(c common.Checker, args ...interface{}) (err error) {
 		return
 	}
 
-	if !checker.NodeRunner.Consensus().HasRunningRound(checker.Ballot.Round().Hash()) {
+	if !checker.NodeRunner.Consensus().HasRunningRound(checker.Ballot.Round().BlockHeight) {
 		err = errors.New("`RunningRound` not found")
 		return
 	}
@@ -254,7 +254,7 @@ func SIGNBallotBroadcast(c common.Checker, args ...interface{}) (err error) {
 	newBallot.SetVote(ballot.StateSIGN, checker.VotingHole)
 	newBallot.Sign(checker.LocalNode.Keypair(), checker.NetworkID)
 
-	if !checker.NodeRunner.Consensus().HasRunningRound(checker.Ballot.Round().Hash()) {
+	if !checker.NodeRunner.Consensus().HasRunningRound(checker.Ballot.Round().BlockHeight) {
 		err = errors.New("RunningRound not found")
 		return
 
@@ -273,7 +273,11 @@ func TransitStateToSIGN(c common.Checker, args ...interface{}) (err error) {
 	if !checker.IsNew {
 		return
 	}
-	checker.NodeRunner.TransitISAACState(checker.Ballot.Round(), ballot.StateSIGN)
+	checker.NodeRunner.TransitISAACState(
+		checker.Ballot.Round().BlockHeight,
+		checker.Ballot.Round().Number,
+		ballot.StateSIGN,
+	)
 
 	return
 }
@@ -291,7 +295,7 @@ func ACCEPTBallotBroadcast(c common.Checker, args ...interface{}) (err error) {
 	newBallot.SetVote(ballot.StateACCEPT, checker.FinishedVotingHole)
 	newBallot.Sign(checker.LocalNode.Keypair(), checker.NetworkID)
 
-	if !checker.NodeRunner.Consensus().HasRunningRound(checker.Ballot.Round().Hash()) {
+	if !checker.NodeRunner.Consensus().HasRunningRound(checker.Ballot.Round().BlockHeight) {
 		err = errors.New("RunningRound not found")
 		return
 
@@ -309,7 +313,11 @@ func TransitStateToACCEPT(c common.Checker, args ...interface{}) (err error) {
 	if !checker.VotingFinished {
 		return
 	}
-	checker.NodeRunner.TransitISAACState(checker.Ballot.Round(), ballot.StateACCEPT)
+	checker.NodeRunner.TransitISAACState(
+		checker.Ballot.Round().BlockHeight,
+		checker.Ballot.Round().Number,
+		ballot.StateACCEPT,
+	)
 
 	return
 }
@@ -335,9 +343,13 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) (err error) {
 			return
 		}
 
-		checker.NodeRunner.Consensus().SetLatestConsensusedBlock(theBlock)
+		checker.NodeRunner.Consensus().SetLatestConfirmedBlock(theBlock)
 		checker.Log.Debug("ballot was stored", "block", theBlock)
-		checker.NodeRunner.TransitISAACState(checker.Ballot.Round(), ballot.StateALLCONFIRM)
+		checker.NodeRunner.TransitISAACState(
+			checker.Ballot.Round().BlockHeight,
+			checker.Ballot.Round().Number,
+			ballot.StateALLCONFIRM,
+		)
 
 		err = NewCheckerStopCloseConsensus(checker, "ballot got consensus and will be stored")
 	} else {

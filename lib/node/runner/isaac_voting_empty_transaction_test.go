@@ -35,7 +35,7 @@ func TestISAACBallotWithEmptyTransactionVoting(t *testing.T) {
 	// `nodeRunner` is proposer's runner
 	proposer := nr.localNode
 
-	nr.Consensus().SetLatestConsensusedBlock(genesisBlock)
+	nr.Consensus().SetLatestConfirmedBlock(genesisBlock)
 	latestBlock := nr.Consensus().LatestConfirmedBlock()
 	require.Equal(t, uint64(1), latestBlock.Height)
 	require.Equal(t, uint64(1), latestBlock.TotalTxs)
@@ -69,7 +69,7 @@ func TestISAACBallotWithEmptyTransactionVoting(t *testing.T) {
 	runningRounds := nr.Consensus().RunningRounds
 
 	// Check that the transaction is in RunningRounds
-	rr := runningRounds[round.Hash()]
+	rr := runningRounds[round.BlockHeight]
 	require.NotNil(t, rr)
 
 	result := rr.Voted[proposer.Address()].GetResult(ballot.StateSIGN)

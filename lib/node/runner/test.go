@@ -85,12 +85,11 @@ func GenerateBallot(t *testing.T, proposer *node.LocalNode, round round.Round, t
 
 func GenerateEmptyTxBallot(t *testing.T, proposer *node.LocalNode, round round.Round, ballotState ballot.State, sender *node.LocalNode) *ballot.Ballot {
 	b := ballot.NewBallot(proposer.Address(), round, []string{})
-	b.SetVote(ballot.StateINIT, ballot.VotingYES)
 	b.Sign(proposer.Keypair(), networkID)
 
 	b.SetSource(sender.Address())
 	b.SetVote(ballotState, ballot.VotingYES)
-	b.Sign(sender.Keypair(), networkID)
+	b.Sign(sender.Keypair(), networkID) // 2. Sign From Sender
 
 	err := b.IsWellFormed(networkID)
 	require.Nil(t, err)
@@ -104,6 +103,7 @@ func ReceiveBallot(t *testing.T, nodeRunner *NodeRunner, ballot *ballot.Ballot) 
 
 	ballotMessage := common.NetworkMessage{Type: common.BallotMessage, Data: data}
 	err = nodeRunner.handleBallotMessage(ballotMessage)
+
 	return err
 }
 
