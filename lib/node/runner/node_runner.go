@@ -472,7 +472,7 @@ func (nr *NodeRunner) StopStateManager() {
 }
 
 func (nr *NodeRunner) TransitISAACState(round round.Round, ballotState ballot.State) {
-	nr.isaacStateManager.TransitISAACState(round, ballotState)
+	nr.isaacStateManager.TransitISAACState(round.BlockHeight, round.Number, ballotState)
 }
 
 func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) (ballot.Ballot, error) {

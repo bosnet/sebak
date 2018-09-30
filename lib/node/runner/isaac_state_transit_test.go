@@ -9,6 +9,7 @@ import (
 
 	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/consensus"
+	"boscoin.io/sebak/lib/consensus/round"
 )
 
 // 1. All 3 Nodes.
@@ -145,7 +146,8 @@ func TestStateSIGNTimeoutProposer(t *testing.T) {
 	<-recv
 	require.Equal(t, 1, len(cm.Messages()))
 
-	nr.TransitISAACState(nr.isaacStateManager.State().Round, ballot.StateSIGN)
+	state := nr.isaacStateManager.State()
+	nr.isaacStateManager.TransitISAACState(state.Height, state.Round, ballot.StateSIGN)
 
 	<-recv
 	require.Equal(t, ballot.StateACCEPT, nr.isaacStateManager.State().BallotState)
@@ -263,7 +265,9 @@ func TestStateACCEPTTimeoutProposerThenNotProposer(t *testing.T) {
 
 	<-recv
 	require.Equal(t, 1, len(cm.Messages()))
-	nr.TransitISAACState(nr.isaacStateManager.State().Round, ballot.StateSIGN)
+
+	state := nr.isaacStateManager.State()
+	nr.isaacStateManager.TransitISAACState(state.Height, state.Round, ballot.StateSIGN)
 
 	<-recv
 	require.Equal(t, 2, len(cm.Messages()))
@@ -319,9 +323,15 @@ func TestStateTransitFromTimeoutInitToAccept(t *testing.T) {
 	nr.StartStateManager()
 	defer nr.StopStateManager()
 	<-recvTransit
-	require.Equal(t, ballot.StateINIT, nr.isaacStateManager.State().BallotState)
+	state := nr.isaacStateManager.State()
+	require.Equal(t, ballot.StateINIT, state.BallotState)
 
-	nr.TransitISAACState(nr.isaacStateManager.State().Round, ballot.StateSIGN)
+	round := round.Round{
+		BlockHeight: state.Height,
+		Number:      state.Round,
+	}
+
+	nr.TransitISAACState(round, ballot.StateSIGN)
 	<-recvTransit
 	require.Equal(t, ballot.StateSIGN, nr.isaacStateManager.State().BallotState)
 
@@ -369,7 +379,14 @@ func TestStateTransitFromTimeoutSignToAccept(t *testing.T) {
 		require.Equal(t, ballot.VotingYES, b.Vote())
 	}
 
-	nr.TransitISAACState(nr.isaacStateManager.State().Round, ballot.StateACCEPT)
+	state := nr.isaacStateManager.State()
+
+	round := round.Round{
+		BlockHeight: state.Height,
+		Number:      state.Round,
+	}
+
+	nr.TransitISAACState(round, ballot.StateACCEPT)
 	<-recv
 
 	require.Equal(t, 2, len(cm.Messages()))

@@ -31,10 +31,8 @@ func NewISAACStateManager(nr *NodeRunner, conf *consensus.ISAACConfiguration) *I
 	p := &ISAACStateManager{
 		nr: nr,
 		state: consensus.ISAACState{
-			Round: round.Round{
-				Number:      0,
-				BlockHeight: 0,
-			},
+			Round:       0,
+			Height:      0,
 			BallotState: ballot.StateINIT,
 		},
 		stateTransit:    make(chan consensus.ISAACState),
@@ -123,12 +121,13 @@ func (sm *ISAACStateManager) SetTransitSignal(f func()) {
 	sm.transitSignal = f
 }
 
-func (sm *ISAACStateManager) TransitISAACState(round round.Round, ballotState ballot.State) {
+func (sm *ISAACStateManager) TransitISAACState(height uint64, round uint64, ballotState ballot.State) {
 	sm.RLock()
 	current := sm.state
 	sm.RUnlock()
 
 	target := consensus.ISAACState{
+		Height:      height,
 		Round:       round,
 		BallotState: ballotState,
 	}
@@ -141,18 +140,15 @@ func (sm *ISAACStateManager) TransitISAACState(round round.Round, ballotState ba
 }
 
 func (sm *ISAACStateManager) IncreaseRound() {
-	round := sm.State().Round
-	sm.nr.Log().Debug("begin ISAACStateManager.IncreaseRound()", round)
-	round.Number++
-	sm.TransitISAACState(round, ballot.StateINIT)
+	state := sm.State()
+	sm.nr.Log().Debug("begin ISAACStateManager.IncreaseRound()", "height", state.Height, "round", state.Round)
+	sm.TransitISAACState(state.Height, state.Round+1, ballot.StateINIT)
 }
 
 func (sm *ISAACStateManager) NextHeight() {
-	round := sm.State().Round
-	sm.nr.Log().Debug("begin ISAACStateManager.NextHeight()", "round", round)
-	round.BlockHeight++
-	round.Number = 0
-	sm.TransitISAACState(round, ballot.StateINIT)
+	state := sm.State()
+	sm.nr.Log().Debug("begin ISAACStateManager.NextHeight()", "height", state.Height, "round", state.Round)
+	sm.TransitISAACState(state.Height+1, 0, ballot.StateINIT)
 }
 
 // In `Start()` method a node proposes ballot.
@@ -209,7 +205,7 @@ func (sm *ISAACStateManager) broadcastExpiredBallot(state consensus.ISAACState) 
 	sm.nr.Log().Debug("begin broadcastExpiredBallot", "ISAACState", state)
 	b := sm.nr.consensus.LatestBlock()
 	round := round.Round{
-		Number:      state.Round.Number,
+		Number:      state.Round,
 		BlockHeight: b.Height,
 		BlockHash:   b.Hash,
 		TotalTxs:    b.TotalTxs,
@@ -241,12 +237,12 @@ func (sm *ISAACStateManager) resetTimer(timer *time.Timer, state ballot.State) {
 // but if not, it waits for receiving ballot from the other proposer.
 func (sm *ISAACStateManager) proposeOrWait(timer *time.Timer, state consensus.ISAACState) {
 	timer.Reset(time.Duration(1 * time.Hour))
-	proposer := sm.nr.Consensus().SelectProposer(state.Round.BlockHeight, state.Round.Number)
+	proposer := sm.nr.Consensus().SelectProposer(state.Height, state.Round)
 	log.Debug("selected proposer", "proposer", proposer)
 
 	if proposer == sm.nr.localNode.Address() {
 		time.Sleep(sm.blockTimeBuffer)
-		if _, err := sm.nr.proposeNewBallot(state.Round.Number); err == nil {
+		if _, err := sm.nr.proposeNewBallot(state.Round); err == nil {
 			log.Debug("propose new ballot", "proposer", proposer, "round", state.Round, "ballotState", ballot.StateSIGN)
 		} else {
 			log.Error("failed to proposeNewBallot", "height", sm.nr.consensus.LatestBlock().Height, "error", err)
