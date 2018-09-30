@@ -51,7 +51,7 @@ jobs:
       - <<: *workspace
       - run:
           name: run tests
-          command: SEBAK_LOG_HANDLER=null go test -v -timeout 5m ./...
+          command: SEBAK_LOG_HANDLER=null go test -v -timeout 8m ./...
 
   generate_merged_tree:
     <<: *defaults

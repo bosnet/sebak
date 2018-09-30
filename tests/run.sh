@@ -44,14 +44,14 @@ for dir in ${TEST_DIRS}; do
     # because the reports are written on program's exit, which also means container's shutdown
     # Also SUPER IMPORTANT: the `-test` args need to be before any other args, or they are simply ignored...
     export NODE1=$(docker run -d --network host --env-file=${ROOT_DIR}/docker/node1.env \
-                          ${NODE_DOCKER_IMAGE} -test.coverprofile=coverage.txt node --genesis=${SEBAK_GENESIS},${SEBAK_COMMON} \
-                          --log-level=debug --timeout-init=4 --timeout-sign=4 --timeout-accept=4 --block-time=10)
+                          ${NODE_DOCKER_IMAGE} -test.coverprofile=coverage.txt node --genesis=${SEBAK_GENESIS},${SEBAK_COMMON}\
+                          --log-level=debug --timeout-init=2 --timeout-sign=3 --timeout-accept=3 --block-time=5)
     export NODE2=$(docker run -d --network host --env-file=${ROOT_DIR}/docker/node2.env \
-                          ${NODE_DOCKER_IMAGE} -test.coverprofile=coverage.txt node --genesis=${SEBAK_GENESIS},${SEBAK_COMMON} \
-                          --log-level=debug --timeout-init=4 --timeout-sign=4 --timeout-accept=4 --block-time=10)
+                          ${NODE_DOCKER_IMAGE} -test.coverprofile=coverage.txt node --genesis=${SEBAK_GENESIS},${SEBAK_COMMON}\
+                          --log-level=debug --timeout-init=2 --timeout-sign=3 --timeout-accept=3 --block-time=5)
     export NODE3=$(docker run -d --network host --env-file=${ROOT_DIR}/docker/node3.env \
-                          ${NODE_DOCKER_IMAGE} -test.coverprofile=coverage.txt node --genesis=${SEBAK_GENESIS},${SEBAK_COMMON} \
-                          --log-level=debug --timeout-init=4 --timeout-sign=4 --timeout-accept=4 --block-time=10)
+                          ${NODE_DOCKER_IMAGE} -test.coverprofile=coverage.txt node --genesis=${SEBAK_GENESIS},${SEBAK_COMMON}\
+                          --log-level=debug --timeout-init=2 --timeout-sign=3 --timeout-accept=3 --block-time=5)
 
     DOCKER_CONTAINERS="${DOCKER_CONTAINERS} ${NODE1} ${NODE2} ${NODE3}"
 
