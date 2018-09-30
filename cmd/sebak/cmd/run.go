@@ -277,7 +277,7 @@ func parseFlagsNode() {
 	parsedFlags := []interface{}{}
 	parsedFlags = append(parsedFlags, "\n\tnetwork-id", flagNetworkID)
 	parsedFlags = append(parsedFlags, "\n\tbind", flagBindURL)
-	parsedFlags = append(parsedFlags, "\n\tpublish", flagBindURL)
+	parsedFlags = append(parsedFlags, "\n\tpublish", flagPublishURL)
 	parsedFlags = append(parsedFlags, "\n\tstorage", flagStorageConfigString)
 	parsedFlags = append(parsedFlags, "\n\ttls-cert", flagTLSCertFile)
 	parsedFlags = append(parsedFlags, "\n\ttls-key", flagTLSKeyFile)
