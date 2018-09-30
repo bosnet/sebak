@@ -116,7 +116,7 @@ func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, n *network.HTTP2Netw
 		commonAccount := block.NewBlockAccount(commonKP.Address(), 0)
 		commonAccount.Save(st)
 
-		block.MakeInitialBlock(st, *account, *commonAccount, networkID)
+		block.MakeGenesisBlock(st, *account, *commonAccount, networkID)
 	}
 	conf := consensus.NewISAACConfiguration()
 	if nodeRunner, err = NewNodeRunner(string(networkID), localNode, p, n, is, st, conf); err != nil {

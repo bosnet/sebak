@@ -47,7 +47,7 @@ func NewISAACStateManager(nr *NodeRunner, conf *consensus.ISAACConfiguration) *I
 	genesisHeight := uint64(1)
 	genesisBlock, err := block.GetBlockByHeight(nr.storage, genesisHeight)
 	if err != nil {
-		nr.log.Error("Cannot get genesis block from storage", "height", genesisHeight, "error", err)
+		nr.log.Error("cannot get genesis block from storage", "height", genesisHeight, "error", err)
 	}
 	p.genesis = genesisBlock.Header.Timestamp
 
@@ -217,6 +217,9 @@ func (sm *ISAACStateManager) broadcastExpiredBallot(state consensus.ISAACState) 
 
 	newExpiredBallot := ballot.NewBallot(sm.nr.localNode.Address(), round, []string{})
 	newExpiredBallot.SetVote(state.BallotState.Next(), ballot.VotingEXP)
+	ptx, _ := ballot.NewProposerTransactionFromBallot(*newExpiredBallot, sm.nr.CommonAccountAddress)
+	ptx.Sign(sm.nr.localNode.Keypair(), sm.nr.networkID)
+	newExpiredBallot.SetProposerTransaction(ptx)
 	newExpiredBallot.Sign(sm.nr.localNode.Keypair(), sm.nr.networkID)
 
 	sm.nr.Log().Debug("broadcast", "ballot", *newExpiredBallot)

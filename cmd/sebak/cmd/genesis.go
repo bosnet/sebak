@@ -31,7 +31,7 @@ func init() {
 		Short: "initialize new network",
 		Args:  cobra.ExactArgs(2),
 		Run: func(c *cobra.Command, args []string) {
-			flagName, err := makeBlocks(args[0], args[1], flagNetworkID, flagBalance, flagStorageConfigString, log)
+			flagName, err := makeGenesisBlock(args[0], args[1], flagNetworkID, flagBalance, flagStorageConfigString, log)
 			if len(flagName) != 0 || err != nil {
 				cmdcommon.PrintFlagsError(c, flagName, err)
 			}
@@ -47,8 +47,7 @@ func init() {
 	rootCmd.AddCommand(genesisCmd)
 }
 
-//
-// Create blocks using the provided parameter
+// makeGenesisBlock creates a genesis block using the provided parameter
 //
 // This function is separate, and public, to allow it to be used from other modules
 // (at the moment, only `run`) so it can provide the same behavior (defaults, error messages).
@@ -68,8 +67,7 @@ func init() {
 //   The string argument represent the name of the flag which errored,
 //   and error is the more detailed error.
 //   Note that only one needs be non-`nil` for it to be considered an error.
-//
-func makeBlocks(genesisAddress, commonAddress, networkID, balanceStr, storageUri string, log logging.Logger) (string, error) {
+func makeGenesisBlock(genesisAddress, commonAddress, networkID, balanceStr, storageUri string, log logging.Logger) (string, error) {
 	var balance common.Amount
 	var err error
 	var genesisKP keypair.KP
@@ -129,10 +127,7 @@ func makeBlocks(genesisAddress, commonAddress, networkID, balanceStr, storageUri
 		return "<public key>", errors.New("account is already created")
 	}
 
-	genesisAccount := block.NewBlockAccount(
-		genesisKP.Address(),
-		balance,
-	)
+	genesisAccount := block.NewBlockAccount(genesisKP.Address(), balance)
 	if err := genesisAccount.Save(st); err != nil {
 		return "<public key>", fmt.Errorf("failed to create genesis account: %v", err)
 	}
@@ -142,7 +137,7 @@ func makeBlocks(genesisAddress, commonAddress, networkID, balanceStr, storageUri
 		return "<public key>", fmt.Errorf("failed to create common account: %v", err)
 	}
 
-	genesisBlock, err := block.MakeInitialBlock(st, *genesisAccount, *commonAccount, []byte(flagNetworkID))
+	b, err := block.MakeGenesisBlock(st, *genesisAccount, *commonAccount, []byte(flagNetworkID))
 	if err != nil {
 		return "<public key>", fmt.Errorf("failed to create genesis block: %v", err)
 	}

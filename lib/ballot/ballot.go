@@ -98,6 +98,10 @@ func (b Ballot) IsWellFormed(networkID []byte) (err error) {
 		return
 	}
 
+	if err = b.ProposerTransaction().IsWellFormedWithBallot(networkID, b); err != nil {
+		return
+	}
+
 	if err = b.Verify(networkID); err != nil {
 		return
 	}
@@ -206,6 +210,16 @@ func (b Ballot) State() State {
 	return b.B.State
 }
 
+func (b Ballot) ProposerTransaction() ProposerTransaction {
+	return b.B.Proposed.Transaction
+}
+
+// TODO SetProposerTransaction should be removed. ProposerTransaction should be
+// set in `NewBallot()`
+func (b *Ballot) SetProposerTransaction(ptx ProposerTransaction) {
+	b.B.Proposed.Transaction = ptx
+}
+
 type BallotHeader struct {
 	Hash              string `json:"hash"`               // hash of `BallotBody`
 	Signature         string `json:"signature"`          // signed by source node of <networkID> + `Hash`
@@ -213,10 +227,11 @@ type BallotHeader struct {
 }
 
 type BallotBodyProposed struct {
-	Confirmed    string      `json:"confirmed"` // created time, ISO8601
-	Proposer     string      `json:"proposer"`
-	Round        round.Round `json:"round"`
-	Transactions []string    `json:"transactions"`
+	Confirmed    string              `json:"confirmed"` // created time, ISO8601
+	Proposer     string              `json:"proposer"`
+	Round        round.Round         `json:"round"`
+	Transactions []string            `json:"transactions"`
+	Transaction  ProposerTransaction `json:"transaction"`
 }
 
 type BallotBody struct {

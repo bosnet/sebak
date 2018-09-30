@@ -50,12 +50,12 @@ func (c *TestConnectionManager) Messages() []common.Message {
 	return messages
 }
 
-type SelfSelector struct {
-	cm network.ConnectionManager
+type FixedSelector struct {
+	address string
 }
 
-func (s SelfSelector) Select(_ uint64, _ uint64) string {
-	return s.cm.GetNodeAddress()
+func (s FixedSelector) Select(_ uint64, _ uint64) string {
+	return s.address
 }
 
 type OtherSelector struct {

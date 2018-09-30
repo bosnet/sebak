@@ -5,8 +5,9 @@ import (
 
 	"boscoin.io/sebak/lib/common"
 
-	"boscoin.io/sebak/lib/error"
 	"encoding/json"
+
+	"boscoin.io/sebak/lib/error"
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
@@ -34,30 +35,36 @@ func TestIsWellFormedTransaction(t *testing.T) {
 func TestIsWellFormedTransactionWithLowerFee(t *testing.T) {
 	var err error
 
-	kp, tx := TestMakeTransaction(networkID, 1)
-	tx.B.Fee = common.BaseFee
-	tx.H.Hash = tx.B.MakeHashString()
-	tx.Sign(kp, networkID)
-	err = tx.IsWellFormed(networkID)
-	require.Nil(t, err)
+	{ // valid fee
+		kp, tx := TestMakeTransaction(networkID, 3)
+		tx.Sign(kp, networkID)
+		err = tx.IsWellFormed(networkID)
+		require.Nil(t, err)
+	}
 
-	tx.B.Fee = common.BaseFee.MustAdd(1)
-	tx.H.Hash = tx.B.MakeHashString()
-	tx.Sign(kp, networkID)
-	err = tx.IsWellFormed(networkID)
-	require.Nil(t, err)
+	{ // fee is over than len(Operations) * BaseFee
+		kp, tx := TestMakeTransaction(networkID, 3)
+		tx.B.Fee = tx.B.Fee.MustAdd(1)
+		tx.Sign(kp, networkID)
+		err = tx.IsWellFormed(networkID)
+		require.Nil(t, err)
+	}
 
-	tx.B.Fee = common.BaseFee.MustSub(1)
-	tx.H.Hash = tx.B.MakeHashString()
-	tx.Sign(kp, networkID)
-	err = tx.IsWellFormed(networkID)
-	require.NotNil(t, err, "Transaction shouidn't pass Fee checks")
+	{ // fee is lower than len(Operations) * BaseFee
+		kp, tx := TestMakeTransaction(networkID, 3)
+		tx.B.Fee = tx.B.Fee.MustSub(1)
+		tx.Sign(kp, networkID)
+		err = tx.IsWellFormed(networkID)
+		require.Equal(t, errors.ErrorInvalidFee, err, "Transaction shouidn't pass Fee checks")
+	}
 
-	tx.B.Fee = common.Amount(0)
-	tx.H.Hash = tx.B.MakeHashString()
-	tx.Sign(kp, networkID)
-	err = tx.IsWellFormed(networkID)
-	require.NotNil(t, err, "Transaction shouidn't pass Fee checks")
+	{ // zero fee
+		kp, tx := TestMakeTransaction(networkID, 3)
+		tx.B.Fee = common.Amount(0)
+		tx.Sign(kp, networkID)
+		err = tx.IsWellFormed(networkID)
+		require.Equal(t, errors.ErrorInvalidFee, err, "Transaction shouidn't pass Fee checks")
+	}
 }
 
 func TestIsWellFormedTransactionWithInvalidSourceAddress(t *testing.T) {

@@ -41,10 +41,9 @@ func (bck Block) String() string {
 	return string(encoded)
 }
 
-// MakeInitialBlock makes special block from special account and transaction
-// like genssis or common block.
+// MakeGenesisBlock makes genesis block.
 //
-// The special block has different part from the other Block
+// This special block has different part from the other Block
 // * `Block.Proposer` is empty
 // * `Block.Confirmed` is `common.GenesisBlockConfirmedTime`
 // * has only one `Transaction`
@@ -60,7 +59,7 @@ func (bck Block) String() string {
 // * `Transaction.B.Source` is same with `OperationCreateAccount.Target` of
 // genesis account
 // * `Transaction.B.Fee` is 0
-func MakeInitialBlock(st *storage.LevelDBBackend, genesisAccount BlockAccount, commonAccount BlockAccount, networdID []byte) (blk Block, err error) {
+func MakeGenesisBlock(st *storage.LevelDBBackend, genesisAccount BlockAccount, commonAccount BlockAccount, networdID []byte) (blk Block, err error) {
 	if genesisAccount.Address == commonAccount.Address {
 		err = fmt.Errorf("genesis account and common account are same.")
 		return

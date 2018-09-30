@@ -23,6 +23,7 @@ import (
 	"boscoin.io/sebak/lib/network/api"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/storage"
+	"boscoin.io/sebak/lib/transaction"
 )
 
 var DefaultHandleTransactionCheckerFuncs = []common.CheckerFunc{
@@ -37,6 +38,7 @@ var DefaultHandleTransactionCheckerFuncs = []common.CheckerFunc{
 
 var DefaultHandleBaseBallotCheckerFuncs = []common.CheckerFunc{
 	BallotUnmarshal,
+	BallotValidateOperationBodyCollectTxFee,
 	BallotNotFromKnownValidators,
 	BallotAlreadyFinished,
 }
@@ -88,7 +90,7 @@ type NodeRunner struct {
 
 	log logging.Logger
 
-	commonAccountAddress string
+	CommonAccountAddress string
 }
 
 func NewNodeRunner(
@@ -123,33 +125,12 @@ func NewNodeRunner(
 	nr.SetHandleACCEPTBallotCheckerFuncs(DefaultHandleACCEPTBallotCheckerFuncs...)
 
 	{ // find common account
-		var bk block.Block
-		if bk, err = block.GetBlockByHeight(nr.storage, common.GenesisBlockHeight); err != nil {
-			return
-		} else if len(bk.Transactions) < 1 {
-			err = errors.ErrorBlockAccountDoesNotExists
-			return
-		}
-
-		var bt block.BlockTransaction
-		if bt, err = block.GetBlockTransaction(nr.storage, bk.Transactions[0]); err != nil {
-			return
-		} else if len(bt.Operations) < 2 {
-			err = errors.ErrorBlockAccountDoesNotExists
-			return
-		}
-
-		var bo block.BlockOperation
-		if bo, err = block.GetBlockOperation(nr.storage, bt.Operations[1]); err != nil {
-			return
-		}
-
 		var commonAccount *block.BlockAccount
-		if commonAccount, err = block.GetBlockAccount(nr.storage, bo.Target); err != nil {
+		if commonAccount, err = GetCommonAccount(nr.storage); err != nil {
 			return
 		}
-
-		nr.commonAccountAddress = commonAccount.Address
+		nr.CommonAccountAddress = commonAccount.Address
+		nr.log.Debug("common account found", "address", nr.CommonAccountAddress)
 	}
 
 	return
@@ -350,7 +331,7 @@ func (nr *NodeRunner) handleMessage(message common.NetworkMessage) {
 		if _, ok := err.(common.CheckerStop); ok {
 			return
 		}
-		nr.log.Debug("failed to handle message", "message", message.Head(50), "error", err)
+		nr.log.Debug("failed to handle message", "message", message.Head(50), "error", err, "message", string(message.Data))
 	}
 }
 
@@ -528,6 +509,20 @@ func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) (ballot.Ballot, error
 
 	theBallot := ballot.NewBallot(nr.localNode.Address(), round, transactionsChecker.ValidTransactions)
 	theBallot.SetVote(ballot.StateINIT, ballot.VotingYES)
+
+	var validTransactions []transaction.Transaction
+	for _, hash := range transactionsChecker.ValidTransactions {
+		if tx, found := nr.consensus.TransactionPool.Get(hash); !found {
+			continue
+		} else {
+			validTransactions = append(validTransactions, tx)
+		}
+	}
+
+	ptx, _ := ballot.NewProposerTransactionFromBallot(*theBallot, nr.CommonAccountAddress, validTransactions...)
+	ptx.Sign(nr.localNode.Keypair(), nr.networkID)
+	theBallot.SetProposerTransaction(ptx)
+
 	theBallot.Sign(nr.localNode.Keypair(), nr.networkID)
 
 	nr.log.Debug("new ballot created", "ballot", theBallot)

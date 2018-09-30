@@ -15,6 +15,8 @@ type TransactionChecker struct {
 
 	NetworkID   []byte
 	Transaction Transaction
+
+	Extra map[string]interface{}
 }
 
 func CheckTransactionSource(c common.Checker, args ...interface{}) (err error) {
@@ -45,7 +47,7 @@ func CheckTransactionSequenceID(c common.Checker, args ...interface{}) (err erro
 
 func CheckTransactionBaseFee(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*TransactionChecker)
-	if checker.Transaction.B.Fee < common.BaseFee {
+	if checker.Transaction.B.Fee < checker.Transaction.TotalBaseFee() {
 		err = errors.ErrorInvalidFee
 		return
 	}

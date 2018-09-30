@@ -70,7 +70,7 @@ func NewTransaction(source string, sequenceID uint64, ops ...Operation) (tx Tran
 
 	txBody := TransactionBody{
 		Source:     source,
-		Fee:        common.BaseFee,
+		Fee:        common.BaseFee.MustMult(len(ops)),
 		SequenceID: sequenceID,
 		Operations: ops,
 	}
@@ -131,6 +131,7 @@ func (tx Transaction) Source() string {
 	return tx.B.Source
 }
 
+// TotalAmount returns the sum of Amount of operations.
 //
 // Returns:
 //   the total monetary value of this transaction,
@@ -150,12 +151,15 @@ func (tx Transaction) TotalAmount(withFee bool) common.Amount {
 		}
 	}
 
-	// TODO: This isn't checked anywhere yet
 	if withFee {
-		amount = amount.MustAdd(tx.B.Fee.MustMult(len(tx.B.Operations)))
+		amount = amount.MustAdd(tx.B.Fee)
 	}
 
 	return amount
+}
+
+func (tx Transaction) TotalBaseFee() common.Amount {
+	return common.BaseFee.MustMult(len(tx.B.Operations))
 }
 
 func (tx Transaction) Serialize() (encoded []byte, err error) {

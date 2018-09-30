@@ -26,27 +26,44 @@ func TestErrorBallotHasOverMaxTransactionsInBallot(t *testing.T) {
 	common.MaxTransactionsInBallot = 2
 
 	kp, _ := keypair.Random()
+	commonKP, _ := keypair.Random()
 	endpoint, _ := common.NewEndpointFromString("https://localhost:1000")
 	node, _ := node.NewLocalNode(kp, endpoint, "")
 
 	round := round.Round{Number: 0, BlockHeight: 1, BlockHash: "hahaha", TotalTxs: 1}
 	_, tx := transaction.TestMakeTransaction(networkID, 1)
 
-	ballot := NewBallot(node.Address(), round, []string{tx.GetHash()})
-	ballot.Sign(node.Keypair(), networkID)
-	require.Nil(t, ballot.IsWellFormed(networkID))
+	{
+		blt := NewBallot(node.Address(), round, []string{tx.GetHash()})
 
-	var txs []string
-	for i := 0; i < common.MaxTransactionsInBallot+1; i++ {
-		_, tx := transaction.TestMakeTransaction(networkID, 1)
-		txs = append(txs, tx.GetHash())
+		ptx, _ := NewProposerTransactionFromBallot(*blt, commonKP.Address(), tx)
+		ptx.Sign(node.Keypair(), networkID)
+		blt.SetProposerTransaction(ptx)
+
+		blt.Sign(node.Keypair(), networkID)
+		require.Nil(t, blt.IsWellFormed(networkID))
 	}
 
-	ballot = NewBallot(node.Address(), round, txs)
-	ballot.Sign(node.Keypair(), networkID)
+	{
+		var txHashes []string
+		var txs []transaction.Transaction
+		for i := 0; i < common.MaxTransactionsInBallot+1; i++ {
+			_, tx := transaction.TestMakeTransaction(networkID, 1)
+			txs = append(txs, tx)
+			txHashes = append(txHashes, tx.GetHash())
+		}
 
-	err := ballot.IsWellFormed(networkID)
-	require.Error(t, err, errors.ErrorBallotHasOverMaxTransactionsInBallot)
+		blt := NewBallot(node.Address(), round, txHashes)
+
+		ptx, _ := NewProposerTransactionFromBallot(*blt, commonKP.Address(), txs...)
+		ptx.Sign(node.Keypair(), networkID)
+		blt.SetProposerTransaction(ptx)
+
+		blt.Sign(node.Keypair(), networkID)
+
+		err := blt.IsWellFormed(networkID)
+		require.Error(t, err, errors.ErrorBallotHasOverMaxTransactionsInBallot)
+	}
 }
 
 /*
@@ -72,10 +89,11 @@ func TestBallotHash(t *testing.T) {
 
 func TestBallotBadConfirmedTime(t *testing.T) {
 	kp, _ := keypair.Random()
+	commonKP, _ := keypair.Random()
 	endpoint, _ := common.NewEndpointFromString("https://localhost:1000")
 	node, _ := node.NewLocalNode(kp, endpoint, "")
 
-	round := round.Round{Number: 0, BlockHeight: 0, BlockHash: "", TotalTxs: 0}
+	round := round.Round{Number: 0, BlockHeight: 0, BlockHash: "showme", TotalTxs: 0}
 
 	updateBallot := func(ballot *Ballot) {
 		ballot.H.Hash = ballot.B.MakeHashString()
@@ -85,6 +103,10 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 
 	{
 		ballot := NewBallot(node.Address(), round, []string{})
+		ballot := NewBallot(node.Address(), round, []string{})
+		ptx, _ := NewProposerTransactionFromBallot(*ballot, commonKP.Address())
+		ptx.Sign(kp, networkID)
+		ballot.SetProposerTransaction(ptx)
 		ballot.Sign(kp, networkID)
 
 		err := ballot.IsWellFormed(networkID)
@@ -148,4 +170,47 @@ func TestBallotEmptyHash(t *testing.T) {
 	b.Sign(kp, networkID)
 
 	require.True(t, len(b.GetHash()) > 0)
+}
+
+// TestBallotProposerTransaction checks; the proposed Ballot must have the
+// proposed transaction.
+func TestBallotProposerTransaction(t *testing.T) {
+	kp, _ := keypair.Random()
+	endpoint, _ := common.NewEndpointFromString("https://localhost:1000")
+	node, _ := node.NewLocalNode(kp, endpoint, "")
+
+	round := round.Round{Number: 0, BlockHeight: 1, BlockHash: "hahaha", TotalTxs: 1}
+
+	commonKP, _ := keypair.Random()
+
+	{ // without ProposerTransaction
+		blt := NewBallot(node, round, []string{})
+		blt.Sign(node.Keypair(), networkID)
+		err := blt.IsWellFormed(networkID)
+		require.NotNil(t, err)
+	}
+
+	{ // with ProposerTransaction
+		blt := NewBallot(node, round, []string{})
+		opb := transaction.NewOperationBodyCollectTxFee(
+			commonKP.Address(),
+			common.Amount(10),
+			uint64(len(blt.Transactions())),
+			blt.Round().BlockHeight,
+			blt.Round().BlockHash,
+			blt.Round().TotalTxs,
+		)
+		var ptx ProposerTransaction
+		{
+			op, err := transaction.NewOperation(opb)
+			require.Nil(t, err)
+			ptx, err = NewProposerTransaction(kp.Address(), op)
+			require.Nil(t, err)
+		}
+
+		blt.SetProposerTransaction(ptx)
+		blt.Sign(node.Keypair(), networkID)
+		err := blt.IsWellFormed(networkID)
+		require.NotNil(t, err)
+	}
 }

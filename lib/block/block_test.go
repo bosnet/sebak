@@ -120,7 +120,7 @@ func TestMakeGenesisBlock(t *testing.T) {
 	err = commonAccount.Save(st)
 	require.Nil(t, err)
 
-	bk, err := MakeInitialBlock(st, *genesisAccount, *commonAccount, networkID)
+	bk, err := MakeGenesisBlock(st, *genesisAccount, *commonAccount, networkID)
 	require.Nil(t, err)
 	require.Equal(t, uint64(1), bk.Height)
 	require.Equal(t, 1, len(bk.Transactions))
@@ -156,7 +156,7 @@ func TestMakeGenesisBlock(t *testing.T) {
 	require.Nil(t, err)
 	require.Equal(t, bt.Hash, bo.TxHash)
 	require.Equal(t, transaction.OperationCreateAccount, bo.Type)
-	require.Equal(t, account.Address, bo.Source)
+	require.Equal(t, genesisAccount.Address, bo.Source)
 
 	{
 		opb, err := transaction.UnmarshalOperationBodyJSON(bo.Type, bo.Body)
@@ -164,8 +164,8 @@ func TestMakeGenesisBlock(t *testing.T) {
 
 		opbp := opb.(transaction.OperationBodyPayable)
 
-		require.Equal(t, account.Address, opbp.TargetAddress())
-		require.Equal(t, account.Balance, opbp.GetAmount())
+		require.Equal(t, genesisAccount.Address, opbp.TargetAddress())
+		require.Equal(t, genesisAccount.Balance, opbp.GetAmount())
 	}
 }
 
@@ -185,7 +185,7 @@ func TestMakeGenesisBlockOverride(t *testing.T) {
 		commonAccount.Save(st)
 		require.Nil(t, err)
 
-		bk, err := MakeInitialBlock(st, *account, *commonAccount, networkID)
+		bk, err := MakeGenesisBlock(st, *account, *commonAccount, networkID)
 		require.Nil(t, err)
 		require.Equal(t, uint64(1), bk.Height)
 	}
@@ -202,7 +202,7 @@ func TestMakeGenesisBlockOverride(t *testing.T) {
 		commonAccount.Save(st)
 		require.Nil(t, err)
 
-		_, err = MakeInitialBlock(st, *account, *commonAccount, networkID)
+		_, err = MakeGenesisBlock(st, *account, *commonAccount, networkID)
 		require.Equal(t, errors.ErrorBlockAlreadyExists, err)
 	}
 }
@@ -222,7 +222,7 @@ func TestMakeGenesisBlockFindGenesisAccount(t *testing.T) {
 	commonAccount.Save(st)
 
 	{
-		bk, err := MakeInitialBlock(st, *account, *commonAccount, networkID)
+		bk, err := MakeGenesisBlock(st, *account, *commonAccount, networkID)
 		require.Nil(t, err)
 		require.Equal(t, uint64(1), bk.Height)
 	}
@@ -274,7 +274,7 @@ func TestMakeGenesisBlockFindCommonAccount(t *testing.T) {
 	commonAccount.Save(st)
 
 	{
-		bk, err := MakeInitialBlock(st, *genesisAccount, *commonAccount, networkID)
+		bk, err := MakeGenesisBlock(st, *genesisAccount, *commonAccount, networkID)
 		require.Nil(t, err)
 		require.Equal(t, uint64(1), bk.Height)
 	}
@@ -285,7 +285,12 @@ func TestMakeGenesisBlockFindCommonAccount(t *testing.T) {
 		bt, _ := GetBlockTransaction(st, bk.Transactions[0])
 		bo, _ := GetBlockOperation(st, bt.Operations[1])
 
-		ac, err := GetBlockAccount(st, bo.Target)
+		opb, err := transaction.UnmarshalOperationBodyJSON(bo.Type, bo.Body)
+		require.Nil(t, err)
+
+		opbp := opb.(transaction.OperationBodyPayable)
+
+		ac, err := GetBlockAccount(st, opbp.TargetAddress())
 		require.Nil(t, err)
 
 		require.Equal(t, commonAccount.Address, ac.Address)

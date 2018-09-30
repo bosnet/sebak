@@ -90,7 +90,7 @@ func init() {
 				if len(csv) == 3 {
 					balanceStr = csv[1]
 				}
-				flagName, err := makeBlocks(csv[0], csv[1], flagNetworkID, balanceStr, flagStorageConfigString, log)
+				flagName, err := makeGenesisBlock(csv[0], csv[1], flagNetworkID, balanceStr, flagStorageConfigString, log)
 				if len(flagName) != 0 || err != nil {
 					cmdcommon.PrintFlagsError(c, flagName, err)
 				}
