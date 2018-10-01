@@ -95,7 +95,7 @@ func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, n *network.HTTP2Netw
 	}
 	n = network.NewHTTP2Network(config)
 
-	p, _ := consensus.NewDefaultVotingThresholdPolicy(30, 30)
+	p, _ := consensus.NewDefaultVotingThresholdPolicy(30)
 
 	connectionManager := network.NewValidatorConnectionManager(
 		localNode,

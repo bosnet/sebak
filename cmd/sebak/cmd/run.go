@@ -346,7 +346,7 @@ func runNode() error {
 
 	nt := network.NewHTTP2Network(networkConfig)
 
-	policy, err := consensus.NewDefaultVotingThresholdPolicy(threshold, threshold)
+	policy, err := consensus.NewDefaultVotingThresholdPolicy(threshold)
 	if err != nil {
 		log.Crit("failed to create VotingThresholdPolicy", "error", err)
 		return err

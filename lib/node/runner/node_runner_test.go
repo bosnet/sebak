@@ -55,7 +55,7 @@ func createTestNodeRunner(n int, conf *consensus.ISAACConfiguration) []*NodeRunn
 	var nodeRunners []*NodeRunner
 	for i := 0; i < n; i++ {
 		localNode := nodes[i]
-		policy, _ := consensus.NewDefaultVotingThresholdPolicy(66, 66)
+		policy, _ := consensus.NewDefaultVotingThresholdPolicy(66)
 
 		connectionManager := network.NewValidatorConnectionManager(
 			localNode,
@@ -151,7 +151,7 @@ func createTestNodeRunnersHTTP2Network(n int) (nodeRunners []*NodeRunner, rootKP
 		10000000000000,
 	)
 	for _, node := range nodes {
-		policy, _ := consensus.NewDefaultVotingThresholdPolicy(66, 66)
+		policy, _ := consensus.NewDefaultVotingThresholdPolicy(66)
 		st := storage.NewTestStorage()
 		networkConfig, _ := network.NewHTTP2NetworkConfigFromEndpoint(node.Alias(), node.Endpoint())
 		n := network.NewHTTP2Network(networkConfig)
