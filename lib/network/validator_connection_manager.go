@@ -110,13 +110,13 @@ func (c *ValidatorConnectionManager) AllConnected() []string {
 }
 
 // Returns:
-//   A list of all validators, including self
+//   A list of all validators
 func (c *ValidatorConnectionManager) AllValidators() []string {
 	var validators []string
 	for address := range c.validators {
 		validators = append(validators, address)
 	}
-	return append(validators, c.localNode.Address())
+	return validators
 }
 
 //

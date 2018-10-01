@@ -45,9 +45,6 @@ func createTestNodeRunner(n int, conf *consensus.ISAACConfiguration) []*NodeRunn
 
 	for i := 0; i < n; i++ {
 		for j := 0; j < n; j++ {
-			if i == j {
-				continue
-			}
 			nodes[i].AddValidators(nodes[j].ConvertToValidator())
 		}
 	}
@@ -142,11 +139,8 @@ func createTestNodeRunnersHTTP2Network(n int) (nodeRunners []*NodeRunner, rootKP
 		nodes = append(nodes, node)
 	}
 
-	for i, node0 := range nodes {
-		for j, node1 := range nodes {
-			if i == j {
-				continue
-			}
+	for _, node0 := range nodes {
+		for _, node1 := range nodes {
 			node0.AddValidators(node1.ConvertToValidator())
 		}
 	}

@@ -119,9 +119,6 @@ func createNodeRunnerForTesting(n int, conf *consensus.ISAACConfiguration, recv 
 	}
 
 	for j := 0; j < n; j++ {
-		if j == 0 {
-			continue
-		}
 		nodes[0].AddValidators(nodes[j].ConvertToValidator())
 	}
 

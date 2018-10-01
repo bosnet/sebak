@@ -150,13 +150,28 @@ func parseFlagValidators(v string) (vs []*node.Validator, err error) {
 
 	for _, v := range splitted {
 		var validator *node.Validator
-		if validator, err = node.NewValidatorFromURI(v); err != nil {
+		if strings.ToLower(v) == "self" {
+			validator, err = newLocalNode()
+		} else {
+			validator, err = node.NewValidatorFromURI(v)
+		}
+		if err != nil {
 			return
 		}
 		vs = append(vs, validator)
 	}
 
 	return
+}
+
+func newLocalNode() (*node.Validator, error) {
+	localNode, err := node.NewLocalNode(kp, bindEndpoint, "")
+	if err != nil {
+		log.Error("failed to make local node", "error", err)
+		return nil, err
+	}
+
+	return localNode.ConvertToValidator(), nil
 }
 
 func parseFlagsNode() {
@@ -213,15 +228,6 @@ func parseFlagsNode() {
 
 	if validators, err = parseFlagValidators(flagValidators); err != nil {
 		cmdcommon.PrintFlagsError(nodeCmd, "--validators", err)
-	}
-
-	for _, n := range validators {
-		if n.Address() == kp.Address() {
-			cmdcommon.PrintFlagsError(nodeCmd, "--validators", fmt.Errorf("duplicated public address found"))
-		}
-		if n.Endpoint() == bindEndpoint {
-			cmdcommon.PrintFlagsError(nodeCmd, "--validators", fmt.Errorf("duplicated endpoint found"))
-		}
 	}
 
 	if storageConfig, err = storage.NewConfigFromString(flagStorageConfigString); err != nil {

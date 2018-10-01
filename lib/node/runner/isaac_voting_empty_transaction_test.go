@@ -41,7 +41,7 @@ func TestISAACBallotWithEmptyTransactionVoting(t *testing.T) {
 	require.Equal(t, uint64(1), latestBlock.TotalTxs)
 
 	// Generate proposed ballot in nr
-	err := nr.proposeNewBallot(0)
+	_, err := nr.proposeNewBallot(0)
 	require.Nil(t, err)
 
 	round := round.Round{

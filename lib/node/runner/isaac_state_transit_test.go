@@ -145,6 +145,8 @@ func TestStateSIGNTimeoutProposer(t *testing.T) {
 	<-recv
 	require.Equal(t, 1, len(cm.Messages()))
 
+	nr.TransitISAACState(nr.isaacStateManager.State().Round, ballot.StateSIGN)
+
 	<-recv
 	require.Equal(t, ballot.StateACCEPT, nr.isaacStateManager.State().BallotState)
 	require.Equal(t, 2, len(cm.Messages()))
@@ -261,6 +263,7 @@ func TestStateACCEPTTimeoutProposerThenNotProposer(t *testing.T) {
 
 	<-recv
 	require.Equal(t, 1, len(cm.Messages()))
+	nr.TransitISAACState(nr.isaacStateManager.State().Round, ballot.StateSIGN)
 
 	<-recv
 	require.Equal(t, 2, len(cm.Messages()))
