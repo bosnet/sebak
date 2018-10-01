@@ -118,6 +118,8 @@ func calculateBlockTimeBuffer(goal, average, untilNow, delta time.Duration) time
 }
 
 func (sm *ISAACStateManager) SetTransitSignal(f func()) {
+	sm.Lock()
+	defer sm.Unlock()
 	sm.transitSignal = f
 }
 
