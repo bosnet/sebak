@@ -44,7 +44,7 @@ var (
 	flagTLSCertFile         string = common.GetENVValue("SEBAK_TLS_CERT", "sebak.crt")
 	flagTLSKeyFile          string = common.GetENVValue("SEBAK_TLS_KEY", "sebak.key")
 	flagValidators          string = common.GetENVValue("SEBAK_VALIDATORS", "")
-	flagThreshold           string = common.GetENVValue("SEBAK_THRESHOLD", "66")
+	flagThreshold           string = common.GetENVValue("SEBAK_THRESHOLD", "67")
 	flagTimeoutINIT         string = common.GetENVValue("SEBAK_TIMEOUT_INIT", "2")
 	flagTimeoutSIGN         string = common.GetENVValue("SEBAK_TIMEOUT_SIGN", "2")
 	flagTimeoutACCEPT       string = common.GetENVValue("SEBAK_TIMEOUT_ACCEPT", "2")
