@@ -65,7 +65,7 @@ func (rv *RoundVote) GetResult(state ballot.State) (result RoundVoteResult) {
 }
 
 func (rv *RoundVote) CanGetVotingResult(policy ballot.VotingThresholdPolicy, state ballot.State, log logging.Logger) (RoundVoteResult, ballot.VotingHole, bool) {
-	threshold := policy.Threshold(state)
+	threshold := policy.Threshold()
 	if threshold < 1 {
 		return RoundVoteResult{}, ballot.VotingNOTYET, false
 	}

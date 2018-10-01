@@ -5,7 +5,6 @@ import (
 	"math"
 	"sync"
 
-	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/error"
 )
 
@@ -51,7 +50,7 @@ func (vt *ISAACVotingThresholdPolicy) SetConnected(n int) error {
 	return nil
 }
 
-func (vt *ISAACVotingThresholdPolicy) Threshold(state ballot.State) int {
+func (vt *ISAACVotingThresholdPolicy) Threshold() int {
 	v := float64(vt.validators) * (float64(vt.threshold) / float64(100))
 	threshold := int(math.Ceil(v))
 
