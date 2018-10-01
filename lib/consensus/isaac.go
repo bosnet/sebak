@@ -26,7 +26,7 @@ type ISAAC struct {
 	NetworkID       []byte
 	Node            *node.LocalNode
 	TransactionPool *transaction.TransactionPool
-	RunningRounds   map[ /* Round.Hash() */ string]*RunningRound
+	RunningRounds   map[ /* Round.Index() */ string]*RunningRound
 	LatestRound     round.Round
 }
 
@@ -60,7 +60,7 @@ func (is *ISAAC) CloseConsensus(proposer string, round round.Round, vh ballot.Vo
 		return
 	}
 
-	roundHash := round.Hash()
+	roundHash := round.Index()
 	rr, found := is.RunningRounds[roundHash]
 	if !found {
 		return
@@ -143,7 +143,7 @@ func (is *ISAAC) IsVoted(b ballot.Ballot) bool {
 	var found bool
 
 	var runningRound *RunningRound
-	if runningRound, found = is.RunningRounds[b.Round().Hash()]; !found {
+	if runningRound, found = is.RunningRounds[b.Round().Index()]; !found {
 		return false
 	}
 
@@ -153,7 +153,7 @@ func (is *ISAAC) IsVoted(b ballot.Ballot) bool {
 func (is *ISAAC) Vote(b ballot.Ballot) (isNew bool, err error) {
 	is.RLock()
 	defer is.RUnlock()
-	roundHash := b.Round().Hash()
+	roundHash := b.Round().Index()
 
 	var found bool
 	var runningRound *RunningRound
@@ -183,7 +183,7 @@ func (is *ISAAC) Vote(b ballot.Ballot) (isNew bool, err error) {
 func (is *ISAAC) CanGetVotingResult(b ballot.Ballot) (RoundVoteResult, ballot.VotingHole, bool) {
 	is.RLock()
 	defer is.RUnlock()
-	runningRound, _ := is.RunningRounds[b.Round().Hash()]
+	runningRound, _ := is.RunningRounds[b.Round().Index()]
 	if roundVote, err := runningRound.RoundVote(b.Proposer()); err == nil {
 		return roundVote.CanGetVotingResult(is.policy, b.State(), is.log)
 	} else {
@@ -194,7 +194,7 @@ func (is *ISAAC) CanGetVotingResult(b ballot.Ballot) (RoundVoteResult, ballot.Vo
 func (is *ISAAC) IsVotedByNode(b ballot.Ballot, node string) (bool, error) {
 	is.RLock()
 	defer is.RUnlock()
-	runningRound, _ := is.RunningRounds[b.Round().Hash()]
+	runningRound, _ := is.RunningRounds[b.Round().Index()]
 	if roundVote, err := runningRound.RoundVote(b.Proposer()); err == nil {
 		return roundVote.IsVotedByNode(b.State(), node), nil
 	} else {
@@ -212,7 +212,7 @@ func (is *ISAAC) HasRunningRound(roundHash string) bool {
 func (is *ISAAC) HasSameProposer(b ballot.Ballot) bool {
 	is.RLock()
 	defer is.RUnlock()
-	if runningRound, found := is.RunningRounds[b.Round().Hash()]; found {
+	if runningRound, found := is.RunningRounds[b.Round().Index()]; found {
 		return runningRound.Proposer == b.Proposer()
 	}
 
