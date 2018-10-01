@@ -6,13 +6,16 @@ import (
 	"time"
 
 	"boscoin.io/sebak/lib/block"
+	"boscoin.io/sebak/lib/transaction"
 )
 
 type SyncInfo struct {
 	BlockHeight uint64
 	Block       *block.Block
-	Txs         []*block.BlockTransaction
-	Ops         []*block.BlockOperation
+	Txs         []*transaction.Transaction
+
+	BlockTxs []*block.BlockTransaction
+	BlockOps []*block.BlockOperation
 }
 
 type Doer interface {

@@ -3,6 +3,7 @@ package sync
 import (
 	"bufio"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -16,6 +17,7 @@ import (
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/node/runner"
 	"boscoin.io/sebak/lib/storage"
+	"boscoin.io/sebak/lib/transaction"
 	"github.com/inconshreveable/log15"
 )
 
@@ -54,11 +56,7 @@ func NewBlockFetcher(nw network.Network, cManager network.ConnectionManager, st 
 }
 
 func (f *BlockFetcher) Fetch(ctx context.Context, syncInfo *SyncInfo) (*SyncInfo, error) {
-	var (
-		height uint64 = syncInfo.BlockHeight
-		result *SyncInfo
-		err    error
-	)
+	height := syncInfo.BlockHeight
 
 	TryForever(func(attempt int) (bool, error) {
 		select {
@@ -66,31 +64,31 @@ func (f *BlockFetcher) Fetch(ctx context.Context, syncInfo *SyncInfo) (*SyncInfo
 			return false, ctx.Err()
 		default:
 			f.logger.Debug("Try to fetch", "height", height, "attempt", attempt)
-			result, err = f.fetch(ctx, syncInfo)
-			if err != nil {
+			if err := f.fetch(ctx, syncInfo); err != nil {
 				f.logger.Error(err.Error(), "err", err)
 				c := time.After(f.retryInterval) //afterFunc?
 				select {
 				case <-ctx.Done():
 					return false, ctx.Err()
 				case <-c:
+					return true, err
 				}
 			}
+			return false, nil
 		}
-		return true, err
 	})
 
-	return result, err
+	return syncInfo, nil
 }
 
-func (f *BlockFetcher) fetch(ctx context.Context, si *SyncInfo) (*SyncInfo, error) {
+func (f *BlockFetcher) fetch(ctx context.Context, si *SyncInfo) error {
 	var height = si.BlockHeight
 	f.logger.Debug("Fetch start", "height", height)
 
 	n := f.pickRandomNode()
 	f.logger.Info("Fetching items from node", "node", n, "height", height)
 	if n == nil {
-		return nil, errors.New("Fetch: node not found")
+		return errors.New("Fetch: node not found")
 	}
 
 	ep := n.Endpoint()
@@ -104,7 +102,7 @@ func (f *BlockFetcher) fetch(ctx context.Context, si *SyncInfo) (*SyncInfo, erro
 
 	req, err := http.NewRequest("GET", apiURL.String(), nil)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	ctx, cancelF := context.WithTimeout(ctx, f.fetchTimeout)
@@ -118,17 +116,17 @@ func (f *BlockFetcher) fetch(ctx context.Context, si *SyncInfo) (*SyncInfo, erro
 	}()
 
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if resp.StatusCode == http.StatusNotFound {
 		//TODO:
 		err := errors.New("Fetch: block not found")
-		return nil, err
+		return err
 	}
 
 	items, err := f.unmarshalResp(resp.Body)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	f.logger.Info("Fetch get items", "items", len(items), "height", height)
@@ -136,23 +134,29 @@ func (f *BlockFetcher) fetch(ctx context.Context, si *SyncInfo) (*SyncInfo, erro
 	blocks, ok := items[runner.NodeItemBlock]
 	if !ok || len(blocks) <= 0 {
 		err := errors.New("Fetch: block not found in resp")
-		return nil, err
+		return err
 	}
 
 	//TODO(anarcher): check items
-	txs, ok := items[runner.NodeItemBlockTransaction]
+	bts, ok := items[runner.NodeItemBlockTransaction]
 	//ops, ok := items[runner.NodeItemBlockOperation]
 
 	blk := blocks[0].(block.Block)
+	si.Block = &blk
 
-	info := &SyncInfo{
-		BlockHeight: height,
-		Block:       &blk,
-	}
+	for _, bt := range bts {
+		bt, ok := bt.(block.BlockTransaction)
+		if !ok {
+			//TODO(anarcher): define sential error
+			return errors.New("Invalid block transaction")
+		}
 
-	for _, tx := range txs {
-		bt := tx.(block.BlockTransaction)
-		info.Txs = append(info.Txs, &bt)
+		var tx transaction.Transaction
+		if err := json.Unmarshal(bt.Message, &tx); err != nil {
+			return err
+		}
+
+		si.Txs = append(si.Txs, &tx)
 	}
 
 	/*
@@ -162,7 +166,7 @@ func (f *BlockFetcher) fetch(ctx context.Context, si *SyncInfo) (*SyncInfo, erro
 		}
 	*/
 
-	return info, nil
+	return nil
 }
 
 // pickRandomNode choose one node by random. It is very protype for choosing fetching which node

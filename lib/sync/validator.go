@@ -2,14 +2,12 @@ package sync
 
 import (
 	"context"
-	"encoding/json"
 
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node/runner"
 	"boscoin.io/sebak/lib/storage"
-	"boscoin.io/sebak/lib/transaction"
 
 	"github.com/inconshreveable/log15"
 )
@@ -59,6 +57,25 @@ func (v *BlockValidator) Validate(ctx context.Context, syncInfo *SyncInfo) error
 
 func (v *BlockValidator) validate(ctx context.Context, syncInfo *SyncInfo) error {
 	//TODO: validate
+	st := v.storage
+	height := syncInfo.BlockHeight
+	exists, err := block.ExistsBlockByHeight(st, height)
+	if err != nil {
+		return err
+	}
+	if exists == true {
+		v.logger.Info("This block exists", "height", height)
+		return nil
+	}
+
+	if err := v.validateTxs(ctx, syncInfo); err != nil {
+		return err
+	}
+
+	if err := v.validateBlock(ctx, syncInfo); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -87,14 +104,11 @@ func (v *BlockValidator) finishBlock(ctx context.Context, syncInfo *SyncInfo) er
 		return err
 	}
 
-	for _, bt := range syncInfo.Txs {
-		if err := bt.Save(ts); err != nil {
+	for _, tx := range syncInfo.Txs {
+		raw, _ := tx.Serialize()
+		bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.Confirmed, *tx, raw)
+		if err = bt.Save(ts); err != nil {
 			ts.Discard()
-			return err
-		}
-
-		var tx *transaction.Transaction
-		if err := json.Unmarshal(bt.Message, tx); err != nil {
 			return err
 		}
 
@@ -128,5 +142,31 @@ func (v *BlockValidator) finishBlock(ctx context.Context, syncInfo *SyncInfo) er
 	}
 
 	v.logger.Info("Finish to sync block", "height", syncInfo.BlockHeight)
+	return nil
+}
+
+func (v *BlockValidator) validateBlock(ctx context.Context, si *SyncInfo) error {
+	var txs []string
+	for _, tx := range si.Txs {
+		txs = append(txs, tx.H.Hash)
+	}
+	blk := block.NewBlock(si.Block.Proposer, si.Block.Round, txs, si.Block.Confirmed)
+
+	if blk.Hash != si.Block.Hash {
+		err := errors.ErrorHashDoesNotMatch
+		return err
+	}
+
+	return nil
+}
+
+func (v *BlockValidator) validateTxs(ctx context.Context, si *SyncInfo) error {
+	for _, tx := range si.Txs {
+		hash := tx.B.MakeHashString()
+		if hash != tx.H.Hash {
+			err := errors.ErrorHashDoesNotMatch
+			return err
+		}
+	}
 	return nil
 }
