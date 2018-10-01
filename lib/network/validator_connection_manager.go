@@ -31,14 +31,16 @@ func NewValidatorConnectionManager(
 	localNode *node.LocalNode,
 	network Network,
 	policy ballot.VotingThresholdPolicy,
-	validators map[string]*node.Validator,
 ) ConnectionManager {
+	if len(localNode.GetValidators()) == 0 {
+		panic("empty validators")
+	}
 	return &ValidatorConnectionManager{
 		localNode: localNode,
 
 		network:    network,
 		policy:     policy,
-		validators: validators,
+		validators: localNode.GetValidators(),
 
 		clients:   map[string]NetworkClient{},
 		connected: map[string]bool{},

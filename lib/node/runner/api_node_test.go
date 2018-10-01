@@ -81,6 +81,7 @@ func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, n *network.HTTP2Netw
 
 	kp, _ = keypair.Random()
 	localNode, _ := node.NewLocalNode(kp, endpoint, "")
+	localNode.AddValidators(localNode.ConvertToValidator())
 
 	queries := endpoint.Query()
 	queries.Add("TLSCertFile", g.GetCertPath())
@@ -100,7 +101,6 @@ func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, n *network.HTTP2Netw
 		localNode,
 		n,
 		p,
-		localNode.GetValidators(),
 	)
 
 	is, _ := consensus.NewISAAC(networkID, localNode, p, connectionManager)
@@ -226,11 +226,12 @@ func TestGetNodeInfoHandler(t *testing.T) {
 	kp, _ := keypair.Random()
 	endpoint, _ := common.NewEndpointFromString("http://localhost:12345")
 	localNode, _ := node.NewLocalNode(kp, endpoint, "")
+	localNode.AddValidators(localNode.ConvertToValidator())
 	isaac, _ := consensus.NewISAAC(
 		networkID,
 		localNode,
 		nil,
-		network.NewValidatorConnectionManager(localNode, nil, nil, nil),
+		network.NewValidatorConnectionManager(localNode, nil, nil),
 	)
 
 	var config *network.HTTP2NetworkConfig

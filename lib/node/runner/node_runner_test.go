@@ -64,7 +64,6 @@ func createTestNodeRunner(n int, conf *consensus.ISAACConfiguration) []*NodeRunn
 			localNode,
 			ns[i],
 			policy,
-			localNode.GetValidators(),
 		)
 
 		is, _ := consensus.NewISAAC(networkID, localNode, policy, connectionManager)
@@ -167,7 +166,6 @@ func createTestNodeRunnersHTTP2Network(n int) (nodeRunners []*NodeRunner, rootKP
 			node,
 			n,
 			policy,
-			node.GetValidators(),
 		)
 
 		is, _ := consensus.NewISAAC(networkID, node, policy, connectionManager)
