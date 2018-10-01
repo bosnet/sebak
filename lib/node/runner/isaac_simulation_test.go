@@ -71,7 +71,7 @@ func TestISAACSimulationProposer(t *testing.T) {
 	err = ReceiveBallot(t, nr, ballotSIGN4)
 	require.Nil(t, err)
 
-	rr := nr.Consensus().RunningRounds[round.Hash()]
+	rr := nr.Consensus().RunningRounds[round.Index()]
 	require.Equal(t, 4, len(rr.Voted[proposer.Address()].GetResult(ballot.StateSIGN)))
 
 	ballotACCEPT0 := GenerateBallot(t, proposer, round, tx, ballot.StateACCEPT, nodes[0])

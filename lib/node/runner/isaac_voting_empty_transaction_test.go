@@ -69,7 +69,7 @@ func TestISAACBallotWithEmptyTransactionVoting(t *testing.T) {
 	runningRounds := nr.Consensus().RunningRounds
 
 	// Check that the transaction is in RunningRounds
-	rr := runningRounds[round.Hash()]
+	rr := runningRounds[round.Index()]
 	require.NotNil(t, rr)
 
 	result := rr.Voted[proposer.Address()].GetResult(ballot.StateSIGN)
