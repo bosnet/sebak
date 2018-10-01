@@ -52,13 +52,13 @@ func TestSerializeOperation(t *testing.T) {
 
 func TestOperationBodyCongressVoting(t *testing.T) {
 	opb := OperationBodyCongressVoting{
-		Contract: "dummy contract",
+		Contract: []byte("dummy contract"),
 		Voting: struct {
-			Start string
-			End   string
+			Start uint64
+			End   uint64
 		}{
-			Start: "2006-01-02T15:04:05.999999999Z",
-			End:   "2006-01-02T15:04:05.999999999Z",
+			Start: 1,
+			End:   100,
 		},
 	}
 	op := Operation{
@@ -67,7 +67,7 @@ func TestOperationBodyCongressVoting(t *testing.T) {
 	}
 	hashed := op.MakeHashString()
 
-	expected := "6pGRgBRMFTyuJGUtiheEboibCNfYEAyqFtq4FgcAgfGC"
+	expected := "4DDgT1txmCrge9eS1QqHhThTu3f97NkHos8t8ueD94sA"
 	require.Equal(t, hashed, expected)
 
 	err := op.IsWellFormed(networkID)
@@ -81,14 +81,14 @@ func TestOperationBodyCongressVotingResult(t *testing.T) {
 			Hash string
 			Urls []string
 		}{
-			Hash: string(common.MakeHash([]byte("http://www.boscoin.io/1http://www.boscoin.io/2"))),
+			Hash: string(common.MakeHash([]byte("dummydummy"))),
 			Urls: []string{"http://www.boscoin.io/1", "http://www.boscoin.io/2"},
 		},
 		Voters: struct {
 			Hash string
 			Urls []string
 		}{
-			Hash: string(common.MakeHash([]byte("http://www.boscoin.io/3http://www.boscoin.io/4"))),
+			Hash: string(common.MakeHash([]byte("dummydummy"))),
 			Urls: []string{"http://www.boscoin.io/3", "http://www.boscoin.io/4"},
 		},
 		Result: struct {
@@ -109,7 +109,7 @@ func TestOperationBodyCongressVotingResult(t *testing.T) {
 	}
 	hashed := op.MakeHashString()
 
-	expected := "q9QygfM7r9W7hm3hekWkpoye8dyYDXnzapja8CiFSem"
+	expected := "F4HQBdWPiMJHFtgbgbxp2ykESppD9vGAewUnmA5B9Agg"
 	require.Equal(t, hashed, expected)
 
 	err := op.IsWellFormed(networkID)

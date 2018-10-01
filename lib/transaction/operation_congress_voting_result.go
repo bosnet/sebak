@@ -1,7 +1,6 @@
 package transaction
 
 import (
-	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
 	"encoding/json"
 	"net/url"
@@ -32,34 +31,20 @@ func (o OperationBodyCongressVotingResult) IsWellFormed([]byte) (err error) {
 		return errors.ErrorOperationBodyInsufficient
 	}
 
-	var tobeHash = ""
 	for _, u := range o.BallotStamps.Urls {
 		if _, err := url.Parse(u); err != nil {
 			return errors.ErrorInvalidOperation
 		}
-		tobeHash += u
-	}
-
-	hash := common.MakeHash([]byte(tobeHash))
-	if string(hash) != o.BallotStamps.Hash {
-		return errors.ErrorInvalidOperation
 	}
 
 	if len(o.Voters.Hash) == 0 {
 		return errors.ErrorOperationBodyInsufficient
 	}
 
-	tobeHash = ""
 	for _, u := range o.Voters.Urls {
 		if _, err := url.Parse(u); err != nil {
 			return errors.ErrorInvalidOperation
 		}
-		tobeHash += u
-	}
-
-	hash = common.MakeHash([]byte(tobeHash))
-	if string(hash) != o.Voters.Hash {
-		return errors.ErrorInvalidOperation
 	}
 
 	if o.Result.Count != o.Result.Yes+o.Result.No+o.Result.ABS {

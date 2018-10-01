@@ -3,14 +3,13 @@ package transaction
 import (
 	"boscoin.io/sebak/lib/error"
 	"encoding/json"
-	"time"
 )
 
 type OperationBodyCongressVoting struct {
-	Contract string
+	Contract []byte
 	Voting   struct {
-		Start string
-		End   string
+		Start uint64
+		End   uint64
 	}
 }
 
@@ -22,11 +21,8 @@ func (o OperationBodyCongressVoting) IsWellFormed([]byte) (err error) {
 	if len(o.Contract) == 0 {
 		return errors.ErrorOperationBodyInsufficient
 	}
-	if _, err := time.Parse(time.RFC3339Nano, o.Voting.Start); err != nil {
-		return errors.ErrorInvalidOperation
-	}
 
-	if _, err := time.Parse(time.RFC3339Nano, o.Voting.End); err != nil {
+	if o.Voting.End < o.Voting.Start {
 		return errors.ErrorInvalidOperation
 	}
 	return
