@@ -331,7 +331,7 @@ func (nr *NodeRunner) handleMessage(message common.NetworkMessage) {
 		if _, ok := err.(common.CheckerStop); ok {
 			return
 		}
-		nr.log.Debug("failed to handle message", "message", message.Head(50), "error", err, "message", string(message.Data))
+		nr.log.Debug("failed to handle message", "message", message.Head(50), "error", err)
 	}
 }
 
@@ -513,7 +513,7 @@ func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) (ballot.Ballot, error
 	var validTransactions []transaction.Transaction
 	for _, hash := range transactionsChecker.ValidTransactions {
 		if tx, found := nr.consensus.TransactionPool.Get(hash); !found {
-			continue
+			return errors.ErrorTransactionNotFound
 		} else {
 			validTransactions = append(validTransactions, tx)
 		}

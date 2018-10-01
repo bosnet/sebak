@@ -24,6 +24,7 @@ const (
 type Block struct {
 	Header
 	Transactions []string `json:"transactions"` /* []Transaction.GetHash() */
+	Transaction  string   `json:"transaction"`  /* ProposerTransaction */
 	//PrevConsensusResult ConsensusResult
 
 	Hash      string      `json:"hash"`
@@ -152,12 +153,15 @@ func NewBlock(proposer string, round round.Round, transactions []string, confirm
 }
 
 func NewBlockFromBallot(b ballot.Ballot) Block {
-	return NewBlock(
+	blk := NewBlock(
 		b.Proposer(),
 		b.Round(),
 		b.Transactions(),
 		b.ProposerConfirmed(),
 	)
+	blk.Transaction = b.ProposerTransaction().GetHash()
+
+	return blk
 }
 
 func getTransactionRoot(txs []string) string {
