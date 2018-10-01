@@ -19,12 +19,6 @@ func TestBlockTime(t *testing.T) {
 
 	latestBlock := nr.Consensus().LatestConfirmedBlock()
 	latestHeight := latestBlock.Height
-	expectedHeight := sec / nr.isaacStateManager.Conf.BlockTime
-
-	t.Log("latestHeight", latestHeight)
-	require.True(t, latestHeight >= uint64(expectedHeight-1))
-	require.True(t, latestHeight <= uint64(expectedHeight+1))
-
 	blockTimes := make([]time.Time, latestHeight)
 	for i := 0; i < int(latestHeight); i++ {
 		b, err := block.GetBlockByHeight(nr.Storage(), uint64(i+1))
