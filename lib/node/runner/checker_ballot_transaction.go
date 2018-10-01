@@ -240,6 +240,10 @@ func ValidateTx(st *storage.LevelDBBackend, tx transaction.Transaction) (err err
 
 	for _, op := range tx.B.Operations {
 		if err = ValidateOp(st, ba, op); err != nil {
+
+			key := block.GetBlockTransactionHistoryKey(tx.H.Hash)
+			st.Remove(key)
+
 			return
 		}
 	}
@@ -265,51 +269,87 @@ func ValidateOp(st *storage.LevelDBBackend, source *block.BlockAccount, op opera
 		var ok bool
 		var casted operation.CreateAccount
 		if casted, ok = op.B.(operation.CreateAccount); !ok {
-			err = errors.ErrorTypeOperationBodyNotMatched
-			return
+			return errors.ErrorTypeOperationBodyNotMatched
 		}
 		var exists bool
 		if exists, err = block.ExistsBlockAccount(st, op.B.(operation.CreateAccount).Target); err == nil && exists {
-			err = errors.ErrorBlockAccountAlreadyExists
-			return
+			return errors.ErrorBlockAccountAlreadyExists
 		}
-		// If it's a frozen account we check that only whole units are frozen
-		if casted.Linked != "" && (casted.Amount%common.Unit) != 0 {
-			return errors.ErrorFrozenAccountCreationWholeUnit // FIXME
+		if source.Linked != "" {
+			// Unfreezing must be done after X period from unfreezing request
+			iterFunc, closeFunc := block.GetBlockOperationsBySource(st, source.Address, nil)
+			bo, _, _ := iterFunc()
+			closeFunc()
+			// Before unfreezing payment, unfreezing request shoud be saved
+			if bo.Type != operation.TypeUnfreezingRequest {
+				return errors.ErrorUnfreezingRequestNotRequested
+			}
+			lastblock := block.GetLatestBlock(st)
+			// unfreezing period is 241920.
+			if lastblock.Height-bo.BlockHeight < common.UnfreezingPeriod {
+				return errors.ErrorUnfreezingNotReachedExpiration
+			}
+			// If it's a frozen account we check that only whole units are frozen
+			if casted.Linked != "" && (casted.Amount%common.Unit) != 0 {
+				return errors.ErrorFrozenAccountCreationWholeUnit // FIXME
+			}
 		}
 	case operation.TypePayment:
 		var ok bool
 		var casted operation.Payment
 		if casted, ok = op.B.(operation.Payment); !ok {
-			err = errors.ErrorTypeOperationBodyNotMatched
-			return
+			return errors.ErrorTypeOperationBodyNotMatched
 		}
 		var taccount *block.BlockAccount
 		if taccount, err = block.GetBlockAccount(st, casted.Target); err != nil {
-			err = errors.ErrorBlockAccountDoesNotExists
-			return
+			return errors.ErrorBlockAccountDoesNotExists
 		}
 		// If it's a frozen account, it cannot receive payment
 		if taccount.Linked != "" {
-			err = errors.ErrorFrozenAccountNoDeposit
-			return
+			return errors.ErrorFrozenAccountNoDeposit
 		}
-		// If it's a frozen account, everything must be withdrawn
 		if source.Linked != "" {
+			// If it's a frozen account, everything must be withdrawn
 			var expected common.Amount
 			expected, err = source.Balance.Sub(common.BaseFee)
 			if casted.Amount != expected {
-				err = errors.ErrorFrozenAccountMustWithdrawEverything
-				return
+				return errors.ErrorFrozenAccountMustWithdrawEverything
 			}
+			// Unfreezing must be done after X period from unfreezing request
+			iterFunc, closeFunc := block.GetBlockOperationsBySource(st, source.Address, nil)
+			bo, _, _ := iterFunc()
+			closeFunc()
+			// Before unfreezing payment, unfreezing request shoud be saved
+			if bo.Type != operation.TypeUnfreezingRequest {
+				return errors.ErrorUnfreezingRequestNotRequested
+			}
+			lastblock := block.GetLatestBlock(st)
+			// unfreezing period is 241920.
+			if lastblock.Height-bo.BlockHeight < common.UnfreezingPeriod {
+				return errors.ErrorUnfreezingNotReachedExpiration
+			}
+		}
+	case operation.TypeUnfreezingRequest:
+		if _, ok := op.B.(operation.UnfreezeRequest); !ok {
+			return errors.ErrorTypeOperationBodyNotMatched
+		}
+		// Unfreezing should be done from a frozen account
+		if source.Linked == "" {
+			return errors.ErrorUnfreezingFromInvalidAccount
+		}
+		// Repeated unfreeze request shoud be blocked after unfreeze request saved
+		iterFunc, closeFunc := block.GetBlockOperationsBySource(st, source.Address, nil)
+		bo, _, _ := iterFunc()
+		closeFunc()
+		if bo.Type == operation.TypeUnfreezingRequest {
+			return errors.ErrorUnfreezingRequestAlreadyReceived
 		}
 	case operation.TypeCongressVoting, operation.TypeCongressVotingResult:
 		// Nothing to do
 		return
 
 	default:
-		err = errors.ErrorUnknownOperationType
-		return
+		return errors.ErrorUnknownOperationType
 	}
 	return
 }

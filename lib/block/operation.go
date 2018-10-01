@@ -25,14 +25,14 @@ type BlockOperation struct {
 	OpHash string
 	TxHash string
 
-	Type   operation.OperationType
-	Source string
-	Body   []byte
+	Type        operation.OperationType
+	Source      string
+	Body        []byte
+	BlockHeight uint64
 
 	// transaction will be used only for `Save` time.
 	transaction transaction.Transaction
 	isSaved     bool
-	blockHeight uint64
 }
 
 func NewBlockOperationKey(opHash, txHash string) string {
@@ -54,13 +54,12 @@ func NewBlockOperationFromOperation(op operation.Operation, tx transaction.Trans
 		OpHash: opHash,
 		TxHash: txHash,
 
-		Type:   op.H.Type,
-		Source: tx.B.Source,
-		Body:   body,
+		Type:        op.H.Type,
+		Source:      tx.B.Source,
+		Body:        body,
+		BlockHeight: blockHeight,
 
 		transaction: tx,
-
-		blockHeight: blockHeight,
 	}, nil
 }
 
@@ -124,7 +123,7 @@ func (bo BlockOperation) NewBlockOperationTxHashKey() string {
 	return fmt.Sprintf(
 		"%s%s%s%s",
 		GetBlockOperationKeyPrefixTxHash(bo.TxHash),
-		common.EncodeUint64ToByteSlice(bo.blockHeight),
+		common.EncodeUint64ToByteSlice(bo.BlockHeight),
 		common.EncodeUint64ToByteSlice(bo.transaction.B.SequenceID),
 		common.GetUniqueIDFromUUID(),
 	)
@@ -134,7 +133,7 @@ func (bo BlockOperation) NewBlockOperationSourceKey() string {
 	return fmt.Sprintf(
 		"%s%s%s%s",
 		GetBlockOperationKeyPrefixSource(bo.Source),
-		common.EncodeUint64ToByteSlice(bo.blockHeight),
+		common.EncodeUint64ToByteSlice(bo.BlockHeight),
 		common.EncodeUint64ToByteSlice(bo.transaction.B.SequenceID),
 		common.GetUniqueIDFromUUID(),
 	)
