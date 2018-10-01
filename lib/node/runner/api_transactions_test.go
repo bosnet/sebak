@@ -40,11 +40,12 @@ func (p *HelperTestGetNodeTransactionsHandler) Prepare() {
 		fmt.Sprintf("http://localhost:12345"),
 	)
 	localNode, _ := node.NewLocalNode(kp, endpoint, "")
+	localNode.AddValidators(localNode.ConvertToValidator())
 	isaac, _ := consensus.NewISAAC(
 		networkID,
 		localNode,
 		nil,
-		network.NewValidatorConnectionManager(localNode, nil, nil, nil),
+		network.NewValidatorConnectionManager(localNode, nil, nil),
 	)
 	p.consensus = isaac
 	apiHandler := NetworkHandlerNode{storage: p.st, consensus: isaac}

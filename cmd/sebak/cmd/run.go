@@ -350,7 +350,6 @@ func runNode() error {
 		localNode,
 		nt,
 		policy,
-		localNode.GetValidators(),
 	)
 
 	isaac, err := consensus.NewISAAC([]byte(flagNetworkID), localNode, policy, connectionManager)

@@ -34,11 +34,11 @@ func MakeNodeRunner() (*NodeRunner, *node.LocalNode) {
 
 	policy, _ := consensus.NewDefaultVotingThresholdPolicy(66, 66)
 
+	localNode.AddValidators(localNode.ConvertToValidator())
 	connectionManager := network.NewValidatorConnectionManager(
 		localNode,
 		n,
 		policy,
-		localNode.GetValidators(),
 	)
 
 	is, _ := consensus.NewISAAC(networkID, localNode, policy, connectionManager)
@@ -136,7 +136,6 @@ func createNodeRunnerForTesting(n int, conf *consensus.ISAACConfiguration, recv 
 		localNode,
 		ns[0],
 		policy,
-		localNode.GetValidators(),
 		recv,
 	)
 

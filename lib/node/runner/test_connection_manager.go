@@ -21,11 +21,10 @@ func NewTestConnectionManager(
 	localNode *node.LocalNode,
 	n network.Network,
 	policy ballot.VotingThresholdPolicy,
-	validators map[string]*node.Validator,
 	r chan struct{},
 ) *TestConnectionManager {
 	p := &TestConnectionManager{
-		ConnectionManager: network.NewValidatorConnectionManager(localNode, n, policy, validators),
+		ConnectionManager: network.NewValidatorConnectionManager(localNode, n, policy),
 	}
 	p.messages = []common.Message{}
 	p.recv = r
