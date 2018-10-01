@@ -112,13 +112,13 @@ func UnmarshalOperationBodyJSON(t OperationType, b []byte) (body OperationBody, 
 		body = ob
 	case OperationCongressVoting:
 		var ob OperationBodyCongressVoting
-		if err = json.Unmarshal(envelop, &body); err != nil {
+		if err = json.Unmarshal(b, &ob); err != nil {
 			return
 		}
 		body = ob
 	case OperationCongressVotingResult:
 		var ob OperationBodyCongressVotingResult
-		if err = json.Unmarshal(envelop, &body); err != nil {
+		if err = json.Unmarshal(b, &ob); err != nil {
 			return
 		}
 		body = ob
