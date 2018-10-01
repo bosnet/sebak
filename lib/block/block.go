@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/btcsuite/btcutil/base58"
+	"github.com/stellar/go/keypair"
 
 	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/common"
@@ -49,6 +50,7 @@ func (bck Block) String() string {
 // * has only one `Transaction`
 //
 // This Transaction is different from other normal Transaction;
+// * signed by `keypair.Master(string(networkID))`
 // * must have only two `Operation`, `OperationCreateAccount`
 // * The first `Operation` is for genesis account
 //   * `OperationCreateAccount.Amount` is same with balance of genesis account
@@ -113,14 +115,14 @@ func MakeGenesisBlock(st *storage.LevelDBBackend, genesisAccount BlockAccount, c
 		},
 		B: txBody,
 	}
-	tx.Sign(kp, []byte(networdID))
 
-	transactions := []string{tx.GetHash()}
+	kp := keypair.Master(string(networkID))
+	tx.Sign(kp, []byte(networdID))
 
 	blk = NewBlock(
 		"",
 		round.Round{},
-		transactions,
+		[]string{tx.GetHash()},
 		common.GenesisBlockConfirmedTime,
 	)
 	if err = blk.Save(st); err != nil {

@@ -15,8 +15,6 @@ type TransactionChecker struct {
 
 	NetworkID   []byte
 	Transaction Transaction
-
-	Extra map[string]interface{}
 }
 
 func CheckTransactionSource(c common.Checker, args ...interface{}) (err error) {

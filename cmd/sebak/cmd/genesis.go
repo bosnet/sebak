@@ -142,7 +142,7 @@ func makeGenesisBlock(genesisAddress, commonAddress, networkID, balanceStr, stor
 		return "<public key>", fmt.Errorf("failed to create genesis block: %v", err)
 	}
 
-	log.Info("GenesisBlock created",
+	log.Info("genesis block created",
 		"height", b.Height,
 		"round", b.Round.Number,
 		"timestamp", b.Header.Timestamp,

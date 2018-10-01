@@ -80,6 +80,11 @@ func (p ProposerTransaction) IsWellFormed(networkID []byte) (err error) {
 }
 
 func (p ProposerTransaction) IsWellFormedWithBallot(networkID []byte, blt Ballot) (err error) {
+	if p.Source() != blt.Proposer() {
+		err = errors.ErrorInvalidProposerTransaction
+		return
+	}
+
 	if err = p.IsWellFormed(networkID); err != nil {
 		return
 	}

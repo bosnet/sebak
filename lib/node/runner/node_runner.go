@@ -520,9 +520,7 @@ func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) (ballot.Ballot, error
 	}
 
 	ptx, _ := ballot.NewProposerTransactionFromBallot(*theBallot, nr.CommonAccountAddress, validTransactions...)
-	ptx.Sign(nr.localNode.Keypair(), nr.networkID)
 	theBallot.SetProposerTransaction(ptx)
-
 	theBallot.Sign(nr.localNode.Keypair(), nr.networkID)
 
 	nr.log.Debug("new ballot created", "ballot", theBallot)

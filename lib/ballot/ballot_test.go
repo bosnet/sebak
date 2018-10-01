@@ -37,7 +37,6 @@ func TestErrorBallotHasOverMaxTransactionsInBallot(t *testing.T) {
 		blt := NewBallot(node.Address(), round, []string{tx.GetHash()})
 
 		ptx, _ := NewProposerTransactionFromBallot(*blt, commonKP.Address(), tx)
-		ptx.Sign(node.Keypair(), networkID)
 		blt.SetProposerTransaction(ptx)
 
 		blt.Sign(node.Keypair(), networkID)
@@ -56,7 +55,6 @@ func TestErrorBallotHasOverMaxTransactionsInBallot(t *testing.T) {
 		blt := NewBallot(node.Address(), round, txHashes)
 
 		ptx, _ := NewProposerTransactionFromBallot(*blt, commonKP.Address(), txs...)
-		ptx.Sign(node.Keypair(), networkID)
 		blt.SetProposerTransaction(ptx)
 
 		blt.Sign(node.Keypair(), networkID)
@@ -104,7 +102,6 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 	{
 		ballot := NewBallot(node.Address(), round, []string{})
 		ptx, _ := NewProposerTransactionFromBallot(*ballot, commonKP.Address())
-		ptx.Sign(kp, networkID)
 		ballot.SetProposerTransaction(ptx)
 		ballot.Sign(kp, networkID)
 

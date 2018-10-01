@@ -1,8 +1,6 @@
 package runner
 
 import (
-	"fmt"
-
 	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
@@ -224,7 +222,6 @@ func ValidateTx(st *storage.LevelDBBackend, tx transaction.Transaction) (err err
 
 	// check, have enough balance at sequenceID
 	if bac.Balance < totalAmount {
-		fmt.Println("0000000", bac.Balance, totalAmount)
 		err = errors.ErrorTransactionExcessAbilityToPay
 		return
 	}

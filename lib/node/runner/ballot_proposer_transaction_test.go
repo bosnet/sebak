@@ -74,9 +74,6 @@ func (p *ballotCheckerProposedTransaction) MakeBallot(numberOfTxs int) (blt *bal
 	blt = ballot.NewBallot(p.proposerNode.Address(), rd, p.txHashes)
 
 	ptx, _ := ballot.NewProposerTransactionFromBallot(*blt, p.commonAccount.Address, p.txs...)
-	ptx.Sign(p.proposerNode.Keypair(), networkID)
-	blt.SetProposerTransaction(ptx)
-
 	blt.SetProposerTransaction(ptx)
 	blt.SetVote(ballot.StateINIT, ballot.VotingYES)
 	blt.Sign(p.proposerNode.Keypair(), networkID)
@@ -177,18 +174,46 @@ func TestBallotCheckerProposedTransactionWithTransactions(t *testing.T) {
 	require.Equal(t, ballot.VotingYES, checker.VotingHole)
 }
 
+// TestBallotCheckerProposedTransactionDifferentSigning checks this rule,
+// `ProposerTransaction.Source()` must be same with `Ballot.Proposer()`, it
+// means, `ProposerTransaction` must be signed by same KP of ballot
+func TestBallotCheckerProposedTransactionDifferentSigning(t *testing.T) {
+	p := &ballotCheckerProposedTransaction{}
+	p.Prepare()
+
+	blt := p.MakeBallot(3)
+
+	{
+		err := blt.ProposerTransaction().IsWellFormed(networkID)
+		require.Nil(t, err)
+	}
+
+	{ // sign different source with `Ballot.Proposer()`
+		newKP, _ := keypair.Random()
+		ptx := blt.ProposerTransaction()
+		ptx.B.Source = newKP.Address()
+		ptx.Sign(newKP, networkID)
+		blt.SetProposerTransaction(ptx)
+
+		require.NotEqual(t, blt.Proposer(), ptx.Source())
+
+		err := blt.ProposerTransaction().IsWellFormedWithBallot(networkID, *blt)
+		require.Equal(t, errors.ErrorInvalidProposerTransaction, err)
+	}
+}
+
 func TestBallotCheckerProposedTransactionWithTransactionsButWrongTxs(t *testing.T) {
 	p := &ballotCheckerProposedTransaction{}
 	p.Prepare()
 
-	// with wrong `OperationBodyCollectTxFee.Txs` count
 	numberOfTxs := 3
 	blt := p.MakeBallot(numberOfTxs)
 	opb, _ := blt.ProposerTransaction().OperationBodyCollectTxFee()
+
+	// with wrong `OperationBodyCollectTxFee.Txs` count
 	opb.Txs = uint64(numberOfTxs - 1)
 	ptx := blt.ProposerTransaction()
 	ptx.B.Operations[0].B = opb
-	ptx.Sign(p.proposerNode.Keypair(), networkID)
 	blt.SetProposerTransaction(ptx)
 	blt.Sign(p.proposerNode.Keypair(), networkID)
 
@@ -213,7 +238,6 @@ func TestBallotCheckerProposedTransactionWithTransactionsButWrongBlockData(t *te
 		opb.BlockHeight = blt.B.Proposed.Round.BlockHeight + 1
 		ptx := blt.ProposerTransaction()
 		ptx.B.Operations[0].B = opb
-		ptx.Sign(p.proposerNode.Keypair(), networkID)
 		blt.SetProposerTransaction(ptx)
 		blt.Sign(p.proposerNode.Keypair(), networkID)
 
@@ -234,7 +258,6 @@ func TestBallotCheckerProposedTransactionWithTransactionsButWrongBlockData(t *te
 		opb.BlockHash = blt.B.Proposed.Round.BlockHash + "showme"
 		ptx := blt.ProposerTransaction()
 		ptx.B.Operations[0].B = opb
-		ptx.Sign(p.proposerNode.Keypair(), networkID)
 		blt.SetProposerTransaction(ptx)
 		blt.Sign(p.proposerNode.Keypair(), networkID)
 
@@ -255,7 +278,6 @@ func TestBallotCheckerProposedTransactionWithTransactionsButWrongBlockData(t *te
 		opb.TotalTxs = blt.B.Proposed.Round.TotalTxs + 2
 		ptx := blt.ProposerTransaction()
 		ptx.B.Operations[0].B = opb
-		ptx.Sign(p.proposerNode.Keypair(), networkID)
 		blt.SetProposerTransaction(ptx)
 		blt.Sign(p.proposerNode.Keypair(), networkID)
 
@@ -277,7 +299,6 @@ func TestBallotCheckerProposedTransactionWithTransactionsButWrongBlockData(t *te
 		opb.Txs = uint64(len(blt.Transactions()) + 1)
 		ptx := blt.ProposerTransaction()
 		ptx.B.Operations[0].B = opb
-		ptx.Sign(p.proposerNode.Keypair(), networkID)
 		blt.SetProposerTransaction(ptx)
 		blt.Sign(p.proposerNode.Keypair(), networkID)
 
@@ -298,7 +319,6 @@ func TestBallotCheckerProposedTransactionWithTransactionsButWrongAmount(t *testi
 	opb.Amount = opb.Amount.MustSub(1)
 	ptx := blt.ProposerTransaction()
 	ptx.B.Operations[0].B = opb
-	ptx.Sign(p.proposerNode.Keypair(), networkID)
 	blt.SetProposerTransaction(ptx)
 	blt.Sign(p.proposerNode.Keypair(), networkID)
 
@@ -316,7 +336,6 @@ func TestBallotCheckerProposedTransactionWithNotZeroFee(t *testing.T) {
 	blt := p.MakeBallot(4)
 	ptx := blt.ProposerTransaction()
 	ptx.B.Fee = common.Amount(1)
-	ptx.Sign(p.proposerNode.Keypair(), networkID)
 	blt.SetProposerTransaction(ptx)
 	blt.Sign(p.proposerNode.Keypair(), networkID)
 
@@ -337,7 +356,6 @@ func TestBallotCheckerProposedTransactionWithWrongCommonAddress(t *testing.T) {
 	opb.Target = wrongKP.Address()
 	ptx := blt.ProposerTransaction()
 	ptx.B.Operations[0].B = opb
-	ptx.Sign(p.proposerNode.Keypair(), networkID)
 	blt.SetProposerTransaction(ptx)
 	blt.Sign(p.proposerNode.Keypair(), networkID)
 
@@ -437,7 +455,6 @@ func TestBallotCheckerProposedTransactionWithBadCommonAccount(t *testing.T) {
 	opb.Target = wrongKP.Address()
 	ptx := blt.ProposerTransaction()
 	ptx.B.Operations[0].B = opb
-	ptx.Sign(p.proposerNode.Keypair(), networkID)
 	blt.SetProposerTransaction(ptx)
 	blt.Sign(p.proposerNode.Keypair(), networkID)
 

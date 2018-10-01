@@ -159,7 +159,11 @@ func (b *Ballot) TransactionsLength() int {
 }
 
 func (b *Ballot) Sign(kp keypair.KP, networkID []byte) {
-	if kp.Address() == b.B.Proposed.Proposer {
+	if kp.Address() == b.B.Proposed.Proposer && b.State() == StateINIT {
+		ptx := b.ProposerTransaction()
+		ptx.Sign(kp, networkID)
+		b.SetProposerTransaction(ptx)
+
 		b.B.Proposed.Confirmed = common.NowISO8601()
 		hash := common.MustMakeObjectHash(b.B.Proposed)
 		signature, _ := common.MakeSignature(kp, networkID, string(hash))
@@ -214,8 +218,8 @@ func (b Ballot) ProposerTransaction() ProposerTransaction {
 	return b.B.Proposed.Transaction
 }
 
-// TODO SetProposerTransaction should be removed. ProposerTransaction should be
-// set in `NewBallot()`
+// SetProposerTransaction should be set in `Ballot`, without it can not be
+// passed thru `Ballot.IsWellFormed()`.
 func (b *Ballot) SetProposerTransaction(ptx ProposerTransaction) {
 	b.B.Proposed.Transaction = ptx
 }
