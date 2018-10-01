@@ -53,9 +53,10 @@ func NewBlockFetcher(nw network.Network, cManager network.ConnectionManager, st 
 	return f
 }
 
-func (f *BlockFetcher) Fetch(ctx context.Context, height uint64) (*BlockInfo, error) {
+func (f *BlockFetcher) Fetch(ctx context.Context, syncInfo *SyncInfo) (*SyncInfo, error) {
 	var (
-		result *BlockInfo
+		height uint64 = syncInfo.BlockHeight
+		result *SyncInfo
 		err    error
 	)
 
@@ -65,7 +66,7 @@ func (f *BlockFetcher) Fetch(ctx context.Context, height uint64) (*BlockInfo, er
 			return false, ctx.Err()
 		default:
 			f.logger.Debug("Try to fetch", "height", height, "attempt", attempt)
-			result, err = f.fetch(ctx, height)
+			result, err = f.fetch(ctx, syncInfo)
 			if err != nil {
 				f.logger.Error(err.Error(), "err", err)
 				c := time.After(f.retryInterval) //afterFunc?
@@ -82,7 +83,8 @@ func (f *BlockFetcher) Fetch(ctx context.Context, height uint64) (*BlockInfo, er
 	return result, err
 }
 
-func (f *BlockFetcher) fetch(ctx context.Context, height uint64) (*BlockInfo, error) {
+func (f *BlockFetcher) fetch(ctx context.Context, si *SyncInfo) (*SyncInfo, error) {
+	var height = si.BlockHeight
 	f.logger.Debug("Fetch start", "height", height)
 
 	n := f.pickRandomNode()
@@ -139,11 +141,11 @@ func (f *BlockFetcher) fetch(ctx context.Context, height uint64) (*BlockInfo, er
 
 	//TODO(anarcher): check items
 	txs, ok := items[runner.NodeItemBlockTransaction]
-	ops, ok := items[runner.NodeItemBlockOperation]
+	//ops, ok := items[runner.NodeItemBlockOperation]
 
 	blk := blocks[0].(block.Block)
 
-	info := &BlockInfo{
+	info := &SyncInfo{
 		BlockHeight: height,
 		Block:       &blk,
 	}
@@ -152,10 +154,13 @@ func (f *BlockFetcher) fetch(ctx context.Context, height uint64) (*BlockInfo, er
 		bt := tx.(block.BlockTransaction)
 		info.Txs = append(info.Txs, &bt)
 	}
-	for _, op := range ops {
-		op := op.(block.BlockOperation)
-		info.Ops = append(info.Ops, &op)
-	}
+
+	/*
+		for _, op := range ops {
+			op := op.(block.BlockOperation)
+			info.Ops = append(info.Ops, &op)
+		}
+	*/
 
 	return info, nil
 }

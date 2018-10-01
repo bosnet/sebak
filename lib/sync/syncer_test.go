@@ -18,25 +18,25 @@ func TestSyncer(t *testing.T) {
 	cm := &mockConnectionManager{}
 
 	tickc := make(chan time.Time)
-	blockInfoC := make(chan *BlockInfo)
+	infoC := make(chan *SyncInfo)
 
 	syncer := NewSyncer(st, nw, cm)
 	defer syncer.Stop()
 
 	syncer.fetcher = &mockFetcher{
-		fetchFunc: func(ctx context.Context, height uint64) (*BlockInfo, error) {
+		fetchFunc: func(ctx context.Context, si *SyncInfo) (*SyncInfo, error) {
 			bk := block.TestMakeNewBlock([]string{})
-			bk.Height = height
-			bi := &BlockInfo{
-				BlockHeight: height,
+			bk.Height = si.BlockHeight
+			si = &SyncInfo{
+				BlockHeight: bk.Height,
 				Block:       &bk,
 			}
-			return bi, nil
+			return si, nil
 		},
 	}
 	syncer.validator = &mockValidator{
-		validateFunc: func(ctx context.Context, bi *BlockInfo) error {
-			blockInfoC <- bi
+		validateFunc: func(ctx context.Context, si *SyncInfo) error {
+			infoC <- si
 			return nil
 		},
 	}
@@ -54,8 +54,8 @@ func TestSyncer(t *testing.T) {
 		require.Nil(t, bk.Save(st))
 
 		tickc <- time.Time{}
-		bi := <-blockInfoC
-		require.NotNil(t, bi.Block)
-		require.Equal(t, bi.BlockHeight, uint64(2))
+		si := <-infoC
+		require.NotNil(t, si.Block)
+		require.Equal(t, si.BlockHeight, uint64(2))
 	}
 }

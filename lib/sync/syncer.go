@@ -124,26 +124,37 @@ func (s *Syncer) syncBlockHeight(height uint64) uint64 {
 func (s *Syncer) work(height uint64) {
 	ctx := s.ctx
 	work := func() {
+		currHeight := s.currBlockHeight()
+		if currHeight > 0 && height <= currHeight {
+			s.logger.Info("This height has already synced", "height", height)
+			return
+		}
+
+		var (
+			syncInfo = &SyncInfo{BlockHeight: height}
+			err      error
+		)
+
 	L:
 		for {
 			select {
 			case <-ctx.Done():
 				break L
 			default:
-				currHeight := s.currBlockHeight()
-				if currHeight > 0 && height <= currHeight {
-					s.logger.Info("This height has already synced", "height", height)
-					break L
-				}
-				blockInfo, _ := s.fetcher.Fetch(ctx, height)
-				if err := s.validator.Validate(ctx, blockInfo); err != nil {
+				syncInfo, _ = s.fetcher.Fetch(ctx, syncInfo)
+				err = s.validator.Validate(ctx, syncInfo)
+				if err != nil {
 					s.logger.Error("validate failure", "err", err)
 					continue
 				}
 				break L
 			}
 		}
-		s.logger.Info("Done sync", "height", height)
+		if err != nil {
+			s.logger.Info("Stop sync work", "height", height, "err", err)
+		} else {
+			s.logger.Info("Done sync work", "height", height)
+		}
 	}
 	s.workPool.Add(ctx, work)
 }

@@ -21,12 +21,12 @@ func TestValidator(t *testing.T) {
 	ctx := context.Background()
 
 	bk := block.TestMakeNewBlock(nil)
-	bi := &BlockInfo{
+	si := &SyncInfo{
 		BlockHeight: uint64(1),
 		Block:       &bk,
 	}
 
-	err := v.Validate(ctx, bi)
+	err := v.Validate(ctx, si)
 	require.Nil(t, err)
 
 }

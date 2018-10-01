@@ -40,12 +40,12 @@ func NewBlockValidator(nw network.Network, ldb *storage.LevelDBBackend, opts ...
 	return v
 }
 
-func (v *BlockValidator) Validate(ctx context.Context, blockInfo *BlockInfo) error {
+func (v *BlockValidator) Validate(ctx context.Context, syncInfo *SyncInfo) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		if err := v.validate(ctx, blockInfo); err != nil {
+		if err := v.validate(ctx, syncInfo); err != nil {
 			return err
 		}
 	}
@@ -53,23 +53,23 @@ func (v *BlockValidator) Validate(ctx context.Context, blockInfo *BlockInfo) err
 	case <-ctx.Done():
 		return ctx.Err()
 	default:
-		return v.finishBlock(ctx, blockInfo)
+		return v.finishBlock(ctx, syncInfo)
 	}
 }
 
-func (v *BlockValidator) validate(ctx context.Context, blockInfo *BlockInfo) error {
+func (v *BlockValidator) validate(ctx context.Context, syncInfo *SyncInfo) error {
 	//TODO: validate
 	return nil
 }
 
-func (v *BlockValidator) finishBlock(ctx context.Context, blockInfo *BlockInfo) error {
+func (v *BlockValidator) finishBlock(ctx context.Context, syncInfo *SyncInfo) error {
 	//TODO(anarcher): using leveldb.Tx or leveldb.Batch?
 	ts, err := v.storage.OpenTransaction()
 	if err != nil {
 		return err
 	}
 
-	height := blockInfo.BlockHeight
+	height := syncInfo.BlockHeight
 	exists, err := block.ExistsBlockByHeight(ts, height)
 	if err != nil {
 		return err
@@ -79,7 +79,7 @@ func (v *BlockValidator) finishBlock(ctx context.Context, blockInfo *BlockInfo) 
 		return nil
 	}
 
-	blk := *blockInfo.Block
+	blk := *syncInfo.Block
 	if err := blk.Save(ts); err != nil {
 		if err == errors.ErrorBlockAlreadyExists {
 			return nil
@@ -87,7 +87,7 @@ func (v *BlockValidator) finishBlock(ctx context.Context, blockInfo *BlockInfo) 
 		return err
 	}
 
-	for _, bt := range blockInfo.Txs {
+	for _, bt := range syncInfo.Txs {
 		if err := bt.Save(ts); err != nil {
 			ts.Discard()
 			return err
@@ -127,6 +127,6 @@ func (v *BlockValidator) finishBlock(ctx context.Context, blockInfo *BlockInfo) 
 		return err
 	}
 
-	v.logger.Info("Finish to sync block", "height", blockInfo.BlockHeight)
+	v.logger.Info("Finish to sync block", "height", syncInfo.BlockHeight)
 	return nil
 }

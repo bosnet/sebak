@@ -53,17 +53,17 @@ func (d mockDoer) Do(req *http.Request) (*http.Response, error) {
 }
 
 type mockFetcher struct {
-	fetchFunc func(context.Context, uint64) (*BlockInfo, error)
+	fetchFunc func(context.Context, *SyncInfo) (*SyncInfo, error)
 }
 
-func (f mockFetcher) Fetch(ctx context.Context, height uint64) (*BlockInfo, error) {
-	return f.fetchFunc(ctx, height)
+func (f mockFetcher) Fetch(ctx context.Context, si *SyncInfo) (*SyncInfo, error) {
+	return f.fetchFunc(ctx, si)
 }
 
 type mockValidator struct {
-	validateFunc func(context.Context, *BlockInfo) error
+	validateFunc func(context.Context, *SyncInfo) error
 }
 
-func (v mockValidator) Validate(ctx context.Context, bi *BlockInfo) error {
-	return v.validateFunc(ctx, bi)
+func (v mockValidator) Validate(ctx context.Context, si *SyncInfo) error {
+	return v.validateFunc(ctx, si)
 }

@@ -8,7 +8,7 @@ import (
 	"boscoin.io/sebak/lib/block"
 )
 
-type BlockInfo struct {
+type SyncInfo struct {
 	BlockHeight uint64
 	Block       *block.Block
 	Txs         []*block.BlockTransaction
@@ -22,9 +22,9 @@ type Doer interface {
 type AfterFunc = func(time.Duration) <-chan time.Time
 
 type Fetcher interface {
-	Fetch(ctx context.Context, height uint64) (*BlockInfo, error)
+	Fetch(ctx context.Context, syncInfo *SyncInfo) (*SyncInfo, error)
 }
 
 type Validator interface {
-	Validate(context.Context, *BlockInfo) error
+	Validate(context.Context, *SyncInfo) error
 }
