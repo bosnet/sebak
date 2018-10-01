@@ -12,9 +12,7 @@ import (
 type ISAACVotingThresholdPolicy struct {
 	sync.RWMutex
 
-	sign   int
-	accept int
-
+	threshold  int
 	validators int
 	connected  int
 }
@@ -54,15 +52,7 @@ func (vt *ISAACVotingThresholdPolicy) SetConnected(n int) error {
 }
 
 func (vt *ISAACVotingThresholdPolicy) Threshold(state ballot.State) int {
-	var t int
-	switch state {
-	case ballot.StateSIGN:
-		t = vt.sign
-	case ballot.StateACCEPT:
-		t = vt.accept
-	}
-
-	v := float64(vt.validators) * (float64(t) / float64(100))
+	v := float64(vt.validators) * (float64(vt.threshold) / float64(100))
 	threshold := int(math.Ceil(v))
 
 	if threshold < 0 {
@@ -77,26 +67,24 @@ func (vt *ISAACVotingThresholdPolicy) MarshalJSON() ([]byte, error) {
 	defer vt.RUnlock()
 
 	return json.Marshal(map[string]interface{}{
-		"sign":       vt.sign,
-		"accept":     vt.accept,
+		"threshold":  vt.threshold,
 		"validators": vt.validators,
 		"connected":  vt.connected,
 	})
 }
 
-func NewDefaultVotingThresholdPolicy(sign, accept int) (vt *ISAACVotingThresholdPolicy, err error) {
-	if sign <= 0 || accept <= 0 {
+func NewDefaultVotingThresholdPolicy(threshold int) (vt *ISAACVotingThresholdPolicy, err error) {
+	if threshold <= 0 {
 		err = errors.ErrorInvalidVotingThresholdPolicy
 		return
 	}
-	if sign > 100 || accept > 100 {
+	if threshold > 100 {
 		err = errors.ErrorInvalidVotingThresholdPolicy
 		return
 	}
 
 	vt = &ISAACVotingThresholdPolicy{
-		sign:       sign,
-		accept:     accept,
+		threshold:  threshold,
 		validators: 0,
 	}
 

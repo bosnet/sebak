@@ -32,7 +32,7 @@ func init() {
 func MakeNodeRunner() (*NodeRunner, *node.LocalNode) {
 	_, n, localNode := network.CreateMemoryNetwork(nil)
 
-	policy, _ := consensus.NewDefaultVotingThresholdPolicy(66, 66)
+	policy, _ := consensus.NewDefaultVotingThresholdPolicy(66)
 
 	localNode.AddValidators(localNode.ConvertToValidator())
 	connectionManager := network.NewValidatorConnectionManager(
@@ -127,7 +127,7 @@ func createNodeRunnerForTesting(n int, conf *consensus.ISAACConfiguration, recv 
 	account = block.NewBlockAccount(address, balance)
 
 	localNode := nodes[0]
-	policy, _ := consensus.NewDefaultVotingThresholdPolicy(66, 66)
+	policy, _ := consensus.NewDefaultVotingThresholdPolicy(66)
 
 	connectionManager := NewTestConnectionManager(
 		localNode,
