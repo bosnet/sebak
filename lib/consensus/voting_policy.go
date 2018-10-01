@@ -65,16 +65,11 @@ func (vt *ISAACVotingThresholdPolicy) Threshold(state ballot.State) int {
 	v := float64(vt.validators) * (float64(t) / float64(100))
 	threshold := int(math.Ceil(v))
 
-	// in SIGN state, proposer assumes to say VotingYES
-	if state == ballot.StateSIGN {
-		threshold = threshold - 1
+	if threshold < 0 {
+		return 0
 	}
 
-	if threshold > 0 {
-		return threshold
-	}
-
-	return 0
+	return threshold
 }
 
 func (vt *ISAACVotingThresholdPolicy) MarshalJSON() ([]byte, error) {

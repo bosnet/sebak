@@ -259,8 +259,6 @@ func SIGNBallotBroadcast(c common.Checker, args ...interface{}) (err error) {
 		return
 
 	}
-	checker.NodeRunner.Consensus().Vote(newBallot)
-
 	checker.NodeRunner.ConnectionManager().Broadcast(newBallot)
 	checker.Log.Debug("ballot will be broadcasted", "newBallot", newBallot)
 
@@ -296,7 +294,6 @@ func ACCEPTBallotBroadcast(c common.Checker, args ...interface{}) (err error) {
 		return
 
 	}
-	checker.NodeRunner.Consensus().Vote(newBallot)
 	checker.NodeRunner.ConnectionManager().Broadcast(newBallot)
 	checker.Log.Debug("ballot will be broadcasted", "newBallot", newBallot)
 

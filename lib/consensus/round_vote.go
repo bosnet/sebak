@@ -38,14 +38,13 @@ func (rv *RoundVote) IsVotedByNode(state ballot.State, node string) bool {
 	return found
 }
 
-func (rv *RoundVote) Vote(ballot ballot.Ballot) (isNew bool, err error) {
-	if ballot.IsFromProposer() {
-		return
-	}
+func (rv *RoundVote) Vote(b ballot.Ballot) (isNew bool, err error) {
+	if b.State() == ballot.StateSIGN || b.State() == ballot.StateACCEPT {
+		result := rv.GetResult(b.State())
 
-	result := rv.GetResult(ballot.State())
-	_, isNew = result[ballot.Source()]
-	result[ballot.Source()] = ballot.Vote()
+		_, isNew = result[b.Source()]
+		result[b.Source()] = b.Vote()
+	}
 
 	return
 }
@@ -97,18 +96,10 @@ func (rv *RoundVote) CanGetVotingResult(policy ballot.VotingThresholdPolicy, sta
 		"state", state,
 	)
 
-	if state == ballot.StateSIGN {
-		if yes >= threshold {
-			return result, ballot.VotingYES, true
-		} else if no >= threshold+1 {
-			return result, ballot.VotingNO, true
-		}
-	} else if state == ballot.StateACCEPT {
-		if yes >= threshold {
-			return result, ballot.VotingYES, true
-		} else if no >= threshold {
-			return result, ballot.VotingNO, true
-		}
+	if yes >= threshold {
+		return result, ballot.VotingYES, true
+	} else if no >= threshold {
+		return result, ballot.VotingNO, true
 	} else {
 		// do nothing
 	}

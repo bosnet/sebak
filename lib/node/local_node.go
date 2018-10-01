@@ -120,9 +120,6 @@ func (n *LocalNode) AddValidators(validators ...*Validator) error {
 	defer n.Unlock()
 
 	for _, va := range validators {
-		if n.Address() == va.Address() {
-			continue
-		}
 		n.validators[va.Address()] = va
 	}
 

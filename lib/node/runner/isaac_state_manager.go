@@ -189,6 +189,8 @@ func (sm *ISAACStateManager) Start() {
 					sm.transitSignal()
 					timer.Reset(sm.Conf.TimeoutACCEPT)
 				case ballot.StateALLCONFIRM:
+					sm.setState(state)
+					sm.transitSignal()
 					sm.SetBlockTimeBuffer()
 					sm.NextHeight()
 				case ballot.StateNONE:
@@ -242,23 +244,17 @@ func (sm *ISAACStateManager) proposeOrWait(timer *time.Timer, state consensus.IS
 
 	if proposer == sm.nr.localNode.Address() {
 		time.Sleep(sm.blockTimeBuffer)
-		if err := sm.nr.proposeNewBallot(state.Round.Number); err == nil {
+		if _, err := sm.nr.proposeNewBallot(state.Round.Number); err == nil {
 			log.Debug("propose new ballot", "proposer", proposer, "round", state.Round, "ballotState", ballot.StateSIGN)
-			state.BallotState = ballot.StateSIGN
-			sm.setState(state)
-
-			timer.Reset(sm.Conf.TimeoutSIGN)
-			sm.transitSignal()
 		} else {
 			log.Error("failed to proposeNewBallot", "height", sm.nr.consensus.LatestConfirmedBlock().Height, "error", err)
-			sm.setState(state)
-			timer.Reset(sm.Conf.TimeoutINIT)
 		}
+		timer.Reset(sm.Conf.TimeoutINIT)
 	} else {
-		sm.setState(state)
 		timer.Reset(sm.blockTimeBuffer + sm.Conf.TimeoutINIT)
-		sm.transitSignal()
 	}
+	sm.setState(state)
+	sm.transitSignal()
 }
 
 func (sm *ISAACStateManager) State() consensus.ISAACState {

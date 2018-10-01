@@ -109,7 +109,7 @@ func NewNodeRunner(
 	}
 	nr.isaacStateManager = NewISAACStateManager(nr, conf)
 
-	nr.policy.SetValidators(len(nr.localNode.GetValidators()) + 1) // including self
+	nr.policy.SetValidators(len(nr.localNode.GetValidators()))
 
 	nr.connectionManager = c.ConnectionManager()
 	nr.network.AddWatcher(nr.connectionManager.ConnectionWatcher)
@@ -462,7 +462,7 @@ func (nr *NodeRunner) TransitISAACState(round round.Round, ballotState ballot.St
 	nr.isaacStateManager.TransitISAACState(round, ballotState)
 }
 
-func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) error {
+func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) (ballot.Ballot, error) {
 	b := nr.consensus.LatestConfirmedBlock()
 	round := round.Round{
 		Number:      roundNumber,
@@ -502,5 +502,5 @@ func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) error {
 
 	nr.ConnectionManager().Broadcast(*theBallot)
 
-	return nr.consensus.AddRunningRound(round.Hash(), *theBallot)
+	return *theBallot, nil
 }
