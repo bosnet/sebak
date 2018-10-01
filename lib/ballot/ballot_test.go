@@ -103,7 +103,6 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 
 	{
 		ballot := NewBallot(node.Address(), round, []string{})
-		ballot := NewBallot(node.Address(), round, []string{})
 		ptx, _ := NewProposerTransactionFromBallot(*ballot, commonKP.Address())
 		ptx.Sign(kp, networkID)
 		ballot.SetProposerTransaction(ptx)
@@ -184,14 +183,14 @@ func TestBallotProposerTransaction(t *testing.T) {
 	commonKP, _ := keypair.Random()
 
 	{ // without ProposerTransaction
-		blt := NewBallot(node, round, []string{})
+		blt := NewBallot(node.Address(), round, []string{})
 		blt.Sign(node.Keypair(), networkID)
 		err := blt.IsWellFormed(networkID)
 		require.NotNil(t, err)
 	}
 
 	{ // with ProposerTransaction
-		blt := NewBallot(node, round, []string{})
+		blt := NewBallot(node.Address(), round, []string{})
 		opb := transaction.NewOperationBodyCollectTxFee(
 			commonKP.Address(),
 			common.Amount(10),

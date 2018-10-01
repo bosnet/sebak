@@ -71,7 +71,7 @@ func (p *ballotCheckerProposedTransaction) MakeBallot(numberOfTxs int) (blt *bal
 		p.nr.Consensus().TransactionPool.Add(tx)
 	}
 
-	blt = ballot.NewBallot(p.proposerNode, rd, p.txHashes)
+	blt = ballot.NewBallot(p.proposerNode.Address(), rd, p.txHashes)
 
 	ptx, _ := ballot.NewProposerTransactionFromBallot(*blt, p.commonAccount.Address, p.txs...)
 	ptx.Sign(p.proposerNode.Keypair(), networkID)
