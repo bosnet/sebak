@@ -16,7 +16,3 @@ type Round struct {
 func (r Round) Hash() string {
 	return base58.Encode(common.MustMakeObjectHash(r))
 }
-
-func (r Round) IsSame(a Round) bool {
-	return r.Hash() == a.Hash()
-}
