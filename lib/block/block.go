@@ -7,7 +7,6 @@ import (
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/stellar/go/keypair"
 
-	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/consensus/round"
@@ -47,6 +46,7 @@ func (bck Block) String() string {
 //
 // This special block has different part from the other Block
 // * `Block.Proposer` is empty
+// * `Block.Transaction` is empty
 // * `Block.Confirmed` is `common.GenesisBlockConfirmedTime`
 // * has only one `Transaction`
 //
@@ -123,6 +123,7 @@ func MakeGenesisBlock(st *storage.LevelDBBackend, genesisAccount BlockAccount, c
 	blk = NewBlock(
 		"",
 		round.Round{},
+		"",
 		[]string{tx.GetHash()},
 		common.GenesisBlockConfirmedTime,
 	)
@@ -139,10 +140,13 @@ func MakeGenesisBlock(st *storage.LevelDBBackend, genesisAccount BlockAccount, c
 	return
 }
 
-func NewBlock(proposer string, round round.Round, transactions []string, confirmed string) Block {
+// NewBlock creates new block; `ptx` represents the
+// `ProposerTransaction.GetHash()`.
+func NewBlock(proposer string, round round.Round, ptx string, transactions []string, confirmed string) Block {
 	b := &Block{
 		Header:       *NewBlockHeader(round, uint64(len(transactions)), getTransactionRoot(transactions)),
 		Transactions: transactions,
+		Transaction:  ptx,
 		Proposer:     proposer,
 		Round:        round,
 		Confirmed:    confirmed,
@@ -150,18 +154,6 @@ func NewBlock(proposer string, round round.Round, transactions []string, confirm
 
 	b.Hash = base58.Encode(common.MustMakeObjectHash(b))
 	return *b
-}
-
-func NewBlockFromBallot(b ballot.Ballot) Block {
-	blk := NewBlock(
-		b.Proposer(),
-		b.Round(),
-		b.Transactions(),
-		b.ProposerConfirmed(),
-	)
-	blk.Transaction = b.ProposerTransaction().GetHash()
-
-	return blk
 }
 
 func getTransactionRoot(txs []string) string {

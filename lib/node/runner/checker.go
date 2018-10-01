@@ -382,7 +382,14 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 		transactions[hash] = tx
 	}
 
-	blk = block.NewBlockFromBallot(b)
+	blk = block.NewBlock(
+		b.Proposer(),
+		b.Round(),
+		b.ProposerTransaction().GetHash(),
+		b.Transactions(),
+		b.ProposerConfirmed(),
+	)
+
 	log.Debug("NewBlock created", "block", blk)
 	infoLog.Info("NewBlock created",
 		"height", blk.Height,
