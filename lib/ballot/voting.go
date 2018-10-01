@@ -10,7 +10,7 @@ const (
 )
 
 type VotingThresholdPolicy interface {
-	Threshold(State) int
+	Threshold() int
 	Validators() int
 	SetValidators(int) error
 	Connected() int
