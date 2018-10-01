@@ -497,3 +497,7 @@ func finishOperationPayment(st *storage.LevelDBBackend, tx transaction.Transacti
 
 	return
 }
+
+func FinishOperation(st *storage.LevelDBBackend, tx transaction.Transaction, op transaction.Operation, log logging.Logger) (err error) {
+	return finishOperation(st, tx, op, log)
+}
