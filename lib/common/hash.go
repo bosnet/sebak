@@ -7,7 +7,7 @@ import (
 	"golang.org/x/crypto/argon2"
 )
 
-var HashSalt = []byte("sebak")
+var HashSalt = []byte("boscoin-sebak-network")
 
 func MakeHash(b []byte) []byte {
 	return argon2.Key(b, HashSalt, 3, 32*1024, 4, 32)
