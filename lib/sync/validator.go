@@ -39,6 +39,15 @@ func NewBlockValidator(nw network.Network, ldb *storage.LevelDBBackend, opts ...
 }
 
 func (v *BlockValidator) Validate(ctx context.Context, syncInfo *SyncInfo) error {
+	exists, err := v.existsBlock(ctx, v.storage, syncInfo.BlockHeight)
+	if err != nil {
+		return err
+	}
+	if exists == true {
+		v.logger.Info("This block exists", "height", syncInfo.BlockHeight)
+		return nil
+	}
+
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
@@ -56,18 +65,6 @@ func (v *BlockValidator) Validate(ctx context.Context, syncInfo *SyncInfo) error
 }
 
 func (v *BlockValidator) validate(ctx context.Context, syncInfo *SyncInfo) error {
-	//TODO: validate
-	st := v.storage
-	height := syncInfo.BlockHeight
-	exists, err := block.ExistsBlockByHeight(st, height)
-	if err != nil {
-		return err
-	}
-	if exists == true {
-		v.logger.Info("This block exists", "height", height)
-		return nil
-	}
-
 	if err := v.validateTxs(ctx, syncInfo); err != nil {
 		return err
 	}
@@ -80,21 +77,34 @@ func (v *BlockValidator) validate(ctx context.Context, syncInfo *SyncInfo) error
 }
 
 func (v *BlockValidator) finishBlock(ctx context.Context, syncInfo *SyncInfo) error {
-	//TODO(anarcher): using leveldb.Tx or leveldb.Batch?
 	ts, err := v.storage.OpenTransaction()
 	if err != nil {
 		return err
 	}
 
-	height := syncInfo.BlockHeight
-	exists, err := block.ExistsBlockByHeight(ts, height)
-	if err != nil {
+	if exists, err := v.existsBlock(ctx, ts, syncInfo.BlockHeight); err != nil {
+		ts.Discard()
 		return err
-	}
-	if exists == true {
-		v.logger.Info("This block exists", "height", height)
+	} else if exists == true {
+		v.logger.Info("This block exists", "height", syncInfo.BlockHeight)
 		return nil
 	}
+
+	if err := v.saveBlock(ctx, syncInfo, ts); err != nil {
+		ts.Discard()
+		return err
+	}
+
+	if err := ts.Commit(); err != nil {
+		ts.Discard()
+		return err
+	}
+
+	return nil
+}
+
+func (v *BlockValidator) saveBlock(ctx context.Context, syncInfo *SyncInfo, ts *storage.LevelDBBackend) error {
+	//TODO(anarcher): using leveldb.Tx or leveldb.Batch?
 
 	blk := *syncInfo.Block
 	if err := blk.Save(ts); err != nil {
@@ -107,8 +117,7 @@ func (v *BlockValidator) finishBlock(ctx context.Context, syncInfo *SyncInfo) er
 	for _, tx := range syncInfo.Txs {
 		raw, _ := tx.Serialize()
 		bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.Confirmed, *tx, raw)
-		if err = bt.Save(ts); err != nil {
-			ts.Discard()
+		if err := bt.Save(ts); err != nil {
 			return err
 		}
 
@@ -121,24 +130,16 @@ func (v *BlockValidator) finishBlock(ctx context.Context, syncInfo *SyncInfo) er
 		baSource, err := block.GetBlockAccount(ts, tx.B.Source)
 		if err != nil {
 			err = errors.ErrorBlockAccountDoesNotExists
-			ts.Discard()
 			return err
 		}
 
 		if err := baSource.Withdraw(tx.TotalAmount(true)); err != nil {
-			ts.Discard()
 			return err
 		}
 
 		if err := baSource.Save(ts); err != nil {
-			ts.Discard()
 			return err
 		}
-	}
-
-	if err := ts.Commit(); err != nil {
-		ts.Discard()
-		return err
 	}
 
 	v.logger.Info("Finish to sync block", "height", syncInfo.BlockHeight)
@@ -169,4 +170,17 @@ func (v *BlockValidator) validateTxs(ctx context.Context, si *SyncInfo) error {
 		}
 	}
 	return nil
+}
+
+func (v *BlockValidator) existsBlock(ctx context.Context, st *storage.LevelDBBackend, height uint64) (bool, error) {
+	select {
+	case <-ctx.Done():
+		return false, ctx.Err()
+	default:
+		exists, err := block.ExistsBlockByHeight(st, height)
+		if err != nil {
+			return false, err
+		}
+		return exists, nil
+	}
 }
