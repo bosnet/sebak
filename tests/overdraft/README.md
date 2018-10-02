@@ -25,10 +25,10 @@ here is how to do it.
 ## Commands used
 
 ```sh
-docker run --network host -it sebak wallet payment ${PUBKEY3} 10_000 ${SECRET1} --endpoint=https://127.0.0.1:2821 --create --verbose
+docker run --network host -it sebak wallet payment ${PUBKEY3} 1_000_000 ${SECRET1} --endpoint=https://127.0.0.1:2821 --create --verbose
 docker run --network host -it sebak wallet payment ${PUBKEY3} 0 ${SECRET1} --endpoint=https://127.0.0.1:2821 --verbose
 docker run --network host -it sebak wallet payment ${PUBKEY3} 1 ${SECRET1} --endpoint=https://127.0.0.1:2821 --verbose
-docker run --network host -it sebak wallet payment ${PUBKEY1} 100 ${SECRET3} --endpoint=https://127.0.0.1:2821 --verbose
-docker run --network host -it sebak wallet payment ${PUBKEY1} 2 ${SECRET3} --endpoint=https://127.0.0.1:2821 --verbose
-docker run --network host -it sebak wallet payment ${PUBKEY1} 1 ${SECRET3} --endpoint=https://127.0.0.1:2821 --verbose
+docker run --network host -it sebak wallet payment ${PUBKEY1} 999_000 ${SECRET3} --endpoint=https://127.0.0.1:2821 --verbose
+docker run --network host -it sebak wallet payment ${PUBKEY1} 990_002 ${SECRET3} --endpoint=https://127.0.0.1:2821 --verbose
+docker run --network host -it sebak wallet payment ${PUBKEY1} 990_001 ${SECRET3} --endpoint=https://127.0.0.1:2821 --verbose
 ```
