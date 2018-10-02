@@ -8,7 +8,7 @@ import (
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/storage"
-	"boscoin.io/sebak/lib/transaction"
+	"boscoin.io/sebak/lib/transaction/operation"
 	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
 )
@@ -155,14 +155,14 @@ func TestMakeGenesisBlock(t *testing.T) {
 	bo, err := GetBlockOperation(st, bt.Operations[0])
 	require.Nil(t, err)
 	require.Equal(t, bt.Hash, bo.TxHash)
-	require.Equal(t, transaction.OperationCreateAccount, bo.Type)
+	require.Equal(t, operation.OperationCreateAccount, bo.Type)
 	require.Equal(t, genesisAccount.Address, bo.Source)
 
 	{
-		opb, err := transaction.UnmarshalOperationBodyJSON(bo.Type, bo.Body)
+		opb, err := operation.UnmarshalOperationBodyJSON(bo.Type, bo.Body)
 		require.Nil(t, err)
 
-		opbp := opb.(transaction.OperationBodyPayable)
+		opbp := opb.(operation.OperationBodyPayable)
 
 		require.Equal(t, genesisAccount.Address, opbp.TargetAddress())
 		require.Equal(t, genesisAccount.Balance, opbp.GetAmount())
@@ -233,10 +233,10 @@ func TestMakeGenesisBlockFindGenesisAccount(t *testing.T) {
 		bt, _ := GetBlockTransaction(st, bk.Transactions[0])
 		bo, _ := GetBlockOperation(st, bt.Operations[0])
 
-		opb, err := transaction.UnmarshalOperationBodyJSON(bo.Type, bo.Body)
+		opb, err := operation.UnmarshalOperationBodyJSON(bo.Type, bo.Body)
 		require.Nil(t, err)
 
-		opbp := opb.(transaction.OperationBodyPayable)
+		opbp := opb.(operation.OperationBodyPayable)
 
 		genesisAccount, err := GetBlockAccount(st, opbp.TargetAddress())
 		require.Nil(t, err)
@@ -285,10 +285,10 @@ func TestMakeGenesisBlockFindCommonAccount(t *testing.T) {
 		bt, _ := GetBlockTransaction(st, bk.Transactions[0])
 		bo, _ := GetBlockOperation(st, bt.Operations[1])
 
-		opb, err := transaction.UnmarshalOperationBodyJSON(bo.Type, bo.Body)
+		opb, err := operation.UnmarshalOperationBodyJSON(bo.Type, bo.Body)
 		require.Nil(t, err)
 
-		opbp := opb.(transaction.OperationBodyPayable)
+		opbp := opb.(operation.OperationBodyPayable)
 
 		ac, err := GetBlockAccount(st, opbp.TargetAddress())
 		require.Nil(t, err)

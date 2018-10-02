@@ -19,6 +19,7 @@ import (
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
+	"boscoin.io/sebak/lib/transaction/operation"
 
 	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
@@ -41,10 +42,10 @@ func TestValidateTxPaymentMissingBlockAccount(t *testing.T) {
 			Source:     kps.Address(), // Need a well-formed address
 			Fee:        common.BaseFee,
 			SequenceID: 0,
-			Operations: []transaction.Operation{
-				transaction.Operation{
-					H: transaction.OperationHeader{Type: transaction.OperationPayment},
-					B: transaction.OperationBodyPayment{Target: kpt.Address(), Amount: common.Amount(10000)},
+			Operations: []operation.Operation{
+				operation.Operation{
+					H: operation.OperationHeader{Type: operation.OperationPayment},
+					B: operation.OperationBodyPayment{Target: kpt.Address(), Amount: common.Amount(10000)},
 				},
 			},
 		},
@@ -106,10 +107,10 @@ func TestValidateTxWrongSequenceID(t *testing.T) {
 			Source:     kps.Address(),
 			Fee:        common.BaseFee,
 			SequenceID: 0,
-			Operations: []transaction.Operation{
-				transaction.Operation{
-					H: transaction.OperationHeader{Type: transaction.OperationPayment},
-					B: transaction.OperationBodyPayment{Target: kpt.Address(), Amount: common.Amount(10000)},
+			Operations: []operation.Operation{
+				operation.Operation{
+					H: operation.OperationHeader{Type: operation.OperationPayment},
+					B: operation.OperationBodyPayment{Target: kpt.Address(), Amount: common.Amount(10000)},
 				},
 			},
 		},
@@ -141,7 +142,7 @@ func TestValidateTxOverBalance(t *testing.T) {
 	bas.Save(st)
 	bat.Save(st)
 
-	opbody := transaction.OperationBodyPayment{Target: kpt.Address(), Amount: bas.Balance}
+	opbody := operation.OperationBodyPayment{Target: kpt.Address(), Amount: bas.Balance}
 	tx := transaction.Transaction{
 		T: "transaction",
 		H: transaction.TransactionHeader{
@@ -151,9 +152,9 @@ func TestValidateTxOverBalance(t *testing.T) {
 			Source:     kps.Address(),
 			Fee:        common.BaseFee,
 			SequenceID: 1,
-			Operations: []transaction.Operation{
-				transaction.Operation{
-					H: transaction.OperationHeader{Type: transaction.OperationPayment},
+			Operations: []operation.Operation{
+				operation.Operation{
+					H: operation.OperationHeader{Type: operation.OperationPayment},
 					B: opbody,
 				},
 			},
@@ -171,7 +172,7 @@ func TestValidateTxOverBalance(t *testing.T) {
 	op := tx.B.Operations[0]
 	opbody.Amount = common.Amount(2500000)
 	op.B = opbody
-	tx.B.Operations = []transaction.Operation{op, op, op, op}
+	tx.B.Operations = []operation.Operation{op, op, op, op}
 	require.Equal(t, ValidateTx(st, tx), errors.ErrorTransactionExcessAbilityToPay)
 
 	// Now the total amount of the ops + balance is equal to the balance
@@ -208,10 +209,10 @@ func TestValidateOpCreateExistsAccount(t *testing.T) {
 			Source:     kps.Address(), // Need a well-formed address
 			Fee:        common.BaseFee,
 			SequenceID: 0,
-			Operations: []transaction.Operation{
-				transaction.Operation{
-					H: transaction.OperationHeader{Type: transaction.OperationCreateAccount},
-					B: transaction.OperationBodyCreateAccount{Target: kpt.Address(), Amount: common.Amount(10000)},
+			Operations: []operation.Operation{
+				operation.Operation{
+					H: operation.OperationHeader{Type: operation.OperationCreateAccount},
+					B: operation.OperationBodyCreateAccount{Target: kpt.Address(), Amount: common.Amount(10000)},
 				},
 			},
 		},

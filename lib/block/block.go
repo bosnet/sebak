@@ -13,6 +13,7 @@ import (
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
+	"boscoin.io/sebak/lib/transaction/operation"
 )
 
 const (
@@ -78,12 +79,12 @@ func MakeGenesisBlock(st *storage.LevelDBBackend, genesisAccount BlockAccount, c
 	}
 
 	// create create-account transaction.
-	var ops []transaction.Operation
+	var ops []operation.Operation
 	{
-		opb := transaction.NewOperationBodyCreateAccount(genesisAccount.Address, genesisAccount.Balance, "")
-		op := transaction.Operation{
-			H: transaction.OperationHeader{
-				Type: transaction.OperationCreateAccount,
+		opb := operation.NewOperationBodyCreateAccount(genesisAccount.Address, genesisAccount.Balance, "")
+		op := operation.Operation{
+			H: operation.OperationHeader{
+				Type: operation.OperationCreateAccount,
 			},
 			B: opb,
 		}
@@ -91,10 +92,10 @@ func MakeGenesisBlock(st *storage.LevelDBBackend, genesisAccount BlockAccount, c
 	}
 
 	{
-		opb := transaction.NewOperationBodyCreateAccount(commonAccount.Address, commonAccount.Balance, "")
-		op := transaction.Operation{
-			H: transaction.OperationHeader{
-				Type: transaction.OperationCreateAccount,
+		opb := operation.NewOperationBodyCreateAccount(commonAccount.Address, commonAccount.Balance, "")
+		op := operation.Operation{
+			H: operation.OperationHeader{
+				Type: operation.OperationCreateAccount,
 			},
 			B: opb,
 		}

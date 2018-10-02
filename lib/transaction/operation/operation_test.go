@@ -1,13 +1,13 @@
-package transaction
+package operation
 
 import (
+	"encoding/json"
 	"testing"
 
-	"boscoin.io/sebak/lib/common"
-
-	"encoding/json"
 	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
+
+	"boscoin.io/sebak/lib/common"
 )
 
 func TestMakeHashOfOperationBodyPayment(t *testing.T) {

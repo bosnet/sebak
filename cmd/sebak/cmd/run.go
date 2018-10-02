@@ -23,6 +23,8 @@ import (
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/node/runner"
 	"boscoin.io/sebak/lib/storage"
+	"boscoin.io/sebak/lib/transaction"
+	"boscoin.io/sebak/lib/transaction/operation"
 )
 
 const (
@@ -50,6 +52,7 @@ var (
 	flagTimeoutACCEPT       string = common.GetENVValue("SEBAK_TIMEOUT_ACCEPT", "2")
 	flagBlockTime           string = common.GetENVValue("SEBAK_BLOCK_TIME", "5")
 	flagTransactionsLimit   string = common.GetENVValue("SEBAK_TRANSACTIONS_LIMIT", "1000")
+	flagOperationsLimit     string = common.GetENVValue("SEBAK_OPERATIONS_LIMIT", "1000")
 )
 
 var (
@@ -66,6 +69,7 @@ var (
 	timeoutACCEPT     time.Duration
 	blockTime         time.Duration
 	transactionsLimit uint64
+	operationsLimit   uint64
 
 	logLevel logging.Lvl
 	log      logging.Logger = logging.New("module", "main")
@@ -139,6 +143,7 @@ func init() {
 	nodeCmd.Flags().StringVar(&flagTimeoutACCEPT, "timeout-accept", flagTimeoutACCEPT, "timeout of the accept state")
 	nodeCmd.Flags().StringVar(&flagBlockTime, "block-time", flagBlockTime, "block creation time")
 	nodeCmd.Flags().StringVar(&flagTransactionsLimit, "transactions-limit", flagTransactionsLimit, "transactions limit in a ballot")
+	nodeCmd.Flags().StringVar(&flagOperationsLimit, "operations-limit", flagOperationsLimit, "operations limit in a transaction")
 
 	rootCmd.AddCommand(nodeCmd)
 }
@@ -244,6 +249,10 @@ func parseFlagsNode() {
 		cmdcommon.PrintFlagsError(nodeCmd, "--transactions-limit", err)
 	}
 
+	if operationsLimit, err = strconv.ParseUint(flagOperationsLimit, 10, 64); err != nil {
+		cmdcommon.PrintFlagsError(nodeCmd, "--operations-limit", err)
+	}
+
 	var tmpUint64 uint64
 	if tmpUint64, err = strconv.ParseUint(flagThreshold, 10, 64); err != nil {
 		cmdcommon.PrintFlagsError(nodeCmd, "--threshold", err)
@@ -297,6 +306,7 @@ func parseFlagsNode() {
 	parsedFlags = append(parsedFlags, "\n\ttimeout-accept", flagTimeoutACCEPT)
 	parsedFlags = append(parsedFlags, "\n\tblock-time", flagBlockTime)
 	parsedFlags = append(parsedFlags, "\n\ttransactions-limit", flagTransactionsLimit)
+	parsedFlags = append(parsedFlags, "\n\toperations-limit", flagOperationsLimit)
 
 	var vl []interface{}
 	for i, v := range validators {
@@ -374,12 +384,13 @@ func runNode() error {
 	// Execution group.
 	var g run.Group
 	{
+		transaction.Limit = int(transactionsLimit)
+		operation.Limit = int(operationsLimit)
 		conf := &consensus.ISAACConfiguration{
-			TimeoutINIT:       timeoutINIT,
-			TimeoutSIGN:       timeoutSIGN,
-			TimeoutACCEPT:     timeoutACCEPT,
-			BlockTime:         blockTime,
-			TransactionsLimit: uint64(transactionsLimit),
+			TimeoutINIT:   timeoutINIT,
+			TimeoutSIGN:   timeoutSIGN,
+			TimeoutACCEPT: timeoutACCEPT,
+			BlockTime:     blockTime,
 		}
 		nr, err := runner.NewNodeRunner(flagNetworkID, localNode, policy, nt, isaac, st, conf)
 

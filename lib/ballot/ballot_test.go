@@ -13,17 +13,18 @@ import (
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/transaction"
+	"boscoin.io/sebak/lib/transaction/operation"
 )
 
 var networkID []byte = []byte("sebak-test-network")
 
 func TestErrorBallotHasOverMaxTransactionsInBallot(t *testing.T) {
-	MaxTransactionsInBallotOrig := common.MaxTransactionsInBallot
+	MaxTransactionsInBallotOrig := transaction.Limit
 	defer func() {
-		common.MaxTransactionsInBallot = MaxTransactionsInBallotOrig
+		transaction.Limit = MaxTransactionsInBallotOrig
 	}()
 
-	common.MaxTransactionsInBallot = 2
+	transaction.Limit = 2
 
 	kp, _ := keypair.Random()
 	commonKP, _ := keypair.Random()
@@ -48,7 +49,7 @@ func TestErrorBallotHasOverMaxTransactionsInBallot(t *testing.T) {
 	{
 		var txHashes []string
 		var txs []transaction.Transaction
-		for i := 0; i < common.MaxTransactionsInBallot+1; i++ {
+		for i := 0; i < transaction.Limit+1; i++ {
 			_, tx := transaction.TestMakeTransaction(networkID, 1)
 			txs = append(txs, tx)
 			txHashes = append(txHashes, tx.GetHash())
@@ -196,7 +197,7 @@ func TestBallotProposerTransaction(t *testing.T) {
 
 	{ // with ProposerTransaction
 		blt := NewBallot(node.Address(), round, []string{})
-		opb := transaction.NewOperationBodyCollectTxFee(
+		opb := operation.NewOperationBodyCollectTxFee(
 			commonKP.Address(),
 			common.Amount(10),
 			uint64(len(blt.Transactions())),
@@ -206,7 +207,7 @@ func TestBallotProposerTransaction(t *testing.T) {
 		)
 		var ptx ProposerTransaction
 		{
-			op, err := transaction.NewOperation(opb)
+			op, err := operation.NewOperation(opb)
 			require.Nil(t, err)
 			ptx, err = NewProposerTransaction(kp.Address(), op)
 			require.Nil(t, err)

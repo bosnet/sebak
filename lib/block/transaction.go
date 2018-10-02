@@ -9,6 +9,7 @@ import (
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
+	"boscoin.io/sebak/lib/transaction/operation"
 )
 
 // BlockTransaction is `Transaction` data for block. the storage should support,
@@ -145,7 +146,7 @@ func (bt *BlockTransaction) Save(st *storage.LevelDBBackend) (err error) {
 		if err = bo.Save(st); err != nil {
 			return
 		}
-		if pop, ok := op.B.(transaction.OperationBodyPayable); ok {
+		if pop, ok := op.B.(operation.OperationBodyPayable); ok {
 			target := pop.TargetAddress()
 			if err = st.New(bt.NewBlockTransactionKeyByAccount(target), bt.Hash); err != nil {
 				return

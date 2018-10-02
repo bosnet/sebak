@@ -6,56 +6,24 @@ import (
 	"github.com/stellar/go/keypair"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/transaction/operation"
 )
 
-var networkID []byte = []byte("sebak-test-network")
-
 var (
-	kp *keypair.Full
+	networkID []byte = []byte("sebak-test-network")
+	kp        *keypair.Full
 )
 
 func init() {
 	kp, _ = keypair.Random()
 }
 
-func TestMakeOperationBodyPayment(amount int, addressList ...string) OperationBodyPayment {
-	var address string
-	if len(addressList) > 0 {
-		address = addressList[0]
-	} else {
-		kp, _ := keypair.Random()
-		address = kp.Address()
-	}
-
-	for amount < 0 {
-		amount = rand.Intn(5000)
-	}
-
-	return OperationBodyPayment{
-		Target: address,
-		Amount: common.Amount(amount),
-	}
-}
-
-func TestMakeOperation(amount int, addressList ...string) Operation {
-	opb := TestMakeOperationBodyPayment(amount, addressList...)
-
-	op := Operation{
-		H: OperationHeader{
-			Type: OperationPayment,
-		},
-		B: opb,
-	}
-
-	return op
-}
-
 func TestMakeTransaction(networkID []byte, n int) (kp *keypair.Full, tx Transaction) {
 	kp, _ = keypair.Random()
 
-	var ops []Operation
+	var ops []operation.Operation
 	for i := 0; i < n; i++ {
-		ops = append(ops, TestMakeOperation(-1))
+		ops = append(ops, operation.TestMakeOperation(-1))
 	}
 
 	tx, _ = NewTransaction(kp.Address(), 0, ops...)
@@ -69,7 +37,7 @@ func TestGenerateNewSequenceID() uint64 {
 }
 
 func TestMakeTransactionWithKeypair(networkID []byte, n int, srcKp *keypair.Full, targetKps ...*keypair.Full) (tx Transaction) {
-	var ops []Operation
+	var ops []operation.Operation
 	var targetAddr string
 
 	if len(targetKps) > 0 {
@@ -77,7 +45,7 @@ func TestMakeTransactionWithKeypair(networkID []byte, n int, srcKp *keypair.Full
 	}
 
 	for i := 0; i < n; i++ {
-		ops = append(ops, TestMakeOperation(-1, targetAddr))
+		ops = append(ops, operation.TestMakeOperation(-1, targetAddr))
 	}
 
 	tx, _ = NewTransaction(
@@ -91,11 +59,11 @@ func TestMakeTransactionWithKeypair(networkID []byte, n int, srcKp *keypair.Full
 }
 
 func MakeTransactionCreateAccount(kpSource *keypair.Full, target string, amount common.Amount) (tx Transaction) {
-	opb := NewOperationBodyCreateAccount(target, common.Amount(amount), "")
+	opb := operation.NewOperationBodyCreateAccount(target, common.Amount(amount), "")
 
-	op := Operation{
-		H: OperationHeader{
-			Type: OperationCreateAccount,
+	op := operation.Operation{
+		H: operation.OperationHeader{
+			Type: operation.OperationCreateAccount,
 		},
 		B: opb,
 	}
@@ -104,7 +72,7 @@ func MakeTransactionCreateAccount(kpSource *keypair.Full, target string, amount 
 		Source:     kpSource.Address(),
 		Fee:        common.BaseFee,
 		SequenceID: rand.Uint64(),
-		Operations: []Operation{op},
+		Operations: []operation.Operation{op},
 	}
 
 	tx = Transaction{

@@ -2,14 +2,15 @@ package runner
 
 import (
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/transaction/operation"
 
 	"boscoin.io/sebak/lib/transaction"
 	"github.com/stellar/go/keypair"
 )
 
 func makeTransaction(kp *keypair.Full) (tx transaction.Transaction) {
-	var ops []transaction.Operation
-	ops = append(ops, transaction.TestMakeOperation(-1))
+	var ops []operation.Operation
+	ops = append(ops, operation.TestMakeOperation(-1))
 
 	txBody := transaction.TransactionBody{
 		Source:     kp.Address(),
@@ -32,11 +33,11 @@ func makeTransaction(kp *keypair.Full) (tx transaction.Transaction) {
 }
 
 func makeTransactionPayment(kpSource *keypair.Full, target string, amount common.Amount) (tx transaction.Transaction) {
-	opb := transaction.NewOperationBodyPayment(target, amount)
+	opb := operation.NewOperationBodyPayment(target, amount)
 
-	op := transaction.Operation{
-		H: transaction.OperationHeader{
-			Type: transaction.OperationPayment,
+	op := operation.Operation{
+		H: operation.OperationHeader{
+			Type: operation.OperationPayment,
 		},
 		B: opb,
 	}
@@ -45,7 +46,7 @@ func makeTransactionPayment(kpSource *keypair.Full, target string, amount common
 		Source:     kpSource.Address(),
 		Fee:        common.BaseFee,
 		SequenceID: 0,
-		Operations: []transaction.Operation{op},
+		Operations: []operation.Operation{op},
 	}
 
 	tx = transaction.Transaction{

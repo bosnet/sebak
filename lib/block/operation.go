@@ -9,6 +9,7 @@ import (
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
+	"boscoin.io/sebak/lib/transaction/operation"
 )
 
 // BlockOperation is `Operation` data for block. the storage should support,
@@ -24,7 +25,7 @@ type BlockOperation struct {
 	OpHash string
 	TxHash string
 
-	Type   transaction.OperationType
+	Type   operation.OperationType
 	Source string
 	Body   []byte
 
@@ -38,7 +39,7 @@ func NewBlockOperationKey(opHash, txHash string) string {
 	return fmt.Sprintf("%s-%s", opHash, txHash)
 }
 
-func NewBlockOperationFromOperation(op transaction.Operation, tx transaction.Transaction, blockHeight uint64) (BlockOperation, error) {
+func NewBlockOperationFromOperation(op operation.Operation, tx transaction.Transaction, blockHeight uint64) (BlockOperation, error) {
 	body, err := op.B.Serialize()
 	if err != nil {
 		return BlockOperation{}, err

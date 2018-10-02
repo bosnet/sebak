@@ -8,9 +8,13 @@ import (
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/transaction/operation"
 )
 
 // TODO versioning
+
+// Limit is the number of transactions to be included in a ballot
+var Limit = 1000
 
 type Transaction struct {
 	T string
@@ -35,10 +39,10 @@ type TransactionHeader struct {
 }
 
 type TransactionBody struct {
-	Source     string        `json:"source"`
-	Fee        common.Amount `json:"fee"`
-	SequenceID uint64        `json:"sequenceid"`
-	Operations []Operation   `json:"operations"`
+	Source     string                `json:"source"`
+	Fee        common.Amount         `json:"fee"`
+	SequenceID uint64                `json:"sequenceid"`
+	Operations []operation.Operation `json:"operations"`
 }
 
 func (tb TransactionBody) MakeHash() []byte {
@@ -62,7 +66,7 @@ func (t *Transaction) UnmarshalJSON(b []byte) (err error) {
 	return
 }
 
-func NewTransaction(source string, sequenceID uint64, ops ...Operation) (tx Transaction, err error) {
+func NewTransaction(source string, sequenceID uint64, ops ...operation.Operation) (tx Transaction, err error) {
 	if len(ops) < 1 {
 		err = errors.ErrorTransactionEmptyOperations
 		return
@@ -147,7 +151,7 @@ func (tx Transaction) TotalAmount(withFee bool) common.Amount {
 	// (the sum of its Operations should not exceed the maximum supply)
 	var amount common.Amount
 	for _, op := range tx.B.Operations {
-		if pop, ok := op.B.(OperationBodyPayable); ok {
+		if pop, ok := op.B.(operation.OperationBodyPayable); ok {
 			amount = amount.MustAdd(pop.GetAmount())
 		}
 	}
