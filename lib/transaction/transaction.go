@@ -92,6 +92,7 @@ var TransactionWellFormedCheckerFuncs = []common.CheckerFunc{
 	CheckTransactionSequenceID,
 	CheckTransactionSource,
 	CheckTransactionBaseFee,
+	CheckTransactionOperationTypes,
 	CheckTransactionOperation,
 	CheckTransactionVerifySignature,
 }

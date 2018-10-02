@@ -53,13 +53,26 @@ func CheckTransactionBaseFee(c common.Checker, args ...interface{}) (err error) 
 	return
 }
 
-func CheckTransactionOperation(c common.Checker, args ...interface{}) (err error) {
+func CheckTransactionOperationTypes(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*TransactionChecker)
 
 	if len(checker.Transaction.B.Operations) < 1 {
 		err = errors.ErrorTransactionEmptyOperations
 		return
 	}
+
+	for _, op := range checker.Transaction.B.Operations {
+		if _, found := OperationTypesNormalTransaction[op.H.Type]; !found {
+			err = errors.ErrorInvalidOperation
+			return
+		}
+	}
+
+	return
+}
+
+func CheckTransactionOperation(c common.Checker, args ...interface{}) (err error) {
+	checker := c.(*TransactionChecker)
 
 	var hashes []string
 	for _, op := range checker.Transaction.B.Operations {

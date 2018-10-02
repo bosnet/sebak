@@ -19,6 +19,13 @@ const (
 	OperationCollectTxFee                       = "collect-tx-fee"
 )
 
+var OperationTypesNormalTransaction map[OperationType]struct{} = map[OperationType]struct{}{
+	OperationCreateAccount:        struct{}{},
+	OperationPayment:              struct{}{},
+	OperationCongressVoting:       struct{}{},
+	OperationCongressVotingResult: struct{}{},
+}
+
 type Operation struct {
 	H OperationHeader
 	B OperationBody

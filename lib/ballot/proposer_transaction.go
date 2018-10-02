@@ -6,7 +6,7 @@ import (
 	"boscoin.io/sebak/lib/transaction"
 )
 
-var availableOperationTypesProposerTransaction map[transaction.OperationType]struct{} = map[transaction.OperationType]struct{}{
+var OperationTypesProposerTransaction map[transaction.OperationType]struct{} = map[transaction.OperationType]struct{}{
 	transaction.OperationCollectTxFee: struct{}{},
 }
 
@@ -58,6 +58,7 @@ var ProposerTransactionWellFormedCheckerFuncs = []common.CheckerFunc{
 	transaction.CheckTransactionSequenceID,
 	transaction.CheckTransactionSource,
 	CheckProposerTransactionFee,
+	CheckProposerTransactionOperationTypes,
 	transaction.CheckTransactionOperation,
 	transaction.CheckTransactionVerifySignature,
 }
@@ -152,6 +153,31 @@ func CheckProposerTransactionFee(c common.Checker, args ...interface{}) (err err
 	if checker.Transaction.B.Fee != 0 {
 		err = errors.ErrorInvalidFee
 		return
+	}
+
+	return
+}
+
+func CheckProposerTransactionOperationTypes(c common.Checker, args ...interface{}) (err error) {
+	checker := c.(*transaction.TransactionChecker)
+
+	if len(checker.Transaction.B.Operations) < 1 {
+		err = errors.ErrorTransactionEmptyOperations
+		return
+	}
+
+	var foundTypes []string
+	for _, op := range checker.Transaction.B.Operations {
+		if _, found := OperationTypesProposerTransaction[op.H.Type]; !found {
+			err = errors.ErrorInvalidOperation
+			return
+		}
+		if _, found := common.InStringArray(foundTypes, string(op.H.Type)); found {
+			err = errors.ErrorDuplicatedOperation
+			return
+		}
+
+		foundTypes = append(foundTypes, string(op.H.Type))
 	}
 
 	return

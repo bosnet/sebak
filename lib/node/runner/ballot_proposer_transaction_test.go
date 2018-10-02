@@ -81,6 +81,29 @@ func (p *ballotCheckerProposedTransaction) MakeBallot(numberOfTxs int) (blt *bal
 	return
 }
 
+func TestBallotCheckerProposedTransactionWithDuplicatedOperations(t *testing.T) {
+	p := &ballotCheckerProposedTransaction{}
+	p.Prepare()
+
+	blt := p.MakeBallot(0)
+	{
+		err := blt.ProposerTransaction().IsWellFormed(networkID)
+		require.Nil(t, err)
+	}
+
+	{
+		ptx := blt.ProposerTransaction()
+		op := ptx.B.Operations[0]
+		ptx.B.Operations = []transaction.Operation{op, op}
+
+		blt.SetProposerTransaction(ptx)
+		blt.Sign(p.proposerNode.Keypair(), networkID)
+
+		err := blt.ProposerTransaction().IsWellFormed(networkID)
+		require.Equal(t, errors.ErrorDuplicatedOperation, err)
+	}
+}
+
 func TestBallotCheckerProposedTransactionWithoutTransactions(t *testing.T) {
 	p := &ballotCheckerProposedTransaction{}
 	p.Prepare()
