@@ -305,8 +305,10 @@ func TestGetNodeTransactionsHandlerInTransactionPool(t *testing.T) {
 	defer p.Done()
 
 	{
-		txHashes := []string{
-			p.consensus.TransactionPool.Hashes[1],
+		var txHashes []string
+		for key, _ := range p.consensus.TransactionPool.Pool {
+			txHashes = append(txHashes, key)
+			break // Only get the first value in the pool
 		}
 
 		u := p.URL(nil)
@@ -343,12 +345,12 @@ func TestGetNodeTransactionsHandlerTooManyHashes(t *testing.T) {
 	}()
 
 	{
-		txHashes := []string{
-			p.consensus.TransactionPool.Hashes[1],
-			p.transactionHashes[0],
-			p.transactionHashes[1],
-			p.transactionHashes[2],
+		var txHashes []string
+		for key, _ := range p.consensus.TransactionPool.Pool {
+			txHashes = append(txHashes, key)
+			break // Only get the first value in the pool
 		}
+		txHashes = append(txHashes, p.transactionHashes[0], p.transactionHashes[1], p.transactionHashes[2])
 
 		query := url.Values{"hash": txHashes}
 		u := p.URL(nil)

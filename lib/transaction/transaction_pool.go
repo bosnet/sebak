@@ -2,28 +2,24 @@ package transaction
 
 import (
 	"sync"
-
-	"boscoin.io/sebak/lib/common"
 )
 
 type TransactionPool struct {
 	sync.RWMutex
 
 	Pool    map[ /* Transaction.GetHash() */ string]Transaction
-	Hashes  []string // Transaction.GetHash()
 	Sources map[ /* Transaction.Source() */ string]bool
 }
 
 func NewTransactionPool() *TransactionPool {
 	return &TransactionPool{
 		Pool:    map[string]Transaction{},
-		Hashes:  []string{},
 		Sources: map[string]bool{},
 	}
 }
 
 func (tp *TransactionPool) Len() int {
-	return len(tp.Hashes)
+	return len(tp.Pool)
 }
 
 func (tp *TransactionPool) Has(hash string) bool {
@@ -47,7 +43,6 @@ func (tp *TransactionPool) Add(tx Transaction) bool {
 	defer tp.Unlock()
 
 	tp.Pool[tx.GetHash()] = tx
-	tp.Hashes = append(tp.Hashes, tx.GetHash())
 	tp.Sources[tx.Source()] = true
 
 	return true
@@ -61,52 +56,30 @@ func (tp *TransactionPool) Remove(hashes ...string) {
 	tp.Lock()
 	defer tp.Unlock()
 
-	indices := map[int]int{}
-	var max int
 	for _, hash := range hashes {
-		index, found := common.InStringArray(tp.Hashes, hash)
-		if !found {
-			continue
-		}
-		indices[index] = 1
-		if index > max {
-			max = index
-		}
-
-		if tx, found := tp.Get(hash); found {
+		if tx, found := tp.Pool[hash]; found {
 			delete(tp.Sources, tx.Source())
+			delete(tp.Pool, hash)
 		}
 	}
-
-	var newHashes []string
-	for i, hash := range tp.Hashes {
-		if i > max {
-			newHashes = append(newHashes, hash)
-			continue
-		}
-
-		if _, found := indices[i]; !found {
-			newHashes = append(newHashes, hash)
-			continue
-		}
-
-		delete(tp.Pool, hash)
-	}
-
-	tp.Hashes = newHashes
-
-	return
 }
 
 func (tp *TransactionPool) AvailableTransactions(transactionLimit int) []string {
+	if transactionLimit < 1 {
+		return nil
+	}
+
 	tp.RLock()
 	defer tp.RUnlock()
 
-	if tp.Len() <= int(transactionLimit) {
-		return tp.Hashes
+	var ret []string
+	for key, _ := range tp.Pool {
+		if len(ret) == transactionLimit {
+			return ret
+		}
+		ret = append(ret, key)
 	}
-
-	return tp.Hashes[:transactionLimit]
+	return ret
 }
 
 func (tp *TransactionPool) IsSameSource(source string) (found bool) {
