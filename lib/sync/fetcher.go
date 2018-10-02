@@ -26,6 +26,7 @@ type BlockFetcher struct {
 	connectionManager network.ConnectionManager
 	apiClient         Doer
 	storage           *storage.LevelDBBackend
+	localNode         *node.LocalNode
 
 	fetchTimeout  time.Duration
 	retryInterval time.Duration
@@ -35,13 +36,18 @@ type BlockFetcher struct {
 
 type BlockFetcherOption = func(f *BlockFetcher)
 
-func NewBlockFetcher(nw network.Network, cManager network.ConnectionManager, st *storage.LevelDBBackend, opts ...BlockFetcherOption) *BlockFetcher {
+func NewBlockFetcher(nw network.Network,
+	cManager network.ConnectionManager,
+	st *storage.LevelDBBackend,
+	localNode *node.LocalNode,
+	opts ...BlockFetcherOption) *BlockFetcher {
 
 	f := &BlockFetcher{
 		network:           nw,
 		connectionManager: cManager,
 		apiClient:         &http.Client{},
 		storage:           st,
+		localNode:         localNode,
 		logger:            NopLogger(),
 
 		fetchTimeout:  1 * time.Minute,
@@ -90,18 +96,12 @@ func (f *BlockFetcher) fetch(ctx context.Context, si *SyncInfo) error {
 	f.logger.Debug("Fetch start", "height", height)
 
 	n := f.pickRandomNode()
-	f.logger.Info("Fetching items from node", "node", n, "height", height)
+	f.logger.Info(fmt.Sprintf("Fetching items from node: %s", n), "fetching_node", n, "height", height)
 	if n == nil {
 		return errors.New("Fetch: node not found")
 	}
 
-	ep := n.Endpoint()
-	apiURL := url.URL(*ep)
-	apiURL.Path = network.UrlPathPrefixNode + runner.GetBlocksPattern
-	q := apiURL.Query()
-	q.Set("height-range", fmt.Sprintf("%d-%d", height, height+1))
-	q.Set("mode", "full")
-	apiURL.RawQuery = q.Encode()
+	apiURL := apiClientURL(n, height)
 	f.logger.Debug("apiClient", "url", apiURL.String())
 
 	req, err := http.NewRequest("GET", apiURL.String(), nil)
@@ -179,8 +179,16 @@ func (f *BlockFetcher) pickRandomNode() node.Node {
 	if len(ac) <= 0 {
 		return nil
 	}
-	idx := rand.Intn(len(ac))
-	node := f.connectionManager.GetNode(ac[idx])
+
+	var addressList []string
+	for _, a := range ac {
+		if f.localNode.Address() != a {
+			addressList = append(addressList, a)
+		}
+	}
+
+	idx := rand.Intn(len(addressList))
+	node := f.connectionManager.GetNode(addressList[idx])
 	return node
 }
 
@@ -209,4 +217,16 @@ func (f *BlockFetcher) unmarshalResp(body io.ReadCloser) (map[runner.NodeItemDat
 	}
 
 	return items, nil
+}
+
+func apiClientURL(n node.Node, height uint64) *url.URL {
+	ep := n.Endpoint()
+	u := url.URL(*ep)
+	u.Path = network.UrlPathPrefixNode + runner.GetBlocksPattern
+	q := u.Query()
+	q.Set("height-range", fmt.Sprintf("%d-%d", height, height+1))
+	q.Set("mode", "full")
+	u.RawQuery = q.Encode()
+
+	return &u
 }

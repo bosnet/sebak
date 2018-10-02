@@ -21,6 +21,7 @@ type Config struct {
 	network           network.Network
 	connectionManager network.ConnectionManager
 	networkID         []byte
+	localNode         *node.LocalNode
 	logger            log15.Logger
 
 	SyncPoolSize             int
@@ -37,6 +38,7 @@ func NewConfig(networkID []byte, localNode *node.LocalNode, st *storage.LevelDBB
 		connectionManager: cm,
 		logger:            log.New(log15.Ctx{"node": localNode.Alias()}),
 		networkID:         networkID,
+		localNode:         localNode,
 
 		SyncPoolSize:             SyncPoolSize,
 		FetchTimeout:             FetchTimeout,
@@ -47,7 +49,7 @@ func NewConfig(networkID []byte, localNode *node.LocalNode, st *storage.LevelDBB
 }
 
 func (c *Config) NewSyncer() *Syncer {
-	s := NewSyncer(c.storage, c.network, c.connectionManager, c.networkID, func(s *Syncer) {
+	s := NewSyncer(c.storage, c.network, c.connectionManager, c.networkID, c.localNode, func(s *Syncer) {
 		s.poolSize = c.SyncPoolSize
 		s.fetchTimeout = c.FetchTimeout
 		s.retryInterval = c.RetryInterval
