@@ -357,18 +357,12 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 		return
 	}
 
-	transactions := map[string]transaction.Transaction{}
-	for _, hash := range b.B.Proposed.Transactions {
-		tx, found := transactionPool.Get(hash)
-		if !found {
-			err = errors.ErrorTransactionNotFound
-			return
-		}
-		transactions[hash] = tx
-	}
-
 	blk = block.NewBlockFromBallot(b)
+	if err = blk.Save(ts); err != nil {
+		return
+	}
 	log.Debug("NewBlock created", "block", blk)
+
 	infoLog.Info("NewBlock created",
 		"height", blk.Height,
 		"round", blk.Round.Number,
@@ -376,22 +370,39 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 		"total-txs", blk.Round.TotalTxs,
 		"proposer", blk.Proposer,
 	)
-	if err = blk.Save(ts); err != nil {
-		return
+
+	txHashes := b.B.Proposed.Transactions
+	transactions := make([]*transaction.Transaction, 0, len(txHashes))
+	for _, hash := range txHashes {
+		tx, found := transactionPool.Get(hash)
+		if !found {
+			err = errors.ErrorTransactionNotFound
+			return
+		}
+		transactions = append(transactions, &tx)
 	}
 
-	for _, hash := range b.B.Proposed.Transactions {
-		tx := transactions[hash]
+	if err = FinishTransactions(blk, transactions, ts); err != nil {
+		ts.Discard()
+	}
+
+	if err = ts.Commit(); err != nil {
+		ts.Discard()
+	}
+
+	return
+}
+
+func FinishTransactions(blk block.Block, transactions []*transaction.Transaction, ts *storage.LevelDBBackend) (err error) {
+	for _, tx := range transactions {
 		raw, _ := json.Marshal(tx)
 
-		bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.Confirmed, tx, raw)
+		bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.Confirmed, *tx, raw)
 		if err = bt.Save(ts); err != nil {
-			ts.Discard()
 			return
 		}
 		for _, op := range tx.B.Operations {
-			if err = finishOperation(ts, tx, op, log); err != nil {
-				ts.Discard()
+			if err = finishOperation(ts, *tx, op, log); err != nil {
 				return
 			}
 		}
@@ -399,26 +410,18 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 		var baSource *block.BlockAccount
 		if baSource, err = block.GetBlockAccount(ts, tx.B.Source); err != nil {
 			err = errors.ErrorBlockAccountDoesNotExists
-			ts.Discard()
 			return
 		}
 
 		if err = baSource.Withdraw(tx.TotalAmount(true)); err != nil {
-			ts.Discard()
 			return
 		}
 
 		if err = baSource.Save(ts); err != nil {
-			ts.Discard()
 			return
 		}
 
 	}
-
-	if err = ts.Commit(); err != nil {
-		ts.Discard()
-	}
-
 	return
 }
 
@@ -496,8 +499,4 @@ func finishOperationPayment(st *storage.LevelDBBackend, tx transaction.Transacti
 	log.Debug("payment done", "source", baSource, "target", baTarget, "amount", op.GetAmount())
 
 	return
-}
-
-func FinishOperation(st *storage.LevelDBBackend, tx transaction.Transaction, op transaction.Operation, log logging.Logger) (err error) {
-	return finishOperation(st, tx, op, log)
 }
