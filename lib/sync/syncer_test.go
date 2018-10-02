@@ -14,14 +14,14 @@ import (
 func TestSyncer(t *testing.T) {
 	st := storage.NewTestStorage()
 	defer st.Close()
-	_, nw, _ := network.CreateMemoryNetwork(nil)
+	_, nw, localNode := network.CreateMemoryNetwork(nil)
 	cm := &mockConnectionManager{}
 	networkID := []byte("test-network")
 
 	tickc := make(chan time.Time)
 	infoC := make(chan *SyncInfo)
 
-	syncer := NewSyncer(st, nw, cm, networkID)
+	syncer := NewSyncer(st, nw, cm, networkID, localNode)
 	defer syncer.Stop()
 
 	syncer.fetcher = &mockFetcher{
