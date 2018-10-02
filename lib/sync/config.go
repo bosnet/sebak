@@ -22,6 +22,7 @@ type Config struct {
 	network           network.Network
 	connectionManager network.ConnectionManager
 	networkID         []byte
+	localNode         *node.LocalNode
 	logger            log15.Logger
 	commonCfg         common.Config
 
@@ -45,6 +46,7 @@ func NewConfig(networkID []byte,
 		logger:            log.New(log15.Ctx{"node": localNode.Alias()}),
 		networkID:         networkID,
 		commonCfg:         cfg,
+		localNode:         localNode,
 
 		SyncPoolSize:             SyncPoolSize,
 		FetchTimeout:             FetchTimeout,

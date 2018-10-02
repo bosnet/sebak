@@ -2,9 +2,11 @@ package sync
 
 import (
 	"context"
+	"time"
 
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node/runner"
@@ -22,17 +24,19 @@ type BlockValidator struct {
 
 	networkID []byte
 
-	logger log15.Logger
+	prevBlockWaitTimeout time.Duration // Waiting prev block if is doesn't exist
+	logger               log15.Logger
 }
 
 type BlockValidatorOption func(*BlockValidator)
 
 func NewBlockValidator(nw network.Network, ldb *storage.LevelDBBackend, networkID []byte, cfg common.Config, opts ...BlockValidatorOption) *BlockValidator {
 	v := &BlockValidator{
-		network:   nw,
-		storage:   ldb,
-		networkID: networkID,
-		commonCfg: cfg,
+		network:              nw,
+		storage:              ldb,
+		networkID:            networkID,
+		prevBlockWaitTimeout: 200 * time.Millisecond,
+		commonCfg:            cfg,
 
 		logger: NopLogger(),
 	}
@@ -116,6 +120,8 @@ func (v *BlockValidator) finishBlock(ctx context.Context, syncInfo *SyncInfo) er
 		return err
 	}
 
+	observer.SyncBlockWaitObserver.Trigger(string(syncInfo.BlockHeight))
+
 	return nil
 }
 
@@ -124,7 +130,16 @@ func (v *BlockValidator) validateBlock(ctx context.Context, si *SyncInfo) error 
 	for _, tx := range si.Txs {
 		txs = append(txs, tx.H.Hash)
 	}
-	blk := block.NewBlock(si.Block.Proposer, si.Block.Round, si.Block.ProposerTransaction, txs, si.Block.Confirmed)
+
+	prevBlk, err := v.getPrevBlock(ctx, si.BlockHeight)
+	if err != nil {
+		return err
+	}
+
+	round := si.Block.Round
+	round.BlockHash = prevBlk.Hash
+
+	blk := block.NewBlock(si.Block.Proposer, si.Block.Round, si.Block.ProposerTransaction().GetHash(), txs, si.Block.Confirmed)
 
 	if blk.Hash != si.Block.Hash {
 		err := errors.ErrorHashDoesNotMatch
@@ -160,4 +175,35 @@ func (v *BlockValidator) existsBlock(ctx context.Context, st *storage.LevelDBBac
 		}
 		return exists, nil
 	}
+}
+
+func (v *BlockValidator) getPrevBlock(pctx context.Context, height uint64) (*block.Block, error) {
+	ctx, cancelFunc := context.WithTimeout(pctx, v.prevBlockWaitTimeout)
+	defer cancelFunc()
+
+	prevHeight := height - 1
+
+	exists, err := block.ExistsBlockByHeight(v.storage, prevHeight)
+	if err != nil {
+		return nil, err
+	}
+
+	if exists == false {
+		waitC := make(chan struct{})
+		observer.SyncBlockWaitObserver.On(string(prevHeight), func() {
+			waitC <- struct{}{}
+		})
+
+		select {
+		case <-waitC:
+		case <-ctx.Done():
+		}
+	}
+
+	prevBlock, err := block.GetBlockByHeight(v.storage, prevHeight)
+	if err != nil {
+		return nil, err
+	}
+
+	return &prevBlock, nil
 }

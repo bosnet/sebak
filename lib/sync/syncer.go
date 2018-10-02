@@ -7,6 +7,7 @@ import (
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/network"
+	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/storage"
 	"github.com/inconshreveable/log15"
 )
@@ -24,6 +25,7 @@ type Syncer struct {
 	connectionManager network.ConnectionManager
 	networkID         []byte
 	commonCfg         common.Config
+	localNode         *node.LocalNode
 
 	fetcher   Fetcher
 	validator Validator
@@ -43,6 +45,8 @@ func NewSyncer(st *storage.LevelDBBackend,
 	cm network.ConnectionManager,
 	networkID []byte,
 	cfg common.Config, opts ...SyncerOption) *Syncer {
+	localNode *node.LocalNode,
+	opts ...SyncerOption) *Syncer {
 	ctx, cancelFunc := context.WithCancel(context.Background())
 
 	s := &Syncer{
@@ -51,6 +55,7 @@ func NewSyncer(st *storage.LevelDBBackend,
 		connectionManager: cm,
 		networkID:         networkID,
 		commonCfg:         cfg,
+		localNode:         localNode,
 
 		poolSize:      SyncPoolSize,
 		fetchTimeout:  FetchTimeout,
@@ -70,7 +75,7 @@ func NewSyncer(st *storage.LevelDBBackend,
 		opt(s)
 	}
 
-	fetcher := NewBlockFetcher(nw, cm, st, func(f *BlockFetcher) {
+	fetcher := NewBlockFetcher(nw, cm, st, localNode, func(f *BlockFetcher) {
 		f.fetchTimeout = s.fetchTimeout
 		f.logger = s.logger
 	})
