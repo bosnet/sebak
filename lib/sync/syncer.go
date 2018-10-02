@@ -33,6 +33,8 @@ type Syncer struct {
 	ctx        context.Context
 	cancelFunc context.CancelFunc
 
+	updateHighestBlock chan uint64
+
 	logger log15.Logger
 }
 
@@ -63,6 +65,8 @@ func NewSyncer(st *storage.LevelDBBackend,
 		stop:       make(chan chan struct{}),
 		ctx:        ctx,
 		cancelFunc: cancelFunc,
+
+		updateHighestBlock: make(chan uint64),
 
 		logger: NopLogger(),
 	}
@@ -102,14 +106,40 @@ func (s *Syncer) Start() error {
 	return nil
 }
 
+func (s *Syncer) SetSyncTargetBlock(ctx context.Context, height uint64) error {
+
+	select {
+	case s.updateHighestBlock <- height:
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+
+	return nil
+}
+
 func (s *Syncer) loop() {
 	checkc := s.afterFunc(s.checkInterval)
-	blockHeight := uint64(1)
+
+	height := s.lastestBlockHeight()
+	syncProgress := &SyncProgress{
+		StartingBlock: height,
+		CurrentBlock:  height,
+		HighestBlock:  height,
+	}
+
+	s.logger.Info("starting block to sync", "height", height)
+
 	for {
 		select {
 		case <-checkc:
-			blockHeight = s.syncBlockHeight(blockHeight)
+			syncProgress.HighestBlock++ // TODO(anarcher): Until work together consensus
+			s.sync(syncProgress)
 			checkc = s.afterFunc(s.checkInterval)
+		case height := <-s.updateHighestBlock:
+			if height >= syncProgress.CurrentBlock {
+				syncProgress.HighestBlock = height
+				s.sync(syncProgress)
+			}
 		case c := <-s.stop:
 			close(c)
 			return
@@ -117,25 +147,42 @@ func (s *Syncer) loop() {
 	}
 }
 
-func (s *Syncer) syncBlockHeight(height uint64) uint64 {
-	blk, err := block.GetLatestBlock(s.storage)
-	if err != nil {
-		s.logger.Error("checkBlockHeight", "err", err)
+func (s *Syncer) sync(p *SyncProgress) {
+	var (
+		currentHeight      uint64
+		lastestBlockHeight = s.lastestBlockHeight()
+		log                = func() {
+			s.logger.Info("sync progress",
+				"start", p.StartingBlock, "cur", p.CurrentBlock, "high", p.HighestBlock)
+		}
+	)
+
+	if lastestBlockHeight > p.CurrentBlock {
+		p.CurrentBlock = lastestBlockHeight
 	}
-	newHeight := blk.Height + 1
-	if newHeight > height {
-		s.work(newHeight)
-		s.logger.Info("Starting sync", "height", newHeight)
-		return newHeight
+
+	if p.CurrentBlock >= p.HighestBlock {
+		log()
+		return
 	}
-	return height
+
+	for height := p.CurrentBlock + 1; height <= p.HighestBlock; height++ {
+		// TryAdd for unblocking when the pool is full. Just keep syncprogress for next sync
+		if s.work(height) == false {
+			break
+		}
+		currentHeight = height
+	}
+	p.StartingBlock = p.CurrentBlock
+	p.CurrentBlock = currentHeight
+	log()
 }
 
-func (s *Syncer) work(height uint64) {
+func (s *Syncer) work(height uint64) bool {
 	ctx := s.ctx
 	work := func() {
-		currHeight := s.currBlockHeight()
-		if currHeight > 0 && height <= currHeight {
+		lastHeight := s.lastestBlockHeight()
+		if lastHeight > 0 && height <= lastHeight {
 			s.logger.Info("This height has already synced", "height", height)
 			return
 		}
@@ -166,10 +213,10 @@ func (s *Syncer) work(height uint64) {
 			s.logger.Info("Done sync work", "height", height)
 		}
 	}
-	s.workPool.Add(ctx, work)
+	return s.workPool.TryAdd(ctx, work)
 }
 
-func (s *Syncer) currBlockHeight() uint64 {
+func (s *Syncer) lastestBlockHeight() uint64 {
 	blk, err := block.GetLatestBlock(s.storage)
 	if err != nil {
 		s.logger.Error("block.GetLatestBlock", "err", err)

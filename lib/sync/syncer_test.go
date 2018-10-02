@@ -45,15 +45,17 @@ func TestSyncer(t *testing.T) {
 		return tickc
 	}
 
+	{
+		bk := block.TestMakeNewBlock([]string{})
+		bk.Height = uint64(1)
+		require.Nil(t, bk.Save(st))
+	}
+
 	go func() {
 		syncer.Start()
 	}()
 
 	{
-		bk := block.TestMakeNewBlock([]string{})
-		bk.Height = uint64(1)
-		require.Nil(t, bk.Save(st))
-
 		tickc <- time.Time{}
 		si := <-infoC
 		require.NotNil(t, si.Block)
