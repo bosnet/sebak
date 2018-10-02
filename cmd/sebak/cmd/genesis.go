@@ -27,11 +27,11 @@ var (
 
 func init() {
 	var genesisCmd = &cobra.Command{
-		Use:   "genesis <public key>",
+		Use:   "genesis <public key of genesis account> <public key of common account>",
 		Short: "initialize new network",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.ExactArgs(2),
 		Run: func(c *cobra.Command, args []string) {
-			flagName, err := MakeGenesisBlock(args[0], flagNetworkID, flagBalance, flagStorageConfigString, log)
+			flagName, err := makeGenesisBlock(args[0], args[1], flagNetworkID, flagBalance, flagStorageConfigString, log)
 			if len(flagName) != 0 || err != nil {
 				cmdcommon.PrintFlagsError(c, flagName, err)
 			}
@@ -47,16 +47,16 @@ func init() {
 	rootCmd.AddCommand(genesisCmd)
 }
 
-//
-// Create a genesis block using the provided parameter
+// makeGenesisBlock creates a genesis block using the provided parameter
 //
 // This function is separate, and public, to allow it to be used from other modules
 // (at the moment, only `run`) so it can provide the same behavior (defaults, error messages).
 //
 // Params:
-//   address   = public address of the account owning the genesis block
+//   genesisAddress  = public address of the account owning the genesis block
+//   commonAddress   = public address of the common account
 //   networkID = `--network-id` argument, used for signing
-//   balanceStr = Amount of coins to put in the account
+//   balanceStr = Amount of coins to put in the genesis account
 //                If not provided, `flagBalance`, which is the value set in the env
 //                when called from another module, will be used
 //   storageUri = URI to include storage path("file://path")
@@ -67,14 +67,18 @@ func init() {
 //   The string argument represent the name of the flag which errored,
 //   and error is the more detailed error.
 //   Note that only one needs be non-`nil` for it to be considered an error.
-//
-func MakeGenesisBlock(addressStr, networkID, balanceStr, storageUri string, log logging.Logger) (string, error) {
+func makeGenesisBlock(genesisAddress, commonAddress, networkID, balanceStr, storageUri string, log logging.Logger) (string, error) {
 	var balance common.Amount
 	var err error
-	var kp keypair.KP
+	var genesisKP keypair.KP
+	var commonKP keypair.KP
 
-	if kp, err = keypair.Parse(addressStr); err != nil {
-		return "<address>", err
+	if genesisKP, err = keypair.Parse(genesisAddress); err != nil {
+		return "<public key of genesis account>", err
+	}
+
+	if commonKP, err = keypair.Parse(commonAddress); err != nil {
+		return "<public key of common account>", err
 	}
 
 	if len(networkID) == 0 {
@@ -119,24 +123,26 @@ func MakeGenesisBlock(addressStr, networkID, balanceStr, storageUri string, log 
 	defer st.Close()
 
 	// check account does not exists
-	if _, err = block.GetBlockAccount(st, kp.Address()); err == nil {
+	if _, err = block.GetBlockAccount(st, genesisKP.Address()); err == nil {
 		return "<public key>", errors.New("account is already created")
 	}
 
-	account := block.NewBlockAccount(
-		kp.Address(),
-		balance,
-	)
-	if err := account.Save(st); err != nil {
+	genesisAccount := block.NewBlockAccount(genesisKP.Address(), balance)
+	if err := genesisAccount.Save(st); err != nil {
 		return "<public key>", fmt.Errorf("failed to create genesis account: %v", err)
 	}
 
-	b, err := block.MakeGenesisBlock(st, *account, []byte(flagNetworkID))
+	commonAccount := block.NewBlockAccount(commonKP.Address(), 0)
+	if err := commonAccount.Save(st); err != nil {
+		return "<public key>", fmt.Errorf("failed to create common account: %v", err)
+	}
+
+	b, err := block.MakeGenesisBlock(st, *genesisAccount, *commonAccount, []byte(flagNetworkID))
 	if err != nil {
 		return "<public key>", fmt.Errorf("failed to create genesis block: %v", err)
 	}
 
-	log.Info("GenesisBlock created",
+	log.Info("genesis block created",
 		"height", b.Height,
 		"round", b.Round.Number,
 		"timestamp", b.Header.Timestamp,

@@ -8,7 +8,6 @@
 package runner
 
 import (
-	"errors"
 	"time"
 
 	logging "github.com/inconshreveable/log15"
@@ -19,10 +18,12 @@ import (
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/consensus"
 	"boscoin.io/sebak/lib/consensus/round"
+	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/network/api"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/storage"
+	"boscoin.io/sebak/lib/transaction"
 )
 
 var DefaultHandleTransactionCheckerFuncs = []common.CheckerFunc{
@@ -37,6 +38,7 @@ var DefaultHandleTransactionCheckerFuncs = []common.CheckerFunc{
 
 var DefaultHandleBaseBallotCheckerFuncs = []common.CheckerFunc{
 	BallotUnmarshal,
+	BallotValidateOperationBodyCollectTxFee,
 	BallotNotFromKnownValidators,
 	BallotAlreadyFinished,
 }
@@ -87,6 +89,8 @@ type NodeRunner struct {
 	handleBallotCheckerDeferFunc      common.CheckerDeferFunc
 
 	log logging.Logger
+
+	CommonAccountAddress string
 }
 
 func NewNodeRunner(
@@ -119,6 +123,15 @@ func NewNodeRunner(
 	nr.SetHandleINITBallotCheckerFuncs(DefaultHandleINITBallotCheckerFuncs...)
 	nr.SetHandleSIGNBallotCheckerFuncs(DefaultHandleSIGNBallotCheckerFuncs...)
 	nr.SetHandleACCEPTBallotCheckerFuncs(DefaultHandleACCEPTBallotCheckerFuncs...)
+
+	{ // find common account
+		var commonAccount *block.BlockAccount
+		if commonAccount, err = GetCommonAccount(nr.storage); err != nil {
+			return
+		}
+		nr.CommonAccountAddress = commonAccount.Address
+		nr.log.Debug("common account found", "address", nr.CommonAccountAddress)
+	}
 
 	return
 }
@@ -496,6 +509,18 @@ func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) (ballot.Ballot, error
 
 	theBallot := ballot.NewBallot(nr.localNode.Address(), round, transactionsChecker.ValidTransactions)
 	theBallot.SetVote(ballot.StateINIT, ballot.VotingYES)
+
+	var validTransactions []transaction.Transaction
+	for _, hash := range transactionsChecker.ValidTransactions {
+		if tx, found := nr.consensus.TransactionPool.Get(hash); !found {
+			return ballot.Ballot{}, errors.ErrorTransactionNotFound
+		} else {
+			validTransactions = append(validTransactions, tx)
+		}
+	}
+
+	ptx, _ := ballot.NewProposerTransactionFromBallot(*theBallot, nr.CommonAccountAddress, validTransactions...)
+	theBallot.SetProposerTransaction(ptx)
 	theBallot.Sign(nr.localNode.Keypair(), nr.networkID)
 
 	nr.log.Debug("new ballot created", "ballot", theBallot)

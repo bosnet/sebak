@@ -67,7 +67,12 @@ func createTestNodeRunner(n int, conf *consensus.ISAACConfiguration) []*NodeRunn
 		st := storage.NewTestStorage()
 
 		account.Save(st)
-		genesisBlock, _ = block.MakeGenesisBlock(st, *account, networkID)
+
+		commonKP, _ := keypair.Random()
+		commonAccount := block.NewBlockAccount(commonKP.Address(), 0)
+		commonAccount.Save(st)
+
+		genesisBlock, _ = block.MakeGenesisBlock(st, *account, *commonAccount, networkID)
 
 		nr, err := NewNodeRunner(string(networkID), localNode, policy, ns[i], is, st, conf)
 		if err != nil {
@@ -150,6 +155,9 @@ func createTestNodeRunnersHTTP2Network(n int) (nodeRunners []*NodeRunner, rootKP
 		rootKP.Address(),
 		10000000000000,
 	)
+	commonKP, _ := keypair.Random()
+	commonAccount := block.NewBlockAccount(commonKP.Address(), 0)
+
 	for _, node := range nodes {
 		policy, _ := consensus.NewDefaultVotingThresholdPolicy(66)
 		st := storage.NewTestStorage()
@@ -165,7 +173,9 @@ func createTestNodeRunnersHTTP2Network(n int) (nodeRunners []*NodeRunner, rootKP
 		is, _ := consensus.NewISAAC(networkID, node, policy, connectionManager)
 
 		genesisAccount.Save(st)
-		block.MakeGenesisBlock(st, *genesisAccount, networkID)
+		commonAccount.Save(st)
+
+		block.MakeGenesisBlock(st, *genesisAccount, *commonAccount, networkID)
 
 		nodeRunner, _ := NewNodeRunner(string(networkID), node, policy, n, is, st, consensus.NewISAACConfiguration())
 		nodeRunners = append(nodeRunners, nodeRunner)

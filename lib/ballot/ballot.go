@@ -98,6 +98,10 @@ func (b Ballot) IsWellFormed(networkID []byte) (err error) {
 		return
 	}
 
+	if err = b.ProposerTransaction().IsWellFormedWithBallot(networkID, b); err != nil {
+		return
+	}
+
 	if err = b.Verify(networkID); err != nil {
 		return
 	}
@@ -155,7 +159,11 @@ func (b *Ballot) TransactionsLength() int {
 }
 
 func (b *Ballot) Sign(kp keypair.KP, networkID []byte) {
-	if kp.Address() == b.B.Proposed.Proposer {
+	if kp.Address() == b.B.Proposed.Proposer && b.State() == StateINIT {
+		ptx := b.ProposerTransaction()
+		ptx.Sign(kp, networkID)
+		b.SetProposerTransaction(ptx)
+
 		b.B.Proposed.Confirmed = common.NowISO8601()
 		hash := common.MustMakeObjectHash(b.B.Proposed)
 		signature, _ := common.MakeSignature(kp, networkID, string(hash))
@@ -206,6 +214,16 @@ func (b Ballot) State() State {
 	return b.B.State
 }
 
+func (b Ballot) ProposerTransaction() ProposerTransaction {
+	return b.B.Proposed.ProposerTransaction
+}
+
+// SetProposerTransaction should be set in `Ballot`, without it can not be
+// passed thru `Ballot.IsWellFormed()`.
+func (b *Ballot) SetProposerTransaction(ptx ProposerTransaction) {
+	b.B.Proposed.ProposerTransaction = ptx
+}
+
 type BallotHeader struct {
 	Hash              string `json:"hash"`               // hash of `BallotBody`
 	Signature         string `json:"signature"`          // signed by source node of <networkID> + `Hash`
@@ -213,10 +231,11 @@ type BallotHeader struct {
 }
 
 type BallotBodyProposed struct {
-	Confirmed    string      `json:"confirmed"` // created time, ISO8601
-	Proposer     string      `json:"proposer"`
-	Round        round.Round `json:"round"`
-	Transactions []string    `json:"transactions"`
+	Confirmed           string              `json:"confirmed"` // created time, ISO8601
+	Proposer            string              `json:"proposer"`
+	Round               round.Round         `json:"round"`
+	Transactions        []string            `json:"transactions"`
+	ProposerTransaction ProposerTransaction `json:"proposer-transaction"`
 }
 
 type BallotBody struct {

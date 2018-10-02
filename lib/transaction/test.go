@@ -58,23 +58,7 @@ func TestMakeTransaction(networkID []byte, n int) (kp *keypair.Full, tx Transact
 		ops = append(ops, TestMakeOperation(-1))
 	}
 
-	txBody := TransactionBody{
-		Source:     kp.Address(),
-		Fee:        common.BaseFee,
-		SequenceID: 0,
-		Operations: ops,
-	}
-
-	txBody.MakeHashString()
-
-	tx = Transaction{
-		T: "transaction",
-		H: TransactionHeader{
-			Created: common.NowISO8601(),
-			Hash:    txBody.MakeHashString(),
-		},
-		B: txBody,
-	}
+	tx, _ = NewTransaction(kp.Address(), 0, ops...)
 	tx.Sign(kp, networkID)
 
 	return

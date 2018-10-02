@@ -9,6 +9,7 @@ TEST_DIRS=$(find . -mindepth 1 -maxdepth 1 -type d -print)
 ROOT_DIR=".."
 export SEBAK_NODE_ARGS=""
 export SEBAK_GENESIS=GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ
+export SEBAK_COMMON=GDYIHSHMDXJ4MXE35N4IMNC2X3Q3F665C5EX2JWHHCUW2PCFVXIFEE2C
 
 # We can only have one trap active at a time, so just save the IDs of containers we started.
 # Single quotes around  trap ensure that the variable is evaluated at exit time.
@@ -43,13 +44,13 @@ for dir in ${TEST_DIRS}; do
     # because the reports are written on program's exit, which also means container's shutdown
     # Also SUPER IMPORTANT: the `-test` args need to be before any other args, or they are simply ignored...
     export NODE1=$(docker run -d --network host --env-file=${ROOT_DIR}/docker/node1.env \
-                          ${NODE_DOCKER_IMAGE} -test.coverprofile=coverage.txt node --genesis=${SEBAK_GENESIS}\
+                          ${NODE_DOCKER_IMAGE} -test.coverprofile=coverage.txt node --genesis=${SEBAK_GENESIS},${SEBAK_COMMON} \
                           --log-level=debug --timeout-init=4 --timeout-sign=4 --timeout-accept=4 --block-time=10)
     export NODE2=$(docker run -d --network host --env-file=${ROOT_DIR}/docker/node2.env \
-                          ${NODE_DOCKER_IMAGE} -test.coverprofile=coverage.txt node --genesis=${SEBAK_GENESIS}\
+                          ${NODE_DOCKER_IMAGE} -test.coverprofile=coverage.txt node --genesis=${SEBAK_GENESIS},${SEBAK_COMMON} \
                           --log-level=debug --timeout-init=4 --timeout-sign=4 --timeout-accept=4 --block-time=10)
     export NODE3=$(docker run -d --network host --env-file=${ROOT_DIR}/docker/node3.env \
-                          ${NODE_DOCKER_IMAGE} -test.coverprofile=coverage.txt node --genesis=${SEBAK_GENESIS}\
+                          ${NODE_DOCKER_IMAGE} -test.coverprofile=coverage.txt node --genesis=${SEBAK_GENESIS},${SEBAK_COMMON} \
                           --log-level=debug --timeout-init=4 --timeout-sign=4 --timeout-accept=4 --block-time=10)
 
     DOCKER_CONTAINERS="${DOCKER_CONTAINERS} ${NODE1} ${NODE2} ${NODE3}"

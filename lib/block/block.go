@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/btcsuite/btcutil/base58"
+	"github.com/stellar/go/keypair"
 
-	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/consensus/round"
@@ -22,7 +22,8 @@ const (
 
 type Block struct {
 	Header
-	Transactions []string `json:"transactions"` /* []Transaction.GetHash() */
+	Transactions        []string `json:"transactions"`         /* []Transaction.GetHash() */
+	ProposerTransaction string   `json:"proposer-transaction"` /* ProposerTransaction */
 	//PrevConsensusResult ConsensusResult
 
 	Hash      string      `json:"hash"`
@@ -41,20 +42,32 @@ func (bck Block) String() string {
 	return string(encoded)
 }
 
-// MakeGenesisBlock makes genesis block from genesis account and transaction.
-// The genesis block has different part from the other Block
+// MakeGenesisBlock makes genesis block.
+//
+// This special block has different part from the other Block
 // * `Block.Proposer` is empty
-// * `Block.Round` is empty
+// * `Block.Transaction` is empty
 // * `Block.Confirmed` is `common.GenesisBlockConfirmedTime`
 // * has only one `Transaction`
 //
 // This Transaction is different from other normal Transaction;
-// * must have only one `Operation`, `OperationCreateAccount`
-// * `Transaction.B.Source` is same with `OperationCreateAccount.Target`
+// * signed by `keypair.Master(string(networkID))`
+// * must have only two `Operation`, `OperationCreateAccount`
+// * The first `Operation` is for genesis account
+//   * `OperationCreateAccount.Amount` is same with balance of genesis account
+//   * `OperationCreateAccount.Target` is genesis account
+// * The next `Operation` is for common account
+//   * `OperationCreateAccount.Amount` is 0
+//   * `OperationCreateAccount.Target` is common account
+// * `Transaction.B.Source` is same with `OperationCreateAccount.Target` of
+// genesis account
 // * `Transaction.B.Fee` is 0
-// * `OperationCreateAccount.Amount` is same with balance of genesis account
-// * `OperationCreateAccount.Target` is genesis account
-func MakeGenesisBlock(st *storage.LevelDBBackend, account BlockAccount, networdID []byte) (blk Block, err error) {
+func MakeGenesisBlock(st *storage.LevelDBBackend, genesisAccount BlockAccount, commonAccount BlockAccount, networdID []byte) (blk Block, err error) {
+	if genesisAccount.Address == commonAccount.Address {
+		err = fmt.Errorf("genesis account and common account are same.")
+		return
+	}
+
 	var exists bool
 	if exists, err = ExistsBlockByHeight(st, 1); exists || err != nil {
 		if exists {
@@ -65,19 +78,34 @@ func MakeGenesisBlock(st *storage.LevelDBBackend, account BlockAccount, networdI
 	}
 
 	// create create-account transaction.
-	opb := transaction.NewOperationBodyCreateAccount(account.Address, account.Balance, "")
-	op := transaction.Operation{
-		H: transaction.OperationHeader{
-			Type: transaction.OperationCreateAccount,
-		},
-		B: opb,
+	var ops []transaction.Operation
+	{
+		opb := transaction.NewOperationBodyCreateAccount(genesisAccount.Address, genesisAccount.Balance, "")
+		op := transaction.Operation{
+			H: transaction.OperationHeader{
+				Type: transaction.OperationCreateAccount,
+			},
+			B: opb,
+		}
+		ops = append(ops, op)
+	}
+
+	{
+		opb := transaction.NewOperationBodyCreateAccount(commonAccount.Address, commonAccount.Balance, "")
+		op := transaction.Operation{
+			H: transaction.OperationHeader{
+				Type: transaction.OperationCreateAccount,
+			},
+			B: opb,
+		}
+		ops = append(ops, op)
 	}
 
 	txBody := transaction.TransactionBody{
-		Source:     account.Address,
+		Source:     genesisAccount.Address,
 		Fee:        0,
-		SequenceID: account.SequenceID,
-		Operations: []transaction.Operation{op},
+		SequenceID: genesisAccount.SequenceID,
+		Operations: ops,
 	}
 
 	tx := transaction.Transaction{
@@ -88,14 +116,15 @@ func MakeGenesisBlock(st *storage.LevelDBBackend, account BlockAccount, networdI
 		},
 		B: txBody,
 	}
-	tx.Sign(kp, []byte(networdID))
 
-	transactions := []string{tx.GetHash()}
+	kp := keypair.Master(string(networkID))
+	tx.Sign(kp, []byte(networdID))
 
 	blk = NewBlock(
 		"",
-		round.Round{}, // empty round
-		transactions,
+		round.Round{},
+		"",
+		[]string{tx.GetHash()},
 		common.GenesisBlockConfirmedTime,
 	)
 	if err = blk.Save(st); err != nil {
@@ -111,26 +140,20 @@ func MakeGenesisBlock(st *storage.LevelDBBackend, account BlockAccount, networdI
 	return
 }
 
-func NewBlock(proposer string, round round.Round, transactions []string, confirmed string) Block {
+// NewBlock creates new block; `ptx` represents the
+// `ProposerTransaction.GetHash()`.
+func NewBlock(proposer string, round round.Round, ptx string, transactions []string, confirmed string) Block {
 	b := &Block{
-		Header:       *NewBlockHeader(round, uint64(len(transactions)), getTransactionRoot(transactions)),
-		Transactions: transactions,
-		Proposer:     proposer,
-		Round:        round,
-		Confirmed:    confirmed,
+		Header:              *NewBlockHeader(round, uint64(len(transactions)), getTransactionRoot(transactions)),
+		Transactions:        transactions,
+		ProposerTransaction: ptx,
+		Proposer:            proposer,
+		Round:               round,
+		Confirmed:           confirmed,
 	}
 
 	b.Hash = base58.Encode(common.MustMakeObjectHash(b))
 	return *b
-}
-
-func NewBlockFromBallot(b ballot.Ballot) Block {
-	return NewBlock(
-		b.Proposer(),
-		b.Round(),
-		b.Transactions(),
-		b.ProposerConfirmed(),
-	)
 }
 
 func getTransactionRoot(txs []string) string {

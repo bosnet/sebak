@@ -83,14 +83,14 @@ func init() {
 			if len(flagGenesis) != 0 {
 				var balanceStr string
 				csv := strings.Split(flagGenesis, ",")
-				if len(csv) > 2 {
+				if len(csv) < 2 || len(csv) > 3 {
 					cmdcommon.PrintFlagsError(nodeCmd, "--genesis",
-						errors.New("--genesis expects address[,balance], but more than 2 commas detected"))
+						errors.New("--genesis expects '<genesis address>,<common account>[,balance]"))
 				}
-				if len(csv) == 2 {
+				if len(csv) == 3 {
 					balanceStr = csv[1]
 				}
-				flagName, err := MakeGenesisBlock(csv[0], flagNetworkID, balanceStr, flagStorageConfigString, log)
+				flagName, err := makeGenesisBlock(csv[0], csv[1], flagNetworkID, balanceStr, flagStorageConfigString, log)
 				if len(flagName) != 0 || err != nil {
 					cmdcommon.PrintFlagsError(c, flagName, err)
 				}

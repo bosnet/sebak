@@ -16,11 +16,41 @@ const (
 	OperationPayment                            = "payment"
 	OperationCongressVoting                     = "congress-voting"
 	OperationCongressVotingResult               = "congress-voting-result"
+	OperationCollectTxFee                       = "collect-tx-fee"
 )
+
+var OperationTypesNormalTransaction map[OperationType]struct{} = map[OperationType]struct{}{
+	OperationCreateAccount:        struct{}{},
+	OperationPayment:              struct{}{},
+	OperationCongressVoting:       struct{}{},
+	OperationCongressVotingResult: struct{}{},
+}
 
 type Operation struct {
 	H OperationHeader
 	B OperationBody
+}
+
+func NewOperation(opb OperationBody) (op Operation, err error) {
+	var t OperationType
+	switch opb.(type) {
+	case OperationBodyCreateAccount:
+		t = OperationCreateAccount
+	case OperationBodyPayment:
+		t = OperationPayment
+	case OperationBodyCollectTxFee:
+		t = OperationCollectTxFee
+	default:
+		err = errors.ErrorUnknownOperationType
+		return
+	}
+
+	op = Operation{
+		H: OperationHeader{Type: t},
+		B: opb,
+	}
+
+	return
 }
 
 type OperationHeader struct {
@@ -118,6 +148,12 @@ func UnmarshalOperationBodyJSON(t OperationType, b []byte) (body OperationBody, 
 		body = ob
 	case OperationCongressVotingResult:
 		var ob OperationBodyCongressVotingResult
+		if err = json.Unmarshal(b, &ob); err != nil {
+			return
+		}
+		body = ob
+	case OperationCollectTxFee:
+		var ob OperationBodyCollectTxFee
 		if err = json.Unmarshal(b, &ob); err != nil {
 			return
 		}

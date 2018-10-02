@@ -37,6 +37,7 @@ func TestMakeNewBlock(transactions []string) Block {
 			BlockHeight: 0,
 			BlockHash:   "",
 		},
+		"",
 		transactions,
 		common.NowISO8601(),
 	)

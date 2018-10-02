@@ -17,6 +17,7 @@ type BallotTransactionChecker struct {
 	LocalNode  node.Node
 	NetworkID  []byte
 
+	Ballot               ballot.Ballot
 	Transactions         []string
 	VotingHole           ballot.VotingHole
 	ValidTransactions    []string
@@ -137,6 +138,43 @@ func BallotTransactionsSourceCheck(c common.Checker, args ...interface{}) (err e
 
 	err = nil
 	checker.setValidTransactions(validTransactions)
+
+	return
+}
+
+// BallotTransactionsOperationBodyCollectTxFee validates the
+// `BallotTransactionsOperationBodyCollectTxFee.Amount` is matched with the
+// collected fee of all transactions.
+func BallotTransactionsOperationBodyCollectTxFee(c common.Checker, args ...interface{}) (err error) {
+	checker := c.(*BallotTransactionChecker)
+
+	var opb transaction.OperationBodyCollectTxFee
+	if opb, err = checker.Ballot.ProposerTransaction().OperationBodyCollectTxFee(); err != nil {
+		return
+	}
+
+	// check the colleted transaction fee is matched with
+	// `OperationBodyCollectTxFee.Amount`
+	if checker.Ballot.TransactionsLength() < 1 {
+		if opb.Amount != 0 {
+			err = errors.ErrorInvalidOperation
+			return
+		}
+	} else {
+		var fee common.Amount
+		for _, hash := range checker.Transactions {
+			if tx, found := checker.NodeRunner.Consensus().TransactionPool.Get(hash); !found {
+				err = errors.ErrorTransactionNotFound
+				return
+			} else {
+				fee = fee.MustAdd(tx.B.Fee)
+			}
+		}
+		if opb.Amount != fee {
+			err = errors.ErrorInvalidFee
+			return
+		}
+	}
 
 	return
 }

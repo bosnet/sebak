@@ -79,6 +79,24 @@ func BallotUnmarshal(c common.Checker, args ...interface{}) (err error) {
 	return
 }
 
+// BallotValidateOperationBodyCollectTxFee validates the proposed transaction.
+func BallotValidateOperationBodyCollectTxFee(c common.Checker, args ...interface{}) (err error) {
+	checker := c.(*BallotChecker)
+
+	var opb transaction.OperationBodyCollectTxFee
+	if opb, err = checker.Ballot.ProposerTransaction().OperationBodyCollectTxFee(); err != nil {
+		return
+	}
+
+	// check common account
+	if opb.Target != checker.NodeRunner.CommonAccountAddress {
+		err = errors.ErrorInvalidOperation
+		return
+	}
+
+	return
+}
+
 // BallotNotFromKnownValidators checks the incoming ballot
 // is from the known validators.
 func BallotNotFromKnownValidators(c common.Checker, args ...interface{}) (err error) {
@@ -187,6 +205,7 @@ var handleBallotTransactionCheckerFuncs = []common.CheckerFunc{
 	GetMissingTransaction,
 	BallotTransactionsSameSource,
 	BallotTransactionsSourceCheck,
+	BallotTransactionsOperationBodyCollectTxFee,
 }
 
 // INITBallotValidateTransactions validates the
@@ -208,16 +227,12 @@ func INITBallotValidateTransactions(c common.Checker, args ...interface{}) (err 
 		return
 	}
 
-	if checker.Ballot.TransactionsLength() < 1 {
-		checker.VotingHole = ballot.VotingYES
-		return
-	}
-
 	transactionsChecker := &BallotTransactionChecker{
 		DefaultChecker: common.DefaultChecker{Funcs: handleBallotTransactionCheckerFuncs},
 		NodeRunner:     checker.NodeRunner,
 		LocalNode:      checker.LocalNode,
 		NetworkID:      checker.NetworkID,
+		Ballot:         checker.Ballot,
 		Transactions:   checker.Ballot.Transactions(),
 		VotingHole:     ballot.VotingNOTYET,
 	}
@@ -367,7 +382,14 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 		transactions[hash] = tx
 	}
 
-	blk = block.NewBlockFromBallot(b)
+	blk = block.NewBlock(
+		b.Proposer(),
+		b.Round(),
+		b.ProposerTransaction().GetHash(),
+		b.Transactions(),
+		b.ProposerConfirmed(),
+	)
+
 	log.Debug("NewBlock created", "block", blk)
 	infoLog.Info("NewBlock created",
 		"height", blk.Height,
@@ -412,7 +434,11 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 			ts.Discard()
 			return
 		}
+	}
 
+	if err = finishProposerTransaction(ts, blk, b.ProposerTransaction(), log); err != nil {
+		ts.Discard()
+		return
 	}
 
 	if err = ts.Commit(); err != nil {
@@ -494,6 +520,45 @@ func finishOperationPayment(st *storage.LevelDBBackend, tx transaction.Transacti
 	}
 
 	log.Debug("payment done", "source", baSource, "target", baTarget, "amount", op.GetAmount())
+
+	return
+}
+
+func finishProposerTransaction(st *storage.LevelDBBackend, blk block.Block, ptx ballot.ProposerTransaction, log logging.Logger) (err error) {
+	var opb transaction.OperationBodyCollectTxFee
+	if opb, err = ptx.OperationBodyCollectTxFee(); err != nil {
+		return
+	}
+	if err = finishOperationCollectTxFee(st, opb, log); err != nil {
+		return
+	}
+
+	raw, _ := json.Marshal(ptx.Transaction)
+	bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.Confirmed, ptx.Transaction, raw)
+	if err = bt.Save(st); err != nil {
+		return
+	}
+
+	return
+}
+
+func finishOperationCollectTxFee(st *storage.LevelDBBackend, opb transaction.OperationBodyCollectTxFee, log logging.Logger) (err error) {
+	if opb.Amount < 1 {
+		return
+	}
+
+	var commonAccount *block.BlockAccount
+	if commonAccount, err = block.GetBlockAccount(st, opb.TargetAddress()); err != nil {
+		return
+	}
+
+	if err = commonAccount.Deposit(opb.GetAmount()); err != nil {
+		return
+	}
+
+	if err = commonAccount.Save(st); err != nil {
+		return
+	}
 
 	return
 }

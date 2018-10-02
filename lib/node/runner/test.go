@@ -20,9 +20,11 @@ import (
 var networkID []byte = []byte("sebak-test-network")
 
 var (
-	kp           *keypair.Full
-	account      *block.BlockAccount
-	genesisBlock block.Block
+	kp            *keypair.Full
+	account       *block.BlockAccount
+	genesisBlock  block.Block
+	commonKP      *keypair.Full
+	commonAccount *block.BlockAccount
 )
 
 func init() {
@@ -71,6 +73,10 @@ func TestGenerateNewSequenceID() uint64 {
 func GenerateBallot(t *testing.T, proposer *node.LocalNode, round round.Round, tx transaction.Transaction, ballotState ballot.State, sender *node.LocalNode) *ballot.Ballot {
 	b := ballot.NewBallot(proposer.Address(), round, []string{tx.GetHash()})
 	b.SetVote(ballot.StateINIT, ballot.VotingYES)
+
+	ptx, _ := ballot.NewProposerTransactionFromBallot(*b, commonAccount.Address, tx)
+	b.SetProposerTransaction(ptx)
+
 	b.Sign(proposer.Keypair(), networkID)
 
 	b.SetSource(sender.Address())
@@ -86,6 +92,10 @@ func GenerateBallot(t *testing.T, proposer *node.LocalNode, round round.Round, t
 func GenerateEmptyTxBallot(t *testing.T, proposer *node.LocalNode, round round.Round, ballotState ballot.State, sender *node.LocalNode) *ballot.Ballot {
 	b := ballot.NewBallot(proposer.Address(), round, []string{})
 	b.SetVote(ballot.StateINIT, ballot.VotingYES)
+
+	ptx, _ := ballot.NewProposerTransactionFromBallot(*b, commonAccount.Address)
+	b.SetProposerTransaction(ptx)
+
 	b.Sign(proposer.Keypair(), networkID)
 
 	b.SetSource(sender.Address())
@@ -122,9 +132,15 @@ func createNodeRunnerForTesting(n int, conf *consensus.ISAACConfiguration, recv 
 		nodes[0].AddValidators(nodes[j].ConvertToValidator())
 	}
 
-	address := kp.Address()
-	balance := common.BaseFee.MustAdd(common.BaseReserve)
-	account = block.NewBlockAccount(address, balance)
+	st := storage.NewTestStorage()
+
+	balance := common.BaseReserve.MustAdd(common.BaseFee)
+	genesisAccount := block.NewBlockAccount(kp.Address(), balance)
+	genesisAccount.Save(st)
+
+	commonKP, _ = keypair.Random()
+	commonAccount = block.NewBlockAccount(commonKP.Address(), 0)
+	commonAccount.Save(st)
 
 	localNode := nodes[0]
 	policy, _ := consensus.NewDefaultVotingThresholdPolicy(66)
@@ -137,11 +153,9 @@ func createNodeRunnerForTesting(n int, conf *consensus.ISAACConfiguration, recv 
 	)
 
 	is, _ := consensus.NewISAAC(networkID, localNode, policy, connectionManager)
-	is.SetProposerSelector(SelfSelector{connectionManager})
-	st := storage.NewTestStorage()
+	is.SetProposerSelector(FixedSelector{localNode.Address()})
 
-	account.Save(st)
-	genesisBlock, _ = block.MakeGenesisBlock(st, *account, networkID)
+	genesisBlock, _ = block.MakeGenesisBlock(st, *genesisAccount, *commonAccount, networkID)
 
 	nr, err := NewNodeRunner(string(networkID), localNode, policy, ns[0], is, st, conf)
 	if err != nil {
