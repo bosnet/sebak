@@ -731,3 +731,6 @@ func finishInflation(st *storage.LevelDBBackend, opb operation.Inflation, log lo
 
 	return
 }
+func FinishOperation(st *storage.LevelDBBackend, tx transaction.Transaction, op operation.Operation, log logging.Logger) (err error) {
+	return finishOperation(st, tx, op, log)
+}

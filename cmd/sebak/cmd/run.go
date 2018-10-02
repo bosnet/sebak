@@ -24,6 +24,7 @@ import (
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/node/runner"
 	"boscoin.io/sebak/lib/storage"
+	"boscoin.io/sebak/lib/sync"
 )
 
 const (
@@ -336,11 +337,14 @@ func parseFlagsNode() {
 		}
 	}
 
-	log.SetHandler(logging.LvlFilterHandler(logLevel, logging.CallerFileHandler(logHandler)))
+	logHandler = logging.CallerFileHandler(logHandler)
+	logHandler = logging.LvlFilterHandler(logLevel, logHandler)
+	log.SetHandler(logHandler)
 
 	runner.SetLogging(logLevel, logHandler)
 	consensus.SetLogging(logLevel, logHandler)
 	network.SetLogging(logLevel, logHandler)
+	sync.SetLogging(logLevel, logHandler)
 
 	if len(flagRateLimitAPI) < 1 {
 		re := strings.Fields(common.GetENVValue("SEBAK_RATE_LIMIT_API", ""))
@@ -490,6 +494,17 @@ func runNode() error {
 			return nil
 		}, func(error) {
 			nr.Stop()
+		})
+	}
+	{
+		c := sync.NewConfig([]byte(flagNetworkID), localNode, st, nt, connectionManager, conf)
+		//Place setting config
+		syncer := c.NewSyncer()
+
+		g.Add(func() error {
+			return syncer.Start()
+		}, func(error) {
+			syncer.Stop()
 		})
 	}
 	{
