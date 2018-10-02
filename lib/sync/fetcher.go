@@ -65,6 +65,10 @@ func (f *BlockFetcher) Fetch(ctx context.Context, syncInfo *SyncInfo) (*SyncInfo
 		default:
 			f.logger.Debug("Try to fetch", "height", height, "attempt", attempt)
 			if err := f.fetch(ctx, syncInfo); err != nil {
+				if err == context.Canceled {
+					return false, ctx.Err()
+				}
+
 				f.logger.Error(err.Error(), "err", err)
 				c := time.After(f.retryInterval) //afterFunc?
 				select {
