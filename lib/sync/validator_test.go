@@ -14,9 +14,10 @@ func TestValidator(t *testing.T) {
 	st := storage.NewTestStorage()
 	defer st.Close()
 
+	networkID := []byte("test-network")
 	_, nw, _ := network.CreateMemoryNetwork(nil)
 
-	v := NewBlockValidator(nw, st)
+	v := NewBlockValidator(nw, st, networkID)
 
 	ctx := context.Background()
 

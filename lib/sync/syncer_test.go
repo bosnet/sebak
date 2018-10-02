@@ -16,11 +16,12 @@ func TestSyncer(t *testing.T) {
 	defer st.Close()
 	_, nw, _ := network.CreateMemoryNetwork(nil)
 	cm := &mockConnectionManager{}
+	networkID := []byte("test-network")
 
 	tickc := make(chan time.Time)
 	infoC := make(chan *SyncInfo)
 
-	syncer := NewSyncer(st, nw, cm)
+	syncer := NewSyncer(st, nw, cm, networkID)
 	defer syncer.Stop()
 
 	syncer.fetcher = &mockFetcher{

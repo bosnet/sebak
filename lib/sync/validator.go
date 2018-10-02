@@ -18,15 +18,18 @@ type BlockValidator struct {
 	network network.Network
 	storage *storage.LevelDBBackend
 
+	networkID []byte
+
 	logger log15.Logger
 }
 
 type BlockValidatorOption func(*BlockValidator)
 
-func NewBlockValidator(nw network.Network, ldb *storage.LevelDBBackend, opts ...BlockValidatorOption) *BlockValidator {
+func NewBlockValidator(nw network.Network, ldb *storage.LevelDBBackend, networkID []byte, opts ...BlockValidatorOption) *BlockValidator {
 	v := &BlockValidator{
-		network: nw,
-		storage: ldb,
+		network:   nw,
+		storage:   ldb,
+		networkID: networkID,
 
 		logger: NopLogger(),
 	}
@@ -166,6 +169,10 @@ func (v *BlockValidator) validateTxs(ctx context.Context, si *SyncInfo) error {
 		hash := tx.B.MakeHashString()
 		if hash != tx.H.Hash {
 			err := errors.ErrorHashDoesNotMatch
+			return err
+		}
+
+		if err := tx.IsWellFormed(v.networkID); err != nil {
 			return err
 		}
 	}

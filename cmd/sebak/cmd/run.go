@@ -402,7 +402,7 @@ func runNode() error {
 		})
 	}
 	{
-		c := sync.NewConfig(localNode, st, nt, connectionManager)
+		c := sync.NewConfig([]byte(flagNetworkID), localNode, st, nt, connectionManager)
 		//Place setting config
 		syncer := c.NewSyncer()
 

@@ -21,6 +21,7 @@ type Syncer struct {
 	storage           *storage.LevelDBBackend
 	network           network.Network
 	connectionManager network.ConnectionManager
+	networkID         []byte
 
 	fetcher   Fetcher
 	validator Validator
@@ -35,13 +36,14 @@ type Syncer struct {
 
 type SyncerOption func(s *Syncer)
 
-func NewSyncer(st *storage.LevelDBBackend, nw network.Network, cm network.ConnectionManager, opts ...SyncerOption) *Syncer {
+func NewSyncer(st *storage.LevelDBBackend, nw network.Network, cm network.ConnectionManager, networkID []byte, opts ...SyncerOption) *Syncer {
 	ctx, cancelFunc := context.WithCancel(context.Background())
 
 	s := &Syncer{
 		storage:           st,
 		network:           nw,
 		connectionManager: cm,
+		networkID:         networkID,
 
 		poolSize:      SyncPoolSize,
 		fetchTimeout:  FetchTimeout,
@@ -67,7 +69,7 @@ func NewSyncer(st *storage.LevelDBBackend, nw network.Network, cm network.Connec
 	})
 	s.fetcher = fetcher
 
-	validator := NewBlockValidator(nw, st, func(v *BlockValidator) {
+	validator := NewBlockValidator(nw, st, networkID, func(v *BlockValidator) {
 		v.logger = s.logger
 	})
 	s.validator = validator

@@ -20,6 +20,7 @@ type Config struct {
 	storage           *storage.LevelDBBackend
 	network           network.Network
 	connectionManager network.ConnectionManager
+	networkID         []byte
 	logger            log15.Logger
 
 	SyncPoolSize             int
@@ -29,12 +30,13 @@ type Config struct {
 	Logger                   log15.Logger
 }
 
-func NewConfig(localNode *node.LocalNode, st *storage.LevelDBBackend, nt network.Network, cm network.ConnectionManager) *Config {
+func NewConfig(networkID []byte, localNode *node.LocalNode, st *storage.LevelDBBackend, nt network.Network, cm network.ConnectionManager) *Config {
 	c := &Config{
 		storage:           st,
 		network:           nt,
 		connectionManager: cm,
 		logger:            log.New(log15.Ctx{"node": localNode.Alias()}),
+		networkID:         networkID,
 
 		SyncPoolSize:             SyncPoolSize,
 		FetchTimeout:             FetchTimeout,
@@ -45,7 +47,7 @@ func NewConfig(localNode *node.LocalNode, st *storage.LevelDBBackend, nt network
 }
 
 func (c *Config) NewSyncer() *Syncer {
-	s := NewSyncer(c.storage, c.network, c.connectionManager, func(s *Syncer) {
+	s := NewSyncer(c.storage, c.network, c.connectionManager, c.networkID, func(s *Syncer) {
 		s.poolSize = c.SyncPoolSize
 		s.fetchTimeout = c.FetchTimeout
 		s.retryInterval = c.RetryInterval

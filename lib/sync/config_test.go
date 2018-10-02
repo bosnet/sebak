@@ -22,8 +22,9 @@ func TestNewConfig(t *testing.T) {
 	require.Equal(t, nil, err)
 
 	node, _ := node.NewLocalNode(kp, endpoint, "")
+	networkID := []byte("test-network")
 
-	cfg := NewConfig(node, st, nt, cm)
+	cfg := NewConfig(networkID, node, st, nt, cm)
 	cfg.SyncPoolSize = 100
 
 	syncer := cfg.NewSyncer()
