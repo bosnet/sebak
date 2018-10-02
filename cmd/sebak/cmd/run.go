@@ -24,6 +24,7 @@ import (
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/node/runner"
 	"boscoin.io/sebak/lib/storage"
+	"boscoin.io/sebak/lib/sync"
 )
 
 const (
@@ -54,6 +55,10 @@ var (
 	flagOperationsLimit     string              = common.GetENVValue("SEBAK_OPERATIONS_LIMIT", "1000")
 	flagRateLimitAPI        cmdcommon.ListFlags // "SEBAK_RATE_LIMIT_API"
 	flagRateLimitNode       cmdcommon.ListFlags // "SEBAK_RATE_LIMIT_NODE"
+	flagSyncPoolSize        string              = common.GetENVValue("SEBAK_SYNC_POOL_SIZE", "300")
+	flagSyncFetchTimeout    string              = common.GetENVValue("SEBAK_SYNC_FETCH_TIMEOUT", "1m")
+	flagSyncRetryInterval   string              = common.GetENVValue("SEBAK_SYNC_RETRY_INTERVAL", "10s")
+	flagSyncCheckInterval   string              = common.GetENVValue("SEBAK_SYNC_CHECK_INTERVAL", "30s")
 	flagDebugPProf          bool                = common.GetENVValue("SEBAK_DEBUG_PPROF", "0") == "1"
 )
 
@@ -75,9 +80,12 @@ var (
 	localNode         *node.LocalNode
 	rateLimitRuleAPI  common.RateLimitRule
 	rateLimitRuleNode common.RateLimitRule
-
-	logLevel logging.Lvl
-	log      logging.Logger = logging.New("module", "main")
+	syncPoolSize      int
+	syncFetchTimeout  time.Duration
+	syncRetryInterval time.Duration
+	syncCheckInterval time.Duration
+	logLevel          logging.Lvl
+	log               logging.Logger = logging.New("module", "main")
 )
 
 func init() {
@@ -159,6 +167,10 @@ func init() {
 		"rate-limit-node",
 		fmt.Sprintf("rate limit for %s: [<ip>=]<limit>-<period>, ex) '10-S' '3.3.3.3=1000-M'", network.UrlPathPrefixNode),
 	)
+	nodeCmd.Flags().StringVar(&flagSyncPoolSize, "sync-pool-size", flagSyncPoolSize, "sync pool size")
+	nodeCmd.Flags().StringVar(&flagSyncFetchTimeout, "sync-fetch-timeout", flagSyncFetchTimeout, "sync fetch timeout")
+	nodeCmd.Flags().StringVar(&flagSyncRetryInterval, "sync-retry-interval", flagSyncRetryInterval, "sync retry interval")
+	nodeCmd.Flags().StringVar(&flagSyncCheckInterval, "sync-check-interval", flagSyncCheckInterval, "sync check interval")
 	nodeCmd.Flags().BoolVar(&flagDebugPProf, "debug-pprof", flagDebugPProf, "set debug pprof")
 
 	rootCmd.AddCommand(nodeCmd)
@@ -317,6 +329,17 @@ func parseFlagsNode() {
 		threshold = int(tmpUint64)
 	}
 
+	var tmpPoolSize uint64
+	if tmpPoolSize, err = strconv.ParseUint(flagSyncPoolSize, 10, 64); err != nil {
+		cmdcommon.PrintFlagsError(nodeCmd, "--sync-pool-size", err)
+	} else {
+		syncPoolSize = int(tmpPoolSize)
+	}
+
+	syncRetryInterval = getTimeDuration(flagSyncRetryInterval, sync.RetryInterval, "--sync-retry-interval")
+	syncFetchTimeout = getTimeDuration(flagSyncFetchTimeout, sync.FetchTimeout, "--sync-fetch-timeout")
+	syncCheckInterval = getTimeDuration(flagSyncCheckInterval, sync.CheckBlockHeightInterval, "--sync-check-interval")
+
 	if logLevel, err = logging.LvlFromString(flagLogLevel); err != nil {
 		cmdcommon.PrintFlagsError(nodeCmd, "--log-level", err)
 	}
@@ -338,11 +361,14 @@ func parseFlagsNode() {
 		}
 	}
 
-	log.SetHandler(logging.LvlFilterHandler(logLevel, logging.CallerFileHandler(logHandler)))
+	logHandler = logging.CallerFileHandler(logHandler)
+	logHandler = logging.LvlFilterHandler(logLevel, logHandler)
+	log.SetHandler(logHandler)
 
 	runner.SetLogging(logLevel, logHandler)
 	consensus.SetLogging(logLevel, logHandler)
 	network.SetLogging(logLevel, logHandler)
+	sync.SetLogging(logLevel, logHandler)
 
 	if len(flagRateLimitAPI) < 1 {
 		re := strings.Fields(common.GetENVValue("SEBAK_RATE_LIMIT_API", ""))
@@ -432,6 +458,17 @@ func getTime(timeoutStr string, defaultValue time.Duration, errMessage string) t
 	return timeoutDuration
 }
 
+func getTimeDuration(str string, defaultValue time.Duration, errMessage string) time.Duration {
+	if strings.TrimSpace(str) == "" {
+		return defaultValue
+	}
+	d, err := time.ParseDuration(str)
+	if err != nil {
+		cmdcommon.PrintFlagsError(nodeCmd, errMessage, err)
+	}
+	return d
+}
+
 func runNode() error {
 	// create network
 	networkConfig, err := network.NewHTTP2NetworkConfigFromEndpoint(localNode.Alias(), bindEndpoint)
@@ -465,15 +502,23 @@ func runNode() error {
 		RateLimitRuleNode: rateLimitRuleNode,
 	}
 
-	isaac, err := consensus.NewISAAC([]byte(flagNetworkID), localNode, policy, connectionManager, conf)
-	if err != nil {
-		log.Crit("failed to launch consensus", "error", err)
-		return err
-	}
-
 	st, err := storage.NewStorage(storageConfig)
 	if err != nil {
 		log.Crit("failed to initialize storage", "error", err)
+		return err
+	}
+
+	c := sync.NewConfig([]byte(flagNetworkID), localNode, st, nt, connectionManager, conf)
+	//Place setting config
+	c.SyncPoolSize = syncPoolSize
+	c.FetchTimeout = syncFetchTimeout
+	c.RetryInterval = syncRetryInterval
+	c.CheckBlockHeightInterval = syncCheckInterval
+	syncer := c.NewSyncer()
+
+	isaac, err := consensus.NewISAAC([]byte(flagNetworkID), localNode, policy, connectionManager, syncer, conf)
+	if err != nil {
+		log.Crit("failed to launch consensus", "error", err)
 		return err
 	}
 
@@ -495,6 +540,13 @@ func runNode() error {
 			return nil
 		}, func(error) {
 			nr.Stop()
+		})
+	}
+	{
+		g.Add(func() error {
+			return syncer.Start()
+		}, func(error) {
+			syncer.Stop()
 		})
 	}
 	{

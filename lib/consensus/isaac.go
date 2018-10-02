@@ -1,6 +1,7 @@
 package consensus
 
 import (
+	"context"
 	"errors"
 	"sync"
 
@@ -15,6 +16,10 @@ import (
 	"boscoin.io/sebak/lib/transaction"
 )
 
+type SyncController interface {
+	SetSyncTargetBlock(ctx context.Context, height uint64, nodeAddrs []string) error
+}
+
 type ISAAC struct {
 	sync.RWMutex
 
@@ -23,6 +28,8 @@ type ISAAC struct {
 	proposerSelector  ProposerSelector
 	log               logging.Logger
 	policy            ballot.VotingThresholdPolicy
+	nodesHeight       map[ /* Node.Address() */ string]uint64
+	syncer            SyncController
 
 	NetworkID       []byte
 	Node            *node.LocalNode
@@ -35,7 +42,7 @@ type ISAAC struct {
 // ISAAC should know network.ConnectionManager
 // because the ISAAC uses connected validators when calculating proposer
 func NewISAAC(networkID []byte, node *node.LocalNode, p ballot.VotingThresholdPolicy,
-	cm network.ConnectionManager, conf common.Config) (is *ISAAC, err error) {
+	cm network.ConnectionManager, syncer SyncController, conf common.Config) (is *ISAAC, err error) {
 
 	is = &ISAAC{
 		NetworkID:         networkID,
@@ -47,6 +54,8 @@ func NewISAAC(networkID []byte, node *node.LocalNode, p ballot.VotingThresholdPo
 		proposerSelector:  SequentialSelector{cm},
 		Conf:              conf,
 		log:               log.New(logging.Ctx{"node": node.Alias()}),
+		nodesHeight:       make(map[string]uint64),
+		syncer:            syncer,
 	}
 
 	return
@@ -113,31 +122,83 @@ func (is *ISAAC) SelectProposer(blockHeight uint64, roundNumber uint64) string {
 	return is.proposerSelector.Select(blockHeight, roundNumber)
 }
 
+func (is *ISAAC) SaveNodeHeight(b ballot.Ballot) {
+	is.nodesHeight[b.Source()] = b.Round().BlockHeight
+}
+
 func (is *ISAAC) IsAvailableRound(round round.Round) bool {
-	// check current round is from InitRound
-	if is.LatestRound.BlockHash == "" {
-		return true
-	}
-
-	if round.BlockHeight < is.latestBlock.Height {
-		return false
-	} else if round.BlockHeight == is.latestBlock.Height {
-		if round.BlockHash != is.latestBlock.Hash {
-			return false
+	if round.BlockHeight == is.latestBlock.Height {
+		if is.isInitRound(round) {
+			return true
 		}
-	} else {
-		// TODO if incoming round.BlockHeight is bigger than
-		// latestBlock.Height and this round confirmed successfully,
-		// this node will get into sync state
+
+		if round.BlockHeight < is.latestBlock.Height {
+			return false
+		} else if round.BlockHeight == is.latestBlock.Height {
+			if round.BlockHash != is.latestBlock.Hash {
+				return false
+			}
+			if round.BlockHeight == is.LatestRound.BlockHeight {
+				if round.Number <= is.LatestRound.Number {
+					return false
+				}
+			}
+			return true
+		}
+	} else if round.BlockHeight > is.latestBlock.Height {
+		is.startSync()
 	}
 
-	if round.BlockHeight == is.LatestRound.BlockHeight {
-		if round.Number <= is.LatestRound.Number {
-			return false
+	return false
+}
+
+func (is *ISAAC) isInitRound(round round.Round) bool {
+	genesisHeight := uint64(1)
+	return is.LatestRound.BlockHash == "" && round.BlockHeight == genesisHeight
+}
+
+func (is *ISAAC) startSync() {
+	height, nodeAddrs := is.getSyncInfo()
+	if is.syncer != nil && len(nodeAddrs) > 0 {
+		if err := is.syncer.SetSyncTargetBlock(context.Background(), height, nodeAddrs); err != nil {
+			is.log.Error("syncer.SetSyncTargetBlock", "err", err, "height", height)
+		}
+	}
+}
+
+func (is *ISAAC) getSyncInfo() (uint64, []string) {
+	overHeightCount := make(map[ /* height */ uint64] /* count */ int)
+	for _, height := range is.nodesHeight {
+		if _, ok := overHeightCount[height]; ok {
+			overHeightCount[height]++
+		} else {
+			overHeightCount[height] = 1
 		}
 	}
 
-	return true
+	threshold := is.policy.Threshold()
+	biggestHeight := uint64(1)
+
+	for height, count := range overHeightCount {
+		if count >= threshold {
+			if height > biggestHeight {
+				biggestHeight = height
+			}
+		}
+	}
+
+	if biggestHeight <= 1 {
+		return 1, []string{}
+	}
+
+	nodeAddrs := []string{}
+	for nodeAddr, height := range is.nodesHeight {
+		if height >= biggestHeight {
+			nodeAddrs = append(nodeAddrs, nodeAddr)
+		}
+	}
+
+	return biggestHeight, nodeAddrs
 }
 
 func (is *ISAAC) IsVoted(b ballot.Ballot) bool {

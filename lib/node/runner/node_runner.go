@@ -32,6 +32,7 @@ import (
 var DefaultHandleBaseBallotCheckerFuncs = []common.CheckerFunc{
 	BallotUnmarshal,
 	BallotNotFromKnownValidators,
+	BallotSaveNodeHeight,
 	BallotAlreadyFinished,
 }
 
@@ -447,6 +448,7 @@ func (nr *NodeRunner) InitRound() {
 	latestBlock := block.GetLatestBlock(nr.storage)
 
 	nr.consensus.SetLatestBlock(latestBlock)
+	nr.log.Info("getLatestBlock in NodeRunner.InitRound", "height", latestBlock.Height)
 	nr.consensus.SetLatestRound(round.Round{})
 
 	ticker := time.NewTicker(time.Millisecond * 5)

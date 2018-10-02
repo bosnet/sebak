@@ -115,6 +115,21 @@ func TestMakeNewBlock(transactions []string) Block {
 	)
 }
 
+func TestMakeNewBlockWithPrevBlock(prevBlock Block, txs []string) Block {
+	kp, _ := keypair.Random()
+
+	return *NewBlock(
+		kp.Address(),
+		round.Round{
+			BlockHeight: prevBlock.Height,
+			BlockHash:   prevBlock.Hash,
+		},
+		"",
+		txs,
+		common.NowISO8601(),
+	)
+}
+
 func TestMakeNewBlockOperation(networkID []byte, n int) (bos []BlockOperation) {
 	_, tx := transaction.TestMakeTransaction(networkID, n)
 
