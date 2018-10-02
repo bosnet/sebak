@@ -14,8 +14,8 @@ type OperationType string
 const (
 	OperationCreateAccount        OperationType = "create-account"
 	OperationPayment                            = "payment"
-	OperationCongressVoting                     = "cv"
-	OperationCongressVotingResult               = "cvr"
+	OperationCongressVoting                     = "congress-voting"
+	OperationCongressVotingResult               = "congress-voting-result"
 )
 
 type Operation struct {
