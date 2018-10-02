@@ -6,18 +6,19 @@ import (
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/transaction"
+	"boscoin.io/sebak/lib/transaction/operation"
 )
 
-var OperationTypesProposerTransaction map[transaction.OperationType]struct{} = map[transaction.OperationType]struct{}{
-	transaction.OperationCollectTxFee: struct{}{},
-	transaction.OperationInflation:    struct{}{},
+var OperationTypesProposerTransaction map[operation.OperationType]struct{} = map[operation.OperationType]struct{}{
+	operation.OperationCollectTxFee: struct{}{},
+	operation.OperationInflation:    struct{}{},
 }
 
 type ProposerTransaction struct {
 	transaction.Transaction
 }
 
-func NewProposerTransaction(proposer string, ops ...transaction.Operation) (ptx ProposerTransaction, err error) {
+func NewProposerTransaction(proposer string, ops ...operation.Operation) (ptx ProposerTransaction, err error) {
 	var tx transaction.Transaction
 	tx, err = transaction.NewTransaction(proposer, 0, ops...)
 	if err != nil {
@@ -31,7 +32,7 @@ func NewProposerTransaction(proposer string, ops ...transaction.Operation) (ptx 
 	return
 }
 
-func NewOperationCollectTxFeeFromBallot(blt Ballot, commonAccount string, txs ...transaction.Transaction) (opb transaction.OperationBodyCollectTxFee, err error) {
+func NewOperationCollectTxFeeFromBallot(blt Ballot, commonAccount string, txs ...transaction.Transaction) (opb operation.OperationBodyCollectTxFee, err error) {
 	rd := blt.Round()
 
 	var feeAmount common.Amount
@@ -39,7 +40,7 @@ func NewOperationCollectTxFeeFromBallot(blt Ballot, commonAccount string, txs ..
 		feeAmount = feeAmount + tx.B.Fee
 	}
 
-	opb = transaction.NewOperationBodyCollectTxFee(
+	opb = operation.NewOperationBodyCollectTxFee(
 		commonAccount,
 		feeAmount,
 		uint64(len(txs)),
@@ -50,7 +51,7 @@ func NewOperationCollectTxFeeFromBallot(blt Ballot, commonAccount string, txs ..
 	return
 }
 
-func NewOperationInflationFromBallot(blt Ballot, commonAccount string, initialBalance common.Amount) (opb transaction.OperationBodyInflation, err error) {
+func NewOperationInflationFromBallot(blt Ballot, commonAccount string, initialBalance common.Amount) (opb operation.OperationBodyInflation, err error) {
 	rd := blt.Round()
 
 	var amount common.Amount
@@ -58,7 +59,7 @@ func NewOperationInflationFromBallot(blt Ballot, commonAccount string, initialBa
 		return
 	}
 
-	opb = transaction.NewOperationBodyInflation(
+	opb = operation.NewOperationBodyInflation(
 		commonAccount,
 		amount,
 		initialBalance,
@@ -70,19 +71,19 @@ func NewOperationInflationFromBallot(blt Ballot, commonAccount string, initialBa
 	return
 }
 
-func NewProposerTransactionFromBallot(blt Ballot, opc transaction.OperationBodyCollectTxFee, opi transaction.OperationBodyInflation) (ptx ProposerTransaction, err error) {
-	var ops []transaction.Operation
+func NewProposerTransactionFromBallot(blt Ballot, opc operation.OperationBodyCollectTxFee, opi operation.OperationBodyInflation) (ptx ProposerTransaction, err error) {
+	var ops []operation.Operation
 
-	var op transaction.Operation
+	var op operation.Operation
 	{ // OperationCollectTxFee
-		if op, err = transaction.NewOperation(opc); err != nil {
+		if op, err = operation.NewOperation(opc); err != nil {
 			return
 		}
 		ops = append(ops, op)
 	}
 
 	{ // OperationInflation
-		if op, err = transaction.NewOperation(opi); err != nil {
+		if op, err = operation.NewOperation(opi); err != nil {
 			return
 		}
 		ops = append(ops, op)
@@ -132,7 +133,7 @@ func (p ProposerTransaction) IsWellFormedWithBallot(networkID []byte, blt Ballot
 
 	rd := blt.Round()
 	{ // check OperationCollectTxFee
-		var opb transaction.OperationBodyCollectTxFee
+		var opb operation.OperationBodyCollectTxFee
 		if opb, err = blt.ProposerTransaction().OperationBodyCollectTxFee(); err != nil {
 			return
 		}
@@ -167,7 +168,7 @@ func (p ProposerTransaction) IsWellFormedWithBallot(networkID []byte, blt Ballot
 	}
 
 	{ // check OperationInflation
-		var opb transaction.OperationBodyInflation
+		var opb operation.OperationBodyInflation
 		if opb, err = blt.ProposerTransaction().OperationBodyInflation(); err != nil {
 			return
 		}
@@ -189,12 +190,12 @@ func (p ProposerTransaction) IsWellFormedWithBallot(networkID []byte, blt Ballot
 	return
 }
 
-func (p ProposerTransaction) OperationBodyCollectTxFee() (opb transaction.OperationBodyCollectTxFee, err error) {
+func (p ProposerTransaction) OperationBodyCollectTxFee() (opb operation.OperationBodyCollectTxFee, err error) {
 	var found bool
 	for _, op := range p.B.Operations {
 		switch op.B.(type) {
-		case transaction.OperationBodyCollectTxFee:
-			opb = op.B.(transaction.OperationBodyCollectTxFee)
+		case operation.OperationBodyCollectTxFee:
+			opb = op.B.(operation.OperationBodyCollectTxFee)
 			found = true
 			break
 		default:
@@ -210,12 +211,12 @@ func (p ProposerTransaction) OperationBodyCollectTxFee() (opb transaction.Operat
 	return
 }
 
-func (p ProposerTransaction) OperationBodyInflation() (opb transaction.OperationBodyInflation, err error) {
+func (p ProposerTransaction) OperationBodyInflation() (opb operation.OperationBodyInflation, err error) {
 	var found bool
 	for _, op := range p.B.Operations {
 		switch op.B.(type) {
-		case transaction.OperationBodyInflation:
-			opb = op.B.(transaction.OperationBodyInflation)
+		case operation.OperationBodyInflation:
+			opb = op.B.(operation.OperationBodyInflation)
 			found = true
 			break
 		default:

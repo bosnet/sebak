@@ -14,6 +14,7 @@ import (
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/transaction"
+	"boscoin.io/sebak/lib/transaction/operation"
 )
 
 type ballotCheckerProposedTransaction struct {
@@ -103,7 +104,7 @@ func TestProposedTransactionWithDuplicatedOperations(t *testing.T) {
 	{
 		ptx := blt.ProposerTransaction()
 		op := ptx.B.Operations[0]
-		ptx.B.Operations = []transaction.Operation{op, op}
+		ptx.B.Operations = []operation.Operation{op, op}
 
 		blt.SetProposerTransaction(ptx)
 		blt.Sign(p.proposerNode.Keypair(), networkID)
@@ -734,11 +735,11 @@ func TestProposedTransactionStoreWithZeroAmount(t *testing.T) {
 	require.Equal(t, 2, len(bos))
 
 	{ // OperationCollectTxFee
-		require.Equal(t, string(transaction.OperationCollectTxFee), string(bos[0].Type))
+		require.Equal(t, string(operation.OperationCollectTxFee), string(bos[0].Type))
 
-		opbFromBlockInterface, err := transaction.UnmarshalOperationBodyJSON(bos[0].Type, bos[0].Body)
+		opbFromBlockInterface, err := operation.UnmarshalOperationBodyJSON(bos[0].Type, bos[0].Body)
 		require.Nil(t, err)
-		opbFromBlock := opbFromBlockInterface.(transaction.OperationBodyCollectTxFee)
+		opbFromBlock := opbFromBlockInterface.(operation.OperationBodyCollectTxFee)
 
 		opb, _ := blt.ProposerTransaction().OperationBodyCollectTxFee()
 		require.Equal(t, opb.Amount, opbFromBlock.Amount)
@@ -750,11 +751,11 @@ func TestProposedTransactionStoreWithZeroAmount(t *testing.T) {
 	}
 
 	{ // OperationInflation
-		require.Equal(t, string(transaction.OperationInflation), string(bos[1].Type))
+		require.Equal(t, string(operation.OperationInflation), string(bos[1].Type))
 
-		opbFromBlockInterface, err := transaction.UnmarshalOperationBodyJSON(bos[1].Type, bos[1].Body)
+		opbFromBlockInterface, err := operation.UnmarshalOperationBodyJSON(bos[1].Type, bos[1].Body)
 		require.Nil(t, err)
-		opbFromBlock := opbFromBlockInterface.(transaction.OperationBodyInflation)
+		opbFromBlock := opbFromBlockInterface.(operation.OperationBodyInflation)
 
 		opb, _ := blt.ProposerTransaction().OperationBodyInflation()
 		require.Equal(t, opb.Amount, opbFromBlock.Amount)
@@ -807,9 +808,9 @@ func TestProposedTransactionWithNormalOperations(t *testing.T) {
 		op := ptx.B.Operations[1]
 
 		kp, _ := keypair.Random()
-		opb := transaction.NewOperationBodyCreateAccount(kp.Address(), common.Amount(1), "")
-		newOp, _ := transaction.NewOperation(opb)
-		ptx.B.Operations = []transaction.Operation{op, newOp}
+		opb := operation.NewOperationBodyCreateAccount(kp.Address(), common.Amount(1), "")
+		newOp, _ := operation.NewOperation(opb)
+		ptx.B.Operations = []operation.Operation{op, newOp}
 
 		blt.SetProposerTransaction(ptx)
 		blt.Sign(p.proposerNode.Keypair(), networkID)
@@ -833,8 +834,8 @@ func TestProposedTransactionWithWrongNumberOfOperations(t *testing.T) {
 		ptx := blt.ProposerTransaction()
 
 		kp, _ := keypair.Random()
-		opb := transaction.NewOperationBodyCreateAccount(kp.Address(), common.Amount(1), "")
-		newOp, _ := transaction.NewOperation(opb)
+		opb := operation.NewOperationBodyCreateAccount(kp.Address(), common.Amount(1), "")
+		newOp, _ := operation.NewOperation(opb)
 		ptx.B.Operations = append(ptx.B.Operations, newOp)
 
 		blt.SetProposerTransaction(ptx)

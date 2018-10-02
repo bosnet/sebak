@@ -8,13 +8,15 @@ import (
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/transaction/operation"
 )
 
 type TransactionChecker struct {
 	common.DefaultChecker
 
-	NetworkID   []byte
-	Transaction Transaction
+	NetworkID       []byte
+	Transaction     Transaction
+	OperationsLimit int
 }
 
 func CheckTransactionSource(c common.Checker, args ...interface{}) (err error) {
@@ -30,7 +32,7 @@ func CheckTransactionSource(c common.Checker, args ...interface{}) (err error) {
 func CheckTransactionOverOperationsLimit(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*TransactionChecker)
 
-	if len(checker.Transaction.B.Operations) > common.MaxOperationsInTransaction {
+	if len(checker.Transaction.B.Operations) > operation.Limit {
 		err = errors.ErrorTransactionHasOverMaxOperations
 		return
 	}
@@ -62,7 +64,7 @@ func CheckTransactionOperationTypes(c common.Checker, args ...interface{}) (err 
 	}
 
 	for _, op := range checker.Transaction.B.Operations {
-		if _, found := OperationTypesNormalTransaction[op.H.Type]; !found {
+		if _, found := operation.OperationTypesNormalTransaction[op.H.Type]; !found {
 			err = errors.ErrorInvalidOperation
 			return
 		}
@@ -76,7 +78,7 @@ func CheckTransactionOperation(c common.Checker, args ...interface{}) (err error
 
 	var hashes []string
 	for _, op := range checker.Transaction.B.Operations {
-		if pop, ok := op.B.(OperationBodyPayable); ok {
+		if pop, ok := op.B.(operation.OperationBodyPayable); ok {
 			if checker.Transaction.B.Source == pop.TargetAddress() {
 				err = errors.ErrorInvalidOperation
 				return

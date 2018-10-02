@@ -1,4 +1,4 @@
-package transaction
+package operation
 
 import (
 	"encoding/json"
@@ -26,6 +26,9 @@ var OperationTypesNormalTransaction map[OperationType]struct{} = map[OperationTy
 	OperationCongressVoting:       struct{}{},
 	OperationCongressVotingResult: struct{}{},
 }
+
+// Limit is the number of operations to be included in a transaction
+var Limit = 1000
 
 type Operation struct {
 	H OperationHeader

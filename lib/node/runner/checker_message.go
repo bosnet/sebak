@@ -15,12 +15,13 @@ package runner
 import (
 	logging "github.com/inconshreveable/log15"
 
+	"encoding/json"
+
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/transaction"
-	"encoding/json"
 )
 
 type MessageChecker struct {

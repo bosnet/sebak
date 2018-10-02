@@ -1,9 +1,10 @@
-package transaction
+package operation
 
 import (
-	"boscoin.io/sebak/lib/error"
 	"encoding/json"
 	"net/url"
+
+	"boscoin.io/sebak/lib/error"
 )
 
 type OperationBodyCongressVotingResult struct {

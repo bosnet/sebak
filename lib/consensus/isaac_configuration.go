@@ -12,11 +12,10 @@ import (
 // these timeout features are used in ISAAC consensus.
 //
 type ISAACConfiguration struct {
-	TimeoutINIT       time.Duration
-	TimeoutSIGN       time.Duration
-	TimeoutACCEPT     time.Duration
-	BlockTime         time.Duration
-	TransactionsLimit uint64
+	TimeoutINIT   time.Duration
+	TimeoutSIGN   time.Duration
+	TimeoutACCEPT time.Duration
+	BlockTime     time.Duration
 }
 
 func NewISAACConfiguration() *ISAACConfiguration {
@@ -26,7 +25,6 @@ func NewISAACConfiguration() *ISAACConfiguration {
 	p.TimeoutSIGN = 2 * time.Second
 	p.TimeoutACCEPT = 2 * time.Second
 	p.BlockTime = 5 * time.Second
-	p.TransactionsLimit = uint64(1000)
 
 	return &p
 }

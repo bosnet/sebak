@@ -1,11 +1,12 @@
-package transaction
+package operation
 
 import (
+	"encoding/json"
+
 	"github.com/stellar/go/keypair"
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
-	"encoding/json"
 )
 
 type OperationBodyCreateAccount struct {

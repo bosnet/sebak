@@ -5,7 +5,7 @@ import (
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/storage"
-	"boscoin.io/sebak/lib/transaction"
+	"boscoin.io/sebak/lib/transaction/operation"
 )
 
 func getGenesisTransaction(st *storage.LevelDBBackend) (bt block.BlockTransaction, err error) {
@@ -40,11 +40,11 @@ func getGenesisAccount(st *storage.LevelDBBackend, operationIndex int) (account 
 		return
 	}
 
-	var opb transaction.OperationBody
-	if opb, err = transaction.UnmarshalOperationBodyJSON(bo.Type, bo.Body); err != nil {
+	var opb operation.OperationBody
+	if opb, err = operation.UnmarshalOperationBodyJSON(bo.Type, bo.Body); err != nil {
 		return
 	}
-	opbp := opb.(transaction.OperationBodyPayable)
+	opbp := opb.(operation.OperationBodyPayable)
 
 	if account, err = block.GetBlockAccount(st, opbp.TargetAddress()); err != nil {
 		return
@@ -72,11 +72,11 @@ func GetGenesisBalance(st *storage.LevelDBBackend) (balance common.Amount, err e
 		return
 	}
 
-	var opb transaction.OperationBody
-	if opb, err = transaction.UnmarshalOperationBodyJSON(bo.Type, bo.Body); err != nil {
+	var opb operation.OperationBody
+	if opb, err = operation.UnmarshalOperationBodyJSON(bo.Type, bo.Body); err != nil {
 		return
 	}
-	opbp := opb.(transaction.OperationBodyPayable)
+	opbp := opb.(operation.OperationBodyPayable)
 
 	balance = opbp.GetAmount()
 

@@ -332,16 +332,16 @@ func TestGetNodeTransactionsHandlerInTransactionPool(t *testing.T) {
 }
 
 // TestGetNodeTransactionsHandlerTooManyHashes checks when the number of hashes
-// reaches limit, `common.MaxTransactionsInBallot`.
+// reaches limit, `transaction.Limit`.
 func TestGetNodeTransactionsHandlerTooManyHashes(t *testing.T) {
 	p := &HelperTestGetNodeTransactionsHandler{}
 	p.Prepare()
 	defer p.Done()
 
-	MaxTransactionsInBallotOrig := common.MaxTransactionsInBallot
-	common.MaxTransactionsInBallot = 2
+	MaxTransactionsInBallotOrig := transaction.Limit
+	transaction.Limit = 2
 	defer func() {
-		common.MaxTransactionsInBallot = MaxTransactionsInBallotOrig
+		transaction.Limit = MaxTransactionsInBallotOrig
 	}()
 
 	{

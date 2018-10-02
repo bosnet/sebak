@@ -35,13 +35,5 @@ var (
 	// For details, `Ballot.IsWellFormed()`
 	BallotConfirmedTimeAllowDuration time.Duration = time.Minute * time.Duration(1)
 
-	// MaxTransactionsInBallot limits the maximum number of `Transaction`s in
-	// one proposed `Ballot`.
-	MaxTransactionsInBallot int = 1000
-
-	// MaxOperationsInTransaction limits the maximum number of `Operation`s in
-	// one `Transaction`.
-	MaxOperationsInTransaction int = 1000
-
 	InflationRatioString string = InflationRatio2String(InflationRatio)
 )

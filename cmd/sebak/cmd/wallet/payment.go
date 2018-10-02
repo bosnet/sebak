@@ -13,6 +13,7 @@ import (
 	cmdcommon "boscoin.io/sebak/cmd/sebak/common"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/network"
+	"boscoin.io/sebak/lib/transaction/operation"
 
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/transaction"
@@ -170,11 +171,11 @@ func init() {
 ///   `sebak.Transaction` = The generated `Transaction` creating the account
 ///
 func makeTransactionCreateAccount(kpSource keypair.KP, kpDest keypair.KP, amount common.Amount, seqid uint64, target string) transaction.Transaction {
-	opb := transaction.NewOperationBodyCreateAccount(kpDest.Address(), amount, target)
+	opb := operation.NewOperationBodyCreateAccount(kpDest.Address(), amount, target)
 
-	op := transaction.Operation{
-		H: transaction.OperationHeader{
-			Type: transaction.OperationCreateAccount,
+	op := operation.Operation{
+		H: operation.OperationHeader{
+			Type: operation.OperationCreateAccount,
 		},
 		B: opb,
 	}
@@ -183,7 +184,7 @@ func makeTransactionCreateAccount(kpSource keypair.KP, kpDest keypair.KP, amount
 		Source:     kpSource.Address(),
 		Fee:        common.BaseFee,
 		SequenceID: seqid,
-		Operations: []transaction.Operation{op},
+		Operations: []operation.Operation{op},
 	}
 
 	tx := transaction.Transaction{
@@ -214,11 +215,11 @@ func makeTransactionCreateAccount(kpSource keypair.KP, kpDest keypair.KP, amount
 ///  `sebak.Transaction` = The generated `Transaction` to do a payment
 ///
 func makeTransactionPayment(kpSource keypair.KP, kpDest keypair.KP, amount common.Amount, seqid uint64) transaction.Transaction {
-	opb := transaction.NewOperationBodyPayment(kpDest.Address(), amount)
+	opb := operation.NewOperationBodyPayment(kpDest.Address(), amount)
 
-	op := transaction.Operation{
-		H: transaction.OperationHeader{
-			Type: transaction.OperationPayment,
+	op := operation.Operation{
+		H: operation.OperationHeader{
+			Type: operation.OperationPayment,
 		},
 		B: opb,
 	}
@@ -227,7 +228,7 @@ func makeTransactionPayment(kpSource keypair.KP, kpDest keypair.KP, amount commo
 		Source:     kpSource.Address(),
 		Fee:        common.Amount(common.BaseFee),
 		SequenceID: seqid,
-		Operations: []transaction.Operation{op},
+		Operations: []operation.Operation{op},
 	}
 
 	tx := transaction.Transaction{
