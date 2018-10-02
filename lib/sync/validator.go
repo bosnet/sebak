@@ -96,22 +96,7 @@ func (v *BlockValidator) finishBlock(ctx context.Context, syncInfo *SyncInfo) er
 		return nil
 	}
 
-	if err := v.saveBlock(ctx, syncInfo, ts); err != nil {
-		ts.Discard()
-		return err
-	}
-
-	if err := ts.Commit(); err != nil {
-		ts.Discard()
-		return err
-	}
-
-	return nil
-}
-
-func (v *BlockValidator) saveBlock(ctx context.Context, syncInfo *SyncInfo, ts *storage.LevelDBBackend) error {
 	//TODO(anarcher): using leveldb.Tx or leveldb.Batch?
-
 	blk := *syncInfo.Block
 	if err := blk.Save(ts); err != nil {
 		if err == errors.ErrorBlockAlreadyExists {
@@ -120,35 +105,17 @@ func (v *BlockValidator) saveBlock(ctx context.Context, syncInfo *SyncInfo, ts *
 		return err
 	}
 
-	for _, tx := range syncInfo.Txs {
-		raw, _ := tx.Serialize()
-		bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.Confirmed, *tx, raw)
-		if err := bt.Save(ts); err != nil {
-			return err
-		}
+	if err = runner.FinishTransactions(blk, syncInfo.Txs, ts); err != nil {
+		ts.Discard()
+		return err
+	}
+	v.logger.Info("Finish to sync block", "height", syncInfo.BlockHeight)
 
-		for _, op := range tx.B.Operations {
-			if err := runner.FinishOperation(ts, *tx, op, v.logger); err != nil {
-				return err
-			}
-		}
-
-		baSource, err := block.GetBlockAccount(ts, tx.B.Source)
-		if err != nil {
-			err = errors.ErrorBlockAccountDoesNotExists
-			return err
-		}
-
-		if err := baSource.Withdraw(tx.TotalAmount(true)); err != nil {
-			return err
-		}
-
-		if err := baSource.Save(ts); err != nil {
-			return err
-		}
+	if err := ts.Commit(); err != nil {
+		ts.Discard()
+		return err
 	}
 
-	v.logger.Info("Finish to sync block", "height", syncInfo.BlockHeight)
 	return nil
 }
 
