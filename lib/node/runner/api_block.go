@@ -124,7 +124,7 @@ func (nh NetworkHandlerNode) GetBlocksHandler(w http.ResponseWriter, r *http.Req
 			var tx block.BlockTransaction
 			var op block.BlockOperation
 
-			if tx, err = block.GetBlockTransaction(nh.storage, b.Transaction); err != nil {
+			if tx, err = block.GetBlockTransaction(nh.storage, b.ProposerTransaction); err != nil {
 				nh.renderNodeItem(w, NodeItemError, err)
 			} else {
 				nh.renderNodeItem(w, NodeItemBlockTransaction, tx)

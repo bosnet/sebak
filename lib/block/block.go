@@ -22,8 +22,8 @@ const (
 
 type Block struct {
 	Header
-	Transactions []string `json:"transactions"` /* []Transaction.GetHash() */
-	Transaction  string   `json:"transaction"`  /* ProposerTransaction */
+	Transactions        []string `json:"transactions"`         /* []Transaction.GetHash() */
+	ProposerTransaction string   `json:"proposer-transaction"` /* ProposerTransaction */
 	//PrevConsensusResult ConsensusResult
 
 	Hash      string      `json:"hash"`
@@ -144,12 +144,12 @@ func MakeGenesisBlock(st *storage.LevelDBBackend, genesisAccount BlockAccount, c
 // `ProposerTransaction.GetHash()`.
 func NewBlock(proposer string, round round.Round, ptx string, transactions []string, confirmed string) Block {
 	b := &Block{
-		Header:       *NewBlockHeader(round, uint64(len(transactions)), getTransactionRoot(transactions)),
-		Transactions: transactions,
-		Transaction:  ptx,
-		Proposer:     proposer,
-		Round:        round,
-		Confirmed:    confirmed,
+		Header:              *NewBlockHeader(round, uint64(len(transactions)), getTransactionRoot(transactions)),
+		Transactions:        transactions,
+		ProposerTransaction: ptx,
+		Proposer:            proposer,
+		Round:               round,
+		Confirmed:           confirmed,
 	}
 
 	b.Hash = base58.Encode(common.MustMakeObjectHash(b))

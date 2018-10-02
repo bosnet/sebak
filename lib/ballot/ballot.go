@@ -215,13 +215,13 @@ func (b Ballot) State() State {
 }
 
 func (b Ballot) ProposerTransaction() ProposerTransaction {
-	return b.B.Proposed.Transaction
+	return b.B.Proposed.ProposerTransaction
 }
 
 // SetProposerTransaction should be set in `Ballot`, without it can not be
 // passed thru `Ballot.IsWellFormed()`.
 func (b *Ballot) SetProposerTransaction(ptx ProposerTransaction) {
-	b.B.Proposed.Transaction = ptx
+	b.B.Proposed.ProposerTransaction = ptx
 }
 
 type BallotHeader struct {
@@ -231,11 +231,11 @@ type BallotHeader struct {
 }
 
 type BallotBodyProposed struct {
-	Confirmed    string              `json:"confirmed"` // created time, ISO8601
-	Proposer     string              `json:"proposer"`
-	Round        round.Round         `json:"round"`
-	Transactions []string            `json:"transactions"`
-	Transaction  ProposerTransaction `json:"transaction"`
+	Confirmed           string              `json:"confirmed"` // created time, ISO8601
+	Proposer            string              `json:"proposer"`
+	Round               round.Round         `json:"round"`
+	Transactions        []string            `json:"transactions"`
+	ProposerTransaction ProposerTransaction `json:"proposer-transaction"`
 }
 
 type BallotBody struct {
