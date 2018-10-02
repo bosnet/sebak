@@ -37,9 +37,11 @@ func (tp *TransactionPool) Get(hash string) (tx Transaction, found bool) {
 }
 
 func (tp *TransactionPool) Add(tx Transaction) bool {
+	tp.RLock()
 	if _, found := tp.Pool[tx.GetHash()]; found {
 		return false
 	}
+	tp.RUnlock()
 
 	tp.Lock()
 	defer tp.Unlock()
