@@ -1,7 +1,7 @@
 version: 2
 
 defaults: &defaults
-  working_directory: /go/src/boscoin.io/sebak
+  working_directory: /home/circleci/sebak
   docker:
     - image: circleci/golang:1.11
 
@@ -14,26 +14,24 @@ jobs:
     <<: *defaults
     steps:
       - checkout
-      - run:
-          name: install dep
-          command: curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
       - restore_cache:
-          key: dependency-cache-{{ checksum "Gopkg.lock" }}
+          key: dependency-cache-mod-{{ checksum "go.sum" }}
       - run:
-          name: install dependencies
-          command: dep ensure
+          name: Download dependencies
+          command: go mod download
       - run:
           name: Run go vet
           command: go vet ./...
       - save_cache:
-          key: dependency-cache-{{ checksum "Gopkg.lock" }}
+          key: dependency-cache-mod-{{ checksum "go.sum" }}
           paths:
-            - vendor
+            - /go/pkg/mod/
       - persist_to_workspace:
           root: /
           paths:
-            - go/src/boscoin.io/sebak
+            - home/circleci/sebak
             - home/circleci/.ssh
+            - go/pkg/mod/
 
   fmt:
     <<: *defaults
@@ -46,7 +44,7 @@ jobs:
   test_go1_11:
     docker:
       - image: circleci/golang:1.11
-    working_directory: /go/src/boscoin.io/sebak
+    working_directory: /home/circleci/sebak
     steps:
       - <<: *workspace
       - run:
@@ -70,7 +68,7 @@ jobs:
       - persist_to_workspace:
           root: /
           paths:
-            - go/src/boscoin.io/sebak
+            - home/circleci/sebak
 
   unittests:
     <<: *defaults
