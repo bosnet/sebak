@@ -49,3 +49,70 @@ func TestSerializeOperation(t *testing.T) {
 	err = json.Unmarshal(b, &o)
 	require.Nil(t, err)
 }
+
+func TestOperationBodyCongressVoting(t *testing.T) {
+	opb := OperationBodyCongressVoting{
+		Contract: []byte("dummy contract"),
+		Voting: struct {
+			Start uint64
+			End   uint64
+		}{
+			Start: 1,
+			End:   100,
+		},
+	}
+	op := Operation{
+		H: OperationHeader{Type: OperationCongressVoting},
+		B: opb,
+	}
+	hashed := op.MakeHashString()
+
+	expected := "2skQu73zDSRvBF5CYhKkJLuK2QBqBkPDTcp3qAx7XvgA"
+	require.Equal(t, hashed, expected)
+
+	err := op.IsWellFormed(networkID)
+	require.Nil(t, err)
+
+}
+
+func TestOperationBodyCongressVotingResult(t *testing.T) {
+	opb := OperationBodyCongressVotingResult{
+		BallotStamps: struct {
+			Hash string
+			Urls []string
+		}{
+			Hash: string(common.MakeHash([]byte("dummydummy"))),
+			Urls: []string{"http://www.boscoin.io/1", "http://www.boscoin.io/2"},
+		},
+		Voters: struct {
+			Hash string
+			Urls []string
+		}{
+			Hash: string(common.MakeHash([]byte("dummydummy"))),
+			Urls: []string{"http://www.boscoin.io/3", "http://www.boscoin.io/4"},
+		},
+		Result: struct {
+			Count uint64
+			Yes   uint64
+			No    uint64
+			ABS   uint64
+		}{
+			Count: 9,
+			Yes:   2,
+			No:    3,
+			ABS:   4,
+		},
+	}
+	op := Operation{
+		H: OperationHeader{Type: OperationCongressVotingResult},
+		B: opb,
+	}
+	hashed := op.MakeHashString()
+
+	expected := "HHEKRf4Q4Hzvaz8NMvvsKV57neTvgkppYBg5Up39JB8k"
+	require.Equal(t, hashed, expected)
+
+	err := op.IsWellFormed(networkID)
+	require.Nil(t, err)
+
+}

@@ -61,4 +61,5 @@ var (
 	ErrorFrozenAccountCreationWholeUnit       = NewError(154, "frozen account balance must be a whole number of units (10k)")
 	ErrorFrozenAccountMustWithdrawEverything  = NewError(155, "frozen account can only withdraw the full amount (minus tx fee)")
 	ErrorInsufficientAmountNewAccount         = NewError(156, "insufficient amount for new account")
+	ErrorOperationBodyInsufficient            = NewError(157, "operation body insufficient")
 )

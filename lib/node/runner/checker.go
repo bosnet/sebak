@@ -440,6 +440,9 @@ func finishOperation(st *storage.LevelDBBackend, tx transaction.Transaction, op 
 			return errors.ErrorUnknownOperationType
 		}
 		return finishOperationPayment(st, tx, pop, log)
+	case transaction.OperationCongressVoting, transaction.OperationCongressVotingResult:
+		//Nothing to do
+		return
 	default:
 		err = errors.ErrorUnknownOperationType
 		return

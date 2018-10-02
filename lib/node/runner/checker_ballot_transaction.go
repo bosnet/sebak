@@ -253,6 +253,10 @@ func ValidateOp(st *storage.LevelDBBackend, source *block.BlockAccount, op trans
 				return
 			}
 		}
+	case transaction.OperationCongressVoting, transaction.OperationCongressVotingResult:
+		// Nothing to do
+		return
+
 	default:
 		err = errors.ErrorUnknownOperationType
 		return
