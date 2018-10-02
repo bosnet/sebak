@@ -307,7 +307,6 @@ func TestGetNodeTransactionsHandlerInTransactionPool(t *testing.T) {
 	{
 		txHashes := []string{
 			p.consensus.TransactionPool.Hashes[1],
-			p.consensus.TransactionPool.Hashes[len(p.consensus.TransactionPool.Hashes)-2],
 		}
 
 		u := p.URL(nil)
@@ -324,12 +323,9 @@ func TestGetNodeTransactionsHandlerInTransactionPool(t *testing.T) {
 		require.Nil(t, err)
 
 		require.Equal(t, 1, len(rbs))
-		require.Equal(t, 2, len(rbs[NodeItemTransaction]))
-
-		for i, hash := range txHashes {
-			tx := rbs[NodeItemTransaction][i].(transaction.Transaction)
-			require.Equal(t, hash, tx.GetHash())
-		}
+		require.Equal(t, 1, len(rbs[NodeItemTransaction]))
+		tx := rbs[NodeItemTransaction][0].(transaction.Transaction)
+		require.Equal(t, txHashes[0], tx.GetHash())
 	}
 }
 
@@ -349,7 +345,6 @@ func TestGetNodeTransactionsHandlerTooManyHashes(t *testing.T) {
 	{
 		txHashes := []string{
 			p.consensus.TransactionPool.Hashes[1],
-			p.consensus.TransactionPool.Hashes[len(p.consensus.TransactionPool.Hashes)-2],
 			p.transactionHashes[0],
 			p.transactionHashes[1],
 			p.transactionHashes[2],
