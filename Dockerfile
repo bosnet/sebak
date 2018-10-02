@@ -2,10 +2,6 @@
 FROM golang:alpine AS builder
 LABEL maintainer="BOSCoin Developers <devteam@boscoin.io>"
 
-#golang:alpine set $GOPATH to `/go`
-COPY ./ /go/src/boscoin.io/sebak
-WORKDIR /go/src/boscoin.io/sebak
-
 # You probably don't need to change this
 ARG BUILD_MODE="install"
 ARG BUILD_ARGS=''
@@ -13,6 +9,10 @@ ARG BUILD_PKG="./..."
 
 RUN apk add --no-cache git openssh gcc musl-dev linux-headers
 RUN go get github.com/ahmetb/govvv
+
+#golang:alpine set $GOPATH to `/go`
+COPY ./ /go/src/boscoin.io/sebak
+WORKDIR /go/src/boscoin.io/sebak
 
 ## Note that we do not get the dependencies anew
 ## We carry over whatever is in `vendor`, so the user MUST run `dep ensure` in their local copy
