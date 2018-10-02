@@ -534,7 +534,7 @@ func TestBallotCheckerProposedTransactionStoreWithZeroAmount(t *testing.T) {
 	}
 	closeFunc()
 	require.Equal(t, 1, len(bos))
-	require.Equal(t, transaction.OperationCollectTxFee, bos[0].Type)
+	require.Equal(t, string(transaction.OperationCollectTxFee), string(bos[0].Type))
 
 	opbFromBlockInterface, err := transaction.UnmarshalOperationBodyJSON(bos[0].Type, bos[0].Body)
 	require.Nil(t, err)
