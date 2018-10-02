@@ -1,9 +1,5 @@
 #!/bin/sh
 
-if [ -f ".env" ]; then
-    source ./.env
-fi
-
 # This entrypoint has 2 modes: if any argument is provided to `docker run`, the
 # arguments are passed directly to sebak Otherwise, it just starts a node with the
 # environment file
