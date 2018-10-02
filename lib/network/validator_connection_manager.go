@@ -208,3 +208,15 @@ func (c *ValidatorConnectionManager) Broadcast(message common.Message) {
 	}
 	return
 }
+
+func (c *ValidatorConnectionManager) GetNode(address string) node.Node {
+	c.Lock()
+	defer c.Unlock()
+
+	validator, ok := c.validators[address]
+	if !ok {
+		return nil
+	}
+
+	return validator
+}
