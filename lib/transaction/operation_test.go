@@ -67,7 +67,7 @@ func TestOperationBodyCongressVoting(t *testing.T) {
 	}
 	hashed := op.MakeHashString()
 
-	expected := "4DDgT1txmCrge9eS1QqHhThTu3f97NkHos8t8ueD94sA"
+	expected := "2skQu73zDSRvBF5CYhKkJLuK2QBqBkPDTcp3qAx7XvgA"
 	require.Equal(t, hashed, expected)
 
 	err := op.IsWellFormed(networkID)
@@ -109,7 +109,7 @@ func TestOperationBodyCongressVotingResult(t *testing.T) {
 	}
 	hashed := op.MakeHashString()
 
-	expected := "F4HQBdWPiMJHFtgbgbxp2ykESppD9vGAewUnmA5B9Agg"
+	expected := "HHEKRf4Q4Hzvaz8NMvvsKV57neTvgkppYBg5Up39JB8k"
 	require.Equal(t, hashed, expected)
 
 	err := op.IsWellFormed(networkID)
