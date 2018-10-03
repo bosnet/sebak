@@ -9,9 +9,9 @@ import (
 	"boscoin.io/sebak/lib/transaction/operation"
 )
 
-var OperationTypesProposerTransaction map[operation.OperationType]struct{} = map[operation.OperationType]struct{}{
-	operation.OperationCollectTxFee: struct{}{},
-	operation.OperationInflation:    struct{}{},
+var TypesProposerTransaction map[operation.OperationType]struct{} = map[operation.OperationType]struct{}{
+	operation.TypeCollectTxFee: struct{}{},
+	operation.TypeInflation:    struct{}{},
 }
 
 type ProposerTransaction struct {
@@ -32,7 +32,7 @@ func NewProposerTransaction(proposer string, ops ...operation.Operation) (ptx Pr
 	return
 }
 
-func NewOperationCollectTxFeeFromBallot(blt Ballot, commonAccount string, txs ...transaction.Transaction) (opb operation.OperationBodyCollectTxFee, err error) {
+func NewCollectTxFeeFromBallot(blt Ballot, commonAccount string, txs ...transaction.Transaction) (opb operation.CollectTxFee, err error) {
 	rd := blt.Round()
 
 	var feeAmount common.Amount
@@ -40,7 +40,7 @@ func NewOperationCollectTxFeeFromBallot(blt Ballot, commonAccount string, txs ..
 		feeAmount = feeAmount + tx.B.Fee
 	}
 
-	opb = operation.NewOperationBodyCollectTxFee(
+	opb = operation.NewCollectTxFee(
 		commonAccount,
 		feeAmount,
 		uint64(len(txs)),
@@ -51,7 +51,7 @@ func NewOperationCollectTxFeeFromBallot(blt Ballot, commonAccount string, txs ..
 	return
 }
 
-func NewOperationInflationFromBallot(blt Ballot, commonAccount string, initialBalance common.Amount) (opb operation.OperationBodyInflation, err error) {
+func NewInflationFromBallot(blt Ballot, commonAccount string, initialBalance common.Amount) (opb operation.Inflation, err error) {
 	rd := blt.Round()
 
 	var amount common.Amount
@@ -71,7 +71,7 @@ func NewOperationInflationFromBallot(blt Ballot, commonAccount string, initialBa
 	return
 }
 
-func NewProposerTransactionFromBallot(blt Ballot, opc operation.OperationBodyCollectTxFee, opi operation.OperationBodyInflation) (ptx ProposerTransaction, err error) {
+func NewProposerTransactionFromBallot(blt Ballot, opc operation.CollectTxFee, opi operation.Inflation) (ptx ProposerTransaction, err error) {
 	var ops []operation.Operation
 
 	var op operation.Operation
@@ -105,7 +105,7 @@ var ProposerTransactionWellFormedCheckerFuncs = []common.CheckerFunc{
 }
 
 func (p ProposerTransaction) IsWellFormed(networkID []byte) (err error) {
-	if _, err = p.OperationBodyCollectTxFee(); err != nil {
+	if _, err = p.CollectTxFee(); err != nil {
 		return
 	}
 
@@ -133,8 +133,8 @@ func (p ProposerTransaction) IsWellFormedWithBallot(networkID []byte, blt Ballot
 
 	rd := blt.Round()
 	{ // check OperationCollectTxFee
-		var opb operation.OperationBodyCollectTxFee
-		if opb, err = blt.ProposerTransaction().OperationBodyCollectTxFee(); err != nil {
+		var opb operation.CollectTxFee
+		if opb, err = blt.ProposerTransaction().CollectTxFee(); err != nil {
 			return
 		}
 
@@ -168,8 +168,8 @@ func (p ProposerTransaction) IsWellFormedWithBallot(networkID []byte, blt Ballot
 	}
 
 	{ // check OperationInflation
-		var opb operation.OperationBodyInflation
-		if opb, err = blt.ProposerTransaction().OperationBodyInflation(); err != nil {
+		var opb operation.Inflation
+		if opb, err = blt.ProposerTransaction().Inflation(); err != nil {
 			return
 		}
 
@@ -190,12 +190,12 @@ func (p ProposerTransaction) IsWellFormedWithBallot(networkID []byte, blt Ballot
 	return
 }
 
-func (p ProposerTransaction) OperationBodyCollectTxFee() (opb operation.OperationBodyCollectTxFee, err error) {
+func (p ProposerTransaction) CollectTxFee() (opb operation.CollectTxFee, err error) {
 	var found bool
 	for _, op := range p.B.Operations {
 		switch op.B.(type) {
-		case operation.OperationBodyCollectTxFee:
-			opb = op.B.(operation.OperationBodyCollectTxFee)
+		case operation.CollectTxFee:
+			opb = op.B.(operation.CollectTxFee)
 			found = true
 			break
 		default:
@@ -211,12 +211,12 @@ func (p ProposerTransaction) OperationBodyCollectTxFee() (opb operation.Operatio
 	return
 }
 
-func (p ProposerTransaction) OperationBodyInflation() (opb operation.OperationBodyInflation, err error) {
+func (p ProposerTransaction) Inflation() (opb operation.Inflation, err error) {
 	var found bool
 	for _, op := range p.B.Operations {
 		switch op.B.(type) {
-		case operation.OperationBodyInflation:
-			opb = op.B.(operation.OperationBodyInflation)
+		case operation.Inflation:
+			opb = op.B.(operation.Inflation)
 			found = true
 			break
 		default:
@@ -264,7 +264,7 @@ func CheckProposerTransactionOperationTypes(c common.Checker, args ...interface{
 
 	var foundTypes []string
 	for _, op := range checker.Transaction.B.Operations {
-		if _, found := OperationTypesProposerTransaction[op.H.Type]; !found {
+		if _, found := TypesProposerTransaction[op.H.Type]; !found {
 			err = errors.ErrorInvalidOperation
 			return
 		}

@@ -33,11 +33,11 @@ func makeTransaction(kp *keypair.Full) (tx transaction.Transaction) {
 }
 
 func makeTransactionPayment(kpSource *keypair.Full, target string, amount common.Amount) (tx transaction.Transaction) {
-	opb := operation.NewOperationBodyPayment(target, amount)
+	opb := operation.NewPayment(target, amount)
 
 	op := operation.Operation{
-		H: operation.OperationHeader{
-			Type: operation.OperationPayment,
+		H: operation.Header{
+			Type: operation.TypePayment,
 		},
 		B: opb,
 	}

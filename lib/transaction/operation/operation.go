@@ -12,58 +12,58 @@ import (
 type OperationType string
 
 const (
-	OperationCreateAccount        OperationType = "create-account"
-	OperationPayment                            = "payment"
-	OperationCongressVoting                     = "congress-voting"
-	OperationCongressVotingResult               = "congress-voting-result"
-	OperationCollectTxFee                       = "collect-tx-fee"
-	OperationInflation                          = "inflation"
+	TypeCreateAccount        OperationType = "create-account"
+	TypePayment              OperationType = "payment"
+	TypeCongressVoting       OperationType = "congress-voting"
+	TypeCongressVotingResult OperationType = "congress-voting-result"
+	TypeCollectTxFee         OperationType = "collect-tx-fee"
+	TypeInflation            OperationType = "inflation"
 )
 
-var OperationTypesNormalTransaction map[OperationType]struct{} = map[OperationType]struct{}{
-	OperationCreateAccount:        struct{}{},
-	OperationPayment:              struct{}{},
-	OperationCongressVoting:       struct{}{},
-	OperationCongressVotingResult: struct{}{},
+var KindsNormalTransaction map[OperationType]struct{} = map[OperationType]struct{}{
+	TypeCreateAccount:        struct{}{},
+	TypePayment:              struct{}{},
+	TypeCongressVoting:       struct{}{},
+	TypeCongressVotingResult: struct{}{},
 }
 
 // Limit is the number of operations to be included in a transaction
 var Limit = 1000
 
 type Operation struct {
-	H OperationHeader
-	B OperationBody
+	H Header
+	B Body
 }
 
-func NewOperation(opb OperationBody) (op Operation, err error) {
+func NewOperation(opb Body) (op Operation, err error) {
 	var t OperationType
 	switch opb.(type) {
-	case OperationBodyCreateAccount:
-		t = OperationCreateAccount
-	case OperationBodyPayment:
-		t = OperationPayment
-	case OperationBodyCollectTxFee:
-		t = OperationCollectTxFee
-	case OperationBodyInflation:
-		t = OperationInflation
+	case CreateAccount:
+		t = TypeCreateAccount
+	case Payment:
+		t = TypePayment
+	case CollectTxFee:
+		t = TypeCollectTxFee
+	case Inflation:
+		t = TypeInflation
 	default:
 		err = errors.ErrorUnknownOperationType
 		return
 	}
 
 	op = Operation{
-		H: OperationHeader{Type: t},
+		H: Header{Type: t},
 		B: opb,
 	}
 
 	return
 }
 
-type OperationHeader struct {
+type Header struct {
 	Type OperationType `json:"type"`
 }
 
-type OperationBody interface {
+type Body interface {
 	//
 	// Check that this transaction is self consistent
 	//
@@ -79,8 +79,8 @@ type OperationBody interface {
 	Serialize() ([]byte, error)
 }
 
-type OperationBodyPayable interface {
-	OperationBody
+type Payable interface {
+	Body
 	TargetAddress() string
 	GetAmount() common.Amount
 }
@@ -107,15 +107,15 @@ func (o Operation) String() string {
 	return string(encoded)
 }
 
-type operationEnvelop struct {
-	H OperationHeader
+type envelop struct {
+	H Header
 	B interface{}
 }
 
 func (o *Operation) UnmarshalJSON(b []byte) (err error) {
-	var envelop json.RawMessage
-	oj := operationEnvelop{
-		B: &envelop,
+	var raw json.RawMessage
+	oj := envelop{
+		B: &raw,
 	}
 	if err = json.Unmarshal(b, &oj); err != nil {
 		return
@@ -123,8 +123,8 @@ func (o *Operation) UnmarshalJSON(b []byte) (err error) {
 
 	o.H = oj.H
 
-	var body OperationBody
-	if body, err = UnmarshalOperationBodyJSON(oj.H.Type, envelop); err != nil {
+	var body Body
+	if body, err = UnmarshalBodyJSON(oj.H.Type, raw); err != nil {
 		return
 	}
 	o.B = body
@@ -132,40 +132,40 @@ func (o *Operation) UnmarshalJSON(b []byte) (err error) {
 	return
 }
 
-func UnmarshalOperationBodyJSON(t OperationType, b []byte) (body OperationBody, err error) {
+func UnmarshalBodyJSON(t OperationType, b []byte) (body Body, err error) {
 	switch t {
-	case OperationCreateAccount:
-		var ob OperationBodyCreateAccount
+	case TypeCreateAccount:
+		var ob CreateAccount
 		if err = json.Unmarshal(b, &ob); err != nil {
 			return
 		}
 		body = ob
-	case OperationPayment:
-		var ob OperationBodyPayment
+	case TypePayment:
+		var ob Payment
 		if err = json.Unmarshal(b, &ob); err != nil {
 			return
 		}
 		body = ob
-	case OperationCongressVoting:
-		var ob OperationBodyCongressVoting
+	case TypeCongressVoting:
+		var ob CongressVoting
 		if err = json.Unmarshal(b, &ob); err != nil {
 			return
 		}
 		body = ob
-	case OperationCongressVotingResult:
-		var ob OperationBodyCongressVotingResult
+	case TypeCongressVotingResult:
+		var ob CongressVotingResult
 		if err = json.Unmarshal(b, &ob); err != nil {
 			return
 		}
 		body = ob
-	case OperationCollectTxFee:
-		var ob OperationBodyCollectTxFee
+	case TypeCollectTxFee:
+		var ob CollectTxFee
 		if err = json.Unmarshal(b, &ob); err != nil {
 			return
 		}
 		body = ob
-	case OperationInflation:
-		var ob OperationBodyInflation
+	case TypeInflation:
+		var ob Inflation
 		if err = json.Unmarshal(b, &ob); err != nil {
 			return
 		}

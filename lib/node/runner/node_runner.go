@@ -540,12 +540,12 @@ func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) (ballot.Ballot, error
 		}
 	}
 
-	opc, err := ballot.NewOperationCollectTxFeeFromBallot(*theBallot, nr.CommonAccountAddress, validTransactions...)
+	opc, err := ballot.NewCollectTxFeeFromBallot(*theBallot, nr.CommonAccountAddress, validTransactions...)
 	if err != nil {
 		return ballot.Ballot{}, err
 	}
 
-	opi, err := ballot.NewOperationInflationFromBallot(*theBallot, nr.CommonAccountAddress, nr.InitialBalance)
+	opi, err := ballot.NewInflationFromBallot(*theBallot, nr.CommonAccountAddress, nr.InitialBalance)
 	if err != nil {
 		return ballot.Ballot{}, err
 	}

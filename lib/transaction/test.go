@@ -59,11 +59,11 @@ func TestMakeTransactionWithKeypair(networkID []byte, n int, srcKp *keypair.Full
 }
 
 func MakeTransactionCreateAccount(kpSource *keypair.Full, target string, amount common.Amount) (tx Transaction) {
-	opb := operation.NewOperationBodyCreateAccount(target, common.Amount(amount), "")
+	opb := operation.NewCreateAccount(target, common.Amount(amount), "")
 
 	op := operation.Operation{
-		H: operation.OperationHeader{
-			Type: operation.OperationCreateAccount,
+		H: operation.Header{
+			Type: operation.TypeCreateAccount,
 		},
 		B: opb,
 	}

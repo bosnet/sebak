@@ -44,8 +44,8 @@ func TestValidateTxPaymentMissingBlockAccount(t *testing.T) {
 			SequenceID: 0,
 			Operations: []operation.Operation{
 				operation.Operation{
-					H: operation.OperationHeader{Type: operation.OperationPayment},
-					B: operation.OperationBodyPayment{Target: kpt.Address(), Amount: common.Amount(10000)},
+					H: operation.Header{Type: operation.TypePayment},
+					B: operation.Payment{Target: kpt.Address(), Amount: common.Amount(10000)},
 				},
 			},
 		},
@@ -109,8 +109,8 @@ func TestValidateTxWrongSequenceID(t *testing.T) {
 			SequenceID: 0,
 			Operations: []operation.Operation{
 				operation.Operation{
-					H: operation.OperationHeader{Type: operation.OperationPayment},
-					B: operation.OperationBodyPayment{Target: kpt.Address(), Amount: common.Amount(10000)},
+					H: operation.Header{Type: operation.TypePayment},
+					B: operation.Payment{Target: kpt.Address(), Amount: common.Amount(10000)},
 				},
 			},
 		},
@@ -142,7 +142,7 @@ func TestValidateTxOverBalance(t *testing.T) {
 	bas.Save(st)
 	bat.Save(st)
 
-	opbody := operation.OperationBodyPayment{Target: kpt.Address(), Amount: bas.Balance}
+	opbody := operation.Payment{Target: kpt.Address(), Amount: bas.Balance}
 	tx := transaction.Transaction{
 		T: "transaction",
 		H: transaction.TransactionHeader{
@@ -154,7 +154,7 @@ func TestValidateTxOverBalance(t *testing.T) {
 			SequenceID: 1,
 			Operations: []operation.Operation{
 				operation.Operation{
-					H: operation.OperationHeader{Type: operation.OperationPayment},
+					H: operation.Header{Type: operation.TypePayment},
 					B: opbody,
 				},
 			},
@@ -211,8 +211,8 @@ func TestValidateOpCreateExistsAccount(t *testing.T) {
 			SequenceID: 0,
 			Operations: []operation.Operation{
 				operation.Operation{
-					H: operation.OperationHeader{Type: operation.OperationCreateAccount},
-					B: operation.OperationBodyCreateAccount{Target: kpt.Address(), Amount: common.Amount(10000)},
+					H: operation.Header{Type: operation.TypeCreateAccount},
+					B: operation.CreateAccount{Target: kpt.Address(), Amount: common.Amount(10000)},
 				},
 			},
 		},

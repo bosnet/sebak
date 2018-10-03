@@ -12,7 +12,7 @@ import (
 // OperationBodyTransactionFee is the operation to send the collected transacton
 // fee to certain account. To prevent the hash duplication of transaction,
 // OperationBodyTransactionFee has block related data.
-type OperationBodyCollectTxFee struct {
+type CollectTxFee struct {
 	Target      string        `json:"target"`
 	Amount      common.Amount `json:"amount"`
 	Txs         uint64        `json:"txs"`
@@ -21,15 +21,15 @@ type OperationBodyCollectTxFee struct {
 	TotalTxs    uint64        `json:"total-txs"`
 }
 
-func NewOperationBodyCollectTxFee(
+func NewCollectTxFee(
 	target string,
 	amount common.Amount,
 	txs uint64,
 	blockHeight uint64,
 	blockHash string,
 	totalTxs uint64,
-) OperationBodyCollectTxFee {
-	return OperationBodyCollectTxFee{
+) CollectTxFee {
+	return CollectTxFee{
 		Target:      target,
 		Amount:      amount,
 		Txs:         txs,
@@ -39,7 +39,7 @@ func NewOperationBodyCollectTxFee(
 	}
 }
 
-func (o OperationBodyCollectTxFee) IsWellFormed([]byte) (err error) {
+func (o CollectTxFee) IsWellFormed([]byte) (err error) {
 	if _, err = keypair.Parse(o.Target); err != nil {
 		return
 	}
@@ -72,14 +72,14 @@ func (o OperationBodyCollectTxFee) IsWellFormed([]byte) (err error) {
 	return
 }
 
-func (o OperationBodyCollectTxFee) TargetAddress() string {
+func (o CollectTxFee) TargetAddress() string {
 	return o.Target
 }
 
-func (o OperationBodyCollectTxFee) GetAmount() common.Amount {
+func (o CollectTxFee) GetAmount() common.Amount {
 	return o.Amount
 }
 
-func (o OperationBodyCollectTxFee) Serialize() (encoded []byte, err error) {
+func (o CollectTxFee) Serialize() (encoded []byte, err error) {
 	return json.Marshal(o)
 }

@@ -7,7 +7,7 @@ import (
 	"boscoin.io/sebak/lib/error"
 )
 
-type OperationBodyCongressVotingResult struct {
+type CongressVotingResult struct {
 	BallotStamps struct {
 		Hash string
 		Urls []string
@@ -24,10 +24,10 @@ type OperationBodyCongressVotingResult struct {
 	}
 }
 
-func (o OperationBodyCongressVotingResult) Serialize() (encoded []byte, err error) {
+func (o CongressVotingResult) Serialize() (encoded []byte, err error) {
 	return json.Marshal(o)
 }
-func (o OperationBodyCongressVotingResult) IsWellFormed([]byte) (err error) {
+func (o CongressVotingResult) IsWellFormed([]byte) (err error) {
 	if len(o.BallotStamps.Hash) == 0 {
 		return errors.ErrorOperationBodyInsufficient
 	}

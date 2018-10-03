@@ -13,12 +13,12 @@ import (
 func TestMakeHashOfOperationBodyPayment(t *testing.T) {
 	kp := keypair.Master("find me")
 
-	opb := OperationBodyPayment{
+	opb := Payment{
 		Target: kp.Address(),
 		Amount: common.Amount(100),
 	}
 	op := Operation{
-		H: OperationHeader{Type: OperationPayment},
+		H: Header{Type: TypePayment},
 		B: opb,
 	}
 	hashed := op.MakeHashString()
@@ -51,7 +51,7 @@ func TestSerializeOperation(t *testing.T) {
 }
 
 func TestOperationBodyCongressVoting(t *testing.T) {
-	opb := OperationBodyCongressVoting{
+	opb := CongressVoting{
 		Contract: []byte("dummy contract"),
 		Voting: struct {
 			Start uint64
@@ -62,7 +62,7 @@ func TestOperationBodyCongressVoting(t *testing.T) {
 		},
 	}
 	op := Operation{
-		H: OperationHeader{Type: OperationCongressVoting},
+		H: Header{Type: TypeCongressVoting},
 		B: opb,
 	}
 	hashed := op.MakeHashString()
@@ -76,7 +76,7 @@ func TestOperationBodyCongressVoting(t *testing.T) {
 }
 
 func TestOperationBodyCongressVotingResult(t *testing.T) {
-	opb := OperationBodyCongressVotingResult{
+	opb := CongressVotingResult{
 		BallotStamps: struct {
 			Hash string
 			Urls []string
@@ -104,7 +104,7 @@ func TestOperationBodyCongressVotingResult(t *testing.T) {
 		},
 	}
 	op := Operation{
-		H: OperationHeader{Type: OperationCongressVotingResult},
+		H: Header{Type: TypeCongressVotingResult},
 		B: opb,
 	}
 	hashed := op.MakeHashString()

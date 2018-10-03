@@ -76,8 +76,8 @@ func (p *ballotCheckerProposedTransaction) MakeBallot(numberOfTxs int) (blt *bal
 
 	blt = ballot.NewBallot(p.proposerNode.Address(), rd, p.txHashes)
 
-	opc, _ := ballot.NewOperationCollectTxFeeFromBallot(*blt, p.commonAccount.Address, p.txs...)
-	opi, _ := ballot.NewOperationInflationFromBallot(*blt, p.commonAccount.Address, p.initialBalance)
+	opc, _ := ballot.NewCollectTxFeeFromBallot(*blt, p.commonAccount.Address, p.txs...)
+	opi, _ := ballot.NewInflationFromBallot(*blt, p.commonAccount.Address, p.initialBalance)
 
 	ptx, err := ballot.NewProposerTransactionFromBallot(*blt, opc, opi)
 	if err != nil {
@@ -163,7 +163,7 @@ func TestProposedTransactionWithTransactions(t *testing.T) {
 	p := &ballotCheckerProposedTransaction{}
 	p.Prepare()
 
-	// with valid `OperationBodyCollectTxFee.Txs` count
+	// with valid `CollectTxFee.Txs` count
 	blt := p.MakeBallot(3)
 	{
 		err := blt.ProposerTransaction().IsWellFormed(networkID)
@@ -244,9 +244,9 @@ func TestProposedTransactionWithTransactionsButWrongTxs(t *testing.T) {
 
 	numberOfTxs := 3
 	blt := p.MakeBallot(numberOfTxs)
-	opb, _ := blt.ProposerTransaction().OperationBodyCollectTxFee()
+	opb, _ := blt.ProposerTransaction().CollectTxFee()
 
-	// with wrong `OperationBodyCollectTxFee.Txs` count
+	// with wrong `CollectTxFee.Txs` count
 	opb.Txs = uint64(numberOfTxs - 1)
 	ptx := blt.ProposerTransaction()
 	ptx.B.Operations[0].B = opb
@@ -268,9 +268,9 @@ func TestProposedTransactionWithWrongOperationBodyCollectTxFeeBlockData(t *testi
 	p.Prepare()
 
 	{
-		// with wrong `OperationBodyCollectTxFee.BlockHeight`
+		// with wrong `CollectTxFee.BlockHeight`
 		blt := p.MakeBallot(4)
-		opb, _ := blt.ProposerTransaction().OperationBodyCollectTxFee()
+		opb, _ := blt.ProposerTransaction().CollectTxFee()
 		opb.BlockHeight = blt.B.Proposed.Round.BlockHeight + 1
 		ptx := blt.ProposerTransaction()
 		ptx.B.Operations[0].B = opb
@@ -288,9 +288,9 @@ func TestProposedTransactionWithWrongOperationBodyCollectTxFeeBlockData(t *testi
 	}
 
 	{
-		// with wrong `OperationBodyCollectTxFee.BlockHash`
+		// with wrong `CollectTxFee.BlockHash`
 		blt := p.MakeBallot(4)
-		opb, _ := blt.ProposerTransaction().OperationBodyCollectTxFee()
+		opb, _ := blt.ProposerTransaction().CollectTxFee()
 		opb.BlockHash = blt.B.Proposed.Round.BlockHash + "showme"
 		ptx := blt.ProposerTransaction()
 		ptx.B.Operations[0].B = opb
@@ -308,9 +308,9 @@ func TestProposedTransactionWithWrongOperationBodyCollectTxFeeBlockData(t *testi
 	}
 
 	{
-		// with wrong `OperationBodyCollectTxFee.TotalTxs`
+		// with wrong `CollectTxFee.TotalTxs`
 		blt := p.MakeBallot(4)
-		opb, _ := blt.ProposerTransaction().OperationBodyCollectTxFee()
+		opb, _ := blt.ProposerTransaction().CollectTxFee()
 		opb.TotalTxs = blt.B.Proposed.Round.TotalTxs + 2
 		ptx := blt.ProposerTransaction()
 		ptx.B.Operations[0].B = opb
@@ -328,10 +328,10 @@ func TestProposedTransactionWithWrongOperationBodyCollectTxFeeBlockData(t *testi
 	}
 
 	{
-		// with wrong `OperationBodyCollectTxFee.Txs`; this will cause the
+		// with wrong `CollectTxFee.Txs`; this will cause the
 		// insufficient collected fee.
 		blt := p.MakeBallot(4)
-		opb, _ := blt.ProposerTransaction().OperationBodyCollectTxFee()
+		opb, _ := blt.ProposerTransaction().CollectTxFee()
 		opb.Txs = uint64(len(blt.Transactions()) + 1)
 		ptx := blt.ProposerTransaction()
 		ptx.B.Operations[0].B = opb
@@ -350,9 +350,9 @@ func TestProposedTransactionWithWrongOperationBodyInflationFeeBlockData(t *testi
 	p.Prepare()
 
 	{
-		// with wrong `OperationBodyInflation.BlockHeight`
+		// with wrong `Inflation.BlockHeight`
 		blt := p.MakeBallot(4)
-		opb, _ := blt.ProposerTransaction().OperationBodyInflation()
+		opb, _ := blt.ProposerTransaction().Inflation()
 		opb.BlockHeight = blt.B.Proposed.Round.BlockHeight + 1
 		ptx := blt.ProposerTransaction()
 		ptx.B.Operations[1].B = opb
@@ -370,9 +370,9 @@ func TestProposedTransactionWithWrongOperationBodyInflationFeeBlockData(t *testi
 	}
 
 	{
-		// with wrong `OperationBodyInflation.BlockHash`
+		// with wrong `Inflation.BlockHash`
 		blt := p.MakeBallot(4)
-		opb, _ := blt.ProposerTransaction().OperationBodyInflation()
+		opb, _ := blt.ProposerTransaction().Inflation()
 		opb.BlockHash = blt.B.Proposed.Round.BlockHash + "showme"
 		ptx := blt.ProposerTransaction()
 		ptx.B.Operations[1].B = opb
@@ -390,9 +390,9 @@ func TestProposedTransactionWithWrongOperationBodyInflationFeeBlockData(t *testi
 	}
 
 	{
-		// with wrong `OperationBodyInflation.TotalTxs`
+		// with wrong `Inflation.TotalTxs`
 		blt := p.MakeBallot(4)
-		opb, _ := blt.ProposerTransaction().OperationBodyInflation()
+		opb, _ := blt.ProposerTransaction().Inflation()
 		opb.TotalTxs = blt.B.Proposed.Round.TotalTxs + 2
 		ptx := blt.ProposerTransaction()
 		ptx.B.Operations[1].B = opb
@@ -414,9 +414,9 @@ func TestProposedTransactionWithCollectTxFeeWrongAmount(t *testing.T) {
 	p := &ballotCheckerProposedTransaction{}
 	p.Prepare()
 
-	// with wrong `OperationBodyCollectTxFee.Amount` count
+	// with wrong `CollectTxFee.Amount` count
 	blt := p.MakeBallot(4)
-	opb, _ := blt.ProposerTransaction().OperationBodyCollectTxFee()
+	opb, _ := blt.ProposerTransaction().CollectTxFee()
 	opb.Amount = opb.Amount.MustSub(1)
 	ptx := blt.ProposerTransaction()
 	ptx.B.Operations[0].B = opb
@@ -433,9 +433,9 @@ func TestProposedTransactionWithInflationWrongAmount(t *testing.T) {
 	p := &ballotCheckerProposedTransaction{}
 	p.Prepare()
 
-	// with wrong `OperationBodyCollectTxFee.Amount` count
+	// with wrong `CollectTxFee.Amount` count
 	blt := p.MakeBallot(4)
-	opb, _ := blt.ProposerTransaction().OperationBodyInflation()
+	opb, _ := blt.ProposerTransaction().Inflation()
 	opb.Amount = opb.Amount.MustAdd(1)
 	ptx := blt.ProposerTransaction()
 	ptx.B.Operations[1].B = opb
@@ -491,7 +491,7 @@ func TestProposedTransactionWithNotZeroFee(t *testing.T) {
 	p := &ballotCheckerProposedTransaction{}
 	p.Prepare()
 
-	// with wrong `OperationBodyCollectTxFee.Amount` count
+	// with wrong `CollectTxFee.Amount` count
 	blt := p.MakeBallot(4)
 	ptx := blt.ProposerTransaction()
 	ptx.B.Fee = common.Amount(1)
@@ -508,10 +508,10 @@ func TestProposedTransactionWithCollectTxFeeWrongCommonAddress(t *testing.T) {
 	p := &ballotCheckerProposedTransaction{}
 	p.Prepare()
 
-	// with wrong `OperationBodyCollectTxFee.Amount` count
+	// with wrong `CollectTxFee.Amount` count
 	wrongKP, _ := keypair.Random()
 	blt := p.MakeBallot(4)
-	opb, _ := blt.ProposerTransaction().OperationBodyCollectTxFee()
+	opb, _ := blt.ProposerTransaction().CollectTxFee()
 	opb.Target = wrongKP.Address()
 	ptx := blt.ProposerTransaction()
 	ptx.B.Operations[0].B = opb
@@ -566,10 +566,10 @@ func TestProposedTransactionWithInflationWrongCommonAddress(t *testing.T) {
 	p := &ballotCheckerProposedTransaction{}
 	p.Prepare()
 
-	// with wrong `OperationBodyCollectTxFee.Amount` count
+	// with wrong `CollectTxFee.Amount` count
 	wrongKP, _ := keypair.Random()
 	blt := p.MakeBallot(4)
-	opb, _ := blt.ProposerTransaction().OperationBodyInflation()
+	opb, _ := blt.ProposerTransaction().Inflation()
 	opb.Target = wrongKP.Address()
 	ptx := blt.ProposerTransaction()
 	ptx.B.Operations[1].B = opb
@@ -624,7 +624,7 @@ func TestProposedTransactionWithBiggerTransactionFeeThanCollected(t *testing.T) 
 	p := &ballotCheckerProposedTransaction{}
 	p.Prepare()
 
-	// with wrong `OperationBodyCollectTxFee.Amount` count
+	// with wrong `CollectTxFee.Amount` count
 	blt := p.MakeBallot(4)
 	var txHashes []string
 	p.nr.Consensus().TransactionPool.Remove(p.txHashes...)
@@ -688,8 +688,8 @@ func TestProposedTransactionStoreWithZeroAmount(t *testing.T) {
 	p.Prepare()
 
 	blt := p.MakeBallot(0)
-	opbc, _ := blt.ProposerTransaction().OperationBodyCollectTxFee()
-	opbi, _ := blt.ProposerTransaction().OperationBodyInflation()
+	opbc, _ := blt.ProposerTransaction().CollectTxFee()
+	opbi, _ := blt.ProposerTransaction().Inflation()
 
 	previousCommonAccount, _ := block.GetBlockAccount(p.nr.Storage(), p.commonAccount.Address)
 
@@ -734,14 +734,14 @@ func TestProposedTransactionStoreWithZeroAmount(t *testing.T) {
 	closeFunc()
 	require.Equal(t, 2, len(bos))
 
-	{ // OperationCollectTxFee
-		require.Equal(t, string(operation.OperationCollectTxFee), string(bos[0].Type))
+	{ // CollectTxFee
+		require.Equal(t, string(operation.TypeCollectTxFee), string(bos[0].Type))
 
-		opbFromBlockInterface, err := operation.UnmarshalOperationBodyJSON(bos[0].Type, bos[0].Body)
+		opbFromBlockInterface, err := operation.UnmarshalBodyJSON(bos[0].Type, bos[0].Body)
 		require.Nil(t, err)
-		opbFromBlock := opbFromBlockInterface.(operation.OperationBodyCollectTxFee)
+		opbFromBlock := opbFromBlockInterface.(operation.CollectTxFee)
 
-		opb, _ := blt.ProposerTransaction().OperationBodyCollectTxFee()
+		opb, _ := blt.ProposerTransaction().CollectTxFee()
 		require.Equal(t, opb.Amount, opbFromBlock.Amount)
 		require.Equal(t, opb.Target, opbFromBlock.Target)
 		require.Equal(t, opb.BlockHeight, opbFromBlock.BlockHeight)
@@ -750,14 +750,14 @@ func TestProposedTransactionStoreWithZeroAmount(t *testing.T) {
 		require.Equal(t, opb.Txs, opbFromBlock.Txs)
 	}
 
-	{ // OperationInflation
-		require.Equal(t, string(operation.OperationInflation), string(bos[1].Type))
+	{ // Inflation
+		require.Equal(t, string(operation.TypeInflation), string(bos[1].Type))
 
-		opbFromBlockInterface, err := operation.UnmarshalOperationBodyJSON(bos[1].Type, bos[1].Body)
+		opbFromBlockInterface, err := operation.UnmarshalBodyJSON(bos[1].Type, bos[1].Body)
 		require.Nil(t, err)
-		opbFromBlock := opbFromBlockInterface.(operation.OperationBodyInflation)
+		opbFromBlock := opbFromBlockInterface.(operation.Inflation)
 
-		opb, _ := blt.ProposerTransaction().OperationBodyInflation()
+		opb, _ := blt.ProposerTransaction().Inflation()
 		require.Equal(t, opb.Amount, opbFromBlock.Amount)
 		require.Equal(t, opb.Target, opbFromBlock.Target)
 		require.Equal(t, opb.BlockHeight, opbFromBlock.BlockHeight)
@@ -771,7 +771,7 @@ func TestProposedTransactionStoreWithAmount(t *testing.T) {
 	p.Prepare()
 
 	blt := p.MakeBallot(4)
-	opb, _ := blt.ProposerTransaction().OperationBodyCollectTxFee()
+	opb, _ := blt.ProposerTransaction().CollectTxFee()
 
 	previousCommonAccount, _ := block.GetBlockAccount(p.nr.Storage(), p.commonAccount.Address)
 
@@ -808,7 +808,7 @@ func TestProposedTransactionWithNormalOperations(t *testing.T) {
 		op := ptx.B.Operations[1]
 
 		kp, _ := keypair.Random()
-		opb := operation.NewOperationBodyCreateAccount(kp.Address(), common.Amount(1), "")
+		opb := operation.NewCreateAccount(kp.Address(), common.Amount(1), "")
 		newOp, _ := operation.NewOperation(opb)
 		ptx.B.Operations = []operation.Operation{op, newOp}
 
@@ -834,7 +834,7 @@ func TestProposedTransactionWithWrongNumberOfOperations(t *testing.T) {
 		ptx := blt.ProposerTransaction()
 
 		kp, _ := keypair.Random()
-		opb := operation.NewOperationBodyCreateAccount(kp.Address(), common.Amount(1), "")
+		opb := operation.NewCreateAccount(kp.Address(), common.Amount(1), "")
 		newOp, _ := operation.NewOperation(opb)
 		ptx.B.Operations = append(ptx.B.Operations, newOp)
 
