@@ -79,7 +79,8 @@ func BallotUnmarshal(c common.Checker, args ...interface{}) (err error) {
 	return
 }
 
-// BallotValidateOperationBodyCollectTxFee validates the proposed transaction.
+// BallotValidateOperationBodyCollectTxFee validates
+// `OperationBodyCollectTxFee`.
 func BallotValidateOperationBodyCollectTxFee(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotChecker)
 
@@ -90,6 +91,46 @@ func BallotValidateOperationBodyCollectTxFee(c common.Checker, args ...interface
 
 	// check common account
 	if opb.Target != checker.NodeRunner.CommonAccountAddress {
+		err = errors.ErrorInvalidOperation
+		return
+	}
+
+	return
+}
+
+// BallotValidateOperationBodyInflation validates `OperationBodyInflation`
+func BallotValidateOperationBodyInflation(c common.Checker, args ...interface{}) (err error) {
+	checker := c.(*BallotChecker)
+
+	var opb transaction.OperationBodyInflation
+	if opb, err = checker.Ballot.ProposerTransaction().OperationBodyInflation(); err != nil {
+		return
+	}
+
+	// check common account
+	if opb.Target != checker.NodeRunner.CommonAccountAddress {
+		err = errors.ErrorInvalidOperation
+		return
+	}
+	if opb.InitialBalance != checker.NodeRunner.InitialBalance {
+		err = errors.ErrorInvalidOperation
+		return
+	}
+
+	expectedInflationRatio := common.InflationRatio2String(
+		checker.NodeRunner.ISAACStateManager().Conf.InflationRatio,
+	)
+
+	if opb.Ratio != expectedInflationRatio {
+		err = errors.ErrorInvalidOperation
+		return
+	}
+
+	expectedInflation, err := common.CalculateInflation(
+		checker.NodeRunner.InitialBalance,
+		checker.NodeRunner.ISAACStateManager().Conf.InflationRatio,
+	)
+	if opb.Amount != expectedInflation {
 		err = errors.ErrorInvalidOperation
 		return
 	}
@@ -344,6 +385,7 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) (err error) {
 			checker.NodeRunner.Log(),
 		)
 		if err != nil {
+			checker.Log.Error("failed to finish ballot", "error", err)
 			return
 		}
 
@@ -390,6 +432,12 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 		b.ProposerConfirmed(),
 	)
 
+	if err = blk.Save(ts); err != nil {
+		ts.Discard()
+		log.Error("failed to create new block", "block", blk, "error", err)
+		return
+	}
+
 	log.Debug("NewBlock created", "block", blk)
 	infoLog.Info("NewBlock created",
 		"height", blk.Height,
@@ -398,9 +446,6 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 		"total-txs", blk.Round.TotalTxs,
 		"proposer", blk.Proposer,
 	)
-	if err = blk.Save(ts); err != nil {
-		return
-	}
 
 	for _, hash := range b.B.Proposed.Transactions {
 		tx := transactions[hash]
@@ -408,11 +453,13 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 
 		bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.Confirmed, tx, raw)
 		if err = bt.Save(ts); err != nil {
+			log.Error("failed to create new BlockTransaction", "block", blk, "bt", bt, "error", err)
 			ts.Discard()
 			return
 		}
 		for _, op := range tx.B.Operations {
 			if err = finishOperation(ts, tx, op, log); err != nil {
+				log.Error("failed to finish operation", "block", blk, "bt", bt, "op", op, "error", err)
 				ts.Discard()
 				return
 			}
@@ -437,6 +484,7 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 	}
 
 	if err = finishProposerTransaction(ts, blk, b.ProposerTransaction(), log); err != nil {
+		log.Error("failed to finish proposer transaction", "block", blk, "ptx", b.ProposerTransaction(), "error", err)
 		ts.Discard()
 		return
 	}
@@ -473,7 +521,6 @@ func finishOperation(st *storage.LevelDBBackend, tx transaction.Transaction, op 
 }
 
 func finishOperationCreateAccount(st *storage.LevelDBBackend, tx transaction.Transaction, op transaction.OperationBodyCreateAccount, log logging.Logger) (err error) {
-
 	var baSource, baTarget *block.BlockAccount
 	if baSource, err = block.GetBlockAccount(st, tx.B.Source); err != nil {
 		err = errors.ErrorBlockAccountDoesNotExists
@@ -501,7 +548,6 @@ func finishOperationCreateAccount(st *storage.LevelDBBackend, tx transaction.Tra
 }
 
 func finishOperationPayment(st *storage.LevelDBBackend, tx transaction.Transaction, op transaction.OperationBodyPayment, log logging.Logger) (err error) {
-
 	var baSource, baTarget *block.BlockAccount
 	if baSource, err = block.GetBlockAccount(st, tx.B.Source); err != nil {
 		err = errors.ErrorBlockAccountDoesNotExists
@@ -525,12 +571,24 @@ func finishOperationPayment(st *storage.LevelDBBackend, tx transaction.Transacti
 }
 
 func finishProposerTransaction(st *storage.LevelDBBackend, blk block.Block, ptx ballot.ProposerTransaction, log logging.Logger) (err error) {
-	var opb transaction.OperationBodyCollectTxFee
-	if opb, err = ptx.OperationBodyCollectTxFee(); err != nil {
-		return
+	{
+		var opb transaction.OperationBodyCollectTxFee
+		if opb, err = ptx.OperationBodyCollectTxFee(); err != nil {
+			return
+		}
+		if err = finishOperationCollectTxFee(st, opb, log); err != nil {
+			return
+		}
 	}
-	if err = finishOperationCollectTxFee(st, opb, log); err != nil {
-		return
+
+	{
+		var opb transaction.OperationBodyInflation
+		if opb, err = ptx.OperationBodyInflation(); err != nil {
+			return
+		}
+		if err = finishOperationInflation(st, opb, log); err != nil {
+			return
+		}
 	}
 
 	raw, _ := json.Marshal(ptx.Transaction)
@@ -543,6 +601,27 @@ func finishProposerTransaction(st *storage.LevelDBBackend, blk block.Block, ptx 
 }
 
 func finishOperationCollectTxFee(st *storage.LevelDBBackend, opb transaction.OperationBodyCollectTxFee, log logging.Logger) (err error) {
+	if opb.Amount < 1 {
+		return
+	}
+
+	var commonAccount *block.BlockAccount
+	if commonAccount, err = block.GetBlockAccount(st, opb.TargetAddress()); err != nil {
+		return
+	}
+
+	if err = commonAccount.Deposit(opb.GetAmount()); err != nil {
+		return
+	}
+
+	if err = commonAccount.Save(st); err != nil {
+		return
+	}
+
+	return
+}
+
+func finishOperationInflation(st *storage.LevelDBBackend, opb transaction.OperationBodyInflation, log logging.Logger) (err error) {
 	if opb.Amount < 1 {
 		return
 	}

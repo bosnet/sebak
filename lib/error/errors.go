@@ -65,4 +65,5 @@ var (
 	ErrorOperationAmountOverflow              = NewError(158, "invalid `Amount`: over than expected")
 	ErrorWrongBlockFound                      = NewError(159, "wrong Block found")
 	ErrorInvalidProposerTransaction           = NewError(160, "invalid proposer transaction found")
+	ErrorInvalidInflationRatio                = NewError(161, "invalid inflation ratio found")
 )

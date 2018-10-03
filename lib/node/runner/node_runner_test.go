@@ -153,7 +153,7 @@ func createTestNodeRunnersHTTP2Network(n int) (nodeRunners []*NodeRunner, rootKP
 	rootKP, _ = keypair.Random()
 	genesisAccount := block.NewBlockAccount(
 		rootKP.Address(),
-		10000000000000,
+		common.MaximumBalance,
 	)
 	commonKP, _ := keypair.Random()
 	commonAccount := block.NewBlockAccount(commonKP.Address(), 0)

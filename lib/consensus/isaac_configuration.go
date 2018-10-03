@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"boscoin.io/sebak/lib/ballot"
+	"boscoin.io/sebak/lib/common"
 )
 
 //
@@ -12,12 +13,12 @@ import (
 // these timeout features are used in ISAAC consensus.
 //
 type ISAACConfiguration struct {
-	TimeoutINIT   time.Duration
-	TimeoutSIGN   time.Duration
-	TimeoutACCEPT time.Duration
-	BlockTime     time.Duration
-
+	TimeoutINIT       time.Duration
+	TimeoutSIGN       time.Duration
+	TimeoutACCEPT     time.Duration
+	BlockTime         time.Duration
 	TransactionsLimit uint64
+	InflationRatio    float64
 }
 
 func NewISAACConfiguration() *ISAACConfiguration {
@@ -28,6 +29,7 @@ func NewISAACConfiguration() *ISAACConfiguration {
 	p.TimeoutACCEPT = 2 * time.Second
 	p.BlockTime = 5 * time.Second
 	p.TransactionsLimit = uint64(1000)
+	p.InflationRatio = common.DefaultInflationRatio
 
 	return &p
 }

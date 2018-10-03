@@ -29,7 +29,13 @@ var (
 	// MaxTransactionsInBallot limits the maximum number of `Transaction`s in
 	// one proposed `Ballot`.
 	MaxTransactionsInBallot int = 1000
+
 	// MaxOperationsInTransaction limits the maximum number of `Operation`s in
 	// one `Transaction`.
 	MaxOperationsInTransaction int = 1000
+
+	// DefaultInflationRatio is the default inflation ratio. If the decimal
+	// points is over 17, the inflation amount will be 0, considering with
+	// `MaximumBalance`.
+	DefaultInflationRatio float64 = 0.00000000000000003
 )

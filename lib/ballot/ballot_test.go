@@ -36,7 +36,9 @@ func TestErrorBallotHasOverMaxTransactionsInBallot(t *testing.T) {
 	{
 		blt := NewBallot(node.Address(), round, []string{tx.GetHash()})
 
-		ptx, _ := NewProposerTransactionFromBallot(*blt, commonKP.Address(), tx)
+		opc, _ := NewOperationCollectTxFeeFromBallot(*blt, commonKP.Address(), tx)
+		opi, _ := NewOperationInflationFromBallot(*blt, commonKP.Address(), common.Amount(1), common.DefaultInflationRatio)
+		ptx, _ := NewProposerTransactionFromBallot(*blt, opc, opi)
 		blt.SetProposerTransaction(ptx)
 
 		blt.Sign(node.Keypair(), networkID)
@@ -54,7 +56,9 @@ func TestErrorBallotHasOverMaxTransactionsInBallot(t *testing.T) {
 
 		blt := NewBallot(node.Address(), round, txHashes)
 
-		ptx, _ := NewProposerTransactionFromBallot(*blt, commonKP.Address(), txs...)
+		opc, _ := NewOperationCollectTxFeeFromBallot(*blt, commonKP.Address(), tx)
+		opi, _ := NewOperationInflationFromBallot(*blt, commonKP.Address(), common.Amount(1), common.DefaultInflationRatio)
+		ptx, _ := NewProposerTransactionFromBallot(*blt, opc, opi)
 		blt.SetProposerTransaction(ptx)
 
 		blt.Sign(node.Keypair(), networkID)
@@ -101,7 +105,11 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 
 	{
 		ballot := NewBallot(node.Address(), round, []string{})
-		ptx, _ := NewProposerTransactionFromBallot(*ballot, commonKP.Address())
+
+		opc, _ := NewOperationCollectTxFeeFromBallot(*ballot, commonKP.Address())
+		opi, _ := NewOperationInflationFromBallot(*ballot, commonKP.Address(), common.Amount(1), common.DefaultInflationRatio)
+		ptx, _ := NewProposerTransactionFromBallot(*ballot, opc, opi)
+
 		ballot.SetProposerTransaction(ptx)
 		ballot.Sign(kp, networkID)
 

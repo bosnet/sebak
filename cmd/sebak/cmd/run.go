@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -19,6 +18,7 @@ import (
 	cmdcommon "boscoin.io/sebak/cmd/sebak/common"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/consensus"
+	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/node/runner"
@@ -50,6 +50,7 @@ var (
 	flagTimeoutACCEPT       string = common.GetENVValue("SEBAK_TIMEOUT_ACCEPT", "2")
 	flagBlockTime           string = common.GetENVValue("SEBAK_BLOCK_TIME", "5")
 	flagTransactionsLimit   string = common.GetENVValue("SEBAK_TRANSACTIONS_LIMIT", "1000")
+	flagInflationRatio      string = common.GetENVValue("SEBAK_INFLATION_RATIO", common.InflationRatio2String(common.DefaultInflationRatio))
 )
 
 var (
@@ -66,8 +67,10 @@ var (
 	timeoutACCEPT     time.Duration
 	blockTime         time.Duration
 	transactionsLimit uint64
-	logLevel          logging.Lvl
-	log               logging.Logger = logging.New("module", "main")
+	inflationRatio    float64
+
+	logLevel logging.Lvl
+	log      logging.Logger = logging.New("module", "main")
 )
 
 func init() {
@@ -138,6 +141,7 @@ func init() {
 	nodeCmd.Flags().StringVar(&flagTimeoutACCEPT, "timeout-accept", flagTimeoutACCEPT, "timeout of the accept state")
 	nodeCmd.Flags().StringVar(&flagBlockTime, "block-time", flagBlockTime, "block creation time")
 	nodeCmd.Flags().StringVar(&flagTransactionsLimit, "transactions-limit", flagTransactionsLimit, "transactions limit in a ballot")
+	nodeCmd.Flags().StringVar(&flagInflationRatio, "inflation-ratio", flagInflationRatio, "infaltion ratio")
 
 	rootCmd.AddCommand(nodeCmd)
 }
@@ -243,6 +247,12 @@ func parseFlagsNode() {
 		cmdcommon.PrintFlagsError(nodeCmd, "--transactions-limit", err)
 	}
 
+	if inflationRatio, err = strconv.ParseFloat(flagInflationRatio, 64); err != nil {
+		cmdcommon.PrintFlagsError(nodeCmd, "--inflation-ratio", err)
+	} else if inflationRatio < 0 {
+		cmdcommon.PrintFlagsError(nodeCmd, "--inflation-ratio", errors.ErrorInvalidInflationRatio)
+	}
+
 	var tmpUint64 uint64
 	if tmpUint64, err = strconv.ParseUint(flagThreshold, 10, 64); err != nil {
 		cmdcommon.PrintFlagsError(nodeCmd, "--threshold", err)
@@ -296,6 +306,7 @@ func parseFlagsNode() {
 	parsedFlags = append(parsedFlags, "\n\ttimeout-accept", flagTimeoutACCEPT)
 	parsedFlags = append(parsedFlags, "\n\tblock-time", flagBlockTime)
 	parsedFlags = append(parsedFlags, "\n\ttransactions-limit", flagTransactionsLimit)
+	parsedFlags = append(parsedFlags, "\n\tinflation-ratio", flagInflationRatio)
 
 	var vl []interface{}
 	for i, v := range validators {
@@ -379,6 +390,7 @@ func runNode() error {
 			TimeoutACCEPT:     timeoutACCEPT,
 			BlockTime:         blockTime,
 			TransactionsLimit: uint64(transactionsLimit),
+			InflationRatio:    inflationRatio,
 		}
 		nr, err := runner.NewNodeRunner(flagNetworkID, localNode, policy, nt, isaac, st, conf)
 
