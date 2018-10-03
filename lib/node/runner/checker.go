@@ -409,7 +409,7 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) (err error) {
 	return
 }
 
-func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *transaction.TransactionPool, log, infoLog logging.Logger) (blk block.Block, err error) {
+func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *transaction.Pool, log, infoLog logging.Logger) (blk block.Block, err error) {
 	var ts *storage.LevelDBBackend
 	if ts, err = st.OpenTransaction(); err != nil {
 		return

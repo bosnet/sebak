@@ -51,7 +51,7 @@ func (nh NetworkHandlerNode) GetNodeTransactionsHandler(w http.ResponseWriter, r
 
 	unknown := map[string]struct{}{}
 
-	// check in `TransactionPool`
+	// check in `Pool`
 	for _, hash := range hashes {
 		if tx, found := nh.consensus.TransactionPool.Get(hash); !found {
 			unknown[hash] = struct{}{}

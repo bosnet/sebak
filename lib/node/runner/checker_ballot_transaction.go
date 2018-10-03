@@ -75,7 +75,7 @@ func IsNew(c common.Checker, args ...interface{}) (err error) {
 }
 
 // GetMissingTransaction will get the missing
-// tranactions, that is, not in `TransactionPool` from proposer.
+// tranactions, that is, not in `Pool` from proposer.
 func GetMissingTransaction(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotTransactionChecker)
 

@@ -15,21 +15,21 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type TransactionTestSuite struct {
+type TestSuite struct {
 	suite.Suite
 	originalLimit int
 }
 
-func (suite *TransactionTestSuite) SetupTest() {
+func (suite *TestSuite) SetupTest() {
 	suite.originalLimit = operation.Limit
 	operation.Limit = 1000
 }
 
-func (suite *TransactionTestSuite) TeardownTest() {
+func (suite *TestSuite) TeardownTest() {
 	operation.Limit = suite.originalLimit
 }
 
-func (suite *TransactionTestSuite) TestLoadTransactionSuite() {
+func (suite *TestSuite) TestLoadTransactionSuite() {
 	_, tx := TestMakeTransaction(networkID, 1)
 
 	b, err := tx.Serialize()
@@ -41,14 +41,14 @@ func (suite *TransactionTestSuite) TestLoadTransactionSuite() {
 	require.Nil(suite.T(), err)
 }
 
-func (suite *TransactionTestSuite) TestIsWellFormedTransactionSuite() {
+func (suite *TestSuite) TestIsWellFormedTransactionSuite() {
 	_, tx := TestMakeTransaction(networkID, 1)
 
 	err := tx.IsWellFormed(networkID)
 	require.Nil(suite.T(), err)
 }
 
-func (suite *TransactionTestSuite) TestIsWellFormedTransactionWithLowerFeeSuite() {
+func (suite *TestSuite) TestIsWellFormedTransactionWithLowerFeeSuite() {
 	var err error
 
 	{ // valid fee
@@ -83,7 +83,7 @@ func (suite *TransactionTestSuite) TestIsWellFormedTransactionWithLowerFeeSuite(
 	}
 }
 
-func (suite *TransactionTestSuite) TestIsWellFormedTransactionWithInvalidSourceAddressSuite() {
+func (suite *TestSuite) TestIsWellFormedTransactionWithInvalidSourceAddressSuite() {
 	var err error
 
 	_, tx := TestMakeTransaction(networkID, 1)
@@ -92,7 +92,7 @@ func (suite *TransactionTestSuite) TestIsWellFormedTransactionWithInvalidSourceA
 	require.NotNil(suite.T(), err)
 }
 
-func (suite *TransactionTestSuite) TestIsWellFormedTransactionWithTargetAddressIsSameWithSourceAddressSuite() {
+func (suite *TestSuite) TestIsWellFormedTransactionWithTargetAddressIsSameWithSourceAddressSuite() {
 	var err error
 
 	_, tx := TestMakeTransaction(networkID, 1)
@@ -105,7 +105,7 @@ func (suite *TransactionTestSuite) TestIsWellFormedTransactionWithTargetAddressI
 	require.NotNil(suite.T(), err, "Transaction to self should be rejected")
 }
 
-func (suite *TransactionTestSuite) TestIsWellFormedTransactionWithInvalidSignatureSuite() {
+func (suite *TestSuite) TestIsWellFormedTransactionWithInvalidSignatureSuite() {
 	var err error
 
 	_, tx := TestMakeTransaction(networkID, 1)
@@ -119,7 +119,7 @@ func (suite *TransactionTestSuite) TestIsWellFormedTransactionWithInvalidSignatu
 	require.NotNil(suite.T(), err)
 }
 
-func (suite *TransactionTestSuite) TestIsWellFormedTransactionMaxOperationsInTransactionSuite() {
+func (suite *TestSuite) TestIsWellFormedTransactionMaxOperationsInTransactionSuite() {
 	var err error
 
 	{ // over operation.Limit
@@ -136,5 +136,5 @@ func (suite *TransactionTestSuite) TestIsWellFormedTransactionMaxOperationsInTra
 }
 
 func TestTransaction(t *testing.T) {
-	suite.Run(t, new(TransactionTestSuite))
+	suite.Run(t, new(TestSuite))
 }

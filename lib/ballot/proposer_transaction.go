@@ -95,13 +95,13 @@ func NewProposerTransactionFromBallot(blt Ballot, opc operation.CollectTxFee, op
 }
 
 var ProposerTransactionWellFormedCheckerFuncs = []common.CheckerFunc{
-	transaction.CheckTransactionOverOperationsLimit,
-	transaction.CheckTransactionSequenceID,
-	transaction.CheckTransactionSource,
+	transaction.CheckOverOperationsLimit,
+	transaction.CheckSequenceID,
+	transaction.CheckSource,
 	CheckProposerTransactionFee,
 	CheckProposerTransactionOperationTypes,
-	transaction.CheckTransactionOperation,
-	transaction.CheckTransactionVerifySignature,
+	transaction.CheckOperations,
+	transaction.CheckVerifySignature,
 }
 
 func (p ProposerTransaction) IsWellFormed(networkID []byte) (err error) {
@@ -109,7 +109,7 @@ func (p ProposerTransaction) IsWellFormed(networkID []byte) (err error) {
 		return
 	}
 
-	checker := &transaction.TransactionChecker{
+	checker := &transaction.Checker{
 		DefaultChecker: common.DefaultChecker{Funcs: ProposerTransactionWellFormedCheckerFuncs},
 		NetworkID:      networkID,
 		Transaction:    p.Transaction,
@@ -245,7 +245,7 @@ func (p *ProposerTransaction) UnmarshalJSON(b []byte) error {
 }
 
 func CheckProposerTransactionFee(c common.Checker, args ...interface{}) (err error) {
-	checker := c.(*transaction.TransactionChecker)
+	checker := c.(*transaction.Checker)
 	if checker.Transaction.B.Fee != 0 {
 		err = errors.ErrorInvalidFee
 		return
@@ -255,7 +255,7 @@ func CheckProposerTransactionFee(c common.Checker, args ...interface{}) (err err
 }
 
 func CheckProposerTransactionOperationTypes(c common.Checker, args ...interface{}) (err error) {
-	checker := c.(*transaction.TransactionChecker)
+	checker := c.(*transaction.Checker)
 
 	if len(checker.Transaction.B.Operations) != 2 {
 		err = errors.ErrorInvalidProposerTransaction
