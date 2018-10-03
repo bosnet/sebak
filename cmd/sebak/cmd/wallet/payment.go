@@ -180,7 +180,7 @@ func makeTransactionCreateAccount(kpSource keypair.KP, kpDest keypair.KP, amount
 		B: opb,
 	}
 
-	txBody := transaction.TransactionBody{
+	txBody := transaction.Body{
 		Source:     kpSource.Address(),
 		Fee:        common.BaseFee,
 		SequenceID: seqid,
@@ -189,7 +189,7 @@ func makeTransactionCreateAccount(kpSource keypair.KP, kpDest keypair.KP, amount
 
 	tx := transaction.Transaction{
 		T: "transaction",
-		H: transaction.TransactionHeader{
+		H: transaction.Header{
 			Created: common.NowISO8601(),
 			Hash:    txBody.MakeHashString(),
 		},
@@ -224,7 +224,7 @@ func makeTransactionPayment(kpSource keypair.KP, kpDest keypair.KP, amount commo
 		B: opb,
 	}
 
-	txBody := transaction.TransactionBody{
+	txBody := transaction.Body{
 		Source:     kpSource.Address(),
 		Fee:        common.Amount(common.BaseFee),
 		SequenceID: seqid,
@@ -233,7 +233,7 @@ func makeTransactionPayment(kpSource keypair.KP, kpDest keypair.KP, amount commo
 
 	tx := transaction.Transaction{
 		T: "transaction",
-		H: transaction.TransactionHeader{
+		H: transaction.Header{
 			Created: common.NowISO8601(),
 			Hash:    txBody.MakeHashString(),
 		},

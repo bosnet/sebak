@@ -35,10 +35,10 @@ func TestValidateTxPaymentMissingBlockAccount(t *testing.T) {
 
 	tx := transaction.Transaction{
 		T: "transaction",
-		H: transaction.TransactionHeader{
+		H: transaction.Header{
 			Created: common.NowISO8601(),
 		},
-		B: transaction.TransactionBody{
+		B: transaction.Body{
 			Source:     kps.Address(), // Need a well-formed address
 			Fee:        common.BaseFee,
 			SequenceID: 0,
@@ -100,10 +100,10 @@ func TestValidateTxWrongSequenceID(t *testing.T) {
 
 	tx := transaction.Transaction{
 		T: "transaction",
-		H: transaction.TransactionHeader{
+		H: transaction.Header{
 			Created: common.NowISO8601(),
 		},
-		B: transaction.TransactionBody{
+		B: transaction.Body{
 			Source:     kps.Address(),
 			Fee:        common.BaseFee,
 			SequenceID: 0,
@@ -145,10 +145,10 @@ func TestValidateTxOverBalance(t *testing.T) {
 	opbody := operation.Payment{Target: kpt.Address(), Amount: bas.Balance}
 	tx := transaction.Transaction{
 		T: "transaction",
-		H: transaction.TransactionHeader{
+		H: transaction.Header{
 			Created: common.NowISO8601(),
 		},
-		B: transaction.TransactionBody{
+		B: transaction.Body{
 			Source:     kps.Address(),
 			Fee:        common.BaseFee,
 			SequenceID: 1,
@@ -202,10 +202,10 @@ func TestValidateOpCreateExistsAccount(t *testing.T) {
 
 	tx := transaction.Transaction{
 		T: "transaction",
-		H: transaction.TransactionHeader{
+		H: transaction.Header{
 			Created: common.NowISO8601(),
 		},
-		B: transaction.TransactionBody{
+		B: transaction.Body{
 			Source:     kps.Address(), // Need a well-formed address
 			Fee:        common.BaseFee,
 			SequenceID: 0,

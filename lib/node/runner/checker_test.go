@@ -59,10 +59,10 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 
 		runChecker(tx, nil)
 
-		require.True(t, nodeRunner.Consensus().TransactionPool.Has(tx.GetHash()), "valid transaction must be in `TransactionPool`")
+		require.True(t, nodeRunner.Consensus().TransactionPool.Has(tx.GetHash()), "valid transaction must be in `Pool`")
 	}
 
-	{ // invalid transaction: same source already in TransactionPool
+	{ // invalid transaction: same source already in Pool
 		targetAccount, targetKP := TestMakeBlockAccount(common.Amount(10000000000000))
 		targetAccount.Save(nodeRunner.Storage())
 
@@ -75,7 +75,7 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 		require.False(
 			t,
 			nodeRunner.Consensus().TransactionPool.Has(tx.GetHash()),
-			"invalid transaction must not be in `TransactionPool`: same source already in `TransactionPool`",
+			"invalid transaction must not be in `Pool`: same source already in `Pool`",
 		)
 	}
 
@@ -91,7 +91,7 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 		require.False(
 			t,
 			nodeRunner.Consensus().TransactionPool.Has(tx.GetHash()),
-			"invalid transaction must not be in `TransactionPool`: source account does not exists",
+			"invalid transaction must not be in `Pool`: source account does not exists",
 		)
 	}
 
@@ -109,7 +109,7 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 		require.False(
 			t,
 			nodeRunner.Consensus().TransactionPool.Has(tx.GetHash()),
-			"invalid transaction must be in `TransactionPool`: target account does not exists",
+			"invalid transaction must be in `Pool`: target account does not exists",
 		)
 	}
 }

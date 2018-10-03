@@ -18,17 +18,17 @@ var Limit = 1000
 
 type Transaction struct {
 	T string
-	H TransactionHeader
-	B TransactionBody
+	H Header
+	B Body
 }
 
-type transactionEnvelop struct {
+type envelop struct {
 	T string
-	H TransactionHeader
-	B TransactionBody
+	H Header
+	B Body
 }
 
-type TransactionHeader struct {
+type Header struct {
 	Version string `json:"version"`
 	Created string `json:"created"`
 	// Hash of this transaction
@@ -38,23 +38,23 @@ type TransactionHeader struct {
 	Signature string `json:"signature"`
 }
 
-type TransactionBody struct {
+type Body struct {
 	Source     string                `json:"source"`
 	Fee        common.Amount         `json:"fee"`
 	SequenceID uint64                `json:"sequenceid"`
 	Operations []operation.Operation `json:"operations"`
 }
 
-func (tb TransactionBody) MakeHash() []byte {
+func (tb Body) MakeHash() []byte {
 	return common.MustMakeObjectHash(tb)
 }
 
-func (tb TransactionBody) MakeHashString() string {
+func (tb Body) MakeHashString() string {
 	return base58.Encode(tb.MakeHash())
 }
 
 func (t *Transaction) UnmarshalJSON(b []byte) (err error) {
-	var tj transactionEnvelop
+	var tj envelop
 	if err = json.Unmarshal(b, &tj); err != nil {
 		return
 	}
@@ -72,7 +72,7 @@ func NewTransaction(source string, sequenceID uint64, ops ...operation.Operation
 		return
 	}
 
-	txBody := TransactionBody{
+	txBody := Body{
 		Source:     source,
 		Fee:        common.BaseFee.MustMult(len(ops)),
 		SequenceID: sequenceID,
@@ -81,7 +81,7 @@ func NewTransaction(source string, sequenceID uint64, ops ...operation.Operation
 
 	tx = Transaction{
 		T: "transaction",
-		H: TransactionHeader{
+		H: Header{
 			Created: common.NowISO8601(),
 			Hash:    txBody.MakeHashString(),
 		},
@@ -92,19 +92,19 @@ func NewTransaction(source string, sequenceID uint64, ops ...operation.Operation
 }
 
 var TransactionWellFormedCheckerFuncs = []common.CheckerFunc{
-	CheckTransactionOverOperationsLimit,
-	CheckTransactionSequenceID,
-	CheckTransactionSource,
-	CheckTransactionBaseFee,
-	CheckTransactionOperationTypes,
-	CheckTransactionOperation,
-	CheckTransactionVerifySignature,
+	CheckOverOperationsLimit,
+	CheckSequenceID,
+	CheckSource,
+	CheckBaseFee,
+	CheckOperationTypes,
+	CheckOperations,
+	CheckVerifySignature,
 }
 
 func (tx Transaction) IsWellFormed(networkID []byte) (err error) {
 	// TODO check `Version` format with SemVer
 
-	checker := &TransactionChecker{
+	checker := &Checker{
 		DefaultChecker: common.DefaultChecker{Funcs: TransactionWellFormedCheckerFuncs},
 		NetworkID:      networkID,
 		Transaction:    tx,

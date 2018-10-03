@@ -12,7 +12,7 @@ func makeTransaction(kp *keypair.Full) (tx transaction.Transaction) {
 	var ops []operation.Operation
 	ops = append(ops, operation.TestMakeOperation(-1))
 
-	txBody := transaction.TransactionBody{
+	txBody := transaction.Body{
 		Source:     kp.Address(),
 		Fee:        common.BaseFee,
 		SequenceID: 0,
@@ -21,7 +21,7 @@ func makeTransaction(kp *keypair.Full) (tx transaction.Transaction) {
 
 	tx = transaction.Transaction{
 		T: "transaction",
-		H: transaction.TransactionHeader{
+		H: transaction.Header{
 			Created: common.NowISO8601(),
 			Hash:    txBody.MakeHashString(),
 		},
@@ -42,7 +42,7 @@ func makeTransactionPayment(kpSource *keypair.Full, target string, amount common
 		B: opb,
 	}
 
-	txBody := transaction.TransactionBody{
+	txBody := transaction.Body{
 		Source:     kpSource.Address(),
 		Fee:        common.BaseFee,
 		SequenceID: 0,
@@ -51,7 +51,7 @@ func makeTransactionPayment(kpSource *keypair.Full, target string, amount common
 
 	tx = transaction.Transaction{
 		T: "transaction",
-		H: transaction.TransactionHeader{
+		H: transaction.Header{
 			Created: common.NowISO8601(),
 			Hash:    txBody.MakeHashString(),
 		},

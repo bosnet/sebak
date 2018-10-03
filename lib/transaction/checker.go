@@ -11,7 +11,7 @@ import (
 	"boscoin.io/sebak/lib/transaction/operation"
 )
 
-type TransactionChecker struct {
+type Checker struct {
 	common.DefaultChecker
 
 	NetworkID       []byte
@@ -19,8 +19,8 @@ type TransactionChecker struct {
 	OperationsLimit int
 }
 
-func CheckTransactionSource(c common.Checker, args ...interface{}) (err error) {
-	checker := c.(*TransactionChecker)
+func CheckSource(c common.Checker, args ...interface{}) (err error) {
+	checker := c.(*Checker)
 	if _, err = keypair.Parse(checker.Transaction.B.Source); err != nil {
 		err = errors.ErrorBadPublicAddress
 		return
@@ -29,8 +29,8 @@ func CheckTransactionSource(c common.Checker, args ...interface{}) (err error) {
 	return
 }
 
-func CheckTransactionOverOperationsLimit(c common.Checker, args ...interface{}) (err error) {
-	checker := c.(*TransactionChecker)
+func CheckOverOperationsLimit(c common.Checker, args ...interface{}) (err error) {
+	checker := c.(*Checker)
 
 	if len(checker.Transaction.B.Operations) > operation.Limit {
 		err = errors.ErrorTransactionHasOverMaxOperations
@@ -40,13 +40,13 @@ func CheckTransactionOverOperationsLimit(c common.Checker, args ...interface{}) 
 	return
 }
 
-func CheckTransactionSequenceID(c common.Checker, args ...interface{}) (err error) {
-	//checker := c.(*TransactionChecker)
+func CheckSequenceID(c common.Checker, args ...interface{}) (err error) {
+	//checker := c.(*Checker)
 	return
 }
 
-func CheckTransactionBaseFee(c common.Checker, args ...interface{}) (err error) {
-	checker := c.(*TransactionChecker)
+func CheckBaseFee(c common.Checker, args ...interface{}) (err error) {
+	checker := c.(*Checker)
 	if checker.Transaction.B.Fee < checker.Transaction.TotalBaseFee() {
 		err = errors.ErrorInvalidFee
 		return
@@ -55,8 +55,8 @@ func CheckTransactionBaseFee(c common.Checker, args ...interface{}) (err error) 
 	return
 }
 
-func CheckTransactionOperationTypes(c common.Checker, args ...interface{}) (err error) {
-	checker := c.(*TransactionChecker)
+func CheckOperationTypes(c common.Checker, args ...interface{}) (err error) {
+	checker := c.(*Checker)
 
 	if len(checker.Transaction.B.Operations) < 1 {
 		err = errors.ErrorTransactionEmptyOperations
@@ -73,8 +73,8 @@ func CheckTransactionOperationTypes(c common.Checker, args ...interface{}) (err 
 	return
 }
 
-func CheckTransactionOperation(c common.Checker, args ...interface{}) (err error) {
-	checker := c.(*TransactionChecker)
+func CheckOperations(c common.Checker, args ...interface{}) (err error) {
+	checker := c.(*Checker)
 
 	var hashes []string
 	for _, op := range checker.Transaction.B.Operations {
@@ -101,8 +101,8 @@ func CheckTransactionOperation(c common.Checker, args ...interface{}) (err error
 	return
 }
 
-func CheckTransactionVerifySignature(c common.Checker, args ...interface{}) (err error) {
-	checker := c.(*TransactionChecker)
+func CheckVerifySignature(c common.Checker, args ...interface{}) (err error) {
+	checker := c.(*Checker)
 
 	var kp keypair.KP
 	if kp, err = keypair.Parse(checker.Transaction.B.Source); err != nil {

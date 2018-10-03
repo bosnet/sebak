@@ -25,7 +25,7 @@ type ISAAC struct {
 
 	NetworkID       []byte
 	Node            *node.LocalNode
-	TransactionPool *transaction.TransactionPool
+	TransactionPool *transaction.Pool
 	RunningRounds   map[ /* Round.Index() */ string]*RunningRound
 	LatestRound     round.Round
 }
@@ -39,7 +39,7 @@ func NewISAAC(networkID []byte, node *node.LocalNode, p ballot.VotingThresholdPo
 		NetworkID:         networkID,
 		Node:              node,
 		policy:            p,
-		TransactionPool:   transaction.NewTransactionPool(),
+		TransactionPool:   transaction.NewPool(),
 		RunningRounds:     map[string]*RunningRound{},
 		connectionManager: cm,
 		proposerSelector:  SequentialSelector{cm},

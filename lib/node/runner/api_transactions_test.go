@@ -298,7 +298,7 @@ func TestGetNodeTransactionsHandlerWithMultipleHashes(t *testing.T) {
 	}
 }
 
-// transactions in `TransactionPool`
+// transactions in `Pool`
 func TestGetNodeTransactionsHandlerInTransactionPool(t *testing.T) {
 	p := &HelperTestGetNodeTransactionsHandler{}
 	p.Prepare()

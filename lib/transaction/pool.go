@@ -4,35 +4,35 @@ import (
 	"sync"
 )
 
-type TransactionPool struct {
+type Pool struct {
 	sync.RWMutex
 
 	Pool    map[ /* Transaction.GetHash() */ string]Transaction
 	Sources map[ /* Transaction.Source() */ string]bool
 }
 
-func NewTransactionPool() *TransactionPool {
-	return &TransactionPool{
+func NewPool() *Pool {
+	return &Pool{
 		Pool:    map[string]Transaction{},
 		Sources: map[string]bool{},
 	}
 }
 
-func (tp *TransactionPool) Len() int {
+func (tp *Pool) Len() int {
 	return len(tp.Pool)
 }
 
-func (tp *TransactionPool) Has(hash string) bool {
+func (tp *Pool) Has(hash string) bool {
 	_, found := tp.Pool[hash]
 	return found
 }
 
-func (tp *TransactionPool) Get(hash string) (tx Transaction, found bool) {
+func (tp *Pool) Get(hash string) (tx Transaction, found bool) {
 	tx, found = tp.Pool[hash]
 	return
 }
 
-func (tp *TransactionPool) Add(tx Transaction) bool {
+func (tp *Pool) Add(tx Transaction) bool {
 	tp.RLock()
 	if _, found := tp.Pool[tx.GetHash()]; found {
 		return false
@@ -48,7 +48,7 @@ func (tp *TransactionPool) Add(tx Transaction) bool {
 	return true
 }
 
-func (tp *TransactionPool) Remove(hashes ...string) {
+func (tp *Pool) Remove(hashes ...string) {
 	if len(hashes) < 1 {
 		return
 	}
@@ -64,7 +64,7 @@ func (tp *TransactionPool) Remove(hashes ...string) {
 	}
 }
 
-func (tp *TransactionPool) AvailableTransactions(transactionLimit int) []string {
+func (tp *Pool) AvailableTransactions(transactionLimit int) []string {
 	if transactionLimit < 1 {
 		return nil
 	}
@@ -82,7 +82,7 @@ func (tp *TransactionPool) AvailableTransactions(transactionLimit int) []string 
 	return ret
 }
 
-func (tp *TransactionPool) IsSameSource(source string) (found bool) {
+func (tp *Pool) IsSameSource(source string) (found bool) {
 	_, found = tp.Sources[source]
 
 	return

@@ -70,7 +70,7 @@ func (p *ballotCheckerProposedTransaction) MakeBallot(numberOfTxs int) (blt *bal
 		p.txHashes = append(p.txHashes, tx.GetHash())
 		p.txs = append(p.txs, tx)
 
-		// inject txs to `TransactionPool`
+		// inject txs to `Pool`
 		p.nr.Consensus().TransactionPool.Add(tx)
 	}
 

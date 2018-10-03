@@ -58,7 +58,7 @@ func TransactionUnmarshal(c common.Checker, args ...interface{}) (err error) {
 }
 
 // HasTransaction checks transaction is in
-// `TransactionPool`.
+// `Pool`.
 func HasTransaction(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*MessageChecker)
 
@@ -94,7 +94,7 @@ func SaveTransactionHistory(c common.Checker, args ...interface{}) (err error) {
 }
 
 // SameSource checks there are transactions which has same source in the
-// `TransactionPool`.
+// `Pool`.
 func MessageHasSameSource(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*MessageChecker)
 
@@ -118,7 +118,7 @@ func MessageValidate(c common.Checker, args ...interface{}) (err error) {
 }
 
 // PushIntoTransactionPool add the incoming
-// transactions into `TransactionPool`.
+// transactions into `Pool`.
 func PushIntoTransactionPool(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*MessageChecker)
 

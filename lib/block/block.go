@@ -102,7 +102,7 @@ func MakeGenesisBlock(st *storage.LevelDBBackend, genesisAccount BlockAccount, c
 		ops = append(ops, op)
 	}
 
-	txBody := transaction.TransactionBody{
+	txBody := transaction.Body{
 		Source:     genesisAccount.Address,
 		Fee:        0,
 		SequenceID: genesisAccount.SequenceID,
@@ -111,7 +111,7 @@ func MakeGenesisBlock(st *storage.LevelDBBackend, genesisAccount BlockAccount, c
 
 	tx := transaction.Transaction{
 		T: "transaction",
-		H: transaction.TransactionHeader{
+		H: transaction.Header{
 			Created: common.GenesisBlockConfirmedTime,
 			Hash:    txBody.MakeHashString(),
 		},

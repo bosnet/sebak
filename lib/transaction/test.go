@@ -68,7 +68,7 @@ func MakeTransactionCreateAccount(kpSource *keypair.Full, target string, amount 
 		B: opb,
 	}
 
-	txBody := TransactionBody{
+	txBody := Body{
 		Source:     kpSource.Address(),
 		Fee:        common.BaseFee,
 		SequenceID: rand.Uint64(),
@@ -77,7 +77,7 @@ func MakeTransactionCreateAccount(kpSource *keypair.Full, target string, amount 
 
 	tx = Transaction{
 		T: "transaction",
-		H: TransactionHeader{
+		H: Header{
 			Created: common.NowISO8601(),
 			Hash:    txBody.MakeHashString(),
 		},

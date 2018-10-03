@@ -505,7 +505,7 @@ func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) (ballot.Ballot, error
 		TotalTxs:    b.TotalTxs,
 	}
 
-	// collect incoming transactions from `TransactionPool`
+	// collect incoming transactions from `Pool`
 	availableTransactions := nr.consensus.TransactionPool.AvailableTransactions(transaction.Limit)
 	nr.log.Debug("new round proposed", "round", round, "transactions", availableTransactions)
 
