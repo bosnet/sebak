@@ -64,7 +64,7 @@ func CheckTransactionOperationTypes(c common.Checker, args ...interface{}) (err 
 	}
 
 	for _, op := range checker.Transaction.B.Operations {
-		if _, found := operation.OperationTypesNormalTransaction[op.H.Type]; !found {
+		if _, found := operation.KindsNormalTransaction[op.H.Type]; !found {
 			err = errors.ErrorInvalidOperation
 			return
 		}
@@ -78,7 +78,7 @@ func CheckTransactionOperation(c common.Checker, args ...interface{}) (err error
 
 	var hashes []string
 	for _, op := range checker.Transaction.B.Operations {
-		if pop, ok := op.B.(operation.OperationBodyPayable); ok {
+		if pop, ok := op.B.(operation.Payable); ok {
 			if checker.Transaction.B.Source == pop.TargetAddress() {
 				err = errors.ErrorInvalidOperation
 				return

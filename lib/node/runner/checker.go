@@ -81,12 +81,12 @@ func BallotUnmarshal(c common.Checker, args ...interface{}) (err error) {
 }
 
 // BallotValidateOperationBodyCollectTxFee validates
-// `OperationBodyCollectTxFee`.
+// `CollectTxFee`.
 func BallotValidateOperationBodyCollectTxFee(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotChecker)
 
-	var opb operation.OperationBodyCollectTxFee
-	if opb, err = checker.Ballot.ProposerTransaction().OperationBodyCollectTxFee(); err != nil {
+	var opb operation.CollectTxFee
+	if opb, err = checker.Ballot.ProposerTransaction().CollectTxFee(); err != nil {
 		return
 	}
 
@@ -99,12 +99,12 @@ func BallotValidateOperationBodyCollectTxFee(c common.Checker, args ...interface
 	return
 }
 
-// BallotValidateOperationBodyInflation validates `OperationBodyInflation`
+// BallotValidateOperationBodyInflation validates `Inflation`
 func BallotValidateOperationBodyInflation(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotChecker)
 
-	var opb operation.OperationBodyInflation
-	if opb, err = checker.Ballot.ProposerTransaction().OperationBodyInflation(); err != nil {
+	var opb operation.Inflation
+	if opb, err = checker.Ballot.ProposerTransaction().Inflation(); err != nil {
 		return
 	}
 
@@ -500,19 +500,19 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 // finishOperation do finish the task after consensus by the type of each operation.
 func finishOperation(st *storage.LevelDBBackend, tx transaction.Transaction, op operation.Operation, log logging.Logger) (err error) {
 	switch op.H.Type {
-	case operation.OperationCreateAccount:
-		pop, ok := op.B.(operation.OperationBodyCreateAccount)
+	case operation.TypeCreateAccount:
+		pop, ok := op.B.(operation.CreateAccount)
 		if !ok {
 			return errors.ErrorUnknownOperationType
 		}
-		return finishOperationCreateAccount(st, tx, pop, log)
-	case operation.OperationPayment:
-		pop, ok := op.B.(operation.OperationBodyPayment)
+		return finishCreateAccount(st, tx, pop, log)
+	case operation.TypePayment:
+		pop, ok := op.B.(operation.Payment)
 		if !ok {
 			return errors.ErrorUnknownOperationType
 		}
 		return finishOperationPayment(st, tx, pop, log)
-	case operation.OperationCongressVoting, operation.OperationCongressVotingResult:
+	case operation.TypeCongressVoting, operation.TypeCongressVotingResult:
 		//Nothing to do
 		return
 	default:
@@ -521,7 +521,7 @@ func finishOperation(st *storage.LevelDBBackend, tx transaction.Transaction, op 
 	}
 }
 
-func finishOperationCreateAccount(st *storage.LevelDBBackend, tx transaction.Transaction, op operation.OperationBodyCreateAccount, log logging.Logger) (err error) {
+func finishCreateAccount(st *storage.LevelDBBackend, tx transaction.Transaction, op operation.CreateAccount, log logging.Logger) (err error) {
 
 	var baSource, baTarget *block.BlockAccount
 	if baSource, err = block.GetBlockAccount(st, tx.B.Source); err != nil {
@@ -549,7 +549,7 @@ func finishOperationCreateAccount(st *storage.LevelDBBackend, tx transaction.Tra
 	return
 }
 
-func finishOperationPayment(st *storage.LevelDBBackend, tx transaction.Transaction, op operation.OperationBodyPayment, log logging.Logger) (err error) {
+func finishOperationPayment(st *storage.LevelDBBackend, tx transaction.Transaction, op operation.Payment, log logging.Logger) (err error) {
 
 	var baSource, baTarget *block.BlockAccount
 	if baSource, err = block.GetBlockAccount(st, tx.B.Source); err != nil {
@@ -575,21 +575,21 @@ func finishOperationPayment(st *storage.LevelDBBackend, tx transaction.Transacti
 
 func finishProposerTransaction(st *storage.LevelDBBackend, blk block.Block, ptx ballot.ProposerTransaction, log logging.Logger) (err error) {
 	{
-		var opb operation.OperationBodyCollectTxFee
-		if opb, err = ptx.OperationBodyCollectTxFee(); err != nil {
+		var opb operation.CollectTxFee
+		if opb, err = ptx.CollectTxFee(); err != nil {
 			return
 		}
-		if err = finishOperationCollectTxFee(st, opb, log); err != nil {
+		if err = finishCollectTxFee(st, opb, log); err != nil {
 			return
 		}
 	}
 
 	{
-		var opb operation.OperationBodyInflation
-		if opb, err = ptx.OperationBodyInflation(); err != nil {
+		var opb operation.Inflation
+		if opb, err = ptx.Inflation(); err != nil {
 			return
 		}
-		if err = finishOperationInflation(st, opb, log); err != nil {
+		if err = finishInflation(st, opb, log); err != nil {
 			return
 		}
 	}
@@ -603,7 +603,7 @@ func finishProposerTransaction(st *storage.LevelDBBackend, blk block.Block, ptx 
 	return
 }
 
-func finishOperationCollectTxFee(st *storage.LevelDBBackend, opb operation.OperationBodyCollectTxFee, log logging.Logger) (err error) {
+func finishCollectTxFee(st *storage.LevelDBBackend, opb operation.CollectTxFee, log logging.Logger) (err error) {
 	if opb.Amount < 1 {
 		return
 	}
@@ -624,7 +624,7 @@ func finishOperationCollectTxFee(st *storage.LevelDBBackend, opb operation.Opera
 	return
 }
 
-func finishOperationInflation(st *storage.LevelDBBackend, opb operation.OperationBodyInflation, log logging.Logger) (err error) {
+func finishInflation(st *storage.LevelDBBackend, opb operation.Inflation, log logging.Logger) (err error) {
 	if opb.Amount < 1 {
 		return
 	}

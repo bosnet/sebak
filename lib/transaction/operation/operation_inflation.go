@@ -10,10 +10,10 @@ import (
 	"boscoin.io/sebak/lib/error"
 )
 
-// OperationBodyInflation is the operation to raise inflation in every block. To
-// prevent the hash duplication of transaction, OperationBodyInflation has block
+// Inflation is the operation to raise inflation in every block. To
+// prevent the hash duplication of transaction, Inflation has block
 // related data.
-type OperationBodyInflation struct {
+type Inflation struct {
 	Target         string        `json:"target"`
 	Amount         common.Amount `json:"amount"`
 	InitialBalance common.Amount `json:"initial-balance"`
@@ -30,8 +30,8 @@ func NewOperationBodyInflation(
 	blockHeight uint64,
 	blockHash string,
 	totalTxs uint64,
-) OperationBodyInflation {
-	return OperationBodyInflation{
+) Inflation {
+	return Inflation{
 		Target:         target,
 		Amount:         amount,
 		InitialBalance: initialBalance,
@@ -42,7 +42,7 @@ func NewOperationBodyInflation(
 	}
 }
 
-func (o OperationBodyInflation) IsWellFormed([]byte) (err error) {
+func (o Inflation) IsWellFormed([]byte) (err error) {
 	if _, err = keypair.Parse(o.Target); err != nil {
 		return
 	}
@@ -71,14 +71,14 @@ func (o OperationBodyInflation) IsWellFormed([]byte) (err error) {
 	return
 }
 
-func (o OperationBodyInflation) TargetAddress() string {
+func (o Inflation) TargetAddress() string {
 	return o.Target
 }
 
-func (o OperationBodyInflation) GetAmount() common.Amount {
+func (o Inflation) GetAmount() common.Amount {
 	return o.Amount
 }
 
-func (o OperationBodyInflation) Serialize() (encoded []byte, err error) {
+func (o Inflation) Serialize() (encoded []byte, err error) {
 	return json.Marshal(o)
 }

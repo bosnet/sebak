@@ -151,7 +151,7 @@ func (tx Transaction) TotalAmount(withFee bool) common.Amount {
 	// (the sum of its Operations should not exceed the maximum supply)
 	var amount common.Amount
 	for _, op := range tx.B.Operations {
-		if pop, ok := op.B.(operation.OperationBodyPayable); ok {
+		if pop, ok := op.B.(operation.Payable); ok {
 			amount = amount.MustAdd(pop.GetAmount())
 		}
 	}

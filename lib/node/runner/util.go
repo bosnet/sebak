@@ -40,11 +40,11 @@ func getGenesisAccount(st *storage.LevelDBBackend, operationIndex int) (account 
 		return
 	}
 
-	var opb operation.OperationBody
-	if opb, err = operation.UnmarshalOperationBodyJSON(bo.Type, bo.Body); err != nil {
+	var opb operation.Body
+	if opb, err = operation.UnmarshalBodyJSON(bo.Type, bo.Body); err != nil {
 		return
 	}
-	opbp := opb.(operation.OperationBodyPayable)
+	opbp := opb.(operation.Payable)
 
 	if account, err = block.GetBlockAccount(st, opbp.TargetAddress()); err != nil {
 		return
@@ -72,11 +72,11 @@ func GetGenesisBalance(st *storage.LevelDBBackend) (balance common.Amount, err e
 		return
 	}
 
-	var opb operation.OperationBody
-	if opb, err = operation.UnmarshalOperationBodyJSON(bo.Type, bo.Body); err != nil {
+	var opb operation.Body
+	if opb, err = operation.UnmarshalBodyJSON(bo.Type, bo.Body); err != nil {
 		return
 	}
-	opbp := opb.(operation.OperationBodyPayable)
+	opbp := opb.(operation.Payable)
 
 	balance = opbp.GetAmount()
 

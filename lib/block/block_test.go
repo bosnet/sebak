@@ -155,14 +155,14 @@ func TestMakeGenesisBlock(t *testing.T) {
 	bo, err := GetBlockOperation(st, bt.Operations[0])
 	require.Nil(t, err)
 	require.Equal(t, bt.Hash, bo.TxHash)
-	require.Equal(t, operation.OperationCreateAccount, bo.Type)
+	require.Equal(t, operation.TypeCreateAccount, bo.Type)
 	require.Equal(t, genesisAccount.Address, bo.Source)
 
 	{
-		opb, err := operation.UnmarshalOperationBodyJSON(bo.Type, bo.Body)
+		opb, err := operation.UnmarshalBodyJSON(bo.Type, bo.Body)
 		require.Nil(t, err)
 
-		opbp := opb.(operation.OperationBodyPayable)
+		opbp := opb.(operation.Payable)
 
 		require.Equal(t, genesisAccount.Address, opbp.TargetAddress())
 		require.Equal(t, genesisAccount.Balance, opbp.GetAmount())
@@ -233,10 +233,10 @@ func TestMakeGenesisBlockFindGenesisAccount(t *testing.T) {
 		bt, _ := GetBlockTransaction(st, bk.Transactions[0])
 		bo, _ := GetBlockOperation(st, bt.Operations[0])
 
-		opb, err := operation.UnmarshalOperationBodyJSON(bo.Type, bo.Body)
+		opb, err := operation.UnmarshalBodyJSON(bo.Type, bo.Body)
 		require.Nil(t, err)
 
-		opbp := opb.(operation.OperationBodyPayable)
+		opbp := opb.(operation.Payable)
 
 		genesisAccount, err := GetBlockAccount(st, opbp.TargetAddress())
 		require.Nil(t, err)
@@ -285,10 +285,10 @@ func TestMakeGenesisBlockFindCommonAccount(t *testing.T) {
 		bt, _ := GetBlockTransaction(st, bk.Transactions[0])
 		bo, _ := GetBlockOperation(st, bt.Operations[1])
 
-		opb, err := operation.UnmarshalOperationBodyJSON(bo.Type, bo.Body)
+		opb, err := operation.UnmarshalBodyJSON(bo.Type, bo.Body)
 		require.Nil(t, err)
 
-		opbp := opb.(operation.OperationBodyPayable)
+		opbp := opb.(operation.Payable)
 
 		ac, err := GetBlockAccount(st, opbp.TargetAddress())
 		require.Nil(t, err)

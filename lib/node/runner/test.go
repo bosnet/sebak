@@ -75,8 +75,8 @@ func GenerateBallot(t *testing.T, proposer *node.LocalNode, round round.Round, t
 	b := ballot.NewBallot(proposer.Address(), round, []string{tx.GetHash()})
 	b.SetVote(ballot.StateINIT, ballot.VotingYES)
 
-	opi, _ := ballot.NewOperationInflationFromBallot(*b, commonAccount.Address, initialBalance)
-	opc, _ := ballot.NewOperationCollectTxFeeFromBallot(*b, commonAccount.Address, tx)
+	opi, _ := ballot.NewInflationFromBallot(*b, commonAccount.Address, initialBalance)
+	opc, _ := ballot.NewCollectTxFeeFromBallot(*b, commonAccount.Address, tx)
 	ptx, _ := ballot.NewProposerTransactionFromBallot(*b, opc, opi)
 	b.SetProposerTransaction(ptx)
 
@@ -96,8 +96,8 @@ func GenerateEmptyTxBallot(t *testing.T, proposer *node.LocalNode, round round.R
 	b := ballot.NewBallot(proposer.Address(), round, []string{})
 	b.SetVote(ballot.StateINIT, ballot.VotingYES)
 
-	opi, _ := ballot.NewOperationInflationFromBallot(*b, commonAccount.Address, initialBalance)
-	opc, _ := ballot.NewOperationCollectTxFeeFromBallot(*b, commonAccount.Address)
+	opi, _ := ballot.NewInflationFromBallot(*b, commonAccount.Address, initialBalance)
+	opc, _ := ballot.NewCollectTxFeeFromBallot(*b, commonAccount.Address)
 	ptx, _ := ballot.NewProposerTransactionFromBallot(*b, opc, opi)
 	b.SetProposerTransaction(ptx)
 

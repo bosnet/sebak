@@ -6,7 +6,7 @@ import (
 	"boscoin.io/sebak/lib/error"
 )
 
-type OperationBodyCongressVoting struct {
+type CongressVoting struct {
 	Contract []byte
 	Voting   struct {
 		Start uint64
@@ -14,11 +14,11 @@ type OperationBodyCongressVoting struct {
 	}
 }
 
-func (o OperationBodyCongressVoting) Serialize() (encoded []byte, err error) {
+func (o CongressVoting) Serialize() (encoded []byte, err error) {
 	encoded, err = json.Marshal(o)
 	return
 }
-func (o OperationBodyCongressVoting) IsWellFormed([]byte) (err error) {
+func (o CongressVoting) IsWellFormed([]byte) (err error) {
 	if len(o.Contract) == 0 {
 		return errors.ErrorOperationBodyInsufficient
 	}

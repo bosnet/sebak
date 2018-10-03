@@ -10,15 +10,15 @@ import (
 	"os"
 	"time"
 
-	cmdcommon "boscoin.io/sebak/cmd/sebak/common"
-	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/network"
-	"boscoin.io/sebak/lib/transaction/operation"
-
-	"boscoin.io/sebak/lib/block"
-	"boscoin.io/sebak/lib/transaction"
 	"github.com/spf13/cobra"
 	"github.com/stellar/go/keypair"
+
+	cmdcommon "boscoin.io/sebak/cmd/sebak/common"
+	"boscoin.io/sebak/lib/block"
+	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/network"
+	"boscoin.io/sebak/lib/transaction"
+	"boscoin.io/sebak/lib/transaction/operation"
 )
 
 var (
@@ -171,11 +171,11 @@ func init() {
 ///   `sebak.Transaction` = The generated `Transaction` creating the account
 ///
 func makeTransactionCreateAccount(kpSource keypair.KP, kpDest keypair.KP, amount common.Amount, seqid uint64, target string) transaction.Transaction {
-	opb := operation.NewOperationBodyCreateAccount(kpDest.Address(), amount, target)
+	opb := operation.NewCreateAccount(kpDest.Address(), amount, target)
 
 	op := operation.Operation{
-		H: operation.OperationHeader{
-			Type: operation.OperationCreateAccount,
+		H: operation.Header{
+			Type: operation.TypeCreateAccount,
 		},
 		B: opb,
 	}
@@ -215,11 +215,11 @@ func makeTransactionCreateAccount(kpSource keypair.KP, kpDest keypair.KP, amount
 ///  `sebak.Transaction` = The generated `Transaction` to do a payment
 ///
 func makeTransactionPayment(kpSource keypair.KP, kpDest keypair.KP, amount common.Amount, seqid uint64) transaction.Transaction {
-	opb := operation.NewOperationBodyPayment(kpDest.Address(), amount)
+	opb := operation.NewPayment(kpDest.Address(), amount)
 
 	op := operation.Operation{
-		H: operation.OperationHeader{
-			Type: operation.OperationPayment,
+		H: operation.Header{
+			Type: operation.TypePayment,
 		},
 		B: opb,
 	}

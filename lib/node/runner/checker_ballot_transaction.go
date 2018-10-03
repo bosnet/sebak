@@ -149,13 +149,13 @@ func BallotTransactionsSourceCheck(c common.Checker, args ...interface{}) (err e
 func BallotTransactionsOperationBodyCollectTxFee(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotTransactionChecker)
 
-	var opb operation.OperationBodyCollectTxFee
-	if opb, err = checker.Ballot.ProposerTransaction().OperationBodyCollectTxFee(); err != nil {
+	var opb operation.CollectTxFee
+	if opb, err = checker.Ballot.ProposerTransaction().CollectTxFee(); err != nil {
 		return
 	}
 
 	// check the colleted transaction fee is matched with
-	// `OperationBodyCollectTxFee.Amount`
+	// `CollectTxFee.Amount`
 	if checker.Ballot.TransactionsLength() < 1 {
 		if opb.Amount != 0 {
 			err = errors.ErrorInvalidOperation
@@ -250,15 +250,15 @@ func ValidateTx(st *storage.LevelDBBackend, tx transaction.Transaction) (err err
 //
 func ValidateOp(st *storage.LevelDBBackend, source *block.BlockAccount, op operation.Operation) (err error) {
 	switch op.H.Type {
-	case operation.OperationCreateAccount:
+	case operation.TypeCreateAccount:
 		var ok bool
-		var casted operation.OperationBodyCreateAccount
-		if casted, ok = op.B.(operation.OperationBodyCreateAccount); !ok {
+		var casted operation.CreateAccount
+		if casted, ok = op.B.(operation.CreateAccount); !ok {
 			err = errors.ErrorTypeOperationBodyNotMatched
 			return
 		}
 		var exists bool
-		if exists, err = block.ExistsBlockAccount(st, op.B.(operation.OperationBodyCreateAccount).Target); err == nil && exists {
+		if exists, err = block.ExistsBlockAccount(st, op.B.(operation.CreateAccount).Target); err == nil && exists {
 			err = errors.ErrorBlockAccountAlreadyExists
 			return
 		}
@@ -266,10 +266,10 @@ func ValidateOp(st *storage.LevelDBBackend, source *block.BlockAccount, op opera
 		if casted.Linked != "" && (casted.Amount%common.Unit) != 0 {
 			return errors.ErrorFrozenAccountCreationWholeUnit // FIXME
 		}
-	case operation.OperationPayment:
+	case operation.TypePayment:
 		var ok bool
-		var casted operation.OperationBodyPayment
-		if casted, ok = op.B.(operation.OperationBodyPayment); !ok {
+		var casted operation.Payment
+		if casted, ok = op.B.(operation.Payment); !ok {
 			err = errors.ErrorTypeOperationBodyNotMatched
 			return
 		}
@@ -292,7 +292,7 @@ func ValidateOp(st *storage.LevelDBBackend, source *block.BlockAccount, op opera
 				return
 			}
 		}
-	case operation.OperationCongressVoting, operation.OperationCongressVotingResult:
+	case operation.TypeCongressVoting, operation.TypeCongressVotingResult:
 		// Nothing to do
 		return
 

@@ -9,24 +9,24 @@ import (
 	"boscoin.io/sebak/lib/error"
 )
 
-type OperationBodyPayment struct {
+type Payment struct {
 	Target string        `json:"target"`
 	Amount common.Amount `json:"amount"`
 }
 
-func NewOperationBodyPayment(target string, amount common.Amount) OperationBodyPayment {
-	return OperationBodyPayment{
+func NewPayment(target string, amount common.Amount) Payment {
+	return Payment{
 		Target: target,
 		Amount: amount,
 	}
 }
 
-func (o OperationBodyPayment) Serialize() (encoded []byte, err error) {
+func (o Payment) Serialize() (encoded []byte, err error) {
 	return json.Marshal(o)
 }
 
-// Implement transaction/operation : OperationBody.IsWellFormed
-func (o OperationBodyPayment) IsWellFormed([]byte) (err error) {
+// Implement transaction/operation : IsWellFormed
+func (o Payment) IsWellFormed([]byte) (err error) {
 	if _, err = keypair.Parse(o.Target); err != nil {
 		return
 	}
@@ -39,10 +39,10 @@ func (o OperationBodyPayment) IsWellFormed([]byte) (err error) {
 	return
 }
 
-func (o OperationBodyPayment) TargetAddress() string {
+func (o Payment) TargetAddress() string {
 	return o.Target
 }
 
-func (o OperationBodyPayment) GetAmount() common.Amount {
+func (o Payment) GetAmount() common.Amount {
 	return o.Amount
 }

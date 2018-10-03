@@ -146,7 +146,7 @@ func (bt *BlockTransaction) Save(st *storage.LevelDBBackend) (err error) {
 		if err = bo.Save(st); err != nil {
 			return
 		}
-		if pop, ok := op.B.(operation.OperationBodyPayable); ok {
+		if pop, ok := op.B.(operation.Payable); ok {
 			target := pop.TargetAddress()
 			if err = st.New(bt.NewBlockTransactionKeyByAccount(target), bt.Hash); err != nil {
 				return

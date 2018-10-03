@@ -53,14 +53,14 @@ func (bck Block) String() string {
 //
 // This Transaction is different from other normal Transaction;
 // * signed by `keypair.Master(string(networkID))`
-// * must have only two `Operation`, `OperationCreateAccount`
+// * must have only two `Operation`, `CreateAccount`
 // * The first `Operation` is for genesis account
-//   * `OperationCreateAccount.Amount` is same with balance of genesis account
-//   * `OperationCreateAccount.Target` is genesis account
+//   * `CreateAccount.Amount` is same with balance of genesis account
+//   * `CreateAccount.Target` is genesis account
 // * The next `Operation` is for common account
-//   * `OperationCreateAccount.Amount` is 0
-//   * `OperationCreateAccount.Target` is common account
-// * `Transaction.B.Source` is same with `OperationCreateAccount.Target` of
+//   * `CreateAccount.Amount` is 0
+//   * `CreateAccount.Target` is common account
+// * `Transaction.B.Source` is same with `CreateAccount.Target` of
 // genesis account
 // * `Transaction.B.Fee` is 0
 func MakeGenesisBlock(st *storage.LevelDBBackend, genesisAccount BlockAccount, commonAccount BlockAccount, networdID []byte) (blk Block, err error) {
@@ -81,10 +81,10 @@ func MakeGenesisBlock(st *storage.LevelDBBackend, genesisAccount BlockAccount, c
 	// create create-account transaction.
 	var ops []operation.Operation
 	{
-		opb := operation.NewOperationBodyCreateAccount(genesisAccount.Address, genesisAccount.Balance, "")
+		opb := operation.NewCreateAccount(genesisAccount.Address, genesisAccount.Balance, "")
 		op := operation.Operation{
-			H: operation.OperationHeader{
-				Type: operation.OperationCreateAccount,
+			H: operation.Header{
+				Type: operation.TypeCreateAccount,
 			},
 			B: opb,
 		}
@@ -92,10 +92,10 @@ func MakeGenesisBlock(st *storage.LevelDBBackend, genesisAccount BlockAccount, c
 	}
 
 	{
-		opb := operation.NewOperationBodyCreateAccount(commonAccount.Address, commonAccount.Balance, "")
+		opb := operation.NewCreateAccount(commonAccount.Address, commonAccount.Balance, "")
 		op := operation.Operation{
-			H: operation.OperationHeader{
-				Type: operation.OperationCreateAccount,
+			H: operation.Header{
+				Type: operation.TypeCreateAccount,
 			},
 			B: opb,
 		}

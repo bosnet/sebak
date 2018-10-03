@@ -11,7 +11,7 @@ import (
 
 func TestCreateAccountOperation(t *testing.T) {
 	{ // minimum Amount
-		o := OperationBodyCreateAccount{
+		o := CreateAccount{
 			Target: kp.Address(),
 			Amount: common.Amount(common.BaseReserve),
 		}
@@ -20,7 +20,7 @@ func TestCreateAccountOperation(t *testing.T) {
 	}
 
 	{ // insufficient Amount
-		o := OperationBodyCreateAccount{
+		o := CreateAccount{
 			Target: kp.Address(),
 			Amount: common.Amount(common.BaseReserve - 1),
 		}
@@ -29,7 +29,7 @@ func TestCreateAccountOperation(t *testing.T) {
 	}
 
 	{ // sufficient Amount
-		o := OperationBodyCreateAccount{
+		o := CreateAccount{
 			Target: kp.Address(),
 			Amount: common.Amount(common.BaseReserve + 1),
 		}

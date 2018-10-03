@@ -96,7 +96,7 @@ func (suite *TransactionTestSuite) TestIsWellFormedTransactionWithTargetAddressI
 	var err error
 
 	_, tx := TestMakeTransaction(networkID, 1)
-	if pop, ok := tx.B.Operations[0].B.(operation.OperationBodyPayable); ok {
+	if pop, ok := tx.B.Operations[0].B.(operation.Payable); ok {
 		tx.B.Source = pop.TargetAddress()
 	} else {
 		require.True(suite.T(), ok)

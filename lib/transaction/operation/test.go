@@ -17,7 +17,7 @@ func init() {
 	kp, _ = keypair.Random()
 }
 
-func TestMakeOperationBodyPayment(amount int, addressList ...string) OperationBodyPayment {
+func TestMakeOperationBodyPayment(amount int, addressList ...string) Payment {
 	var address string
 	if len(addressList) > 0 {
 		address = addressList[0]
@@ -30,7 +30,7 @@ func TestMakeOperationBodyPayment(amount int, addressList ...string) OperationBo
 		amount = rand.Intn(5000)
 	}
 
-	return OperationBodyPayment{
+	return Payment{
 		Target: address,
 		Amount: common.Amount(amount),
 	}
@@ -40,8 +40,8 @@ func TestMakeOperation(amount int, addressList ...string) Operation {
 	opb := TestMakeOperationBodyPayment(amount, addressList...)
 
 	op := Operation{
-		H: OperationHeader{
-			Type: OperationPayment,
+		H: Header{
+			Type: TypePayment,
 		},
 		B: opb,
 	}
