@@ -1,12 +1,14 @@
 package network
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"time"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/node"
 )
 
@@ -65,9 +67,13 @@ func (c *HTTP2NetworkClient) GetNodeInfo() (body []byte, err error) {
 		return
 	}
 	defer response.Body.Close()
-	if response.StatusCode == http.StatusOK {
-		body, err = ioutil.ReadAll(response.Body)
+	if response.StatusCode != http.StatusOK {
+		err = errors.ErrorHTTPProblem.Clone().SetData("status", response.StatusCode)
+		return
 	}
+
+	body, err = ioutil.ReadAll(response.Body)
+
 	return
 }
 
@@ -82,9 +88,13 @@ func (c *HTTP2NetworkClient) Connect(n node.Node) (body []byte, err error) {
 		return
 	}
 	defer response.Body.Close()
-	if response.StatusCode == http.StatusOK {
-		body, err = ioutil.ReadAll(response.Body)
+	if response.StatusCode != http.StatusOK {
+		err = errors.ErrorHTTPProblem.Clone().SetData("status", response.StatusCode)
+		return
 	}
+
+	body, err = ioutil.ReadAll(response.Body)
+
 	return
 }
 
@@ -105,9 +115,12 @@ func (c *HTTP2NetworkClient) SendMessage(message common.Serializable) (retBody [
 		return
 	}
 	defer response.Body.Close()
-	if response.StatusCode == http.StatusOK {
-		retBody, err = ioutil.ReadAll(response.Body)
+	if response.StatusCode != http.StatusOK {
+		err = errors.ErrorHTTPProblem.Clone().SetData("status", response.StatusCode)
+		return
 	}
+
+	retBody, err = ioutil.ReadAll(response.Body)
 
 	return
 }
@@ -129,9 +142,39 @@ func (c *HTTP2NetworkClient) SendBallot(message common.Serializable) (retBody []
 		return
 	}
 	defer response.Body.Close()
-	if response.StatusCode == http.StatusOK {
-		retBody, err = ioutil.ReadAll(response.Body)
+	if response.StatusCode != http.StatusOK {
+		err = errors.ErrorHTTPProblem.Clone().SetData("status", response.StatusCode)
+		return
 	}
+
+	retBody, err = ioutil.ReadAll(response.Body)
+
+	return
+}
+
+func (c *HTTP2NetworkClient) GetTransactions(txs []string) (retBody []byte, err error) {
+	headers := c.DefaultHeaders()
+	headers.Set("Content-Type", "application/json")
+
+	var body []byte
+	if body, err = json.Marshal(txs); err != nil {
+		return
+	}
+
+	u := c.resolvePath(UrlPathPrefixNode + "/transactions")
+
+	var response *http.Response
+	response, err = c.client.Post(u.String(), body, headers)
+	if err != nil {
+		return
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		err = errors.ErrorHTTPProblem.Clone().SetData("status", response.StatusCode)
+		return
+	}
+
+	retBody, err = ioutil.ReadAll(response.Body)
 
 	return
 }
@@ -151,7 +194,6 @@ func (c *HTTP2NetworkClient) SendBallot(message common.Serializable) (retBody []
 ///   error  = Error information if the query wasn't successful
 ///
 func (client *HTTP2NetworkClient) Get(endpoint string) ([]byte, error) {
-	var body []byte
 	var err error
 	var response *http.Response
 	headers := client.DefaultHeaders()
@@ -163,9 +205,9 @@ func (client *HTTP2NetworkClient) Get(endpoint string) ([]byte, error) {
 		return nil, err
 	}
 	defer response.Body.Close()
-	if response.StatusCode == http.StatusOK {
-		body, err = ioutil.ReadAll(response.Body)
+	if response.StatusCode != http.StatusOK {
+		return []byte{}, errors.ErrorHTTPProblem.Clone().SetData("status", response.StatusCode)
 	}
 
-	return body, err
+	return ioutil.ReadAll(response.Body)
 }

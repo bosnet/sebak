@@ -66,4 +66,6 @@ var (
 	ErrorWrongBlockFound                      = NewError(159, "wrong Block found")
 	ErrorInvalidProposerTransaction           = NewError(160, "invalid proposer transaction found")
 	ErrorInvalidInflationRatio                = NewError(161, "invalid inflation ratio found")
+	ErrorNotImplemented                       = NewError(162, "not implemented")
+	ErrorHTTPProblem                          = NewError(163, "http failed to get response")
 )

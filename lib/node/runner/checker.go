@@ -242,12 +242,13 @@ func BallotCheckResult(c common.Checker, args ...interface{}) (err error) {
 	return
 }
 
-var handleBallotTransactionCheckerFuncs = []common.CheckerFunc{
+var INITBallotTransactionCheckerFuncs = []common.CheckerFunc{
 	IsNew,
 	GetMissingTransaction,
 	BallotTransactionsSameSource,
 	BallotTransactionsSourceCheck,
 	BallotTransactionsOperationBodyCollectTxFee,
+	BallotTransactionsAllValid,
 }
 
 // INITBallotValidateTransactions validates the
@@ -270,7 +271,7 @@ func INITBallotValidateTransactions(c common.Checker, args ...interface{}) (err 
 	}
 
 	transactionsChecker := &BallotTransactionChecker{
-		DefaultChecker: common.DefaultChecker{Funcs: handleBallotTransactionCheckerFuncs},
+		DefaultChecker: common.DefaultChecker{Funcs: INITBallotTransactionCheckerFuncs},
 		NodeRunner:     checker.NodeRunner,
 		LocalNode:      checker.LocalNode,
 		NetworkID:      checker.NetworkID,

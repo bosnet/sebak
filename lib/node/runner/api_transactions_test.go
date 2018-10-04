@@ -163,8 +163,8 @@ func TestGetNodeTransactionsHandlerWithUnknownHashes(t *testing.T) {
 		rbs, err := unmarshalFromNodeItemResponseBody(resp.Body)
 		require.Nil(t, err)
 		require.Equal(t, 1, len(rbs[NodeItemError]))
-		require.Equal(t, errors.ErrorTransactionNotFound.Code, rbs[NodeItemError][0].(errors.Error).Code)
-		require.Equal(t, unknownHashKey, rbs[NodeItemError][0].(errors.Error).Data["hash"])
+		require.Equal(t, errors.ErrorTransactionNotFound.Code, rbs[NodeItemError][0].(*errors.Error).Code)
+		require.Equal(t, unknownHashKey, rbs[NodeItemError][0].(*errors.Error).Data["hash"])
 	}
 
 	{ // unknown hash + known hash
@@ -182,8 +182,8 @@ func TestGetNodeTransactionsHandlerWithUnknownHashes(t *testing.T) {
 		rbs, err := unmarshalFromNodeItemResponseBody(resp.Body)
 		require.Nil(t, err)
 		require.Equal(t, 1, len(rbs[NodeItemError]))
-		require.Equal(t, errors.ErrorTransactionNotFound.Code, rbs[NodeItemError][0].(errors.Error).Code)
-		require.Equal(t, unknownHashKey, rbs[NodeItemError][0].(errors.Error).Data["hash"])
+		require.Equal(t, errors.ErrorTransactionNotFound.Code, rbs[NodeItemError][0].(*errors.Error).Code)
+		require.Equal(t, unknownHashKey, rbs[NodeItemError][0].(*errors.Error).Data["hash"])
 
 		require.Equal(t, 1, len(rbs[NodeItemTransaction]))
 

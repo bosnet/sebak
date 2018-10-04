@@ -38,6 +38,7 @@ type NetworkClient interface {
 	GetNodeInfo() ([]byte, error)
 	SendMessage(common.Serializable) ([]byte, error)
 	SendBallot(common.Serializable) ([]byte, error)
+	GetTransactions([]string) ([]byte, error)
 }
 
 type MessageBroker interface {

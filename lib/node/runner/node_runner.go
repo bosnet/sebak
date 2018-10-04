@@ -494,7 +494,6 @@ func (nr *NodeRunner) TransitISAACState(round round.Round, ballotState ballot.St
 
 var NewBallotTransactionCheckerFuncs = []common.CheckerFunc{
 	IsNew,
-	GetMissingTransaction,
 	BallotTransactionsSameSource,
 	BallotTransactionsSourceCheck,
 }

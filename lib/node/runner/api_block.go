@@ -190,7 +190,7 @@ func UnmarshalNodeItemResponse(d []byte) (itemType NodeItemDataType, b interface
 	case NodeItemError:
 		var t errors.Error
 		err = unmarshal(&t)
-		b = t
+		b = &t
 	default:
 		err = errors.ErrorInvalidMessage
 	}

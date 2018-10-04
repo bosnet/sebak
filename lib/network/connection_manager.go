@@ -9,6 +9,7 @@ import (
 
 type ConnectionManager interface {
 	GetNodeAddress() string
+	GetConnection(string) NetworkClient
 	ConnectionWatcher(Network, net.Conn, http.ConnState)
 	Broadcast(common.Message)
 	Start()
