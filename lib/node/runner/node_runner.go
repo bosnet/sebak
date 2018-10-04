@@ -38,6 +38,7 @@ var DefaultHandleTransactionCheckerFuncs = []common.CheckerFunc{
 var DefaultHandleBaseBallotCheckerFuncs = []common.CheckerFunc{
 	BallotUnmarshal,
 	BallotNotFromKnownValidators,
+	BallotSaveNodeHeight,
 	BallotAlreadyFinished,
 }
 
@@ -408,6 +409,8 @@ func (nr *NodeRunner) InitRound() {
 	if latestBlock, err = block.GetLatestBlock(nr.storage); err != nil {
 		panic(err)
 	}
+
+	nr.log.Info("getLatestBlock in NodeRunner.InitRound", "height", latestBlock.Height)
 
 	nr.consensus.SetLatestConsensusedBlock(latestBlock)
 	nr.consensus.SetLatestRound(round.Round{})

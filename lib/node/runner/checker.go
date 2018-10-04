@@ -61,6 +61,8 @@ func BallotUnmarshal(c common.Checker, args ...interface{}) (err error) {
 		return
 	}
 
+	checker.Log = checker.Log.New(logging.Ctx{})
+
 	if err = b.IsWellFormed(checker.NetworkID); err != nil {
 		return
 	}
@@ -93,13 +95,19 @@ func BallotNotFromKnownValidators(c common.Checker, args ...interface{}) (err er
 	return
 }
 
+// BallotSaveNodeHeight saves height of ballot sender in ISAAC.
+func BallotSaveNodeHeight(c common.Checker, args ...interface{}) (err error) {
+	checker := c.(*BallotChecker)
+	checker.NodeRunner.Consensus().SaveNodeHeight(checker.Ballot)
+	return
+}
+
 // BallotAlreadyFinished checks the incoming ballot in
 // valid round.
 func BallotAlreadyFinished(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotChecker)
-
-	round := checker.Ballot.Round()
-	if !checker.NodeRunner.Consensus().IsAvailableRound(round) {
+	ballotRound := checker.Ballot.Round()
+	if !checker.NodeRunner.Consensus().IsAvailableRound(ballotRound) {
 		err = errors.ErrorBallotAlreadyFinished
 		checker.Log.Debug("ballot already finished")
 		return
@@ -319,6 +327,7 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) (err error) {
 	if !checker.VotingFinished {
 		return
 	}
+	ballotRound := checker.Ballot.Round()
 	if checker.FinishedVotingHole == ballot.VotingYES {
 		var theBlock block.Block
 		theBlock, err = finishBallot(
@@ -334,7 +343,7 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) (err error) {
 
 		checker.NodeRunner.Consensus().SetLatestConsensusedBlock(theBlock)
 		checker.Log.Debug("ballot was stored", "block", theBlock)
-		checker.NodeRunner.TransitISAACState(checker.Ballot.Round(), ballot.StateALLCONFIRM)
+		checker.NodeRunner.TransitISAACState(ballotRound, ballot.StateALLCONFIRM)
 
 		err = NewCheckerStopCloseConsensus(checker, "ballot got consensus and will be stored")
 	} else {
@@ -344,7 +353,7 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) (err error) {
 
 	checker.NodeRunner.Consensus().CloseConsensus(
 		checker.Ballot.Proposer(),
-		checker.Ballot.Round(),
+		ballotRound,
 		checker.FinishedVotingHole,
 	)
 
