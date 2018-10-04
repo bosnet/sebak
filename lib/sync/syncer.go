@@ -137,7 +137,7 @@ func (s *Syncer) SyncProgress(ctx context.Context) (*SyncProgress, error) {
 func (s *Syncer) loop() {
 	checkc := s.afterFunc(s.checkInterval)
 
-	height := s.lastestBlockHeight()
+	height := s.latestBlockHeight()
 	syncProgress := &SyncProgress{
 		StartingBlock: height,
 		CurrentBlock:  height,
@@ -149,11 +149,13 @@ func (s *Syncer) loop() {
 	for {
 		select {
 		case <-checkc:
+			s.logger.Debug("check interval", "checkInterval", s.checkInterval)
 			syncProgress.HighestBlock++ // TODO(anarcher): Until work together consensus
 			s.sync(syncProgress)
 			checkc = s.afterFunc(s.checkInterval)
 		case height := <-s.updateHighestBlock:
-			if height >= syncProgress.CurrentBlock {
+			s.logger.Debug("update highest Height", "height", height)
+			if height > syncProgress.CurrentBlock {
 				syncProgress.HighestBlock = height
 				s.sync(syncProgress)
 			}
@@ -171,7 +173,7 @@ func (s *Syncer) sync(p *SyncProgress) {
 		startHeight        = p.CurrentBlock + 1
 		currentHeight      = p.CurrentBlock
 		highestHeight      = p.HighestBlock
-		lastestBlockHeight = s.lastestBlockHeight()
+		lastestBlockHeight = s.latestBlockHeight()
 		log                = func() {
 			s.logger.Info("sync progress",
 				"start", p.StartingBlock, "cur", p.CurrentBlock, "high", p.HighestBlock)
@@ -201,8 +203,8 @@ func (s *Syncer) sync(p *SyncProgress) {
 func (s *Syncer) work(height uint64) bool {
 	ctx := s.ctx
 	work := func() {
-		lastHeight := s.lastestBlockHeight()
-		if lastHeight > 0 && height <= lastHeight {
+		latestHeight := s.latestBlockHeight()
+		if latestHeight > 0 && height <= latestHeight {
 			s.logger.Info("this height has already synced", "height", height)
 			return
 		}
@@ -218,17 +220,28 @@ func (s *Syncer) work(height uint64) bool {
 			case <-ctx.Done():
 				break L
 			default:
-				syncInfo, _ = s.fetcher.Fetch(ctx, syncInfo)
+				syncInfo, err = s.fetcher.Fetch(ctx, syncInfo)
+				if err != nil {
+					if err != context.Canceled {
+						s.logger.Error("fetch failure", "err", err)
+					}
+				}
 				err = s.validator.Validate(ctx, syncInfo)
 				if err != nil {
-					s.logger.Error("validate failure", "err", err)
+					if err != context.Canceled {
+						s.logger.Error("validate failure", "err", err)
+					}
 					continue
 				}
 				break L
 			}
 		}
 		if err != nil {
-			s.logger.Info("stop sync work", "height", height, "err", err)
+			if err != context.Canceled {
+				s.logger.Error("stop sync work", "height", height, "err", err)
+			} else {
+				s.logger.Debug("stop sync work", "height", height, "err", err)
+			}
 		} else {
 			s.logger.Info("done sync work", "height", height)
 		}
@@ -236,7 +249,7 @@ func (s *Syncer) work(height uint64) bool {
 	return s.workPool.TryAdd(ctx, work)
 }
 
-func (s *Syncer) lastestBlockHeight() uint64 {
+func (s *Syncer) latestBlockHeight() uint64 {
 	blk, err := block.GetLatestBlock(s.storage)
 	if err != nil {
 		s.logger.Error("block.GetLatestBlock", "err", err)

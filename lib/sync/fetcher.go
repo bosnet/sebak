@@ -96,7 +96,7 @@ func (f *BlockFetcher) fetch(ctx context.Context, si *SyncInfo) error {
 	f.logger.Debug("Fetch start", "height", height)
 
 	n := f.pickRandomNode()
-	f.logger.Info(fmt.Sprintf("Fetching items from node: %s", n), "fetching_node", n, "height", height)
+	f.logger.Info(fmt.Sprintf("fetching items from node: %v", n), "fetching_node", n, "height", height)
 	if n == nil {
 		return errors.New("Fetch: node not found")
 	}
@@ -133,7 +133,7 @@ func (f *BlockFetcher) fetch(ctx context.Context, si *SyncInfo) error {
 		return err
 	}
 
-	f.logger.Info("Fetch get items", "items", len(items), "height", height)
+	f.logger.Info("fetch get items", "items", len(items), "height", height)
 
 	blocks, ok := items[runner.NodeItemBlock]
 	if !ok || len(blocks) <= 0 {
@@ -185,6 +185,10 @@ func (f *BlockFetcher) pickRandomNode() node.Node {
 		if f.localNode.Address() != a {
 			addressList = append(addressList, a)
 		}
+	}
+
+	if len(addressList) <= 0 {
+		return nil
 	}
 
 	idx := rand.Intn(len(addressList))

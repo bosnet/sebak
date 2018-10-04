@@ -26,6 +26,7 @@ func TestNewConfig(t *testing.T) {
 
 	cfg := NewConfig(networkID, node, st, nt, cm)
 	cfg.SyncPoolSize = 100
+	cfg.logger = NopLogger()
 
 	syncer := cfg.NewSyncer()
 
