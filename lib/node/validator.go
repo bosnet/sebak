@@ -19,10 +19,11 @@ import (
 )
 
 type ValidatorFromJSON struct {
-	Alias    string           `json:"alias"`
-	Address  string           `json:"address"`
-	Endpoint *common.Endpoint `json:"endpoint"`
-	State    State            `json:"state"`
+	Alias       string           `json:"alias"`
+	Address     string           `json:"address"`
+	Endpoint    *common.Endpoint `json:"endpoint"`
+	State       State            `json:"state"`
+	BlockHeight uint64           `json:"block_height"`
 }
 
 type Validator struct {
@@ -32,6 +33,8 @@ type Validator struct {
 	alias    string
 	address  string
 	endpoint *common.Endpoint
+
+	blockHeight uint64
 }
 
 func (v *Validator) String() string {
@@ -80,10 +83,11 @@ func (v *Validator) Endpoint() *common.Endpoint {
 
 func (v *Validator) MarshalJSON() ([]byte, error) {
 	return json.Marshal(map[string]interface{}{
-		"address":  v.Address(),
-		"alias":    v.Alias(),
-		"endpoint": v.Endpoint().String(),
-		"state":    v.State().String(),
+		"address":      v.Address(),
+		"alias":        v.Alias(),
+		"endpoint":     v.Endpoint().String(),
+		"state":        v.State().String(),
+		"block_height": v.blockHeight,
 	})
 }
 
@@ -97,12 +101,17 @@ func (v *Validator) UnmarshalJSON(b []byte) error {
 	v.address = va.Address
 	v.endpoint = va.Endpoint
 	v.state = va.State
+	v.blockHeight = va.BlockHeight
 
 	return nil
 }
 
 func (v *Validator) Serialize() ([]byte, error) {
 	return json.Marshal(v)
+}
+
+func (v *Validator) BlockHeight() uint64 {
+	return v.blockHeight
 }
 
 func NewValidator(address string, endpoint *common.Endpoint, alias string) (v *Validator, err error) {

@@ -11,6 +11,7 @@ type Node interface {
 	Equal(Node) bool
 	Serialize() ([]byte, error)
 	State() State
+	BlockHeight() uint64
 	SetBooting()
 	SetSync()
 	SetConsensus()

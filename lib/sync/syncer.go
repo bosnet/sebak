@@ -145,8 +145,6 @@ func (s *Syncer) loop() {
 		HighestBlock:  height,
 	}
 
-	s.logger.Info("starting block to sync", "height", height)
-
 	for {
 		select {
 		case <-checkc:

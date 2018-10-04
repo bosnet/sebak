@@ -87,8 +87,8 @@ func TestValidatorMarshalJSON(t *testing.T) {
 	tmpByte, err := validator.MarshalJSON()
 	require.Equal(t, nil, err)
 
-	jsonStr := `"alias":"%s","endpoint":"https://localhost:%s","state":"%s"`
-	require.Equal(t, true, strings.Contains(string(tmpByte), fmt.Sprintf(jsonStr, "v1", "5000", "NONE")))
+	jsonStr := `"alias":"%s","block_height":%d,"endpoint":"https://localhost:%s","state":"%s"`
+	require.Equal(t, true, strings.Contains(string(tmpByte), fmt.Sprintf(jsonStr, "v1", 0, "5000", "NONE")))
 }
 
 func TestValidatorNewValidatorFromString(t *testing.T) {
