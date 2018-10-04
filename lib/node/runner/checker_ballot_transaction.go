@@ -294,7 +294,38 @@ func ValidateOp(st *storage.LevelDBBackend, source *block.BlockAccount, op trans
 	case transaction.OperationCongressVoting, transaction.OperationCongressVotingResult:
 		// Nothing to do
 		return
-
+	case transaction.OperationMembershipRegister:
+		var ok bool
+		var casted transaction.OperationBodyMembershipRegister
+		if casted, ok = op.B.(transaction.OperationBodyMembershipRegister); !ok {
+			err = errors.ErrorTypeOperationBodyNotMatched
+			return
+		}
+		var taccount *block.BlockAccount
+		if taccount, err = block.GetBlockAccount(st, casted.Target); err != nil {
+			err = errors.ErrorBlockAccountDoesNotExists
+			return
+		}
+		if taccount.Linked != "" {
+			err = errors.ErrorInvalidAccountTypeForMembership
+			return
+		}
+	case transaction.OperationMembershipDeregister:
+		var ok bool
+		var casted transaction.OperationBodyMembershipDeregister
+		if casted, ok = op.B.(transaction.OperationBodyMembershipDeregister); !ok {
+			err = errors.ErrorTypeOperationBodyNotMatched
+			return
+		}
+		var taccount *block.BlockAccount
+		if taccount, err = block.GetBlockAccount(st, casted.Target); err != nil {
+			err = errors.ErrorBlockAccountDoesNotExists
+			return
+		}
+		if taccount.Linked != "" {
+			err = errors.ErrorInvalidAccountTypeForMembership
+			return
+		}
 	default:
 		err = errors.ErrorUnknownOperationType
 		return

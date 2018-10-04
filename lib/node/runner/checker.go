@@ -466,6 +466,9 @@ func finishOperation(st *storage.LevelDBBackend, tx transaction.Transaction, op 
 	case transaction.OperationCongressVoting, transaction.OperationCongressVotingResult:
 		//Nothing to do
 		return
+	case transaction.OperationMembershipRegister, transaction.OperationMembershipDeregister:
+		//Store membership result to ?
+		return
 	default:
 		err = errors.ErrorUnknownOperationType
 		return

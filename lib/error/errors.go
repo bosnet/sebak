@@ -65,4 +65,5 @@ var (
 	ErrorOperationAmountOverflow              = NewError(158, "invalid `Amount`: over than expected")
 	ErrorWrongBlockFound                      = NewError(159, "wrong Block found")
 	ErrorInvalidProposerTransaction           = NewError(160, "invalid proposer transaction found")
+	ErrorInvalidAccountTypeForMembership      = NewError(161, "frozen account can not be used for target of membership registration")
 )

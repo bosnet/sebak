@@ -17,6 +17,8 @@ const (
 	OperationCongressVoting                     = "congress-voting"
 	OperationCongressVotingResult               = "congress-voting-result"
 	OperationCollectTxFee                       = "collect-tx-fee"
+	OperationMembershipRegister                 = "register membership"
+	OperationMembershipDeregister               = "deregister membership"
 )
 
 var OperationTypesNormalTransaction map[OperationType]struct{} = map[OperationType]struct{}{
@@ -24,6 +26,8 @@ var OperationTypesNormalTransaction map[OperationType]struct{} = map[OperationTy
 	OperationPayment:              struct{}{},
 	OperationCongressVoting:       struct{}{},
 	OperationCongressVotingResult: struct{}{},
+	OperationMembershipRegister:   struct{}{},
+	OperationMembershipDeregister: struct{}{},
 }
 
 type Operation struct {
@@ -154,6 +158,18 @@ func UnmarshalOperationBodyJSON(t OperationType, b []byte) (body OperationBody, 
 		body = ob
 	case OperationCollectTxFee:
 		var ob OperationBodyCollectTxFee
+		if err = json.Unmarshal(b, &ob); err != nil {
+			return
+		}
+		body = ob
+	case OperationMembershipRegister:
+		var ob OperationBodyMembershipRegister
+		if err = json.Unmarshal(b, &ob); err != nil {
+			return
+		}
+		body = ob
+	case OperationMembershipDeregister:
+		var ob OperationBodyMembershipDeregister
 		if err = json.Unmarshal(b, &ob); err != nil {
 			return
 		}
