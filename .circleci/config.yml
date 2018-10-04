@@ -80,7 +80,7 @@ jobs:
           name: run tests
           command: |
             for pkg in $(go list ./... | grep -v vendor); do
-                SEBAK_LOG_HANDLER=null go test -race -v -timeout 5m -coverprofile=profile.out "$pkg"
+                SEBAK_LOG_HANDLER=null go test -race -v -timeout 8m -coverprofile=profile.out "$pkg"
                 if [ -f profile.out ]; then
                     cat profile.out >> coverage.txt
                     rm profile.out
