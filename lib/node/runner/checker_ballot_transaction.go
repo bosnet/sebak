@@ -1,10 +1,6 @@
 package runner
 
 import (
-	"bufio"
-	"bytes"
-	"io"
-
 	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
@@ -80,68 +76,7 @@ func IsNew(c common.Checker, args ...interface{}) (err error) {
 
 // GetMissingTransaction will get the missing
 // tranactions, that is, not in `Pool` from proposer.
-func GetMissingTransaction(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotTransactionChecker)
-
-	// get missing transactions
-	var unknown []string
-	for _, hash := range checker.ValidTransactions {
-		if checker.NodeRunner.Consensus().TransactionPool.Has(hash) {
-			continue
-		}
-		unknown = append(unknown, hash)
-	}
-
-	if len(unknown) > 0 {
-		client := checker.NodeRunner.ConnectionManager().GetConnection(checker.Ballot.Proposer())
-		if client == nil {
-			err = errors.ErrorBallotFromUnknownValidator
-			return
-		}
-		var body []byte
-		// TODO check error
-		if body, err = client.GetTransactions(unknown); err != nil {
-			return
-		}
-
-		var receivedTransaction []transaction.Transaction
-		bf := bufio.NewReader(bytes.NewReader(body))
-		for {
-			var l []byte
-			l, err = bf.ReadBytes('\n')
-			if err == io.EOF {
-				err = nil
-				break
-			} else if err != nil {
-				return
-			}
-			var itemType NodeItemDataType
-			var d interface{}
-			if itemType, d, err = UnmarshalNodeItemResponse(l); err != nil {
-				return
-			}
-			if itemType == NodeItemError {
-				err = d.(*errors.Error)
-				return
-			}
-
-			var tx transaction.Transaction
-			var ok bool
-			if tx, ok = d.(transaction.Transaction); !ok {
-				err = errors.ErrorTransactionNotFound
-				return
-			}
-			if err = tx.IsWellFormed(checker.NetworkID); err != nil {
-				return
-			}
-
-			receivedTransaction = append(receivedTransaction, tx)
-		}
-
-		for _, tx := range receivedTransaction {
-			checker.NodeRunner.Consensus().TransactionPool.Add(tx)
-		}
-	}
 
 	var validTransactions []string
 	for _, hash := range checker.ValidTransactions {

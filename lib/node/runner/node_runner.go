@@ -48,6 +48,7 @@ var DefaultHandleINITBallotCheckerFuncs = []common.CheckerFunc{
 	BallotIsSameProposer,
 	BallotValidateOperationBodyCollectTxFee,
 	BallotValidateOperationBodyInflation,
+	BallotGetMissingTransaction,
 	INITBallotValidateTransactions,
 	SIGNBallotBroadcast,
 	TransitStateToSIGN,
@@ -67,6 +68,7 @@ var DefaultHandleACCEPTBallotCheckerFuncs = []common.CheckerFunc{
 	BallotVote,
 	BallotIsSameProposer,
 	BallotCheckResult,
+	BallotGetMissingTransaction,
 	FinishedBallotStore,
 }
 

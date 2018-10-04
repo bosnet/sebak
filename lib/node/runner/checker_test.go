@@ -250,21 +250,24 @@ func TestGetMissingTransactionAllMissing(t *testing.T) {
 	require.Nil(t, err)
 
 	var checkerFuncs = []common.CheckerFunc{
-		IsNew,
-		GetMissingTransaction,
+		BallotAlreadyVoted,
+		BallotVote,
+		BallotIsSameProposer,
+		BallotGetMissingTransaction,
 	}
 
-	transactionsChecker := &BallotTransactionChecker{
+	checker := &BallotChecker{
 		DefaultChecker: common.DefaultChecker{Funcs: checkerFuncs},
 		NodeRunner:     baseChecker.NodeRunner,
 		LocalNode:      baseChecker.LocalNode,
 		NetworkID:      baseChecker.NetworkID,
+		Message:        ballotMessage,
 		Ballot:         baseChecker.Ballot,
-		Transactions:   baseChecker.Ballot.Transactions(),
 		VotingHole:     ballot.VotingNOTYET,
+		Log:            baseChecker.Log,
 	}
 
-	err = common.RunChecker(transactionsChecker, common.DefaultDeferFunc)
+	err = common.RunChecker(checker, common.DefaultDeferFunc)
 	require.Nil(t, err)
 
 	// check consensus node runner has all missing transactions.
@@ -311,22 +314,24 @@ func TestGetMissingTransactionProposerAlsoMissing(t *testing.T) {
 	require.Nil(t, err)
 
 	var checkerFuncs = []common.CheckerFunc{
-		IsNew,
-		GetMissingTransaction,
+		BallotAlreadyVoted,
+		BallotVote,
+		BallotIsSameProposer,
+		BallotGetMissingTransaction,
 	}
 
-	transactionsChecker := &BallotTransactionChecker{
+	checker := &BallotChecker{
 		DefaultChecker: common.DefaultChecker{Funcs: checkerFuncs},
 		NodeRunner:     baseChecker.NodeRunner,
 		LocalNode:      baseChecker.LocalNode,
 		NetworkID:      baseChecker.NetworkID,
+		Message:        ballotMessage,
 		Ballot:         baseChecker.Ballot,
-		Transactions:   baseChecker.Ballot.Transactions(),
 		VotingHole:     ballot.VotingNOTYET,
+		Log:            baseChecker.Log,
 	}
+	err = common.RunChecker(checker, common.DefaultDeferFunc)
 
-	err = common.RunChecker(transactionsChecker, common.DefaultDeferFunc)
-	require.Equal(t, errors.ErrorTransactionNotFound.Code, err.(*errors.Error).Code)
-	require.Equal(t, removedHash, err.(*errors.Error).Data["hash"].(string))
+	require.Equal(t, ballot.VotingNO, checker.VotingHole)
 	require.Equal(t, 0, g.consensusNR.Consensus().TransactionPool.Len())
 }
