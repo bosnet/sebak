@@ -10,12 +10,14 @@ import (
 )
 
 func TestCreateAccountOperation(t *testing.T) {
+
+	conf := common.NewConfig()
 	{ // minimum Amount
 		o := CreateAccount{
 			Target: kp.Address(),
 			Amount: common.Amount(common.BaseReserve),
 		}
-		err := o.IsWellFormed(networkID)
+		err := o.IsWellFormed(networkID, conf)
 		require.Nil(t, err)
 	}
 
@@ -24,7 +26,7 @@ func TestCreateAccountOperation(t *testing.T) {
 			Target: kp.Address(),
 			Amount: common.Amount(common.BaseReserve - 1),
 		}
-		err := o.IsWellFormed(networkID)
+		err := o.IsWellFormed(networkID, conf)
 		require.Equal(t, errors.ErrorInsufficientAmountNewAccount, err)
 	}
 
@@ -33,7 +35,7 @@ func TestCreateAccountOperation(t *testing.T) {
 			Target: kp.Address(),
 			Amount: common.Amount(common.BaseReserve + 1),
 		}
-		err := o.IsWellFormed(networkID)
+		err := o.IsWellFormed(networkID, conf)
 		require.Nil(t, err)
 	}
 }

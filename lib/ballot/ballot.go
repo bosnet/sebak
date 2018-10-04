@@ -10,7 +10,6 @@ import (
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/consensus/round"
 	"boscoin.io/sebak/lib/error"
-	"boscoin.io/sebak/lib/transaction"
 )
 
 type Ballot struct {
@@ -68,8 +67,8 @@ func (b Ballot) String() string {
 	return string(encoded)
 }
 
-func (b Ballot) IsWellFormed(networkID []byte) (err error) {
-	if b.TransactionsLength() > transaction.Limit {
+func (b Ballot) IsWellFormed(networkID []byte, conf common.Config) (err error) {
+	if b.TransactionsLength() > conf.TxsLimit {
 		err = errors.ErrorBallotHasOverMaxTransactionsInBallot
 		return
 	}
@@ -99,7 +98,7 @@ func (b Ballot) IsWellFormed(networkID []byte) (err error) {
 		return
 	}
 
-	if err = b.ProposerTransaction().IsWellFormedWithBallot(networkID, b); err != nil {
+	if err = b.ProposerTransaction().IsWellFormedWithBallot(networkID, b, conf); err != nil {
 		return
 	}
 

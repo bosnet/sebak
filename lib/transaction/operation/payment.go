@@ -26,7 +26,7 @@ func (o Payment) Serialize() (encoded []byte, err error) {
 }
 
 // Implement transaction/operation : IsWellFormed
-func (o Payment) IsWellFormed([]byte) (err error) {
+func (o Payment) IsWellFormed([]byte, common.Config) (err error) {
 	if _, err = keypair.Parse(o.Target); err != nil {
 		return
 	}

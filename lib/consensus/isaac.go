@@ -8,6 +8,7 @@ import (
 
 	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/block"
+	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/consensus/round"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
@@ -28,12 +29,13 @@ type ISAAC struct {
 	TransactionPool *transaction.Pool
 	RunningRounds   map[ /* Round.Index() */ string]*RunningRound
 	LatestRound     round.Round
+	Conf            common.Config
 }
 
 // ISAAC should know network.ConnectionManager
 // because the ISAAC uses connected validators when calculating proposer
 func NewISAAC(networkID []byte, node *node.LocalNode, p ballot.VotingThresholdPolicy,
-	cm network.ConnectionManager) (is *ISAAC, err error) {
+	cm network.ConnectionManager, conf common.Config) (is *ISAAC, err error) {
 
 	is = &ISAAC{
 		NetworkID:         networkID,
@@ -43,6 +45,7 @@ func NewISAAC(networkID []byte, node *node.LocalNode, p ballot.VotingThresholdPo
 		RunningRounds:     map[string]*RunningRound{},
 		connectionManager: cm,
 		proposerSelector:  SequentialSelector{cm},
+		Conf:              conf,
 		log:               log.New(logging.Ctx{"node": node.Alias()}),
 	}
 

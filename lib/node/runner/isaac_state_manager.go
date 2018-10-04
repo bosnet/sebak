@@ -24,10 +24,10 @@ type ISAACStateManager struct {
 	transitSignal   func()        // the function is called when the ISAACState is changed.
 	genesis         time.Time     // the time at which the GenesisBlock was saved. It is used for calculating `blockTimeBuffer`.
 
-	Conf *consensus.ISAACConfiguration
+	Conf common.Config
 }
 
-func NewISAACStateManager(nr *NodeRunner, conf *consensus.ISAACConfiguration) *ISAACStateManager {
+func NewISAACStateManager(nr *NodeRunner, conf common.Config) *ISAACStateManager {
 	p := &ISAACStateManager{
 		nr: nr,
 		state: consensus.ISAACState{

@@ -19,12 +19,6 @@ import (
 var networkID []byte = []byte("sebak-test-network")
 
 func TestErrorBallotHasOverMaxTransactionsInBallot(t *testing.T) {
-	MaxTransactionsInBallotOrig := transaction.Limit
-	defer func() {
-		transaction.Limit = MaxTransactionsInBallotOrig
-	}()
-
-	transaction.Limit = 2
 
 	kp, _ := keypair.Random()
 	commonKP, _ := keypair.Random()
@@ -32,7 +26,10 @@ func TestErrorBallotHasOverMaxTransactionsInBallot(t *testing.T) {
 	node, _ := node.NewLocalNode(kp, endpoint, "")
 
 	round := round.Round{Number: 0, BlockHeight: 1, BlockHash: "hahaha", TotalTxs: 1}
+
 	_, tx := transaction.TestMakeTransaction(networkID, 1)
+	conf := common.NewConfig()
+	conf.TxsLimit = 2
 
 	{
 		blt := NewBallot(node.Address(), round, []string{tx.GetHash()})
@@ -43,13 +40,13 @@ func TestErrorBallotHasOverMaxTransactionsInBallot(t *testing.T) {
 		blt.SetProposerTransaction(ptx)
 
 		blt.Sign(node.Keypair(), networkID)
-		require.Nil(t, blt.IsWellFormed(networkID))
+		require.Nil(t, blt.IsWellFormed(networkID, conf))
 	}
 
 	{
 		var txHashes []string
 		var txs []transaction.Transaction
-		for i := 0; i < transaction.Limit+1; i++ {
+		for i := 0; i < conf.TxsLimit+1; i++ {
 			_, tx := transaction.TestMakeTransaction(networkID, 1)
 			txs = append(txs, tx)
 			txHashes = append(txHashes, tx.GetHash())
@@ -64,7 +61,7 @@ func TestErrorBallotHasOverMaxTransactionsInBallot(t *testing.T) {
 
 		blt.Sign(node.Keypair(), networkID)
 
-		err := blt.IsWellFormed(networkID)
+		err := blt.IsWellFormed(networkID, conf)
 		require.Error(t, err, errors.ErrorBallotHasOverMaxTransactionsInBallot)
 	}
 }
@@ -104,6 +101,7 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 		ballot.H.Signature = base58.Encode(signature)
 	}
 
+	conf := common.NewConfig()
 	{
 		ballot := NewBallot(node.Address(), round, []string{})
 
@@ -114,7 +112,7 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 		ballot.SetProposerTransaction(ptx)
 		ballot.Sign(kp, networkID)
 
-		err := ballot.IsWellFormed(networkID)
+		err := ballot.IsWellFormed(networkID, conf)
 		require.Nil(t, err)
 	}
 
@@ -126,7 +124,7 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 		ballot.B.Confirmed = common.FormatISO8601(newConfirmed)
 		updateBallot(ballot)
 
-		err := ballot.IsWellFormed(networkID)
+		err := ballot.IsWellFormed(networkID, conf)
 		require.Error(t, err, errors.ErrorMessageHasIncorrectTime)
 	}
 
@@ -138,7 +136,7 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 		ballot.B.Confirmed = common.FormatISO8601(newConfirmed)
 		updateBallot(ballot)
 
-		err := ballot.IsWellFormed(networkID)
+		err := ballot.IsWellFormed(networkID, conf)
 		require.Error(t, err, errors.ErrorMessageHasIncorrectTime)
 	}
 
@@ -150,7 +148,7 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 		ballot.B.Proposed.Confirmed = common.FormatISO8601(newConfirmed)
 		updateBallot(ballot)
 
-		err := ballot.IsWellFormed(networkID)
+		err := ballot.IsWellFormed(networkID, conf)
 		require.Error(t, err, errors.ErrorMessageHasIncorrectTime)
 	}
 
@@ -162,7 +160,7 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 		ballot.B.Proposed.Confirmed = common.FormatISO8601(newConfirmed)
 		updateBallot(ballot)
 
-		err := ballot.IsWellFormed(networkID)
+		err := ballot.IsWellFormed(networkID, conf)
 		require.Error(t, err, errors.ErrorMessageHasIncorrectTime)
 	}
 }
@@ -188,10 +186,11 @@ func TestBallotProposerTransaction(t *testing.T) {
 
 	commonKP, _ := keypair.Random()
 
+	conf := common.NewConfig()
 	{ // without ProposerTransaction
 		blt := NewBallot(node.Address(), round, []string{})
 		blt.Sign(node.Keypair(), networkID)
-		err := blt.IsWellFormed(networkID)
+		err := blt.IsWellFormed(networkID, conf)
 		require.NotNil(t, err)
 	}
 
@@ -215,7 +214,7 @@ func TestBallotProposerTransaction(t *testing.T) {
 
 		blt.SetProposerTransaction(ptx)
 		blt.Sign(node.Keypair(), networkID)
-		err := blt.IsWellFormed(networkID)
+		err := blt.IsWellFormed(networkID, conf)
 		require.NotNil(t, err)
 	}
 }

@@ -23,8 +23,6 @@ import (
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/node/runner"
 	"boscoin.io/sebak/lib/storage"
-	"boscoin.io/sebak/lib/transaction"
-	"boscoin.io/sebak/lib/transaction/operation"
 )
 
 const (
@@ -369,7 +367,16 @@ func runNode() error {
 		policy,
 	)
 
-	isaac, err := consensus.NewISAAC([]byte(flagNetworkID), localNode, policy, connectionManager)
+	conf := common.Config{
+		TimeoutINIT:   timeoutINIT,
+		TimeoutSIGN:   timeoutSIGN,
+		TimeoutACCEPT: timeoutACCEPT,
+		BlockTime:     blockTime,
+		TxsLimit:      int(transactionsLimit),
+		OpsLimit:      int(operationsLimit),
+	}
+
+	isaac, err := consensus.NewISAAC([]byte(flagNetworkID), localNode, policy, connectionManager, conf)
 	if err != nil {
 		log.Crit("failed to launch consensus", "error", err)
 		return err
@@ -384,14 +391,6 @@ func runNode() error {
 	// Execution group.
 	var g run.Group
 	{
-		transaction.Limit = int(transactionsLimit)
-		operation.Limit = int(operationsLimit)
-		conf := &consensus.ISAACConfiguration{
-			TimeoutINIT:   timeoutINIT,
-			TimeoutSIGN:   timeoutSIGN,
-			TimeoutACCEPT: timeoutACCEPT,
-			BlockTime:     blockTime,
-		}
 		nr, err := runner.NewNodeRunner(flagNetworkID, localNode, policy, nt, isaac, st, conf)
 
 		if err != nil {

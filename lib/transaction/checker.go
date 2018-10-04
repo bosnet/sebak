@@ -14,9 +14,9 @@ import (
 type Checker struct {
 	common.DefaultChecker
 
-	NetworkID       []byte
-	Transaction     Transaction
-	OperationsLimit int
+	NetworkID   []byte
+	Transaction Transaction
+	Conf        common.Config
 }
 
 func CheckSource(c common.Checker, args ...interface{}) (err error) {
@@ -32,7 +32,7 @@ func CheckSource(c common.Checker, args ...interface{}) (err error) {
 func CheckOverOperationsLimit(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*Checker)
 
-	if len(checker.Transaction.B.Operations) > operation.Limit {
+	if len(checker.Transaction.B.Operations) > checker.Conf.OpsLimit {
 		err = errors.ErrorTransactionHasOverMaxOperations
 		return
 	}
@@ -83,7 +83,7 @@ func CheckOperations(c common.Checker, args ...interface{}) (err error) {
 				err = errors.ErrorInvalidOperation
 				return
 			}
-			if err = op.IsWellFormed(checker.NetworkID); err != nil {
+			if err = op.IsWellFormed(checker.NetworkID, checker.Conf); err != nil {
 				return
 			}
 			// if there are multiple operations which has same 'Type' and same

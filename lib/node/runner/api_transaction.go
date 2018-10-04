@@ -7,7 +7,6 @@ import (
 
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/error"
-	"boscoin.io/sebak/lib/transaction"
 )
 
 const GetTransactionPattern string = "/transactions"
@@ -41,7 +40,7 @@ func (nh NetworkHandlerNode) GetNodeTransactionsHandler(w http.ResponseWriter, r
 	// Usually `GetNodeTransactionsHandler` will be used for finding the missing
 	// `Transaction`s from proposer, so it can not be over the maximum number of
 	// `Transaction`s in one `Ballot`.
-	if len(hashes) > transaction.Limit {
+	if len(hashes) > nh.consensus.Conf.TxsLimit {
 		http.Error(w, errors.ErrorInvalidQueryString.Error(), http.StatusBadRequest)
 		return
 	}

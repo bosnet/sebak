@@ -3,13 +3,13 @@ package runner
 import (
 	"testing"
 
-	"boscoin.io/sebak/lib/consensus"
+	"boscoin.io/sebak/lib/common"
 	"github.com/stretchr/testify/require"
 )
 
 // In TestProposerSelector test, the proposer is always the node itself because of SelfProposerCalculator.
 func TestProposerSelector(t *testing.T) {
-	nodeRunners := createTestNodeRunner(1, consensus.NewISAACConfiguration())
+	nodeRunners := createTestNodeRunner(1, common.NewConfig())
 
 	nodeRunner := nodeRunners[0]
 
@@ -22,7 +22,7 @@ func TestProposerSelector(t *testing.T) {
 func TestNodesHaveSameProposers(t *testing.T) {
 	numberOfNodes := 3
 
-	nodeRunners := createTestNodeRunner(numberOfNodes, consensus.NewISAACConfiguration())
+	nodeRunners := createTestNodeRunner(numberOfNodes, common.NewConfig())
 
 	nr0 := nodeRunners[0]
 	nr1 := nodeRunners[1]

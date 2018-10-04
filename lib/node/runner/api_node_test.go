@@ -103,7 +103,7 @@ func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, n *network.HTTP2Netw
 		p,
 	)
 
-	is, _ := consensus.NewISAAC(networkID, localNode, p, connectionManager)
+	is, _ := consensus.NewISAAC(networkID, localNode, p, connectionManager, common.NewConfig())
 	st := storage.NewTestStorage()
 	// Make the latest block
 	{
@@ -118,8 +118,7 @@ func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, n *network.HTTP2Netw
 
 		block.MakeGenesisBlock(st, *account, *commonAccount, networkID)
 	}
-	conf := consensus.NewISAACConfiguration()
-	if nodeRunner, err = NewNodeRunner(string(networkID), localNode, p, n, is, st, conf); err != nil {
+	if nodeRunner, err = NewNodeRunner(string(networkID), localNode, p, n, is, st, common.NewConfig()); err != nil {
 		panic(err)
 	}
 
@@ -237,6 +236,7 @@ func TestGetNodeInfoHandler(t *testing.T) {
 		localNode,
 		nil,
 		network.NewValidatorConnectionManager(localNode, nil, nil),
+		common.NewConfig(),
 	)
 
 	var config *network.HTTP2NetworkConfig

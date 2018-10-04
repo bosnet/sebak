@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/url"
 
+	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
 )
 
@@ -27,7 +28,7 @@ type CongressVotingResult struct {
 func (o CongressVotingResult) Serialize() (encoded []byte, err error) {
 	return json.Marshal(o)
 }
-func (o CongressVotingResult) IsWellFormed([]byte) (err error) {
+func (o CongressVotingResult) IsWellFormed([]byte, common.Config) (err error) {
 	if len(o.BallotStamps.Hash) == 0 {
 		return errors.ErrorOperationBodyInsufficient
 	}

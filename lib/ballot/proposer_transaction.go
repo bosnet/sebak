@@ -104,7 +104,7 @@ var ProposerTransactionWellFormedCheckerFuncs = []common.CheckerFunc{
 	transaction.CheckVerifySignature,
 }
 
-func (p ProposerTransaction) IsWellFormed(networkID []byte) (err error) {
+func (p ProposerTransaction) IsWellFormed(networkID []byte, conf common.Config) (err error) {
 	if _, err = p.CollectTxFee(); err != nil {
 		return
 	}
@@ -113,6 +113,7 @@ func (p ProposerTransaction) IsWellFormed(networkID []byte) (err error) {
 		DefaultChecker: common.DefaultChecker{Funcs: ProposerTransactionWellFormedCheckerFuncs},
 		NetworkID:      networkID,
 		Transaction:    p.Transaction,
+		Conf:           conf,
 	}
 	if err = common.RunChecker(checker, common.DefaultDeferFunc); err != nil {
 		return
@@ -121,13 +122,13 @@ func (p ProposerTransaction) IsWellFormed(networkID []byte) (err error) {
 	return
 }
 
-func (p ProposerTransaction) IsWellFormedWithBallot(networkID []byte, blt Ballot) (err error) {
+func (p ProposerTransaction) IsWellFormedWithBallot(networkID []byte, blt Ballot, conf common.Config) (err error) {
 	if p.Source() != blt.Proposer() {
 		err = errors.ErrorInvalidProposerTransaction
 		return
 	}
 
-	if err = p.IsWellFormed(networkID); err != nil {
+	if err = p.IsWellFormed(networkID, conf); err != nil {
 		return
 	}
 

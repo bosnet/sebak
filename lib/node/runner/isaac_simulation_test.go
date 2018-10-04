@@ -12,7 +12,6 @@ import (
 
 	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/consensus"
 	"boscoin.io/sebak/lib/consensus/round"
 )
 
@@ -25,7 +24,7 @@ TestISAACSimulationProposer indicates the following:
 	4. The node receives a ballot that exceeds the threshold, and the block is confirmed.
 */
 func TestISAACSimulationProposer(t *testing.T) {
-	nr, nodes, _ := createNodeRunnerForTesting(5, consensus.NewISAACConfiguration(), nil)
+	nr, nodes, _ := createNodeRunnerForTesting(5, common.NewConfig(), nil)
 	tx, txByte := GetTransaction(t)
 
 	message := common.NetworkMessage{Type: common.TransactionMessage, Data: txByte}
@@ -55,38 +54,40 @@ func TestISAACSimulationProposer(t *testing.T) {
 	}
 	require.True(t, nr.Consensus().TransactionPool.Has(tx.GetHash()))
 
-	ballotSIGN1 := GenerateBallot(t, proposer, round, tx, ballot.StateSIGN, nodes[1])
+	conf := common.NewConfig()
+
+	ballotSIGN1 := GenerateBallot(t, proposer, round, tx, ballot.StateSIGN, nodes[1], conf)
 	err = ReceiveBallot(t, nr, ballotSIGN1)
 	require.Nil(t, err)
 
-	ballotSIGN2 := GenerateBallot(t, proposer, round, tx, ballot.StateSIGN, nodes[2])
+	ballotSIGN2 := GenerateBallot(t, proposer, round, tx, ballot.StateSIGN, nodes[2], conf)
 	err = ReceiveBallot(t, nr, ballotSIGN2)
 	require.Nil(t, err)
 
-	ballotSIGN3 := GenerateBallot(t, proposer, round, tx, ballot.StateSIGN, nodes[3])
+	ballotSIGN3 := GenerateBallot(t, proposer, round, tx, ballot.StateSIGN, nodes[3], conf)
 	err = ReceiveBallot(t, nr, ballotSIGN3)
 	require.Nil(t, err)
 
-	ballotSIGN4 := GenerateBallot(t, proposer, round, tx, ballot.StateSIGN, nodes[4])
+	ballotSIGN4 := GenerateBallot(t, proposer, round, tx, ballot.StateSIGN, nodes[4], conf)
 	err = ReceiveBallot(t, nr, ballotSIGN4)
 	require.Nil(t, err)
 
 	rr := nr.Consensus().RunningRounds[round.Index()]
 	require.Equal(t, 4, len(rr.Voted[proposer.Address()].GetResult(ballot.StateSIGN)))
 
-	ballotACCEPT0 := GenerateBallot(t, proposer, round, tx, ballot.StateACCEPT, nodes[0])
+	ballotACCEPT0 := GenerateBallot(t, proposer, round, tx, ballot.StateACCEPT, nodes[0], conf)
 	err = ReceiveBallot(t, nr, ballotACCEPT0)
 	require.Nil(t, err)
 
-	ballotACCEPT1 := GenerateBallot(t, proposer, round, tx, ballot.StateACCEPT, nodes[1])
+	ballotACCEPT1 := GenerateBallot(t, proposer, round, tx, ballot.StateACCEPT, nodes[1], conf)
 	err = ReceiveBallot(t, nr, ballotACCEPT1)
 	require.Nil(t, err)
 
-	ballotACCEPT2 := GenerateBallot(t, proposer, round, tx, ballot.StateACCEPT, nodes[2])
+	ballotACCEPT2 := GenerateBallot(t, proposer, round, tx, ballot.StateACCEPT, nodes[2], conf)
 	err = ReceiveBallot(t, nr, ballotACCEPT2)
 	require.Nil(t, err)
 
-	ballotACCEPT3 := GenerateBallot(t, proposer, round, tx, ballot.StateACCEPT, nodes[3])
+	ballotACCEPT3 := GenerateBallot(t, proposer, round, tx, ballot.StateACCEPT, nodes[3], conf)
 	err = ReceiveBallot(t, nr, ballotACCEPT3)
 
 	_, ok := err.(CheckerStopCloseConsensus)
