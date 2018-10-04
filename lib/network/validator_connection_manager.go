@@ -24,6 +24,8 @@ type ValidatorConnectionManager struct {
 	clients    map[ /* node.Address() */ string]NetworkClient
 	connected  map[ /* node.Address() */ string]bool
 
+	blockHeights map[ /* node.Address() */ string]uint64
+
 	log logging.Logger
 }
 
@@ -42,9 +44,10 @@ func NewValidatorConnectionManager(
 		policy:     policy,
 		validators: localNode.GetValidators(),
 
-		clients:   map[string]NetworkClient{},
-		connected: map[string]bool{},
-		log:       log.New(logging.Ctx{"node": localNode.Alias()}),
+		clients:      map[string]NetworkClient{},
+		connected:    map[string]bool{},
+		blockHeights: map[string]uint64{},
+		log:          log.New(logging.Ctx{"node": localNode.Alias()}),
 	}
 }
 
@@ -176,7 +179,9 @@ func (c *ValidatorConnectionManager) connectValidator(v *node.Validator) (err er
 		return
 	}
 
-	v.SetBlockHeight(validator.BlockHeight())
+	c.Lock()
+	c.blockHeights[v.Address()] = validator.BlockHeight()
+	c.Unlock()
 
 	return
 }
@@ -218,6 +223,11 @@ func (c *ValidatorConnectionManager) GetNode(address string) node.Node {
 	validator, ok := c.validators[address]
 	if !ok {
 		return nil
+	}
+
+	blockHeight, ok := c.blockHeights[address]
+	if ok {
+		validator.SetBlockHeight(blockHeight)
 	}
 
 	return validator
