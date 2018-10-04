@@ -36,7 +36,7 @@ var (
 
 	// DefaultInflationRatio is the default inflation ratio. If the decimal
 	// points is over 17, the inflation amount will be 0, considering with
-	// `MaximumBalance`. The current value, `0.00000000000001` will increase
+	// `MaximumBalance`. The current value, `0.0000001` will increase
 	// `50BOS` in every block(current genesis balance is `5000000000000000`).
-	DefaultInflationRatio float64 = 0.00000000000001
+	DefaultInflationRatio float64 = 0.0000001
 )
