@@ -56,6 +56,15 @@ func (p *Pool) Add(ctx context.Context, f func()) error {
 	}
 }
 
+func (p *Pool) TryAdd(ctx context.Context, f func()) bool {
+	select {
+	case p.work <- f:
+		return true
+	default:
+		return false
+	}
+}
+
 func (p *Pool) Finish() {
 	select {
 	case <-p.finish:

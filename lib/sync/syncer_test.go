@@ -11,7 +11,65 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type SyncerTestContext struct {
+	t         *testing.T
+	st        *storage.LevelDBBackend
+	syncer    *Syncer
+	tickC     chan time.Time
+	syncInfoC chan *SyncInfo
+}
+
 func TestSyncer(t *testing.T) {
+	fn := func(ctx *SyncerTestContext) {
+		{
+			bk := block.TestMakeNewBlock([]string{})
+			bk.Height = uint64(1)
+			require.Nil(t, bk.Save(ctx.st))
+		}
+
+		go func() {
+			ctx.syncer.Start()
+		}()
+
+		ctx.tickC <- time.Time{}
+		si := <-ctx.syncInfoC
+		require.NotNil(t, si.Block)
+		require.Equal(t, si.BlockHeight, uint64(2))
+	}
+	SyncerTest(t, fn)
+}
+
+func TestSyncerSetSyncTarget(t *testing.T) {
+	fn := func(tctx *SyncerTestContext) {
+		ctx := context.Background()
+		syncer := tctx.syncer
+
+		{
+			bk := block.TestMakeNewBlock([]string{})
+			bk.Height = uint64(1)
+			bk.Save(tctx.st)
+		}
+
+		go func() {
+			syncer.Start()
+		}()
+
+		height := uint64(10)
+		syncer.SetSyncTargetBlock(ctx, height)
+		sp, err := syncer.SyncProgress(ctx)
+		require.Nil(t, err)
+
+		var heights []uint64
+		for i := sp.StartingBlock; i <= sp.CurrentBlock; i++ {
+			si := <-tctx.syncInfoC
+			heights = append(heights, si.BlockHeight)
+		}
+		require.Equal(t, len(heights), 9)
+	}
+	SyncerTest(t, fn)
+}
+
+func SyncerTest(t *testing.T, fn func(*SyncerTestContext)) {
 	st := storage.NewTestStorage()
 	defer st.Close()
 	_, nw, localNode := network.CreateMemoryNetwork(nil)
@@ -19,7 +77,7 @@ func TestSyncer(t *testing.T) {
 	networkID := []byte("test-network")
 
 	tickc := make(chan time.Time)
-	infoC := make(chan *SyncInfo)
+	infoc := make(chan *SyncInfo)
 
 	syncer := NewSyncer(st, nw, cm, networkID, localNode)
 	defer syncer.Stop()
@@ -37,7 +95,7 @@ func TestSyncer(t *testing.T) {
 	}
 	syncer.validator = &mockValidator{
 		validateFunc: func(ctx context.Context, si *SyncInfo) error {
-			infoC <- si
+			infoc <- si
 			return nil
 		},
 	}
@@ -45,18 +103,13 @@ func TestSyncer(t *testing.T) {
 		return tickc
 	}
 
-	go func() {
-		syncer.Start()
-	}()
-
-	{
-		bk := block.TestMakeNewBlock([]string{})
-		bk.Height = uint64(1)
-		require.Nil(t, bk.Save(st))
-
-		tickc <- time.Time{}
-		si := <-infoC
-		require.NotNil(t, si.Block)
-		require.Equal(t, si.BlockHeight, uint64(2))
+	ctx := &SyncerTestContext{
+		t:         t,
+		st:        st,
+		syncer:    syncer,
+		tickC:     tickc,
+		syncInfoC: infoc,
 	}
+
+	fn(ctx)
 }

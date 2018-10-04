@@ -14,7 +14,7 @@ const (
 	SyncPoolSize             = 300
 	FetchTimeout             = 1 * time.Minute
 	RetryInterval            = 10 * time.Second
-	CheckBlockHeightInterval = 500 * time.Millisecond
+	CheckBlockHeightInterval = 30 * time.Second
 )
 
 type Config struct {
@@ -64,5 +64,17 @@ func (c *Config) NewSyncer() *Syncer {
 		s.checkInterval = c.CheckBlockHeightInterval
 		s.logger = c.logger
 	})
+
+	c.LoggingConfig()
 	return s
+}
+
+func (c *Config) LoggingConfig() {
+	c.logger.Info("syncer config",
+		"poolSize", c.SyncPoolSize,
+		"fetchTimeout", c.FetchTimeout,
+		"retryInterval", c.RetryInterval,
+		"checkInterval", c.CheckBlockHeightInterval,
+	)
+
 }
