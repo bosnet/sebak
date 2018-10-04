@@ -149,6 +149,13 @@ func (st *LevelDBBackend) Get(k string, i interface{}) (err error) {
 }
 
 func (st *LevelDBBackend) New(k string, v interface{}) (err error) {
+	var exists bool
+	if exists, err = st.Has(k); err != nil {
+		return
+	} else if exists {
+		return errors.ErrorStorageRecordAlreadyExists
+	}
+
 	var encoded []byte
 	serializable, ok := v.(common.Serializable)
 	if ok {
@@ -158,15 +165,6 @@ func (st *LevelDBBackend) New(k string, v interface{}) (err error) {
 	}
 	if err != nil {
 		err = setLevelDBCoreError(err)
-		return
-	}
-
-	var exists bool
-	if exists, err = st.Has(k); exists || err != nil {
-		if exists {
-			err = errors.ErrorStorageRecordAlreadyExists
-			return
-		}
 		return
 	}
 
