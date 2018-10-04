@@ -61,6 +61,8 @@ func BallotUnmarshal(c common.Checker, args ...interface{}) (err error) {
 		return
 	}
 
+	checker.Log = checker.Log.New(logging.Ctx{})
+
 	if err = b.IsWellFormed(checker.NetworkID); err != nil {
 		return
 	}
@@ -98,8 +100,7 @@ func BallotNotFromKnownValidators(c common.Checker, args ...interface{}) (err er
 func BallotAlreadyFinished(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotChecker)
 
-	round := checker.Ballot.Round()
-	if !checker.NodeRunner.Consensus().IsAvailableRound(round) {
+	if !checker.NodeRunner.Consensus().IsAvailableRound(checker.Ballot.Round()) {
 		err = errors.ErrorBallotAlreadyFinished
 		checker.Log.Debug("ballot already finished")
 		return
@@ -319,6 +320,7 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) (err error) {
 	if !checker.VotingFinished {
 		return
 	}
+	ballotRound := checker.Ballot.Round()
 	if checker.FinishedVotingHole == ballot.VotingYES {
 		var theBlock block.Block
 		theBlock, err = finishBallot(
@@ -334,7 +336,15 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) (err error) {
 
 		checker.NodeRunner.Consensus().SetLatestConsensusedBlock(theBlock)
 		checker.Log.Debug("ballot was stored", "block", theBlock)
-		checker.NodeRunner.TransitISAACState(checker.Ballot.Round(), ballot.StateALLCONFIRM)
+		checker.NodeRunner.TransitISAACState(ballotRound, ballot.StateALLCONFIRM)
+
+		// yesValidators := make([]string, 0)
+		// for nodeAddr, votingHole := range checker.Result {
+		// 	if votingHole == ballot.VotingYES {
+		// 		yesValidators = append(yesValidators, nodeAddr)
+		// 	}
+		// }
+		// checker.NodeRunner.Consensus().StartSync(ballotRound.BlockHeight, yesValidators)
 
 		err = NewCheckerStopCloseConsensus(checker, "ballot got consensus and will be stored")
 	} else {
@@ -344,7 +354,7 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) (err error) {
 
 	checker.NodeRunner.Consensus().CloseConsensus(
 		checker.Ballot.Proposer(),
-		checker.Ballot.Round(),
+		ballotRound,
 		checker.FinishedVotingHole,
 	)
 

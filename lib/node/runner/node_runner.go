@@ -409,6 +409,8 @@ func (nr *NodeRunner) InitRound() {
 		panic(err)
 	}
 
+	nr.log.Info("getLatestBlock in NodeRunner.InitRound", "height", latestBlock.Height)
+
 	nr.consensus.SetLatestConsensusedBlock(latestBlock)
 	nr.consensus.SetLatestRound(round.Round{})
 

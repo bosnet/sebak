@@ -1,6 +1,7 @@
 package consensus
 
 import (
+	"context"
 	"errors"
 	"sync"
 
@@ -14,6 +15,10 @@ import (
 	"boscoin.io/sebak/lib/transaction"
 )
 
+type SyncController interface {
+	SetSyncTargetBlock(ctx context.Context, height uint64, nodeAddrs []string) error
+}
+
 type ISAAC struct {
 	sync.RWMutex
 
@@ -22,6 +27,7 @@ type ISAAC struct {
 	proposerSelector     ProposerSelector
 	log                  logging.Logger
 	policy               ballot.VotingThresholdPolicy
+	syncer               SyncController
 
 	NetworkID       []byte
 	Node            *node.LocalNode
@@ -33,7 +39,7 @@ type ISAAC struct {
 // ISAAC should know network.ConnectionManager
 // because the ISAAC uses connected validators when calculating proposer
 func NewISAAC(networkID []byte, node *node.LocalNode, p ballot.VotingThresholdPolicy,
-	cm network.ConnectionManager) (is *ISAAC, err error) {
+	cm network.ConnectionManager, syncer SyncController) (is *ISAAC, err error) {
 
 	is = &ISAAC{
 		NetworkID:         networkID,
@@ -44,6 +50,7 @@ func NewISAAC(networkID []byte, node *node.LocalNode, p ballot.VotingThresholdPo
 		connectionManager: cm,
 		proposerSelector:  SequentialSelector{cm},
 		log:               log.New(logging.Ctx{"node": node.Alias()}),
+		syncer:            syncer,
 	}
 
 	return
@@ -122,10 +129,8 @@ func (is *ISAAC) IsAvailableRound(round round.Round) bool {
 		if round.BlockHash != is.latestConfirmedBlock.Hash {
 			return false
 		}
-	} else {
-		// TODO if incoming round.BlockHeight is bigger than
-		// latestConfirmedBlock.Height and this round confirmed successfully,
-		// this node will get into sync state
+	} else { /* round.BlockHeight > is.latestConfirmedBlock.Height */
+
 	}
 
 	if round.BlockHeight == is.LatestRound.BlockHeight {
@@ -135,6 +140,17 @@ func (is *ISAAC) IsAvailableRound(round round.Round) bool {
 	}
 
 	return true
+}
+
+func (is *ISAAC) StartSync(height uint64, yesValidators []string) {
+	is.log.Info("begin ISAAC.StartSync", "height", height)
+	if is.syncer != nil {
+		is.log.Info("before syncer.SetSyncTargetBlock", "height", height)
+		if err := is.syncer.SetSyncTargetBlock(context.Background(), height, yesValidators); err != nil {
+			is.log.Error("syncer.SetSyncTargetBlock", "err", err, "height", height)
+		}
+	}
+
 }
 
 func (is *ISAAC) IsVoted(b ballot.Ballot) bool {
