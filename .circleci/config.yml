@@ -43,14 +43,6 @@ jobs:
           name: check formatting
           command: if [[ -n "$(gofmt -l cmd lib)" ]]; then gofmt -l cmd lib; exit 1; fi
 
-  test_go1_10:
-    <<: *defaults
-    steps:
-      - <<: *workspace
-      - run:
-          name: run tests
-          command: SEBAK_LOG_HANDLER=null go test -v -timeout 5m ./...
-
   test_go1_11:
     docker:
       - image: circleci/golang:1.11
@@ -118,9 +110,6 @@ workflows:
       - fmt:
           requires:
             - build
-      - test_go1_10:
-          requires:
-            - fmt
       - test_go1_11:
           requires:
             - fmt
