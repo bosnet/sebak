@@ -1,5 +1,5 @@
 ## Builder part is quite heavy as it depends on the Go toolchain
-FROM golang:alpine AS builder
+FROM golang:1.11-alpine AS builder
 LABEL maintainer="BOSCoin Developers <devteam@boscoin.io>"
 
 # You probably don't need to change this
