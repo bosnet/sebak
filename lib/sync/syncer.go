@@ -2,6 +2,7 @@ package sync
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"boscoin.io/sebak/lib/block"
@@ -170,25 +171,30 @@ func (s *Syncer) loop() {
 
 func (s *Syncer) sync(p *SyncProgress) {
 	var (
-		startHeight        = p.CurrentBlock + 1
-		currentHeight      = p.CurrentBlock
-		highestHeight      = p.HighestBlock
-		lastestBlockHeight = s.latestBlockHeight()
-		log                = func() {
-			s.logger.Info("sync progress",
+		startHeight       = p.CurrentBlock + 1
+		currentHeight     = p.CurrentBlock
+		highestHeight     = p.HighestBlock
+		latestBlockHeight = s.latestBlockHeight()
+		log               = func(msg string) {
+			if msg == "" {
+				msg = fmt.Sprintf("sync progress")
+			}
+			s.logger.Info(msg,
 				"start", p.StartingBlock, "cur", p.CurrentBlock, "high", p.HighestBlock)
 		}
 	)
 
-	if lastestBlockHeight > p.CurrentBlock {
-		currentHeight = lastestBlockHeight
+	if latestBlockHeight > p.CurrentBlock {
+		currentHeight = latestBlockHeight
 	}
 	if currentHeight >= highestHeight {
-		log()
+		p.CurrentBlock = currentHeight
+		log("sync progress skip: current latest height is over than highest (requested) height")
 		return
 	}
 
 	for height := startHeight; height <= highestHeight; height++ {
+		s.logger.Info("work height", "height", height)
 		// TryAdd for unblocking when the pool is full. Just keep syncprogress for next sync
 		if s.work(height) == false {
 			break
@@ -197,7 +203,8 @@ func (s *Syncer) sync(p *SyncProgress) {
 	}
 	p.StartingBlock = startHeight
 	p.CurrentBlock = currentHeight
-	log()
+
+	log("")
 }
 
 func (s *Syncer) work(height uint64) bool {
