@@ -10,6 +10,11 @@ import (
 
 func TestBlockTime(t *testing.T) {
 	nodeRunners, _ := createTestNodeRunnersHTTP2NetworkWithReady(3)
+	defer func() {
+		for _, nr := range nodeRunners {
+			nr.Stop()
+		}
+	}()
 
 	nr := nodeRunners[0]
 
@@ -34,5 +39,4 @@ func TestBlockTime(t *testing.T) {
 	t.Log("averageBlockTime", averageBlockTime)
 	require.True(t, averageBlockTime >= 4500*time.Millisecond)
 	require.True(t, averageBlockTime <= 5500*time.Millisecond)
-
 }

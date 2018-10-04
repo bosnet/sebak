@@ -855,10 +855,15 @@ func TestProposedTransactionWithWrongNumberOfOperations(t *testing.T) {
 
 func TestCheckInflationBlockIncrease(t *testing.T) {
 	nodeRunners, _ := createTestNodeRunnersHTTP2NetworkWithReady(1)
+	defer func() {
+		for _, nr := range nodeRunners {
+			nr.Stop()
+		}
+	}()
 
 	nr := nodeRunners[0]
 
-	nr.isaacStateManager.Conf.BlockTime = 0
+	nr.ISAACStateManager().Conf.BlockTime = 0
 	validators := nr.ConnectionManager().AllValidators()
 	require.Equal(t, 1, len(validators))
 	require.Equal(t, nr.localNode.Address(), validators[0])
@@ -873,7 +878,7 @@ func TestCheckInflationBlockIncrease(t *testing.T) {
 	require.Equal(t, common.Amount(0), getCommonAccountBalance())
 
 	recv := make(chan struct{})
-	nr.isaacStateManager.SetTransitSignal(func() {
+	nr.ISAACStateManager().SetTransitSignal(func() {
 		recv <- struct{}{}
 	})
 
@@ -885,13 +890,13 @@ func TestCheckInflationBlockIncrease(t *testing.T) {
 			inflationAmount,
 		)
 		<-recv // ballot.StateINIT
-		require.Equal(t, blockHeight, nr.isaacStateManager.State().Round.BlockHeight)
+		require.Equal(t, blockHeight, nr.ISAACStateManager().State().Height)
 		<-recv // ballot.StateSIGN
 		<-recv // ballot.StateACCEPT
 		<-recv
-		require.Equal(t, ballot.StateALLCONFIRM, nr.isaacStateManager.State().BallotState)
-		require.Equal(t, blockHeight+1, isaac.LatestConfirmedBlock().Height)
-		require.Equal(t, blockHeight, nr.isaacStateManager.State().Round.BlockHeight)
+		require.Equal(t, ballot.StateALLCONFIRM, nr.ISAACStateManager().State().BallotState)
+		require.Equal(t, blockHeight+1, isaac.LatestBlock().Height)
+		require.Equal(t, blockHeight, nr.ISAACStateManager().State().Height)
 
 		expected := previous + inflationAmount
 		t.Logf(
@@ -949,5 +954,4 @@ func TestCheckInflationBlockIncrease(t *testing.T) {
 			previous = checkInflation(previous, inflationAmount, blockHeight)
 		}
 	}
-
 }

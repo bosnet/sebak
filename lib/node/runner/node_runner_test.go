@@ -3,6 +3,7 @@ package runner
 import (
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"testing"
 	"time"
 
@@ -190,6 +191,9 @@ func createTestNodeRunnersHTTP2NetworkWithReady(n int) (nodeRunners []*NodeRunne
 	for _, nr := range nodeRunners {
 		go func(nodeRunner *NodeRunner) {
 			if err := nodeRunner.Start(); err != nil {
+				if err == http.ErrServerClosed {
+					return
+				}
 				panic(err)
 			}
 		}(nr)
