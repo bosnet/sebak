@@ -13,9 +13,6 @@ import (
 
 // TODO versioning
 
-// Limit is the number of transactions to be included in a ballot
-var Limit = 1000
-
 type Transaction struct {
 	T string
 	H Header
@@ -101,13 +98,14 @@ var TransactionWellFormedCheckerFuncs = []common.CheckerFunc{
 	CheckVerifySignature,
 }
 
-func (tx Transaction) IsWellFormed(networkID []byte) (err error) {
+func (tx Transaction) IsWellFormed(networkID []byte, conf common.Config) (err error) {
 	// TODO check `Version` format with SemVer
 
 	checker := &Checker{
 		DefaultChecker: common.DefaultChecker{Funcs: TransactionWellFormedCheckerFuncs},
 		NetworkID:      networkID,
 		Transaction:    tx,
+		Conf:           conf,
 	}
 	if err = common.RunChecker(checker, common.DefaultDeferFunc); err != nil {
 		return

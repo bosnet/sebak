@@ -3,6 +3,7 @@ package operation
 import (
 	"encoding/json"
 
+	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
 )
 
@@ -18,7 +19,7 @@ func (o CongressVoting) Serialize() (encoded []byte, err error) {
 	encoded, err = json.Marshal(o)
 	return
 }
-func (o CongressVoting) IsWellFormed([]byte) (err error) {
+func (o CongressVoting) IsWellFormed([]byte, common.Config) (err error) {
 	if len(o.Contract) == 0 {
 		return errors.ErrorOperationBodyInsufficient
 	}

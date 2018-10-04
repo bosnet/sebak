@@ -28,7 +28,7 @@ func (o CreateAccount) Serialize() (encoded []byte, err error) {
 }
 
 // Implement transaction/operation : IsWellFormed
-func (o CreateAccount) IsWellFormed([]byte) (err error) {
+func (o CreateAccount) IsWellFormed([]byte, common.Config) (err error) {
 	if _, err = keypair.Parse(o.Target); err != nil {
 		return
 	}

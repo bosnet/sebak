@@ -33,7 +33,7 @@ func init() {
 	tlsKey = network.NewKeyGenerator(dir, "sebak-test.crt", "sebak-test.key")
 }
 
-func createTestNodeRunner(n int, conf *consensus.ISAACConfiguration) []*NodeRunner {
+func createTestNodeRunner(n int, conf common.Config) []*NodeRunner {
 	var ns []*network.MemoryNetwork
 	var net *network.MemoryNetwork
 	var nodes []*node.LocalNode
@@ -64,7 +64,7 @@ func createTestNodeRunner(n int, conf *consensus.ISAACConfiguration) []*NodeRunn
 			policy,
 		)
 
-		is, _ := consensus.NewISAAC(networkID, localNode, policy, connectionManager)
+		is, _ := consensus.NewISAAC(networkID, localNode, policy, connectionManager, conf)
 		st := storage.NewTestStorage()
 
 		account.Save(st)
@@ -86,7 +86,7 @@ func createTestNodeRunner(n int, conf *consensus.ISAACConfiguration) []*NodeRunn
 }
 
 func createTestNodeRunnerWithReady(n int) []*NodeRunner {
-	nodeRunners := createTestNodeRunner(n, consensus.NewISAACConfiguration())
+	nodeRunners := createTestNodeRunner(n, common.NewConfig())
 
 	for _, nr := range nodeRunners {
 		go nr.Start()
@@ -171,14 +171,15 @@ func createTestNodeRunnersHTTP2Network(n int) (nodeRunners []*NodeRunner, rootKP
 			policy,
 		)
 
-		is, _ := consensus.NewISAAC(networkID, node, policy, connectionManager)
+		conf := common.NewConfig()
+		is, _ := consensus.NewISAAC(networkID, node, policy, connectionManager, conf)
 
 		genesisAccount.Save(st)
 		commonAccount.Save(st)
 
 		block.MakeGenesisBlock(st, *genesisAccount, *commonAccount, networkID)
 
-		nodeRunner, _ := NewNodeRunner(string(networkID), node, policy, n, is, st, consensus.NewISAACConfiguration())
+		nodeRunner, _ := NewNodeRunner(string(networkID), node, policy, n, is, st, conf)
 		nodeRunners = append(nodeRunners, nodeRunner)
 	}
 
@@ -232,14 +233,14 @@ func createTestNodeRunnersHTTP2NetworkWithReady(n int) (nodeRunners []*NodeRunne
 
 // Check that createTestNodeRunner creates the appropriate number of node runners.
 func TestCreateNodeRunner(t *testing.T) {
-	nodeRunners := createTestNodeRunner(3, consensus.NewISAACConfiguration())
+	nodeRunners := createTestNodeRunner(3, common.NewConfig())
 
 	require.Equal(t, 3, len(nodeRunners))
 }
 
 // Check that when a node receives transaction, the node broadcasts it to validators
 func TestNodeRunnerTransactionBroadcast(t *testing.T) {
-	nodeRunners := createTestNodeRunner(3, consensus.NewISAACConfiguration())
+	nodeRunners := createTestNodeRunner(3, common.NewConfig())
 
 	tx, txByte := GetTransaction(t)
 

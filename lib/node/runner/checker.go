@@ -62,7 +62,7 @@ func BallotUnmarshal(c common.Checker, args ...interface{}) (err error) {
 		return
 	}
 
-	if err = b.IsWellFormed(checker.NetworkID); err != nil {
+	if err = b.IsWellFormed(checker.NetworkID, checker.NodeRunner.Conf); err != nil {
 		return
 	}
 

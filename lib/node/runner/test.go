@@ -44,9 +44,9 @@ func MakeNodeRunner() (*NodeRunner, *node.LocalNode) {
 		policy,
 	)
 
-	is, _ := consensus.NewISAAC(networkID, localNode, policy, connectionManager)
+	conf := common.NewConfig()
+	is, _ := consensus.NewISAAC(networkID, localNode, policy, connectionManager, conf)
 	st := storage.NewTestStorage()
-	conf := consensus.NewISAACConfiguration()
 	nodeRunner, _ := NewNodeRunner(string(networkID), localNode, policy, n, is, st, conf)
 	return nodeRunner, localNode
 }
@@ -71,7 +71,7 @@ func TestGenerateNewSequenceID() uint64 {
 	return 0
 }
 
-func GenerateBallot(t *testing.T, proposer *node.LocalNode, round round.Round, tx transaction.Transaction, ballotState ballot.State, sender *node.LocalNode) *ballot.Ballot {
+func GenerateBallot(t *testing.T, proposer *node.LocalNode, round round.Round, tx transaction.Transaction, ballotState ballot.State, sender *node.LocalNode, conf common.Config) *ballot.Ballot {
 	b := ballot.NewBallot(proposer.Address(), round, []string{tx.GetHash()})
 	b.SetVote(ballot.StateINIT, ballot.VotingYES)
 
@@ -86,13 +86,13 @@ func GenerateBallot(t *testing.T, proposer *node.LocalNode, round round.Round, t
 	b.SetVote(ballotState, ballot.VotingYES)
 	b.Sign(sender.Keypair(), networkID)
 
-	err := b.IsWellFormed(networkID)
+	err := b.IsWellFormed(networkID, conf)
 	require.Nil(t, err)
 
 	return b
 }
 
-func GenerateEmptyTxBallot(t *testing.T, proposer *node.LocalNode, round round.Round, ballotState ballot.State, sender *node.LocalNode) *ballot.Ballot {
+func GenerateEmptyTxBallot(t *testing.T, proposer *node.LocalNode, round round.Round, ballotState ballot.State, sender *node.LocalNode, conf common.Config) *ballot.Ballot {
 	b := ballot.NewBallot(proposer.Address(), round, []string{})
 	b.SetVote(ballot.StateINIT, ballot.VotingYES)
 
@@ -107,7 +107,7 @@ func GenerateEmptyTxBallot(t *testing.T, proposer *node.LocalNode, round round.R
 	b.SetVote(ballotState, ballot.VotingYES)
 	b.Sign(sender.Keypair(), networkID)
 
-	err := b.IsWellFormed(networkID)
+	err := b.IsWellFormed(networkID, conf)
 	require.Nil(t, err)
 
 	return b
@@ -122,7 +122,7 @@ func ReceiveBallot(t *testing.T, nodeRunner *NodeRunner, ballot *ballot.Ballot) 
 	return err
 }
 
-func createNodeRunnerForTesting(n int, conf *consensus.ISAACConfiguration, recv chan struct{}) (*NodeRunner, []*node.LocalNode, *TestConnectionManager) {
+func createNodeRunnerForTesting(n int, conf common.Config, recv chan struct{}) (*NodeRunner, []*node.LocalNode, *TestConnectionManager) {
 	var ns []*network.MemoryNetwork
 	var net *network.MemoryNetwork
 	var nodes []*node.LocalNode
@@ -157,7 +157,7 @@ func createNodeRunnerForTesting(n int, conf *consensus.ISAACConfiguration, recv 
 		recv,
 	)
 
-	is, _ := consensus.NewISAAC(networkID, localNode, policy, connectionManager)
+	is, _ := consensus.NewISAAC(networkID, localNode, policy, connectionManager, common.NewConfig())
 	is.SetProposerSelector(FixedSelector{localNode.Address()})
 
 	genesisBlock, _ = block.MakeGenesisBlock(st, *genesisAccount, *commonAccount, networkID)

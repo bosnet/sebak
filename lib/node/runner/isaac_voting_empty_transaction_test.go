@@ -6,13 +6,13 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"boscoin.io/sebak/lib/ballot"
-	"boscoin.io/sebak/lib/consensus"
+	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/consensus/round"
 )
 
 // Test that ballot with empty transactions have VotingYES
 func TestISAACBallotWithEmptyTransaction(t *testing.T) {
-	conf := consensus.NewISAACConfiguration()
+	conf := common.NewConfig()
 	nr, _, _ := createNodeRunnerForTesting(1, conf, nil)
 
 	latestBlock := nr.Consensus().LatestBlock()
@@ -29,7 +29,7 @@ func TestISAACBallotWithEmptyTransaction(t *testing.T) {
 
 // Test that the voting process ends normally with a ballot with an empty transaction.
 func TestISAACBallotWithEmptyTransactionVoting(t *testing.T) {
-	conf := consensus.NewISAACConfiguration()
+	conf := common.NewConfig()
 	nr, nodes, _ := createNodeRunnerForTesting(5, conf, nil)
 
 	// `nodeRunner` is proposer's runner
@@ -54,15 +54,15 @@ func TestISAACBallotWithEmptyTransactionVoting(t *testing.T) {
 	b := ballot.NewBallot(nr.localNode.Address(), round, []string{})
 	b.SetVote(ballot.StateINIT, ballot.VotingYES)
 
-	ballotSIGN1 := GenerateEmptyTxBallot(t, proposer, round, ballot.StateSIGN, nodes[1])
+	ballotSIGN1 := GenerateEmptyTxBallot(t, proposer, round, ballot.StateSIGN, nodes[1], conf)
 	err = ReceiveBallot(t, nr, ballotSIGN1)
 	require.Nil(t, err)
 
-	ballotSIGN2 := GenerateEmptyTxBallot(t, proposer, round, ballot.StateSIGN, nodes[2])
+	ballotSIGN2 := GenerateEmptyTxBallot(t, proposer, round, ballot.StateSIGN, nodes[2], conf)
 	err = ReceiveBallot(t, nr, ballotSIGN2)
 	require.Nil(t, err)
 
-	ballotSIGN3 := GenerateEmptyTxBallot(t, proposer, round, ballot.StateSIGN, nodes[3])
+	ballotSIGN3 := GenerateEmptyTxBallot(t, proposer, round, ballot.StateSIGN, nodes[3], conf)
 	err = ReceiveBallot(t, nr, ballotSIGN3)
 	require.Nil(t, err)
 
@@ -75,19 +75,19 @@ func TestISAACBallotWithEmptyTransactionVoting(t *testing.T) {
 	result := rr.Voted[proposer.Address()].GetResult(ballot.StateSIGN)
 	require.Equal(t, 3, len(result))
 
-	ballotACCEPT1 := GenerateEmptyTxBallot(t, proposer, round, ballot.StateACCEPT, nodes[1])
+	ballotACCEPT1 := GenerateEmptyTxBallot(t, proposer, round, ballot.StateACCEPT, nodes[1], conf)
 	err = ReceiveBallot(t, nr, ballotACCEPT1)
 	require.Nil(t, err)
 
-	ballotACCEPT2 := GenerateEmptyTxBallot(t, proposer, round, ballot.StateACCEPT, nodes[2])
+	ballotACCEPT2 := GenerateEmptyTxBallot(t, proposer, round, ballot.StateACCEPT, nodes[2], conf)
 	err = ReceiveBallot(t, nr, ballotACCEPT2)
 	require.Nil(t, err)
 
-	ballotACCEPT3 := GenerateEmptyTxBallot(t, proposer, round, ballot.StateACCEPT, nodes[3])
+	ballotACCEPT3 := GenerateEmptyTxBallot(t, proposer, round, ballot.StateACCEPT, nodes[3], conf)
 	err = ReceiveBallot(t, nr, ballotACCEPT3)
 	require.Nil(t, err)
 
-	ballotACCEPT4 := GenerateEmptyTxBallot(t, proposer, round, ballot.StateACCEPT, nodes[4])
+	ballotACCEPT4 := GenerateEmptyTxBallot(t, proposer, round, ballot.StateACCEPT, nodes[4], conf)
 	err = ReceiveBallot(t, nr, ballotACCEPT4)
 	require.EqualError(t, err, "ballot got consensus and will be stored")
 

@@ -27,9 +27,6 @@ var KindsNormalTransaction map[OperationType]struct{} = map[OperationType]struct
 	TypeCongressVotingResult: struct{}{},
 }
 
-// Limit is the number of operations to be included in a transaction
-var Limit = 1000
-
 type Operation struct {
 	H Header
 	B Body
@@ -75,7 +72,7 @@ type Body interface {
 	// Returns:
 	//   An `error` if that transaction is invalid, `nil` otherwise
 	//
-	IsWellFormed([]byte) error
+	IsWellFormed([]byte, common.Config) error
 	Serialize() ([]byte, error)
 }
 
@@ -93,8 +90,8 @@ func (o Operation) MakeHashString() string {
 	return base58.Encode(o.MakeHash())
 }
 
-func (o Operation) IsWellFormed(networkID []byte) (err error) {
-	return o.B.IsWellFormed(networkID)
+func (o Operation) IsWellFormed(networkID []byte, conf common.Config) (err error) {
+	return o.B.IsWellFormed(networkID, conf)
 }
 
 func (o Operation) Serialize() (encoded []byte, err error) {

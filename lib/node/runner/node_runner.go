@@ -93,6 +93,8 @@ type NodeRunner struct {
 
 	CommonAccountAddress string
 	InitialBalance       common.Amount
+
+	Conf common.Config
 }
 
 func NewNodeRunner(
@@ -102,7 +104,7 @@ func NewNodeRunner(
 	n network.Network,
 	c *consensus.ISAAC,
 	storage *storage.LevelDBBackend,
-	conf *consensus.ISAACConfiguration,
+	conf common.Config,
 ) (nr *NodeRunner, err error) {
 	nr = &NodeRunner{
 		networkID: []byte(networkID),
@@ -112,6 +114,7 @@ func NewNodeRunner(
 		consensus: c,
 		storage:   storage,
 		log:       log.New(logging.Ctx{"node": localNode.Alias()}),
+		Conf:      conf,
 	}
 	nr.isaacStateManager = NewISAACStateManager(nr, conf)
 
@@ -506,7 +509,7 @@ func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) (ballot.Ballot, error
 	}
 
 	// collect incoming transactions from `Pool`
-	availableTransactions := nr.consensus.TransactionPool.AvailableTransactions(transaction.Limit)
+	availableTransactions := nr.consensus.TransactionPool.AvailableTransactions(nr.Conf.TxsLimit)
 	nr.log.Debug("new round proposed", "round", round, "transactions", availableTransactions)
 
 	transactionsChecker := &BallotTransactionChecker{

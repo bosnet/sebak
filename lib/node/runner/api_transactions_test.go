@@ -46,6 +46,7 @@ func (p *HelperTestGetNodeTransactionsHandler) Prepare() {
 		localNode,
 		nil,
 		network.NewValidatorConnectionManager(localNode, nil, nil),
+		common.NewConfig(),
 	)
 	p.consensus = isaac
 	apiHandler := NetworkHandlerNode{storage: p.st, consensus: isaac}
@@ -336,13 +337,8 @@ func TestGetNodeTransactionsHandlerInTransactionPool(t *testing.T) {
 func TestGetNodeTransactionsHandlerTooManyHashes(t *testing.T) {
 	p := &HelperTestGetNodeTransactionsHandler{}
 	p.Prepare()
+	p.consensus.Conf.TxsLimit = 2
 	defer p.Done()
-
-	MaxTransactionsInBallotOrig := transaction.Limit
-	transaction.Limit = 2
-	defer func() {
-		transaction.Limit = MaxTransactionsInBallotOrig
-	}()
 
 	{
 		var txHashes []string
