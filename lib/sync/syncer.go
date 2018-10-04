@@ -184,12 +184,13 @@ func (s *Syncer) sync(p *SyncProgress) {
 		}
 	)
 
-	if latestBlockHeight > p.CurrentBlock {
-		currentHeight = latestBlockHeight
+	if latestBlockHeight > currentHeight {
+		startHeight = latestBlockHeight + 1
 	}
-	if currentHeight >= highestHeight {
+	if startHeight > highestHeight {
+		p.StartingBlock = latestBlockHeight + 1
 		p.CurrentBlock = currentHeight
-		log("sync progress skip: current latest height is over than highest (requested) height")
+		log("sync progress skip: start height is over or equal than highest (requested) height")
 		return
 	}
 
