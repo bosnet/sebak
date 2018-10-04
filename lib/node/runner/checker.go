@@ -465,6 +465,11 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) (err error) {
 		return
 	}
 	if checker.FinishedVotingHole == ballot.VotingYES {
+		if err = getMissingTransaction(checker); err != nil {
+			checker.Log.Debug("failed to get the missing transactions of ballot", "error", err)
+			return
+		}
+
 		var theBlock block.Block
 		theBlock, err = finishBallot(
 			checker.NodeRunner.Storage(),

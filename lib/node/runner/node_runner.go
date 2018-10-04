@@ -68,7 +68,6 @@ var DefaultHandleACCEPTBallotCheckerFuncs = []common.CheckerFunc{
 	BallotVote,
 	BallotIsSameProposer,
 	BallotCheckResult,
-	BallotGetMissingTransaction,
 	FinishedBallotStore,
 }
 
