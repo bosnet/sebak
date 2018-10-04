@@ -114,6 +114,10 @@ func (v *Validator) BlockHeight() uint64 {
 	return v.blockHeight
 }
 
+func (v *Validator) SetBlockHeight(h uint64) {
+	v.blockHeight = h
+}
+
 func NewValidator(address string, endpoint *common.Endpoint, alias string) (v *Validator, err error) {
 	if len(alias) < 1 {
 		alias = MakeAlias(address)

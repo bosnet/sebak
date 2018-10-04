@@ -176,6 +176,8 @@ func (c *ValidatorConnectionManager) connectValidator(v *node.Validator) (err er
 		return
 	}
 
+	v.SetBlockHeight(validator.BlockHeight())
+
 	return
 }
 

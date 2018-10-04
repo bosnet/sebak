@@ -153,7 +153,7 @@ func (s *Syncer) loop() {
 			s.sync(syncProgress)
 			checkc = s.afterFunc(s.checkInterval)
 		case height := <-s.updateHighestBlock:
-			s.logger.Debug("update highest Height", "height", height)
+			s.logger.Info("update highest Height", "height", height)
 			if height > syncProgress.CurrentBlock {
 				syncProgress.HighestBlock = height
 				s.sync(syncProgress)
