@@ -19,26 +19,6 @@ type SyncerTestContext struct {
 	syncInfoC chan *SyncInfo
 }
 
-func TestSyncer(t *testing.T) {
-	fn := func(ctx *SyncerTestContext) {
-		{
-			bk := block.TestMakeNewBlock([]string{})
-			bk.Height = uint64(1)
-			require.Nil(t, bk.Save(ctx.st))
-		}
-
-		go func() {
-			ctx.syncer.Start()
-		}()
-
-		ctx.tickC <- time.Time{}
-		si := <-ctx.syncInfoC
-		require.NotNil(t, si.Block)
-		require.Equal(t, si.BlockHeight, uint64(2))
-	}
-	SyncerTest(t, fn)
-}
-
 func TestSyncerSetSyncTarget(t *testing.T) {
 	fn := func(tctx *SyncerTestContext) {
 		ctx := context.Background()

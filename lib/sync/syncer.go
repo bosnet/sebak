@@ -151,7 +151,7 @@ func (s *Syncer) loop() {
 		select {
 		case <-checkc:
 			s.logger.Debug("check interval", "checkInterval", s.checkInterval)
-			syncProgress.HighestBlock++ // TODO(anarcher): Until work together consensus
+			// syncProgress.HighestBlock++ // TODO(anarcher): Until work together consensus
 			s.sync(syncProgress)
 			checkc = s.afterFunc(s.checkInterval)
 		case height := <-s.updateHighestBlock:
