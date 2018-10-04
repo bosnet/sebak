@@ -110,7 +110,7 @@ func (v *BlockValidator) finishBlock(ctx context.Context, syncInfo *SyncInfo) er
 		ts.Discard()
 		return err
 	}
-	v.logger.Info("Finish to sync block", "height", syncInfo.BlockHeight)
+	v.logger.Info("Finish to sync block", "height", syncInfo.BlockHeight, "hash", blk.Hash)
 
 	if err := ts.Commit(); err != nil {
 		ts.Discard()
