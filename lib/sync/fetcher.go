@@ -148,6 +148,8 @@ func (f *BlockFetcher) fetch(ctx context.Context, si *SyncInfo) error {
 	blk := blocks[0].(block.Block)
 	si.Block = &blk
 
+	txmap := make(map[string]*transaction.Transaction) // For ordering txs by block.Transactions
+
 	for _, bt := range bts {
 		bt, ok := bt.(block.BlockTransaction)
 		if !ok {
@@ -159,10 +161,21 @@ func (f *BlockFetcher) fetch(ctx context.Context, si *SyncInfo) error {
 		if err := json.Unmarshal(bt.Message, &tx); err != nil {
 			return err
 		}
-
-		si.Txs = append(si.Txs, &tx)
+		txmap[bt.Hash] = &tx
 	}
 
+	for _, hash := range blk.Transactions {
+		tx, ok := txmap[hash]
+		if !ok {
+			//TODO(anarcher): Error type for controlling timeout
+			err := fmt.Errorf("Tx: %s not found in block height %d", hash, height)
+			return err
+		}
+		si.Txs = append(si.Txs, tx)
+
+	}
+
+	//TODO(anarcher): Remove this comments
 	/*
 		for _, op := range ops {
 			op := op.(block.BlockOperation)
