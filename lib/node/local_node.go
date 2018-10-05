@@ -134,7 +134,7 @@ func (n *LocalNode) MarshalJSON() ([]byte, error) {
 		"endpoint":     n.Endpoint().String(),
 		"state":        n.State().String(),
 		"validators":   n.validators,
-		"block_height": n.blockHeight,
+		"block-height": n.blockHeight,
 	})
 }
 

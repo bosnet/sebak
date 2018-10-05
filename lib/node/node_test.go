@@ -93,7 +93,7 @@ func TestNodeMarshalJSONWithValidator(t *testing.T) {
 	tmpByte, err := localNode.MarshalJSON()
 	require.Equal(t, nil, err)
 
-	jsonStr := `"alias":"%s","block_height":%d,"endpoint":"https://localhost:%s","state":"%s"`
+	jsonStr := `"alias":"%s","block-height":%d,"endpoint":"https://localhost:%s","state":"%s"`
 
 	require.Equal(t, true, strings.Contains(string(tmpByte), fmt.Sprintf(jsonStr, "node", 0, "5000", "NONE")))
 	require.Equal(t, true, strings.Contains(string(tmpByte), fmt.Sprintf(jsonStr, "v1", 0, "5001", "NONE")))

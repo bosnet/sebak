@@ -158,7 +158,7 @@ func NodeInfoWithRequest(localNode *node.LocalNode, blk *block.Block, r *http.Re
 		"endpoint":     endpoint,
 		"state":        localNode.State().String(),
 		"validators":   localNode.GetValidators(),
-		"block_height": blockHeight,
+		"block-height": blockHeight,
 	}
 
 	b, err = json.Marshal(info)

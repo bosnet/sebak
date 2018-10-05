@@ -23,7 +23,7 @@ type ValidatorFromJSON struct {
 	Address     string           `json:"address"`
 	Endpoint    *common.Endpoint `json:"endpoint"`
 	State       State            `json:"state"`
-	BlockHeight uint64           `json:"block_height"`
+	BlockHeight uint64           `json:"block-height"`
 }
 
 type Validator struct {
@@ -87,7 +87,7 @@ func (v *Validator) MarshalJSON() ([]byte, error) {
 		"alias":        v.Alias(),
 		"endpoint":     v.Endpoint().String(),
 		"state":        v.State().String(),
-		"block_height": v.blockHeight,
+		"block-height": v.blockHeight,
 	})
 }
 
