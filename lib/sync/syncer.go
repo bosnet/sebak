@@ -235,13 +235,13 @@ func (s *Syncer) work(height uint64) bool {
 				syncInfo, err = s.fetcher.Fetch(ctx, syncInfo)
 				if err != nil {
 					if err != context.Canceled {
-						s.logger.Error("fetch failure", "err", err)
+						s.logger.Error("fetch failure", "err", err, "height", height)
 					}
 				}
 				err = s.validator.Validate(ctx, syncInfo)
 				if err != nil {
 					if err != context.Canceled {
-						s.logger.Error("validate failure", "err", err)
+						s.logger.Error("validate failure", "err", err, "height", height)
 					}
 					continue
 				}
