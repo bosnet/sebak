@@ -204,10 +204,6 @@ func (t *HTTP2Network) IsReady() bool {
 
 // Start will start `HTTP2Network`.
 func (t *HTTP2Network) Start() (err error) {
-	defer func() {
-		close(t.receiveChannel)
-	}()
-
 	if strings.ToLower(t.config.Endpoint.Scheme) == "http" {
 		return t.server.ListenAndServe()
 	}
