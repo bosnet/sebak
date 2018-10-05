@@ -61,6 +61,16 @@ func (c *Config) NewSyncer() *Syncer {
 	return s
 }
 
+func (c *Config) NewWatcher(syncer SyncController) *Watcher {
+	w := NewWatcher(
+		c.connectionManager,
+		c.storage,
+		syncer,
+	)
+	w.logger = c.logger
+	return w
+}
+
 func (c *Config) LoggingConfig() {
 	c.logger.Info("syncer config",
 		"poolSize", c.SyncPoolSize,

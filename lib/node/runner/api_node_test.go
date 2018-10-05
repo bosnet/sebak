@@ -209,7 +209,10 @@ func TestHTTP2NetworkConnect(t *testing.T) {
 	c0 := s0.GetClient(s0.Endpoint())
 	pingAndWait(t, c0)
 
-	o, _ := nodeRunner.Node().Serialize()
+	localNode := nodeRunner.Node()
+	localNode.SetBlockHeight(1)
+
+	o, _ := localNode.Serialize()
 	nodeStr := removeWhiteSpaces(string(o))
 
 	returnMsg, _ := c0.Connect(nodeRunner.Node())
@@ -246,6 +249,12 @@ func TestGetNodeInfoHandler(t *testing.T) {
 
 	server := httptest.NewServer(router)
 	defer server.Close()
+
+	{
+		bk := block.TestMakeNewBlock([]string{})
+		bk.Height = uint64(1)
+		require.Nil(t, bk.Save(st))
+	}
 
 	{ // without setting PublishEndpoint, `endpoint` of response should be requested URL
 		u, _ := url.Parse(server.URL)

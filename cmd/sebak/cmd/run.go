@@ -401,11 +401,18 @@ func runNode() error {
 			nr.Stop()
 		})
 	}
+	c := sync.NewConfig([]byte(flagNetworkID), localNode, st, nt, connectionManager)
+	//Place setting config
+	syncer := c.NewSyncer()
 	{
-		c := sync.NewConfig([]byte(flagNetworkID), localNode, st, nt, connectionManager)
-		//Place setting config
-		syncer := c.NewSyncer()
-
+		watcher := c.NewWatcher(syncer)
+		g.Add(func() error {
+			return watcher.Start()
+		}, func(error) {
+			watcher.Stop()
+		})
+	}
+	{
 		g.Add(func() error {
 			return syncer.Start()
 		}, func(error) {

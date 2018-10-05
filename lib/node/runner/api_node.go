@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/consensus"
 	"boscoin.io/sebak/lib/network"
@@ -58,7 +59,13 @@ func (api NetworkHandlerNode) writeNodeItem(w http.ResponseWriter, itemType Node
 }
 
 func (api NetworkHandlerNode) NodeInfoHandler(w http.ResponseWriter, r *http.Request) {
-	b, err := NodeInfoWithRequest(api.localNode, r)
+	blk, err := block.GetLatestBlock(api.storage)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	b, err := NodeInfoWithRequest(api.localNode, &blk, r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -77,7 +84,13 @@ func (api NetworkHandlerNode) ConnectHandler(w http.ResponseWriter, r *http.Requ
 
 	api.network.MessageBroker().Receive(common.NetworkMessage{Type: common.ConnectMessage, Data: body})
 
-	b, err := NodeInfoWithRequest(api.localNode, r)
+	blk, err := block.GetLatestBlock(api.storage)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	b, err := NodeInfoWithRequest(api.localNode, &blk, r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -123,7 +136,7 @@ func (api NetworkHandlerNode) BallotHandler(w http.ResponseWriter, r *http.Reque
 	return
 }
 
-func NodeInfoWithRequest(localNode *node.LocalNode, r *http.Request) (b []byte, err error) {
+func NodeInfoWithRequest(localNode *node.LocalNode, blk *block.Block, r *http.Request) (b []byte, err error) {
 	var endpoint string
 	if localNode.PublishEndpoint() != nil {
 		endpoint = localNode.PublishEndpoint().String()
@@ -134,12 +147,18 @@ func NodeInfoWithRequest(localNode *node.LocalNode, r *http.Request) (b []byte, 
 		endpoint = rUrl.String()
 	}
 
+	var blockHeight uint64
+	if blk != nil {
+		blockHeight = blk.Height
+	}
+
 	info := map[string]interface{}{
-		"address":    localNode.Address(),
-		"alias":      localNode.Alias(),
-		"endpoint":   endpoint,
-		"state":      localNode.State().String(),
-		"validators": localNode.GetValidators(),
+		"address":      localNode.Address(),
+		"alias":        localNode.Alias(),
+		"endpoint":     endpoint,
+		"state":        localNode.State().String(),
+		"validators":   localNode.GetValidators(),
+		"block-height": blockHeight,
 	}
 
 	b, err = json.Marshal(info)

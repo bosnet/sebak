@@ -28,6 +28,7 @@ type LocalNode struct {
 	bindEndpoint    *common.Endpoint
 	publishEndpoint *common.Endpoint
 	validators      map[ /* Node.Address() */ string]*Validator
+	blockHeight     uint64
 }
 
 func NewLocalNode(kp *keypair.Full, bindEndpoint *common.Endpoint, alias string) (n *LocalNode, err error) {
@@ -128,11 +129,12 @@ func (n *LocalNode) AddValidators(validators ...*Validator) error {
 
 func (n *LocalNode) MarshalJSON() ([]byte, error) {
 	return json.Marshal(map[string]interface{}{
-		"address":    n.Address(),
-		"alias":      n.Alias(),
-		"endpoint":   n.Endpoint().String(),
-		"state":      n.State().String(),
-		"validators": n.validators,
+		"address":      n.Address(),
+		"alias":        n.Alias(),
+		"endpoint":     n.Endpoint().String(),
+		"state":        n.State().String(),
+		"validators":   n.validators,
+		"block-height": n.blockHeight,
 	})
 }
 
@@ -143,6 +145,14 @@ func (n *LocalNode) Serialize() ([]byte, error) {
 func (n *LocalNode) ConvertToValidator() *Validator {
 	v, _ := NewValidator(n.Address(), n.Endpoint(), n.Alias())
 	return v
+}
+
+func (n *LocalNode) BlockHeight() uint64 {
+	return n.blockHeight
+}
+
+func (n *LocalNode) SetBlockHeight(h uint64) {
+	n.blockHeight = h
 }
 
 func MakeAlias(address string) string {
