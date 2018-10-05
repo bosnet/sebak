@@ -189,8 +189,8 @@ func createTestNodeRunnersHTTP2NetworkWithReady(n int) (nodeRunners []*NodeRunne
 	nodeRunners, rootKP = createTestNodeRunnersHTTP2Network(n)
 
 	for _, nr := range nodeRunners {
-		go func(nodeRunner *NodeRunner) {
-			if err := nodeRunner.Start(); err != nil {
+		go func(n *NodeRunner) {
+			if err := n.Start(); err != nil {
 				if err == http.ErrServerClosed {
 					return
 				}
