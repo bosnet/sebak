@@ -25,7 +25,7 @@ func (s SyncProgress) Clone() *SyncProgress {
 }
 
 type SyncController interface {
-	SetSyncTargetBlock(ctx context.Context, height uint64) error
+	SetSyncTargetBlock(ctx context.Context, height uint64, nodeAddressList []string) error
 }
 
 type SyncInfo struct {
@@ -33,8 +33,11 @@ type SyncInfo struct {
 	Block       *block.Block
 	Txs         []*transaction.Transaction
 
-	BlockTxs []*block.BlockTransaction
-	BlockOps []*block.BlockOperation
+	NodeAddrs []string
+
+	//TODO(anarcher): Remove
+	//BlockTxs []*block.BlockTransaction
+	//BlockOps []*block.BlockOperation
 }
 
 type Doer interface {
