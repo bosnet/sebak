@@ -117,19 +117,19 @@ func BallotValidateOperationBodyInflation(c common.Checker, args ...interface{})
 		return
 	}
 
-	expectedInflationRatio := common.InflationRatio2String(
-		checker.NodeRunner.ISAACStateManager().Conf.InflationRatio,
-	)
-
-	if opb.Ratio != expectedInflationRatio {
+	if opb.Ratio != common.InflationRatioString {
 		err = errors.ErrorInvalidOperation
 		return
 	}
 
-	expectedInflation, err := common.CalculateInflation(
-		checker.NodeRunner.InitialBalance,
-		checker.NodeRunner.ISAACStateManager().Conf.InflationRatio,
-	)
+	var expectedInflation common.Amount
+	if checker.NodeRunner.Consensus().LatestBlock().Height <= common.BlockHeightEndOfInflation {
+		expectedInflation, err = common.CalculateInflation(checker.NodeRunner.InitialBalance)
+		if err != nil {
+			return
+		}
+	}
+
 	if opb.Amount != expectedInflation {
 		err = errors.ErrorInvalidOperation
 		return

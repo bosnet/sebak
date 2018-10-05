@@ -9,18 +9,13 @@ import (
 )
 
 // CalculateInflation returns the amount of inflation in every block.
-func CalculateInflation(initialBalance Amount, ratio float64) (a Amount, err error) {
+func CalculateInflation(initialBalance Amount) (a Amount, err error) {
 	if initialBalance > MaximumBalance {
 		err = errors.ErrorMaximumBalanceReached
 		return
 	}
 
-	if ratio < 0 {
-		err = errors.ErrorInvalidInflationRatio
-		return
-	}
-
-	a = Amount(uint64(math.Round(float64(initialBalance) * ratio)))
+	a = Amount(uint64(math.Round(float64(initialBalance) * InflationRatio)))
 	return
 }
 

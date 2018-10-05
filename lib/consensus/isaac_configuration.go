@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"boscoin.io/sebak/lib/ballot"
-	"boscoin.io/sebak/lib/common"
 )
 
 //
@@ -18,7 +17,6 @@ type ISAACConfiguration struct {
 	TimeoutACCEPT     time.Duration
 	BlockTime         time.Duration
 	TransactionsLimit uint64
-	InflationRatio    float64
 }
 
 func NewISAACConfiguration() *ISAACConfiguration {
@@ -29,7 +27,6 @@ func NewISAACConfiguration() *ISAACConfiguration {
 	p.TimeoutACCEPT = 2 * time.Second
 	p.BlockTime = 5 * time.Second
 	p.TransactionsLimit = uint64(1000)
-	p.InflationRatio = common.DefaultInflationRatio
 
 	return &p
 }

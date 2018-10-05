@@ -50,11 +50,11 @@ func NewOperationCollectTxFeeFromBallot(blt Ballot, commonAccount string, txs ..
 	return
 }
 
-func NewOperationInflationFromBallot(blt Ballot, commonAccount string, initialBalance common.Amount, ratio float64) (opb transaction.OperationBodyInflation, err error) {
+func NewOperationInflationFromBallot(blt Ballot, commonAccount string, initialBalance common.Amount) (opb transaction.OperationBodyInflation, err error) {
 	rd := blt.Round()
 
 	var amount common.Amount
-	if amount, err = common.CalculateInflation(initialBalance, ratio); err != nil {
+	if amount, err = common.CalculateInflation(initialBalance); err != nil {
 		return
 	}
 
@@ -62,7 +62,6 @@ func NewOperationInflationFromBallot(blt Ballot, commonAccount string, initialBa
 		commonAccount,
 		amount,
 		initialBalance,
-		ratio,
 		rd.BlockHeight,
 		rd.BlockHash,
 		rd.TotalTxs,

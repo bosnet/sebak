@@ -545,7 +545,7 @@ func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) (ballot.Ballot, error
 		return ballot.Ballot{}, err
 	}
 
-	opi, err := ballot.NewOperationInflationFromBallot(*theBallot, nr.CommonAccountAddress, nr.InitialBalance, nr.ISAACStateManager().Conf.InflationRatio)
+	opi, err := ballot.NewOperationInflationFromBallot(*theBallot, nr.CommonAccountAddress, nr.InitialBalance)
 	if err != nil {
 		return ballot.Ballot{}, err
 	}

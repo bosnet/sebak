@@ -26,8 +26,6 @@ type ballotCheckerProposedTransaction struct {
 	txs      []transaction.Transaction
 	txHashes []string
 	keys     map[string]*keypair.Full
-
-	inflationRatio float64
 }
 
 func (p *ballotCheckerProposedTransaction) Prepare() {
@@ -42,8 +40,6 @@ func (p *ballotCheckerProposedTransaction) Prepare() {
 	nr.Consensus().SetProposerSelector(FixedSelector{p.proposerNode.Address()})
 
 	p.keys = map[string]*keypair.Full{}
-
-	p.inflationRatio = common.DefaultInflationRatio
 }
 
 func (p *ballotCheckerProposedTransaction) MakeBallot(numberOfTxs int) (blt *ballot.Ballot) {
@@ -80,7 +76,7 @@ func (p *ballotCheckerProposedTransaction) MakeBallot(numberOfTxs int) (blt *bal
 	blt = ballot.NewBallot(p.proposerNode.Address(), rd, p.txHashes)
 
 	opc, _ := ballot.NewOperationCollectTxFeeFromBallot(*blt, p.commonAccount.Address, p.txs...)
-	opi, _ := ballot.NewOperationInflationFromBallot(*blt, p.commonAccount.Address, p.initialBalance, p.inflationRatio)
+	opi, _ := ballot.NewOperationInflationFromBallot(*blt, p.commonAccount.Address, p.initialBalance)
 
 	ptx, err := ballot.NewProposerTransactionFromBallot(*blt, opc, opi)
 	if err != nil {
@@ -709,9 +705,7 @@ func TestProposedTransactionStoreWithZeroAmount(t *testing.T) {
 
 	afterCommonAccount, _ := block.GetBlockAccount(p.nr.Storage(), p.commonAccount.Address)
 
-	inflationAmount, err := common.CalculateInflation(
-		p.initialBalance, p.inflationRatio,
-	)
+	inflationAmount, err := common.CalculateInflation(p.initialBalance)
 	require.Nil(t, err)
 
 	require.Equal(t, previousCommonAccount.Balance+inflationAmount, afterCommonAccount.Balance)
@@ -793,9 +787,7 @@ func TestProposedTransactionStoreWithAmount(t *testing.T) {
 
 	afterCommonAccount, _ := block.GetBlockAccount(p.nr.Storage(), p.commonAccount.Address)
 
-	inflationAmount, err := common.CalculateInflation(
-		p.initialBalance, p.inflationRatio,
-	)
+	inflationAmount, err := common.CalculateInflation(p.initialBalance)
 	require.Nil(t, err)
 	require.Equal(t, previousCommonAccount.Balance+opb.Amount+inflationAmount, afterCommonAccount.Balance)
 }
@@ -912,46 +904,109 @@ func TestCheckInflationBlockIncrease(t *testing.T) {
 		return expected
 	}
 
+	t.Logf(
+		"CalculateInflation(initial balance, inflation ratio): initial balance=%v inflation ratio=%s",
+		nr.InitialBalance,
+		common.InflationRatioString,
+	)
+
+	inflationAmount, err := common.CalculateInflation(nr.InitialBalance)
+	require.Nil(t, err)
+
 	var previous common.Amount
-	{ // default inflation ratio
-		inflationRatio := common.DefaultInflationRatio
-		nr.ISAACStateManager().Conf.InflationRatio = inflationRatio
+	for blockHeight := uint64(1); blockHeight < 5; blockHeight++ {
+		previous = checkInflation(previous, inflationAmount, blockHeight)
+	}
+}
 
-		t.Logf(
-			"CalculateInflation(initial balance, inflation ratio): initial balance=%v inflation ratio=%s",
-			nr.InitialBalance,
-			common.InflationRatio2String(nr.ISAACStateManager().Conf.InflationRatio),
-		)
+func TestProposedTransactionReachedBlockHeightEndOfInflation(t *testing.T) {
+	p := &ballotCheckerProposedTransaction{}
 
-		inflationAmount, err := common.CalculateInflation(
-			nr.InitialBalance,
-			nr.ISAACStateManager().Conf.InflationRatio,
-		)
+	p.Prepare()
+
+	{ // Height = common.BlockHeightEndOfInflation
+		genesisBlock := p.genesisBlock
+		genesisBlock.Height = common.BlockHeightEndOfInflation
+		p.genesisBlock = genesisBlock
+		p.nr.Consensus().SetLatestBlock(p.genesisBlock)
+
+		blt := p.MakeBallot(4)
+
+		var ballotMessage common.NetworkMessage
+		{
+			b, _ := blt.Serialize()
+			ballotMessage = common.NetworkMessage{
+				Type: common.BallotMessage,
+				Data: b,
+			}
+		}
+
+		baseChecker := &BallotChecker{
+			DefaultChecker: common.DefaultChecker{Funcs: DefaultHandleBaseBallotCheckerFuncs},
+			NodeRunner:     p.nr,
+			LocalNode:      p.nr.Node(),
+			NetworkID:      p.nr.NetworkID(),
+			Message:        ballotMessage,
+			Log:            p.nr.Log(),
+			VotingHole:     ballot.VotingNOTYET,
+		}
+		err := common.RunChecker(baseChecker, common.DefaultDeferFunc)
 		require.Nil(t, err)
 
-		for blockHeight := uint64(1); blockHeight < 5; blockHeight++ {
-			previous = checkInflation(previous, inflationAmount, blockHeight)
+		checker := &BallotChecker{
+			DefaultChecker: common.DefaultChecker{Funcs: DefaultHandleINITBallotCheckerFuncs},
+			NodeRunner:     p.nr,
+			LocalNode:      p.nr.Node(),
+			NetworkID:      p.nr.NetworkID(),
+			Message:        ballotMessage,
+			Ballot:         baseChecker.Ballot,
+			VotingHole:     ballot.VotingNOTYET,
+			Log:            p.nr.Log(),
 		}
+		err = common.RunChecker(checker, common.DefaultDeferFunc)
+		require.Nil(t, err)
 	}
 
-	{ // default inflation ratio
-		inflationRatio := common.DefaultInflationRatio * 2
-		nr.ISAACStateManager().Conf.InflationRatio = inflationRatio
+	{ // Height = common.BlockHeightEndOfInflation + 1
+		genesisBlock := p.genesisBlock
+		genesisBlock.Height = common.BlockHeightEndOfInflation + 1
+		p.genesisBlock = genesisBlock
+		p.nr.Consensus().SetLatestBlock(p.genesisBlock)
 
-		t.Logf(
-			"CalculateInflation(initial balance, inflation ratio): initial balance=%v inflation ratio=%s",
-			nr.InitialBalance,
-			common.InflationRatio2String(nr.ISAACStateManager().Conf.InflationRatio),
-		)
+		blt := p.MakeBallot(4)
 
-		inflationAmount, err := common.CalculateInflation(
-			nr.InitialBalance,
-			nr.ISAACStateManager().Conf.InflationRatio,
-		)
+		var ballotMessage common.NetworkMessage
+		{
+			b, _ := blt.Serialize()
+			ballotMessage = common.NetworkMessage{
+				Type: common.BallotMessage,
+				Data: b,
+			}
+		}
+
+		baseChecker := &BallotChecker{
+			DefaultChecker: common.DefaultChecker{Funcs: DefaultHandleBaseBallotCheckerFuncs},
+			NodeRunner:     p.nr,
+			LocalNode:      p.nr.Node(),
+			NetworkID:      p.nr.NetworkID(),
+			Message:        ballotMessage,
+			Log:            p.nr.Log(),
+			VotingHole:     ballot.VotingNOTYET,
+		}
+		err := common.RunChecker(baseChecker, common.DefaultDeferFunc)
 		require.Nil(t, err)
 
-		for blockHeight := uint64(5); blockHeight < 10; blockHeight++ {
-			previous = checkInflation(previous, inflationAmount, blockHeight)
+		checker := &BallotChecker{
+			DefaultChecker: common.DefaultChecker{Funcs: DefaultHandleINITBallotCheckerFuncs},
+			NodeRunner:     p.nr,
+			LocalNode:      p.nr.Node(),
+			NetworkID:      p.nr.NetworkID(),
+			Message:        ballotMessage,
+			Ballot:         baseChecker.Ballot,
+			VotingHole:     ballot.VotingNOTYET,
+			Log:            p.nr.Log(),
 		}
+		err = common.RunChecker(checker, common.DefaultDeferFunc)
+		require.Equal(t, errors.ErrorInvalidOperation, err)
 	}
 }
