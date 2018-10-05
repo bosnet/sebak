@@ -73,11 +73,17 @@ func (v *BlockValidator) Validate(ctx context.Context, syncInfo *SyncInfo) error
 }
 
 func (v *BlockValidator) validate(ctx context.Context, syncInfo *SyncInfo) error {
+	//Waiting to get prev block for runner.ValidateTx
+	prevBlk, err := v.getPrevBlock(ctx, syncInfo.BlockHeight)
+	if err != nil {
+		return err
+	}
+
 	if err := v.validateTxs(ctx, syncInfo); err != nil {
 		return err
 	}
 
-	if err := v.validateBlock(ctx, syncInfo); err != nil {
+	if err := v.validateBlock(ctx, syncInfo, prevBlk); err != nil {
 		return err
 	}
 
@@ -128,15 +134,10 @@ func (v *BlockValidator) finishBlock(ctx context.Context, syncInfo *SyncInfo) er
 	return nil
 }
 
-func (v *BlockValidator) validateBlock(ctx context.Context, si *SyncInfo) error {
+func (v *BlockValidator) validateBlock(ctx context.Context, si *SyncInfo, prevBlk *block.Block) error {
 	var txs []string
 	for _, tx := range si.Txs {
 		txs = append(txs, tx.H.Hash)
-	}
-
-	prevBlk, err := v.getPrevBlock(ctx, si.BlockHeight)
-	if err != nil {
-		return err
 	}
 
 	round := si.Block.Round
@@ -161,6 +162,10 @@ func (v *BlockValidator) validateTxs(ctx context.Context, si *SyncInfo) error {
 		}
 
 		if err := tx.IsWellFormed(v.networkID); err != nil {
+			return err
+		}
+
+		if err := runner.ValidateTx(v.storage, *tx); err != nil {
 			return err
 		}
 	}
