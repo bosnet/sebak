@@ -118,7 +118,12 @@ func (v *BlockValidator) finishBlock(ctx context.Context, syncInfo *SyncInfo) er
 		return err
 	}
 
-	observer.SyncBlockWaitObserver.Trigger(string(syncInfo.BlockHeight))
+	select {
+	case <-ctx.Done():
+		return nil
+	default:
+		observer.SyncBlockWaitObserver.Trigger(string(syncInfo.BlockHeight))
+	}
 
 	return nil
 }
@@ -188,8 +193,11 @@ func (v *BlockValidator) getPrevBlock(pctx context.Context, height uint64) (*blo
 
 	if exists == false {
 		waitC := make(chan struct{})
-		observer.SyncBlockWaitObserver.On(string(prevHeight), func() {
-			waitC <- struct{}{}
+		observer.SyncBlockWaitObserver.On(string(prevHeight), func(args ...interface{}) {
+			select {
+			case waitC <- struct{}{}:
+			case <-ctx.Done():
+			}
 		})
 
 		select {
