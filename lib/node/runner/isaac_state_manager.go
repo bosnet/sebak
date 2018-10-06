@@ -141,13 +141,13 @@ func (sm *ISAACStateManager) TransitISAACState(height uint64, round uint64, ball
 
 func (sm *ISAACStateManager) IncreaseRound() {
 	state := sm.State()
-	sm.nr.Log().Debug("begin ISAACStateManager.IncreaseRound()", "height", state.Height, "round", state.Round)
+	sm.nr.Log().Debug("begin ISAACStateManager.IncreaseRound()", "height", state.Height, "round", state.Round, "state", state.BallotState)
 	sm.TransitISAACState(state.Height, state.Round+1, ballot.StateINIT)
 }
 
 func (sm *ISAACStateManager) NextHeight() {
 	state := sm.State()
-	sm.nr.Log().Debug("begin ISAACStateManager.NextHeight()", "height", state.Height, "round", state.Round)
+	sm.nr.Log().Debug("begin ISAACStateManager.NextHeight()", "height", state.Height, "round", state.Round, "state", state.BallotState)
 	sm.TransitISAACState(state.Height+1, 0, ballot.StateINIT)
 }
 
@@ -213,8 +213,13 @@ func (sm *ISAACStateManager) broadcastExpiredBallot(state consensus.ISAACState) 
 
 	newExpiredBallot := ballot.NewBallot(sm.nr.localNode.Address(), round, []string{})
 	newExpiredBallot.SetVote(state.BallotState.Next(), ballot.VotingEXP)
-	ptx, _ := ballot.NewProposerTransactionFromBallot(*newExpiredBallot, sm.nr.CommonAccountAddress)
+
+	opc, _ := ballot.NewOperationCollectTxFeeFromBallot(*newExpiredBallot, sm.nr.CommonAccountAddress)
+	opi, _ := ballot.NewOperationInflationFromBallot(*newExpiredBallot, sm.nr.CommonAccountAddress, sm.nr.InitialBalance)
+	ptx, _ := ballot.NewProposerTransactionFromBallot(*newExpiredBallot, opc, opi)
+
 	newExpiredBallot.SetProposerTransaction(ptx)
+	newExpiredBallot.SignByProposer(sm.nr.localNode.Keypair(), sm.nr.networkID)
 	newExpiredBallot.Sign(sm.nr.localNode.Keypair(), sm.nr.networkID)
 
 	sm.nr.Log().Debug("broadcast", "ballot", *newExpiredBallot)

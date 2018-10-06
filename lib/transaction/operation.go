@@ -17,6 +17,7 @@ const (
 	OperationCongressVoting                     = "congress-voting"
 	OperationCongressVotingResult               = "congress-voting-result"
 	OperationCollectTxFee                       = "collect-tx-fee"
+	OperationInflation                          = "inflation"
 )
 
 var OperationTypesNormalTransaction map[OperationType]struct{} = map[OperationType]struct{}{
@@ -40,6 +41,8 @@ func NewOperation(opb OperationBody) (op Operation, err error) {
 		t = OperationPayment
 	case OperationBodyCollectTxFee:
 		t = OperationCollectTxFee
+	case OperationBodyInflation:
+		t = OperationInflation
 	default:
 		err = errors.ErrorUnknownOperationType
 		return
@@ -154,6 +157,12 @@ func UnmarshalOperationBodyJSON(t OperationType, b []byte) (body OperationBody, 
 		body = ob
 	case OperationCollectTxFee:
 		var ob OperationBodyCollectTxFee
+		if err = json.Unmarshal(b, &ob); err != nil {
+			return
+		}
+		body = ob
+	case OperationInflation:
+		var ob OperationBodyInflation
 		if err = json.Unmarshal(b, &ob); err != nil {
 			return
 		}

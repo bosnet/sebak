@@ -158,16 +158,20 @@ func (b *Ballot) TransactionsLength() int {
 	return len(b.B.Proposed.Transactions)
 }
 
+func (b *Ballot) SignByProposer(kp keypair.KP, networkID []byte) {
+	ptx := b.ProposerTransaction()
+	ptx.Sign(kp, networkID)
+	b.SetProposerTransaction(ptx)
+
+	b.B.Proposed.Confirmed = common.NowISO8601()
+	hash := common.MustMakeObjectHash(b.B.Proposed)
+	signature, _ := common.MakeSignature(kp, networkID, string(hash))
+	b.H.ProposerSignature = base58.Encode(signature)
+}
+
 func (b *Ballot) Sign(kp keypair.KP, networkID []byte) {
 	if kp.Address() == b.B.Proposed.Proposer && b.State() == StateINIT {
-		ptx := b.ProposerTransaction()
-		ptx.Sign(kp, networkID)
-		b.SetProposerTransaction(ptx)
-
-		b.B.Proposed.Confirmed = common.NowISO8601()
-		hash := common.MustMakeObjectHash(b.B.Proposed)
-		signature, _ := common.MakeSignature(kp, networkID, string(hash))
-		b.H.ProposerSignature = base58.Encode(signature)
+		b.SignByProposer(kp, networkID)
 	}
 
 	b.B.Confirmed = common.NowISO8601()

@@ -1,6 +1,8 @@
 package ballot
 
 import (
+	"encoding/json"
+
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/transaction"
@@ -8,33 +10,36 @@ import (
 
 var OperationTypesProposerTransaction map[transaction.OperationType]struct{} = map[transaction.OperationType]struct{}{
 	transaction.OperationCollectTxFee: struct{}{},
+	transaction.OperationInflation:    struct{}{},
 }
 
 type ProposerTransaction struct {
 	transaction.Transaction
 }
 
-func NewProposerTransaction(proposer string, op transaction.Operation) (ptx ProposerTransaction, err error) {
+func NewProposerTransaction(proposer string, ops ...transaction.Operation) (ptx ProposerTransaction, err error) {
 	var tx transaction.Transaction
-	tx, err = transaction.NewTransaction(proposer, 0, op)
+	tx, err = transaction.NewTransaction(proposer, 0, ops...)
 	if err != nil {
 		return
 	}
 	tx.B.Fee = 0
+	tx.H.Hash = tx.B.MakeHashString()
 
 	ptx = ProposerTransaction{Transaction: tx}
 
 	return
 }
 
-func NewProposerTransactionFromBallot(blt Ballot, commonAccount string, txs ...transaction.Transaction) (ptx ProposerTransaction, err error) {
+func NewOperationCollectTxFeeFromBallot(blt Ballot, commonAccount string, txs ...transaction.Transaction) (opb transaction.OperationBodyCollectTxFee, err error) {
+	rd := blt.Round()
+
 	var feeAmount common.Amount
 	for _, tx := range txs {
 		feeAmount = feeAmount + tx.B.Fee
 	}
 
-	rd := blt.Round()
-	opb := transaction.NewOperationBodyCollectTxFee(
+	opb = transaction.NewOperationBodyCollectTxFee(
 		commonAccount,
 		feeAmount,
 		uint64(len(txs)),
@@ -42,13 +47,48 @@ func NewProposerTransactionFromBallot(blt Ballot, commonAccount string, txs ...t
 		rd.BlockHash,
 		rd.TotalTxs,
 	)
+	return
+}
 
-	var op transaction.Operation
-	if op, err = transaction.NewOperation(opb); err != nil {
+func NewOperationInflationFromBallot(blt Ballot, commonAccount string, initialBalance common.Amount) (opb transaction.OperationBodyInflation, err error) {
+	rd := blt.Round()
+
+	var amount common.Amount
+	if amount, err = common.CalculateInflation(initialBalance); err != nil {
 		return
 	}
 
-	ptx, err = NewProposerTransaction(blt.Proposer(), op)
+	opb = transaction.NewOperationBodyInflation(
+		commonAccount,
+		amount,
+		initialBalance,
+		rd.BlockHeight,
+		rd.BlockHash,
+		rd.TotalTxs,
+	)
+
+	return
+}
+
+func NewProposerTransactionFromBallot(blt Ballot, opc transaction.OperationBodyCollectTxFee, opi transaction.OperationBodyInflation) (ptx ProposerTransaction, err error) {
+	var ops []transaction.Operation
+
+	var op transaction.Operation
+	{ // OperationCollectTxFee
+		if op, err = transaction.NewOperation(opc); err != nil {
+			return
+		}
+		ops = append(ops, op)
+	}
+
+	{ // OperationInflation
+		if op, err = transaction.NewOperation(opi); err != nil {
+			return
+		}
+		ops = append(ops, op)
+	}
+
+	ptx, err = NewProposerTransaction(blt.Proposer(), ops...)
 
 	return
 }
@@ -90,39 +130,60 @@ func (p ProposerTransaction) IsWellFormedWithBallot(networkID []byte, blt Ballot
 		return
 	}
 
-	// check the expected collected Fee is right
-	var opb transaction.OperationBodyCollectTxFee
-	if opb, err = blt.ProposerTransaction().OperationBodyCollectTxFee(); err != nil {
-		return
-	}
-
-	if opb.Txs != uint64(blt.TransactionsLength()) {
-		err = errors.ErrorInvalidOperation
-		return
-	}
-
 	rd := blt.Round()
-	if opb.BlockHeight != rd.BlockHeight {
-		err = errors.ErrorInvalidOperation
-		return
-	}
-	if opb.BlockHash != rd.BlockHash {
-		err = errors.ErrorInvalidOperation
-		return
-	}
-	if opb.TotalTxs != rd.TotalTxs {
-		err = errors.ErrorInvalidOperation
-		return
-	}
+	{ // check OperationCollectTxFee
+		var opb transaction.OperationBodyCollectTxFee
+		if opb, err = blt.ProposerTransaction().OperationBodyCollectTxFee(); err != nil {
+			return
+		}
 
-	if len(blt.Transactions()) < 1 {
-		if opb.Amount != 0 {
+		if opb.Txs != uint64(blt.TransactionsLength()) {
 			err = errors.ErrorInvalidOperation
 			return
 		}
-	} else if opb.Amount < 1 {
-		err = errors.ErrorInvalidOperation
-		return
+
+		if opb.BlockHeight != rd.BlockHeight {
+			err = errors.ErrorInvalidOperation
+			return
+		}
+		if opb.BlockHash != rd.BlockHash {
+			err = errors.ErrorInvalidOperation
+			return
+		}
+		if opb.TotalTxs != rd.TotalTxs {
+			err = errors.ErrorInvalidOperation
+			return
+		}
+
+		if len(blt.Transactions()) < 1 {
+			if opb.Amount != 0 {
+				err = errors.ErrorInvalidOperation
+				return
+			}
+		} else if opb.Amount < 1 {
+			err = errors.ErrorInvalidOperation
+			return
+		}
+	}
+
+	{ // check OperationInflation
+		var opb transaction.OperationBodyInflation
+		if opb, err = blt.ProposerTransaction().OperationBodyInflation(); err != nil {
+			return
+		}
+
+		if opb.BlockHeight != rd.BlockHeight {
+			err = errors.ErrorInvalidOperation
+			return
+		}
+		if opb.BlockHash != rd.BlockHash {
+			err = errors.ErrorInvalidOperation
+			return
+		}
+		if opb.TotalTxs != rd.TotalTxs {
+			err = errors.ErrorInvalidOperation
+			return
+		}
 	}
 
 	return
@@ -135,6 +196,7 @@ func (p ProposerTransaction) OperationBodyCollectTxFee() (opb transaction.Operat
 		case transaction.OperationBodyCollectTxFee:
 			opb = op.B.(transaction.OperationBodyCollectTxFee)
 			found = true
+			break
 		default:
 			continue
 		}
@@ -146,6 +208,39 @@ func (p ProposerTransaction) OperationBodyCollectTxFee() (opb transaction.Operat
 	}
 
 	return
+}
+
+func (p ProposerTransaction) OperationBodyInflation() (opb transaction.OperationBodyInflation, err error) {
+	var found bool
+	for _, op := range p.B.Operations {
+		switch op.B.(type) {
+		case transaction.OperationBodyInflation:
+			opb = op.B.(transaction.OperationBodyInflation)
+			found = true
+			break
+		default:
+			continue
+		}
+	}
+
+	if !found {
+		err = errors.ErrorInvalidProposerTransaction
+		return
+	}
+
+	return
+}
+
+func (p *ProposerTransaction) UnmarshalJSON(b []byte) error {
+	var t transaction.Transaction
+	if err := json.Unmarshal(b, &t); err != nil {
+		return err
+	}
+	t.H.Hash = t.B.MakeHashString()
+
+	*p = ProposerTransaction{Transaction: t}
+
+	return nil
 }
 
 func CheckProposerTransactionFee(c common.Checker, args ...interface{}) (err error) {
@@ -161,8 +256,8 @@ func CheckProposerTransactionFee(c common.Checker, args ...interface{}) (err err
 func CheckProposerTransactionOperationTypes(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*transaction.TransactionChecker)
 
-	if len(checker.Transaction.B.Operations) < 1 {
-		err = errors.ErrorTransactionEmptyOperations
+	if len(checker.Transaction.B.Operations) != 2 {
+		err = errors.ErrorInvalidProposerTransaction
 		return
 	}
 

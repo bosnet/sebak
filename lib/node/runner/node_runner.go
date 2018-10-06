@@ -38,7 +38,6 @@ var DefaultHandleTransactionCheckerFuncs = []common.CheckerFunc{
 
 var DefaultHandleBaseBallotCheckerFuncs = []common.CheckerFunc{
 	BallotUnmarshal,
-	BallotValidateOperationBodyCollectTxFee,
 	BallotNotFromKnownValidators,
 	BallotAlreadyFinished,
 }
@@ -47,6 +46,8 @@ var DefaultHandleINITBallotCheckerFuncs = []common.CheckerFunc{
 	BallotAlreadyVoted,
 	BallotVote,
 	BallotIsSameProposer,
+	BallotValidateOperationBodyCollectTxFee,
+	BallotValidateOperationBodyInflation,
 	INITBallotValidateTransactions,
 	SIGNBallotBroadcast,
 	TransitStateToSIGN,
@@ -91,6 +92,7 @@ type NodeRunner struct {
 	log logging.Logger
 
 	CommonAccountAddress string
+	InitialBalance       common.Amount
 }
 
 func NewNodeRunner(
@@ -124,13 +126,21 @@ func NewNodeRunner(
 	nr.SetHandleSIGNBallotCheckerFuncs(DefaultHandleSIGNBallotCheckerFuncs...)
 	nr.SetHandleACCEPTBallotCheckerFuncs(DefaultHandleACCEPTBallotCheckerFuncs...)
 
-	{ // find common account
+	{
+		// find common account
 		var commonAccount *block.BlockAccount
 		if commonAccount, err = GetCommonAccount(nr.storage); err != nil {
 			return
 		}
 		nr.CommonAccountAddress = commonAccount.Address
 		nr.log.Debug("common account found", "address", nr.CommonAccountAddress)
+
+		// get the initial balance of geness account
+		if nr.InitialBalance, err = GetGenesisBalance(nr.storage); err != nil {
+			return
+		}
+		nr.log.Debug("initial balance found", "amount", nr.InitialBalance)
+		nr.InitialBalance.Invariant()
 	}
 
 	return
@@ -246,6 +256,10 @@ func (nr *NodeRunner) Log() logging.Logger {
 	return nr.log
 }
 
+func (nr *NodeRunner) ISAACStateManager() *ISAACStateManager {
+	return nr.isaacStateManager
+}
+
 func (nr *NodeRunner) ConnectValidators() {
 	ticker := time.NewTicker(time.Millisecond * 5)
 	for _ = range ticker.C {
@@ -331,7 +345,7 @@ func (nr *NodeRunner) handleMessage(message common.NetworkMessage) {
 		if _, ok := err.(common.CheckerStop); ok {
 			return
 		}
-		nr.log.Debug("failed to handle message", "message", message.Head(50), "error", err)
+		nr.log.Debug("failed to handle message", "message", string(message.Data), "error", err)
 	}
 }
 
@@ -348,7 +362,7 @@ func (nr *NodeRunner) handleTransaction(message common.NetworkMessage) (err erro
 
 	if err = common.RunChecker(checker, nr.handleTransactionCheckerDeferFunc); err != nil {
 		if _, ok := err.(common.CheckerErrorStop); !ok {
-			nr.log.Error("failed to handle transaction", "error", err)
+			nr.log.Error("failed to handle transaction", "message", string(message.Data), "error", err)
 		}
 		return
 	}
@@ -371,7 +385,7 @@ func (nr *NodeRunner) handleBallotMessage(message common.NetworkMessage) (err er
 	err = common.RunChecker(baseChecker, nr.handleTransactionCheckerDeferFunc)
 	if err != nil {
 		if _, ok := err.(common.CheckerErrorStop); !ok {
-			nr.log.Debug("failed to handle ballot", "error", err, "state", "")
+			nr.log.Debug("failed to handle ballot", "error", err, "message", string(message.Data))
 			return
 		}
 	}
@@ -406,7 +420,7 @@ func (nr *NodeRunner) handleBallotMessage(message common.NetworkMessage) (err er
 				"reason", stopped.Error(),
 			)
 		} else {
-			nr.log.Debug("failed to handle ballot", "error", err, "state", baseChecker.Ballot.State())
+			nr.log.Debug("failed to handle ballot", "error", err, "state", baseChecker.Ballot.State(), "message", string(message.Data))
 			return
 		}
 	}
@@ -475,6 +489,13 @@ func (nr *NodeRunner) TransitISAACState(round round.Round, ballotState ballot.St
 	nr.isaacStateManager.TransitISAACState(round.BlockHeight, round.Number, ballotState)
 }
 
+var NewBallotTransactionCheckerFuncs = []common.CheckerFunc{
+	IsNew,
+	GetMissingTransaction,
+	BallotTransactionsSameSource,
+	BallotTransactionsSourceCheck,
+}
+
 func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) (ballot.Ballot, error) {
 	b := nr.consensus.LatestBlock()
 	round := round.Round{
@@ -489,13 +510,13 @@ func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) (ballot.Ballot, error
 	nr.log.Debug("new round proposed", "round", round, "transactions", availableTransactions)
 
 	transactionsChecker := &BallotTransactionChecker{
-		DefaultChecker: common.DefaultChecker{Funcs: handleBallotTransactionCheckerFuncs},
-		NodeRunner:     nr,
-		LocalNode:      nr.localNode,
-		NetworkID:      nr.networkID,
-		Transactions:   availableTransactions,
-		CheckAll:       true,
-		VotingHole:     ballot.VotingNOTYET,
+		DefaultChecker:        common.DefaultChecker{Funcs: NewBallotTransactionCheckerFuncs},
+		NodeRunner:            nr,
+		LocalNode:             nr.localNode,
+		NetworkID:             nr.networkID,
+		Transactions:          availableTransactions,
+		CheckTransactionsOnly: true,
+		VotingHole:            ballot.VotingNOTYET,
 	}
 
 	if err := common.RunChecker(transactionsChecker, common.DefaultDeferFunc); err != nil {
@@ -519,7 +540,21 @@ func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) (ballot.Ballot, error
 		}
 	}
 
-	ptx, _ := ballot.NewProposerTransactionFromBallot(*theBallot, nr.CommonAccountAddress, validTransactions...)
+	opc, err := ballot.NewOperationCollectTxFeeFromBallot(*theBallot, nr.CommonAccountAddress, validTransactions...)
+	if err != nil {
+		return ballot.Ballot{}, err
+	}
+
+	opi, err := ballot.NewOperationInflationFromBallot(*theBallot, nr.CommonAccountAddress, nr.InitialBalance)
+	if err != nil {
+		return ballot.Ballot{}, err
+	}
+
+	ptx, err := ballot.NewProposerTransactionFromBallot(*theBallot, opc, opi)
+	if err != nil {
+		return ballot.Ballot{}, err
+	}
+
 	theBallot.SetProposerTransaction(ptx)
 	theBallot.Sign(nr.localNode.Keypair(), nr.networkID)
 

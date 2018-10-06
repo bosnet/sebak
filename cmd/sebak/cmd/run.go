@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -19,6 +18,7 @@ import (
 	cmdcommon "boscoin.io/sebak/cmd/sebak/common"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/consensus"
+	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/node/runner"
@@ -66,8 +66,9 @@ var (
 	timeoutACCEPT     time.Duration
 	blockTime         time.Duration
 	transactionsLimit uint64
-	logLevel          logging.Lvl
-	log               logging.Logger = logging.New("module", "main")
+
+	logLevel logging.Lvl
+	log      logging.Logger = logging.New("module", "main")
 )
 
 func init() {

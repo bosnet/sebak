@@ -17,6 +17,15 @@ const (
 	// GenesisBlockConfirmedTime is the time for the confirmed time of genesis
 	// block. This time is of the first commit of SEBAK.
 	GenesisBlockConfirmedTime string = "2018-04-17T5:07:31.000000000Z"
+
+	// InflationRatio is the inflation ratio. If the decimal points is over 17,
+	// the inflation amount will be 0, considering with `MaximumBalance`. The
+	// current value, `0.0000001` will increase `50BOS` in every block(current
+	// genesis balance is `5000000000000000`).
+	InflationRatio float64 = 0.0000001
+
+	// BlockHeightEndOfInflation sets the block height of inflation end.
+	BlockHeightEndOfInflation uint64 = 36000000
 )
 
 var (
@@ -29,7 +38,10 @@ var (
 	// MaxTransactionsInBallot limits the maximum number of `Transaction`s in
 	// one proposed `Ballot`.
 	MaxTransactionsInBallot int = 1000
+
 	// MaxOperationsInTransaction limits the maximum number of `Operation`s in
 	// one `Transaction`.
 	MaxOperationsInTransaction int = 1000
+
+	InflationRatioString string = InflationRatio2String(InflationRatio)
 )

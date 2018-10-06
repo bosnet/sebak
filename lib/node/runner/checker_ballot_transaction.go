@@ -17,12 +17,12 @@ type BallotTransactionChecker struct {
 	LocalNode  node.Node
 	NetworkID  []byte
 
-	Ballot               ballot.Ballot
-	Transactions         []string
-	VotingHole           ballot.VotingHole
-	ValidTransactions    []string
-	validTransactionsMap map[string]bool
-	CheckAll             bool
+	Ballot                ballot.Ballot
+	Transactions          []string
+	VotingHole            ballot.VotingHole
+	ValidTransactions     []string
+	validTransactionsMap  map[string]bool
+	CheckTransactionsOnly bool
 }
 
 func (checker *BallotTransactionChecker) InvalidTransactions() (invalids []string) {
@@ -58,7 +58,7 @@ func IsNew(c common.Checker, args ...interface{}) (err error) {
 		// check transaction is already stored
 		var found bool
 		if found, err = block.ExistsBlockTransaction(checker.NodeRunner.Storage(), hash); err != nil || found {
-			if !checker.CheckAll {
+			if !checker.CheckTransactionsOnly {
 				err = errors.ErrorNewButKnownMessage
 				return
 			}
@@ -103,7 +103,7 @@ func BallotTransactionsSameSource(c common.Checker, args ...interface{}) (err er
 	for _, hash := range checker.ValidTransactions {
 		tx, _ := checker.NodeRunner.Consensus().TransactionPool.Get(hash)
 		if found := common.InStringMap(sources, tx.B.Source); found {
-			if !checker.CheckAll {
+			if !checker.CheckTransactionsOnly {
 				err = errors.ErrorTransactionSameSource
 				return
 			}
@@ -128,7 +128,7 @@ func BallotTransactionsSourceCheck(c common.Checker, args ...interface{}) (err e
 		tx, _ := checker.NodeRunner.Consensus().TransactionPool.Get(hash)
 
 		if err = ValidateTx(checker.NodeRunner.Storage(), tx); err != nil {
-			if !checker.CheckAll {
+			if !checker.CheckTransactionsOnly {
 				return
 			}
 			continue

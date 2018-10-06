@@ -3,6 +3,7 @@ package runner
 import (
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"testing"
 	"time"
 
@@ -153,7 +154,7 @@ func createTestNodeRunnersHTTP2Network(n int) (nodeRunners []*NodeRunner, rootKP
 	rootKP, _ = keypair.Random()
 	genesisAccount := block.NewBlockAccount(
 		rootKP.Address(),
-		10000000000000,
+		common.MaximumBalance,
 	)
 	commonKP, _ := keypair.Random()
 	commonAccount := block.NewBlockAccount(commonKP.Address(), 0)
@@ -190,6 +191,9 @@ func createTestNodeRunnersHTTP2NetworkWithReady(n int) (nodeRunners []*NodeRunne
 	for _, nr := range nodeRunners {
 		go func(nodeRunner *NodeRunner) {
 			if err := nodeRunner.Start(); err != nil {
+				if err == http.ErrServerClosed {
+					return
+				}
 				panic(err)
 			}
 		}(nr)

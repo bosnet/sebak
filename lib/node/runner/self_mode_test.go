@@ -11,6 +11,11 @@ import (
 // We can test the transition of ballotState in SelfMode.
 func TestSelfMode(t *testing.T) {
 	nodeRunners, _ := createTestNodeRunnersHTTP2NetworkWithReady(1)
+	defer func() {
+		for _, nr := range nodeRunners {
+			nr.Stop()
+		}
+	}()
 
 	nr := nodeRunners[0]
 

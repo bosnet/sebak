@@ -20,11 +20,12 @@ import (
 var networkID []byte = []byte("sebak-test-network")
 
 var (
-	kp            *keypair.Full
-	account       *block.BlockAccount
-	genesisBlock  block.Block
-	commonKP      *keypair.Full
-	commonAccount *block.BlockAccount
+	kp             *keypair.Full
+	account        *block.BlockAccount
+	genesisBlock   block.Block
+	initialBalance common.Amount
+	commonKP       *keypair.Full
+	commonAccount  *block.BlockAccount
 )
 
 func init() {
@@ -74,7 +75,9 @@ func GenerateBallot(t *testing.T, proposer *node.LocalNode, round round.Round, t
 	b := ballot.NewBallot(proposer.Address(), round, []string{tx.GetHash()})
 	b.SetVote(ballot.StateINIT, ballot.VotingYES)
 
-	ptx, _ := ballot.NewProposerTransactionFromBallot(*b, commonAccount.Address, tx)
+	opi, _ := ballot.NewOperationInflationFromBallot(*b, commonAccount.Address, initialBalance)
+	opc, _ := ballot.NewOperationCollectTxFeeFromBallot(*b, commonAccount.Address, tx)
+	ptx, _ := ballot.NewProposerTransactionFromBallot(*b, opc, opi)
 	b.SetProposerTransaction(ptx)
 
 	b.Sign(proposer.Keypair(), networkID)
@@ -93,7 +96,9 @@ func GenerateEmptyTxBallot(t *testing.T, proposer *node.LocalNode, round round.R
 	b := ballot.NewBallot(proposer.Address(), round, []string{})
 	b.SetVote(ballot.StateINIT, ballot.VotingYES)
 
-	ptx, _ := ballot.NewProposerTransactionFromBallot(*b, commonAccount.Address)
+	opi, _ := ballot.NewOperationInflationFromBallot(*b, commonAccount.Address, initialBalance)
+	opc, _ := ballot.NewOperationCollectTxFeeFromBallot(*b, commonAccount.Address)
+	ptx, _ := ballot.NewProposerTransactionFromBallot(*b, opc, opi)
 	b.SetProposerTransaction(ptx)
 
 	b.Sign(proposer.Keypair(), networkID)
@@ -134,7 +139,7 @@ func createNodeRunnerForTesting(n int, conf *consensus.ISAACConfiguration, recv 
 
 	st := storage.NewTestStorage()
 
-	balance := common.BaseReserve.MustAdd(common.BaseFee)
+	balance := common.MaximumBalance
 	genesisAccount := block.NewBlockAccount(kp.Address(), balance)
 	genesisAccount.Save(st)
 
@@ -156,6 +161,7 @@ func createNodeRunnerForTesting(n int, conf *consensus.ISAACConfiguration, recv 
 	is.SetProposerSelector(FixedSelector{localNode.Address()})
 
 	genesisBlock, _ = block.MakeGenesisBlock(st, *genesisAccount, *commonAccount, networkID)
+	initialBalance = balance
 
 	nr, err := NewNodeRunner(string(networkID), localNode, policy, ns[0], is, st, conf)
 	if err != nil {

@@ -204,15 +204,17 @@ func (t *HTTP2Network) IsReady() bool {
 
 // Start will start `HTTP2Network`.
 func (t *HTTP2Network) Start() (err error) {
-	defer func() {
-		close(t.receiveChannel)
-	}()
-
 	if strings.ToLower(t.config.Endpoint.Scheme) == "http" {
 		return t.server.ListenAndServe()
 	}
 
-	return t.server.ListenAndServeTLS(t.tlsCertFile, t.tlsKeyFile)
+	err = t.server.ListenAndServeTLS(t.tlsCertFile, t.tlsKeyFile)
+	if err == http.ErrServerClosed {
+		err = nil
+		return
+	}
+
+	return
 }
 
 func (t *HTTP2Network) Stop() {

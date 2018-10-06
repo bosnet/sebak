@@ -8,7 +8,7 @@ import (
 	"boscoin.io/sebak/lib/transaction"
 )
 
-func getGenesisAccount(st *storage.LevelDBBackend, operationIndex int) (account *block.BlockAccount, err error) {
+func getGenesisTransaction(st *storage.LevelDBBackend) (bt block.BlockTransaction, err error) {
 	var bk block.Block
 	if bk, err = block.GetBlockByHeight(st, common.GenesisBlockHeight); err != nil {
 		return
@@ -17,11 +17,21 @@ func getGenesisAccount(st *storage.LevelDBBackend, operationIndex int) (account 
 		return
 	}
 
-	var bt block.BlockTransaction
 	if bt, err = block.GetBlockTransaction(st, bk.Transactions[0]); err != nil {
 		return
-	} else if len(bt.Operations) < 2 {
+	}
+
+	if len(bt.Operations) != 2 {
 		err = errors.ErrorWrongBlockFound
+		return
+	}
+
+	return
+}
+
+func getGenesisAccount(st *storage.LevelDBBackend, operationIndex int) (account *block.BlockAccount, err error) {
+	var bt block.BlockTransaction
+	if bt, err = getGenesisTransaction(st); err != nil {
 		return
 	}
 
@@ -49,4 +59,26 @@ func GetGenesisAccount(st *storage.LevelDBBackend) (account *block.BlockAccount,
 
 func GetCommonAccount(st *storage.LevelDBBackend) (account *block.BlockAccount, err error) {
 	return getGenesisAccount(st, 1)
+}
+
+func GetGenesisBalance(st *storage.LevelDBBackend) (balance common.Amount, err error) {
+	var bt block.BlockTransaction
+	if bt, err = getGenesisTransaction(st); err != nil {
+		return
+	}
+
+	var bo block.BlockOperation
+	if bo, err = block.GetBlockOperation(st, bt.Operations[0]); err != nil {
+		return
+	}
+
+	var opb transaction.OperationBody
+	if opb, err = transaction.UnmarshalOperationBodyJSON(bo.Type, bo.Body); err != nil {
+		return
+	}
+	opbp := opb.(transaction.OperationBodyPayable)
+
+	balance = opbp.GetAmount()
+
+	return
 }

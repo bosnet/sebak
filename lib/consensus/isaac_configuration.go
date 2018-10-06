@@ -12,11 +12,10 @@ import (
 // these timeout features are used in ISAAC consensus.
 //
 type ISAACConfiguration struct {
-	TimeoutINIT   time.Duration
-	TimeoutSIGN   time.Duration
-	TimeoutACCEPT time.Duration
-	BlockTime     time.Duration
-
+	TimeoutINIT       time.Duration
+	TimeoutSIGN       time.Duration
+	TimeoutACCEPT     time.Duration
+	BlockTime         time.Duration
 	TransactionsLimit uint64
 }
 

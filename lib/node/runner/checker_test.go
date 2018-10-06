@@ -14,6 +14,12 @@ import (
 
 func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 	nodeRunners, rootKP := createTestNodeRunnersHTTP2NetworkWithReady(3)
+	defer func() {
+		for _, nr := range nodeRunners {
+			nr.Stop()
+		}
+	}()
+
 	nodeRunner := nodeRunners[0]
 
 	rootAccount, _ := block.GetBlockAccount(nodeRunner.Storage(), rootKP.Address())
