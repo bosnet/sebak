@@ -345,7 +345,7 @@ func (nr *NodeRunner) handleMessage(message common.NetworkMessage) {
 		if _, ok := err.(common.CheckerStop); ok {
 			return
 		}
-		nr.log.Debug("failed to handle message", "message", message.Head(50), "error", err)
+		nr.log.Debug("failed to handle message", "message", message, "error", err)
 	}
 }
 

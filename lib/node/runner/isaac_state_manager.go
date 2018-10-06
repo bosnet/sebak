@@ -162,6 +162,13 @@ func (sm *ISAACStateManager) Start() {
 			select {
 			case <-timer.C:
 				sm.nr.Log().Debug("timeout", "ISAACState", sm.State())
+				if sm.State().BallotState == ballot.StateALLCONFIRM {
+					sm.transitSignal()
+					sm.SetBlockTimeBuffer()
+					sm.NextHeight()
+					continue
+				}
+
 				if sm.State().BallotState == ballot.StateACCEPT {
 					sm.SetBlockTimeBuffer()
 					sm.IncreaseRound()
@@ -219,6 +226,7 @@ func (sm *ISAACStateManager) broadcastExpiredBallot(state consensus.ISAACState) 
 	ptx, _ := ballot.NewProposerTransactionFromBallot(*newExpiredBallot, opc, opi)
 
 	newExpiredBallot.SetProposerTransaction(ptx)
+	newExpiredBallot.SignByProposer(sm.nr.localNode.Keypair(), sm.nr.networkID)
 	newExpiredBallot.Sign(sm.nr.localNode.Keypair(), sm.nr.networkID)
 
 	sm.nr.Log().Debug("broadcast", "ballot", *newExpiredBallot)
