@@ -152,6 +152,16 @@ func (t *HTTP2Network) setNotReadyHandler() {
 	t.server.Handler = HTTP2Log15Handler{log: t.log, handler: t.router}
 }
 
+func (t *HTTP2Network) AddMiddleware(routerName string, mws ...mux.MiddlewareFunc) {
+	r, ok := t.routers[routerName]
+	if !ok {
+		// ignore it
+	}
+	for _, mw := range mws {
+		r.Use(mw)
+	}
+}
+
 func (t *HTTP2Network) AddHandler(pattern string, handler http.HandlerFunc) (router *mux.Route) {
 	var routerName string
 	var prefix string

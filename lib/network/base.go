@@ -16,6 +16,7 @@ type Network interface {
 	GetClient(endpoint *common.Endpoint) NetworkClient
 	AddWatcher(func(Network, net.Conn, http.ConnState))
 	AddHandler(string, http.HandlerFunc) *mux.Route
+	AddMiddleware(string, ...mux.MiddlewareFunc)
 
 	// Starts network handling
 	// Blocks until finished, either because of an error

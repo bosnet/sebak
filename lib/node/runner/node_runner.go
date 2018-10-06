@@ -149,6 +149,9 @@ func (nr *NodeRunner) Ready() {
 		nr.Conf,
 	)
 
+	nr.network.AddMiddleware(network.RouterNameAPI, network.RecoverMiddleware(false))
+	nr.network.AddMiddleware(network.RouterNameNode, network.RecoverMiddleware(false))
+
 	nr.network.AddHandler(nodeHandler.HandlerURLPattern(NodeInfoHandlerPattern), nodeHandler.NodeInfoHandler)
 	nr.network.AddHandler(nodeHandler.HandlerURLPattern(ConnectHandlerPattern), nodeHandler.ConnectHandler).
 		Methods("POST").
