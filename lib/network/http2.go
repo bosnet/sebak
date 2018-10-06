@@ -208,7 +208,13 @@ func (t *HTTP2Network) Start() (err error) {
 		return t.server.ListenAndServe()
 	}
 
-	return t.server.ListenAndServeTLS(t.tlsCertFile, t.tlsKeyFile)
+	err = t.server.ListenAndServeTLS(t.tlsCertFile, t.tlsKeyFile)
+	if err == http.ErrServerClosed {
+		err = nil
+		return
+	}
+
+	return
 }
 
 func (t *HTTP2Network) Stop() {
