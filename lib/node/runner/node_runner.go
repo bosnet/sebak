@@ -345,7 +345,7 @@ func (nr *NodeRunner) handleMessage(message common.NetworkMessage) {
 		if _, ok := err.(common.CheckerStop); ok {
 			return
 		}
-		nr.log.Debug("failed to handle message", "message", message, "error", err)
+		nr.log.Debug("failed to handle message", "message", string(message.Data), "error", err)
 	}
 }
 
@@ -362,7 +362,7 @@ func (nr *NodeRunner) handleTransaction(message common.NetworkMessage) (err erro
 
 	if err = common.RunChecker(checker, nr.handleTransactionCheckerDeferFunc); err != nil {
 		if _, ok := err.(common.CheckerErrorStop); !ok {
-			nr.log.Error("failed to handle transaction", "error", err)
+			nr.log.Error("failed to handle transaction", "message", string(message.Data), "error", err)
 		}
 		return
 	}

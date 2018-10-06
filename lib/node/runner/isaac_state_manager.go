@@ -162,13 +162,6 @@ func (sm *ISAACStateManager) Start() {
 			select {
 			case <-timer.C:
 				sm.nr.Log().Debug("timeout", "ISAACState", sm.State())
-				if sm.State().BallotState == ballot.StateALLCONFIRM {
-					sm.transitSignal()
-					sm.SetBlockTimeBuffer()
-					sm.NextHeight()
-					continue
-				}
-
 				if sm.State().BallotState == ballot.StateACCEPT {
 					sm.SetBlockTimeBuffer()
 					sm.IncreaseRound()
