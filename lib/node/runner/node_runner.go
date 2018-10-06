@@ -385,7 +385,7 @@ func (nr *NodeRunner) handleBallotMessage(message common.NetworkMessage) (err er
 	err = common.RunChecker(baseChecker, nr.handleTransactionCheckerDeferFunc)
 	if err != nil {
 		if _, ok := err.(common.CheckerErrorStop); !ok {
-			nr.log.Debug("failed to handle ballot", "error", err, "state", "")
+			nr.log.Debug("failed to handle ballot", "error", err, "message", string(message.Data))
 			return
 		}
 	}
@@ -420,7 +420,7 @@ func (nr *NodeRunner) handleBallotMessage(message common.NetworkMessage) (err er
 				"reason", stopped.Error(),
 			)
 		} else {
-			nr.log.Debug("failed to handle ballot", "error", err, "state", baseChecker.Ballot.State())
+			nr.log.Debug("failed to handle ballot", "error", err, "state", baseChecker.Ballot.State(), "message", string(message.Data))
 			return
 		}
 	}
