@@ -118,11 +118,12 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 }
 
 type getMissingTransactionTesting struct {
-	nodeRunners   []*NodeRunner
-	proposerNR    *NodeRunner
-	consensusNR   *NodeRunner
-	genesisBlock  block.Block
-	commonAccount *block.BlockAccount
+	nodeRunners    []*NodeRunner
+	proposerNR     *NodeRunner
+	consensusNR    *NodeRunner
+	genesisBlock   block.Block
+	commonAccount  *block.BlockAccount
+	initialBalance common.Amount
 }
 
 func (g *getMissingTransactionTesting) Prepare() {
@@ -174,6 +175,7 @@ func (g *getMissingTransactionTesting) Prepare() {
 
 	g.genesisBlock, _ = block.GetBlockByHeight(g.proposerNR.Storage(), 1)
 	g.commonAccount, _ = GetCommonAccount(g.proposerNR.Storage())
+	g.initialBalance, _ = GetGenesisBalance(g.proposerNR.Storage())
 }
 
 func (g *getMissingTransactionTesting) MakeBallot(numberOfTxs int) (blt *ballot.Ballot) {
@@ -208,7 +210,10 @@ func (g *getMissingTransactionTesting) MakeBallot(numberOfTxs int) (blt *ballot.
 
 	blt = ballot.NewBallot(g.proposerNR.Node().Address(), rd, txHashes)
 
-	ptx, _ := ballot.NewProposerTransactionFromBallot(*blt, g.commonAccount.Address, txs...)
+	opc, _ := ballot.NewOperationCollectTxFeeFromBallot(*blt, g.commonAccount.Address, txs...)
+	opi, _ := ballot.NewOperationInflationFromBallot(*blt, g.commonAccount.Address, g.initialBalance)
+
+	ptx, _ := ballot.NewProposerTransactionFromBallot(*blt, opc, opi)
 	blt.SetProposerTransaction(ptx)
 	blt.SetVote(ballot.StateINIT, ballot.VotingYES)
 	blt.Sign(g.proposerNR.Node().Keypair(), networkID)
