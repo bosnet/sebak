@@ -238,29 +238,6 @@ func TestCreateNodeRunner(t *testing.T) {
 	require.Equal(t, 3, len(nodeRunners))
 }
 
-// Check that when a node receives transaction, the node broadcasts it to validators
-func TestNodeRunnerTransactionBroadcast(t *testing.T) {
-	nodeRunners := createTestNodeRunner(3, common.NewConfig())
-
-	tx, txByte := GetTransaction(t)
-
-	message := common.NetworkMessage{Type: common.TransactionMessage, Data: txByte}
-
-	nodeRunner := nodeRunners[0]
-
-	nodeRunner.Consensus().SetLatestBlock(genesisBlock)
-	b := nodeRunner.Consensus().LatestBlock()
-	require.Equal(t, uint64(1), b.Height)
-	require.Equal(t, uint64(1), b.TotalTxs)
-
-	var err error
-	err = nodeRunner.handleTransaction(message)
-
-	require.Nil(t, err)
-	require.True(t, nodeRunner.Consensus().TransactionPool.Has(tx.GetHash()))
-
-}
-
 /*
 func TestNodeRunnerSaveBlock(t *testing.T) {
 	numberOfNodes := 4

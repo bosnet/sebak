@@ -24,8 +24,9 @@ func TestMessageChecker(t *testing.T) {
 	nodeRunner, localNode := MakeNodeRunner()
 	checker := &MessageChecker{
 		DefaultChecker: common.DefaultChecker{},
-		NodeRunner:     nodeRunner,
 		LocalNode:      localNode,
+		Consensus:      nodeRunner.Consensus(),
+		Storage:        nodeRunner.Storage(),
 		NetworkID:      networkID,
 		Message:        validMessage,
 	}
@@ -40,12 +41,12 @@ func TestMessageChecker(t *testing.T) {
 	err = SaveTransactionHistory(checker)
 	require.Nil(t, err)
 	var found bool
-	found, err = block.ExistsBlockTransactionHistory(checker.NodeRunner.Storage(), checker.Transaction.GetHash())
+	found, err = block.ExistsBlockTransactionHistory(checker.Storage, checker.Transaction.GetHash())
 	require.True(t, found)
 
 	err = PushIntoTransactionPool(checker)
 	require.Nil(t, err)
-	require.True(t, checker.NodeRunner.Consensus().TransactionPool.Has(validTx.GetHash()))
+	require.True(t, checker.Consensus.TransactionPool.Has(validTx.GetHash()))
 
 	// TransactionBroadcast(checker) is not suitable in unittest
 
@@ -85,10 +86,11 @@ func TestMessageCheckerWithInvalidHash(t *testing.T) {
 	invalidMessage := common.NetworkMessage{Type: common.TransactionMessage, Data: b}
 	nodeRunner, localNode := MakeNodeRunner()
 	checker := &MessageChecker{
-		NodeRunner: nodeRunner,
-		LocalNode:  localNode,
-		NetworkID:  networkID,
-		Message:    invalidMessage,
+		Consensus: nodeRunner.Consensus(),
+		Storage:   nodeRunner.Storage(),
+		LocalNode: localNode,
+		NetworkID: networkID,
+		Message:   invalidMessage,
 	}
 
 	err = TransactionUnmarshal(checker)

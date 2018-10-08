@@ -25,9 +25,7 @@ TestISAACSimulationProposer indicates the following:
 */
 func TestISAACSimulationProposer(t *testing.T) {
 	nr, nodes, _ := createNodeRunnerForTesting(5, common.NewConfig(), nil)
-	tx, txByte := GetTransaction(t)
-
-	message := common.NetworkMessage{Type: common.TransactionMessage, Data: txByte}
+	tx, _ := GetTransaction(t)
 
 	// `nr` is proposer's runner
 	proposer := nr.localNode
@@ -35,10 +33,7 @@ func TestISAACSimulationProposer(t *testing.T) {
 	nr.Consensus().SetLatestBlock(genesisBlock)
 
 	var err error
-	err = nr.handleTransaction(message)
-
-	require.Nil(t, err)
-	require.True(t, nr.Consensus().TransactionPool.Has(tx.GetHash()))
+	nr.Consensus().TransactionPool.Add(tx)
 
 	// Generate proposed ballot in nr
 	roundNumber := uint64(0)

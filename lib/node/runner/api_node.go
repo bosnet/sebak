@@ -10,6 +10,7 @@ import (
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/consensus"
 	"boscoin.io/sebak/lib/network"
+	"boscoin.io/sebak/lib/network/httputils"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/storage"
 )
@@ -85,13 +86,18 @@ func (api NetworkHandlerNode) ConnectHandler(w http.ResponseWriter, r *http.Requ
 	api.network.MessageBroker().Response(w, b)
 }
 
+var HandleTransactionCheckerFuncs = []common.CheckerFunc{
+	TransactionUnmarshal,
+	HasTransaction,
+	SaveTransactionHistory,
+	MessageHasSameSource,
+	MessageValidate,
+	PushIntoTransactionPool,
+	BroadcastTransaction,
+}
+
 func (api NetworkHandlerNode) MessageHandler(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
-
-	if ct := r.Header.Get("Content-Type"); strings.ToLower(ct) != "application/json" {
-		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-		return
-	}
 
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -99,8 +105,24 @@ func (api NetworkHandlerNode) MessageHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	api.network.MessageBroker().Receive(common.NetworkMessage{Type: common.TransactionMessage, Data: body})
-	api.network.MessageBroker().Response(w, body)
+	message := common.NetworkMessage{Type: common.TransactionMessage, Data: body}
+	checker := &MessageChecker{
+		DefaultChecker: common.DefaultChecker{Funcs: HandleTransactionCheckerFuncs},
+		Consensus:      api.consensus,
+		Storage:        api.storage,
+		LocalNode:      api.localNode,
+		NetworkID:      api.consensus.NetworkID,
+		Message:        message,
+		Log:            log,
+	}
+
+	if err = common.RunChecker(checker, common.DefaultDeferFunc); err != nil {
+		if _, ok := err.(common.CheckerErrorStop); ok {
+			return
+		}
+		httputils.WriteJSONError(w, err)
+		return
+	}
 }
 
 func (api NetworkHandlerNode) BallotHandler(w http.ResponseWriter, r *http.Request) {

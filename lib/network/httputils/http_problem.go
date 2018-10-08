@@ -1,9 +1,10 @@
 package httputils
 
 import (
-	"boscoin.io/sebak/lib/error"
 	"fmt"
 	"net/http"
+
+	"boscoin.io/sebak/lib/error"
 )
 
 const (
@@ -11,7 +12,7 @@ const (
 	HttpProblemErrorTypePrefix = "https://boscoin.io/sebak/error/"
 )
 
-type problem struct {
+type Problem struct {
 	// "type" (string) - A URI reference [RFC3986] that identifies the
 	// problem type.  This specification encourages that, when
 	// dereferenced, it provide human-readable documentation for the
@@ -40,26 +41,29 @@ type problem struct {
 	Instance string `json:"instance,omitempty"`
 }
 
-func NewProblem(problemType string, title string) problem {
-	return problem{Type: problemType, Title: title}
+func NewProblem(problemType string, title string) Problem {
+	return Problem{Type: problemType, Title: title}
 }
 
-func NewStatusProblem(status int) problem {
+func NewStatusProblem(status int) Problem {
 	p := NewProblem(HttpProblemDefaultType, http.StatusText(status))
 	p.Status = status
 	return p
 }
 
-func NewDetailedStatusProblem(status int, detail string) problem {
+func NewDetailedStatusProblem(status int, detail string) Problem {
 	p := NewStatusProblem(status)
 	p.Detail = detail
 	return p
 }
 
-func NewErrorProblem(err error, status int) problem {
-	var p problem
+func NewErrorProblem(err error, status int) Problem {
+	var p Problem
 	if e, ok := err.(*errors.Error); ok {
-		p = NewProblem(fmt.Sprintf("%s%d", HttpProblemErrorTypePrefix, e.Code), e.Message)
+		p = NewProblem(ProblemTypeByCode(e.Code), e.Message)
+		if detail, ok := e.Data["error"]; ok {
+			p.Detail = detail.(string)
+		}
 	} else {
 		p = NewProblem(HttpProblemDefaultType, err.Error())
 	}
@@ -67,17 +71,21 @@ func NewErrorProblem(err error, status int) problem {
 	return p
 }
 
-func (p problem) SetInstance(instance string) problem {
+func (p Problem) SetInstance(instance string) Problem {
 	p.Instance = instance
 	return p
 }
 
-func (p problem) SetStatus(status int) problem {
+func (p Problem) SetStatus(status int) Problem {
 	p.Status = status
 	return p
 }
 
-func (p problem) SetDetail(detail string) problem {
+func (p Problem) SetDetail(detail string) Problem {
 	p.Detail = detail
 	return p
+}
+
+func ProblemTypeByCode(code uint) string {
+	return fmt.Sprintf("%s%d", HttpProblemErrorTypePrefix, code)
 }

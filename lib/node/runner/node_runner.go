@@ -8,6 +8,7 @@
 package runner
 
 import (
+	"net/http"
 	"time"
 
 	logging "github.com/inconshreveable/log15"
@@ -25,16 +26,6 @@ import (
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
 )
-
-var DefaultHandleTransactionCheckerFuncs = []common.CheckerFunc{
-	TransactionUnmarshal,
-	HasTransaction,
-	SaveTransactionHistory,
-	MessageHasSameSource,
-	MessageValidate,
-	PushIntoTransactionPool,
-	BroadcastTransaction,
-}
 
 var DefaultHandleBaseBallotCheckerFuncs = []common.CheckerFunc{
 	BallotUnmarshal,
@@ -81,14 +72,12 @@ type NodeRunner struct {
 	storage           *storage.LevelDBBackend
 	isaacStateManager *ISAACStateManager
 
-	handleTransactionCheckerFuncs  []common.CheckerFunc
 	handleBaseBallotCheckerFuncs   []common.CheckerFunc
 	handleINITBallotCheckerFuncs   []common.CheckerFunc
 	handleSIGNBallotCheckerFuncs   []common.CheckerFunc
 	handleACCEPTBallotCheckerFuncs []common.CheckerFunc
 
-	handleTransactionCheckerDeferFunc common.CheckerDeferFunc
-	handleBallotCheckerDeferFunc      common.CheckerDeferFunc
+	handleBallotCheckerDeferFunc common.CheckerDeferFunc
 
 	log logging.Logger
 
@@ -124,7 +113,6 @@ func NewNodeRunner(
 	nr.connectionManager = c.ConnectionManager()
 	nr.network.AddWatcher(nr.connectionManager.ConnectionWatcher)
 
-	nr.SetHandleTransactionCheckerFuncs(nil, DefaultHandleTransactionCheckerFuncs...)
 	nr.SetHandleBaseBallotCheckerFuncs(DefaultHandleBaseBallotCheckerFuncs...)
 	nr.SetHandleINITBallotCheckerFuncs(DefaultHandleINITBallotCheckerFuncs...)
 	nr.SetHandleSIGNBallotCheckerFuncs(DefaultHandleSIGNBallotCheckerFuncs...)
@@ -161,17 +149,21 @@ func (nr *NodeRunner) Ready() {
 	)
 
 	nr.network.AddHandler(nodeHandler.HandlerURLPattern(NodeInfoHandlerPattern), nodeHandler.NodeInfoHandler)
-	nr.network.AddHandler(nodeHandler.HandlerURLPattern(ConnectHandlerPattern), nodeHandler.ConnectHandler).Methods("POST")
-	nr.network.AddHandler(nodeHandler.HandlerURLPattern(MessageHandlerPattern), nodeHandler.MessageHandler).Methods("POST")
-	nr.network.AddHandler(nodeHandler.HandlerURLPattern(BallotHandlerPattern), nodeHandler.BallotHandler).Methods("POST")
-	nr.network.AddHandler(
-		nodeHandler.HandlerURLPattern(GetBlocksPattern),
-		nodeHandler.GetBlocksHandler,
-	).Methods("GET", "POST")
-	nr.network.AddHandler(
-		nodeHandler.HandlerURLPattern(GetTransactionPattern),
-		nodeHandler.GetNodeTransactionsHandler,
-	).Methods("GET", "POST")
+	nr.network.AddHandler(nodeHandler.HandlerURLPattern(ConnectHandlerPattern), nodeHandler.ConnectHandler).
+		Methods("POST").
+		Headers("Content-Type", "application/json")
+	nr.network.AddHandler(nodeHandler.HandlerURLPattern(MessageHandlerPattern), nodeHandler.MessageHandler).
+		Methods("POST").
+		Headers("Content-Type", "application/json")
+	nr.network.AddHandler(nodeHandler.HandlerURLPattern(BallotHandlerPattern), nodeHandler.BallotHandler).
+		Methods("POST").
+		Headers("Content-Type", "application/json")
+	nr.network.AddHandler(nodeHandler.HandlerURLPattern(GetBlocksPattern), nodeHandler.GetBlocksHandler).
+		Methods("GET", "POST").
+		MatcherFunc(common.PostAndJSONMatcher)
+	nr.network.AddHandler(nodeHandler.HandlerURLPattern(GetTransactionPattern), nodeHandler.GetNodeTransactionsHandler).
+		Methods("GET", "POST").
+		MatcherFunc(common.PostAndJSONMatcher)
 	nr.network.AddHandler("/metrics", promhttp.Handler().ServeHTTP)
 
 	// api handlers
@@ -189,10 +181,6 @@ func (nr *NodeRunner) Ready() {
 		apiHandler.GetOperationsByAccountHandler,
 	).Methods("GET")
 	nr.network.AddHandler(
-		apiHandler.HandlerURLPattern(api.GetTransactionsHandlerPattern),
-		apiHandler.GetTransactionsHandler,
-	).Methods("GET")
-	nr.network.AddHandler(
 		apiHandler.HandlerURLPattern(api.GetTransactionByHashHandlerPattern),
 		apiHandler.GetTransactionByHashHandler,
 	).Methods("GET")
@@ -200,10 +188,21 @@ func (nr *NodeRunner) Ready() {
 		apiHandler.HandlerURLPattern(api.GetTransactionOperationsHandlerPattern),
 		apiHandler.GetOperationsByTxHashHandler,
 	).Methods("GET")
+
+	TransactionsHandler := func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "POST" {
+			nodeHandler.MessageHandler(w, r)
+			return
+		}
+
+		apiHandler.GetTransactionsHandler(w, r)
+		return
+	}
+
 	nr.network.AddHandler(
-		apiHandler.HandlerURLPattern(api.PostTransactionPattern),
-		nodeHandler.MessageHandler,
-	).Methods("POST")
+		apiHandler.HandlerURLPattern(api.GetTransactionsHandlerPattern),
+		TransactionsHandler,
+	).Methods("GET", "POST").MatcherFunc(common.PostAndJSONMatcher)
 
 	nr.network.Ready()
 }
@@ -281,21 +280,6 @@ func (nr *NodeRunner) ConnectValidators() {
 	nr.connectionManager.Start()
 }
 
-func (nr *NodeRunner) SetHandleTransactionCheckerFuncs(
-	deferFunc common.CheckerDeferFunc,
-	f ...common.CheckerFunc,
-) {
-	if len(f) > 0 {
-		nr.handleTransactionCheckerFuncs = f
-	}
-
-	if deferFunc == nil {
-		deferFunc = common.DefaultDeferFunc
-	}
-
-	nr.handleTransactionCheckerDeferFunc = deferFunc
-}
-
 func (nr *NodeRunner) SetHandleBaseBallotCheckerFuncs(f ...common.CheckerFunc) {
 	nr.handleBaseBallotCheckerFuncs = f
 }
@@ -310,10 +294,6 @@ func (nr *NodeRunner) SetHandleSIGNBallotCheckerFuncs(f ...common.CheckerFunc) {
 
 func (nr *NodeRunner) SetHandleACCEPTBallotCheckerFuncs(f ...common.CheckerFunc) {
 	nr.handleACCEPTBallotCheckerFuncs = f
-}
-
-func (nr *NodeRunner) SetHandleMessageCheckerDeferFunc(f common.CheckerDeferFunc) {
-	nr.handleTransactionCheckerDeferFunc = f
 }
 
 // Read from the network channel and forwards to `handleMessage`
@@ -337,8 +317,6 @@ func (nr *NodeRunner) handleMessage(message common.NetworkMessage) {
 			nr.log.Error("invalid validator data was received", "data", message.Data, "error", err)
 			return
 		}
-	case common.TransactionMessage:
-		err = nr.handleTransaction(message)
 	case common.BallotMessage:
 		err = nr.handleBallotMessage(message)
 	default:
@@ -353,27 +331,6 @@ func (nr *NodeRunner) handleMessage(message common.NetworkMessage) {
 	}
 }
 
-func (nr *NodeRunner) handleTransaction(message common.NetworkMessage) (err error) {
-	nr.log.Debug("got transaction", "transaction", message.Head(50))
-
-	checker := &MessageChecker{
-		DefaultChecker: common.DefaultChecker{Funcs: nr.handleTransactionCheckerFuncs},
-		NodeRunner:     nr,
-		LocalNode:      nr.localNode,
-		NetworkID:      nr.networkID,
-		Message:        message,
-	}
-
-	if err = common.RunChecker(checker, nr.handleTransactionCheckerDeferFunc); err != nil {
-		if _, ok := err.(common.CheckerErrorStop); !ok {
-			nr.log.Error("failed to handle transaction", "message", string(message.Data), "error", err)
-		}
-		return
-	}
-
-	return
-}
-
 func (nr *NodeRunner) handleBallotMessage(message common.NetworkMessage) (err error) {
 	nr.log.Debug("got ballot", "message", message.Head(50))
 
@@ -386,7 +343,7 @@ func (nr *NodeRunner) handleBallotMessage(message common.NetworkMessage) (err er
 		Log:            nr.Log(),
 		VotingHole:     ballot.VotingNOTYET,
 	}
-	err = common.RunChecker(baseChecker, nr.handleTransactionCheckerDeferFunc)
+	err = common.RunChecker(baseChecker, nr.handleBallotCheckerDeferFunc)
 	if err != nil {
 		if _, ok := err.(common.CheckerErrorStop); !ok {
 			nr.log.Debug("failed to handle ballot", "error", err, "message", string(message.Data))
@@ -415,7 +372,7 @@ func (nr *NodeRunner) handleBallotMessage(message common.NetworkMessage) (err er
 		IsNew:          baseChecker.IsNew,
 		Log:            baseChecker.Log,
 	}
-	err = common.RunChecker(checker, nr.handleTransactionCheckerDeferFunc)
+	err = common.RunChecker(checker, nr.handleBallotCheckerDeferFunc)
 	if err != nil {
 		if stopped, ok := err.(common.CheckerStop); ok {
 			nr.log.Debug(

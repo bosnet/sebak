@@ -38,9 +38,10 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 		messageData, _ := tx.Serialize()
 
 		checker := &MessageChecker{
-			DefaultChecker: common.DefaultChecker{Funcs: DefaultHandleTransactionCheckerFuncs},
-			NodeRunner:     nodeRunner,
+			DefaultChecker: common.DefaultChecker{Funcs: HandleTransactionCheckerFuncs},
 			LocalNode:      nodeRunner.Node(),
+			Consensus:      nodeRunner.Consensus(),
+			Storage:        nodeRunner.Storage(),
 			NetworkID:      networkID,
 			Message:        common.NetworkMessage{Type: "message", Data: messageData},
 		}
