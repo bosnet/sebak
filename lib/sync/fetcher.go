@@ -124,7 +124,7 @@ func (f *BlockFetcher) fetch(ctx context.Context, si *SyncInfo) error {
 	}
 	if resp.StatusCode == http.StatusNotFound {
 		//TODO:
-		err := errors.New("Fetch: block not found")
+		err := errors.New("fetch: block not found")
 		return err
 	}
 
@@ -133,17 +133,17 @@ func (f *BlockFetcher) fetch(ctx context.Context, si *SyncInfo) error {
 		return err
 	}
 
+	//TODO(anarcher): loggger.Debug insteads .Info
 	f.logger.Info("fetch get items", "items", len(items), "height", height)
 
 	blocks, ok := items[runner.NodeItemBlock]
 	if !ok || len(blocks) <= 0 {
-		err := errors.New("Fetch: block not found in resp")
+		err := errors.New("fetch: block not found in resp")
 		return err
 	}
 
 	//TODO(anarcher): check items
 	bts, ok := items[runner.NodeItemBlockTransaction]
-	//ops, ok := items[runner.NodeItemBlockOperation]
 
 	blk := blocks[0].(block.Block)
 	si.Block = &blk
@@ -154,7 +154,7 @@ func (f *BlockFetcher) fetch(ctx context.Context, si *SyncInfo) error {
 		bt, ok := bt.(block.BlockTransaction)
 		if !ok {
 			//TODO(anarcher): define sential error
-			return errors.New("Invalid block transaction")
+			return errors.New("invalid block transaction")
 		}
 
 		var tx transaction.Transaction
@@ -174,14 +174,6 @@ func (f *BlockFetcher) fetch(ctx context.Context, si *SyncInfo) error {
 		si.Txs = append(si.Txs, tx)
 
 	}
-
-	//TODO(anarcher): Remove this comments
-	/*
-		for _, op := range ops {
-			op := op.(block.BlockOperation)
-			info.Ops = append(info.Ops, &op)
-		}
-	*/
 
 	return nil
 }
