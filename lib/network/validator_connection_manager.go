@@ -78,6 +78,9 @@ func (c *ValidatorConnectionManager) GetConnection(address string) (client Netwo
 func (c *ValidatorConnectionManager) Start() {
 	c.log.Debug("starting to connect to validators", "validators", c.validators)
 	for _, v := range c.validators {
+		if v.Address() == c.localNode.Address() {
+			continue
+		}
 		go c.connectingValidator(v)
 	}
 }
