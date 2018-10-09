@@ -1,16 +1,16 @@
 package common
 
 import (
-	"crypto/sha256"
 	"github.com/btcsuite/btcutil/base58"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/rlp"
+	"golang.org/x/crypto/argon2"
 )
 
+var HashSalt = []byte("sebak")
+
 func MakeHash(b []byte) []byte {
-	first := sha256.Sum256(b)
-	second := sha256.Sum256(first[:])
-	return second[:]
+	return argon2.Key(b, HashSalt, 3, 32*1024, 4, 32)
 }
 
 func MakeObjectHash(i interface{}) (b []byte, err error) {

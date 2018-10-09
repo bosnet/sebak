@@ -12,5 +12,5 @@ if [ $# -gt 0 ]; then
     exec ./sebak $@
 else
     # Node mode
-    exec ./sebak node --genesis=${SEBAK_GENESIS_BLOCK},${SEBAK_COMMON_ACCOUNT}
+    exec ./sebak node --genesis=${SEBAK_GENESIS_BLOCK}
 fi
