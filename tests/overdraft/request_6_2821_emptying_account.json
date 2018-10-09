@@ -3,12 +3,12 @@
   "H": {
     "version": "",
     "created": "2018-09-27T14:27:28.050051320+09:00",
-    "signature": "4GQwemoXaStJpsRutWVEPbx1fwFn5k9pcTPvFymS46yyNyaXKiyVyfbQFJaR2Ro7p54DuNbLwPHXVCvUkq4fP5wK"
+    "signature": "3bY1S6FBXZcZP4AXM2X9KXuxpXcecmVwyX9xeJydnsXiFeBYW5Z7fccVhJUE8v87tk4dyaLHGt8oPUE2Va3zByoU"
   },
   "B": {
     "source": "GDTEPFWEITKFHSUO44NQABY2XHRBBH2UBVGJ2ZJPDREIOL2F6RAEBJE4",
     "fee": "10000",
-    "sequenceID": 0,
+    "sequenceid": 0,
     "operations": [
       {
         "H": {
