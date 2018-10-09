@@ -124,7 +124,7 @@ func (f *BlockFetcher) fetch(ctx context.Context, si *SyncInfo) error {
 	}
 	if resp.StatusCode == http.StatusNotFound {
 		//TODO:
-		err := errors.New("Fetch: block not found")
+		err := errors.New("fetch: block not found")
 		return err
 	}
 
@@ -133,42 +133,47 @@ func (f *BlockFetcher) fetch(ctx context.Context, si *SyncInfo) error {
 		return err
 	}
 
+	//TODO(anarcher): loggger.Debug insteads .Info
 	f.logger.Info("fetch get items", "items", len(items), "height", height)
 
 	blocks, ok := items[runner.NodeItemBlock]
 	if !ok || len(blocks) <= 0 {
-		err := errors.New("Fetch: block not found in resp")
+		err := errors.New("fetch: block not found in resp")
 		return err
 	}
 
 	//TODO(anarcher): check items
 	bts, ok := items[runner.NodeItemBlockTransaction]
-	//ops, ok := items[runner.NodeItemBlockOperation]
 
 	blk := blocks[0].(block.Block)
 	si.Block = &blk
+
+	txmap := make(map[string]*transaction.Transaction) // For ordering txs by block.Transactions
 
 	for _, bt := range bts {
 		bt, ok := bt.(block.BlockTransaction)
 		if !ok {
 			//TODO(anarcher): define sential error
-			return errors.New("Invalid block transaction")
+			return errors.New("invalid block transaction")
 		}
 
 		var tx transaction.Transaction
 		if err := json.Unmarshal(bt.Message, &tx); err != nil {
 			return err
 		}
-
-		si.Txs = append(si.Txs, &tx)
+		txmap[bt.Hash] = &tx
 	}
 
-	/*
-		for _, op := range ops {
-			op := op.(block.BlockOperation)
-			info.Ops = append(info.Ops, &op)
+	for _, hash := range blk.Transactions {
+		tx, ok := txmap[hash]
+		if !ok {
+			//TODO(anarcher): Error type for controlling timeout
+			err := fmt.Errorf("Tx: %s not found in block height %d", hash, height)
+			return err
 		}
-	*/
+		si.Txs = append(si.Txs, tx)
+
+	}
 
 	return nil
 }
