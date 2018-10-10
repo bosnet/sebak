@@ -33,7 +33,9 @@ type SyncInfo struct {
 	Block       *block.Block
 	Txs         []*transaction.Transaction
 
-	NodeAddrs []string // Fetching target node addresses
+	// Fetching target node addresses, `NodeAddrs` is  the validators which
+	// participated and confirmed the consensus of latest ballot.
+	NodeAddrs []string
 }
 
 type Doer interface {
