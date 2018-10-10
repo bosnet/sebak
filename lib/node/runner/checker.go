@@ -1,7 +1,10 @@
 package runner
 
 import (
+	"bufio"
+	"bytes"
 	"encoding/json"
+	"io"
 
 	logging "github.com/inconshreveable/log15"
 
@@ -242,12 +245,97 @@ func BallotCheckResult(c common.Checker, args ...interface{}) (err error) {
 	return
 }
 
-var handleBallotTransactionCheckerFuncs = []common.CheckerFunc{
+// getMissingTransaction will get the missing tranactions, that is, not in
+// `TransactionPool` from proposer.
+func getMissingTransaction(checker *BallotChecker) (err error) {
+	// get missing transactions
+	var unknown []string
+	for _, hash := range checker.Ballot.Transactions() {
+		if checker.NodeRunner.Consensus().TransactionPool.Has(hash) {
+			continue
+		}
+		unknown = append(unknown, hash)
+	}
+
+	if len(unknown) < 1 {
+		return
+	}
+
+	client := checker.NodeRunner.ConnectionManager().GetConnection(checker.Ballot.Proposer())
+	if client == nil {
+		err = errors.ErrorBallotFromUnknownValidator
+		return
+	}
+	var body []byte
+	// TODO check error
+	if body, err = client.GetTransactions(unknown); err != nil {
+		return
+	}
+
+	var receivedTransaction []transaction.Transaction
+	bf := bufio.NewReader(bytes.NewReader(body))
+	for {
+		var l []byte
+		l, err = bf.ReadBytes('\n')
+		if err == io.EOF {
+			err = nil
+			break
+		} else if err != nil {
+			return
+		}
+		var itemType NodeItemDataType
+		var d interface{}
+		if itemType, d, err = UnmarshalNodeItemResponse(l); err != nil {
+			return
+		}
+		if itemType == NodeItemError {
+			err = d.(*errors.Error)
+			return
+		}
+
+		var tx transaction.Transaction
+		var ok bool
+		if tx, ok = d.(transaction.Transaction); !ok {
+			err = errors.ErrorTransactionNotFound
+			return
+		}
+		if err = tx.IsWellFormed(checker.NetworkID, checker.NodeRunner.Conf); err != nil {
+			return
+		}
+
+		receivedTransaction = append(receivedTransaction, tx)
+	}
+
+	for _, tx := range receivedTransaction {
+		checker.NodeRunner.Consensus().TransactionPool.Add(tx)
+	}
+
+	return
+}
+
+func BallotGetMissingTransaction(c common.Checker, args ...interface{}) (err error) {
+	checker := c.(*BallotChecker)
+
+	if checker.VotingHole != ballot.VotingNOTYET {
+		return
+	}
+
+	if err = getMissingTransaction(checker); err != nil {
+		checker.VotingHole = ballot.VotingNO
+		err = nil
+		checker.Log.Debug("failed to get the missing transactions of ballot", "error", err)
+	}
+
+	return
+}
+
+var INITBallotTransactionCheckerFuncs = []common.CheckerFunc{
 	IsNew,
-	GetMissingTransaction,
+	CheckMissingTransaction,
 	BallotTransactionsSameSource,
 	BallotTransactionsSourceCheck,
 	BallotTransactionsOperationBodyCollectTxFee,
+	BallotTransactionsAllValid,
 }
 
 // INITBallotValidateTransactions validates the
@@ -270,7 +358,7 @@ func INITBallotValidateTransactions(c common.Checker, args ...interface{}) (err 
 	}
 
 	transactionsChecker := &BallotTransactionChecker{
-		DefaultChecker: common.DefaultChecker{Funcs: handleBallotTransactionCheckerFuncs},
+		DefaultChecker: common.DefaultChecker{Funcs: INITBallotTransactionCheckerFuncs},
 		NodeRunner:     checker.NodeRunner,
 		LocalNode:      checker.LocalNode,
 		NetworkID:      checker.NetworkID,
@@ -377,6 +465,11 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) (err error) {
 		return
 	}
 	if checker.FinishedVotingHole == ballot.VotingYES {
+		if err = getMissingTransaction(checker); err != nil {
+			checker.Log.Debug("failed to get the missing transactions of ballot", "error", err)
+			return
+		}
+
 		var theBlock block.Block
 		theBlock, err = finishBallot(
 			checker.NodeRunner.Storage(),

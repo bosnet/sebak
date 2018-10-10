@@ -48,6 +48,7 @@ var DefaultHandleINITBallotCheckerFuncs = []common.CheckerFunc{
 	BallotIsSameProposer,
 	BallotValidateOperationBodyCollectTxFee,
 	BallotValidateOperationBodyInflation,
+	BallotGetMissingTransaction,
 	INITBallotValidateTransactions,
 	SIGNBallotBroadcast,
 	TransitStateToSIGN,
@@ -494,7 +495,6 @@ func (nr *NodeRunner) TransitISAACState(round round.Round, ballotState ballot.St
 
 var NewBallotTransactionCheckerFuncs = []common.CheckerFunc{
 	IsNew,
-	GetMissingTransaction,
 	BallotTransactionsSameSource,
 	BallotTransactionsSourceCheck,
 }
