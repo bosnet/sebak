@@ -60,8 +60,6 @@ func (bck Block) String() string {
 // * The next `Operation` is for common account
 //   * `CreateAccount.Amount` is 0
 //   * `CreateAccount.Target` is common account
-// * `Transaction.B.Source` is same with `CreateAccount.Target` of
-// genesis account
 // * `Transaction.B.Fee` is 0
 func MakeGenesisBlock(st *storage.LevelDBBackend, genesisAccount BlockAccount, commonAccount BlockAccount, networdID []byte) (blk Block, err error) {
 	if genesisAccount.Address == commonAccount.Address {

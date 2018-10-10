@@ -18,6 +18,8 @@ type MemoryNetwork struct {
 	receiveChannel chan common.NetworkMessage
 	// They all share the same map to find each other
 	peers map[ /* endpoint */ string]*MemoryNetwork
+
+	messageBroker MessageBroker
 }
 
 func (t *MemoryNetwork) GetClient(endpoint *common.Endpoint) NetworkClient {
@@ -52,11 +54,12 @@ func (p *MemoryNetwork) Ready() error {
 	return nil
 }
 
-func (p *MemoryNetwork) SetMessageBroker(MessageBroker) {
+func (p *MemoryNetwork) SetMessageBroker(mb MessageBroker) {
+	p.messageBroker = mb
 }
 
 func (p *MemoryNetwork) MessageBroker() MessageBroker {
-	return nil
+	return p.messageBroker
 }
 
 func (p *MemoryNetwork) IsReady() bool {

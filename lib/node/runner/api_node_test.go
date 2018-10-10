@@ -126,15 +126,18 @@ func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, n *network.HTTP2Netw
 }
 
 type TestMessageBroker struct {
-	network *network.HTTP2Network
+	network  *network.HTTP2Network
+	Messages []common.NetworkMessage
 }
 
-func (r TestMessageBroker) Response(w io.Writer, o []byte) error {
+func (r *TestMessageBroker) Response(w io.Writer, o []byte) error {
 	_, err := w.Write(o)
 	return err
 }
 
-func (r TestMessageBroker) Receive(common.NetworkMessage) {}
+func (r *TestMessageBroker) Receive(m common.NetworkMessage) {
+	r.Messages = append(r.Messages, m)
+}
 
 func removeWhiteSpaces(str string) string {
 	return strings.Map(func(r rune) rune {
@@ -147,7 +150,7 @@ func removeWhiteSpaces(str string) string {
 
 func TestHTTP2NetworkGetNodeInfo(t *testing.T) {
 	_, s0, nodeRunner := createNewHTTP2Network(t)
-	s0.SetMessageBroker(TestMessageBroker{network: s0})
+	s0.SetMessageBroker(&TestMessageBroker{network: s0})
 	nodeRunner.Ready()
 
 	go nodeRunner.Start()
@@ -204,7 +207,7 @@ func TestHTTP2NetworkMessageBrokerResponseMessage(t *testing.T) {
 
 func TestHTTP2NetworkConnect(t *testing.T) {
 	_, s0, nodeRunner := createNewHTTP2Network(t)
-	s0.SetMessageBroker(TestMessageBroker{network: s0})
+	s0.SetMessageBroker(&TestMessageBroker{network: s0})
 	nodeRunner.Ready()
 
 	go nodeRunner.Start()

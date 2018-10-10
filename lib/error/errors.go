@@ -68,4 +68,5 @@ var (
 	ErrorInvalidInflationRatio                = NewError(161, "invalid inflation ratio found")
 	ErrorNotImplemented                       = NewError(162, "not implemented")
 	ErrorHTTPProblem                          = NewError(163, "http failed to get response")
+	ErrorInvalidTransaction                   = NewError(164, "invalid transaction")
 )

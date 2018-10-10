@@ -25,11 +25,16 @@ import (
 )
 
 type HelperTestGetNodeTransactionsHandler struct {
+	localNode         *node.LocalNode
 	st                *storage.LevelDBBackend
 	server            *httptest.Server
 	blocks            []block.Block
 	transactionHashes []string
 	consensus         *consensus.ISAAC
+	router            *mux.Router
+	genesisAccount    *block.BlockAccount
+	genesisKeypair    *keypair.Full
+	network           *network.MemoryNetwork
 }
 
 func (p *HelperTestGetNodeTransactionsHandler) Prepare() {
@@ -39,22 +44,31 @@ func (p *HelperTestGetNodeTransactionsHandler) Prepare() {
 	endpoint, _ := common.NewEndpointFromString(
 		fmt.Sprintf("http://localhost:12345"),
 	)
-	localNode, _ := node.NewLocalNode(kp, endpoint, "")
-	localNode.AddValidators(localNode.ConvertToValidator())
+	p.localNode, _ = node.NewLocalNode(kp, endpoint, "")
+	p.localNode.AddValidators(p.localNode.ConvertToValidator())
+
+	_, p.network, _ = network.CreateMemoryNetwork(nil)
+	p.network.SetLocalNode(p.localNode)
+
 	isaac, _ := consensus.NewISAAC(
 		networkID,
-		localNode,
+		p.localNode,
 		nil,
-		network.NewValidatorConnectionManager(localNode, nil, nil),
+		network.NewValidatorConnectionManager(p.localNode, nil, nil),
 		common.NewConfig(),
 	)
 	p.consensus = isaac
+
 	apiHandler := NetworkHandlerNode{storage: p.st, consensus: isaac}
 
-	router := mux.NewRouter()
-	router.HandleFunc(GetTransactionPattern, apiHandler.GetNodeTransactionsHandler).Methods("GET", "POST")
+	p.router = mux.NewRouter()
+	p.router.HandleFunc(GetTransactionPattern, apiHandler.GetNodeTransactionsHandler).Methods("GET", "POST")
 
-	p.server = httptest.NewServer(router)
+	p.server = httptest.NewServer(p.router)
+
+	p.genesisKeypair, _ = keypair.Random()
+	p.genesisAccount = block.NewBlockAccount(p.genesisKeypair.Address(), common.MaximumBalance)
+	p.genesisAccount.Save(p.st)
 
 	var bks []block.Block
 	for i := 0; i < 3; i++ {

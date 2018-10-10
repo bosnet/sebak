@@ -19,20 +19,23 @@ import (
 
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/consensus"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/node"
+	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
 )
 
 type MessageChecker struct {
 	common.DefaultChecker
 
-	NodeRunner *NodeRunner
-	LocalNode  *node.LocalNode
-	NetworkID  []byte
-	Message    common.NetworkMessage
-
+	Conf        common.Config
+	LocalNode   *node.LocalNode
+	NetworkID   []byte
+	Message     common.NetworkMessage
 	Log         logging.Logger
+	Consensus   *consensus.ISAAC
+	Storage     *storage.LevelDBBackend
 	Transaction transaction.Transaction
 }
 
@@ -46,12 +49,12 @@ func TransactionUnmarshal(c common.Checker, args ...interface{}) (err error) {
 		return
 	}
 
-	if err = tx.IsWellFormed(checker.NetworkID, checker.NodeRunner.Conf); err != nil {
+	if err = tx.IsWellFormed(checker.NetworkID, checker.Conf); err != nil {
 		return
 	}
 
 	checker.Transaction = tx
-	checker.Log = checker.NodeRunner.Log().New(logging.Ctx{"transaction": tx.GetHash()})
+	checker.Log = checker.Log.New(logging.Ctx{"transaction": tx.GetHash()})
 	checker.Log.Debug("message is transaction")
 
 	return
@@ -62,8 +65,7 @@ func TransactionUnmarshal(c common.Checker, args ...interface{}) (err error) {
 func HasTransaction(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*MessageChecker)
 
-	consensus := checker.NodeRunner.Consensus()
-	if consensus.TransactionPool.Has(checker.Transaction.GetHash()) {
+	if checker.Consensus.TransactionPool.Has(checker.Transaction.GetHash()) {
 		err = errors.ErrorNewButKnownMessage
 		return
 	}
@@ -77,14 +79,14 @@ func SaveTransactionHistory(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*MessageChecker)
 
 	var found bool
-	if found, err = block.ExistsBlockTransactionHistory(checker.NodeRunner.Storage(), checker.Transaction.GetHash()); found && err == nil {
+	if found, err = block.ExistsBlockTransactionHistory(checker.Storage, checker.Transaction.GetHash()); found && err == nil {
 		checker.Log.Debug("found in history")
 		err = errors.ErrorNewButKnownMessage
 		return
 	}
 
 	bt := block.NewTransactionHistoryFromTransaction(checker.Transaction, checker.Message.Data)
-	if err = bt.Save(checker.NodeRunner.Storage()); err != nil {
+	if err = bt.Save(checker.Storage); err != nil {
 		return
 	}
 
@@ -98,7 +100,7 @@ func SaveTransactionHistory(c common.Checker, args ...interface{}) (err error) {
 func MessageHasSameSource(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*MessageChecker)
 
-	if checker.NodeRunner.Consensus().TransactionPool.IsSameSource(checker.Transaction.Source()) {
+	if checker.Consensus.TransactionPool.IsSameSource(checker.Transaction.Source()) {
 		err = errors.ErrorTransactionSameSource
 		return
 	}
@@ -110,7 +112,7 @@ func MessageHasSameSource(c common.Checker, args ...interface{}) (err error) {
 func MessageValidate(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*MessageChecker)
 
-	if err = ValidateTx(checker.NodeRunner.Storage(), checker.Transaction); err != nil {
+	if err = ValidateTx(checker.Storage, checker.Transaction); err != nil {
 		return
 	}
 
@@ -123,7 +125,7 @@ func PushIntoTransactionPool(c common.Checker, args ...interface{}) (err error) 
 	checker := c.(*MessageChecker)
 
 	tx := checker.Transaction
-	is := checker.NodeRunner.Consensus()
+	is := checker.Consensus
 	is.TransactionPool.Add(tx)
 
 	checker.Log.Debug("push transaction into transactionPool")
@@ -139,7 +141,7 @@ func BroadcastTransaction(c common.Checker, args ...interface{}) (err error) {
 	checker.Log.Debug("transaction from client will be broadcasted")
 
 	// TODO sender should be excluded
-	checker.NodeRunner.ConnectionManager().Broadcast(checker.Transaction)
+	checker.Consensus.ConnectionManager().Broadcast(checker.Transaction)
 
 	return
 }

@@ -67,12 +67,11 @@ func (c *HTTP2NetworkClient) GetNodeInfo() (body []byte, err error) {
 		return
 	}
 	defer response.Body.Close()
+	body, err = ioutil.ReadAll(response.Body)
+
 	if response.StatusCode != http.StatusOK {
 		err = errors.ErrorHTTPProblem.Clone().SetData("status", response.StatusCode)
-		return
 	}
-
-	body, err = ioutil.ReadAll(response.Body)
 
 	return
 }
@@ -88,12 +87,11 @@ func (c *HTTP2NetworkClient) Connect(n node.Node) (body []byte, err error) {
 		return
 	}
 	defer response.Body.Close()
+	body, err = ioutil.ReadAll(response.Body)
+
 	if response.StatusCode != http.StatusOK {
 		err = errors.ErrorHTTPProblem.Clone().SetData("status", response.StatusCode)
-		return
 	}
-
-	body, err = ioutil.ReadAll(response.Body)
 
 	return
 }
@@ -115,12 +113,11 @@ func (c *HTTP2NetworkClient) SendMessage(message common.Serializable) (retBody [
 		return
 	}
 	defer response.Body.Close()
+	retBody, err = ioutil.ReadAll(response.Body)
+
 	if response.StatusCode != http.StatusOK {
 		err = errors.ErrorHTTPProblem.Clone().SetData("status", response.StatusCode)
-		return
 	}
-
-	retBody, err = ioutil.ReadAll(response.Body)
 
 	return
 }
@@ -142,12 +139,11 @@ func (c *HTTP2NetworkClient) SendBallot(message common.Serializable) (retBody []
 		return
 	}
 	defer response.Body.Close()
+	retBody, err = ioutil.ReadAll(response.Body)
+
 	if response.StatusCode != http.StatusOK {
 		err = errors.ErrorHTTPProblem.Clone().SetData("status", response.StatusCode)
-		return
 	}
-
-	retBody, err = ioutil.ReadAll(response.Body)
 
 	return
 }
@@ -169,12 +165,11 @@ func (c *HTTP2NetworkClient) GetTransactions(txs []string) (retBody []byte, err 
 		return
 	}
 	defer response.Body.Close()
+	retBody, err = ioutil.ReadAll(response.Body)
+
 	if response.StatusCode != http.StatusOK {
 		err = errors.ErrorHTTPProblem.Clone().SetData("status", response.StatusCode)
-		return
 	}
-
-	retBody, err = ioutil.ReadAll(response.Body)
 
 	return
 }

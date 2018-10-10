@@ -192,16 +192,17 @@ func (c *ValidatorConnectionManager) Broadcast(message common.Message) {
 				client := c.GetConnection(v.Address())
 
 				var err error
+				var response []byte
 				if message.GetType() == common.BallotMessage {
-					_, err = client.SendBallot(message)
+					response, err = client.SendBallot(message)
 				} else if message.GetType() == string(common.TransactionMessage) {
-					_, err = client.SendMessage(message)
+					response, err = client.SendMessage(message)
 				} else {
 					panic("invalid message")
 				}
 
 				if err != nil {
-					c.log.Error("failed to SendBallot", "error", err, "validator", v)
+					c.log.Error("failed to broadcast", "error", err, "validator", v, "message", message, "response", string(response))
 				}
 			}(c.validators[addr])
 		}

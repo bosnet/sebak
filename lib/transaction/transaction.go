@@ -108,6 +108,9 @@ func (tx Transaction) IsWellFormed(networkID []byte, conf common.Config) (err er
 		Conf:           conf,
 	}
 	if err = common.RunChecker(checker, common.DefaultDeferFunc); err != nil {
+		if _, ok := err.(*errors.Error); !ok {
+			err = errors.ErrorInvalidTransaction.Clone().SetData("error", err.Error())
+		}
 		return
 	}
 
@@ -177,6 +180,7 @@ func (tx Transaction) String() string {
 }
 
 func (tx *Transaction) Sign(kp keypair.KP, networkID []byte) {
+	tx.B.Source = kp.Address()
 	tx.H.Hash = tx.B.MakeHashString()
 	signature, _ := common.MakeSignature(kp, networkID, tx.H.Hash)
 
