@@ -33,11 +33,7 @@ type SyncInfo struct {
 	Block       *block.Block
 	Txs         []*transaction.Transaction
 
-	NodeAddrs []string
-
-	//TODO(anarcher): Remove
-	//BlockTxs []*block.BlockTransaction
-	//BlockOps []*block.BlockOperation
+	NodeAddrs []string // Fetching target node addresses
 }
 
 type Doer interface {
