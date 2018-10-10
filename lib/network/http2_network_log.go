@@ -89,8 +89,8 @@ func (l HTTP2Log15Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	l.log.Debug(
 		"request",
-		"content-length", r.Header.Get("Content-Type"),
-		"content-type", r.ContentLength,
+		"content-length", r.ContentLength,
+		"content-type", r.Header.Get("Content-Type"),
 		"headers", header,
 		"host", r.Host,
 		"id", uid,
