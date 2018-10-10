@@ -44,6 +44,8 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 			Storage:        nodeRunner.Storage(),
 			NetworkID:      networkID,
 			Message:        common.NetworkMessage{Type: "message", Data: messageData},
+			Log:            nodeRunner.Log(),
+			Conf:           nodeRunner.Conf,
 		}
 
 		if err := common.RunChecker(checker, nil); err != nil {

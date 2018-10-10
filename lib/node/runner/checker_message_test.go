@@ -29,6 +29,8 @@ func TestMessageChecker(t *testing.T) {
 		Storage:        nodeRunner.Storage(),
 		NetworkID:      networkID,
 		Message:        validMessage,
+		Log:            nodeRunner.Log(),
+		Conf:           nodeRunner.Conf,
 	}
 
 	err = TransactionUnmarshal(checker)
@@ -91,6 +93,8 @@ func TestMessageCheckerWithInvalidHash(t *testing.T) {
 		LocalNode: localNode,
 		NetworkID: networkID,
 		Message:   invalidMessage,
+		Log:       nodeRunner.Log(),
+		Conf:      nodeRunner.Conf,
 	}
 
 	err = TransactionUnmarshal(checker)

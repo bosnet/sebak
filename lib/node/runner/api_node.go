@@ -28,15 +28,17 @@ type NetworkHandlerNode struct {
 	storage   *storage.LevelDBBackend
 	consensus *consensus.ISAAC
 	urlPrefix string
+	conf      common.Config
 }
 
-func NewNetworkHandlerNode(localNode *node.LocalNode, network network.Network, storage *storage.LevelDBBackend, consensus *consensus.ISAAC, urlPrefix string) *NetworkHandlerNode {
+func NewNetworkHandlerNode(localNode *node.LocalNode, network network.Network, storage *storage.LevelDBBackend, consensus *consensus.ISAAC, urlPrefix string, conf common.Config) *NetworkHandlerNode {
 	return &NetworkHandlerNode{
 		localNode: localNode,
 		network:   network,
 		storage:   storage,
 		consensus: consensus,
 		urlPrefix: urlPrefix,
+		conf:      conf,
 	}
 }
 
@@ -114,6 +116,7 @@ func (api NetworkHandlerNode) MessageHandler(w http.ResponseWriter, r *http.Requ
 		NetworkID:      api.consensus.NetworkID,
 		Message:        message,
 		Log:            log,
+		Conf:           api.conf,
 	}
 
 	if err = common.RunChecker(checker, common.DefaultDeferFunc); err != nil {

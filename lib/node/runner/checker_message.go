@@ -29,6 +29,7 @@ import (
 type MessageChecker struct {
 	common.DefaultChecker
 
+	Conf        common.Config
 	LocalNode   *node.LocalNode
 	NetworkID   []byte
 	Message     common.NetworkMessage
@@ -48,7 +49,7 @@ func TransactionUnmarshal(c common.Checker, args ...interface{}) (err error) {
 		return
 	}
 
-	if err = tx.IsWellFormed(checker.NetworkID, checker.NodeRunner.Conf); err != nil {
+	if err = tx.IsWellFormed(checker.NetworkID, checker.Conf); err != nil {
 		return
 	}
 

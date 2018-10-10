@@ -146,6 +146,7 @@ func (nr *NodeRunner) Ready() {
 		nr.storage,
 		nr.consensus,
 		network.UrlPathPrefixNode,
+		nr.Conf,
 	)
 
 	nr.network.AddHandler(nodeHandler.HandlerURLPattern(NodeInfoHandlerPattern), nodeHandler.NodeInfoHandler)

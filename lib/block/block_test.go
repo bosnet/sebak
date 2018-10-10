@@ -140,10 +140,11 @@ func TestMakeGenesisBlock(t *testing.T) {
 	bt, err := GetBlockTransaction(st, bk.Transactions[0])
 	require.Nil(t, err)
 
+	genesisBlockKP := keypair.Master(string(networkID))
 	require.Equal(t, genesisAccount.SequenceID, bt.SequenceID)
 	require.Equal(t, common.Amount(0), bt.Fee)
 	require.Equal(t, 2, len(bt.Operations))
-	require.Equal(t, genesisAccount.Address, bt.Source)
+	require.Equal(t, genesisBlockKP.Address(), bt.Source)
 	require.Equal(t, bk.Hash, bt.Block)
 
 	// operation
@@ -156,7 +157,7 @@ func TestMakeGenesisBlock(t *testing.T) {
 	require.Nil(t, err)
 	require.Equal(t, bt.Hash, bo.TxHash)
 	require.Equal(t, operation.TypeCreateAccount, bo.Type)
-	require.Equal(t, genesisAccount.Address, bo.Source)
+	require.Equal(t, genesisBlockKP.Address(), bo.Source)
 
 	{
 		opb, err := operation.UnmarshalBodyJSON(bo.Type, bo.Body)
@@ -239,18 +240,6 @@ func TestMakeGenesisBlockFindGenesisAccount(t *testing.T) {
 		opbp := opb.(operation.Payable)
 
 		genesisAccount, err := GetBlockAccount(st, opbp.TargetAddress())
-		require.Nil(t, err)
-
-		require.Equal(t, account.Address, genesisAccount.Address)
-		require.Equal(t, account.Balance, genesisAccount.Balance)
-		require.Equal(t, account.SequenceID, genesisAccount.SequenceID)
-	}
-
-	{ // with `Transaction`
-		bk, _ := GetBlockByHeight(st, 1)
-		bt, _ := GetBlockTransaction(st, bk.Transactions[0])
-
-		genesisAccount, err := GetBlockAccount(st, bt.Source)
 		require.Nil(t, err)
 
 		require.Equal(t, account.Address, genesisAccount.Address)

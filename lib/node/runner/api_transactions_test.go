@@ -54,7 +54,6 @@ func (p *HelperTestGetNodeTransactionsHandler) Prepare() {
 		networkID,
 		p.localNode,
 		nil,
-		network.NewValidatorConnectionManager(localNode, nil, nil),
 		network.NewValidatorConnectionManager(p.localNode, nil, nil),
 		common.NewConfig(),
 	)

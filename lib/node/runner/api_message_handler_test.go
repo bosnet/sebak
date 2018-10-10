@@ -19,23 +19,27 @@ import (
 	"boscoin.io/sebak/lib/network/api"
 	"boscoin.io/sebak/lib/network/httputils"
 	"boscoin.io/sebak/lib/transaction"
+	"boscoin.io/sebak/lib/transaction/operation"
 )
 
 type HelperTestNodeMessageHandler struct {
 	HelperTestGetNodeTransactionsHandler
 
+	conf        common.Config
 	nodeHandler *NetworkHandlerNode
 }
 
 func (p *HelperTestNodeMessageHandler) Prepare() {
 	p.HelperTestGetNodeTransactionsHandler.Prepare()
 
+	p.conf = common.NewConfig()
 	p.nodeHandler = NewNetworkHandlerNode(
 		p.localNode,
 		p.network,
 		p.st,
 		p.consensus,
 		network.UrlPathPrefixNode,
+		p.conf,
 	)
 
 	// override existing handler
@@ -74,7 +78,7 @@ func TestNodeMessageHandler(t *testing.T) {
 	u := p.URL(nil)
 
 	tx := p.makeTransaction()
-	require.Nil(t, tx.IsWellFormed(networkID))
+	require.Nil(t, tx.IsWellFormed(networkID, p.conf))
 
 	postData, _ := tx.Serialize()
 	req, err := http.NewRequest("POST", u.String(), bytes.NewBuffer(postData))
@@ -83,7 +87,6 @@ func TestNodeMessageHandler(t *testing.T) {
 	resp, err := p.server.Client().Do(req)
 	require.Nil(t, err)
 	require.Equal(t, http.StatusOK, resp.StatusCode)
-
 	require.True(t, p.consensus.TransactionPool.Has(tx.GetHash()))
 }
 
@@ -97,7 +100,7 @@ func TestNodeMessageHandlerNotWellformedTransaction(t *testing.T) {
 	{ // invalid signature
 		tx := p.makeTransaction()
 		tx.H.Signature = "findme"
-		errIsWellformed := tx.IsWellFormed(networkID)
+		errIsWellformed := tx.IsWellFormed(networkID, p.conf)
 		require.Equal(t, errors.ErrorInvalidTransaction.Code, errIsWellformed.(*errors.Error).Code)
 
 		postData, _ := tx.Serialize()
@@ -127,12 +130,12 @@ func TestNodeMessageHandlerNotWellformedTransaction(t *testing.T) {
 	{ // under BaseReserve
 		tx := p.makeTransaction()
 		tx.H.Signature = "findme"
-		opb := tx.B.Operations[0].B.(transaction.OperationBodyCreateAccount)
+		opb := tx.B.Operations[0].B.(operation.CreateAccount)
 		opb.Amount = common.Amount(0)
 		tx.B.Operations[0].B = opb
 		tx.Sign(p.genesisKeypair, networkID)
 
-		errIsWellformed := tx.IsWellFormed(networkID)
+		errIsWellformed := tx.IsWellFormed(networkID, p.conf)
 		require.Equal(t, errors.ErrorOperationAmountUnderflow.Code, errIsWellformed.(*errors.Error).Code)
 
 		postData, _ := tx.Serialize()
