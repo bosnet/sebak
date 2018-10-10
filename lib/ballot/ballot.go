@@ -17,11 +17,11 @@ type Ballot struct {
 	B BallotBody
 }
 
-func NewBallot(fromAddress string, round round.Round, transactions []string) (b *Ballot) {
+func NewBallot(fromAddr string, proposerAddr string, round round.Round, transactions []string) (b *Ballot) {
 	body := BallotBody{
-		Source: fromAddress,
+		Source: fromAddr,
 		Proposed: BallotBodyProposed{
-			Proposer:     fromAddress,
+			Proposer:     proposerAddr,
 			Round:        round,
 			Transactions: transactions,
 		},

@@ -512,7 +512,8 @@ func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) (ballot.Ballot, error
 	// remove invalid transactions
 	nr.Consensus().TransactionPool.Remove(transactionsChecker.InvalidTransactions()...)
 
-	theBallot := ballot.NewBallot(nr.localNode.Address(), round, transactionsChecker.ValidTransactions)
+	proposerAddr := nr.consensus.SelectProposer(b.Height, roundNumber)
+	theBallot := ballot.NewBallot(nr.localNode.Address(), proposerAddr, round, transactionsChecker.ValidTransactions)
 	theBallot.SetVote(ballot.StateINIT, ballot.VotingYES)
 
 	var validTransactions []transaction.Transaction

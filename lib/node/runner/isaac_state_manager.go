@@ -211,7 +211,9 @@ func (sm *ISAACStateManager) broadcastExpiredBallot(state consensus.ISAACState) 
 		TotalTxs:    b.TotalTxs,
 	}
 
-	newExpiredBallot := ballot.NewBallot(sm.nr.localNode.Address(), round, []string{})
+	proposerAddr := sm.nr.consensus.SelectProposer(b.Height, state.Round)
+
+	newExpiredBallot := ballot.NewBallot(sm.nr.localNode.Address(), proposerAddr, round, []string{})
 	newExpiredBallot.SetVote(state.BallotState.Next(), ballot.VotingEXP)
 
 	opc, _ := ballot.NewCollectTxFeeFromBallot(*newExpiredBallot, sm.nr.CommonAccountAddress)
