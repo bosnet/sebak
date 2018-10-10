@@ -32,7 +32,7 @@ func TestErrorBallotHasOverMaxTransactionsInBallot(t *testing.T) {
 	conf.TxsLimit = 2
 
 	{
-		blt := NewBallot(node.Address(), round, []string{tx.GetHash()})
+		blt := NewBallot(node.Address(), node.Address(), round, []string{tx.GetHash()})
 
 		opc, _ := NewCollectTxFeeFromBallot(*blt, commonKP.Address(), tx)
 		opi, _ := NewInflationFromBallot(*blt, commonKP.Address(), common.Amount(1))
@@ -52,7 +52,7 @@ func TestErrorBallotHasOverMaxTransactionsInBallot(t *testing.T) {
 			txHashes = append(txHashes, tx.GetHash())
 		}
 
-		blt := NewBallot(node.Address(), round, txHashes)
+		blt := NewBallot(node.Address(), node.Address(), round, txHashes)
 
 		opc, _ := NewCollectTxFeeFromBallot(*blt, commonKP.Address(), tx)
 		opi, _ := NewInflationFromBallot(*blt, commonKP.Address(), common.Amount(1))
@@ -103,7 +103,7 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 
 	conf := common.NewConfig()
 	{
-		ballot := NewBallot(node.Address(), round, []string{})
+		ballot := NewBallot(node.Address(), node.Address(), round, []string{})
 
 		opc, _ := NewCollectTxFeeFromBallot(*ballot, commonKP.Address())
 		opi, _ := NewInflationFromBallot(*ballot, commonKP.Address(), common.Amount(1))
@@ -117,7 +117,7 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 	}
 
 	{ // bad `Ballot.B.Confirmed` time; too ahead
-		ballot := NewBallot(node.Address(), round, []string{})
+		ballot := NewBallot(node.Address(), node.Address(), round, []string{})
 		ballot.Sign(kp, networkID)
 
 		newConfirmed := time.Now().Add(time.Duration(2) * common.BallotConfirmedTimeAllowDuration)
@@ -129,7 +129,7 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 	}
 
 	{ // bad `Ballot.B.Confirmed` time; too behind
-		ballot := NewBallot(node.Address(), round, []string{})
+		ballot := NewBallot(node.Address(), node.Address(), round, []string{})
 		ballot.Sign(kp, networkID)
 
 		newConfirmed := time.Now().Add(time.Duration(-2) * common.BallotConfirmedTimeAllowDuration)
@@ -141,7 +141,7 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 	}
 
 	{ // bad `Ballot.B.Proposed.Confirmed` time; too ahead
-		ballot := NewBallot(node.Address(), round, []string{})
+		ballot := NewBallot(node.Address(), node.Address(), round, []string{})
 		ballot.Sign(kp, networkID)
 
 		newConfirmed := time.Now().Add(time.Duration(2) * common.BallotConfirmedTimeAllowDuration)
@@ -153,7 +153,7 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 	}
 
 	{ // bad `Ballot.B.Proposed.Confirmed` time; too behind
-		ballot := NewBallot(node.Address(), round, []string{})
+		ballot := NewBallot(node.Address(), node.Address(), round, []string{})
 		ballot.Sign(kp, networkID)
 
 		newConfirmed := time.Now().Add(time.Duration(-2) * common.BallotConfirmedTimeAllowDuration)
@@ -169,7 +169,7 @@ func TestBallotEmptyHash(t *testing.T) {
 	kp, _ := keypair.Random()
 	node, _ := node.NewLocalNode(kp, &common.Endpoint{}, "")
 	r := round.Round{}
-	b := NewBallot(node.Address(), r, []string{})
+	b := NewBallot(node.Address(), node.Address(), r, []string{})
 	b.Sign(kp, networkID)
 
 	require.True(t, len(b.GetHash()) > 0)
@@ -188,14 +188,14 @@ func TestBallotProposerTransaction(t *testing.T) {
 
 	conf := common.NewConfig()
 	{ // without ProposerTransaction
-		blt := NewBallot(node.Address(), round, []string{})
+		blt := NewBallot(node.Address(), node.Address(), round, []string{})
 		blt.Sign(node.Keypair(), networkID)
 		err := blt.IsWellFormed(networkID, conf)
 		require.NotNil(t, err)
 	}
 
 	{ // with ProposerTransaction
-		blt := NewBallot(node.Address(), round, []string{})
+		blt := NewBallot(node.Address(), node.Address(), round, []string{})
 		opb := operation.NewCollectTxFee(
 			commonKP.Address(),
 			common.Amount(10),
@@ -217,4 +217,20 @@ func TestBallotProposerTransaction(t *testing.T) {
 		err := blt.IsWellFormed(networkID, conf)
 		require.NotNil(t, err)
 	}
+}
+
+func TestBallotProposerAddress(t *testing.T) {
+	kp, _ := keypair.Random()
+	nodeEndpoint, _ := common.NewEndpointFromString("https://localhost:1000")
+	proposerEndpoint, _ := common.NewEndpointFromString("https://localhost:1001")
+	n, _ := node.NewLocalNode(kp, nodeEndpoint, "")
+	p, _ := node.NewLocalNode(kp, proposerEndpoint, "")
+
+	round := round.Round{Number: 0, BlockHeight: 1, BlockHash: "hahaha", TotalTxs: 1}
+
+	b := NewBallot(n.Address(), p.Address(), round, []string{})
+
+	require.Equal(t, n.Address(), b.Source())
+	require.Equal(t, p.Address(), b.Proposer())
+
 }

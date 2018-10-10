@@ -212,7 +212,7 @@ func (g *getMissingTransactionTesting) MakeBallot(numberOfTxs int) (blt *ballot.
 		g.proposerNR.Consensus().TransactionPool.Add(tx)
 	}
 
-	blt = ballot.NewBallot(g.proposerNR.Node().Address(), rd, txHashes)
+	blt = ballot.NewBallot(g.proposerNR.Node().Address(), g.proposerNR.Node().Address(), rd, txHashes)
 
 	opc, _ := ballot.NewCollectTxFeeFromBallot(*blt, g.commonAccount.Address, txs...)
 	opi, _ := ballot.NewInflationFromBallot(*blt, g.commonAccount.Address, g.initialBalance)

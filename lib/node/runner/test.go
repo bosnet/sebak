@@ -77,7 +77,7 @@ func TestGenerateNewSequenceID() uint64 {
 }
 
 func GenerateBallot(t *testing.T, proposer *node.LocalNode, round round.Round, tx transaction.Transaction, ballotState ballot.State, sender *node.LocalNode, conf common.Config) *ballot.Ballot {
-	b := ballot.NewBallot(proposer.Address(), round, []string{tx.GetHash()})
+	b := ballot.NewBallot(sender.Address(), proposer.Address(), round, []string{tx.GetHash()})
 	b.SetVote(ballot.StateINIT, ballot.VotingYES)
 
 	opi, _ := ballot.NewInflationFromBallot(*b, commonAccount.Address, common.BaseReserve)
@@ -87,7 +87,6 @@ func GenerateBallot(t *testing.T, proposer *node.LocalNode, round round.Round, t
 
 	b.Sign(proposer.Keypair(), networkID)
 
-	b.SetSource(sender.Address())
 	b.SetVote(ballotState, ballot.VotingYES)
 	b.Sign(sender.Keypair(), networkID)
 
@@ -98,7 +97,7 @@ func GenerateBallot(t *testing.T, proposer *node.LocalNode, round round.Round, t
 }
 
 func GenerateEmptyTxBallot(t *testing.T, proposer *node.LocalNode, round round.Round, ballotState ballot.State, sender *node.LocalNode, conf common.Config) *ballot.Ballot {
-	b := ballot.NewBallot(proposer.Address(), round, []string{})
+	b := ballot.NewBallot(sender.Address(), proposer.Address(), round, []string{})
 	b.SetVote(ballot.StateINIT, ballot.VotingYES)
 
 	opi, _ := ballot.NewInflationFromBallot(*b, commonAccount.Address, common.BaseReserve)
@@ -108,7 +107,6 @@ func GenerateEmptyTxBallot(t *testing.T, proposer *node.LocalNode, round round.R
 
 	b.Sign(proposer.Keypair(), networkID)
 
-	b.SetSource(sender.Address())
 	b.SetVote(ballotState, ballot.VotingYES)
 	b.Sign(sender.Keypair(), networkID)
 

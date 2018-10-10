@@ -327,7 +327,7 @@ func TestStateTransitFromTimeoutInitToAccept(t *testing.T) {
 	for _, message := range cm.Messages() {
 		b, ok := message.(ballot.Ballot)
 		require.True(t, ok)
-		require.Equal(t, nr.localNode.Address(), b.Proposer())
+		require.NotEqual(t, nr.localNode.Address(), b.Proposer())
 		require.Equal(t, ballot.StateACCEPT, b.State())
 		require.Equal(t, ballot.VotingEXP, b.Vote())
 	}

@@ -23,7 +23,7 @@ func TestISAACBallotWithEmptyTransaction(t *testing.T) {
 		TotalTxs:    latestBlock.TotalTxs,
 	}
 
-	b := ballot.NewBallot(nr.localNode.Address(), round, []string{})
+	b := ballot.NewBallot(nr.localNode.Address(), nr.localNode.Address(), round, []string{})
 	require.Equal(t, b.B.Vote, ballot.VotingYES)
 }
 
@@ -50,7 +50,7 @@ func TestISAACBallotWithEmptyTransactionVoting(t *testing.T) {
 		TotalTxs:    latestBlock.TotalTxs,
 	}
 
-	b := ballot.NewBallot(nr.localNode.Address(), round, []string{})
+	b := ballot.NewBallot(nr.localNode.Address(), nr.localNode.Address(), round, []string{})
 	b.SetVote(ballot.StateINIT, ballot.VotingYES)
 
 	ballotSIGN1 := GenerateEmptyTxBallot(t, proposer, round, ballot.StateSIGN, nodes[1], conf)
