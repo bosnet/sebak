@@ -13,6 +13,11 @@ import (
 	"github.com/inconshreveable/log15"
 )
 
+type requestHighestBlock struct {
+	height    uint64
+	nodeAddrs []string
+}
+
 type Syncer struct {
 	poolSize      int
 	fetchTimeout  time.Duration
@@ -36,8 +41,8 @@ type Syncer struct {
 	ctx        context.Context
 	cancelFunc context.CancelFunc
 
-	updateHighestBlock chan uint64
-	getSyncProgress    chan chan *SyncProgress
+	requestHighestBlock chan *requestHighestBlock
+	getSyncProgress     chan chan *SyncProgress
 
 	logger log15.Logger
 }
@@ -72,8 +77,8 @@ func NewSyncer(st *storage.LevelDBBackend,
 		ctx:        ctx,
 		cancelFunc: cancelFunc,
 
-		updateHighestBlock: make(chan uint64),
-		getSyncProgress:    make(chan chan *SyncProgress),
+		requestHighestBlock: make(chan *requestHighestBlock),
+		getSyncProgress:     make(chan chan *SyncProgress),
 
 		logger: NopLogger(),
 	}
@@ -113,9 +118,15 @@ func (s *Syncer) Start() error {
 	return nil
 }
 
-func (s *Syncer) SetSyncTargetBlock(ctx context.Context, height uint64) error {
+func (s *Syncer) SetSyncTargetBlock(ctx context.Context, height uint64, nodeAddrs []string) error {
+	nas := make([]string, len(nodeAddrs))
+	copy(nas, nodeAddrs) // preventing data race
+	req := &requestHighestBlock{
+		height:    height,
+		nodeAddrs: nas,
+	}
 	select {
-	case s.updateHighestBlock <- height:
+	case s.requestHighestBlock <- req:
 	case <-ctx.Done():
 		return ctx.Err()
 	}
@@ -140,29 +151,31 @@ func (s *Syncer) SyncProgress(ctx context.Context) (*SyncProgress, error) {
 }
 
 func (s *Syncer) loop() {
-	checkc := s.afterFunc(s.checkInterval)
-
-	height := s.latestBlockHeight()
-	syncProgress := &SyncProgress{
-		StartingBlock: height,
-		CurrentBlock:  height,
-		HighestBlock:  height,
-	}
-
-	s.logger.Info("starting block to sync", "height", height)
+	var (
+		checkc       = s.afterFunc(s.checkInterval)
+		height       = s.latestBlockHeight()
+		syncProgress = &SyncProgress{
+			StartingBlock: height,
+			CurrentBlock:  height,
+			HighestBlock:  height,
+		}
+		nodeAddrs []string
+	)
 
 	for {
 		select {
 		case <-checkc:
 			s.logger.Debug("check interval", "checkInterval", s.checkInterval)
 			// syncProgress.HighestBlock++ // TODO(anarcher): Until work together consensus
-			s.sync(syncProgress)
+			s.sync(syncProgress, nodeAddrs)
 			checkc = s.afterFunc(s.checkInterval)
-		case height := <-s.updateHighestBlock:
-			s.logger.Debug("update highest Height", "height", height)
+		case req := <-s.requestHighestBlock:
+			height := req.height
+			nodeAddrs = req.nodeAddrs
+			s.logger.Debug("update highest Height", "height", height, "nodes", len(nodeAddrs))
 			if height > syncProgress.CurrentBlock {
 				syncProgress.HighestBlock = height
-				s.sync(syncProgress)
+				s.sync(syncProgress, nodeAddrs)
 			}
 		case c := <-s.getSyncProgress:
 			c <- syncProgress.Clone()
@@ -173,7 +186,7 @@ func (s *Syncer) loop() {
 	}
 }
 
-func (s *Syncer) sync(p *SyncProgress) {
+func (s *Syncer) sync(p *SyncProgress, nodeAddrs []string) {
 	var (
 		startHeight       = p.CurrentBlock + 1
 		currentHeight     = p.CurrentBlock
@@ -201,7 +214,7 @@ func (s *Syncer) sync(p *SyncProgress) {
 	for height := startHeight; height <= highestHeight; height++ {
 		s.logger.Info("work height", "height", height)
 		// TryAdd for unblocking when the pool is full. Just keep syncprogress for next sync
-		if s.work(height) == false {
+		if s.work(height, nodeAddrs) == false {
 			break
 		}
 		currentHeight = height
@@ -212,7 +225,7 @@ func (s *Syncer) sync(p *SyncProgress) {
 	log("")
 }
 
-func (s *Syncer) work(height uint64) bool {
+func (s *Syncer) work(height uint64, nodeAddrs []string) bool {
 	ctx := s.ctx
 	work := func() {
 		latestHeight := s.latestBlockHeight()
@@ -222,8 +235,11 @@ func (s *Syncer) work(height uint64) bool {
 		}
 
 		var (
-			syncInfo = &SyncInfo{BlockHeight: height}
-			err      error
+			syncInfo = &SyncInfo{
+				BlockHeight: height,
+				NodeAddrs:   nodeAddrs,
+			}
+			err error
 		)
 
 	L:
