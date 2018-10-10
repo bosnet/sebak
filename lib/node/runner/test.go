@@ -41,7 +41,7 @@ func MakeNodeRunner() (*NodeRunner, *node.LocalNode) {
 		policy,
 	)
 
-	is, _ := consensus.NewISAAC(networkID, localNode, policy, connectionManager)
+	is, _ := consensus.NewISAAC(networkID, localNode, policy, connectionManager, nil)
 	st := storage.NewTestStorage()
 	conf := consensus.NewISAACConfiguration()
 	nodeRunner, _ := NewNodeRunner(string(networkID), localNode, policy, n, is, st, conf)
@@ -136,7 +136,7 @@ func createNodeRunnerForTesting(n int, conf *consensus.ISAACConfiguration, recv 
 		recv,
 	)
 
-	is, _ := consensus.NewISAAC(networkID, localNode, policy, connectionManager)
+	is, _ := consensus.NewISAAC(networkID, localNode, policy, connectionManager, nil)
 	is.SetProposerSelector(SelfSelector{connectionManager})
 	st := storage.NewTestStorage()
 
