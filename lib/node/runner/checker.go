@@ -299,7 +299,7 @@ func getMissingTransaction(checker *BallotChecker) (err error) {
 			err = errors.ErrorTransactionNotFound
 			return
 		}
-		if err = tx.IsWellFormed(checker.NetworkID); err != nil {
+		if err = tx.IsWellFormed(checker.NetworkID, checker.NodeRunner.Conf); err != nil {
 			return
 		}
 
