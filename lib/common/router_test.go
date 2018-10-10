@@ -23,7 +23,7 @@ func TestRouterHeaderMatcher(t *testing.T) {
 	u, _ := url.Parse(server.URL)
 	u.Path = "/showme"
 
-	{ // GET msut be passed
+	{ // GET must pass
 		req, _ := http.NewRequest("GET", u.String(), nil)
 		resp, err := server.Client().Do(req)
 		require.Nil(t, err)
