@@ -92,10 +92,13 @@ func (f *BlockFetcher) Fetch(ctx context.Context, syncInfo *SyncInfo) (*SyncInfo
 }
 
 func (f *BlockFetcher) fetch(ctx context.Context, si *SyncInfo) error {
-	var height = si.BlockHeight
+	var (
+		height    = si.BlockHeight
+		nodeAddrs = si.NodeAddrs
+	)
 	f.logger.Debug("Fetch start", "height", height)
 
-	n := f.pickRandomNode()
+	n := f.pickRandomNode(nodeAddrs)
 	f.logger.Info(fmt.Sprintf("fetching items from node: %v", n), "fetching_node", n, "height", height)
 	if n == nil {
 		return errors.New("Fetch: node not found")
@@ -179,15 +182,27 @@ func (f *BlockFetcher) fetch(ctx context.Context, si *SyncInfo) error {
 }
 
 // pickRandomNode choose one node by random. It is very protype for choosing fetching which node
-func (f *BlockFetcher) pickRandomNode() node.Node {
+func (f *BlockFetcher) pickRandomNode(nodeAddrs []string) node.Node {
 	ac := f.connectionManager.AllConnected()
 	if len(ac) <= 0 {
 		return nil
 	}
 
+	var nodeMap = make(map[string]struct{})
+	for _, addr := range nodeAddrs {
+		nodeMap[addr] = struct{}{}
+	}
+
 	var addressList []string
 	for _, a := range ac {
-		if f.localNode.Address() != a {
+		if f.localNode.Address() == a {
+			continue
+		}
+		if len(nodeAddrs) > 0 {
+			if _, ok := nodeMap[a]; ok {
+				addressList = append(addressList, a)
+			}
+		} else {
 			addressList = append(addressList, a)
 		}
 	}
