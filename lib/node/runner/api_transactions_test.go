@@ -54,7 +54,7 @@ func (p *HelperTestGetNodeTransactionsHandler) Prepare() {
 		networkID,
 		p.localNode,
 		nil,
-		network.NewValidatorConnectionManager(p.localNode, nil, nil),
+		NewTestConnectionManager(p.localNode, nil, nil, make(chan struct{}, 100)),
 		common.NewConfig(),
 	)
 	p.consensus = isaac
