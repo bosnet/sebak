@@ -212,7 +212,7 @@ func createTestNodeRunnersHTTP2NetworkWithReady(n int) (nodeRunners []*NodeRunne
 		for _ = range T.C {
 			var notyet bool
 			for _, nr := range nodeRunners {
-				if nr.ConnectionManager().CountConnected() != n-1 {
+				if nr.ConnectionManager().CountConnected() != n {
 					notyet = true
 					break
 				}

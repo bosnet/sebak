@@ -410,9 +410,6 @@ func (nr *NodeRunner) InitRound() {
 		}
 
 		for address, _ := range nr.localNode.GetValidators() {
-			if address == nr.localNode.Address() {
-				continue
-			}
 			if _, found := common.InStringArray(connected, address); !found {
 				notFound = true
 				break

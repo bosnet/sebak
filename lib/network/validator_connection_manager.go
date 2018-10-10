@@ -35,7 +35,7 @@ func NewValidatorConnectionManager(
 	if len(localNode.GetValidators()) == 0 {
 		panic("empty validators")
 	}
-	return &ValidatorConnectionManager{
+	cm := &ValidatorConnectionManager{
 		localNode: localNode,
 
 		network:    network,
@@ -46,6 +46,9 @@ func NewValidatorConnectionManager(
 		connected: map[string]bool{},
 		log:       log.New(logging.Ctx{"node": localNode.Alias()}),
 	}
+	cm.connected[localNode.Address()] = true
+
+	return cm
 }
 
 func (c *ValidatorConnectionManager) GetNodeAddress() string {
