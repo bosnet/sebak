@@ -104,7 +104,9 @@ func (n *LocalNode) PublishEndpoint() *common.Endpoint {
 }
 
 func (n *LocalNode) SetPublishEndpoint(endpoint *common.Endpoint) {
+	delete(n.validators, n.Address())
 	n.publishEndpoint = endpoint
+	n.AddValidators(n.ConvertToValidator())
 }
 
 func (n *LocalNode) HasValidators(address string) bool {
@@ -142,7 +144,7 @@ func (n *LocalNode) Serialize() ([]byte, error) {
 }
 
 func (n *LocalNode) ConvertToValidator() *Validator {
-	v, _ := NewValidator(n.Address(), n.Endpoint(), n.Alias())
+	v, _ := NewValidator(n.Address(), n.PublishEndpoint(), n.Alias())
 	return v
 }
 

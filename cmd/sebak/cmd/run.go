@@ -169,16 +169,6 @@ func parseFlagValidators(v string) (vs []*node.Validator, err error) {
 	return
 }
 
-func newLocalNode() (*node.Validator, error) {
-	localNode, err := node.NewLocalNode(kp, bindEndpoint, "")
-	if err != nil {
-		log.Error("failed to make local node", "error", err)
-		return nil, err
-	}
-
-	return localNode.ConvertToValidator(), nil
-}
-
 func parseFlagsNode() {
 	var err error
 
@@ -204,15 +194,6 @@ func parseFlagsNode() {
 		flagBindURL = bindEndpoint.String()
 	}
 
-	if len(flagPublishURL) > 0 {
-		if p, err := common.ParseEndpoint(flagPublishURL); err != nil {
-			cmdcommon.PrintFlagsError(nodeCmd, "--publish", err)
-		} else {
-			publishEndpoint = p
-			flagPublishURL = publishEndpoint.String()
-		}
-	}
-
 	if strings.ToLower(bindEndpoint.Scheme) == "https" {
 		if _, err = os.Stat(flagTLSCertFile); os.IsNotExist(err) {
 			cmdcommon.PrintFlagsError(nodeCmd, "--tls-cert", err)
@@ -227,6 +208,20 @@ func parseFlagsNode() {
 	queries.Add("TLSKeyFile", flagTLSKeyFile)
 	queries.Add("IdleTimeout", "3s")
 	bindEndpoint.RawQuery = queries.Encode()
+
+	if len(flagPublishURL) > 0 {
+		if p, err := common.ParseEndpoint(flagPublishURL); err != nil {
+			cmdcommon.PrintFlagsError(nodeCmd, "--publish", err)
+		} else {
+			publishEndpoint = p
+			flagPublishURL = publishEndpoint.String()
+		}
+	} else {
+		publishEndpoint = &common.Endpoint{}
+		*publishEndpoint = *bindEndpoint
+		publishEndpoint.Host = fmt.Sprintf("localhost:%s", publishEndpoint.Port())
+		flagPublishURL = publishEndpoint.String()
+	}
 
 	if validators, err = parseFlagValidators(flagValidators); err != nil {
 		cmdcommon.PrintFlagsError(nodeCmd, "--validators", err)
@@ -304,9 +299,17 @@ func parseFlagsNode() {
 	parsedFlags = append(parsedFlags, "\n\ttransactions-limit", flagTransactionsLimit)
 	parsedFlags = append(parsedFlags, "\n\toperations-limit", flagOperationsLimit)
 
+	// create current Node
+	localNode, err = node.NewLocalNode(kp, bindEndpoint, "")
+	if err != nil {
+		cmdcommon.PrintError(nodeCmd, err)
+	}
+	localNode.AddValidators(validators...)
+	localNode.SetPublishEndpoint(publishEndpoint)
+
 	var vl []interface{}
-	for i, v := range validators {
-		vl = append(vl, fmt.Sprintf("\n\tvalidator#%d", i))
+	for _, v := range localNode.GetValidators() {
+		vl = append(vl, "\n\tvalidator")
 		vl = append(
 			vl,
 			fmt.Sprintf("alias=%s address=%s endpoint=%s", v.Alias(), v.Address(), v.Endpoint()),
@@ -320,14 +323,6 @@ func parseFlagsNode() {
 		http2.VerboseLogs = true
 		network.VerboseLogs = true
 	}
-
-	// create current Node
-	localNode, err = node.NewLocalNode(kp, bindEndpoint, "")
-	if err != nil {
-		cmdcommon.PrintError(nodeCmd, err)
-	}
-	localNode.AddValidators(validators...)
-	localNode.SetPublishEndpoint(publishEndpoint)
 }
 
 func getTime(timeoutStr string, defaultValue time.Duration, errMessage string) time.Duration {
