@@ -22,7 +22,7 @@ func NewAccount(ba *block.BlockAccount) *Account {
 func (a Account) GetMap() hal.Entry {
 	return hal.Entry{
 		"address":     a.ba.Address,
-		"sequenceid": a.ba.SequenceID,
+		"sequence_id": a.ba.SequenceID,
 		"balance":     a.ba.Balance,
 		"linked":      a.ba.Linked,
 	}
