@@ -68,10 +68,6 @@ func TestAddingSelfWithoutValidators(t *testing.T) {
 	flagValidators = ""
 	flagKPSecretSeed = "SCN4NSV5SVHIZWUDJFT4Z5FFVHO3TFRTOIBQLHMNPAZJ37K5A2YFSCBM"
 	flagBindURL = "http://0.0.0.0:12345"
-	parseFlagsNode()
-	require.NotNil(t, localNode)
-	require.Equal(t, 1, len(localNode.GetValidators()))
-
-	validator := localNode.GetValidators()[localNode.Address()]
-	require.Equal(t, localNode.Address(), validator.Address())
+	_, err := parseFlagValidators(flagValidators)
+	require.NotNil(t, err)
 }

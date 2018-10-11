@@ -150,10 +150,15 @@ func init() {
 func parseFlagValidators(v string) (vs []*node.Validator, err error) {
 	splitted := strings.Fields(strings.TrimSpace(v))
 	if len(splitted) < 1 {
+		err = fmt.Errorf("empty")
 		return
 	}
 
 	for _, v := range splitted {
+		if v == "self" {
+			continue
+		}
+
 		var validator *node.Validator
 		if validator, err = node.NewValidatorFromURI(v); err != nil {
 			return
