@@ -68,6 +68,20 @@ func (b Ballot) String() string {
 }
 
 func (b Ballot) IsWellFormed(networkID []byte, conf common.Config) (err error) {
+	if err = b.isBallotWellFormed(networkID, conf); err != nil {
+		return
+	}
+
+	if b.Vote() != VotingEXP {
+		if err = b.isProposerInfoWellFormed(networkID, conf); err != nil {
+			return
+		}
+	}
+
+	return
+}
+
+func (b Ballot) isBallotWellFormed(networkID []byte, conf common.Config) (err error) {
 	if b.TransactionsLength() > conf.TxsLimit {
 		err = errors.ErrorBallotHasOverMaxTransactionsInBallot
 		return
@@ -78,14 +92,10 @@ func (b Ballot) IsWellFormed(networkID []byte, conf common.Config) (err error) {
 		return
 	}
 
-	var confirmed, proposerConfirmed time.Time
+	var confirmed time.Time
 	if confirmed, err = common.ParseISO8601(b.B.Confirmed); err != nil {
 		return
 	}
-	if proposerConfirmed, err = common.ParseISO8601(b.ProposerConfirmed()); err != nil {
-		return
-	}
-
 	now := time.Now()
 	timeStart := now.Add(time.Duration(-1) * common.BallotConfirmedTimeAllowDuration)
 	timeEnd := now.Add(common.BallotConfirmedTimeAllowDuration)
@@ -93,6 +103,24 @@ func (b Ballot) IsWellFormed(networkID []byte, conf common.Config) (err error) {
 		err = errors.ErrorMessageHasIncorrectTime
 		return
 	}
+
+	if err = b.VerifySource(networkID); err != nil {
+		return
+	}
+
+	return
+}
+
+func (b Ballot) isProposerInfoWellFormed(networkID []byte, conf common.Config) (err error) {
+	var proposerConfirmed time.Time
+	if proposerConfirmed, err = common.ParseISO8601(b.ProposerConfirmed()); err != nil {
+		return
+	}
+
+	now := time.Now()
+	timeStart := now.Add(time.Duration(-1) * common.BallotConfirmedTimeAllowDuration)
+	timeEnd := now.Add(common.BallotConfirmedTimeAllowDuration)
+
 	if proposerConfirmed.Before(timeStart) || proposerConfirmed.After(timeEnd) {
 		err = errors.ErrorMessageHasIncorrectTime
 		return
@@ -102,7 +130,7 @@ func (b Ballot) IsWellFormed(networkID []byte, conf common.Config) (err error) {
 		return
 	}
 
-	if err = b.Verify(networkID); err != nil {
+	if err = b.VerifyProposer(networkID); err != nil {
 		return
 	}
 
@@ -183,7 +211,7 @@ func (b *Ballot) Sign(kp keypair.KP, networkID []byte) {
 	return
 }
 
-func (b Ballot) Verify(networkID []byte) (err error) {
+func (b Ballot) VerifyProposer(networkID []byte) (err error) {
 	var kp keypair.KP
 	if kp, err = keypair.Parse(b.B.Proposed.Proposer); err != nil {
 		return
@@ -192,9 +220,12 @@ func (b Ballot) Verify(networkID []byte) (err error) {
 		append(networkID, common.MustMakeObjectHash(b.B.Proposed)...),
 		base58.Decode(b.H.ProposerSignature),
 	)
-	if err != nil {
-		return
-	}
+
+	return
+}
+
+func (b Ballot) VerifySource(networkID []byte) (err error) {
+	var kp keypair.KP
 
 	if kp, err = keypair.Parse(b.B.Source); err != nil {
 		return
@@ -203,9 +234,6 @@ func (b Ballot) Verify(networkID []byte) (err error) {
 		append(networkID, []byte(b.H.Hash)...),
 		base58.Decode(b.H.Signature),
 	)
-	if err != nil {
-		return
-	}
 
 	return
 }

@@ -436,7 +436,7 @@ func (p *irregularIncomingBallot) makeBallot(state ballot.State) (blt *ballot.Ba
 	// inject txs to `TransactionPool`
 	p.nr.Consensus().TransactionPool.Add(tx)
 
-	blt = ballot.NewBallot(p.nr.Node().Address(), rd, []string{tx.GetHash()})
+	blt = ballot.NewBallot(p.nr.Node().Address(), p.nr.Node().Address(), rd, []string{tx.GetHash()})
 
 	opc, _ := ballot.NewCollectTxFeeFromBallot(*blt, p.commonAccount.Address, tx)
 	opi, _ := ballot.NewInflationFromBallot(*blt, p.commonAccount.Address, p.initialBalance)

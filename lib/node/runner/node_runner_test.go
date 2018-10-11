@@ -10,9 +10,11 @@ import (
 	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
 
+	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/consensus"
+	"boscoin.io/sebak/lib/consensus/round"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/storage"
@@ -279,3 +281,63 @@ func TestNodeRunnerSaveBlock(t *testing.T) {
 	}
 }
 */
+
+// We can make sure to check the proposer of the expired ballot.
+// If the proposer of a ballot is different from the node, the node votes with VotingNo
+func TestExpiredBallotCheckProposer(t *testing.T) {
+	nr, nodes, _ := createNodeRunnerForTesting(2, common.NewConfig(), nil)
+
+	_, ok := nr.Consensus().ConnectionManager().(*TestConnectionManager)
+	require.True(t, ok)
+
+	latestBlock := nr.Consensus().LatestBlock()
+
+	round := round.Round{
+		Number:      0,
+		BlockHeight: latestBlock.Height,
+		BlockHash:   latestBlock.Hash,
+		TotalTxs:    latestBlock.TotalTxs,
+	}
+
+	// The createNodeRunnerForTesting has FixedSelector{localNode.Address()} so the proposer is always nr(nodes[0]).
+	validBallot := GenerateEmptyTxBallot(t, nr.localNode, round, ballot.StateSIGN, nodes[1], common.NewConfig())
+	validBallot.SetVote(ballot.StateSIGN, ballot.VotingEXP)
+
+	checker := &BallotChecker{
+		DefaultChecker: common.DefaultChecker{},
+		NodeRunner:     nr,
+		LocalNode:      nr.localNode,
+		NetworkID:      nr.networkID,
+		Log:            nr.Log(),
+		Ballot:         *validBallot,
+		VotingHole:     ballot.VotingNOTYET,
+	}
+
+	err := BallotVote(checker)
+	require.Nil(t, err)
+
+	err = BallotIsSameProposer(checker)
+	require.Nil(t, err)
+
+	// The createNodeRunnerForTesting has FixedSelector{localNode.Address()} so the proposer is always nr(nodes[0]).
+	// The invalidBallot has nodes[1] as a proposer so it is invalid.
+	invalidBallot := GenerateEmptyTxBallot(t, nodes[1], round, ballot.StateSIGN, nodes[1], common.NewConfig())
+	invalidBallot.SetVote(ballot.StateSIGN, ballot.VotingEXP)
+
+	checker = &BallotChecker{
+		DefaultChecker: common.DefaultChecker{},
+		NodeRunner:     nr,
+		LocalNode:      nr.localNode,
+		NetworkID:      nr.networkID,
+		Log:            nr.Log(),
+		Ballot:         *invalidBallot,
+		VotingHole:     ballot.VotingNOTYET,
+	}
+
+	require.Nil(t, BallotVote(checker))
+
+	err = BallotIsSameProposer(checker)
+	require.Nil(t, err)
+
+	require.Equal(t, ballot.VotingNO, checker.VotingHole)
+}
