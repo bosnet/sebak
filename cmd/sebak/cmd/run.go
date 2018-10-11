@@ -150,7 +150,7 @@ func init() {
 func parseFlagValidators(v string) (vs []*node.Validator, err error) {
 	splitted := strings.Fields(strings.TrimSpace(v))
 	if len(splitted) < 1 {
-		err = fmt.Errorf("empty")
+		err = fmt.Errorf("must be given")
 		return
 	}
 
