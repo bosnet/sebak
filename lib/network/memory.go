@@ -129,5 +129,6 @@ func (p *MemoryNetwork) AddHandler(string, http.HandlerFunc) *mux.Route {
 	return &mux.Route{}
 }
 
-func (p *MemoryNetwork) AddMiddleware(string, ...mux.MiddlewareFunc) {
+func (p *MemoryNetwork) AddMiddleware(string, ...mux.MiddlewareFunc) error {
+	return nil
 }

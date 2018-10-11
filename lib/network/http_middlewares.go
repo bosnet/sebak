@@ -5,11 +5,13 @@ import (
 	"net/http"
 	"runtime/debug"
 
-	"boscoin.io/sebak/lib/network/httputils"
 	"github.com/gorilla/mux"
+	"github.com/inconshreveable/log15"
+
+	"boscoin.io/sebak/lib/network/httputils"
 )
 
-func RecoverMiddleware(printStack bool) mux.MiddlewareFunc {
+func RecoverMiddleware(logger log15.Logger) mux.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			defer func() {
@@ -19,8 +21,11 @@ func RecoverMiddleware(printStack bool) mux.MiddlewareFunc {
 						err = fmt.Errorf("panic: %v", r)
 					}
 					httputils.WriteJSONError(w, err)
-					log.Error("recover an panic", "err", err)
-					if printStack == true {
+					if logger == nil {
+						logger = log // use network.log
+					}
+					logger.Error("recover an panic", "err", err)
+					if VerboseLogs == true {
 						debug.PrintStack()
 					}
 				}

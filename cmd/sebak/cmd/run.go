@@ -320,6 +320,7 @@ func parseFlagsNode() {
 
 	if flagVerbose {
 		http2.VerboseLogs = true
+		network.VerboseLogs = true
 	}
 }
 
