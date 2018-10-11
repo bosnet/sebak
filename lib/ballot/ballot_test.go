@@ -8,6 +8,7 @@ import (
 	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
 
+	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/consensus/round"
 	"boscoin.io/sebak/lib/error"
@@ -219,7 +220,7 @@ func TestBallotProposerTransaction(t *testing.T) {
 	}
 }
 
-func TestBallotProposerAddress(t *testing.T) {
+func TestNewBallot(t *testing.T) {
 	kp, _ := keypair.Random()
 	nodeEndpoint, _ := common.NewEndpointFromString("https://localhost:1000")
 	proposerEndpoint, _ := common.NewEndpointFromString("https://localhost:1001")
@@ -232,5 +233,113 @@ func TestBallotProposerAddress(t *testing.T) {
 
 	require.Equal(t, n.Address(), b.Source())
 	require.Equal(t, p.Address(), b.Proposer())
+}
+
+// In this test, we can check that the normal ballot(not expired) should be signed by proposer.
+func TestIsBallotWellFormed(t *testing.T) {
+	nodeEndpoint, _ := common.NewEndpointFromString("https://localhost:1000")
+	proposerEndpoint, _ := common.NewEndpointFromString("https://localhost:1001")
+
+	nodeKP, _ := keypair.Random()
+	n, _ := node.NewLocalNode(nodeKP, nodeEndpoint, "")
+
+	proposerKP, _ := keypair.Random()
+	p, _ := node.NewLocalNode(proposerKP, proposerEndpoint, "")
+
+	round := round.Round{Number: 0, BlockHeight: 1, BlockHash: "hahaha", TotalTxs: 1}
+
+	initialBalance := common.Amount(common.BaseReserve)
+	kpNewAccount, _ := keypair.Random()
+	tx := transaction.MakeTransactionCreateAccount(nodeKP, kpNewAccount.Address(), initialBalance)
+
+	wellBallot := NewBallot(n.Address(), p.Address(), round, []string{tx.GetHash()})
+
+	commonKP, _ := keypair.Random()
+	commonAccount := block.NewBlockAccount(commonKP.Address(), 0)
+
+	opi, _ := NewInflationFromBallot(*wellBallot, commonAccount.Address, initialBalance)
+	opc, _ := NewCollectTxFeeFromBallot(*wellBallot, commonAccount.Address, tx)
+	ptx, _ := NewProposerTransactionFromBallot(*wellBallot, opc, opi)
+	wellBallot.SetProposerTransaction(ptx)
+
+	wellBallot.Sign(proposerKP, networkID)
+
+	err := wellBallot.IsWellFormed(networkID, common.NewConfig())
+
+	require.Nil(t, err)
+
+	wrongSignedBallot := NewBallot(n.Address(), p.Address(), round, []string{tx.GetHash()})
+	wrongSignedBallot.SetProposerTransaction(ptx)
+
+	wrongSignedBallot.Sign(nodeKP, networkID)
+
+	err = wrongSignedBallot.IsWellFormed(networkID, common.NewConfig())
+
+	require.NotNil(t, err)
+
+}
+
+// We can check that expired ballot could be signed by node key pair(not proposer).
+func TestIsExpiredBallotWellFormed(t *testing.T) {
+	nodeEndpoint, _ := common.NewEndpointFromString("https://localhost:1000")
+	proposerEndpoint, _ := common.NewEndpointFromString("https://localhost:1001")
+
+	nodeKP, _ := keypair.Random()
+	n, _ := node.NewLocalNode(nodeKP, nodeEndpoint, "")
+
+	proposerKP, _ := keypair.Random()
+	p, _ := node.NewLocalNode(proposerKP, proposerEndpoint, "")
+
+	round := round.Round{Number: 0, BlockHeight: 1, BlockHash: "hahaha", TotalTxs: 1}
+
+	initialBalance := common.Amount(common.BaseReserve)
+	kpNewAccount, _ := keypair.Random()
+	tx := transaction.MakeTransactionCreateAccount(nodeKP, kpNewAccount.Address(), initialBalance)
+
+	b := NewBallot(n.Address(), p.Address(), round, []string{tx.GetHash()})
+
+	b.SetVote(StateSIGN, VotingEXP)
+	b.Sign(nodeKP, networkID)
+
+	err := b.IsWellFormed(networkID, common.NewConfig())
+
+	require.Nil(t, err)
+
+}
+
+// This test is the same as TestIsExpiredBallotWellFormed except that the proposal transaction is added.
+// As a result, in expired ballot's validation, it does not matter whether there is a proposal transaction or not.
+func TestIsExpiredBallotWithProposerTransactionWellFormed(t *testing.T) {
+	nodeEndpoint, _ := common.NewEndpointFromString("https://localhost:1000")
+	proposerEndpoint, _ := common.NewEndpointFromString("https://localhost:1001")
+
+	nodeKP, _ := keypair.Random()
+	n, _ := node.NewLocalNode(nodeKP, nodeEndpoint, "")
+
+	proposerKP, _ := keypair.Random()
+	p, _ := node.NewLocalNode(proposerKP, proposerEndpoint, "")
+
+	round := round.Round{Number: 0, BlockHeight: 1, BlockHash: "hahaha", TotalTxs: 1}
+
+	initialBalance := common.Amount(common.BaseReserve)
+	kpNewAccount, _ := keypair.Random()
+	tx := transaction.MakeTransactionCreateAccount(nodeKP, kpNewAccount.Address(), initialBalance)
+
+	b := NewBallot(n.Address(), p.Address(), round, []string{tx.GetHash()})
+
+	commonKP, _ := keypair.Random()
+	commonAccount := block.NewBlockAccount(commonKP.Address(), 0)
+
+	opi, _ := NewInflationFromBallot(*b, commonAccount.Address, initialBalance)
+	opc, _ := NewCollectTxFeeFromBallot(*b, commonAccount.Address, tx)
+	ptx, _ := NewProposerTransactionFromBallot(*b, opc, opi)
+	b.SetProposerTransaction(ptx)
+
+	b.SetVote(StateSIGN, VotingEXP)
+	b.Sign(nodeKP, networkID)
+
+	err := b.IsWellFormed(networkID, common.NewConfig())
+
+	require.Nil(t, err)
 
 }
