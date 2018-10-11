@@ -2,14 +2,14 @@ package client
 
 import (
 	"boscoin.io/sebak/lib/common"
+	"bufio"
+	"context"
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
-	"io/ioutil"
-	"bufio"
-	"context"
 )
 
 const (
@@ -173,7 +173,7 @@ func (c *Client) LoadOperationsByTransaction(id string) (oPage OperationsPage, e
 	return
 }
 
-func (c *Client) SubmitTransaction(tx []byte) (retBody []byte, err error){  //TODO: make a model for the retBody
+func (c *Client) SubmitTransaction(tx []byte) (retBody []byte, err error) { //TODO: make a model for the retBody
 	url := UrlTransactions
 	headers := http.Header{}
 	headers.Set("Content-Type", "application/json")
@@ -185,8 +185,7 @@ func (c *Client) SubmitTransaction(tx []byte) (retBody []byte, err error){  //TO
 	return
 }
 
-
-func (c *Client) Stream(ctx context.Context, theUrl string, cursor *string, handler func(data []byte) error )(err error){
+func (c *Client) Stream(ctx context.Context, theUrl string, cursor *string, handler func(data []byte) error) (err error) {
 	query := url.Values{}
 	if cursor != nil {
 		query.Set("cursor", string(*cursor))
@@ -202,7 +201,7 @@ func (c *Client) Stream(ctx context.Context, theUrl string, cursor *string, hand
 
 	scanner := bufio.NewScanner(resp.Body)
 
-	for scanner.Scan(){
+	for scanner.Scan() {
 		select {
 		case <-ctx.Done():
 			return nil
@@ -223,7 +222,7 @@ func (c *Client) Stream(ctx context.Context, theUrl string, cursor *string, hand
 
 func (c *Client) StreamAccount(ctx context.Context, id string, cursor *string, handler func(Account)) (err error) {
 	url := strings.Replace(UrlAccount, "{id}", id, -1)
-	handlerFunc := func(b []byte) (err error){
+	handlerFunc := func(b []byte) (err error) {
 		var v Account
 		err = json.Unmarshal(b, &v)
 		if err != nil {
@@ -237,7 +236,7 @@ func (c *Client) StreamAccount(ctx context.Context, id string, cursor *string, h
 
 func (c *Client) StreamTransactions(ctx context.Context, cursor *string, handler func(Transaction)) (err error) {
 	url := UrlTransactions
-	handlerFunc := func(b []byte) (err error){
+	handlerFunc := func(b []byte) (err error) {
 		var v Transaction
 		err = json.Unmarshal(b, &v)
 		if err != nil {
@@ -251,7 +250,7 @@ func (c *Client) StreamTransactions(ctx context.Context, cursor *string, handler
 
 func (c *Client) StreamTransactionsByAccount(ctx context.Context, id string, cursor *string, handler func(Transaction)) (err error) {
 	url := strings.Replace(UrlAccountTransactions, "{id}", id, -1)
-	handlerFunc := func(b []byte) (err error){
+	handlerFunc := func(b []byte) (err error) {
 		var v Transaction
 		err = json.Unmarshal(b, &v)
 		if err != nil {
@@ -265,7 +264,7 @@ func (c *Client) StreamTransactionsByAccount(ctx context.Context, id string, cur
 
 func (c *Client) StreamTransactionsByHash(ctx context.Context, id string, cursor *string, handler func(Transaction)) (err error) {
 	url := strings.Replace(UrlTransactionByHash, "{id}", id, -1)
-	handlerFunc := func(b []byte) (err error){
+	handlerFunc := func(b []byte) (err error) {
 		var v Transaction
 		err = json.Unmarshal(b, &v)
 		if err != nil {
@@ -279,7 +278,7 @@ func (c *Client) StreamTransactionsByHash(ctx context.Context, id string, cursor
 
 func (c *Client) StreamOperationsByAccount(ctx context.Context, id string, cursor *string, handler func(Operation)) (err error) {
 	url := strings.Replace(UrlAccountOperations, "{id}", id, -1)
-	handlerFunc := func(b []byte) (err error){
+	handlerFunc := func(b []byte) (err error) {
 		var v Operation
 		err = json.Unmarshal(b, &v)
 		if err != nil {
@@ -293,7 +292,7 @@ func (c *Client) StreamOperationsByAccount(ctx context.Context, id string, curso
 
 func (c *Client) StreamOperationsByTransaction(ctx context.Context, id string, cursor *string, handler func(Operation)) (err error) {
 	url := strings.Replace(UrlTransactionOperations, "{id}", id, -1)
-	handlerFunc := func(b []byte) (err error){
+	handlerFunc := func(b []byte) (err error) {
 		var v Operation
 		err = json.Unmarshal(b, &v)
 		if err != nil {

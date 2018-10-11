@@ -21,7 +21,7 @@ type Account struct {
 	} `json:"_links"`
 
 	Address    string `json:"address"`
-	SequenceID int `json:"sequence_id"`
+	SequenceID int    `json:"sequence_id"`
 	Balance    string `json:"balance"`
 	Linked     string `json:"linked"`
 }
