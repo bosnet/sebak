@@ -12,7 +12,7 @@ import (
 )
 
 func RecoverMiddleware(logger log15.Logger) mux.MiddlewareFunc {
-	if logger != nil {
+	if logger == nil {
 		logger = log // use network.log
 	}
 	return func(next http.Handler) http.Handler {
