@@ -23,6 +23,16 @@ func PrintFlagsError(cmd *cobra.Command, flagName string, err error) {
 	os.Exit(1)
 }
 
+func PrintError(cmd *cobra.Command, err error) {
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n\n", err)
+	}
+
+	cmd.Help()
+
+	os.Exit(1)
+}
+
 // Parse an input string as a monetary amount
 //
 // Commas (','), and dots ('.') and underscores ('_')

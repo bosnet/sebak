@@ -42,6 +42,7 @@ func NewLocalNode(kp *keypair.Full, bindEndpoint *common.Endpoint, alias string)
 		bindEndpoint: bindEndpoint,
 		validators:   map[string]*Validator{},
 	}
+	n.AddValidators(n.ConvertToValidator())
 
 	return
 }

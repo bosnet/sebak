@@ -68,6 +68,7 @@ var (
 	blockTime         time.Duration
 	transactionsLimit uint64
 	operationsLimit   uint64
+	localNode         *node.LocalNode
 
 	logLevel logging.Lvl
 	log      logging.Logger = logging.New("module", "main")
@@ -147,19 +148,14 @@ func init() {
 }
 
 func parseFlagValidators(v string) (vs []*node.Validator, err error) {
-	splitted := strings.Fields(v)
+	splitted := strings.Fields(strings.TrimSpace(v))
 	if len(splitted) < 1 {
 		return
 	}
 
 	for _, v := range splitted {
 		var validator *node.Validator
-		if strings.ToLower(v) == "self" {
-			validator, err = newLocalNode()
-		} else {
-			validator, err = node.NewValidatorFromURI(v)
-		}
-		if err != nil {
+		if validator, err = node.NewValidatorFromURI(v); err != nil {
 			return
 		}
 		vs = append(vs, validator)
@@ -183,9 +179,6 @@ func parseFlagsNode() {
 
 	if len(flagNetworkID) < 1 {
 		cmdcommon.PrintFlagsError(nodeCmd, "--network-id", errors.New("--network-id must be given"))
-	}
-	if len(flagValidators) < 1 {
-		cmdcommon.PrintFlagsError(nodeCmd, "--validators", errors.New("must be given"))
 	}
 	if len(flagKPSecretSeed) < 1 {
 		cmdcommon.PrintFlagsError(nodeCmd, "--secret-seed", errors.New("must be given"))
@@ -322,6 +315,14 @@ func parseFlagsNode() {
 		http2.VerboseLogs = true
 		network.VerboseLogs = true
 	}
+
+	// create current Node
+	localNode, err = node.NewLocalNode(kp, bindEndpoint, "")
+	if err != nil {
+		cmdcommon.PrintError(nodeCmd, err)
+	}
+	localNode.AddValidators(validators...)
+	localNode.SetPublishEndpoint(publishEndpoint)
 }
 
 func getTime(timeoutStr string, defaultValue time.Duration, errMessage string) time.Duration {
@@ -338,15 +339,6 @@ func getTime(timeoutStr string, defaultValue time.Duration, errMessage string) t
 }
 
 func runNode() error {
-	// create current Node
-	localNode, err := node.NewLocalNode(kp, bindEndpoint, "")
-	if err != nil {
-		log.Error("failed to launch main node", "error", err)
-		return err
-	}
-	localNode.AddValidators(validators...)
-	localNode.SetPublishEndpoint(publishEndpoint)
-
 	// create network
 	networkConfig, err := network.NewHTTP2NetworkConfigFromEndpoint(localNode.Alias(), bindEndpoint)
 	if err != nil {
