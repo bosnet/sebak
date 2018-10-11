@@ -12,6 +12,9 @@ import (
 )
 
 func RecoverMiddleware(logger log15.Logger) mux.MiddlewareFunc {
+	if logger != nil {
+		logger = log // use network.log
+	}
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			defer func() {
@@ -21,9 +24,7 @@ func RecoverMiddleware(logger log15.Logger) mux.MiddlewareFunc {
 						err = fmt.Errorf("panic: %v", r)
 					}
 					httputils.WriteJSONError(w, err)
-					if logger == nil {
-						logger = log // use network.log
-					}
+
 					logger.Error("recover an panic", "err", err)
 					if VerboseLogs == true {
 						debug.PrintStack()
