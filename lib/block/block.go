@@ -61,7 +61,7 @@ func (bck Block) String() string {
 //   * `CreateAccount.Amount` is 0
 //   * `CreateAccount.Target` is common account
 // * `Transaction.B.Fee` is 0
-func MakeGenesisBlock(st *storage.LevelDBBackend, genesisAccount BlockAccount, commonAccount BlockAccount, networdID []byte) (blk Block, err error) {
+func MakeGenesisBlock(st *storage.LevelDBBackend, genesisAccount BlockAccount, commonAccount BlockAccount, networdID []byte) (blk *Block, err error) {
 	if genesisAccount.Address == commonAccount.Address {
 		err = fmt.Errorf("genesis account and common account are same.")
 		return
@@ -141,7 +141,7 @@ func MakeGenesisBlock(st *storage.LevelDBBackend, genesisAccount BlockAccount, c
 
 // NewBlock creates new block; `ptx` represents the
 // `ProposerTransaction.GetHash()`.
-func NewBlock(proposer string, round round.Round, ptx string, transactions []string, confirmed string) Block {
+func NewBlock(proposer string, round round.Round, ptx string, transactions []string, confirmed string) *Block {
 	b := &Block{
 		Header:              *NewBlockHeader(round, uint64(len(transactions)), getTransactionRoot(transactions)),
 		Transactions:        transactions,
@@ -152,7 +152,7 @@ func NewBlock(proposer string, round round.Round, ptx string, transactions []str
 	}
 
 	b.Hash = base58.Encode(common.MustMakeObjectHash(b))
-	return *b
+	return b
 }
 
 func getTransactionRoot(txs []string) string {
