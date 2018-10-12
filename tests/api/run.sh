@@ -16,9 +16,9 @@ source ./build.sh
 DOCKER_CONTAINERS=""
 function dumpLogsAndCleanup () {
     if [ ! -z "${DOCKER_CONTAINERS}" ]; then
-#        for CONTAINER in ${DOCKER_CONTAINERS}; do
-#            docker logs ${CONTAINER} || true
-#        done
+        for CONTAINER in ${DOCKER_CONTAINERS}; do
+            docker logs ${CONTAINER} || true
+        done
         docker rm -f ${DOCKER_CONTAINERS} || true
     fi
 }
@@ -47,9 +47,11 @@ for dir in ${TEST_DIRS}; do
 
         # Copy integration tests
     mkdir -p ${dir}/coverage/node{1,2,3}/
-    docker cp ${NODE1}:/sebak/coverage.txt ${dir}/coverage/node1/coverage.txt
-    docker cp ${NODE2}:/sebak/coverage.txt ${dir}/coverage/node2/coverage.txt
-    docker cp ${NODE3}:/sebak/coverage.txt ${dir}/coverage/node3/coverage.txt
+    index=1
+    for CONTAINER in ${DOCKER_CONTAINERS}; do
+        docker cp ${CONTAINER}:/sebak/coverage.txt ${dir}/coverage/node${index}/coverage.txt
+        index = ${index} + 1
+    done
 
     # Shut down the containers - we need to do so for integration reports to be written
     docker stop ${DOCKER_CONTAINERS}
