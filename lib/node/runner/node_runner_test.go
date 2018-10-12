@@ -23,8 +23,6 @@ var (
 )
 
 func init() {
-	kp, _ = keypair.Random()
-
 	dir, err := ioutil.TempDir("/tmp/", "sebak-test")
 	if err != nil {
 		panic(err)
@@ -50,9 +48,9 @@ func createTestNodeRunner(n int, conf common.Config) []*NodeRunner {
 		}
 	}
 
-	address := kp.Address()
+	address := genesisKP.Address()
 	balance := common.BaseFee.MustAdd(common.BaseReserve)
-	account = block.NewBlockAccount(address, balance)
+	account := block.NewBlockAccount(address, balance)
 	var nodeRunners []*NodeRunner
 	for i := 0; i < n; i++ {
 		localNode := nodes[i]
@@ -73,7 +71,8 @@ func createTestNodeRunner(n int, conf common.Config) []*NodeRunner {
 		commonAccount := block.NewBlockAccount(commonKP.Address(), 0)
 		commonAccount.Save(st)
 
-		genesisBlock, _ = block.MakeGenesisBlock(st, *account, *commonAccount, networkID)
+		genesisBlock, _ := block.MakeGenesisBlock(st, *account, *commonAccount, networkID)
+		genesisBlock.Save(st)
 
 		nr, err := NewNodeRunner(string(networkID), localNode, policy, ns[i], is, st, conf)
 		if err != nil {

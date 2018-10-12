@@ -20,16 +20,21 @@ import (
 var networkID []byte = []byte("sebak-test-network")
 
 var (
-	kp             *keypair.Full
-	account        *block.BlockAccount
-	genesisBlock   block.Block
-	initialBalance common.Amount
-	commonKP       *keypair.Full
-	commonAccount  *block.BlockAccount
+	genesisKP     *keypair.Full
+	commonKP      *keypair.Full
+	commonAccount *block.BlockAccount
 )
 
 func init() {
-	kp, _ = keypair.Random()
+	var err error
+	genesisKP, err = keypair.Random()
+	if (err != nil) {
+		panic(err)
+	}
+	commonKP, err = keypair.Random()
+	if (err != nil) {
+		panic(err)
+	}
 }
 
 func MakeNodeRunner() (*NodeRunner, *node.LocalNode) {
@@ -52,12 +57,11 @@ func MakeNodeRunner() (*NodeRunner, *node.LocalNode) {
 }
 
 func GetTransaction(t *testing.T) (tx transaction.Transaction, txByte []byte) {
-	initialBalance := common.Amount(common.BaseReserve)
 	kpNewAccount, _ := keypair.Random()
 
-	tx = transaction.MakeTransactionCreateAccount(kp, kpNewAccount.Address(), initialBalance)
+	tx = transaction.MakeTransactionCreateAccount(genesisKP, kpNewAccount.Address(), common.BaseReserve)
 	tx.B.SequenceID = uint64(0)
-	tx.Sign(kp, networkID)
+	tx.Sign(genesisKP, networkID)
 
 	var err error
 
@@ -75,7 +79,7 @@ func GenerateBallot(t *testing.T, proposer *node.LocalNode, round round.Round, t
 	b := ballot.NewBallot(proposer.Address(), round, []string{tx.GetHash()})
 	b.SetVote(ballot.StateINIT, ballot.VotingYES)
 
-	opi, _ := ballot.NewInflationFromBallot(*b, commonAccount.Address, initialBalance)
+	opi, _ := ballot.NewInflationFromBallot(*b, commonAccount.Address, common.BaseReserve)
 	opc, _ := ballot.NewCollectTxFeeFromBallot(*b, commonAccount.Address, tx)
 	ptx, _ := ballot.NewProposerTransactionFromBallot(*b, opc, opi)
 	b.SetProposerTransaction(ptx)
@@ -96,7 +100,7 @@ func GenerateEmptyTxBallot(t *testing.T, proposer *node.LocalNode, round round.R
 	b := ballot.NewBallot(proposer.Address(), round, []string{})
 	b.SetVote(ballot.StateINIT, ballot.VotingYES)
 
-	opi, _ := ballot.NewInflationFromBallot(*b, commonAccount.Address, initialBalance)
+	opi, _ := ballot.NewInflationFromBallot(*b, commonAccount.Address, common.BaseReserve)
 	opc, _ := ballot.NewCollectTxFeeFromBallot(*b, commonAccount.Address)
 	ptx, _ := ballot.NewProposerTransactionFromBallot(*b, opc, opi)
 	b.SetProposerTransaction(ptx)
@@ -140,7 +144,7 @@ func createNodeRunnerForTesting(n int, conf common.Config, recv chan struct{}) (
 	st := storage.NewTestStorage()
 
 	balance := common.MaximumBalance
-	genesisAccount := block.NewBlockAccount(kp.Address(), balance)
+	genesisAccount := block.NewBlockAccount(genesisKP.Address(), balance)
 	genesisAccount.Save(st)
 
 	commonKP, _ = keypair.Random()
@@ -160,14 +164,15 @@ func createNodeRunnerForTesting(n int, conf common.Config, recv chan struct{}) (
 	is, _ := consensus.NewISAAC(networkID, localNode, policy, connectionManager, common.NewConfig())
 	is.SetProposerSelector(FixedSelector{localNode.Address()})
 
-	genesisBlock, _ = block.MakeGenesisBlock(st, *genesisAccount, *commonAccount, networkID)
-	initialBalance = balance
+	genesisBlock, _ := block.MakeGenesisBlock(st, *genesisAccount, *commonAccount, networkID)
+	genesisBlock.Save(st)
 
 	nr, err := NewNodeRunner(string(networkID), localNode, policy, ns[0], is, st, conf)
 	if err != nil {
 		panic(err)
 	}
 	nr.isaacStateManager.blockTimeBuffer = 0
+	nr.Consensus().SetLatestBlock(genesisBlock)
 
 	return nr, nodes, connectionManager
 }
