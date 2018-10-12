@@ -31,7 +31,7 @@ func init() {
 func TestMakeNewBlock(transactions []string) Block {
 	kp, _ := keypair.Random()
 
-	return NewBlock(
+	return *NewBlock(
 		kp.Address(),
 		round.Round{
 			BlockHeight: 0,

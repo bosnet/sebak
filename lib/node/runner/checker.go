@@ -463,7 +463,7 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) (err error) {
 			return
 		}
 
-		var theBlock block.Block
+		var theBlock *block.Block
 		theBlock, err = finishBallot(
 			checker.NodeRunner.Storage(),
 			checker.Ballot,
@@ -476,8 +476,8 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) (err error) {
 			return
 		}
 
-		checker.NodeRunner.Consensus().SetLatestBlock(theBlock)
-		checker.Log.Debug("ballot was stored", "block", theBlock)
+		checker.NodeRunner.Consensus().SetLatestBlock(*theBlock)
+		checker.Log.Debug("ballot was stored", "block", *theBlock)
 		checker.NodeRunner.TransitISAACState(checker.Ballot.Round(), ballot.StateALLCONFIRM)
 
 		err = NewCheckerStopCloseConsensus(checker, "ballot got consensus and will be stored")
@@ -495,7 +495,7 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) (err error) {
 	return
 }
 
-func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *transaction.Pool, log, infoLog logging.Logger) (blk block.Block, err error) {
+func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *transaction.Pool, log, infoLog logging.Logger) (blk *block.Block, err error) {
 	var ts *storage.LevelDBBackend
 	if ts, err = st.OpenTransaction(); err != nil {
 		return
@@ -525,7 +525,7 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 		return
 	}
 
-	log.Debug("NewBlock created", "block", blk)
+	log.Debug("NewBlock created", "block", *blk)
 	infoLog.Info("NewBlock created",
 		"height", blk.Height,
 		"round", blk.Round.Number,
@@ -570,7 +570,7 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 		}
 	}
 
-	if err = finishProposerTransaction(ts, blk, b.ProposerTransaction(), log); err != nil {
+	if err = finishProposerTransaction(ts, *blk, b.ProposerTransaction(), log); err != nil {
 		log.Error("failed to finish proposer transaction", "block", blk, "ptx", b.ProposerTransaction(), "error", err)
 		ts.Discard()
 		return
