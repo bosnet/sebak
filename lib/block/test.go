@@ -90,12 +90,13 @@ func TestMakeNewBlock(transactions []string) Block {
 func TestMakeNewBlockWithPrevBlock(prevBlock Block, txs []string) Block {
 	kp, _ := keypair.Random()
 
-	return NewBlock(
+	return *NewBlock(
 		kp.Address(),
 		round.Round{
 			BlockHeight: prevBlock.Height,
 			BlockHash:   prevBlock.Hash,
 		},
+		"",
 		txs,
 		common.NowISO8601(),
 	)

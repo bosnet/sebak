@@ -27,10 +27,16 @@ func MakeNodeRunner() (*NodeRunner, *node.LocalNode) {
 		policy,
 	)
 
+<<<<<<< HEAD
 	conf := common.NewConfig()
 	is, _ := consensus.NewISAAC(networkID, localNode, policy, connectionManager, conf)
 	st := block.InitTestBlockchain()
 
+=======
+	is, _ := consensus.NewISAAC(networkID, localNode, policy, connectionManager, nil)
+	st := storage.NewTestStorage()
+	conf := consensus.NewISAACConfiguration()
+>>>>>>> Call syncer in consensus (#513)
 	nodeRunner, _ := NewNodeRunner(string(networkID), localNode, policy, n, is, st, conf)
 	return nodeRunner, localNode
 }
@@ -124,8 +130,17 @@ func createNodeRunnerForTesting(n int, conf common.Config, recv chan struct{}) (
 		recv,
 	)
 
+<<<<<<< HEAD
 	is, _ := consensus.NewISAAC(networkID, localNode, policy, connectionManager, common.NewConfig())
 	is.SetProposerSelector(FixedSelector{localNode.Address()})
+=======
+	is, _ := consensus.NewISAAC(networkID, localNode, policy, connectionManager, nil)
+	is.SetProposerSelector(SelfSelector{connectionManager})
+	st := storage.NewTestStorage()
+
+	account.Save(st)
+	genesisBlock, _ = block.MakeGenesisBlock(st, *account, networkID)
+>>>>>>> Call syncer in consensus (#513)
 
 	st := block.InitTestBlockchain()
 	nr, err := NewNodeRunner(string(networkID), localNode, policy, ns[0], is, st, conf)

@@ -465,14 +465,19 @@ func runNode() error {
 	}
 
 	isaac, err := consensus.NewISAAC([]byte(flagNetworkID), localNode, policy, connectionManager, conf)
-	if err != nil {
-		log.Crit("failed to launch consensus", "error", err)
-		return err
-	}
-
 	st, err := storage.NewStorage(storageConfig)
 	if err != nil {
 		log.Crit("failed to initialize storage", "error", err)
+		return err
+	}
+
+	c := sync.NewConfig([]byte(flagNetworkID), localNode, st, nt, connectionManager)
+	// Place setting config
+	syncer := c.NewSyncer()
+
+	isaac, err := consensus.NewISAAC([]byte(flagNetworkID), localNode, policy, connectionManager, syncer)
+	if err != nil {
+		log.Crit("failed to launch consensus", "error", err)
 		return err
 	}
 
