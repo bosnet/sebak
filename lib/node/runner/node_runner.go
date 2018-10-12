@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"time"
 
+	ghandlers "github.com/gorilla/handlers"
 	logging "github.com/inconshreveable/log15"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
@@ -156,6 +157,19 @@ func (nr *NodeRunner) Ready() {
 	if err := nr.network.AddMiddleware(network.RouterNameNode, network.RecoverMiddleware(nr.log)); err != nil {
 		nr.log.Error("Middleware has an error", "err", err)
 		return
+	}
+
+	//CORS
+	{
+		allowedOrigins := ghandlers.AllowedOrigins([]string{"*"})
+		allowedMethods := ghandlers.AllowedMethods([]string{"GET", "POST"})
+
+		cors := ghandlers.CORS(allowedOrigins, allowedMethods)
+		err := nr.network.AddMiddleware(network.RouterNameAPI, cors)
+		if err != nil {
+			nr.log.Error("Middleware has an error", "err", err)
+			return
+		}
 	}
 
 	nr.network.AddHandler(nodeHandler.HandlerURLPattern(NodeInfoHandlerPattern), nodeHandler.NodeInfoHandler)
