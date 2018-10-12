@@ -162,7 +162,7 @@ func (nr *NodeRunner) Ready() {
 	//CORS
 	{
 		allowedOrigins := ghandlers.AllowedOrigins([]string{"*"})
-		allowedMethods := ghandlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS"})
+		allowedMethods := ghandlers.AllowedMethods([]string{"GET", "POST"})
 
 		cors := ghandlers.CORS(allowedOrigins, allowedMethods)
 		err := nr.network.AddMiddleware(network.RouterNameAPI, cors)
