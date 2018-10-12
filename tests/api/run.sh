@@ -33,7 +33,9 @@ for dir in ${TEST_DIRS}; do
 
     for index in 1 2 3; do
         NODE=$(docker run -d --network host --env-file=${ROOT_DIR}/docker/node${index}.env \
-                       sebak:runner node \
+                       sebak:runner \
+                       -test.coverprofile=coverage.txt \
+                       node \
                        --genesis=${SEBAK_GENESIS},${SEBAK_COMMON} \
                        --log-level=debug)
         DOCKER_CONTAINERS="${DOCKER_CONTAINERS} ${NODE}"
