@@ -24,8 +24,6 @@ func TestStateINITProposer(t *testing.T) {
 	recv := make(chan struct{})
 	nr, _, cm := createNodeRunnerForTesting(3, conf, recv)
 
-	nr.Consensus().SetLatestBlock(genesisBlock)
-
 	nr.StartStateManager()
 	defer nr.StopStateManager()
 
@@ -56,8 +54,6 @@ func TestStateINITNotProposer(t *testing.T) {
 	cm, ok := nr.Consensus().ConnectionManager().(*TestConnectionManager)
 	require.True(t, ok)
 
-	nr.Consensus().SetLatestBlock(genesisBlock)
-
 	nr.StartStateManager()
 	defer nr.StopStateManager()
 	time.Sleep(1 * time.Second)
@@ -86,8 +82,6 @@ func TestStateINITTimeoutNotProposer(t *testing.T) {
 	proposer := nr.Consensus().SelectProposer(0, 0)
 
 	require.NotEqual(t, nr.localNode.Address(), proposer)
-
-	nr.Consensus().SetLatestBlock(genesisBlock)
 
 	nr.StartStateManager()
 	defer nr.StopStateManager()
@@ -135,8 +129,6 @@ func TestStateSIGNTimeoutProposer(t *testing.T) {
 	proposer := nr.Consensus().SelectProposer(0, 0)
 
 	require.Equal(t, nr.localNode.Address(), proposer)
-
-	nr.Consensus().SetLatestBlock(genesisBlock)
 
 	nr.StartStateManager()
 	defer nr.StopStateManager()
@@ -200,8 +192,6 @@ func TestStateSIGNTimeoutNotProposer(t *testing.T) {
 
 	require.NotEqual(t, nr.localNode.Address(), proposer)
 
-	nr.Consensus().SetLatestBlock(genesisBlock)
-
 	nr.StartStateManager()
 	defer nr.StopStateManager()
 
@@ -257,8 +247,6 @@ func TestStateACCEPTTimeoutProposerThenNotProposer(t *testing.T) {
 
 	proposer = nr.Consensus().SelectProposer(0, 1)
 	require.NotEqual(t, nr.localNode.Address(), proposer)
-
-	nr.Consensus().SetLatestBlock(genesisBlock)
 
 	nr.StartStateManager()
 	defer nr.StopStateManager()
@@ -318,8 +306,6 @@ func TestStateTransitFromTimeoutInitToAccept(t *testing.T) {
 	cm, ok := nr.Consensus().ConnectionManager().(*TestConnectionManager)
 	require.True(t, ok)
 
-	nr.Consensus().SetLatestBlock(genesisBlock)
-
 	nr.StartStateManager()
 	defer nr.StopStateManager()
 	<-recvTransit
@@ -363,8 +349,6 @@ func TestStateTransitFromTimeoutSignToAccept(t *testing.T) {
 
 	recv := make(chan struct{})
 	nr, _, cm := createNodeRunnerForTesting(3, conf, recv)
-
-	nr.Consensus().SetLatestBlock(genesisBlock)
 
 	nr.StartStateManager()
 	defer nr.StopStateManager()

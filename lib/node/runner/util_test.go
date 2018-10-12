@@ -13,7 +13,7 @@ import (
 func TestGetGenesisAccount(t *testing.T) {
 	st := storage.NewTestStorage()
 
-	genesisAccount := block.NewBlockAccount(kp.Address(), common.Amount(1))
+	genesisAccount := block.NewBlockAccount(genesisKP.Address(), common.Amount(1))
 	genesisAccount.Save(st)
 
 	commonKP, _ := keypair.Random()
@@ -39,7 +39,7 @@ func TestGetInitialBalance(t *testing.T) {
 	st := storage.NewTestStorage()
 
 	initialBalance := common.Amount(99)
-	genesisAccount := block.NewBlockAccount(kp.Address(), initialBalance)
+	genesisAccount := block.NewBlockAccount(genesisKP.Address(), initialBalance)
 	genesisAccount.Save(st)
 
 	commonKP, _ := keypair.Random()
