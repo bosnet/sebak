@@ -28,11 +28,11 @@ var (
 func init() {
 	var err error
 	genesisKP, err = keypair.Random()
-	if (err != nil) {
+	if err != nil {
 		panic(err)
 	}
 	commonKP, err = keypair.Random()
-	if (err != nil) {
+	if err != nil {
 		panic(err)
 	}
 }
