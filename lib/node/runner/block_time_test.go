@@ -24,12 +24,10 @@ func TestBlockTime(t *testing.T) {
 
 	latestBlock := nr.Consensus().LatestBlock()
 	latestHeight := latestBlock.Height
-	blockTimes := make([]time.Time, latestHeight)
 	for i := 0; i < int(latestHeight); i++ {
 		b, err := block.GetBlockByHeight(nr.Storage(), uint64(i+1))
 		require.Nil(t, err)
-		blockTimes[i] = b.Header.Timestamp
-		t.Log(blockTimes[i].String())
+		t.Log(b.Header.Timestamp.String())
 	}
 
 	genesis, err := block.GetBlockByHeight(nr.Storage(), uint64(1))
