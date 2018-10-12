@@ -51,7 +51,8 @@ func MakeNodeRunner() (*NodeRunner, *node.LocalNode) {
 
 	conf := common.NewConfig()
 	is, _ := consensus.NewISAAC(networkID, localNode, policy, connectionManager, conf)
-	st := storage.NewTestStorage()
+	st := InitTestBlockchain()
+
 	nodeRunner, _ := NewNodeRunner(string(networkID), localNode, policy, n, is, st, conf)
 	return nodeRunner, localNode
 }
@@ -141,16 +142,6 @@ func createNodeRunnerForTesting(n int, conf common.Config, recv chan struct{}) (
 		nodes[0].AddValidators(nodes[j].ConvertToValidator())
 	}
 
-	st := storage.NewTestStorage()
-
-	balance := common.MaximumBalance
-	genesisAccount := block.NewBlockAccount(genesisKP.Address(), balance)
-	genesisAccount.Save(st)
-
-	commonKP, _ = keypair.Random()
-	commonAccount = block.NewBlockAccount(commonKP.Address(), 0)
-	commonAccount.Save(st)
-
 	localNode := nodes[0]
 	policy, _ := consensus.NewDefaultVotingThresholdPolicy(66)
 
@@ -164,15 +155,32 @@ func createNodeRunnerForTesting(n int, conf common.Config, recv chan struct{}) (
 	is, _ := consensus.NewISAAC(networkID, localNode, policy, connectionManager, common.NewConfig())
 	is.SetProposerSelector(FixedSelector{localNode.Address()})
 
-	genesisBlock, _ := block.MakeGenesisBlock(st, *genesisAccount, *commonAccount, networkID)
-	genesisBlock.Save(st)
-
+	st := InitTestBlockchain()
 	nr, err := NewNodeRunner(string(networkID), localNode, policy, ns[0], is, st, conf)
 	if err != nil {
 		panic(err)
 	}
 	nr.isaacStateManager.blockTimeBuffer = 0
+	genesisBlock, _ := block.GetBlockByHeight(st, 1)
 	nr.Consensus().SetLatestBlock(genesisBlock)
 
 	return nr, nodes, connectionManager
+}
+
+// Initialize the blockchain with a genesis account and a common account
+func InitTestBlockchain() *storage.LevelDBBackend {
+	st := storage.NewTestStorage()
+
+	balance := common.MaximumBalance
+	genesisAccount := block.NewBlockAccount(genesisKP.Address(), balance)
+	genesisAccount.Save(st)
+
+	commonKP, _ = keypair.Random()
+	commonAccount = block.NewBlockAccount(commonKP.Address(), 0)
+	commonAccount.Save(st)
+
+	genesisBlock, _ := block.MakeGenesisBlock(st, *genesisAccount, *commonAccount, networkID)
+	genesisBlock.Save(st)
+
+	return st
 }
