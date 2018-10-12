@@ -8,5 +8,5 @@ import (
 )
 
 func init() {
-	common.SetLogging(log, logging.LvlDebug, test.LogHandler())
+	common.SetLogging(log, logging.LvlInfo, test.LogHandler())
 }
