@@ -6,6 +6,8 @@ set -xe
 # So make sure we're in the right WD
 cd -- `dirname ${BASH_SOURCE[0]}`
 
+ROOT_DIR=".."
+
 if [ $# -lt 2 ]; then
     echo "the number of parameter less than 2" >&2
     echo "build.sh build_mode builde_pkg [build_args]" >&2
@@ -33,7 +35,7 @@ IMAGE=$(docker build --tag sebak:builder -q \
     --build-arg BUILD_MODE=${BUILD_MODE} \
     --build-arg BUILD_PKG=${BUILD_PKG} \
     --build-arg BUILD_ARGS="${BUILD_ARGS}"  \
-    . -f ./Dockerfile.build | cut -d: -f2)
+    ${ROOT_DIR}/ -f ${ROOT_DIR}/Dockerfile.build | cut -d: -f2)
 
 if [ -z ${IMAGE} ]; then
     echo "Failed to build builder docker image" >&2
@@ -42,7 +44,7 @@ fi
 
 ## Build the docker runner image
 IMAGE=$(docker build --tag sebak:runner -q \
-    . | cut -d: -f2)
+    ${ROOT_DIR}/ | cut -d: -f2)
 
 if [ -z ${IMAGE} ]; then
     echo "Failed to build runner docker image" >&2
