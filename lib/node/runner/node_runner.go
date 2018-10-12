@@ -149,6 +149,15 @@ func (nr *NodeRunner) Ready() {
 		nr.Conf,
 	)
 
+	if err := nr.network.AddMiddleware(network.RouterNameAPI, network.RecoverMiddleware(nr.log)); err != nil {
+		nr.log.Error("Middleware has an error", "err", err)
+		return
+	}
+	if err := nr.network.AddMiddleware(network.RouterNameNode, network.RecoverMiddleware(nr.log)); err != nil {
+		nr.log.Error("Middleware has an error", "err", err)
+		return
+	}
+
 	nr.network.AddHandler(nodeHandler.HandlerURLPattern(NodeInfoHandlerPattern), nodeHandler.NodeInfoHandler)
 	nr.network.AddHandler(nodeHandler.HandlerURLPattern(ConnectHandlerPattern), nodeHandler.ConnectHandler).
 		Methods("POST").

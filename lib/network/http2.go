@@ -14,6 +14,7 @@ import (
 	"golang.org/x/net/http2"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/node"
 )
 
@@ -150,6 +151,17 @@ func (t *HTTP2Network) setNotReadyHandler() {
 	})
 
 	t.server.Handler = HTTP2Log15Handler{log: t.log, handler: t.router}
+}
+
+func (t *HTTP2Network) AddMiddleware(routerName string, mws ...mux.MiddlewareFunc) error {
+	r, ok := t.routers[routerName]
+	if !ok {
+		return errors.ErrorNotMatcHTTPRouter
+	}
+	for _, mw := range mws {
+		r.Use(mw)
+	}
+	return nil
 }
 
 func (t *HTTP2Network) AddHandler(pattern string, handler http.HandlerFunc) (router *mux.Route) {

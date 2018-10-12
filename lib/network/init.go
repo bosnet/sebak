@@ -5,6 +5,7 @@ import (
 	logging "github.com/inconshreveable/log15"
 )
 
+var VerboseLogs bool
 var log logging.Logger = logging.New("module", "network")
 
 func init() {
