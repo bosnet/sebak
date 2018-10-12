@@ -495,23 +495,23 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) (err error) {
 	return
 }
 
-func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *transaction.Pool, log, infoLog logging.Logger) (blk *block.Block, err error) {
+func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *transaction.Pool, log, infoLog logging.Logger) (*block.Block, error) {
+	var err error
 	var ts *storage.LevelDBBackend
 	if ts, err = st.OpenTransaction(); err != nil {
-		return
+		return nil, err
 	}
 
 	transactions := map[string]transaction.Transaction{}
 	for _, hash := range b.B.Proposed.Transactions {
 		tx, found := transactionPool.Get(hash)
 		if !found {
-			err = errors.ErrorTransactionNotFound
-			return
+			return nil, errors.ErrorTransactionNotFound
 		}
 		transactions[hash] = tx
 	}
 
-	blk = block.NewBlock(
+	blk := block.NewBlock(
 		b.Proposer(),
 		b.Round(),
 		b.ProposerTransaction().GetHash(),
@@ -522,7 +522,7 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 	if err = blk.Save(ts); err != nil {
 		ts.Discard()
 		log.Error("failed to create new block", "block", blk, "error", err)
-		return
+		return nil, err
 	}
 
 	log.Debug("NewBlock created", "block", *blk)
@@ -542,13 +542,13 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 		if err = bt.Save(ts); err != nil {
 			log.Error("failed to create new BlockTransaction", "block", blk, "bt", bt, "error", err)
 			ts.Discard()
-			return
+			return nil, err
 		}
 		for _, op := range tx.B.Operations {
 			if err = finishOperation(ts, tx, op, log); err != nil {
 				log.Error("failed to finish operation", "block", blk, "bt", bt, "op", op, "error", err)
 				ts.Discard()
-				return
+				return nil, err
 			}
 		}
 
@@ -556,31 +556,32 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 		if baSource, err = block.GetBlockAccount(ts, tx.B.Source); err != nil {
 			err = errors.ErrorBlockAccountDoesNotExists
 			ts.Discard()
-			return
+			return nil, err
 		}
 
 		if err = baSource.Withdraw(tx.TotalAmount(true)); err != nil {
 			ts.Discard()
-			return
+			return nil, err
 		}
 
 		if err = baSource.Save(ts); err != nil {
 			ts.Discard()
-			return
+			return nil, err
 		}
 	}
 
 	if err = finishProposerTransaction(ts, *blk, b.ProposerTransaction(), log); err != nil {
 		log.Error("failed to finish proposer transaction", "block", blk, "ptx", b.ProposerTransaction(), "error", err)
 		ts.Discard()
-		return
+		return nil, err
 	}
 
 	if err = ts.Commit(); err != nil {
 		ts.Discard()
+		return nil, err
 	}
 
-	return
+	return blk, nil
 }
 
 // finishOperation do finish the task after consensus by the type of each operation.
