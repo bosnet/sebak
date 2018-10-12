@@ -8,9 +8,7 @@ cd -- `dirname ${BASH_SOURCE[0]}`
 ROOT_DIR=".."
 
 # Build the docker container
-source ${ROOT_DIR}/build.sh "install" "./..."
-
-cd -- `dirname ${BASH_SOURCE[0]}`
+${ROOT_DIR}/build.sh "test" "./cmd/sebak" "-coverpkg=./... -tags integration -c -o /go/bin/sebak"
 
 ./api/run.sh
 ./sdk/run.sh

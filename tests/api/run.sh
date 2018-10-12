@@ -45,6 +45,12 @@ for dir in ${TEST_DIRS}; do
     # Run the tests
     docker run --rm --network host sebak:api_tester ${dir}
 
+        # Copy integration tests
+    mkdir -p ${dir}/coverage/node{1,2,3}/
+    docker cp ${NODE1}:/sebak/coverage.txt ${dir}/coverage/node1/coverage.txt
+    docker cp ${NODE2}:/sebak/coverage.txt ${dir}/coverage/node2/coverage.txt
+    docker cp ${NODE3}:/sebak/coverage.txt ${dir}/coverage/node3/coverage.txt
+
     # Shut down the containers - we need to do so for integration reports to be written
     docker stop ${DOCKER_CONTAINERS}
     # Cleanup

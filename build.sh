@@ -15,7 +15,16 @@ fi
 BUILD_MODE="install"
 BUILD_PKG="./..."
 BUILD_ARGS=""
-if [ $# -eq 3 ]; then
+
+if [ -n $1 ]; then
+    BUILD_MODE=$1
+fi
+
+if [ -n $2 ]; then
+    BUILD_PKG=$2
+fi
+
+if [ -n "$3" ]; then
     BUILD_ARGS=$3
 fi
 
@@ -23,7 +32,7 @@ fi
 IMAGE=$(docker build --tag sebak:builder -q \
     --build-arg BUILD_MODE=${BUILD_MODE} \
     --build-arg BUILD_PKG=${BUILD_PKG} \
-    --build-arg BUILD_ARGS=${BUILD_ARGS}  \
+    --build-arg BUILD_ARGS="${BUILD_ARGS}"  \
     . -f ./Dockerfile.build | cut -d: -f2)
 
 if [ -z ${IMAGE} ]; then
