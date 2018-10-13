@@ -19,25 +19,32 @@ func NewPool() *Pool {
 }
 
 func (tp *Pool) Len() int {
+	tp.RLock()
+	defer tp.RUnlock()
+
 	return len(tp.Pool)
 }
 
 func (tp *Pool) Has(hash string) bool {
+	tp.RLock()
+	defer tp.RUnlock()
+
 	_, found := tp.Pool[hash]
 	return found
 }
 
 func (tp *Pool) Get(hash string) (tx Transaction, found bool) {
+	tp.RLock()
+	defer tp.RUnlock()
+
 	tx, found = tp.Pool[hash]
 	return
 }
 
 func (tp *Pool) Add(tx Transaction) bool {
-	tp.RLock()
-	if _, found := tp.Pool[tx.GetHash()]; found {
+	if tp.Has(tx.GetHash()) {
 		return false
 	}
-	tp.RUnlock()
 
 	tp.Lock()
 	defer tp.Unlock()
@@ -83,6 +90,9 @@ func (tp *Pool) AvailableTransactions(transactionLimit int) []string {
 }
 
 func (tp *Pool) IsSameSource(source string) (found bool) {
+	tp.RLock()
+	defer tp.RUnlock()
+
 	_, found = tp.Sources[source]
 
 	return
