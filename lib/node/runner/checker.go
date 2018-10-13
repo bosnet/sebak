@@ -6,8 +6,6 @@ import (
 	"encoding/json"
 	"io"
 
-	logging "github.com/inconshreveable/log15"
-
 	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
@@ -17,6 +15,7 @@ import (
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
 	"boscoin.io/sebak/lib/transaction/operation"
+	logging "github.com/inconshreveable/log15"
 )
 
 type CheckerStopCloseConsensus struct {
@@ -391,7 +390,9 @@ func INITBallotValidateTransactions(c common.Checker, args ...interface{}) (err 
 func SIGNBallotBroadcast(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotChecker)
 	if !checker.IsNew {
-		return
+		if checker.Ballot.State() != ballot.StateINIT {
+			return
+		}
 	}
 
 	newBallot := checker.Ballot

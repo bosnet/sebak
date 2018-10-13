@@ -23,6 +23,8 @@ func (tp *Pool) Len() int {
 }
 
 func (tp *Pool) Has(hash string) bool {
+	tp.RLock()
+	defer tp.RUnlock()
 	_, found := tp.Pool[hash]
 	return found
 }
@@ -33,11 +35,9 @@ func (tp *Pool) Get(hash string) (tx Transaction, found bool) {
 }
 
 func (tp *Pool) Add(tx Transaction) bool {
-	tp.RLock()
-	if _, found := tp.Pool[tx.GetHash()]; found {
+	if tp.Has(tx.GetHash()) {
 		return false
 	}
-	tp.RUnlock()
 
 	tp.Lock()
 	defer tp.Unlock()
