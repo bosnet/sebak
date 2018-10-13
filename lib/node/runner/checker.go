@@ -342,7 +342,7 @@ var INITBallotTransactionCheckerFuncs = []common.CheckerFunc{
 func INITBallotValidateTransactions(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotChecker)
 
-	if !checker.IsNew || checker.VotingFinished {
+	if checker.VotingFinished {
 		return
 	}
 	var voted bool
@@ -409,9 +409,6 @@ func SIGNBallotBroadcast(c common.Checker, args ...interface{}) (err error) {
 // TransitStateToSIGN changes ISAACState to SIGN
 func TransitStateToSIGN(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotChecker)
-	if !checker.IsNew {
-		return
-	}
 	checker.NodeRunner.TransitISAACState(checker.Ballot.Round(), ballot.StateSIGN)
 
 	return
