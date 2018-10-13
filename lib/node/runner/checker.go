@@ -389,11 +389,6 @@ func INITBallotValidateTransactions(c common.Checker, args ...interface{}) (err 
 // SIGNBallotBroadcast will broadcast the validated SIGN ballot.
 func SIGNBallotBroadcast(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotChecker)
-	if !checker.IsNew {
-		if checker.Ballot.State() != ballot.StateINIT {
-			return
-		}
-	}
 
 	newBallot := checker.Ballot
 	newBallot.SetSource(checker.LocalNode.Address())
