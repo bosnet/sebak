@@ -13,6 +13,8 @@ cd $DIR
 echo "===== ${DIR}: Default test runner ====="
 
 for JSONFILE in $(find . -name "*.json" -type f | sort); do
+    starttime=$(date +%s)
+
     PORT=$(echo "${JSONFILE}" | cut -d'_' -f3)
     curl --insecure \
          --request POST \
@@ -24,4 +26,6 @@ for JSONFILE in $(find . -name "*.json" -type f | sort); do
     if [ -f ${JSONFILE}.check ]; then
         bash -c ${JSONFILE}.check
     fi
+
+    echo ${JSONFILE} "- Elapsed Time:" $(expr $(date +%s) - ${starttime}) "seconds"
 done
