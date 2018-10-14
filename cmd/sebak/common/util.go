@@ -51,3 +51,18 @@ func ParseAmountFromString(input string) (common.Amount, error) {
 	amountStr = strings.Replace(amountStr, "_", "", -1)
 	return common.AmountFromString(amountStr)
 }
+
+type ListFlags []string
+
+func (i *ListFlags) Type() string {
+	return "list"
+}
+
+func (i *ListFlags) String() string {
+	return strings.Join([]string(*i), " ")
+}
+
+func (i *ListFlags) Set(value string) error {
+	*i = append(*i, value)
+	return nil
+}

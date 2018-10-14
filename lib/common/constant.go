@@ -1,6 +1,10 @@
 package common
 
-import "time"
+import (
+	"time"
+
+	"github.com/ulule/limiter"
+)
 
 const (
 	// BaseFee is the default transaction fee, if fee is lower than BaseFee, the
@@ -36,4 +40,18 @@ var (
 	BallotConfirmedTimeAllowDuration time.Duration = time.Minute * time.Duration(1)
 
 	InflationRatioString string = InflationRatio2String(InflationRatio)
+
+	// RateLimitAPI set the rate limit for API interface, the default value
+	// allows 100 requests per minute.
+	RateLimitAPI limiter.Rate = limiter.Rate{
+		Period: 1 * time.Minute,
+		Limit:  100,
+	}
+
+	// RateLimitNode set the rate limit for node interface, the default value
+	// allows 100 requests per seconds.
+	RateLimitNode limiter.Rate = limiter.Rate{
+		Period: 1 * time.Second,
+		Limit:  100,
+	}
 )

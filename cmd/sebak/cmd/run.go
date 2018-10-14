@@ -2,18 +2,19 @@ package cmd
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
-	"golang.org/x/net/http2"
-
 	logging "github.com/inconshreveable/log15"
 	"github.com/oklog/run"
 	"github.com/spf13/cobra"
 	"github.com/stellar/go/keypair"
+	"github.com/ulule/limiter"
+	"golang.org/x/net/http2"
 
 	cmdcommon "boscoin.io/sebak/cmd/sebak/common"
 	"boscoin.io/sebak/lib/common"
@@ -41,16 +42,18 @@ var (
 	flagBindURL             string = common.GetENVValue("SEBAK_BIND", defaultBindURL)
 	flagPublishURL          string = common.GetENVValue("SEBAK_PUBLISH", "")
 	flagStorageConfigString string
-	flagTLSCertFile         string = common.GetENVValue("SEBAK_TLS_CERT", "sebak.crt")
-	flagTLSKeyFile          string = common.GetENVValue("SEBAK_TLS_KEY", "sebak.key")
-	flagValidators          string = common.GetENVValue("SEBAK_VALIDATORS", "")
-	flagThreshold           string = common.GetENVValue("SEBAK_THRESHOLD", "67")
-	flagTimeoutINIT         string = common.GetENVValue("SEBAK_TIMEOUT_INIT", "2")
-	flagTimeoutSIGN         string = common.GetENVValue("SEBAK_TIMEOUT_SIGN", "2")
-	flagTimeoutACCEPT       string = common.GetENVValue("SEBAK_TIMEOUT_ACCEPT", "2")
-	flagBlockTime           string = common.GetENVValue("SEBAK_BLOCK_TIME", "5")
-	flagTransactionsLimit   string = common.GetENVValue("SEBAK_TRANSACTIONS_LIMIT", "1000")
-	flagOperationsLimit     string = common.GetENVValue("SEBAK_OPERATIONS_LIMIT", "1000")
+	flagTLSCertFile         string              = common.GetENVValue("SEBAK_TLS_CERT", "sebak.crt")
+	flagTLSKeyFile          string              = common.GetENVValue("SEBAK_TLS_KEY", "sebak.key")
+	flagValidators          string              = common.GetENVValue("SEBAK_VALIDATORS", "")
+	flagThreshold           string              = common.GetENVValue("SEBAK_THRESHOLD", "67")
+	flagTimeoutINIT         string              = common.GetENVValue("SEBAK_TIMEOUT_INIT", "2")
+	flagTimeoutSIGN         string              = common.GetENVValue("SEBAK_TIMEOUT_SIGN", "2")
+	flagTimeoutACCEPT       string              = common.GetENVValue("SEBAK_TIMEOUT_ACCEPT", "2")
+	flagBlockTime           string              = common.GetENVValue("SEBAK_BLOCK_TIME", "5")
+	flagTransactionsLimit   string              = common.GetENVValue("SEBAK_TRANSACTIONS_LIMIT", "1000")
+	flagOperationsLimit     string              = common.GetENVValue("SEBAK_OPERATIONS_LIMIT", "1000")
+	flagRateLimitAPI        cmdcommon.ListFlags // "SEBAK_RATE_LIMIT_API"
+	flagRateLimitNode       cmdcommon.ListFlags // "SEBAK_RATE_LIMIT_NODE"
 )
 
 var (
@@ -69,6 +72,8 @@ var (
 	transactionsLimit uint64
 	operationsLimit   uint64
 	localNode         *node.LocalNode
+	rateLimitRuleAPI  common.RateLimitRule
+	rateLimitRuleNode common.RateLimitRule
 
 	logLevel logging.Lvl
 	log      logging.Logger = logging.New("module", "main")
@@ -143,8 +148,68 @@ func init() {
 	nodeCmd.Flags().StringVar(&flagBlockTime, "block-time", flagBlockTime, "block creation time")
 	nodeCmd.Flags().StringVar(&flagTransactionsLimit, "transactions-limit", flagTransactionsLimit, "transactions limit in a ballot")
 	nodeCmd.Flags().StringVar(&flagOperationsLimit, "operations-limit", flagOperationsLimit, "operations limit in a transaction")
+	nodeCmd.Flags().Var(
+		&flagRateLimitAPI,
+		"rate-limit-api",
+		fmt.Sprintf("rate limit for %s: [<ip>=]<limit>-<period>, ex) '10-S' '3.3.3.3=1000-M'", network.UrlPathPrefixAPI),
+	)
+	nodeCmd.Flags().Var(
+		&flagRateLimitNode,
+		"rate-limit-node",
+		fmt.Sprintf("rate limit for %s: [<ip>=]<limit>-<period>, ex) '10-S' '3.3.3.3=1000-M'", network.UrlPathPrefixNode),
+	)
 
 	rootCmd.AddCommand(nodeCmd)
+}
+
+func parseFlagRateLimit(l cmdcommon.ListFlags, defaultRate limiter.Rate) (rule common.RateLimitRule, err error) {
+	if len(l) < 1 {
+		rule = common.NewRateLimitRule(defaultRate)
+		return
+	}
+
+	var givenRate limiter.Rate
+
+	byIPAddress := map[string]limiter.Rate{}
+	for _, s := range l {
+		sl := strings.SplitN(s, "=", 2)
+
+		var ip, r string
+		if len(sl) < 2 {
+			r = s
+		} else {
+			ip = sl[0]
+			r = sl[1]
+		}
+
+		if len(ip) > 0 {
+			if net.ParseIP(ip) == nil {
+				err = fmt.Errorf("invalid ip address")
+				return
+			}
+		}
+
+		var rate limiter.Rate
+		if rate, err = limiter.NewRateFromFormatted(r); err != nil {
+			return
+		}
+
+		if len(ip) > 0 {
+			byIPAddress[ip] = rate
+		} else {
+			givenRate = rate
+		}
+	}
+
+	// select last defined default rate
+	if givenRate.Limit < 1 {
+		givenRate = defaultRate
+	}
+
+	rule = common.NewRateLimitRule(givenRate)
+	rule.ByIPAddress = byIPAddress
+
+	return
 }
 
 func parseFlagValidators(v string) (vs []*node.Validator, err error) {
@@ -278,6 +343,29 @@ func parseFlagsNode() {
 	consensus.SetLogging(logLevel, logHandler)
 	network.SetLogging(logLevel, logHandler)
 
+	if len(flagRateLimitAPI) < 1 {
+		re := strings.Fields(common.GetENVValue("SEBAK_RATE_LIMIT_API", ""))
+		for _, r := range re {
+			flagRateLimitAPI.Set(r)
+		}
+	}
+
+	rateLimitRuleAPI, err = parseFlagRateLimit(flagRateLimitAPI, common.RateLimitAPI)
+	if err != nil {
+		cmdcommon.PrintFlagsError(nodeCmd, "--rate-limit-api", err)
+	}
+
+	if len(flagRateLimitNode) < 1 {
+		re := strings.Fields(common.GetENVValue("SEBAK_RATE_LIMIT_NODE", ""))
+		for _, r := range re {
+			flagRateLimitNode.Set(r)
+		}
+	}
+	rateLimitRuleNode, err = parseFlagRateLimit(flagRateLimitNode, common.RateLimitNode)
+	if err != nil {
+		cmdcommon.PrintFlagsError(nodeCmd, "--rate-limit-node", err)
+	}
+
 	log.Info("Starting Sebak")
 
 	// print flags
@@ -298,6 +386,8 @@ func parseFlagsNode() {
 	parsedFlags = append(parsedFlags, "\n\tblock-time", flagBlockTime)
 	parsedFlags = append(parsedFlags, "\n\ttransactions-limit", flagTransactionsLimit)
 	parsedFlags = append(parsedFlags, "\n\toperations-limit", flagOperationsLimit)
+	parsedFlags = append(parsedFlags, "\n\trate-limit-api", rateLimitRuleAPI)
+	parsedFlags = append(parsedFlags, "\n\trate-limit-node", rateLimitRuleNode)
 
 	// create current Node
 	localNode, err = node.NewLocalNode(kp, bindEndpoint, "")
@@ -361,12 +451,14 @@ func runNode() error {
 	)
 
 	conf := common.Config{
-		TimeoutINIT:   timeoutINIT,
-		TimeoutSIGN:   timeoutSIGN,
-		TimeoutACCEPT: timeoutACCEPT,
-		BlockTime:     blockTime,
-		TxsLimit:      int(transactionsLimit),
-		OpsLimit:      int(operationsLimit),
+		TimeoutINIT:       timeoutINIT,
+		TimeoutSIGN:       timeoutSIGN,
+		TimeoutACCEPT:     timeoutACCEPT,
+		BlockTime:         blockTime,
+		TxsLimit:          int(transactionsLimit),
+		OpsLimit:          int(operationsLimit),
+		RateLimitRuleAPI:  rateLimitRuleAPI,
+		RateLimitRuleNode: rateLimitRuleNode,
 	}
 
 	isaac, err := consensus.NewISAAC([]byte(flagNetworkID), localNode, policy, connectionManager, conf)
