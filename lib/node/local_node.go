@@ -37,7 +37,7 @@ func NewLocalNode(kp *keypair.Full, bindEndpoint *common.Endpoint, alias string)
 
 	n = &LocalNode{
 		keypair:      kp,
-		state:        StateNONE,
+		state:        StateCONSENSUS,
 		alias:        alias,
 		bindEndpoint: bindEndpoint,
 		validators:   map[string]*Validator{},

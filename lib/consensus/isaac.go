@@ -29,6 +29,7 @@ type ISAAC struct {
 	policy               ballot.VotingThresholdPolicy
 	nodesHeight          map[ /* Node.Address() */ string]uint64
 	syncer               SyncController
+	latestReqSyncHeight  uint64
 
 	NetworkID       []byte
 	Node            *node.LocalNode
@@ -119,8 +120,8 @@ func (is *ISAAC) SelectProposer(blockHeight uint64, roundNumber uint64) string {
 	return is.proposerSelector.Select(blockHeight, roundNumber)
 }
 
-func (is *ISAAC) SaveNodeHeight(b ballot.Ballot) {
-	is.nodesHeight[b.Source()] = b.Round().BlockHeight
+func (is *ISAAC) SaveNodeHeight(senderAddr string, height uint64) {
+	is.nodesHeight[senderAddr] = height
 }
 
 func (is *ISAAC) IsAvailableRound(round round.Round) bool {
@@ -139,8 +140,6 @@ func (is *ISAAC) IsAvailableRound(round round.Round) bool {
 			}
 		}
 		return true
-	} else if round.BlockHeight > is.latestConfirmedBlock.Height {
-		is.startSync()
 	}
 
 	return false
@@ -151,16 +150,24 @@ func (is *ISAAC) isInitRound(round round.Round) bool {
 	return is.LatestRound.BlockHash == "" && round.BlockHeight == genesisHeight
 }
 
-func (is *ISAAC) startSync() {
-	height, nodeAddrs := is.getSyncInfo()
-	if is.syncer != nil && len(nodeAddrs) > 0 {
+func (is *ISAAC) StartSync(height uint64, nodeAddrs []string) {
+	is.log.Debug("begin is.StartSync")
+	if is.syncer != nil && len(nodeAddrs) > 0 && is.latestReqSyncHeight < height {
+		is.Node.SetSync()
+		is.log.Info("node state transits to sync")
+		is.latestReqSyncHeight = height
+		is.log.Debug("before is.SetSyncTargetBlock")
 		if err := is.syncer.SetSyncTargetBlock(context.Background(), height, nodeAddrs); err != nil {
 			is.log.Error("syncer.SetSyncTargetBlock", "err", err, "height", height)
 		}
 	}
+
+	return
 }
 
-func (is *ISAAC) getSyncInfo() (uint64, []string) {
+func (is *ISAAC) GetSyncInfo() (uint64, []string, error) {
+	is.log.Debug("begin is.GetSyncInfo", "is.nodesHeight", is.nodesHeight)
+
 	overHeightCount := make(map[ /* height */ uint64] /* count */ int)
 	for _, height := range is.nodesHeight {
 		if _, ok := overHeightCount[height]; ok {
@@ -182,7 +189,7 @@ func (is *ISAAC) getSyncInfo() (uint64, []string) {
 	}
 
 	if biggestHeight <= 1 {
-		return 1, []string{}
+		return 1, []string{}, nil
 	}
 
 	nodeAddrs := []string{}
@@ -192,7 +199,11 @@ func (is *ISAAC) getSyncInfo() (uint64, []string) {
 		}
 	}
 
-	return biggestHeight, nodeAddrs
+	if len(nodeAddrs) == 0 {
+		return 1, nodeAddrs, errors.New("biggestHeight nodeAddrs is empty")
+	}
+
+	return biggestHeight, nodeAddrs, nil
 }
 
 func (is *ISAAC) IsVoted(b ballot.Ballot) bool {

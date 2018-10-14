@@ -95,10 +95,45 @@ func BallotNotFromKnownValidators(c common.Checker, args ...interface{}) (err er
 	return
 }
 
-// BallotSaveNodeHeight saves height of ballot sender in ISAAC.
-func BallotSaveNodeHeight(c common.Checker, args ...interface{}) (err error) {
+// BallotCheckSYNC performs sync by considering sync condition.
+// And to participate in the consensus,
+// update the latestblock by referring to the database.
+func BallotCheckSYNC(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotChecker)
-	checker.NodeRunner.Consensus().SaveNodeHeight(checker.Ballot)
+
+	b := checker.Ballot
+	is := checker.NodeRunner.Consensus()
+	is.SaveNodeHeight(b.Source(), b.Round().BlockHeight)
+
+	var height uint64
+	var nodeAddrs []string
+	height, nodeAddrs, err = checker.NodeRunner.Consensus().GetSyncInfo()
+	if err != nil {
+		return err
+	}
+
+	checker.NodeRunner.log.Debug("check GetSyncInfo()", "len(nodeAddrs)", len(nodeAddrs))
+	if is.LatestConfirmedBlock().Height < height {
+		is.StartSync(height, nodeAddrs)
+
+		var blk block.Block
+		blk, err = block.GetLatestBlock(checker.NodeRunner.storage)
+		checker.NodeRunner.Log().Debug("NodeState is SYNC and GetLatestBlock", "height", blk.Height, "err", err)
+		if err != nil {
+			return
+		}
+
+		if is.LatestConfirmedBlock().Height < blk.Height {
+			checker.NodeRunner.Log().Debug("is.LatestConfirmedBlock().Height < blk.Height")
+			is.SetLatestConsensusedBlock(blk)
+			if blk.Height == b.Round().BlockHeight {
+				checker.LocalNode.SetConsensus()
+				checker.NodeRunner.log.Info("node state transits to consensus")
+
+			}
+		}
+	}
+
 	return
 }
 
