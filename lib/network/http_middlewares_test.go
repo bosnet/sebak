@@ -198,3 +198,48 @@ func TestRateLimitMiddleWareByIPAddress(t *testing.T) {
 	}
 	ts.Close()
 }
+
+func TestRateLimitMiddleWareUnlimit(t *testing.T) {
+	handlerURL := UrlPathPrefixAPI + "/test"
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("1"))
+		return
+	}
+
+	{ // set `Limit` to 0, unlimited requests
+		rate := limiter.Rate{
+			Period: 1 * time.Second,
+			Limit:  0,
+		}
+		router := mux.NewRouter()
+		router.Use(RateLimitMiddleware(nil, common.NewRateLimitRule(rate)))
+		router.HandleFunc(handlerURL, http.HandlerFunc(handler)).Methods("GET")
+		ts := httptest.NewServer(router)
+
+		var wg sync.WaitGroup
+		wg.Add(10)
+		for i := 0; i < 10; i++ {
+			go func() {
+				http.Get(ts.URL + handlerURL)
+				wg.Done()
+			}()
+		}
+		wg.Wait()
+
+		resp, err := http.Get(ts.URL + handlerURL)
+		require.Nil(t, err)
+		ts.Close()
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+
+		// under unlimited rate limit, the rate limit related headers will be
+		// empty.
+		require.Emptyf(t, resp.Header.Get("X-Ratelimit-Limit"), "")
+		require.Emptyf(t, resp.Header.Get("X-Ratelimit-Remaining"), "")
+		require.Emptyf(t, resp.Header.Get("X-Ratelimit-Reset"), "")
+
+		body, err := ioutil.ReadAll(resp.Body)
+		resp.Body.Close()
+
+		require.Equal(t, []byte("1"), body)
+	}
+}

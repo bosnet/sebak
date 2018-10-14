@@ -51,6 +51,8 @@ func rateLimitErrorHandler(w http.ResponseWriter, r *http.Request, err error) {
 	httputils.WriteJSONError(w, errors.ErrorHTTPServerError.Clone().SetData("error", err))
 }
 
+// RateLimitMiddleware throttles the incoming requests; if `Limit` is 0, there
+// will be no limit.
 func RateLimitMiddleware(logger logging.Logger, rule common.RateLimitRule) mux.MiddlewareFunc {
 	if logger == nil {
 		logger = log
@@ -62,33 +64,52 @@ func RateLimitMiddleware(logger logging.Logger, rule common.RateLimitRule) mux.M
 		},
 	)
 
-	defaultMiddleware := stdlib.NewMiddleware(
-		limiter.New(store, rule.Default),
-		stdlib.WithForwardHeader(true),
-		stdlib.WithErrorHandler(rateLimitErrorHandler),
-		stdlib.WithLimitReachedHandler(rateLimitReachedHandler),
-	)
-
-	middlewares := map[ /* ip address */ string]*stdlib.Middleware{}
-	for ip, rate := range rule.ByIPAddress {
-		m := stdlib.NewMiddleware(
-			limiter.New(store, rate),
+	var defaultMiddleware *stdlib.Middleware
+	if rule.Default.Limit > 0 {
+		defaultMiddleware = stdlib.NewMiddleware(
+			limiter.New(store, rule.Default),
 			stdlib.WithForwardHeader(true),
 			stdlib.WithErrorHandler(rateLimitErrorHandler),
 			stdlib.WithLimitReachedHandler(rateLimitReachedHandler),
 		)
-		middlewares[ip] = m
+	}
+
+	middlewaresByIP := map[ /* ip address */ string]*stdlib.Middleware{}
+	for ip, rate := range rule.ByIPAddress {
+		var m *stdlib.Middleware
+		if rate.Limit > 0 {
+			m = stdlib.NewMiddleware(
+				limiter.New(store, rate),
+				stdlib.WithForwardHeader(true),
+				stdlib.WithErrorHandler(rateLimitErrorHandler),
+				stdlib.WithLimitReachedHandler(rateLimitReachedHandler),
+			)
+		}
+		middlewaresByIP[ip] = m
 	}
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// find middleware by ip
 			ip := limiter.GetIPKey(r, true)
 
 			var middleware *stdlib.Middleware
-			var found bool
-			if middleware, found = middlewares[ip]; !found {
+
+			if len(middlewaresByIP) < 1 {
 				middleware = defaultMiddleware
+			} else { // find middleware by ip
+				var found bool
+				if middleware, found = middlewaresByIP[ip]; !found {
+					middleware = defaultMiddleware
+				}
+			}
+
+			if middleware == nil {
+				w.Header().Add("X-RateLimit-Limit", "")
+				w.Header().Add("X-RateLimit-Remaining", "")
+				w.Header().Add("X-RateLimit-Reset", "")
+
+				next.ServeHTTP(w, r)
+				return
 			}
 
 			context, err := middleware.Limiter.Get(r.Context(), ip)
