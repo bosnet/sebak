@@ -221,4 +221,72 @@ func TestParseFlagRateLimit(t *testing.T) {
 		require.Equal(t, time.Second, rule.ByIPAddress[allowedIP].Period)
 		require.Equal(t, int64(8), rule.ByIPAddress[allowedIP].Limit)
 	}
+
+	{ // unlimit
+		testCmd := pflag.NewFlagSet(os.Args[0], pflag.ExitOnError)
+
+		var fr cmdcommon.ListFlags
+		testCmd.Var(&fr, "rate-limit-api", "")
+
+		cmdline := "--rate-limit-api=0-S"
+		err := testCmd.Parse(strings.Fields(cmdline))
+		require.Nil(t, err)
+
+		rule, err := parseFlagRateLimit(fr, common.RateLimitAPI)
+		require.Nil(t, err)
+		require.Equal(t, time.Second, rule.Default.Period)
+		require.Equal(t, int64(0), rule.Default.Limit)
+		require.Equal(t, 0, len(rule.ByIPAddress))
+	}
+
+	{ // lowercase
+		{ // second
+			testCmd := pflag.NewFlagSet(os.Args[0], pflag.ExitOnError)
+
+			var fr cmdcommon.ListFlags
+			testCmd.Var(&fr, "rate-limit-api", "")
+
+			cmdline := "--rate-limit-api=10-s"
+			err := testCmd.Parse(strings.Fields(cmdline))
+			require.Nil(t, err)
+
+			rule, err := parseFlagRateLimit(fr, common.RateLimitAPI)
+			require.Nil(t, err)
+			require.Equal(t, time.Second, rule.Default.Period)
+			require.Equal(t, int64(10), rule.Default.Limit)
+			require.Equal(t, 0, len(rule.ByIPAddress))
+		}
+		{ // minute
+			testCmd := pflag.NewFlagSet(os.Args[0], pflag.ExitOnError)
+
+			var fr cmdcommon.ListFlags
+			testCmd.Var(&fr, "rate-limit-api", "")
+
+			cmdline := "--rate-limit-api=10-m"
+			err := testCmd.Parse(strings.Fields(cmdline))
+			require.Nil(t, err)
+
+			rule, err := parseFlagRateLimit(fr, common.RateLimitAPI)
+			require.Nil(t, err)
+			require.Equal(t, time.Minute, rule.Default.Period)
+			require.Equal(t, int64(10), rule.Default.Limit)
+			require.Equal(t, 0, len(rule.ByIPAddress))
+		}
+		{ // hour
+			testCmd := pflag.NewFlagSet(os.Args[0], pflag.ExitOnError)
+
+			var fr cmdcommon.ListFlags
+			testCmd.Var(&fr, "rate-limit-api", "")
+
+			cmdline := "--rate-limit-api=10-h"
+			err := testCmd.Parse(strings.Fields(cmdline))
+			require.Nil(t, err)
+
+			rule, err := parseFlagRateLimit(fr, common.RateLimitAPI)
+			require.Nil(t, err)
+			require.Equal(t, time.Hour, rule.Default.Period)
+			require.Equal(t, int64(10), rule.Default.Limit)
+			require.Equal(t, 0, len(rule.ByIPAddress))
+		}
+	}
 }

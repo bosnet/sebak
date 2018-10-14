@@ -201,8 +201,7 @@ func parseFlagRateLimit(l cmdcommon.ListFlags, defaultRate limiter.Rate) (rule c
 		}
 	}
 
-	// select last defined default rate
-	if givenRate.Limit < 1 {
+	if givenRate.Period < 1 && givenRate.Limit < 1 {
 		givenRate = defaultRate
 	}
 
