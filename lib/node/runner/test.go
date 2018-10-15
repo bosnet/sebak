@@ -71,10 +71,6 @@ func GetTransaction() (transaction.Transaction, []byte) {
 	}
 }
 
-func TestGenerateNewSequenceID() uint64 {
-	return 0
-}
-
 func GenerateBallot(t *testing.T, proposer *node.LocalNode, round round.Round, tx transaction.Transaction, ballotState ballot.State, sender *node.LocalNode, conf common.Config) *ballot.Ballot {
 	b := ballot.NewBallot(sender.Address(), proposer.Address(), round, []string{tx.GetHash()})
 	b.SetVote(ballot.StateINIT, ballot.VotingYES)

@@ -32,10 +32,6 @@ func TestMakeTransaction(networkID []byte, n int) (kp *keypair.Full, tx Transact
 	return
 }
 
-func TestGenerateNewSequenceID() uint64 {
-	return 0
-}
-
 func TestMakeTransactionWithKeypair(networkID []byte, n int, srcKp *keypair.Full, targetKps ...*keypair.Full) (tx Transaction) {
 	var ops []operation.Operation
 	var targetAddr string
@@ -50,7 +46,7 @@ func TestMakeTransactionWithKeypair(networkID []byte, n int, srcKp *keypair.Full
 
 	tx, _ = NewTransaction(
 		srcKp.Address(),
-		TestGenerateNewSequenceID(),
+		0,
 		ops...,
 	)
 	tx.Sign(srcKp, networkID)
