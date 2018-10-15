@@ -12,6 +12,7 @@ import (
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/consensus/round"
 	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/transaction"
 )
 
@@ -342,4 +343,163 @@ func TestGetMissingTransactionProposerAlsoMissing(t *testing.T) {
 
 	require.Equal(t, ballot.VotingNO, checker.VotingHole)
 	require.Equal(t, 0, g.consensusNR.Consensus().TransactionPool.Len())
+}
+
+type irregularIncomingBallot struct {
+	nr    *NodeRunner
+	nodes []*node.LocalNode
+
+	genesisBlock   block.Block
+	commonAccount  *block.BlockAccount
+	initialBalance common.Amount
+
+	keyA     *keypair.Full
+	accountA *block.BlockAccount
+}
+
+func (p *irregularIncomingBallot) prepare() {
+	p.nr, p.nodes, _ = createNodeRunnerForTesting(2, common.NewConfig(), nil)
+
+	p.genesisBlock, _ = block.GetBlockByHeight(p.nr.Storage(), 1)
+	p.commonAccount, _ = GetCommonAccount(p.nr.Storage())
+	p.initialBalance, _ = GetGenesisBalance(p.nr.Storage())
+
+	p.nr.Consensus().SetProposerSelector(FixedSelector{p.nr.Node().Address()})
+}
+
+func (p *irregularIncomingBallot) runChecker(blt ballot.Ballot) (checker *BallotChecker, err error) {
+	var ballotMessage common.NetworkMessage
+	{
+		b, _ := blt.Serialize()
+		ballotMessage = common.NetworkMessage{
+			Type: common.BallotMessage,
+			Data: b,
+		}
+	}
+
+	baseChecker := &BallotChecker{
+		DefaultChecker: common.DefaultChecker{Funcs: DefaultHandleBaseBallotCheckerFuncs},
+		NodeRunner:     p.nr,
+		LocalNode:      p.nr.Node(),
+		NetworkID:      p.nr.NetworkID(),
+		Message:        ballotMessage,
+		Log:            p.nr.Log(),
+		VotingHole:     ballot.VotingNOTYET,
+	}
+	{
+		err := common.RunChecker(baseChecker, common.DefaultDeferFunc)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	var funcs []common.CheckerFunc
+	if blt.State() == ballot.StateINIT {
+		funcs = DefaultHandleINITBallotCheckerFuncs
+	} else if blt.State() == ballot.StateSIGN {
+		funcs = DefaultHandleSIGNBallotCheckerFuncs
+	}
+
+	checker = &BallotChecker{
+		DefaultChecker: common.DefaultChecker{Funcs: funcs},
+		NodeRunner:     baseChecker.NodeRunner,
+		LocalNode:      baseChecker.LocalNode,
+		NetworkID:      baseChecker.NetworkID,
+		Message:        ballotMessage,
+		Ballot:         baseChecker.Ballot,
+		VotingHole:     ballot.VotingNOTYET,
+		Log:            baseChecker.Log,
+	}
+	err = common.RunChecker(checker, common.DefaultDeferFunc)
+
+	return
+}
+
+func (p *irregularIncomingBallot) makeBallot(state ballot.State) (blt *ballot.Ballot) {
+	rd := round.Round{
+		Number:      0,
+		BlockHeight: p.genesisBlock.Height,
+		BlockHash:   p.genesisBlock.Hash,
+		TotalTxs:    p.genesisBlock.TotalTxs,
+	}
+
+	p.keyA, _ = keypair.Random()
+	p.accountA = block.NewBlockAccount(p.keyA.Address(), common.Amount(common.BaseReserve)*2)
+	p.accountA.Save(p.nr.Storage())
+
+	kpB, _ := keypair.Random()
+
+	tx := transaction.MakeTransactionCreateAccount(p.keyA, kpB.Address(), common.BaseReserve)
+	tx.B.SequenceID = p.accountA.SequenceID
+	tx.Sign(p.keyA, networkID)
+
+	// inject txs to `TransactionPool`
+	p.nr.Consensus().TransactionPool.Add(tx)
+
+	blt = ballot.NewBallot(p.nr.Node().Address(), rd, []string{tx.GetHash()})
+
+	opc, _ := ballot.NewCollectTxFeeFromBallot(*blt, p.commonAccount.Address, tx)
+	opi, _ := ballot.NewInflationFromBallot(*blt, p.commonAccount.Address, p.initialBalance)
+
+	ptx, _ := ballot.NewProposerTransactionFromBallot(*blt, opc, opi)
+	blt.SetProposerTransaction(ptx)
+	blt.SetVote(state, ballot.VotingYES)
+	blt.Sign(p.nr.Node().Keypair(), networkID)
+
+	return blt
+}
+
+// TestRegularIncomingBallots checks the normal situation of consensus; node
+// receives `INIT` ballot and then, `SIGN` ballot with regular sequence.
+func TestRegularIncomingBallots(t *testing.T) {
+	p := &irregularIncomingBallot{}
+	p.prepare()
+
+	cm := p.nr.ConnectionManager().(*TestConnectionManager)
+	require.Equal(t, 0, len(cm.Messages()))
+
+	// send `INIT` ballot
+	blt := p.makeBallot(ballot.StateINIT)
+	_, err := p.runChecker(*blt)
+	require.Nil(t, err)
+	require.Equal(t, 1, len(cm.Messages())) // this check node broadcast the new SIGN ballot
+
+	received := cm.Messages()[0].(ballot.Ballot)
+	require.Equal(t, blt.H.ProposerSignature, received.H.ProposerSignature)
+
+	_, err = p.runChecker(received)
+	require.Nil(t, err)
+	require.Equal(t, 1, len(cm.Messages())) // this check node does not broadcast
+}
+
+// TestIrregularIncomingBallots checks the normal situation of consensus; node
+// receives `SIGN` ballot and then, `INIT` ballot with irregular sequence. This
+// will check the node must broadcast new SIGN ballot.
+func TestIrregularIncomingBallots(t *testing.T) {
+	p := &irregularIncomingBallot{}
+	p.prepare()
+
+	cm := p.nr.ConnectionManager().(*TestConnectionManager)
+	require.Equal(t, 0, len(cm.Messages()))
+
+	// send `SIGN` ballot
+	initBallot := p.makeBallot(ballot.StateINIT)
+
+	signBallot := &ballot.Ballot{}
+	*signBallot = *initBallot
+	signBallot.SetVote(ballot.StateSIGN, ballot.VotingYES)
+	signBallot.Sign(p.nodes[1].Keypair(), networkID)
+
+	_, err := p.runChecker(*signBallot)
+	require.Nil(t, err)
+	require.Equal(t, 0, len(cm.Messages()))
+
+	_, err = p.runChecker(*initBallot)
+	require.Nil(t, err)
+	require.Equal(t, 1, len(cm.Messages()))
+
+	// check the broadcasted ballot is valid `SIGN` ballot
+	received := cm.Messages()[0].(ballot.Ballot)
+	require.Equal(t, initBallot.H.ProposerSignature, received.H.ProposerSignature)
+	require.Equal(t, ballot.StateSIGN, received.State())
 }

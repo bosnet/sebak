@@ -6,8 +6,6 @@ import (
 	"encoding/json"
 	"io"
 
-	logging "github.com/inconshreveable/log15"
-
 	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
@@ -17,6 +15,7 @@ import (
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
 	"boscoin.io/sebak/lib/transaction/operation"
+	logging "github.com/inconshreveable/log15"
 )
 
 type CheckerStopCloseConsensus struct {
@@ -343,7 +342,7 @@ var INITBallotTransactionCheckerFuncs = []common.CheckerFunc{
 func INITBallotValidateTransactions(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotChecker)
 
-	if !checker.IsNew || checker.VotingFinished {
+	if checker.VotingFinished {
 		return
 	}
 	var voted bool
@@ -390,9 +389,6 @@ func INITBallotValidateTransactions(c common.Checker, args ...interface{}) (err 
 // SIGNBallotBroadcast will broadcast the validated SIGN ballot.
 func SIGNBallotBroadcast(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotChecker)
-	if !checker.IsNew {
-		return
-	}
 
 	newBallot := checker.Ballot
 	newBallot.SetSource(checker.LocalNode.Address())
@@ -413,9 +409,6 @@ func SIGNBallotBroadcast(c common.Checker, args ...interface{}) (err error) {
 // TransitStateToSIGN changes ISAACState to SIGN
 func TransitStateToSIGN(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotChecker)
-	if !checker.IsNew {
-		return
-	}
 	checker.NodeRunner.TransitISAACState(checker.Ballot.Round(), ballot.StateSIGN)
 
 	return
