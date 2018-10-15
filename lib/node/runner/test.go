@@ -10,7 +10,6 @@ import (
 	"boscoin.io/sebak/lib/consensus/round"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
-	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
 )
 
@@ -30,7 +29,7 @@ func MakeNodeRunner() (*NodeRunner, *node.LocalNode) {
 
 	conf := common.NewConfig()
 	is, _ := consensus.NewISAAC(networkID, localNode, policy, connectionManager, conf)
-	st := InitTestBlockchain()
+	st := block.InitTestBlockchain()
 
 	nodeRunner, _ := NewNodeRunner(string(networkID), localNode, policy, n, is, st, conf)
 	return nodeRunner, localNode
@@ -128,7 +127,7 @@ func createNodeRunnerForTesting(n int, conf common.Config, recv chan struct{}) (
 	is, _ := consensus.NewISAAC(networkID, localNode, policy, connectionManager, common.NewConfig())
 	is.SetProposerSelector(FixedSelector{localNode.Address()})
 
-	st := InitTestBlockchain()
+	st := block.InitTestBlockchain()
 	nr, err := NewNodeRunner(string(networkID), localNode, policy, ns[0], is, st, conf)
 	if err != nil {
 		panic(err)
@@ -138,21 +137,4 @@ func createNodeRunnerForTesting(n int, conf common.Config, recv chan struct{}) (
 	nr.Consensus().SetLatestBlock(genesisBlock)
 
 	return nr, nodes, connectionManager
-}
-
-// Initialize the blockchain with a genesis account and a common account
-func InitTestBlockchain() *storage.LevelDBBackend {
-	st := storage.NewTestStorage()
-
-	balance := common.MaximumBalance
-	genesisAccount := block.NewBlockAccount(block.GenesisKP.Address(), balance)
-	genesisAccount.Save(st)
-
-	commonAccount := block.NewBlockAccount(block.CommonKP.Address(), 0)
-	commonAccount.Save(st)
-
-	genesisBlock, _ := block.MakeGenesisBlock(st, *genesisAccount, *commonAccount, networkID)
-	genesisBlock.Save(st)
-
-	return st
 }
