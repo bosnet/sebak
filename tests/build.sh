@@ -30,23 +30,14 @@ if [ -n "$3" ]; then
     BUILD_ARGS=$3
 fi
 
-## Build the docker builder image
-IMAGE=$(docker build --tag sebak:builder -q \
+## Build the docker image
+IMAGE=$(docker build --tag sebak:runner -q \
     --build-arg BUILD_MODE=${BUILD_MODE} \
     --build-arg BUILD_PKG=${BUILD_PKG} \
     --build-arg BUILD_ARGS="${BUILD_ARGS}"  \
-    ${ROOT_DIR}/ -f ${ROOT_DIR}/Dockerfile.build | cut -d: -f2)
-
-if [ -z ${IMAGE} ]; then
-    echo "Failed to build builder docker image" >&2
-    exit 1
-fi
-
-## Build the docker runner image
-IMAGE=$(docker build --tag sebak:runner -q \
     ${ROOT_DIR}/ | cut -d: -f2)
 
 if [ -z ${IMAGE} ]; then
-    echo "Failed to build runner docker image" >&2
+    echo "Failed to build builder docker image" >&2
     exit 1
 fi

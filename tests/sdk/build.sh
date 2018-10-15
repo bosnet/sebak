@@ -13,7 +13,7 @@ IMAGE=$(docker build --tag sebak:builder_sdk -q \
     --build-arg BUILD_MODE=${BUILD_MODE} \
     --build-arg BUILD_PKG=${BUILD_PKG} \
     --build-arg BUILD_ARGS="${BUILD_ARGS}"  \
-    ${ROOT_DIR}/ -f ${ROOT_DIR}/Dockerfile.build | cut -d: -f2)
+    ${ROOT_DIR}/ -f ${ROOT_DIR}/Dockerfile_client.build | cut -d: -f2)
 
 if [ -z ${IMAGE} ]; then
     echo "Failed to build builder docker image" >&2
