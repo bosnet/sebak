@@ -3,6 +3,8 @@ package runner
 import (
 	"encoding/json"
 
+	"boscoin.io/sebak/lib/consensus/round"
+
 	logging "github.com/inconshreveable/log15"
 
 	"boscoin.io/sebak/lib/ballot"
@@ -101,40 +103,105 @@ func BallotNotFromKnownValidators(c common.Checker, args ...interface{}) (err er
 func BallotCheckSYNC(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotChecker)
 
-	b := checker.Ballot
 	is := checker.NodeRunner.Consensus()
+	b := checker.Ballot
+	if is.LatestConfirmedBlock().Height >= b.Round().BlockHeight { // in consensus, not sync
+		return
+	}
+
+	if !isBallotAcceptYes(b) {
+		return
+	}
+
+	if !hasBallotValidProposer(is, b) {
+		return
+	}
+
+	if is.LatestBallot.H.Hash == "" {
+		is.LatestBallot = b
+	}
+
 	is.SaveNodeHeight(b.Source(), b.Round().BlockHeight)
 
-	var height uint64
+	var syncHeight uint64
 	var nodeAddrs []string
-	height, nodeAddrs, err = checker.NodeRunner.Consensus().GetSyncInfo()
+	syncHeight, nodeAddrs, err = checker.NodeRunner.Consensus().GetSyncInfo()
 	if err != nil {
 		return err
 	}
 
-	checker.NodeRunner.log.Debug("check GetSyncInfo()", "len(nodeAddrs)", len(nodeAddrs))
-	if is.LatestConfirmedBlock().Height < height {
-		is.StartSync(height, nodeAddrs)
+	defer func() {
+		if b.Round().BlockHeight == syncHeight {
+			checker.NodeRunner.Log().Debug("is.SetLatestConsensusedBlock(blk)", "syncHeight", syncHeight)
+			is.LatestBallot = b
+		}
+	}()
 
-		var blk block.Block
-		blk, err = block.GetLatestBlock(checker.NodeRunner.storage)
-		checker.NodeRunner.Log().Debug("NodeState is SYNC and GetLatestBlock", "height", blk.Height, "err", err)
+	if err = updateLatestBlockFromDatabase(is, checker.NodeRunner.storage, checker.NodeRunner.Log()); err != nil {
+		return
+	}
+
+	latestHeight := is.LatestConfirmedBlock().Height
+	if latestHeight < syncHeight-1 { // request sync until syncHeight
+		checker.NodeRunner.Log().Debug("latestHeight < syncHeight-1", "latestHeight", latestHeight, "syncHeight", syncHeight)
+		is.StartSync(syncHeight, nodeAddrs)
+	} else {
+		if latestHeight == syncHeight-1 { // finish previous and current height ballot
+			var previousBlock block.Block
+			previousBlock, err = finishBallot(
+				checker.NodeRunner.Storage(),
+				is.LatestBallot,
+				checker.NodeRunner.Consensus().TransactionPool,
+				checker.Log,
+				checker.NodeRunner.Log(),
+			)
+			checker.NodeRunner.Consensus().SetLatestConsensusedBlock(previousBlock)
+			if err != nil {
+				return
+			}
+		}
+
+		var block block.Block
+		block, err = finishBallot(
+			checker.NodeRunner.Storage(),
+			checker.Ballot,
+			checker.NodeRunner.Consensus().TransactionPool,
+			checker.Log,
+			checker.NodeRunner.Log(),
+		)
 		if err != nil {
 			return
 		}
 
-		if is.LatestConfirmedBlock().Height < blk.Height {
-			checker.NodeRunner.Log().Debug("is.LatestConfirmedBlock().Height < blk.Height")
-			is.SetLatestConsensusedBlock(blk)
-			if blk.Height == b.Round().BlockHeight {
-				checker.LocalNode.SetConsensus()
-				checker.NodeRunner.log.Info("node state transits to consensus")
-
-			}
-		}
+		checker.NodeRunner.Consensus().SetLatestConsensusedBlock(block)
+		checker.LocalNode.SetConsensus()
+		checker.NodeRunner.TransitISAACState(b.Round(), ballot.StateALLCONFIRM)
+		err = NewCheckerStopCloseConsensus(checker, "ballot got consensus")
+		return
 	}
 
 	return
+}
+
+func isBallotAcceptYes(b ballot.Ballot) bool {
+	return b.State() == ballot.StateACCEPT && b.Vote() == ballot.VotingYES
+}
+
+func hasBallotValidProposer(is *consensus.ISAAC, b ballot.Ballot) bool {
+	return b.Proposer() == is.SelectProposer(b.Round().BlockHeight, b.Round().Number)
+}
+
+func updateLatestBlockFromDatabase(is *consensus.ISAAC, st *storage.LevelDBBackend, log logging.Logger) error {
+	blk, err := block.GetLatestBlock(st)
+	if err != nil {
+		return err
+	}
+	if is.LatestConfirmedBlock().Height < blk.Height {
+		log.Info("is.SetLatestConsensusedBlock(blk)", "blk.Height", blk.Height)
+		is.SetLatestConsensusedBlock(blk)
+	}
+
+	return nil
 }
 
 // BallotAlreadyFinished checks the incoming ballot in
@@ -396,6 +463,11 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) (err error) {
 }
 
 func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *transaction.TransactionPool, log, infoLog logging.Logger) (blk block.Block, err error) {
+	var isValid bool
+	if isValid, err = isValidRound(st, b.Round(), infoLog); err != nil || !isValid {
+		return
+	}
+
 	var ts *storage.LevelDBBackend
 	if ts, err = st.OpenTransaction(); err != nil {
 		return
@@ -435,6 +507,32 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 	}
 
 	return
+}
+
+func isValidRound(st *storage.LevelDBBackend, r round.Round, log logging.Logger) (bool, error) {
+	var latestBlock block.Block
+	latestBlock, err := block.GetLatestBlock(st)
+	if err != nil {
+		return false, err
+	}
+	if latestBlock.Height != r.BlockHeight {
+		log.Error(
+			"ballot height is not equal to latestBlock",
+			"in ballot", r.BlockHeight,
+			"latest height", latestBlock.Height,
+		)
+		return false, errors.New("ballot height is not equal to latestBlock")
+	}
+	if latestBlock.Hash != r.BlockHash {
+		log.Error(
+			"latest block hash in ballot is not equal to latestBlock",
+			"in ballot", r.BlockHash,
+			"latest block", latestBlock.Hash,
+		)
+		return false, errors.New("latest block hash in ballot is not equal to latestBlock")
+	}
+
+	return true, nil
 }
 
 func FinishTransactions(blk block.Block, transactions []*transaction.Transaction, ts *storage.LevelDBBackend) (err error) {
