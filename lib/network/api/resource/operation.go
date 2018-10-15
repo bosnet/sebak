@@ -5,6 +5,7 @@ import (
 
 	"boscoin.io/sebak/lib/block"
 
+	"boscoin.io/sebak/lib/transaction/operation"
 	"github.com/nvellon/hal"
 )
 
@@ -20,11 +21,14 @@ func NewOperation(bo *block.BlockOperation) *Operation {
 }
 
 func (o Operation) GetMap() hal.Entry {
+	body, _ := operation.UnmarshalBodyJSON(o.bo.Type, o.bo.Body)
+
 	return hal.Entry{
 		"hash":    o.bo.Hash,
 		"source":  o.bo.Source,
 		"type":    o.bo.Type,
 		"tx_hash": o.bo.TxHash,
+		"body":    body,
 	}
 }
 
