@@ -50,9 +50,8 @@ func createTestNodeRunner(n int, conf common.Config) []*NodeRunner {
 		}
 	}
 
-	address := genesisKP.Address()
 	balance := common.BaseFee.MustAdd(common.BaseReserve)
-	account := block.NewBlockAccount(address, balance)
+	account := block.NewBlockAccount(block.GenesisKP.Address(), balance)
 	var nodeRunners []*NodeRunner
 	for i := 0; i < n; i++ {
 		localNode := nodes[i]
