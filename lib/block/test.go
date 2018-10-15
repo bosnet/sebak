@@ -5,6 +5,7 @@ import (
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/consensus/round"
+	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
 )
 
@@ -33,6 +34,42 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+}
+
+//
+// Make a default-initialized test blockchain
+//
+// Write to the provided storage the genesis and common account,
+// as well as the genesis block.
+// This provide a simple, workable chain to use within tests.
+//
+// If anything goes wrong, `panic`
+//
+// Params:
+//   st = Storage to write the blockchain to
+//
+func MakeTestBlockchain(st *storage.LevelDBBackend) {
+	balance := common.MaximumBalance
+	genesisAccount := NewBlockAccount(GenesisKP.Address(), balance)
+	if err := genesisAccount.Save(st); err != nil {
+		panic(err)
+	}
+
+	commonAccount := NewBlockAccount(CommonKP.Address(), 0)
+	if err := commonAccount.Save(st); err != nil {
+		panic(err)
+	}
+
+	if _, err := MakeGenesisBlock(st, *genesisAccount, *commonAccount, networkID); err != nil {
+		panic(err)
+	}
+}
+
+// Like `MakeTestBlockchain`, but also create a storage
+func InitTestBlockchain() *storage.LevelDBBackend {
+	st := storage.NewTestStorage()
+	MakeTestBlockchain(st)
+	return st
 }
 
 func TestMakeNewBlock(transactions []string) Block {
