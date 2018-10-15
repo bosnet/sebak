@@ -12,6 +12,7 @@ import (
 	"boscoin.io/sebak/lib/network/api/resource"
 	"boscoin.io/sebak/lib/network/httputils"
 	"boscoin.io/sebak/lib/storage"
+	"strings"
 )
 
 func (api NetworkHandlerAPI) GetOperationsByTxHashHandler(w http.ResponseWriter, r *http.Request) {
@@ -43,8 +44,8 @@ func (api NetworkHandlerAPI) GetOperationsByTxHashHandler(w http.ResponseWriter,
 	ops, cursor := api.getOperationsByTxHash(hash, options)
 
 	self := r.URL.String()
-	next := GetTransactionOperationsHandlerPattern + "?" + options.SetCursor(cursor).SetReverse(false).Encode()
-	prev := GetTransactionOperationsHandlerPattern + "?" + options.SetReverse(true).Encode()
+	next := strings.Replace(resource.URLTransactionOperations, "{id}", hash, -1) + "?" + options.SetCursor(cursor).SetReverse(false).Encode()
+	prev := strings.Replace(resource.URLTransactionOperations, "{id}", hash, -1) + "?" + options.SetReverse(true).Encode()
 	list := resource.NewResourceList(ops, self, next, prev)
 
 	if err := httputils.WriteJSON(w, 200, list); err != nil {

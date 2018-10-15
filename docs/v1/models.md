@@ -22,7 +22,7 @@
 + created: `2018-09-12T09:08:35.157472400Z` - Created time of the transaction. It is set by wallet
 + operation_count: 1 (number) - The number of operations in this transaction.
 + _links 
-    + accounts
+    + account
         + href: `/accounts/GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ`
     + operations
         + href: `/transactions/ghf6msRhE4jRf5DPib9UHD1msadvmZs9o53V9FQTb11/operations{?cursor,limit,order}`
@@ -78,9 +78,10 @@
 + amount: 1000000 - amount in GON
 + target: GDPWP7BOOMEKK6DUQELQD7H5NEENPLDTQQWYOIBSFS65WH7DNG7UWVKB - The funded account's public key
 + hash: E4qTH5UmzHy2Psdxh8RaQomqJb1gcUZFVENimzV9YB8D - Hash of operation
++ tx_hash: ghf6msRhE4jRf5DPib9UHD1msadvmZs9o53V9FQTb11 - Hash of transaction
 + type: create-account - operation type. ex. payment, create-account
 + _links 
-    + accounts 
+    + account 
         + href: `/accounts/GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ`
     + transaction 
         + href: `/operations/E4qTH5UmzHy2Psdxh8RaQomqJb1gcUZFVENimzV9YB8D/transactions`
@@ -99,6 +100,7 @@
         + amount: 1000000
         + target: GDPWP7BOOMEKK6DUQELQD7H5NEENPLDTQQWYOIBSFS65WH7DNG7UWVKB
         + hash: E4qTH5UmzHy2Psdxh8RaQomqJb1gcUZFVENimzV9YB8D
+        + tx_hash: ghf6msRhE4jRf5DPib9UHD1msadvmZs9o53V9FQTb11
         + type: create-account
 + _links
     + next

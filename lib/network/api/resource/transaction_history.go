@@ -30,7 +30,7 @@ func (t TransactionHistory) GetMap() hal.Entry {
 func (t TransactionHistory) Resource() *hal.Resource {
 	r := hal.NewResource(t, t.LinkSelf())
 	r.AddLink("accounts", hal.NewLink(strings.Replace(URLAccounts, "{id}", t.bt.Source, -1)))
-	r.AddLink("operations", hal.NewLink(strings.Replace(URLTransactions, "{id}", t.bt.Hash, -1)+"/operations{?cursor,limit,order}", hal.LinkAttr{"templated": true}))
+	r.AddLink("operations", hal.NewLink(strings.Replace(URLTransactionOperations, "{id}", t.bt.Hash, -1)+"{?cursor,limit,order}", hal.LinkAttr{"templated": true}))
 	return r
 }
 

@@ -12,6 +12,7 @@ import (
 	"boscoin.io/sebak/lib/network/api/resource"
 	"boscoin.io/sebak/lib/network/httputils"
 	"boscoin.io/sebak/lib/storage"
+	"strings"
 )
 
 func (api NetworkHandlerAPI) GetTransactionsHandler(w http.ResponseWriter, r *http.Request) {
@@ -141,8 +142,8 @@ func (api NetworkHandlerAPI) GetTransactionsByAccountHandler(w http.ResponseWrit
 
 	txs := readFunc()
 	self := r.URL.String()
-	next := GetAccountTransactionsHandlerPattern + "?" + options.SetCursor(cursor).SetReverse(false).Encode()
-	prev := GetAccountTransactionsHandlerPattern + "?" + options.SetReverse(true).Encode()
+	next := strings.Replace(resource.URLAccountTransactions, "{id}", address, -1) + "?" + options.SetCursor(cursor).SetReverse(false).Encode()
+	prev := strings.Replace(resource.URLAccountTransactions, "{id}", address, -1) + "?" + options.SetReverse(true).Encode()
 	list := resource.NewResourceList(txs, self, next, prev)
 
 	if err := httputils.WriteJSON(w, 200, list); err != nil {
