@@ -45,13 +45,13 @@ for dir in ${TEST_DIRS}; do
     # Also SUPER IMPORTANT: the `-test` args need to be before any other args, or they are simply ignored...
     export NODE1=$(docker run -d --network host --env-file=${ROOT_DIR}/docker/node1.env \
                           ${NODE_DOCKER_IMAGE} -test.coverprofile=coverage.txt node --genesis=${SEBAK_GENESIS},${SEBAK_COMMON}\
-                          --log-level=debug --timeout-init=10 --timeout-sign=10 --timeout-accept=10 --block-time=20)
+                          --log-level=debug)
     export NODE2=$(docker run -d --network host --env-file=${ROOT_DIR}/docker/node2.env \
                           ${NODE_DOCKER_IMAGE} -test.coverprofile=coverage.txt node --genesis=${SEBAK_GENESIS},${SEBAK_COMMON}\
-                          --log-level=debug --timeout-init=10 --timeout-sign=10 --timeout-accept=10 --block-time=20)
+                          --log-level=debug)
     export NODE3=$(docker run -d --network host --env-file=${ROOT_DIR}/docker/node3.env \
                           ${NODE_DOCKER_IMAGE} -test.coverprofile=coverage.txt node --genesis=${SEBAK_GENESIS},${SEBAK_COMMON}\
-                          --log-level=debug --timeout-init=10 --timeout-sign=10 --timeout-accept=10 --block-time=20)
+                          --log-level=debug)
 
     DOCKER_CONTAINERS="${DOCKER_CONTAINERS} ${NODE1} ${NODE2} ${NODE3}"
 
