@@ -9,7 +9,7 @@ BUILD_PKG="./..."
 BUILD_ARGS=""
 
 ## Build the docker builder image
-IMAGE=$(docker build --tag sebak:builder -q \
+IMAGE=$(docker build --tag sebak:builder_sdk -q \
     --build-arg BUILD_MODE=${BUILD_MODE} \
     --build-arg BUILD_PKG=${BUILD_PKG} \
     --build-arg BUILD_ARGS="${BUILD_ARGS}"  \

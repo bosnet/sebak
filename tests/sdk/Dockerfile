@@ -2,7 +2,7 @@
 FROM alpine:latest
 LABEL maintainer="BOSCoin Developers <devteam@boscoin.io>"
 
-COPY --from=sebak:builder /go/bin/sdk /sebak/
+COPY --from=sebak:builder_sdk /go/bin/sdk /sebak/
 COPY ./entrypoint.sh /sebak/
 
 WORKDIR /sebak/

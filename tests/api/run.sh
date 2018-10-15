@@ -31,6 +31,7 @@ for dir in ${TEST_DIRS}; do
     # because the reports are written on program's exit, which also means container's shutdown
     # Also SUPER IMPORTANT: the `-test` args need to be before any other args, or they are simply ignored...
 
+    NODES=""
     for index in 1 2 3; do
         NODE=$(docker run -d --network host --env-file=${ROOT_DIR}/docker/node${index}.env \
                        sebak:runner \
@@ -39,6 +40,7 @@ for dir in ${TEST_DIRS}; do
                        --genesis=${SEBAK_GENESIS},${SEBAK_COMMON} \
                        --log-level=debug)
         DOCKER_CONTAINERS="${DOCKER_CONTAINERS} ${NODE}"
+        NODES="${NODES} ${NODE}"
     done
 
     # Give them a bit of time
@@ -47,16 +49,17 @@ for dir in ${TEST_DIRS}; do
     # Run the tests
     docker run --rm --network host sebak:api_tester ${dir}
 
-        # Copy integration tests
+    # Shut down the containers - we need to do so for integration reports to be written
+    docker stop ${NODES}
+
+    # Copy integration tests
     mkdir -p ${dir}/coverage/node{1,2,3}/
     index=1
-    for CONTAINER in ${DOCKER_CONTAINERS}; do
-        docker cp ${CONTAINER}:/sebak/coverage.txt ${dir}/coverage/node${index}/coverage.txt
-        index = ${index} + 1
+    for NODE in ${NODES}; do
+        docker cp ${NODE}:/sebak/coverage.txt ${dir}/coverage/node${index}/coverage.txt
+        index=`expr ${index} + 1`
     done
 
-    # Shut down the containers - we need to do so for integration reports to be written
-    docker stop ${DOCKER_CONTAINERS}
     # Cleanup
-    docker rm -f ${DOCKER_CONTAINERS} || true
+    docker rm -f ${NODES} || true
 done
