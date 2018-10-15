@@ -68,6 +68,53 @@ func TestSyncerSetSyncTarget(t *testing.T) {
 	SyncerTest(t, fn)
 }
 
+func TestSyncerStartEqualToHigh(t *testing.T) {
+	fn := func(tctx *SyncerTestContext) {
+		var (
+			ctx    = context.Background()
+			syncer = tctx.syncer
+			infoc  = tctx.syncInfoC
+		)
+
+		{
+			bk := block.TestMakeNewBlock([]string{})
+			bk.Height = uint64(1)
+			bk.Save(tctx.st)
+		}
+
+		var (
+			height    uint64   = 2
+			cnt       uint64   = 2
+			nodeAddrs []string = []string{"a", "b"}
+		)
+
+		syncer.validator = &mockValidator{
+			validateFunc: func(ctx context.Context, si *SyncInfo) error {
+				assert.Equal(t, len(si.NodeAddrs), 2)
+				infoc <- si
+				atomic.AddUint64(&cnt, 1)
+				if atomic.LoadUint64(&cnt) > 2 {
+					close(infoc)
+				}
+				return nil
+			},
+		}
+
+		go func() {
+			syncer.Start()
+		}()
+
+		syncer.SetSyncTargetBlock(ctx, height, nodeAddrs)
+
+		var heights []uint64
+		for si := range infoc {
+			heights = append(heights, si.BlockHeight)
+		}
+		require.Equal(t, len(heights), 1)
+	}
+	SyncerTest(t, fn)
+}
+
 func SyncerTest(t *testing.T, fn func(*SyncerTestContext)) {
 	st := storage.NewTestStorage()
 	defer st.Close()

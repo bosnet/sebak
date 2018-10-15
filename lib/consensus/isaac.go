@@ -30,6 +30,7 @@ type ISAAC struct {
 	nodesHeight          map[ /* Node.Address() */ string]uint64
 	syncer               SyncController
 	latestReqSyncHeight  uint64
+	LatestBallot         ballot.Ballot
 
 	NetworkID       []byte
 	Node            *node.LocalNode
@@ -54,6 +55,7 @@ func NewISAAC(networkID []byte, node *node.LocalNode, p ballot.VotingThresholdPo
 		log:               log.New(logging.Ctx{"node": node.Alias()}),
 		nodesHeight:       make(map[string]uint64),
 		syncer:            syncer,
+		LatestBallot:      ballot.Ballot{},
 	}
 
 	return
@@ -153,8 +155,10 @@ func (is *ISAAC) isInitRound(round round.Round) bool {
 func (is *ISAAC) StartSync(height uint64, nodeAddrs []string) {
 	is.log.Debug("begin is.StartSync")
 	if is.syncer != nil && len(nodeAddrs) > 0 && is.latestReqSyncHeight < height {
-		is.Node.SetSync()
-		is.log.Info("node state transits to sync")
+		if is.Node.State() != node.StateSYNC {
+			is.log.Info("node state transits to sync", "height", height)
+			is.Node.SetSync()
+		}
 		is.latestReqSyncHeight = height
 		is.log.Debug("before is.SetSyncTargetBlock")
 		if err := is.syncer.SetSyncTargetBlock(context.Background(), height, nodeAddrs); err != nil {

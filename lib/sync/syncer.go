@@ -193,7 +193,7 @@ func (s *Syncer) sync(p *SyncProgress, nodeAddrs []string) {
 				msg = fmt.Sprintf("sync progress")
 			}
 			s.logger.Info(msg,
-				"start", p.StartingBlock, "cur", p.CurrentBlock, "high", p.HighestBlock)
+				"p.StartingBlock", p.StartingBlock, "cur", p.CurrentBlock, "high", p.HighestBlock)
 		}
 	)
 
