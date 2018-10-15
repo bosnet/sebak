@@ -51,6 +51,10 @@ var (
 	flagTimeoutACCEPT       string = common.GetENVValue("SEBAK_TIMEOUT_ACCEPT", "2")
 	flagBlockTime           string = common.GetENVValue("SEBAK_BLOCK_TIME", "5")
 	flagTransactionsLimit   string = common.GetENVValue("SEBAK_TRANSACTIONS_LIMIT", "1000")
+	flagSyncPoolSize        string = common.GetENVValue("SEBAK_SYNC_POOL_SIZE", "300")
+	flagSyncFetchTimeout    string = common.GetENVValue("SEBAK_SYNC_FETCH_TIMEOUT", "1m")
+	flagSyncRetryInterval   string = common.GetENVValue("SEBAK_SYNC_RETRY_INTERVAL", "10s")
+	flagSyncCheckInterval   string = common.GetENVValue("SEBAK_SYNC_CHECK_INTERVAL", "30s")
 )
 
 var (
@@ -67,6 +71,10 @@ var (
 	timeoutACCEPT     time.Duration
 	blockTime         time.Duration
 	transactionsLimit uint64
+	syncPoolSize      int
+	syncFetchTimeout  time.Duration
+	syncRetryInterval time.Duration
+	syncCheckInterval time.Duration
 	logLevel          logging.Lvl
 	log               logging.Logger = logging.New("module", "main")
 )
@@ -139,6 +147,10 @@ func init() {
 	nodeCmd.Flags().StringVar(&flagTimeoutACCEPT, "timeout-accept", flagTimeoutACCEPT, "timeout of the accept state")
 	nodeCmd.Flags().StringVar(&flagBlockTime, "block-time", flagBlockTime, "block creation time")
 	nodeCmd.Flags().StringVar(&flagTransactionsLimit, "transactions-limit", flagTransactionsLimit, "transactions limit in a ballot")
+	nodeCmd.Flags().StringVar(&flagSyncPoolSize, "sync-pool-size", flagSyncPoolSize, "sync pool size")
+	nodeCmd.Flags().StringVar(&flagSyncFetchTimeout, "sync-fetch-timeout", flagSyncFetchTimeout, "sync fetch timeout")
+	nodeCmd.Flags().StringVar(&flagSyncRetryInterval, "sync-retry-interval", flagSyncRetryInterval, "sync retry interval")
+	nodeCmd.Flags().StringVar(&flagSyncCheckInterval, "sync-check-interval", flagSyncCheckInterval, "sync check interval")
 
 	rootCmd.AddCommand(nodeCmd)
 }
@@ -251,6 +263,17 @@ func parseFlagsNode() {
 		threshold = int(tmpUint64)
 	}
 
+	var tmpPoolSize uint64
+	if tmpPoolSize, err = strconv.ParseUint(flagSyncPoolSize, 10, 64); err != nil {
+		cmdcommon.PrintFlagsError(nodeCmd, "--sync-pool-size", err)
+	} else {
+		syncPoolSize = int(tmpPoolSize)
+	}
+
+	syncRetryInterval = getTimeDuration(flagSyncRetryInterval, sync.RetryInterval, "--sync-retry-interval")
+	syncFetchTimeout = getTimeDuration(flagSyncFetchTimeout, sync.FetchTimeout, "--sync-fetch-timeout")
+	syncCheckInterval = getTimeDuration(flagSyncCheckInterval, sync.CheckBlockHeightInterval, "--sync-check-interval")
+
 	if logLevel, err = logging.LvlFromString(flagLogLevel); err != nil {
 		cmdcommon.PrintFlagsError(nodeCmd, "--log-level", err)
 	}
@@ -331,6 +354,17 @@ func getTime(timeoutStr string, defaultValue time.Duration, errMessage string) t
 	return timeoutDuration
 }
 
+func getTimeDuration(str string, defaultValue time.Duration, errMessage string) time.Duration {
+	if strings.TrimSpace(str) == "" {
+		return defaultValue
+	}
+	d, err := time.ParseDuration(str)
+	if err != nil {
+		cmdcommon.PrintFlagsError(nodeCmd, errMessage, err)
+	}
+	return d
+}
+
 func runNode() error {
 	// create current Node
 	localNode, err := node.NewLocalNode(kp, bindEndpoint, "")
@@ -369,7 +403,12 @@ func runNode() error {
 	}
 
 	c := sync.NewConfig([]byte(flagNetworkID), localNode, st, nt, connectionManager)
-	// Place setting config
+	//Place setting config
+	c.SyncPoolSize = syncPoolSize
+	c.FetchTimeout = syncFetchTimeout
+	c.RetryInterval = syncRetryInterval
+	c.CheckBlockHeightInterval = syncCheckInterval
+
 	syncer := c.NewSyncer()
 
 	isaac, err := consensus.NewISAAC([]byte(flagNetworkID), localNode, policy, connectionManager, syncer)
