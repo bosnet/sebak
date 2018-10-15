@@ -19,13 +19,20 @@ func TestMakeBlockAccount() *BlockAccount {
 }
 
 var (
-	kp           *keypair.Full
-	account      *BlockAccount
-	genesisBlock Block
+	GenesisKP *keypair.Full
+	CommonKP  *keypair.Full
 )
 
 func init() {
-	kp, _ = keypair.Random()
+	var err error
+	GenesisKP, err = keypair.Random()
+	if err != nil {
+		panic(err)
+	}
+	CommonKP, err = keypair.Random()
+	if err != nil {
+		panic(err)
+	}
 }
 
 func TestMakeNewBlock(transactions []string) Block {

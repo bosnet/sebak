@@ -17,22 +17,8 @@ import (
 var networkID []byte = []byte("sebak-test-network")
 
 var (
-	genesisKP     *keypair.Full
-	commonKP      *keypair.Full
 	commonAccount *block.BlockAccount
 )
-
-func init() {
-	var err error
-	genesisKP, err = keypair.Random()
-	if err != nil {
-		panic(err)
-	}
-	commonKP, err = keypair.Random()
-	if err != nil {
-		panic(err)
-	}
-}
 
 func MakeNodeRunner() (*NodeRunner, *node.LocalNode) {
 	_, n, localNode := network.CreateMemoryNetwork(nil)
@@ -57,9 +43,9 @@ func MakeNodeRunner() (*NodeRunner, *node.LocalNode) {
 func GetTransaction() (transaction.Transaction, []byte) {
 	kpNewAccount, _ := keypair.Random()
 
-	tx := transaction.MakeTransactionCreateAccount(genesisKP, kpNewAccount.Address(), common.BaseReserve)
+	tx := transaction.MakeTransactionCreateAccount(block.GenesisKP, kpNewAccount.Address(), common.BaseReserve)
 	tx.B.SequenceID = uint64(0)
-	tx.Sign(genesisKP, networkID)
+	tx.Sign(block.GenesisKP, networkID)
 
 	if txByte, err := tx.Serialize(); err != nil {
 		panic(err)
@@ -163,11 +149,10 @@ func InitTestBlockchain() *storage.LevelDBBackend {
 	st := storage.NewTestStorage()
 
 	balance := common.MaximumBalance
-	genesisAccount := block.NewBlockAccount(genesisKP.Address(), balance)
+	genesisAccount := block.NewBlockAccount(block.GenesisKP.Address(), balance)
 	genesisAccount.Save(st)
 
-	commonKP, _ = keypair.Random()
-	commonAccount = block.NewBlockAccount(commonKP.Address(), 0)
+	commonAccount = block.NewBlockAccount(block.CommonKP.Address(), 0)
 	commonAccount.Save(st)
 
 	genesisBlock, _ := block.MakeGenesisBlock(st, *genesisAccount, *commonAccount, networkID)
