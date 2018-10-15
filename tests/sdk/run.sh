@@ -24,7 +24,6 @@ NODE=$(docker run -d --network host --env-file=${ROOT_DIR}/docker/self.env \
       sebak:runner node \
       --genesis=${SEBAK_GENESIS},${SEBAK_COMMON} \
       --log-level=debug)
-      )
 
 sleep 1
 
