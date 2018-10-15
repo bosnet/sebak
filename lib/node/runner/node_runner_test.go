@@ -300,7 +300,7 @@ func TestExpiredBallotCheckProposer(t *testing.T) {
 	}
 
 	// The createNodeRunnerForTesting has FixedSelector{localNode.Address()} so the proposer is always nr(nodes[0]).
-	validBallot := GenerateEmptyTxBallot(t, nr.localNode, round, ballot.StateSIGN, nodes[1], common.NewConfig())
+	validBallot := GenerateEmptyTxBallot(nr.localNode, round, ballot.StateSIGN, nodes[1], common.NewConfig())
 	validBallot.SetVote(ballot.StateSIGN, ballot.VotingEXP)
 
 	checker := &BallotChecker{
@@ -321,7 +321,7 @@ func TestExpiredBallotCheckProposer(t *testing.T) {
 
 	// The createNodeRunnerForTesting has FixedSelector{localNode.Address()} so the proposer is always nr(nodes[0]).
 	// The invalidBallot has nodes[1] as a proposer so it is invalid.
-	invalidBallot := GenerateEmptyTxBallot(t, nodes[1], round, ballot.StateSIGN, nodes[1], common.NewConfig())
+	invalidBallot := GenerateEmptyTxBallot(nodes[1], round, ballot.StateSIGN, nodes[1], common.NewConfig())
 	invalidBallot.SetVote(ballot.StateSIGN, ballot.VotingEXP)
 
 	checker = &BallotChecker{
