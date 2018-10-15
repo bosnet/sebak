@@ -17,8 +17,7 @@ import (
 )
 
 const (
-	maxBlockHeightStringLength int    = 20
-	EventBlockPrefix           string = "bk-saved"
+	EventBlockPrefix string = "bk-saved"
 )
 
 type Block struct {
@@ -168,8 +167,7 @@ func GetBlockKeyPrefixConfirmed(confirmed string) string {
 }
 
 func GetBlockKeyPrefixHeight(height uint64) string {
-	f := fmt.Sprintf("%%s%%0%dd-", maxBlockHeightStringLength)
-	return fmt.Sprintf(f, common.BlockPrefixHeight, height)
+	return fmt.Sprintf("%s%020d", common.BlockPrefixHeight, height)
 }
 
 func (b Block) NewBlockKeyConfirmed() string {
