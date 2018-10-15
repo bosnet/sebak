@@ -170,6 +170,15 @@ func GetBlockKeyPrefixHeight(height uint64) string {
 	return fmt.Sprintf("%s%020d", common.BlockPrefixHeight, height)
 }
 
+// Returns: Genesis block
+func GetGenesis(st *storage.LevelDBBackend) Block {
+	if blk, err := GetBlockByHeight(st, common.GenesisBlockHeight); err != nil {
+		panic(err)
+	} else {
+		return blk
+	}
+}
+
 func (b Block) NewBlockKeyConfirmed() string {
 	return fmt.Sprintf(
 		"%s%s%s",

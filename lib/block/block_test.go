@@ -230,7 +230,7 @@ func TestMakeGenesisBlockFindGenesisAccount(t *testing.T) {
 
 	// find genesis account
 	{ // with `Operation`
-		bk, _ := GetBlockByHeight(st, 1)
+		bk := GetGenesis(st)
 		bt, _ := GetBlockTransaction(st, bk.Transactions[0])
 		bo, _ := GetBlockOperation(st, bt.Operations[0])
 
@@ -270,7 +270,7 @@ func TestMakeGenesisBlockFindCommonAccount(t *testing.T) {
 
 	// find common account
 	{ // with `Operation`
-		bk, _ := GetBlockByHeight(st, 1)
+		bk := GetGenesis(st)
 		bt, _ := GetBlockTransaction(st, bk.Transactions[0])
 		bo, _ := GetBlockOperation(st, bt.Operations[1])
 

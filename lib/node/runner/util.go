@@ -9,10 +9,8 @@ import (
 )
 
 func getGenesisTransaction(st *storage.LevelDBBackend) (bt block.BlockTransaction, err error) {
-	var bk block.Block
-	if bk, err = block.GetBlockByHeight(st, common.GenesisBlockHeight); err != nil {
-		return
-	} else if len(bk.Transactions) < 1 {
+	bk := block.GetGenesis(st)
+	if len(bk.Transactions) < 1 {
 		err = errors.ErrorWrongBlockFound
 		return
 	}

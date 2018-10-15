@@ -177,7 +177,7 @@ func (g *getMissingTransactionTesting) Prepare() {
 
 	g.consensusNR = g.nodeRunners[1]
 
-	g.genesisBlock, _ = block.GetBlockByHeight(g.proposerNR.Storage(), 1)
+	g.genesisBlock = block.GetGenesis(g.proposerNR.Storage())
 	g.commonAccount, _ = GetCommonAccount(g.proposerNR.Storage())
 	g.initialBalance, _ = GetGenesisBalance(g.proposerNR.Storage())
 }
@@ -360,7 +360,7 @@ type irregularIncomingBallot struct {
 func (p *irregularIncomingBallot) prepare() {
 	p.nr, p.nodes, _ = createNodeRunnerForTesting(2, common.NewConfig(), nil)
 
-	p.genesisBlock, _ = block.GetBlockByHeight(p.nr.Storage(), 1)
+	p.genesisBlock = block.GetGenesis(p.nr.Storage())
 	p.commonAccount, _ = GetCommonAccount(p.nr.Storage())
 	p.initialBalance, _ = GetGenesisBalance(p.nr.Storage())
 
