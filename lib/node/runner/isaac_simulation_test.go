@@ -49,38 +49,38 @@ func TestISAACSimulationProposer(t *testing.T) {
 
 	conf := common.NewConfig()
 
-	ballotSIGN1 := GenerateBallot(t, proposer, round, tx, ballot.StateSIGN, nodes[1], conf)
+	ballotSIGN1 := GenerateBallot(proposer, round, tx, ballot.StateSIGN, nodes[1], conf)
 	err = ReceiveBallot(nr, ballotSIGN1)
 	require.Nil(t, err)
 
-	ballotSIGN2 := GenerateBallot(t, proposer, round, tx, ballot.StateSIGN, nodes[2], conf)
+	ballotSIGN2 := GenerateBallot(proposer, round, tx, ballot.StateSIGN, nodes[2], conf)
 	err = ReceiveBallot(nr, ballotSIGN2)
 	require.Nil(t, err)
 
-	ballotSIGN3 := GenerateBallot(t, proposer, round, tx, ballot.StateSIGN, nodes[3], conf)
+	ballotSIGN3 := GenerateBallot(proposer, round, tx, ballot.StateSIGN, nodes[3], conf)
 	err = ReceiveBallot(nr, ballotSIGN3)
 	require.Nil(t, err)
 
-	ballotSIGN4 := GenerateBallot(t, proposer, round, tx, ballot.StateSIGN, nodes[4], conf)
+	ballotSIGN4 := GenerateBallot(proposer, round, tx, ballot.StateSIGN, nodes[4], conf)
 	err = ReceiveBallot(nr, ballotSIGN4)
 	require.Nil(t, err)
 
 	rr := nr.Consensus().RunningRounds[round.Index()]
 	require.Equal(t, 4, len(rr.Voted[proposer.Address()].GetResult(ballot.StateSIGN)))
 
-	ballotACCEPT0 := GenerateBallot(t, proposer, round, tx, ballot.StateACCEPT, nodes[0], conf)
+	ballotACCEPT0 := GenerateBallot(proposer, round, tx, ballot.StateACCEPT, nodes[0], conf)
 	err = ReceiveBallot(nr, ballotACCEPT0)
 	require.Nil(t, err)
 
-	ballotACCEPT1 := GenerateBallot(t, proposer, round, tx, ballot.StateACCEPT, nodes[1], conf)
+	ballotACCEPT1 := GenerateBallot(proposer, round, tx, ballot.StateACCEPT, nodes[1], conf)
 	err = ReceiveBallot(nr, ballotACCEPT1)
 	require.Nil(t, err)
 
-	ballotACCEPT2 := GenerateBallot(t, proposer, round, tx, ballot.StateACCEPT, nodes[2], conf)
+	ballotACCEPT2 := GenerateBallot(proposer, round, tx, ballot.StateACCEPT, nodes[2], conf)
 	err = ReceiveBallot(nr, ballotACCEPT2)
 	require.Nil(t, err)
 
-	ballotACCEPT3 := GenerateBallot(t, proposer, round, tx, ballot.StateACCEPT, nodes[3], conf)
+	ballotACCEPT3 := GenerateBallot(proposer, round, tx, ballot.StateACCEPT, nodes[3], conf)
 	err = ReceiveBallot(nr, ballotACCEPT3)
 
 	_, ok := err.(CheckerStopCloseConsensus)
