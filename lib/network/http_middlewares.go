@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"runtime/debug"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -91,6 +92,16 @@ func RateLimitMiddleware(logger logging.Logger, rule common.RateLimitRule) mux.M
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ip := limiter.GetIPKey(r, true)
+
+			// from localhost, no rate limit
+			if strings.HasPrefix(ip, "127.0.") {
+				w.Header().Add("X-RateLimit-Limit", "")
+				w.Header().Add("X-RateLimit-Remaining", "")
+				w.Header().Add("X-RateLimit-Reset", "")
+
+				next.ServeHTTP(w, r)
+				return
+			}
 
 			var middleware *stdlib.Middleware
 

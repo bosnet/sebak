@@ -49,6 +49,12 @@ func TestRecoverMiddleware(t *testing.T) {
 	require.Equal(t, "panic: "+panicMsg, msg["title"])
 }
 
+func testRequestForRateLimit(ts *httptest.Server, u, ip string) (*http.Response, error) {
+	req, _ := http.NewRequest("GET", ts.URL+u, nil)
+	req.Header.Set("X-Forwarded-For", ip)
+	return ts.Client().Do(req)
+}
+
 func TestRateLimitMiddleWare(t *testing.T) {
 	handlerURL := UrlPathPrefixAPI + "/test"
 	handler := func(w http.ResponseWriter, r *http.Request) {
@@ -66,7 +72,7 @@ func TestRateLimitMiddleWare(t *testing.T) {
 		router.HandleFunc(handlerURL, http.HandlerFunc(handler)).Methods("GET")
 		ts := httptest.NewServer(router)
 
-		resp, err := http.Get(ts.URL + handlerURL)
+		resp, err := testRequestForRateLimit(ts, handlerURL, "3.3.3.3")
 		require.Nil(t, err)
 		ts.Close()
 
@@ -95,13 +101,13 @@ func TestRateLimitMiddleWare(t *testing.T) {
 		wg.Add(10)
 		for i := 0; i < 10; i++ {
 			go func() {
-				http.Get(ts.URL + handlerURL)
+				testRequestForRateLimit(ts, handlerURL, "3.3.3.3")
 				wg.Done()
 			}()
 		}
 		wg.Wait()
 
-		resp, err := http.Get(ts.URL + handlerURL)
+		resp, err := testRequestForRateLimit(ts, handlerURL, "3.3.3.3")
 		require.Nil(t, err)
 
 		require.Equal(t, http.StatusTooManyRequests, resp.StatusCode)
@@ -159,13 +165,13 @@ func TestRateLimitMiddleWareByIPAddress(t *testing.T) {
 		wg.Add(10)
 		for i := 0; i < 10; i++ {
 			go func() {
-				http.Get(ts.URL + handlerURL)
+				testRequestForRateLimit(ts, handlerURL, "3.3.3.3")
 				wg.Done()
 			}()
 		}
 		wg.Wait()
 
-		resp, err := http.Get(ts.URL + handlerURL)
+		resp, err := testRequestForRateLimit(ts, handlerURL, "3.3.3.3")
 		require.Nil(t, err)
 
 		require.Equal(t, http.StatusTooManyRequests, resp.StatusCode)
@@ -220,13 +226,13 @@ func TestRateLimitMiddleWareUnlimit(t *testing.T) {
 		wg.Add(10)
 		for i := 0; i < 10; i++ {
 			go func() {
-				http.Get(ts.URL + handlerURL)
+				testRequestForRateLimit(ts, handlerURL, "3.3.3.")
 				wg.Done()
 			}()
 		}
 		wg.Wait()
 
-		resp, err := http.Get(ts.URL + handlerURL)
+		resp, err := testRequestForRateLimit(ts, handlerURL, "3.3.3.3")
 		require.Nil(t, err)
 		ts.Close()
 		require.Equal(t, http.StatusOK, resp.StatusCode)
