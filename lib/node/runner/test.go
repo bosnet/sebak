@@ -1,10 +1,7 @@
 package runner
 
 import (
-	"testing"
-
 	"github.com/stellar/go/keypair"
-	"github.com/stretchr/testify/require"
 
 	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/block"
@@ -71,7 +68,7 @@ func GetTransaction() (transaction.Transaction, []byte) {
 	}
 }
 
-func GenerateBallot(t *testing.T, proposer *node.LocalNode, round round.Round, tx transaction.Transaction, ballotState ballot.State, sender *node.LocalNode, conf common.Config) *ballot.Ballot {
+func GenerateBallot(proposer *node.LocalNode, round round.Round, tx transaction.Transaction, ballotState ballot.State, sender *node.LocalNode, conf common.Config) *ballot.Ballot {
 	b := ballot.NewBallot(sender.Address(), proposer.Address(), round, []string{tx.GetHash()})
 	b.SetVote(ballot.StateINIT, ballot.VotingYES)
 
@@ -84,8 +81,9 @@ func GenerateBallot(t *testing.T, proposer *node.LocalNode, round round.Round, t
 	b.SetVote(ballotState, ballot.VotingYES)
 	b.Sign(sender.Keypair(), networkID)
 
-	err := b.IsWellFormed(networkID, conf)
-	require.Nil(t, err)
+	if err := b.IsWellFormed(networkID, conf); err != nil {
+		panic(err)
+	}
 
 	return b
 }
