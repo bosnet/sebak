@@ -4,6 +4,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stellar/go/keypair"
+	"github.com/stretchr/testify/require"
+
 	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
@@ -11,8 +14,6 @@ import (
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/transaction"
-	"github.com/stellar/go/keypair"
-	"github.com/stretchr/testify/require"
 )
 
 func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
@@ -344,7 +345,7 @@ func TestGetMissingTransactionProposerAlsoMissing(t *testing.T) {
 	require.Equal(t, 0, g.consensusNR.Consensus().TransactionPool.Len())
 }
 
-type IrregularIncomingBallot struct {
+type irregularIncomingBallot struct {
 	nr    *NodeRunner
 	nodes []*node.LocalNode
 
@@ -356,7 +357,7 @@ type IrregularIncomingBallot struct {
 	accountA *block.BlockAccount
 }
 
-func (p *IrregularIncomingBallot) Prepare() {
+func (p *irregularIncomingBallot) prepare() {
 	p.nr, p.nodes, _ = createNodeRunnerForTesting(2, common.NewConfig(), nil)
 
 	p.genesisBlock, _ = block.GetBlockByHeight(p.nr.Storage(), 1)
@@ -366,7 +367,7 @@ func (p *IrregularIncomingBallot) Prepare() {
 	p.nr.Consensus().SetProposerSelector(FixedSelector{p.nr.Node().Address()})
 }
 
-func (p *IrregularIncomingBallot) runChecker(blt ballot.Ballot) (checker *BallotChecker, err error) {
+func (p *irregularIncomingBallot) runChecker(blt ballot.Ballot) (checker *BallotChecker, err error) {
 	var ballotMessage common.NetworkMessage
 	{
 		b, _ := blt.Serialize()
@@ -414,7 +415,7 @@ func (p *IrregularIncomingBallot) runChecker(blt ballot.Ballot) (checker *Ballot
 	return
 }
 
-func (p *IrregularIncomingBallot) MakeBallot(state ballot.State) (blt *ballot.Ballot) {
+func (p *irregularIncomingBallot) makeBallot(state ballot.State) (blt *ballot.Ballot) {
 	rd := round.Round{
 		Number:      0,
 		BlockHeight: p.genesisBlock.Height,
@@ -451,14 +452,14 @@ func (p *IrregularIncomingBallot) MakeBallot(state ballot.State) (blt *ballot.Ba
 // TestRegularIncomingBallots checks the normal situation of consensus; node
 // receives `INIT` ballot and then, `SIGN` ballot with regular sequence.
 func TestRegularIncomingBallots(t *testing.T) {
-	p := &IrregularIncomingBallot{}
-	p.Prepare()
+	p := &irregularIncomingBallot{}
+	p.prepare()
 
 	cm := p.nr.ConnectionManager().(*TestConnectionManager)
 	require.Equal(t, 0, len(cm.Messages()))
 
 	// send `INIT` ballot
-	blt := p.MakeBallot(ballot.StateINIT)
+	blt := p.makeBallot(ballot.StateINIT)
 	_, err := p.runChecker(*blt)
 	require.Nil(t, err)
 	require.Equal(t, 1, len(cm.Messages())) // this check node broadcast the new SIGN ballot
@@ -475,14 +476,14 @@ func TestRegularIncomingBallots(t *testing.T) {
 // receives `SIGN` ballot and then, `INIT` ballot with irregular sequence. This
 // will check the node must broadcast new SIGN ballot.
 func TestIrregularIncomingBallots(t *testing.T) {
-	p := &IrregularIncomingBallot{}
-	p.Prepare()
+	p := &irregularIncomingBallot{}
+	p.prepare()
 
 	cm := p.nr.ConnectionManager().(*TestConnectionManager)
 	require.Equal(t, 0, len(cm.Messages()))
 
 	// send `SIGN` ballot
-	initBallot := p.MakeBallot(ballot.StateINIT)
+	initBallot := p.makeBallot(ballot.StateINIT)
 
 	signBallot := &ballot.Ballot{}
 	*signBallot = *initBallot
