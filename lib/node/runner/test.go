@@ -16,10 +16,6 @@ import (
 
 var networkID []byte = []byte("sebak-test-network")
 
-var (
-	commonAccount *block.BlockAccount
-)
-
 func MakeNodeRunner() (*NodeRunner, *node.LocalNode) {
 	_, n, localNode := network.CreateMemoryNetwork(nil)
 
@@ -58,8 +54,8 @@ func GenerateBallot(proposer *node.LocalNode, round round.Round, tx transaction.
 	b := ballot.NewBallot(sender.Address(), proposer.Address(), round, []string{tx.GetHash()})
 	b.SetVote(ballot.StateINIT, ballot.VotingYES)
 
-	opi, _ := ballot.NewInflationFromBallot(*b, commonAccount.Address, common.BaseReserve)
-	opc, _ := ballot.NewCollectTxFeeFromBallot(*b, commonAccount.Address, tx)
+	opi, _ := ballot.NewInflationFromBallot(*b, block.CommonKP.Address(), common.BaseReserve)
+	opc, _ := ballot.NewCollectTxFeeFromBallot(*b, block.CommonKP.Address(), tx)
 	ptx, _ := ballot.NewProposerTransactionFromBallot(*b, opc, opi)
 	b.SetProposerTransaction(ptx)
 	b.Sign(proposer.Keypair(), networkID)
@@ -78,8 +74,8 @@ func GenerateEmptyTxBallot(proposer *node.LocalNode, round round.Round, ballotSt
 	b := ballot.NewBallot(sender.Address(), proposer.Address(), round, []string{})
 	b.SetVote(ballot.StateINIT, ballot.VotingYES)
 
-	opi, _ := ballot.NewInflationFromBallot(*b, commonAccount.Address, common.BaseReserve)
-	opc, _ := ballot.NewCollectTxFeeFromBallot(*b, commonAccount.Address)
+	opi, _ := ballot.NewInflationFromBallot(*b, block.CommonKP.Address(), common.BaseReserve)
+	opc, _ := ballot.NewCollectTxFeeFromBallot(*b, block.CommonKP.Address())
 	ptx, _ := ballot.NewProposerTransactionFromBallot(*b, opc, opi)
 	b.SetProposerTransaction(ptx)
 	b.Sign(proposer.Keypair(), networkID)
@@ -152,7 +148,7 @@ func InitTestBlockchain() *storage.LevelDBBackend {
 	genesisAccount := block.NewBlockAccount(block.GenesisKP.Address(), balance)
 	genesisAccount.Save(st)
 
-	commonAccount = block.NewBlockAccount(block.CommonKP.Address(), 0)
+	commonAccount := block.NewBlockAccount(block.CommonKP.Address(), 0)
 	commonAccount.Save(st)
 
 	genesisBlock, _ := block.MakeGenesisBlock(st, *genesisAccount, *commonAccount, networkID)
