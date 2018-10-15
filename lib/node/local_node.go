@@ -13,9 +13,9 @@ import (
 	"fmt"
 	"sync"
 
-	"boscoin.io/sebak/lib/common"
-
 	"github.com/stellar/go/keypair"
+
+	"boscoin.io/sebak/lib/common"
 )
 
 type LocalNode struct {
@@ -144,7 +144,11 @@ func (n *LocalNode) Serialize() ([]byte, error) {
 }
 
 func (n *LocalNode) ConvertToValidator() *Validator {
-	v, _ := NewValidator(n.Address(), n.PublishEndpoint(), n.Alias())
+	endpoint := n.publishEndpoint
+	if endpoint == nil {
+		endpoint = n.bindEndpoint
+	}
+	v, _ := NewValidator(n.Address(), endpoint, n.Alias())
 	return v
 }
 
