@@ -57,19 +57,18 @@ func MakeNodeRunner() (*NodeRunner, *node.LocalNode) {
 	return nodeRunner, localNode
 }
 
-func GetTransaction(t *testing.T) (tx transaction.Transaction, txByte []byte) {
+func GetTransaction() (transaction.Transaction, []byte) {
 	kpNewAccount, _ := keypair.Random()
 
-	tx = transaction.MakeTransactionCreateAccount(genesisKP, kpNewAccount.Address(), common.BaseReserve)
+	tx := transaction.MakeTransactionCreateAccount(genesisKP, kpNewAccount.Address(), common.BaseReserve)
 	tx.B.SequenceID = uint64(0)
 	tx.Sign(genesisKP, networkID)
 
-	var err error
-
-	txByte, err = tx.Serialize()
-	require.Nil(t, err)
-
-	return
+	if txByte, err := tx.Serialize(); err != nil {
+		panic(err)
+	} else {
+		return tx, txByte
+	}
 }
 
 func TestGenerateNewSequenceID() uint64 {
@@ -95,7 +94,7 @@ func GenerateBallot(t *testing.T, proposer *node.LocalNode, round round.Round, t
 	return b
 }
 
-func GenerateEmptyTxBallot(t *testing.T, proposer *node.LocalNode, round round.Round, ballotState ballot.State, sender *node.LocalNode, conf common.Config) *ballot.Ballot {
+func GenerateEmptyTxBallot(proposer *node.LocalNode, round round.Round, ballotState ballot.State, sender *node.LocalNode, conf common.Config) *ballot.Ballot {
 	b := ballot.NewBallot(sender.Address(), proposer.Address(), round, []string{})
 	b.SetVote(ballot.StateINIT, ballot.VotingYES)
 
@@ -108,19 +107,21 @@ func GenerateEmptyTxBallot(t *testing.T, proposer *node.LocalNode, round round.R
 	b.SetVote(ballotState, ballot.VotingYES)
 	b.Sign(sender.Keypair(), networkID)
 
-	err := b.IsWellFormed(networkID, conf)
-	require.Nil(t, err)
+	if err := b.IsWellFormed(networkID, conf); err != nil {
+		panic(err)
+	}
 
 	return b
 }
 
-func ReceiveBallot(t *testing.T, nodeRunner *NodeRunner, ballot *ballot.Ballot) error {
+func ReceiveBallot(nodeRunner *NodeRunner, ballot *ballot.Ballot) error {
 	data, err := ballot.Serialize()
-	require.Nil(t, err)
+	if err != nil {
+		panic(err)
+	}
 
 	ballotMessage := common.NetworkMessage{Type: common.BallotMessage, Data: data}
-	err = nodeRunner.handleBallotMessage(ballotMessage)
-	return err
+	return nodeRunner.handleBallotMessage(ballotMessage)
 }
 
 func createNodeRunnerForTesting(n int, conf common.Config, recv chan struct{}) (*NodeRunner, []*node.LocalNode, *TestConnectionManager) {

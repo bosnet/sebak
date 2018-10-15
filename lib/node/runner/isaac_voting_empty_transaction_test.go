@@ -53,16 +53,16 @@ func TestISAACBallotWithEmptyTransactionVoting(t *testing.T) {
 	b := ballot.NewBallot(nr.localNode.Address(), nr.localNode.Address(), round, []string{})
 	b.SetVote(ballot.StateINIT, ballot.VotingYES)
 
-	ballotSIGN1 := GenerateEmptyTxBallot(t, proposer, round, ballot.StateSIGN, nodes[1], conf)
-	err = ReceiveBallot(t, nr, ballotSIGN1)
+	ballotSIGN1 := GenerateEmptyTxBallot(proposer, round, ballot.StateSIGN, nodes[1], conf)
+	err = ReceiveBallot(nr, ballotSIGN1)
 	require.Nil(t, err)
 
-	ballotSIGN2 := GenerateEmptyTxBallot(t, proposer, round, ballot.StateSIGN, nodes[2], conf)
-	err = ReceiveBallot(t, nr, ballotSIGN2)
+	ballotSIGN2 := GenerateEmptyTxBallot(proposer, round, ballot.StateSIGN, nodes[2], conf)
+	err = ReceiveBallot(nr, ballotSIGN2)
 	require.Nil(t, err)
 
-	ballotSIGN3 := GenerateEmptyTxBallot(t, proposer, round, ballot.StateSIGN, nodes[3], conf)
-	err = ReceiveBallot(t, nr, ballotSIGN3)
+	ballotSIGN3 := GenerateEmptyTxBallot(proposer, round, ballot.StateSIGN, nodes[3], conf)
+	err = ReceiveBallot(nr, ballotSIGN3)
 	require.Nil(t, err)
 
 	runningRounds := nr.Consensus().RunningRounds
@@ -74,20 +74,20 @@ func TestISAACBallotWithEmptyTransactionVoting(t *testing.T) {
 	result := rr.Voted[proposer.Address()].GetResult(ballot.StateSIGN)
 	require.Equal(t, 3, len(result))
 
-	ballotACCEPT1 := GenerateEmptyTxBallot(t, proposer, round, ballot.StateACCEPT, nodes[1], conf)
-	err = ReceiveBallot(t, nr, ballotACCEPT1)
+	ballotACCEPT1 := GenerateEmptyTxBallot(proposer, round, ballot.StateACCEPT, nodes[1], conf)
+	err = ReceiveBallot(nr, ballotACCEPT1)
 	require.Nil(t, err)
 
-	ballotACCEPT2 := GenerateEmptyTxBallot(t, proposer, round, ballot.StateACCEPT, nodes[2], conf)
-	err = ReceiveBallot(t, nr, ballotACCEPT2)
+	ballotACCEPT2 := GenerateEmptyTxBallot(proposer, round, ballot.StateACCEPT, nodes[2], conf)
+	err = ReceiveBallot(nr, ballotACCEPT2)
 	require.Nil(t, err)
 
-	ballotACCEPT3 := GenerateEmptyTxBallot(t, proposer, round, ballot.StateACCEPT, nodes[3], conf)
-	err = ReceiveBallot(t, nr, ballotACCEPT3)
+	ballotACCEPT3 := GenerateEmptyTxBallot(proposer, round, ballot.StateACCEPT, nodes[3], conf)
+	err = ReceiveBallot(nr, ballotACCEPT3)
 	require.Nil(t, err)
 
-	ballotACCEPT4 := GenerateEmptyTxBallot(t, proposer, round, ballot.StateACCEPT, nodes[4], conf)
-	err = ReceiveBallot(t, nr, ballotACCEPT4)
+	ballotACCEPT4 := GenerateEmptyTxBallot(proposer, round, ballot.StateACCEPT, nodes[4], conf)
+	err = ReceiveBallot(nr, ballotACCEPT4)
 	require.EqualError(t, err, "ballot got consensus and will be stored")
 
 	require.Equal(t, 4, len(rr.Voted[proposer.Address()].GetResult(ballot.StateACCEPT)))
