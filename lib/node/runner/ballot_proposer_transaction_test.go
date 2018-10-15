@@ -32,7 +32,7 @@ func (p *ballotCheckerProposedTransaction) Prepare() {
 	nr, localNodes, _ := createNodeRunnerForTesting(2, common.NewConfig(), nil)
 	p.nr = nr
 
-	p.genesisBlock, _ = block.GetBlockByHeight(nr.Storage(), 1)
+	p.genesisBlock = block.GetGenesis(nr.Storage())
 	p.commonAccount, _ = GetCommonAccount(nr.Storage())
 	p.initialBalance, _ = GetGenesisBalance(nr.Storage())
 

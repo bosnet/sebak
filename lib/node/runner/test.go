@@ -157,7 +157,7 @@ func createNodeRunnerForTesting(n int, conf common.Config, recv chan struct{}) (
 		panic(err)
 	}
 	nr.isaacStateManager.blockTimeBuffer = 0
-	genesisBlock, _ := block.GetBlockByHeight(st, 1)
+	genesisBlock := block.GetGenesis(st)
 	nr.Consensus().SetLatestBlock(genesisBlock)
 
 	return nr, nodes, connectionManager
