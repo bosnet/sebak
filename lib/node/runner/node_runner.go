@@ -433,11 +433,7 @@ func (nr *NodeRunner) handleBallotMessage(message common.NetworkMessage) (err er
 
 func (nr *NodeRunner) InitRound() {
 	// get latest blocks
-	var err error
-	var latestBlock block.Block
-	if latestBlock, err = block.GetLatestBlock(nr.storage); err != nil {
-		panic(err)
-	}
+	latestBlock := block.GetLatestBlock(nr.storage)
 
 	nr.consensus.SetLatestBlock(latestBlock)
 	nr.consensus.SetLatestRound(round.Round{})

@@ -99,15 +99,8 @@ func (p *HelperTestGetNodeTransactionsHandler) createBlock() block.Block {
 	}
 
 	var height int
-	latest, err := block.GetLatestBlock(p.st)
-	if err == nil {
-		height = int(latest.Height)
-	} else {
-		if _, ok := err.(*errors.Error); !ok {
-			panic(err)
-		}
-		height = -1
-	}
+	latest := block.GetLatestBlock(p.st)
+	height = int(latest.Height)
 	bk := block.TestMakeNewBlock(txHashes)
 	bk.Height = uint64(height + 1)
 	bk.Save(p.st)
@@ -115,7 +108,7 @@ func (p *HelperTestGetNodeTransactionsHandler) createBlock() block.Block {
 	for _, tx := range txs {
 		b, _ := tx.Serialize()
 		btx := block.NewBlockTransactionFromTransaction(bk.Hash, bk.Height, bk.Confirmed, tx, b)
-		if err = btx.Save(p.st); err != nil {
+		if err := btx.Save(p.st); err != nil {
 			panic(err)
 		}
 	}
