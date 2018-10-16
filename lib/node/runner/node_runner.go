@@ -145,13 +145,13 @@ func (nr *NodeRunner) Ready() {
 		nr.log.Error("`network.RateLimitMiddleware` for `RouterNameAPI` has an error", "err", err)
 		return
 	}
-	if err := nr.network.AddMiddleware("", rateLimitMiddlewareAPI); err != nil {
-		nr.log.Error("`network.RateLimitMiddleware` for base router has an error", "err", err)
-		return
-	}
 	rateLimitMiddlewareNode := network.RateLimitMiddleware(nr.log, nr.Conf.RateLimitRuleNode)
 	if err := nr.network.AddMiddleware(network.RouterNameNode, rateLimitMiddlewareNode); err != nil {
 		nr.log.Error("`network.RateLimitMiddleware` for `RouterNameNode` has an error", "err", err)
+		return
+	}
+	if err := nr.network.AddMiddleware("", rateLimitMiddlewareAPI); err != nil {
+		nr.log.Error("`network.RateLimitMiddleware` for base router has an error", "err", err)
 		return
 	}
 
