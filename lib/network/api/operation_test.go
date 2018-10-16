@@ -10,7 +10,7 @@ import (
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/network/api/resource"
-	"boscoin.io/sebak/lib/transaction"
+	"boscoin.io/sebak/lib/transaction/operation"
 	"github.com/stretchr/testify/require"
 	"strings"
 	"sync"
@@ -61,7 +61,7 @@ func TestGetOperationsByAccountHandlerWithType(t *testing.T) {
 	// Do a Request
 	url := strings.Replace(GetAccountOperationsHandlerPattern, "{id}", kp.Address(), -1)
 	{
-		url := url + "?type=" + string(transaction.OperationCreateAccount)
+		url := url + "?type=" + string(operation.TypeCreateAccount)
 		respBody, err := request(ts, url, false)
 		require.Nil(t, err)
 		defer respBody.Close()
@@ -77,7 +77,7 @@ func TestGetOperationsByAccountHandlerWithType(t *testing.T) {
 	}
 
 	{
-		url := url + "?type=" + string(transaction.OperationPayment)
+		url := url + "?type=" + string(operation.TypePayment)
 		respBody, err := request(ts, url, false)
 		require.Nil(t, err)
 		defer respBody.Close()

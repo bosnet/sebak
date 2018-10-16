@@ -20,6 +20,18 @@ const (
 	TypeInflation            OperationType = "inflation"
 )
 
+func IsValidOperationType(oType string) bool {
+	_, b := common.InStringArray([]string{
+		string(TypeCreateAccount),
+		string(TypePayment),
+		string(TypeCongressVoting),
+		string(TypeCongressVotingResult),
+		string(TypeCollectTxFee),
+		string(TypeInflation),
+	}, oType)
+	return b
+}
+
 var KindsNormalTransaction map[OperationType]struct{} = map[OperationType]struct{}{
 	TypeCreateAccount:        struct{}{},
 	TypePayment:              struct{}{},

@@ -12,7 +12,7 @@ import (
 	"boscoin.io/sebak/lib/network/api/resource"
 	"boscoin.io/sebak/lib/network/httputils"
 	"boscoin.io/sebak/lib/storage"
-	"boscoin.io/sebak/lib/transaction"
+	"boscoin.io/sebak/lib/transaction/operation"
 	"strings"
 )
 
@@ -20,13 +20,17 @@ func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter
 	vars := mux.Vars(r)
 	address := vars["id"]
 	options, err := storage.NewDefaultListOptionsFromQuery(r.URL.Query())
-
-	oType := transaction.OperationType(r.URL.Query().Get("type"))
-
 	if err != nil {
 		http.Error(w, errors.ErrorInvalidQueryString.Error(), http.StatusBadRequest)
 		return
 	}
+
+	oTypeStr := r.URL.Query().Get("type")
+	if len(oTypeStr) > 0 && !operation.IsValidOperationType(oTypeStr) {
+		http.Error(w, errors.ErrorInvalidQueryString.Error(), http.StatusBadRequest)
+		return
+	}
+	oType := operation.OperationType(oTypeStr)
 	var cursor []byte
 	readFunc := func() []resource.Resource {
 		var txs []resource.Resource
@@ -48,7 +52,7 @@ func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter
 	if httputils.IsEventStream(r) {
 		event := fmt.Sprintf("source-%s", address)
 		if len(oType) > 0 {
-			event = fmt.Sprintf("sourcewithtype-%s%s", address, oType)
+			event = fmt.Sprintf("source-type-%s%s", address, oType)
 		}
 		es := NewEventStream(w, r, renderEventStream, DefaultContentType)
 		txs := readFunc()
