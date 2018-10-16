@@ -3,7 +3,6 @@ package api
 import (
 	"bufio"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http/httptest"
 	"testing"
@@ -69,7 +68,7 @@ func TestAPIGetNodeInfoHandler(t *testing.T) {
 		},
 		Hash: "findme",
 	}
-	apiHandler := NetworkHandlerAPI{storage: st, nodeInfo: nodeInfo}
+	apiHandler := NetworkHandlerAPI{localNode: localNode, storage: st, nodeInfo: nodeInfo}
 	apiHandler.GetLatestBlock = func() block.Block {
 		return latestBlock
 	}
@@ -84,8 +83,6 @@ func TestAPIGetNodeInfoHandler(t *testing.T) {
 	require.Nil(t, err)
 	data, err := ioutil.ReadAll(bufio.NewReader(body))
 	body.Close()
-
-	fmt.Println(string(data))
 
 	require.NotEmpty(t, data)
 
@@ -106,4 +103,14 @@ func TestAPIGetNodeInfoHandler(t *testing.T) {
 	rjs, _ := json.Marshal(receivedNodeInfo.Policy)
 	require.Equal(t, js, rjs)
 
+	// udpate localNode state
+	localNode.SetBooting()
+
+	body, err = request(ts, GetNodeInfoPattern, false)
+	require.Nil(t, err)
+	data, err = ioutil.ReadAll(bufio.NewReader(body))
+	body.Close()
+
+	receivedNodeInfo, _ = node.NewNodeInfoFromJSON(data)
+	require.Equal(t, localNode.State(), receivedNodeInfo.Node.State)
 }

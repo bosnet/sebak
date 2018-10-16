@@ -108,6 +108,8 @@ func NewNodeRunner(
 		log:       log.New(logging.Ctx{"node": localNode.Alias()}),
 		Conf:      conf,
 	}
+	nr.localNode.SetBooting()
+
 	nr.isaacStateManager = NewISAACStateManager(nr, conf)
 
 	nr.policy.SetValidators(len(nr.localNode.GetValidators()))

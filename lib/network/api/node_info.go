@@ -11,6 +11,8 @@ func (api NetworkHandlerAPI) GetNodeInfoHandler(w http.ResponseWriter, r *http.R
 	nodeInfo := &node.NodeInfo{}
 	*nodeInfo = *&api.nodeInfo
 
+	nodeInfo.Node.State = api.localNode.State()
+
 	if nodeInfo.Node.Endpoint == nil {
 		rUrl := common.RequestURLFromRequest(r)
 		rUrl.Path = ""
