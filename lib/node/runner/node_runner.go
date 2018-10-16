@@ -158,6 +158,10 @@ func (nr *NodeRunner) Ready() {
 		nr.log.Error("Middleware has an error", "err", err)
 		return
 	}
+	if err := nr.network.AddMiddleware("", network.RecoverMiddleware(nr.log)); err != nil {
+		nr.log.Error("Middleware has an error", "err", err)
+		return
+	}
 
 	//CORS
 	{
