@@ -17,7 +17,6 @@ import (
 	"boscoin.io/sebak/lib/consensus/round"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
-	"boscoin.io/sebak/lib/storage"
 )
 
 var (
@@ -140,17 +139,8 @@ func createTestNodeRunnersHTTP2Network(n int) (nodeRunners []*NodeRunner, rootKP
 		}
 	}
 
-	rootKP, _ = keypair.Random()
-	genesisAccount := block.NewBlockAccount(
-		rootKP.Address(),
-		common.MaximumBalance,
-	)
-	commonKP, _ := keypair.Random()
-	commonAccount := block.NewBlockAccount(commonKP.Address(), 0)
-
 	for _, node := range nodes {
 		policy, _ := consensus.NewDefaultVotingThresholdPolicy(66)
-		st := storage.NewTestStorage()
 		networkConfig, _ := network.NewHTTP2NetworkConfigFromEndpoint(node.Alias(), node.Endpoint())
 		n := network.NewHTTP2Network(networkConfig)
 
@@ -163,16 +153,13 @@ func createTestNodeRunnersHTTP2Network(n int) (nodeRunners []*NodeRunner, rootKP
 		conf := common.NewConfig()
 		is, _ := consensus.NewISAAC(networkID, node, policy, connectionManager, conf)
 
-		genesisAccount.Save(st)
-		commonAccount.Save(st)
-
-		block.MakeGenesisBlock(st, *genesisAccount, *commonAccount, networkID)
+		st := block.InitTestBlockchain()
 
 		nodeRunner, _ := NewNodeRunner(string(networkID), node, policy, n, is, st, conf)
 		nodeRunners = append(nodeRunners, nodeRunner)
 	}
 
-	return nodeRunners, rootKP
+	return nodeRunners, block.GenesisKP
 }
 
 func createTestNodeRunnersHTTP2NetworkWithReady(n int) (nodeRunners []*NodeRunner, rootKP *keypair.Full) {
