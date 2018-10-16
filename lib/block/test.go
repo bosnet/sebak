@@ -72,6 +72,34 @@ func InitTestBlockchain() *storage.LevelDBBackend {
 	return st
 }
 
+/// Version of `Block.Save` that panics on error, usable only in tests
+func (b *Block) MustSave(st *storage.LevelDBBackend) {
+	if err := b.Save(st); err != nil {
+		panic(err)
+	}
+}
+
+/// Version of `BlockAccount.Save` that panics on error, usable only in tests
+func (b *BlockAccount) MustSave(st *storage.LevelDBBackend) {
+	if err := b.Save(st); err != nil {
+		panic(err)
+	}
+}
+
+/// Version of `BlockTransaction.Save` that panics on error, usable only in tests
+func (b *BlockTransaction) MustSave(st *storage.LevelDBBackend) {
+	if err := b.Save(st); err != nil {
+		panic(err)
+	}
+}
+
+/// Version of `BlockTransaction.Save` that panics on error, usable only in tests
+func (b *BlockOperation) MustSave(st *storage.LevelDBBackend) {
+	if err := b.Save(st); err != nil {
+		panic(err)
+	}
+}
+
 func TestMakeNewBlock(transactions []string) Block {
 	kp, _ := keypair.Random()
 

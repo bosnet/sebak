@@ -58,7 +58,7 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 
 	{ // valid transaction
 		targetAccount, targetKP := TestMakeBlockAccount(common.Amount(10000000000000) /* 100,00000 BOS */)
-		targetAccount.Save(nodeRunner.Storage())
+		targetAccount.MustSave(nodeRunner.Storage())
 
 		tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, rootKP, targetKP)
 		tx.B.SequenceID = rootAccount.SequenceID
@@ -71,7 +71,7 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 
 	{ // invalid transaction: same source already in Pool
 		targetAccount, targetKP := TestMakeBlockAccount(common.Amount(10000000000000))
-		targetAccount.Save(nodeRunner.Storage())
+		targetAccount.MustSave(nodeRunner.Storage())
 
 		tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, rootKP, targetKP)
 		tx.B.SequenceID = rootAccount.SequenceID
@@ -89,7 +89,7 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 	{ // invalid transaction: source account does not exists
 		_, sourceKP := TestMakeBlockAccount(common.Amount(10000000000000))
 		targetAccount, targetKP := TestMakeBlockAccount(common.Amount(10000000000000))
-		targetAccount.Save(nodeRunner.Storage())
+		targetAccount.MustSave(nodeRunner.Storage())
 
 		tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, sourceKP, targetKP)
 
@@ -105,7 +105,7 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 	{ // invalid transaction: target account does not exists
 		sourceAccount, sourceKP := TestMakeBlockAccount(common.Amount(10000000000000))
 		_, targetKP := TestMakeBlockAccount(common.Amount(10000000000000))
-		sourceAccount.Save(nodeRunner.Storage())
+		sourceAccount.MustSave(nodeRunner.Storage())
 
 		tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, sourceKP, targetKP)
 		tx.B.SequenceID = sourceAccount.SequenceID
@@ -196,7 +196,7 @@ func (g *getMissingTransactionTesting) MakeBallot(numberOfTxs int) (blt *ballot.
 	for i := 0; i < numberOfTxs; i++ {
 		kpA, _ := keypair.Random()
 		accountA := block.NewBlockAccount(kpA.Address(), common.Amount(common.BaseReserve)*2)
-		accountA.Save(g.proposerNR.Storage())
+		accountA.MustSave(g.proposerNR.Storage())
 
 		kpB, _ := keypair.Random()
 
@@ -425,7 +425,7 @@ func (p *irregularIncomingBallot) makeBallot(state ballot.State) (blt *ballot.Ba
 
 	p.keyA, _ = keypair.Random()
 	p.accountA = block.NewBlockAccount(p.keyA.Address(), common.Amount(common.BaseReserve)*2)
-	p.accountA.Save(p.nr.Storage())
+	p.accountA.MustSave(p.nr.Storage())
 
 	kpB, _ := keypair.Random()
 

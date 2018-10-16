@@ -25,7 +25,7 @@ func TestGetTransactionByHashHandler(t *testing.T) {
 
 	_, _, bt, err := prepareTxWithoutSave()
 	require.Nil(t, err)
-	bt.Save(storage)
+	bt.MustSave(storage)
 
 	var reader *bufio.Reader
 	// Do a Request
@@ -163,7 +163,7 @@ func TestGetTransactionsHandlerStream(t *testing.T) {
 				observer.BlockTransactionObserver.RUnlock()
 			}
 			for _, bt := range btMap {
-				bt.Save(storage)
+				bt.MustSave(storage)
 			}
 			wg.Done()
 		}()
@@ -263,7 +263,7 @@ func TestGetTransactionsByAccountHandlerStream(t *testing.T) {
 				observer.BlockTransactionObserver.RUnlock()
 			}
 			for _, bt := range btMap {
-				bt.Save(storage)
+				bt.MustSave(storage)
 			}
 			wg.Done()
 		}()

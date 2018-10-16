@@ -221,16 +221,15 @@ func GetBlockHeaderByHeight(st *storage.LevelDBBackend, height uint64) (bt Heade
 	return GetBlockHeader(st, hash)
 }
 
-func GetLatestBlock(st *storage.LevelDBBackend) (b Block, err error) {
+func GetLatestBlock(st *storage.LevelDBBackend) Block {
 	// get latest blocks
 	iterFunc, closeFunc := GetBlocksByConfirmed(st, storage.NewDefaultListOptions(true, nil, 1))
-	b, _, _ = iterFunc()
+	b, _, _ := iterFunc()
 	closeFunc()
 
 	if b.Hash == "" {
-		err = errors.ErrorBlockNotFound
-		return
+		panic(errors.ErrorBlockNotFound)
 	}
 
-	return
+	return b
 }
