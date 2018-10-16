@@ -5,8 +5,6 @@ cd -- `dirname ${BASH_SOURCE[0]}`
 
 ROOT_DIR="../.."
 
-./build.sh
-
 export SEBAK_GENESIS=GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ
 export SEBAK_COMMON=GDYIHSHMDXJ4MXE35N4IMNC2X3Q3F665C5EX2JWHHCUW2PCFVXIFEE2C
 
@@ -19,6 +17,26 @@ function dumpLogsAndCleanup () {
 }
 
 trap dumpLogsAndCleanup EXIT
+
+## Build the docker builder image
+IMAGE=$(docker build --tag sebak:builder_sdk -q \
+    --build-arg BUILD_MODE="install" \
+    --build-arg BUILD_PKG="./tests/sdk" \
+    ${ROOT_DIR}/ -f ${ROOT_DIR}/Dockerfile_client.build | cut -d: -f2)
+
+if [ -z ${IMAGE} ]; then
+    echo "Failed to build builder docker image" >&2
+    exit 1
+fi
+
+IMAGE=$(docker build --tag sebak:sdk_tester -q \
+    . | cut -d: -f2)
+
+if [ -z ${IMAGE} ]; then
+    echo "Failed to build tester docker image" >&2
+    exit 1
+fi
+
 
 NODE=$(docker run -d --network host --env-file=${ROOT_DIR}/docker/self.env \
       sebak:runner node \
