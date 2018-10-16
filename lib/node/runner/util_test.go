@@ -14,10 +14,10 @@ func TestGetGenesisAccount(t *testing.T) {
 	st := storage.NewTestStorage()
 
 	genesisAccount := block.NewBlockAccount(block.GenesisKP.Address(), common.Amount(1))
-	genesisAccount.Save(st)
+	genesisAccount.MustSave(st)
 
 	commonAccount := block.NewBlockAccount(block.CommonKP.Address(), 0)
-	commonAccount.Save(st)
+	commonAccount.MustSave(st)
 
 	block.MakeGenesisBlock(st, *genesisAccount, *commonAccount, networkID)
 
@@ -39,10 +39,10 @@ func TestGetInitialBalance(t *testing.T) {
 
 	initialBalance := common.Amount(99)
 	genesisAccount := block.NewBlockAccount(block.GenesisKP.Address(), initialBalance)
-	genesisAccount.Save(st)
+	genesisAccount.MustSave(st)
 
 	commonAccount := block.NewBlockAccount(block.CommonKP.Address(), 0)
-	commonAccount.Save(st)
+	commonAccount.MustSave(st)
 
 	block.MakeGenesisBlock(st, *genesisAccount, *commonAccount, networkID)
 

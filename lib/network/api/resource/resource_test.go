@@ -20,7 +20,7 @@ func TestResourceAccount(t *testing.T) {
 	{
 		ba := block.TestMakeBlockAccount()
 		ba.SequenceID = 123
-		ba.Save(storage)
+		ba.MustSave(storage)
 
 		ra := NewAccount(ba)
 		r := ra.Resource()
@@ -45,7 +45,7 @@ func TestResourceAccount(t *testing.T) {
 		a, err := tx.Serialize()
 		require.Nil(t, err)
 		bt := block.NewBlockTransactionFromTransaction("dummy", 0, common.NowISO8601(), tx, a)
-		bt.Save(storage)
+		bt.MustSave(storage)
 
 		rt := NewTransaction(&bt)
 		r := rt.Resource()
@@ -73,7 +73,7 @@ func TestResourceAccount(t *testing.T) {
 		a, err := tx.Serialize()
 		require.Nil(t, err)
 		bt := block.NewBlockTransactionFromTransaction(common.GetUniqueIDFromUUID(), 0, common.NowISO8601(), tx, a)
-		bt.Save(storage)
+		bt.MustSave(storage)
 		bo, err := block.GetBlockOperation(storage, bt.Operations[0])
 
 		ro := NewOperation(&bo)
@@ -98,7 +98,7 @@ func TestResourceAccount(t *testing.T) {
 		a, err := tx.Serialize()
 		require.Nil(t, err)
 		bt := block.NewBlockTransactionFromTransaction(common.GetUniqueIDFromUUID(), 0, common.NowISO8601(), tx, a)
-		bt.Save(storage)
+		bt.MustSave(storage)
 
 		var rol []Resource
 		for _, boHash := range bt.Operations {

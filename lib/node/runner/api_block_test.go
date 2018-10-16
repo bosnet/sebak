@@ -57,14 +57,12 @@ func (p *HelperTestGetBlocksHandler) createBlock() block.Block {
 	height := int(latest.Height)
 	bk := block.TestMakeNewBlock(txHashes)
 	bk.Height = uint64(height + 1)
-	bk.Save(p.st)
+	bk.MustSave(p.st)
 
 	for _, tx := range txs {
 		b, _ := tx.Serialize()
 		btx := block.NewBlockTransactionFromTransaction(bk.Hash, bk.Height, bk.Confirmed, tx, b)
-		if err := btx.Save(p.st); err != nil {
-			panic(err)
-		}
+		btx.MustSave(p.st)
 	}
 
 	return bk

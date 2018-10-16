@@ -77,7 +77,7 @@ func TestGetOperationsByAccountHandlerStream(t *testing.T) {
 				observer.BlockOperationObserver.RUnlock()
 			}
 			for _, bo := range boMap {
-				bo.Save(storage)
+				bo.MustSave(storage)
 			}
 			wg.Done()
 		}()

@@ -57,7 +57,7 @@ func (p *ballotCheckerProposedTransaction) MakeBallot(numberOfTxs int) (blt *bal
 	for i := 0; i < numberOfTxs; i++ {
 		kpA, _ := keypair.Random()
 		accountA := block.NewBlockAccount(kpA.Address(), common.Amount(common.BaseReserve))
-		accountA.Save(p.nr.Storage())
+		accountA.MustSave(p.nr.Storage())
 
 		kpB, _ := keypair.Random()
 
