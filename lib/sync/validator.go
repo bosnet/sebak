@@ -146,7 +146,7 @@ func (v *BlockValidator) validateBlock(ctx context.Context, si *SyncInfo, prevBl
 	round := si.Block.Round
 	round.BlockHash = prevBlk.Hash
 
-	blk := block.NewBlock(si.Block.Proposer, si.Block.Round, si.Block.ProposerTransaction().GetHash(), txs, si.Block.Confirmed)
+	blk := block.NewBlock(si.Block.Proposer, si.Block.Round, si.Block.ProposerTransaction, txs, si.Block.Confirmed)
 
 	if blk.Hash != si.Block.Hash {
 		err := errors.ErrorHashDoesNotMatch

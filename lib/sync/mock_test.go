@@ -25,6 +25,10 @@ func (m *mockConnectionManager) ConnectionWatcher(network.Network, net.Conn, htt
 func (m *mockConnectionManager) Broadcast(common.Message)                                    {}
 func (m *mockConnectionManager) Start()                                                      {}
 
+func (m *mockConnectionManager) GetConnection(string) network.NetworkClient {
+	return nil
+}
+
 func (m *mockConnectionManager) AllConnected() []string {
 	return m.allConnected
 }

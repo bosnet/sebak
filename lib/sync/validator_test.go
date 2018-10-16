@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"boscoin.io/sebak/lib/block"
+	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/storage"
 	"github.com/stretchr/testify/require"
@@ -17,7 +18,7 @@ func TestValidator(t *testing.T) {
 	networkID := []byte("test-network")
 	_, nw, _ := network.CreateMemoryNetwork(nil)
 
-	v := NewBlockValidator(nw, st, networkID)
+	v := NewBlockValidator(nw, st, networkID, common.NewConfig())
 
 	ctx := context.Background()
 

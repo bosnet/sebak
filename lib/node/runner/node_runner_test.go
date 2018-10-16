@@ -165,7 +165,8 @@ func createTestNodeRunnersHTTP2Network(n int) (nodeRunners []*NodeRunner, rootKP
 		genesisAccount.Save(st)
 		commonAccount.Save(st)
 
-		block.MakeGenesisBlock(st, *genesisAccount, *commonAccount, networkID)
+		blk, _ := block.MakeGenesisBlock(st, *genesisAccount, *commonAccount, networkID)
+		is.SetLatestBlock(*blk)
 
 		nodeRunner, _ := NewNodeRunner(string(networkID), node, policy, n, is, st, conf)
 		nodeRunners = append(nodeRunners, nodeRunner)

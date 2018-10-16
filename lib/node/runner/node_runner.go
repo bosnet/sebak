@@ -31,7 +31,7 @@ import (
 var DefaultHandleBaseBallotCheckerFuncs = []common.CheckerFunc{
 	BallotUnmarshal,
 	BallotNotFromKnownValidators,
-	BallotSaveNodeHeight,
+	// BallotSaveNodeHeight,
 	BallotAlreadyFinished,
 }
 

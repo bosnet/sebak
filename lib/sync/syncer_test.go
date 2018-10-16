@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"boscoin.io/sebak/lib/block"
+	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/storage"
 	"github.com/stretchr/testify/assert"
@@ -78,7 +79,7 @@ func SyncerTest(t *testing.T, fn func(*SyncerTestContext)) {
 	tickc := make(chan time.Time)
 	infoc := make(chan *SyncInfo)
 
-	syncer := NewSyncer(st, nw, cm, networkID, localNode)
+	syncer := NewSyncer(st, nw, cm, networkID, localNode, common.NewConfig())
 	defer syncer.Stop()
 
 	syncer.fetcher = &mockFetcher{

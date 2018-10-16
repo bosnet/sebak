@@ -53,8 +53,8 @@ func NewSyncer(st *storage.LevelDBBackend,
 	nw network.Network,
 	cm network.ConnectionManager,
 	networkID []byte,
-	cfg common.Config, opts ...SyncerOption) *Syncer {
 	localNode *node.LocalNode,
+	cfg common.Config,
 	opts ...SyncerOption) *Syncer {
 	ctx, cancelFunc := context.WithCancel(context.Background())
 
