@@ -88,17 +88,29 @@ jobs:
           name: upload coverage reports
           command: bash <(curl -s https://codecov.io/bash) -F unittests
 
-  integration_tests:
+  integration_tests_node:
     <<: *defaults
     steps:
       - setup_remote_docker
       - <<: *workspace
       - run:
-          name: integration tests
-          command: ./tests/run.sh
+          name: integration tests node
+          command: ./tests/node/run.sh
       - run:
           name: upload coverage reports
-          command: bash <(curl -s https://codecov.io/bash) -F integration_tests
+          command: bash <(curl -s https://codecov.io/bash) -F integration_tests_node
+
+  integration_tests_sdk:
+    <<: *defaults
+    steps:
+      - setup_remote_docker
+      - <<: *workspace
+      - run:
+          name: integration tests sdk
+          command: ./tests/sdk/run.sh
+      - run:
+          name: upload coverage reports
+          command: bash <(curl -s https://codecov.io/bash) -F integration_tests_sdk
 
 workflows:
   version: 2
@@ -117,6 +129,9 @@ workflows:
       - unittests:
           requires:
             - generate_merged_tree
-      - integration_tests:
+      - integration_tests_node:
+          requires:
+            - generate_merged_tree
+      - integration_tests_sdk:
           requires:
             - generate_merged_tree

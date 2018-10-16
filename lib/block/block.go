@@ -5,20 +5,16 @@ import (
 	"fmt"
 
 	"github.com/btcsuite/btcutil/base58"
-	"github.com/stellar/go/keypair"
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/consensus/round"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/storage"
-	"boscoin.io/sebak/lib/transaction"
-	"boscoin.io/sebak/lib/transaction/operation"
 )
 
 const (
-	maxBlockHeightStringLength int    = 20
-	EventBlockPrefix           string = "bk-saved"
+	EventBlockPrefix string = "bk-saved"
 )
 
 type Block struct {
@@ -41,102 +37,6 @@ func (bck Block) Serialize() (encoded []byte, err error) {
 func (bck Block) String() string {
 	encoded, _ := json.MarshalIndent(bck, "", "  ")
 	return string(encoded)
-}
-
-// MakeGenesisBlock makes genesis block.
-//
-// This special block has different part from the other Block
-// * `Block.Proposer` is empty
-// * `Block.Transaction` is empty
-// * `Block.Confirmed` is `common.GenesisBlockConfirmedTime`
-// * has only one `Transaction`
-//
-// This Transaction is different from other normal Transaction;
-// * signed by `keypair.Master(string(networkID))`
-// * must have only two `Operation`, `CreateAccount`
-// * The first `Operation` is for genesis account
-//   * `CreateAccount.Amount` is same with balance of genesis account
-//   * `CreateAccount.Target` is genesis account
-// * The next `Operation` is for common account
-//   * `CreateAccount.Amount` is 0
-//   * `CreateAccount.Target` is common account
-// * `Transaction.B.Fee` is 0
-func MakeGenesisBlock(st *storage.LevelDBBackend, genesisAccount BlockAccount, commonAccount BlockAccount, networdID []byte) (blk *Block, err error) {
-	if genesisAccount.Address == commonAccount.Address {
-		err = fmt.Errorf("genesis account and common account are same.")
-		return
-	}
-
-	var exists bool
-	if exists, err = ExistsBlockByHeight(st, 1); exists || err != nil {
-		if exists {
-			err = errors.ErrorBlockAlreadyExists
-		}
-
-		return
-	}
-
-	// create create-account transaction.
-	var ops []operation.Operation
-	{
-		opb := operation.NewCreateAccount(genesisAccount.Address, genesisAccount.Balance, "")
-		op := operation.Operation{
-			H: operation.Header{
-				Type: operation.TypeCreateAccount,
-			},
-			B: opb,
-		}
-		ops = append(ops, op)
-	}
-
-	{
-		opb := operation.NewCreateAccount(commonAccount.Address, commonAccount.Balance, "")
-		op := operation.Operation{
-			H: operation.Header{
-				Type: operation.TypeCreateAccount,
-			},
-			B: opb,
-		}
-		ops = append(ops, op)
-	}
-
-	txBody := transaction.Body{
-		Source:     genesisAccount.Address,
-		Fee:        0,
-		SequenceID: genesisAccount.SequenceID,
-		Operations: ops,
-	}
-
-	tx := transaction.Transaction{
-		T: "transaction",
-		H: transaction.Header{
-			Created: common.GenesisBlockConfirmedTime,
-			Hash:    txBody.MakeHashString(),
-		},
-		B: txBody,
-	}
-
-	kp := keypair.Master(string(networkID))
-	tx.Sign(kp, []byte(networdID))
-
-	blk = NewBlock(
-		"",
-		round.Round{},
-		"",
-		[]string{tx.GetHash()},
-		common.GenesisBlockConfirmedTime,
-	)
-	if err = blk.Save(st); err != nil {
-		return
-	}
-
-	raw, _ := tx.Serialize()
-	bt := NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.Confirmed, tx, raw)
-	if err = bt.Save(st); err != nil {
-		return
-	}
-
-	return
 }
 
 // NewBlock creates new block; `ptx` represents the
@@ -168,8 +68,7 @@ func GetBlockKeyPrefixConfirmed(confirmed string) string {
 }
 
 func GetBlockKeyPrefixHeight(height uint64) string {
-	f := fmt.Sprintf("%%s%%0%dd-", maxBlockHeightStringLength)
-	return fmt.Sprintf(f, common.BlockPrefixHeight, height)
+	return fmt.Sprintf("%s%020d", common.BlockPrefixHeight, height)
 }
 
 func (b Block) NewBlockKeyConfirmed() string {
@@ -322,16 +221,15 @@ func GetBlockHeaderByHeight(st *storage.LevelDBBackend, height uint64) (bt Heade
 	return GetBlockHeader(st, hash)
 }
 
-func GetLatestBlock(st *storage.LevelDBBackend) (b Block, err error) {
+func GetLatestBlock(st *storage.LevelDBBackend) Block {
 	// get latest blocks
 	iterFunc, closeFunc := GetBlocksByConfirmed(st, storage.NewDefaultListOptions(true, nil, 1))
-	b, _, _ = iterFunc()
+	b, _, _ := iterFunc()
 	closeFunc()
 
 	if b.Hash == "" {
-		err = errors.ErrorBlockNotFound
-		return
+		panic(errors.ErrorBlockNotFound)
 	}
 
-	return
+	return b
 }

@@ -76,6 +76,8 @@ github.com/stretchr/testify v1.2.2 h1:bSDNvY7ZPG5RlJ8otE/7V6gMiyenm9RtJ7IUVIAoJ1
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/syndtr/goleveldb v0.0.0-20180331014930-714f901b98fd h1:WuVJ5mLz1bggtrjvb2pQCZxN4MBDEK/SoyQXGI5UtBA=
 github.com/syndtr/goleveldb v0.0.0-20180331014930-714f901b98fd/go.mod h1:Z4AUp2Km+PwemOoO/VB5AOx9XSsIItzFjoJlOSiYmn0=
+github.com/ulule/limiter v2.2.0+incompatible h1:1SeOVtEtaMckX/1yBlsok6LLZjiUrZ33kF5FITMl3MU=
+github.com/ulule/limiter v2.2.0+incompatible/go.mod h1:VJx/ZNGmClQDS5F6EmsGqK8j3jz1qJYZ6D9+MdAD+kw=
 golang.org/x/net v0.0.0-20180420171651-5f9ae10d9af5 h1:ylIG3jIeS45kB0W95N19kS62fwermjMYLIyybf8xh9M=
 golang.org/x/net v0.0.0-20180420171651-5f9ae10d9af5/go.mod h1:mL1N/T3taQHkDXs73rZJwtUhF3w3ftmwwsq0BUmARs4=
 golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f h1:wMNYb4v58l5UBM7MYRLPG6ZhfOqbKu7X5eyFl8ZhKvA=

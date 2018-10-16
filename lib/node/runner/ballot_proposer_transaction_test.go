@@ -32,7 +32,7 @@ func (p *ballotCheckerProposedTransaction) Prepare() {
 	nr, localNodes, _ := createNodeRunnerForTesting(2, common.NewConfig(), nil)
 	p.nr = nr
 
-	p.genesisBlock, _ = block.GetBlockByHeight(nr.Storage(), 1)
+	p.genesisBlock = block.GetGenesis(nr.Storage())
 	p.commonAccount, _ = GetCommonAccount(nr.Storage())
 	p.initialBalance, _ = GetGenesisBalance(nr.Storage())
 
@@ -57,7 +57,7 @@ func (p *ballotCheckerProposedTransaction) MakeBallot(numberOfTxs int) (blt *bal
 	for i := 0; i < numberOfTxs; i++ {
 		kpA, _ := keypair.Random()
 		accountA := block.NewBlockAccount(kpA.Address(), common.Amount(common.BaseReserve))
-		accountA.Save(p.nr.Storage())
+		accountA.MustSave(p.nr.Storage())
 
 		kpB, _ := keypair.Random()
 

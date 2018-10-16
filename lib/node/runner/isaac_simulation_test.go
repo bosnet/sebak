@@ -25,7 +25,7 @@ TestISAACSimulationProposer indicates the following:
 */
 func TestISAACSimulationProposer(t *testing.T) {
 	nr, nodes, _ := createNodeRunnerForTesting(5, common.NewConfig(), nil)
-	tx, _ := GetTransaction(t)
+	tx, _ := GetTransaction()
 
 	// `nr` is proposer's runner
 	proposer := nr.localNode
@@ -49,39 +49,39 @@ func TestISAACSimulationProposer(t *testing.T) {
 
 	conf := common.NewConfig()
 
-	ballotSIGN1 := GenerateBallot(t, proposer, round, tx, ballot.StateSIGN, nodes[1], conf)
-	err = ReceiveBallot(t, nr, ballotSIGN1)
+	ballotSIGN1 := GenerateBallot(proposer, round, tx, ballot.StateSIGN, nodes[1], conf)
+	err = ReceiveBallot(nr, ballotSIGN1)
 	require.Nil(t, err)
 
-	ballotSIGN2 := GenerateBallot(t, proposer, round, tx, ballot.StateSIGN, nodes[2], conf)
-	err = ReceiveBallot(t, nr, ballotSIGN2)
+	ballotSIGN2 := GenerateBallot(proposer, round, tx, ballot.StateSIGN, nodes[2], conf)
+	err = ReceiveBallot(nr, ballotSIGN2)
 	require.Nil(t, err)
 
-	ballotSIGN3 := GenerateBallot(t, proposer, round, tx, ballot.StateSIGN, nodes[3], conf)
-	err = ReceiveBallot(t, nr, ballotSIGN3)
+	ballotSIGN3 := GenerateBallot(proposer, round, tx, ballot.StateSIGN, nodes[3], conf)
+	err = ReceiveBallot(nr, ballotSIGN3)
 	require.Nil(t, err)
 
-	ballotSIGN4 := GenerateBallot(t, proposer, round, tx, ballot.StateSIGN, nodes[4], conf)
-	err = ReceiveBallot(t, nr, ballotSIGN4)
+	ballotSIGN4 := GenerateBallot(proposer, round, tx, ballot.StateSIGN, nodes[4], conf)
+	err = ReceiveBallot(nr, ballotSIGN4)
 	require.Nil(t, err)
 
 	rr := nr.Consensus().RunningRounds[round.Index()]
 	require.Equal(t, 4, len(rr.Voted[proposer.Address()].GetResult(ballot.StateSIGN)))
 
-	ballotACCEPT0 := GenerateBallot(t, proposer, round, tx, ballot.StateACCEPT, nodes[0], conf)
-	err = ReceiveBallot(t, nr, ballotACCEPT0)
+	ballotACCEPT0 := GenerateBallot(proposer, round, tx, ballot.StateACCEPT, nodes[0], conf)
+	err = ReceiveBallot(nr, ballotACCEPT0)
 	require.Nil(t, err)
 
-	ballotACCEPT1 := GenerateBallot(t, proposer, round, tx, ballot.StateACCEPT, nodes[1], conf)
-	err = ReceiveBallot(t, nr, ballotACCEPT1)
+	ballotACCEPT1 := GenerateBallot(proposer, round, tx, ballot.StateACCEPT, nodes[1], conf)
+	err = ReceiveBallot(nr, ballotACCEPT1)
 	require.Nil(t, err)
 
-	ballotACCEPT2 := GenerateBallot(t, proposer, round, tx, ballot.StateACCEPT, nodes[2], conf)
-	err = ReceiveBallot(t, nr, ballotACCEPT2)
+	ballotACCEPT2 := GenerateBallot(proposer, round, tx, ballot.StateACCEPT, nodes[2], conf)
+	err = ReceiveBallot(nr, ballotACCEPT2)
 	require.Nil(t, err)
 
-	ballotACCEPT3 := GenerateBallot(t, proposer, round, tx, ballot.StateACCEPT, nodes[3], conf)
-	err = ReceiveBallot(t, nr, ballotACCEPT3)
+	ballotACCEPT3 := GenerateBallot(proposer, round, tx, ballot.StateACCEPT, nodes[3], conf)
+	err = ReceiveBallot(nr, ballotACCEPT3)
 
 	_, ok := err.(CheckerStopCloseConsensus)
 	require.True(t, ok)

@@ -36,10 +36,11 @@ require (
 	github.com/prometheus/procfs v0.0.0-20180725123919-05ee40e3a273 // indirect
 	github.com/satori/go.uuid v1.2.0
 	github.com/spf13/cobra v0.0.3
-	github.com/spf13/pflag v1.0.1 // indirect
+	github.com/spf13/pflag v1.0.1
 	github.com/stellar/go v0.0.0-20180501231346-87a45bf9f03d
 	github.com/stretchr/testify v1.2.2
 	github.com/syndtr/goleveldb v0.0.0-20180331014930-714f901b98fd
+	github.com/ulule/limiter v2.2.0+incompatible
 	golang.org/x/net v0.0.0-20180420171651-5f9ae10d9af5
 	golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f // indirect
 	golang.org/x/sys v0.0.0-20180501092740-78d5f264b493 // indirect

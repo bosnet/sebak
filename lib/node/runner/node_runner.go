@@ -140,27 +140,35 @@ func NewNodeRunner(
 }
 
 func (nr *NodeRunner) Ready() {
-	// node handlers
-	nodeHandler := NewNetworkHandlerNode(
-		nr.localNode,
-		nr.network,
-		nr.storage,
-		nr.consensus,
-		network.UrlPathPrefixNode,
-		nr.Conf,
-	)
+	rateLimitMiddlewareAPI := network.RateLimitMiddleware(nr.log, nr.Conf.RateLimitRuleAPI)
+	if err := nr.network.AddMiddleware(network.RouterNameAPI, rateLimitMiddlewareAPI); err != nil {
+		nr.log.Error("`network.RateLimitMiddleware` for `RouterNameAPI` has an error", "err", err)
+		return
+	}
+	rateLimitMiddlewareNode := network.RateLimitMiddleware(nr.log, nr.Conf.RateLimitRuleNode)
+	if err := nr.network.AddMiddleware(network.RouterNameNode, rateLimitMiddlewareNode); err != nil {
+		nr.log.Error("`network.RateLimitMiddleware` for `RouterNameNode` has an error", "err", err)
+		return
+	}
+	if err := nr.network.AddMiddleware("", rateLimitMiddlewareAPI); err != nil {
+		nr.log.Error("`network.RateLimitMiddleware` for base router has an error", "err", err)
+		return
+	}
 
 	if err := nr.network.AddMiddleware(network.RouterNameAPI, network.RecoverMiddleware(nr.log)); err != nil {
-		nr.log.Error("Middleware has an error", "err", err)
+		nr.log.Error("`network.RecoverMiddleware` for `RouterNameAPI` has an error", "err", err)
 		return
 	}
 	if err := nr.network.AddMiddleware(network.RouterNameNode, network.RecoverMiddleware(nr.log)); err != nil {
+		nr.log.Error("`network.RecoverMiddleware` for `RouterNameNode` has an error", "err", err)
+		return
+	}
+	if err := nr.network.AddMiddleware("", network.RecoverMiddleware(nr.log)); err != nil {
 		nr.log.Error("Middleware has an error", "err", err)
 		return
 	}
 
-	//CORS
-	{
+	{ //CORS
 		allowedOrigins := ghandlers.AllowedOrigins([]string{"*"})
 		allowedMethods := ghandlers.AllowedMethods([]string{"GET", "POST"})
 
@@ -171,6 +179,16 @@ func (nr *NodeRunner) Ready() {
 			return
 		}
 	}
+
+	// node handlers
+	nodeHandler := NewNetworkHandlerNode(
+		nr.localNode,
+		nr.network,
+		nr.storage,
+		nr.consensus,
+		network.UrlPathPrefixNode,
+		nr.Conf,
+	)
 
 	nr.network.AddHandler(nodeHandler.HandlerURLPattern(NodeInfoHandlerPattern), nodeHandler.NodeInfoHandler)
 	nr.network.AddHandler(nodeHandler.HandlerURLPattern(ConnectHandlerPattern), nodeHandler.ConnectHandler).
@@ -415,11 +433,7 @@ func (nr *NodeRunner) handleBallotMessage(message common.NetworkMessage) (err er
 
 func (nr *NodeRunner) InitRound() {
 	// get latest blocks
-	var err error
-	var latestBlock block.Block
-	if latestBlock, err = block.GetLatestBlock(nr.storage); err != nil {
-		panic(err)
-	}
+	latestBlock := block.GetLatestBlock(nr.storage)
 
 	nr.consensus.SetLatestBlock(latestBlock)
 	nr.consensus.SetLatestRound(round.Round{})

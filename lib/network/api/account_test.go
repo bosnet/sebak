@@ -23,7 +23,7 @@ func TestGetAccountHandler(t *testing.T) {
 	defer ts.Close()
 	// Make Dummy BlockAccount
 	ba := block.TestMakeBlockAccount()
-	ba.Save(storage)
+	ba.MustSave(storage)
 	{
 		// Do a Request
 		url := strings.Replace(GetAccountHandlerPattern, "{id}", ba.Address, -1)
@@ -63,7 +63,7 @@ func TestGetAccountHandlerStream(t *testing.T) {
 				}
 				observer.BlockAccountObserver.RUnlock()
 			}
-			ba.Save(storage)
+			ba.MustSave(storage)
 			wg.Done()
 		}()
 	}

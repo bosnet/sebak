@@ -6,7 +6,7 @@ set -xe
 # So make sure we're in the right WD
 cd -- `dirname ${BASH_SOURCE[0]}`
 TEST_DIRS=$(find . -mindepth 1 -maxdepth 1 -type d -print)
-ROOT_DIR=".."
+ROOT_DIR="../.."
 export SEBAK_NODE_ARGS=""
 export SEBAK_GENESIS=GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ
 export SEBAK_COMMON=GDYIHSHMDXJ4MXE35N4IMNC2X3Q3F665C5EX2JWHHCUW2PCFVXIFEE2C
@@ -45,13 +45,13 @@ for dir in ${TEST_DIRS}; do
     # Also SUPER IMPORTANT: the `-test` args need to be before any other args, or they are simply ignored...
     export NODE1=$(docker run -d --network host --env-file=${ROOT_DIR}/docker/node1.env \
                           ${NODE_DOCKER_IMAGE} -test.coverprofile=coverage.txt node --genesis=${SEBAK_GENESIS},${SEBAK_COMMON}\
-                          --log-level=debug --timeout-init=10 --timeout-sign=10 --timeout-accept=10 --block-time=20)
+                          --log-level=debug)
     export NODE2=$(docker run -d --network host --env-file=${ROOT_DIR}/docker/node2.env \
                           ${NODE_DOCKER_IMAGE} -test.coverprofile=coverage.txt node --genesis=${SEBAK_GENESIS},${SEBAK_COMMON}\
-                          --log-level=debug --timeout-init=10 --timeout-sign=10 --timeout-accept=10 --block-time=20)
+                          --log-level=debug)
     export NODE3=$(docker run -d --network host --env-file=${ROOT_DIR}/docker/node3.env \
                           ${NODE_DOCKER_IMAGE} -test.coverprofile=coverage.txt node --genesis=${SEBAK_GENESIS},${SEBAK_COMMON}\
-                          --log-level=debug --timeout-init=10 --timeout-sign=10 --timeout-accept=10 --block-time=20)
+                          --log-level=debug)
 
     DOCKER_CONTAINERS="${DOCKER_CONTAINERS} ${NODE1} ${NODE2} ${NODE3}"
 

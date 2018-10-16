@@ -5,6 +5,7 @@ import (
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/consensus/round"
+	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
 )
 
@@ -19,13 +20,84 @@ func TestMakeBlockAccount() *BlockAccount {
 }
 
 var (
-	kp           *keypair.Full
-	account      *BlockAccount
-	genesisBlock Block
+	GenesisKP *keypair.Full
+	CommonKP  *keypair.Full
 )
 
 func init() {
-	kp, _ = keypair.Random()
+	var err error
+	GenesisKP, err = keypair.Random()
+	if err != nil {
+		panic(err)
+	}
+	CommonKP, err = keypair.Random()
+	if err != nil {
+		panic(err)
+	}
+}
+
+//
+// Make a default-initialized test blockchain
+//
+// Write to the provided storage the genesis and common account,
+// as well as the genesis block.
+// This provide a simple, workable chain to use within tests.
+//
+// If anything goes wrong, `panic`
+//
+// Params:
+//   st = Storage to write the blockchain to
+//
+func MakeTestBlockchain(st *storage.LevelDBBackend) {
+	balance := common.MaximumBalance
+	genesisAccount := NewBlockAccount(GenesisKP.Address(), balance)
+	if err := genesisAccount.Save(st); err != nil {
+		panic(err)
+	}
+
+	commonAccount := NewBlockAccount(CommonKP.Address(), 0)
+	if err := commonAccount.Save(st); err != nil {
+		panic(err)
+	}
+
+	if _, err := MakeGenesisBlock(st, *genesisAccount, *commonAccount, networkID); err != nil {
+		panic(err)
+	}
+}
+
+// Like `MakeTestBlockchain`, but also create a storage
+func InitTestBlockchain() *storage.LevelDBBackend {
+	st := storage.NewTestStorage()
+	MakeTestBlockchain(st)
+	return st
+}
+
+/// Version of `Block.Save` that panics on error, usable only in tests
+func (b *Block) MustSave(st *storage.LevelDBBackend) {
+	if err := b.Save(st); err != nil {
+		panic(err)
+	}
+}
+
+/// Version of `BlockAccount.Save` that panics on error, usable only in tests
+func (b *BlockAccount) MustSave(st *storage.LevelDBBackend) {
+	if err := b.Save(st); err != nil {
+		panic(err)
+	}
+}
+
+/// Version of `BlockTransaction.Save` that panics on error, usable only in tests
+func (b *BlockTransaction) MustSave(st *storage.LevelDBBackend) {
+	if err := b.Save(st); err != nil {
+		panic(err)
+	}
+}
+
+/// Version of `BlockTransaction.Save` that panics on error, usable only in tests
+func (b *BlockOperation) MustSave(st *storage.LevelDBBackend) {
+	if err := b.Save(st); err != nil {
+		panic(err)
+	}
 }
 
 func TestMakeNewBlock(transactions []string) Block {

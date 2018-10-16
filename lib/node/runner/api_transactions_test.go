@@ -38,7 +38,8 @@ type HelperTestGetNodeTransactionsHandler struct {
 }
 
 func (p *HelperTestGetNodeTransactionsHandler) Prepare() {
-	p.st = storage.NewTestStorage()
+	p.st = block.InitTestBlockchain()
+	p.blocks = append(p.blocks, block.GetGenesis(p.st))
 
 	kp, _ := keypair.Random()
 	endpoint, _ := common.NewEndpointFromString(
@@ -68,19 +69,16 @@ func (p *HelperTestGetNodeTransactionsHandler) Prepare() {
 
 	p.genesisKeypair, _ = keypair.Random()
 	p.genesisAccount = block.NewBlockAccount(p.genesisKeypair.Address(), common.MaximumBalance)
-	p.genesisAccount.Save(p.st)
+	p.genesisAccount.MustSave(p.st)
 
-	var bks []block.Block
 	for i := 0; i < 3; i++ {
-		bks = append(bks, p.createBlock())
+		p.blocks = append(p.blocks, p.createBlock())
 	}
 
 	for j := 0; j < 3; j++ {
 		_, tx := transaction.TestMakeTransaction(networkID, 2)
 		p.consensus.TransactionPool.Add(tx)
 	}
-
-	p.blocks = bks
 
 	return
 }
@@ -100,24 +98,16 @@ func (p *HelperTestGetNodeTransactionsHandler) createBlock() block.Block {
 		p.transactionHashes = append(p.transactionHashes, tx.GetHash())
 	}
 
-	var height int
-	latest, err := block.GetLatestBlock(p.st)
-	if err == nil {
-		height = int(latest.Height)
-	} else {
-		if _, ok := err.(*errors.Error); !ok {
-			panic(err)
-		}
-		height = -1
-	}
+	latest := block.GetLatestBlock(p.st)
+	height := int(latest.Height)
 	bk := block.TestMakeNewBlock(txHashes)
 	bk.Height = uint64(height + 1)
-	bk.Save(p.st)
+	bk.MustSave(p.st)
 
 	for _, tx := range txs {
 		b, _ := tx.Serialize()
 		btx := block.NewBlockTransactionFromTransaction(bk.Hash, bk.Height, bk.Confirmed, tx, b)
-		if err = btx.Save(p.st); err != nil {
+		if err := btx.Save(p.st); err != nil {
 			panic(err)
 		}
 	}

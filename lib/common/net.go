@@ -1,6 +1,7 @@
 package common
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
@@ -9,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/ulule/limiter"
 )
 
 var DefaultEndpoint int = 12345
@@ -164,4 +167,20 @@ func RequestURLFromRequest(r *http.Request) *url.URL {
 		RawQuery:   r.URL.RawQuery,
 		Fragment:   r.URL.Fragment,
 	}
+}
+
+type RateLimitRule struct {
+	Default     limiter.Rate
+	ByIPAddress map[string]limiter.Rate
+}
+
+func NewRateLimitRule(rate limiter.Rate) RateLimitRule {
+	return RateLimitRule{
+		Default:     rate,
+		ByIPAddress: map[string]limiter.Rate{},
+	}
+}
+
+func (r RateLimitRule) Serializable() ([]byte, error) {
+	return json.Marshal(r)
 }

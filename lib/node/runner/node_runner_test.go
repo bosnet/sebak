@@ -17,7 +17,6 @@ import (
 	"boscoin.io/sebak/lib/consensus/round"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
-	"boscoin.io/sebak/lib/storage"
 )
 
 var (
@@ -50,9 +49,6 @@ func createTestNodeRunner(n int, conf common.Config) []*NodeRunner {
 		}
 	}
 
-	address := genesisKP.Address()
-	balance := common.BaseFee.MustAdd(common.BaseReserve)
-	account := block.NewBlockAccount(address, balance)
 	var nodeRunners []*NodeRunner
 	for i := 0; i < n; i++ {
 		localNode := nodes[i]
@@ -65,16 +61,7 @@ func createTestNodeRunner(n int, conf common.Config) []*NodeRunner {
 		)
 
 		is, _ := consensus.NewISAAC(networkID, localNode, policy, connectionManager, conf)
-		st := storage.NewTestStorage()
-
-		account.Save(st)
-
-		commonKP, _ := keypair.Random()
-		commonAccount := block.NewBlockAccount(commonKP.Address(), 0)
-		commonAccount.Save(st)
-
-		genesisBlock, _ := block.MakeGenesisBlock(st, *account, *commonAccount, networkID)
-		genesisBlock.Save(st)
+		st := block.InitTestBlockchain()
 
 		nr, err := NewNodeRunner(string(networkID), localNode, policy, ns[i], is, st, conf)
 		if err != nil {
@@ -152,17 +139,8 @@ func createTestNodeRunnersHTTP2Network(n int) (nodeRunners []*NodeRunner, rootKP
 		}
 	}
 
-	rootKP, _ = keypair.Random()
-	genesisAccount := block.NewBlockAccount(
-		rootKP.Address(),
-		common.MaximumBalance,
-	)
-	commonKP, _ := keypair.Random()
-	commonAccount := block.NewBlockAccount(commonKP.Address(), 0)
-
 	for _, node := range nodes {
 		policy, _ := consensus.NewDefaultVotingThresholdPolicy(66)
-		st := storage.NewTestStorage()
 		networkConfig, _ := network.NewHTTP2NetworkConfigFromEndpoint(node.Alias(), node.Endpoint())
 		n := network.NewHTTP2Network(networkConfig)
 
@@ -175,16 +153,13 @@ func createTestNodeRunnersHTTP2Network(n int) (nodeRunners []*NodeRunner, rootKP
 		conf := common.NewConfig()
 		is, _ := consensus.NewISAAC(networkID, node, policy, connectionManager, conf)
 
-		genesisAccount.Save(st)
-		commonAccount.Save(st)
-
-		block.MakeGenesisBlock(st, *genesisAccount, *commonAccount, networkID)
+		st := block.InitTestBlockchain()
 
 		nodeRunner, _ := NewNodeRunner(string(networkID), node, policy, n, is, st, conf)
 		nodeRunners = append(nodeRunners, nodeRunner)
 	}
 
-	return nodeRunners, rootKP
+	return nodeRunners, block.GenesisKP
 }
 
 func createTestNodeRunnersHTTP2NetworkWithReady(n int) (nodeRunners []*NodeRunner, rootKP *keypair.Full) {
@@ -300,7 +275,7 @@ func TestExpiredBallotCheckProposer(t *testing.T) {
 	}
 
 	// The createNodeRunnerForTesting has FixedSelector{localNode.Address()} so the proposer is always nr(nodes[0]).
-	validBallot := GenerateEmptyTxBallot(t, nr.localNode, round, ballot.StateSIGN, nodes[1], common.NewConfig())
+	validBallot := GenerateEmptyTxBallot(nr.localNode, round, ballot.StateSIGN, nodes[1], common.NewConfig())
 	validBallot.SetVote(ballot.StateSIGN, ballot.VotingEXP)
 
 	checker := &BallotChecker{
@@ -321,7 +296,7 @@ func TestExpiredBallotCheckProposer(t *testing.T) {
 
 	// The createNodeRunnerForTesting has FixedSelector{localNode.Address()} so the proposer is always nr(nodes[0]).
 	// The invalidBallot has nodes[1] as a proposer so it is invalid.
-	invalidBallot := GenerateEmptyTxBallot(t, nodes[1], round, ballot.StateSIGN, nodes[1], common.NewConfig())
+	invalidBallot := GenerateEmptyTxBallot(nodes[1], round, ballot.StateSIGN, nodes[1], common.NewConfig())
 	invalidBallot.SetVote(ballot.StateSIGN, ballot.VotingEXP)
 
 	checker = &BallotChecker{

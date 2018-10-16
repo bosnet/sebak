@@ -20,7 +20,7 @@ func TestBlockConfirmedOrdering(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		bk := TestMakeNewBlock([]string{})
 		bk.Height = uint64(i)
-		require.Nil(t, bk.Save(st))
+		bk.MustSave(st)
 		inserted = append(inserted, bk)
 	}
 
@@ -183,7 +183,7 @@ func TestMakeGenesisBlockOverride(t *testing.T) {
 
 		commonKP, _ := keypair.Random()
 		commonAccount := NewBlockAccount(commonKP.Address(), 0)
-		commonAccount.Save(st)
+		err = commonAccount.Save(st)
 		require.Nil(t, err)
 
 		bk, err := MakeGenesisBlock(st, *account, *commonAccount, networkID)
@@ -200,7 +200,7 @@ func TestMakeGenesisBlockOverride(t *testing.T) {
 
 		commonKP, _ := keypair.Random()
 		commonAccount := NewBlockAccount(commonKP.Address(), 0)
-		commonAccount.Save(st)
+		err = commonAccount.Save(st)
 		require.Nil(t, err)
 
 		_, err = MakeGenesisBlock(st, *account, *commonAccount, networkID)
@@ -216,11 +216,11 @@ func TestMakeGenesisBlockFindGenesisAccount(t *testing.T) {
 	kp, _ := keypair.Random()
 	balance := common.Amount(100)
 	account := NewBlockAccount(kp.Address(), balance)
-	account.Save(st)
+	account.MustSave(st)
 
 	commonKP, _ := keypair.Random()
 	commonAccount := NewBlockAccount(commonKP.Address(), 0)
-	commonAccount.Save(st)
+	commonAccount.MustSave(st)
 
 	{
 		bk, err := MakeGenesisBlock(st, *account, *commonAccount, networkID)
@@ -230,7 +230,7 @@ func TestMakeGenesisBlockFindGenesisAccount(t *testing.T) {
 
 	// find genesis account
 	{ // with `Operation`
-		bk, _ := GetBlockByHeight(st, 1)
+		bk := GetGenesis(st)
 		bt, _ := GetBlockTransaction(st, bk.Transactions[0])
 		bo, _ := GetBlockOperation(st, bt.Operations[0])
 
@@ -256,11 +256,11 @@ func TestMakeGenesisBlockFindCommonAccount(t *testing.T) {
 	kp, _ := keypair.Random()
 	balance := common.Amount(100)
 	genesisAccount := NewBlockAccount(kp.Address(), balance)
-	genesisAccount.Save(st)
+	genesisAccount.MustSave(st)
 
 	commonKP, _ := keypair.Random()
 	commonAccount := NewBlockAccount(commonKP.Address(), 0)
-	commonAccount.Save(st)
+	commonAccount.MustSave(st)
 
 	{
 		bk, err := MakeGenesisBlock(st, *genesisAccount, *commonAccount, networkID)
@@ -270,7 +270,7 @@ func TestMakeGenesisBlockFindCommonAccount(t *testing.T) {
 
 	// find common account
 	{ // with `Operation`
-		bk, _ := GetBlockByHeight(st, 1)
+		bk := GetGenesis(st)
 		bt, _ := GetBlockTransaction(st, bk.Transactions[0])
 		bo, _ := GetBlockOperation(st, bt.Operations[1])
 

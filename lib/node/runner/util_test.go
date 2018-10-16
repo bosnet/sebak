@@ -6,19 +6,18 @@ import (
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/storage"
-	"github.com/stellar/go/keypair"
+
 	"github.com/stretchr/testify/require"
 )
 
 func TestGetGenesisAccount(t *testing.T) {
 	st := storage.NewTestStorage()
 
-	genesisAccount := block.NewBlockAccount(genesisKP.Address(), common.Amount(1))
-	genesisAccount.Save(st)
+	genesisAccount := block.NewBlockAccount(block.GenesisKP.Address(), common.Amount(1))
+	genesisAccount.MustSave(st)
 
-	commonKP, _ := keypair.Random()
-	commonAccount := block.NewBlockAccount(commonKP.Address(), 0)
-	commonAccount.Save(st)
+	commonAccount := block.NewBlockAccount(block.CommonKP.Address(), 0)
+	commonAccount.MustSave(st)
 
 	block.MakeGenesisBlock(st, *genesisAccount, *commonAccount, networkID)
 
@@ -39,12 +38,11 @@ func TestGetInitialBalance(t *testing.T) {
 	st := storage.NewTestStorage()
 
 	initialBalance := common.Amount(99)
-	genesisAccount := block.NewBlockAccount(genesisKP.Address(), initialBalance)
-	genesisAccount.Save(st)
+	genesisAccount := block.NewBlockAccount(block.GenesisKP.Address(), initialBalance)
+	genesisAccount.MustSave(st)
 
-	commonKP, _ := keypair.Random()
-	commonAccount := block.NewBlockAccount(commonKP.Address(), 0)
-	commonAccount.Save(st)
+	commonAccount := block.NewBlockAccount(block.CommonKP.Address(), 0)
+	commonAccount.MustSave(st)
 
 	block.MakeGenesisBlock(st, *genesisAccount, *commonAccount, networkID)
 

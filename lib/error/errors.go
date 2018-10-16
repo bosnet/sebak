@@ -70,4 +70,6 @@ var (
 	ErrorHTTPProblem                          = NewError(163, "http failed to get response")
 	ErrorInvalidTransaction                   = NewError(164, "invalid transaction")
 	ErrorNotMatcHTTPRouter                    = NewError(165, "doesn't match http router")
+	ErrorTooManyRequests                      = NewError(166, "too many requests; reached limit")
+	ErrorHTTPServerError                      = NewError(167, "Internal Server Error")
 )

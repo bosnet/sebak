@@ -58,7 +58,7 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 
 	{ // valid transaction
 		targetAccount, targetKP := TestMakeBlockAccount(common.Amount(10000000000000) /* 100,00000 BOS */)
-		targetAccount.Save(nodeRunner.Storage())
+		targetAccount.MustSave(nodeRunner.Storage())
 
 		tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, rootKP, targetKP)
 		tx.B.SequenceID = rootAccount.SequenceID
@@ -71,7 +71,7 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 
 	{ // invalid transaction: same source already in Pool
 		targetAccount, targetKP := TestMakeBlockAccount(common.Amount(10000000000000))
-		targetAccount.Save(nodeRunner.Storage())
+		targetAccount.MustSave(nodeRunner.Storage())
 
 		tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, rootKP, targetKP)
 		tx.B.SequenceID = rootAccount.SequenceID
@@ -89,7 +89,7 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 	{ // invalid transaction: source account does not exists
 		_, sourceKP := TestMakeBlockAccount(common.Amount(10000000000000))
 		targetAccount, targetKP := TestMakeBlockAccount(common.Amount(10000000000000))
-		targetAccount.Save(nodeRunner.Storage())
+		targetAccount.MustSave(nodeRunner.Storage())
 
 		tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, sourceKP, targetKP)
 
@@ -105,7 +105,7 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 	{ // invalid transaction: target account does not exists
 		sourceAccount, sourceKP := TestMakeBlockAccount(common.Amount(10000000000000))
 		_, targetKP := TestMakeBlockAccount(common.Amount(10000000000000))
-		sourceAccount.Save(nodeRunner.Storage())
+		sourceAccount.MustSave(nodeRunner.Storage())
 
 		tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, sourceKP, targetKP)
 		tx.B.SequenceID = sourceAccount.SequenceID
@@ -177,7 +177,7 @@ func (g *getMissingTransactionTesting) Prepare() {
 
 	g.consensusNR = g.nodeRunners[1]
 
-	g.genesisBlock, _ = block.GetBlockByHeight(g.proposerNR.Storage(), 1)
+	g.genesisBlock = block.GetGenesis(g.proposerNR.Storage())
 	g.commonAccount, _ = GetCommonAccount(g.proposerNR.Storage())
 	g.initialBalance, _ = GetGenesisBalance(g.proposerNR.Storage())
 }
@@ -196,7 +196,7 @@ func (g *getMissingTransactionTesting) MakeBallot(numberOfTxs int) (blt *ballot.
 	for i := 0; i < numberOfTxs; i++ {
 		kpA, _ := keypair.Random()
 		accountA := block.NewBlockAccount(kpA.Address(), common.Amount(common.BaseReserve)*2)
-		accountA.Save(g.proposerNR.Storage())
+		accountA.MustSave(g.proposerNR.Storage())
 
 		kpB, _ := keypair.Random()
 
@@ -360,7 +360,7 @@ type irregularIncomingBallot struct {
 func (p *irregularIncomingBallot) prepare() {
 	p.nr, p.nodes, _ = createNodeRunnerForTesting(2, common.NewConfig(), nil)
 
-	p.genesisBlock, _ = block.GetBlockByHeight(p.nr.Storage(), 1)
+	p.genesisBlock = block.GetGenesis(p.nr.Storage())
 	p.commonAccount, _ = GetCommonAccount(p.nr.Storage())
 	p.initialBalance, _ = GetGenesisBalance(p.nr.Storage())
 
@@ -425,7 +425,7 @@ func (p *irregularIncomingBallot) makeBallot(state ballot.State) (blt *ballot.Ba
 
 	p.keyA, _ = keypair.Random()
 	p.accountA = block.NewBlockAccount(p.keyA.Address(), common.Amount(common.BaseReserve)*2)
-	p.accountA.Save(p.nr.Storage())
+	p.accountA.MustSave(p.nr.Storage())
 
 	kpB, _ := keypair.Random()
 

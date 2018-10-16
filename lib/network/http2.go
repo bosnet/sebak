@@ -154,9 +154,14 @@ func (t *HTTP2Network) setNotReadyHandler() {
 }
 
 func (t *HTTP2Network) AddMiddleware(routerName string, mws ...mux.MiddlewareFunc) error {
-	r, ok := t.routers[routerName]
-	if !ok {
-		return errors.ErrorNotMatcHTTPRouter
+	var r *mux.Router
+	if len(routerName) < 1 {
+		r = t.router
+	} else {
+		var ok bool
+		if r, ok = t.routers[routerName]; !ok {
+			return errors.ErrorNotMatcHTTPRouter
+		}
 	}
 	for _, mw := range mws {
 		r.Use(mw)
