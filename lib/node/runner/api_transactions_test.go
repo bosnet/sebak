@@ -38,7 +38,8 @@ type HelperTestGetNodeTransactionsHandler struct {
 }
 
 func (p *HelperTestGetNodeTransactionsHandler) Prepare() {
-	p.st = storage.NewTestStorage()
+	p.st = block.InitTestBlockchain()
+	p.blocks = append(p.blocks, block.GetGenesis(p.st))
 
 	kp, _ := keypair.Random()
 	endpoint, _ := common.NewEndpointFromString(
@@ -70,17 +71,14 @@ func (p *HelperTestGetNodeTransactionsHandler) Prepare() {
 	p.genesisAccount = block.NewBlockAccount(p.genesisKeypair.Address(), common.MaximumBalance)
 	p.genesisAccount.Save(p.st)
 
-	var bks []block.Block
 	for i := 0; i < 3; i++ {
-		bks = append(bks, p.createBlock())
+		p.blocks = append(p.blocks, p.createBlock())
 	}
 
 	for j := 0; j < 3; j++ {
 		_, tx := transaction.TestMakeTransaction(networkID, 2)
 		p.consensus.TransactionPool.Add(tx)
 	}
-
-	p.blocks = bks
 
 	return
 }
