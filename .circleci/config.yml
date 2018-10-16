@@ -107,10 +107,10 @@ jobs:
       - <<: *workspace
       - run:
           name: integration tests sdk
-          command: ./tests/sdk/run.sh
+          command: ./tests/client/run.sh
       - run:
           name: upload coverage reports
-          command: bash <(curl -s https://codecov.io/bash) -F integration_tests_sdk
+          command: bash <(curl -s https://codecov.io/bash) -F integration_tests_client
 
 workflows:
   version: 2
@@ -132,6 +132,6 @@ workflows:
       - integration_tests_node:
           requires:
             - generate_merged_tree
-      - integration_tests_sdk:
+      - integration_tests_client:
           requires:
             - generate_merged_tree
