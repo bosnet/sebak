@@ -183,7 +183,7 @@ func TestMakeGenesisBlockOverride(t *testing.T) {
 
 		commonKP, _ := keypair.Random()
 		commonAccount := NewBlockAccount(commonKP.Address(), 0)
-		commonAccount.Save(st)
+		err = commonAccount.Save(st)
 		require.Nil(t, err)
 
 		bk, err := MakeGenesisBlock(st, *account, *commonAccount, networkID)
@@ -200,7 +200,7 @@ func TestMakeGenesisBlockOverride(t *testing.T) {
 
 		commonKP, _ := keypair.Random()
 		commonAccount := NewBlockAccount(commonKP.Address(), 0)
-		commonAccount.Save(st)
+		err = commonAccount.Save(st)
 		require.Nil(t, err)
 
 		_, err = MakeGenesisBlock(st, *account, *commonAccount, networkID)
