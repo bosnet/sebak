@@ -31,7 +31,7 @@ func TestResourceAccount(t *testing.T) {
 			json.Unmarshal(j, &f)
 			m := f.(map[string]interface{})
 			require.Equal(t, ba.Address, m["address"])
-			require.Equal(t, ba.SequenceID, uint64(m["sequence_id"].(float64)))
+			require.Equal(t, ba.SequenceID, uint64(m["sequenceid"].(float64)))
 			require.Equal(t, ba.GetBalance().String(), m["balance"])
 
 			l := m["_links"].(map[string]interface{})

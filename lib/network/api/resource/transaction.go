@@ -23,7 +23,7 @@ func (t Transaction) GetMap() hal.Entry {
 		"hash":            t.bt.Hash,
 		"source":          t.bt.Source,
 		"fee":             t.bt.Fee.String(),
-		"sequence_id":     t.bt.SequenceID,
+		"sequenceid":      t.bt.SequenceID,
 		"created":         t.bt.Created,
 		"operation_count": len(t.bt.Operations),
 	}
