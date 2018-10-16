@@ -33,8 +33,8 @@ func (a Account) Resource() *hal.Resource {
 	accountID := a.ba.Address
 
 	r := hal.NewResource(a, a.LinkSelf())
-	r.AddLink("transactions", hal.NewLink(strings.Replace(URLAccounts, "{id}", address, -1)+"/transactions{?cursor,limit,order}", hal.LinkAttr{"templated": true}))
-	r.AddLink("operations", hal.NewLink(strings.Replace(URLAccounts, "{id}", accountID, -1)+"/operations{?cursor,limit,order}", hal.LinkAttr{"templated": true}))
+	r.AddLink("transactions", hal.NewLink(strings.Replace(URLAccountTransactions, "{id}", address, -1)+"{?cursor,limit,order}", hal.LinkAttr{"templated": true}))
+	r.AddLink("operations", hal.NewLink(strings.Replace(URLAccountOperations, "{id}", accountID, -1)+"{?cursor,limit,order}", hal.LinkAttr{"templated": true}))
 	return r
 }
 

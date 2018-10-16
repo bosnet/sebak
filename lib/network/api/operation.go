@@ -12,6 +12,7 @@ import (
 	"boscoin.io/sebak/lib/network/api/resource"
 	"boscoin.io/sebak/lib/network/httputils"
 	"boscoin.io/sebak/lib/storage"
+	"strings"
 )
 
 func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter, r *http.Request) {
@@ -51,8 +52,8 @@ func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter
 
 	txs := readFunc() //TODO paging support
 	self := r.URL.String()
-	next := GetAccountOperationsHandlerPattern + "?" + options.SetCursor(cursor).SetReverse(false).Encode()
-	prev := GetAccountOperationsHandlerPattern + "?" + options.SetReverse(true).Encode()
+	next := strings.Replace(resource.URLAccountOperations, "{id}", address, -1) + "?" + options.SetCursor(cursor).SetReverse(false).Encode()
+	prev := strings.Replace(resource.URLAccountOperations, "{id}", address, -1) + "?" + options.SetReverse(true).Encode()
 	list := resource.NewResourceList(txs, self, next, prev)
 
 	if err := httputils.WriteJSON(w, 200, list); err != nil {
