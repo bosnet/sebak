@@ -80,7 +80,7 @@ func (b Block) NewBlockKeyConfirmed() string {
 	)
 }
 
-func (b Block) Save(st *storage.LevelDBBackend) (err error) {
+func (b *Block) Save(st *storage.LevelDBBackend) (err error) {
 	key := GetBlockKey(b.Hash)
 
 	var exists bool
