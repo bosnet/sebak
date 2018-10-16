@@ -132,6 +132,6 @@ workflows:
       - integration_tests_node:
           requires:
             - generate_merged_tree
-      - integration_tests_client:
+      - integration_tests_sdk:
           requires:
             - generate_merged_tree
