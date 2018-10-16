@@ -98,9 +98,8 @@ func (p *HelperTestGetNodeTransactionsHandler) createBlock() block.Block {
 		p.transactionHashes = append(p.transactionHashes, tx.GetHash())
 	}
 
-	var height int
 	latest := block.GetLatestBlock(p.st)
-	height = int(latest.Height)
+	height := int(latest.Height)
 	bk := block.TestMakeNewBlock(txHashes)
 	bk.Height = uint64(height + 1)
 	bk.Save(p.st)
