@@ -1,12 +1,13 @@
-package main
+package client
 
 import (
 	"boscoin.io/sebak/lib/client"
 	"fmt"
 	"net/http"
+	"testing"
 )
 
-func main() {
+func TestPing(t *testing.T) {
 	c := client.NewClient("https://127.0.0.1:2830")
 	headers := http.Header{}
 	headers.Set("Content-Type", "application/json")
@@ -15,5 +16,4 @@ func main() {
 		fmt.Println(e)
 	}
 	fmt.Println(a)
-
 }
