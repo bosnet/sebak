@@ -8,15 +8,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gorilla/mux"
-	"github.com/stellar/go/keypair"
-	"github.com/stretchr/testify/require"
-
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/version"
+	"github.com/gorilla/mux"
+	"github.com/stellar/go/keypair"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAPIGetNodeInfoHandler(t *testing.T) {
@@ -44,7 +43,7 @@ func TestAPIGetNodeInfoHandler(t *testing.T) {
 	}
 
 	policy := node.NodePolicy{
-		NetworkID:                 networkID,
+		NetworkID:                 string(networkID),
 		InitialBalance:            common.Amount(1000),
 		BaseReserve:               common.BaseReserve,
 		BaseFee:                   common.BaseFee,

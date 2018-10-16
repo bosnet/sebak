@@ -23,7 +23,7 @@ type NodeInfoNode struct {
 }
 
 type NodePolicy struct {
-	NetworkID                 []byte        `json:"network-id"`
+	NetworkID                 string        `json:"network-id"`
 	InitialBalance            common.Amount `json:"initial-balance"`
 	BaseReserve               common.Amount `json:"base-reserve"`
 	BaseFee                   common.Amount `json:"base-fee"`
