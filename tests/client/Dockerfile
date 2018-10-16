@@ -6,7 +6,7 @@ FROM ${BUILDER} AS builder
 FROM alpine:latest
 LABEL maintainer="BOSCoin Developers <devteam@boscoin.io>"
 
-COPY --from=builder /go/bin/sdk_test /sebak/
+COPY --from=builder /go/bin/client_test /sebak/
 COPY ./entrypoint.sh /sebak/
 
 WORKDIR /sebak/
