@@ -27,7 +27,8 @@ type HelperTestGetBlocksHandler struct {
 }
 
 func (p *HelperTestGetBlocksHandler) Prepare() {
-	p.st = storage.NewTestStorage()
+	p.st = block.InitTestBlockchain()
+	p.blocks = append(p.blocks, block.GetGenesis(p.st))
 
 	apiHandler := NetworkHandlerNode{storage: p.st}
 
@@ -36,12 +37,9 @@ func (p *HelperTestGetBlocksHandler) Prepare() {
 
 	p.server = httptest.NewServer(router)
 
-	var bks []block.Block
 	for i := 0; i < 5; i++ {
-		bks = append(bks, p.createBlock())
+		p.blocks = append(p.blocks, p.createBlock())
 	}
-
-	p.blocks = bks
 
 	return
 }
@@ -63,7 +61,7 @@ func (p *HelperTestGetBlocksHandler) createBlock() block.Block {
 		if _, ok := err.(*errors.Error); !ok {
 			panic(err)
 		}
-		height = -1
+		height = 0
 	}
 	bk := block.TestMakeNewBlock(txHashes)
 	bk.Height = uint64(height + 1)
@@ -495,7 +493,7 @@ func TestGetBlocksHandlerWithInvalidHeightRange(t *testing.T) {
 		var expectedLength uint64 = 2
 		options, err := NewGetBlocksOptionsFromRequest(nil)
 		require.Nil(t, err)
-		options.SetHeightRange([2]uint64{0, p.blocks[len(p.blocks)-1].Height}).SetLimit(expectedLength)
+		options.SetHeightRange([2]uint64{1, p.blocks[len(p.blocks)-1].Height}).SetLimit(expectedLength)
 		require.True(t, options.Height() > expectedLength)
 
 		urlValues := options.URLValues()
