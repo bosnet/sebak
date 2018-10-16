@@ -4,7 +4,6 @@ import (
 	"boscoin.io/sebak/lib/client"
 	"fmt"
 	"net/http"
-	"os"
 )
 
 func main() {
@@ -17,5 +16,4 @@ func main() {
 	}
 	fmt.Println(a)
 
-	os.Exit(0)
 }

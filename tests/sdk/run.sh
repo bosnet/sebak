@@ -19,13 +19,13 @@ function dumpLogsAndCleanup () {
 trap dumpLogsAndCleanup EXIT
 
 ## Build the node runner docker image
-IMAGE=$(docker build --tag sebak:runner -q \
+NODE_IMAGE=$(docker build -q \
     --build-arg BUILD_MODE="test" \
     --build-arg BUILD_PKG="./cmd/sebak" \
     --build-arg BUILD_ARGS="-coverpkg=./... -tags integration -c -o /go/bin/sebak"  \
     ${ROOT_DIR}/ | cut -d: -f2)
 
-if [ -z ${IMAGE} ]; then
+if [ -z ${NODE_IMAGE} ]; then
     echo "Failed to build node runner docker image" >&2
     exit 1
 fi
@@ -41,23 +41,23 @@ if [ -z ${IMAGE} ]; then
     exit 1
 fi
 
-IMAGE=$(docker build --tag sebak:sdk_tester -q \
+TEST_IMAGE=$(docker build -q \
     . | cut -d: -f2)
 
-if [ -z ${IMAGE} ]; then
+if [ -z ${TEST_IMAGE} ]; then
     echo "Failed to build tester docker image" >&2
     exit 1
 fi
 
 
 NODE=$(docker run -d --network host --env-file=${ROOT_DIR}/docker/self.env \
-      sebak:runner node \
+      ${NODE_IMAGE} node \
       --genesis=${SEBAK_GENESIS},${SEBAK_COMMON} \
       --log-level=debug)
 
 sleep 1
 
-docker run --rm --network host sebak:sdk_tester
+docker run --rm --network host ${TEST_IMAGE}
 # Shut down the containers - we need to do so for integration reports to be written
 docker stop ${NODE}
 # Cleanup
