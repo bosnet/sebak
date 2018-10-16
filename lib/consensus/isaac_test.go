@@ -3,6 +3,7 @@ package consensus
 import (
 	"testing"
 
+	logging "github.com/inconshreveable/log15"
 	"github.com/stretchr/testify/require"
 )
 
@@ -10,7 +11,11 @@ func TestGetSyncInfoNormal(t *testing.T) {
 	vt, err := NewDefaultVotingThresholdPolicy(67)
 	require.Nil(t, err)
 
-	is := ISAAC{policy: vt, nodesHeight: make(map[string]uint64)}
+	is := ISAAC{
+		policy:      vt,
+		nodesHeight: make(map[string]uint64),
+		log:         logging.New("module", "consensus"),
+	}
 
 	valids := []string{
 		"nodeA",
@@ -31,7 +36,8 @@ func TestGetSyncInfoNormal(t *testing.T) {
 	is.nodesHeight[invalids[0]] = 3
 	is.nodesHeight[valids[3]] = 10
 
-	height, nodeAddrs := is.getSyncInfo()
+	height, nodeAddrs, err := is.GetSyncInfo()
+	require.Nil(t, err)
 	require.Equal(t, uint64(10), height)
 	require.True(t, contains(nodeAddrs, valids[0]))
 	require.True(t, contains(nodeAddrs, valids[1]))
@@ -43,7 +49,11 @@ func TestGetSyncInfoNotFoundValidHeight(t *testing.T) {
 	vt, err := NewDefaultVotingThresholdPolicy(67)
 	require.Nil(t, err)
 
-	is := ISAAC{policy: vt, nodesHeight: make(map[string]uint64)}
+	is := ISAAC{
+		policy:      vt,
+		nodesHeight: make(map[string]uint64),
+		log:         logging.New("module", "consensus"),
+	}
 
 	nodes := []string{
 		"nodeA",
@@ -59,7 +69,9 @@ func TestGetSyncInfoNotFoundValidHeight(t *testing.T) {
 	is.nodesHeight[nodes[2]] = 30
 	is.nodesHeight[nodes[3]] = 40
 
-	height, nodeAddrs := is.getSyncInfo()
+	is.log = logging.New("module", "consensus")
+	height, nodeAddrs, err := is.GetSyncInfo()
+	require.Nil(t, err)
 	require.Equal(t, uint64(1), height)
 	require.Empty(t, nodeAddrs)
 }
@@ -68,7 +80,11 @@ func TestGetSyncInfoGenesis(t *testing.T) {
 	vt, err := NewDefaultVotingThresholdPolicy(67)
 	require.Nil(t, err)
 
-	is := ISAAC{policy: vt, nodesHeight: make(map[string]uint64)}
+	is := ISAAC{
+		policy:      vt,
+		nodesHeight: make(map[string]uint64),
+		log:         logging.New("module", "consensus"),
+	}
 
 	nodes := []string{
 		"nodeA",
@@ -84,7 +100,9 @@ func TestGetSyncInfoGenesis(t *testing.T) {
 	is.nodesHeight[nodes[2]] = 1
 	is.nodesHeight[nodes[3]] = 1
 
-	height, nodeAddrs := is.getSyncInfo()
+	is.log = logging.New("module", "consensus")
+	height, nodeAddrs, err := is.GetSyncInfo()
+	require.Nil(t, err)
 	require.Equal(t, uint64(1), height)
 	require.Empty(t, nodeAddrs)
 }

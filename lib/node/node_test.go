@@ -18,7 +18,7 @@ func TestNodeStateChange(t *testing.T) {
 
 	node, _ := NewLocalNode(kp, endpoint, "")
 
-	require.Equal(t, StateNONE, node.State())
+	require.Equal(t, StateCONSENSUS, node.State())
 
 	node.SetBooting()
 	require.Equal(t, StateBOOTING, node.State())
@@ -45,7 +45,7 @@ func TestNodeMarshalJSON(t *testing.T) {
 
 	// alias and address cannot be compared with string literal because these are random generated.
 	jsonStr := `"endpoint":"https://localhost:5000","state":"%s"`
-	require.Equal(t, true, strings.Contains(string(tmpByte), fmt.Sprintf(jsonStr, "NONE")))
+	require.Equal(t, true, strings.Contains(string(tmpByte), fmt.Sprintf(jsonStr, "CONSENSUS")))
 
 	marshalNode.SetBooting()
 	tmpByte, err = marshalNode.MarshalJSON()
@@ -93,8 +93,9 @@ func TestNodeMarshalJSONWithValidator(t *testing.T) {
 	tmpByte, err := localNode.MarshalJSON()
 	require.Equal(t, nil, err)
 
+	t.Log(string(tmpByte))
 	jsonStr := `"alias":"%s","endpoint":"https://localhost:%s","state":"%s"`
-	require.Equal(t, true, strings.Contains(string(tmpByte), fmt.Sprintf(jsonStr, "node", "5000", "NONE")))
+	require.Equal(t, true, strings.Contains(string(tmpByte), fmt.Sprintf(jsonStr, "node", "5000", "CONSENSUS")))
 	require.Equal(t, true, strings.Contains(string(tmpByte), fmt.Sprintf(jsonStr, "v1", "5001", "NONE")))
 	require.Equal(t, true, strings.Contains(string(tmpByte), fmt.Sprintf(jsonStr, "v2", "5002", "NONE")))
 }

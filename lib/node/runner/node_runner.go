@@ -38,7 +38,7 @@ var DefaultHandleTransactionCheckerFuncs = []common.CheckerFunc{
 var DefaultHandleBaseBallotCheckerFuncs = []common.CheckerFunc{
 	BallotUnmarshal,
 	BallotNotFromKnownValidators,
-	BallotSaveNodeHeight,
+	BallotCheckSYNC,
 	BallotAlreadyFinished,
 }
 
