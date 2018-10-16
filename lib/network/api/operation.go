@@ -12,6 +12,7 @@ import (
 	"boscoin.io/sebak/lib/network/api/resource"
 	"boscoin.io/sebak/lib/network/httputils"
 	"boscoin.io/sebak/lib/storage"
+	"boscoin.io/sebak/lib/transaction/operation"
 	"strings"
 )
 
@@ -23,6 +24,13 @@ func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter
 		http.Error(w, errors.ErrorInvalidQueryString.Error(), http.StatusBadRequest)
 		return
 	}
+
+	oTypeStr := r.URL.Query().Get("type")
+	if len(oTypeStr) > 0 && !operation.IsValidOperationType(oTypeStr) {
+		http.Error(w, errors.ErrorInvalidQueryString.Error(), http.StatusBadRequest)
+		return
+	}
+	oType := operation.OperationType(oTypeStr)
 	var cursor []byte
 	readFunc := func() []resource.Resource {
 		var txs []resource.Resource
@@ -33,7 +41,9 @@ func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter
 			if !hasNext {
 				break
 			}
-			txs = append(txs, resource.NewOperation(&t))
+			if len(oType) == 0 || (len(oType) > 0 && t.Type == oType) {
+				txs = append(txs, resource.NewOperation(&t))
+			}
 		}
 		closeFunc()
 		return txs
@@ -41,6 +51,9 @@ func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter
 
 	if httputils.IsEventStream(r) {
 		event := fmt.Sprintf("source-%s", address)
+		if len(oType) > 0 {
+			event = fmt.Sprintf("source-type-%s%s", address, oType)
+		}
 		es := NewEventStream(w, r, renderEventStream, DefaultContentType)
 		txs := readFunc()
 		for _, tx := range txs {
@@ -50,7 +63,7 @@ func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter
 		return
 	}
 
-	txs := readFunc() //TODO paging support
+	txs := readFunc()
 	self := r.URL.String()
 	next := strings.Replace(resource.URLAccountOperations, "{id}", address, -1) + "?" + options.SetCursor(cursor).SetReverse(false).Encode()
 	prev := strings.Replace(resource.URLAccountOperations, "{id}", address, -1) + "?" + options.SetReverse(true).Encode()

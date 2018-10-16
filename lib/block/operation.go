@@ -93,6 +93,7 @@ func (bo *BlockOperation) Save(st *storage.LevelDBBackend) (err error) {
 	event += " " + fmt.Sprintf("source-%s", bo.Source)
 	event += " " + fmt.Sprintf("hash-%s", bo.Hash)
 	event += " " + fmt.Sprintf("txhash-%s", bo.TxHash)
+	event += " " + fmt.Sprintf("source-type-%s%s", bo.Source, bo.Type)
 	observer.BlockOperationObserver.Trigger(event, bo)
 
 	return nil
