@@ -29,7 +29,7 @@ func TestSaveExistingBlockAccount(t *testing.T) {
 	st := storage.NewTestStorage()
 
 	b := TestMakeBlockAccount()
-	b.Save(st)
+	b.MustSave(st)
 
 	err := b.Deposit(common.Amount(100))
 	require.Nil(t, err)
@@ -47,7 +47,7 @@ func TestSortMultipleBlockAccount(t *testing.T) {
 	var createdOrder []string
 	for i := 0; i < 50; i++ {
 		b := TestMakeBlockAccount()
-		b.Save(st)
+		b.MustSave(st)
 
 		createdOrder = append(createdOrder, b.Address)
 	}
@@ -75,7 +75,7 @@ func TestGetSortedBlockAccounts(t *testing.T) {
 	var createdOrder []string
 	for i := 0; i < 50; i++ {
 		b := TestMakeBlockAccount()
-		b.Save(st)
+		b.MustSave(st)
 
 		createdOrder = append(createdOrder, b.Address)
 	}
@@ -101,14 +101,14 @@ func TestBlockAccountSaveBlockAccountSequenceIDs(t *testing.T) {
 	st := storage.NewTestStorage()
 
 	b := TestMakeBlockAccount()
-	b.Save(st)
+	b.MustSave(st)
 
 	expectedSavedLength := 10
 	var saved []BlockAccount
 	saved = append(saved, *b)
 	for i := 0; i < expectedSavedLength-len(saved); i++ {
 		b.SequenceID = rand.Uint64()
-		b.Save(st)
+		b.MustSave(st)
 
 		saved = append(saved, *b)
 	}
@@ -148,7 +148,7 @@ func TestBlockAccountObserver(t *testing.T) {
 
 	st := storage.NewTestStorage()
 
-	b.Save(st)
+	b.MustSave(st)
 
 	wg.Wait()
 

@@ -50,7 +50,7 @@ func TestBlockOperationSaveExisting(t *testing.T) {
 
 	bos := TestMakeNewBlockOperation(networkID, 1)
 	bo := bos[0]
-	bo.Save(st)
+	bo.MustSave(st)
 
 	exists, err := ExistsBlockOperation(st, bos[0].Hash)
 	require.Nil(t, err)
@@ -72,7 +72,7 @@ func TestGetSortedBlockOperationsByTxHash(t *testing.T) {
 		txHashes = append(txHashes, bos[0].TxHash)
 
 		for _, bo := range bos {
-			bo.Save(st)
+			bo.MustSave(st)
 
 			createdOrder[bo.TxHash] = append(createdOrder[bo.TxHash], bo.Hash)
 		}

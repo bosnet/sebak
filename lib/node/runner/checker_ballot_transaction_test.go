@@ -58,7 +58,7 @@ func TestValidateTxPaymentMissingBlockAccount(t *testing.T) {
 		Address: kps.Address(),
 		Balance: common.Amount(1 * common.AmountPerCoin),
 	}
-	bas.Save(st)
+	bas.MustSave(st)
 	require.Equal(t, ValidateTx(st, tx), errors.ErrorBlockAccountDoesNotExists)
 
 	// Now just the target
@@ -68,14 +68,14 @@ func TestValidateTxPaymentMissingBlockAccount(t *testing.T) {
 		Address: kpt.Address(),
 		Balance: common.Amount(1 * common.AmountPerCoin),
 	}
-	bat.Save(st1)
+	bat.MustSave(st1)
 	require.Equal(t, ValidateTx(st1, tx), errors.ErrorBlockAccountDoesNotExists)
 
 	// And finally, bot
 	st2 := storage.NewTestStorage()
 	defer st2.Close()
-	bas.Save(st2)
-	bat.Save(st2)
+	bas.MustSave(st2)
+	bat.MustSave(st2)
 	require.Nil(t, ValidateTx(st2, tx))
 }
 
@@ -95,8 +95,8 @@ func TestValidateTxWrongSequenceID(t *testing.T) {
 		Address: kpt.Address(),
 		Balance: common.Amount(1 * common.AmountPerCoin),
 	}
-	bas.Save(st)
-	bat.Save(st)
+	bas.MustSave(st)
+	bat.MustSave(st)
 
 	tx := transaction.Transaction{
 		T: "transaction",
@@ -139,8 +139,8 @@ func TestValidateTxOverBalance(t *testing.T) {
 		Address: kpt.Address(),
 		Balance: common.Amount(1 * common.AmountPerCoin),
 	}
-	bas.Save(st)
-	bat.Save(st)
+	bas.MustSave(st)
+	bat.MustSave(st)
 
 	opbody := operation.Payment{Target: kpt.Address(), Amount: bas.Balance}
 	tx := transaction.Transaction{
@@ -197,8 +197,8 @@ func TestValidateOpCreateExistsAccount(t *testing.T) {
 		Address: kpt.Address(),
 		Balance: common.Amount(1 * common.AmountPerCoin),
 	}
-	bat.Save(st)
-	bas.Save(st)
+	bat.MustSave(st)
+	bas.MustSave(st)
 
 	tx := transaction.Transaction{
 		T: "transaction",
@@ -222,6 +222,6 @@ func TestValidateOpCreateExistsAccount(t *testing.T) {
 
 	st1 := storage.NewTestStorage()
 	defer st1.Close()
-	bas.Save(st1)
+	bas.MustSave(st1)
 	require.Nil(t, ValidateTx(st1, tx))
 }

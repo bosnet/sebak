@@ -69,7 +69,7 @@ func (p *HelperTestGetNodeTransactionsHandler) Prepare() {
 
 	p.genesisKeypair, _ = keypair.Random()
 	p.genesisAccount = block.NewBlockAccount(p.genesisKeypair.Address(), common.MaximumBalance)
-	p.genesisAccount.Save(p.st)
+	p.genesisAccount.MustSave(p.st)
 
 	for i := 0; i < 3; i++ {
 		p.blocks = append(p.blocks, p.createBlock())
@@ -102,7 +102,7 @@ func (p *HelperTestGetNodeTransactionsHandler) createBlock() block.Block {
 	height := int(latest.Height)
 	bk := block.TestMakeNewBlock(txHashes)
 	bk.Height = uint64(height + 1)
-	bk.Save(p.st)
+	bk.MustSave(p.st)
 
 	for _, tx := range txs {
 		b, _ := tx.Serialize()

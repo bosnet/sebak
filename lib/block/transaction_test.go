@@ -257,8 +257,7 @@ func TestMultipleBlockTransactionGetByAccount(t *testing.T) {
 	for _, tx := range txs {
 		a, _ := tx.Serialize()
 		bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, block.Confirmed, tx, a)
-		err := bt.Save(st)
-		require.Nil(t, err)
+		bt.MustSave(st)
 	}
 
 	// create txs from another keypair source but target is this keypair
@@ -275,8 +274,7 @@ func TestMultipleBlockTransactionGetByAccount(t *testing.T) {
 	for _, tx := range txs {
 		a, _ := tx.Serialize()
 		bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, block.Confirmed, tx, a)
-		err := bt.Save(st)
-		require.Nil(t, err)
+		bt.MustSave(st)
 	}
 
 	// create txs from another keypair
@@ -292,8 +290,7 @@ func TestMultipleBlockTransactionGetByAccount(t *testing.T) {
 	for _, tx := range txs {
 		a, _ := tx.Serialize()
 		bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, block.Confirmed, tx, a)
-		err := bt.Save(st)
-		require.Nil(t, err)
+		bt.MustSave(st)
 	}
 
 	{
@@ -336,7 +333,7 @@ func TestMultipleBlockTransactionGetByBlock(t *testing.T) {
 	for _, tx := range txs0 {
 		a, _ := tx.Serialize()
 		bt := NewBlockTransactionFromTransaction(block0.Hash, block0.Height, block0.Confirmed, tx, a)
-		require.Nil(t, bt.Save(st))
+		bt.MustSave(st)
 	}
 
 	var txs1 []transaction.Transaction
@@ -353,7 +350,7 @@ func TestMultipleBlockTransactionGetByBlock(t *testing.T) {
 	for _, tx := range txs1 {
 		a, _ := tx.Serialize()
 		bt := NewBlockTransactionFromTransaction(block1.Hash, block1.Height, block1.Confirmed, tx, a)
-		require.Nil(t, bt.Save(st))
+		bt.MustSave(st)
 	}
 
 	{
@@ -421,11 +418,10 @@ func TestMultipleBlockTransactionsOrderByBlockHeightAndCursor(t *testing.T) {
 		for _, tx := range txs {
 			a, _ := tx.Serialize()
 			bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, block.Confirmed, tx, a)
-			err := bt.Save(st)
-			require.Nil(t, err)
+			bt.MustSave(st)
 		}
 		transactionOrder = append(transactionOrder, createdOrder...)
-		block.Save(st)
+		block.MustSave(st)
 	}
 
 	// Make transactions with height 1
@@ -444,12 +440,11 @@ func TestMultipleBlockTransactionsOrderByBlockHeightAndCursor(t *testing.T) {
 		for _, tx := range txs {
 			a, _ := tx.Serialize()
 			bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, block.Confirmed, tx, a)
-			err := bt.Save(st)
-			require.Nil(t, err)
+			bt.MustSave(st)
 		}
 
 		transactionOrder = append(createdOrder, transactionOrder...)
-		block.Save(st)
+		block.MustSave(st)
 	}
 
 	var halfSaved []BlockTransaction
