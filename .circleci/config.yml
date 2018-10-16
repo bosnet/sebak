@@ -129,6 +129,9 @@ workflows:
       - unittests:
           requires:
             - generate_merged_tree
-      - integration_tests:
+      - integration_tests_node:
+          requires:
+            - generate_merged_tree
+      - integration_tests_sdk:
           requires:
             - generate_merged_tree
