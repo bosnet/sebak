@@ -17,6 +17,9 @@ type Config struct {
 
 	TxsLimit int
 	OpsLimit int
+
+	RateLimitRuleAPI  RateLimitRule
+	RateLimitRuleNode RateLimitRule
 }
 
 func NewConfig() Config {
@@ -29,6 +32,8 @@ func NewConfig() Config {
 
 	p.TxsLimit = 1000
 	p.OpsLimit = 1000
+	p.RateLimitRuleAPI = NewRateLimitRule(RateLimitAPI)
+	p.RateLimitRuleNode = NewRateLimitRule(RateLimitNode)
 
 	return p
 }
