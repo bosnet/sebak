@@ -9,13 +9,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gorilla/mux"
-	logging "github.com/inconshreveable/log15"
-	"golang.org/x/net/http2"
-
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/node"
+	"github.com/gorilla/mux"
+	logging "github.com/inconshreveable/log15"
+	"golang.org/x/net/http2"
 )
 
 type Handlers map[string]func(http.ResponseWriter, *http.Request)
@@ -47,8 +46,9 @@ type HTTP2Network struct {
 	tlsCertFile string
 	tlsKeyFile  string
 
-	server *http.Server
-	router *mux.Router
+	server    *http.Server
+	router    *mux.Router
+	rootRoute *mux.Route
 
 	receiveChannel chan common.NetworkMessage
 
@@ -143,7 +143,7 @@ func (t *HTTP2Network) ConnState(c net.Conn, state http.ConnState) {
 }
 
 func (t *HTTP2Network) setNotReadyHandler() {
-	t.router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	t.rootRoute = t.router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if !t.ready {
 			http.Error(w, http.StatusText(http.StatusServiceUnavailable), http.StatusServiceUnavailable)
 			return
@@ -185,8 +185,12 @@ func (t *HTTP2Network) AddHandler(pattern string, handler http.HandlerFunc) (rou
 			pathPrefix := strings.TrimSuffix(pattern, "*")
 			return t.router.PathPrefix(pathPrefix).Handler(handler)
 		}
-		// if unknown pattern, it will be attached to base router
-		return t.router.HandleFunc(pattern, handler)
+
+		if pattern == "" || pattern == "/" {
+			return t.rootRoute.Handler(handler)
+		} else {
+			return t.router.HandleFunc(pattern, handler)
+		}
 	}
 
 	r, _ := t.routers[routerName]

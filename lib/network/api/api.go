@@ -1,9 +1,8 @@
 package api
 
 import (
-	"fmt"
-
 	"encoding/json"
+	"fmt"
 
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/network"
@@ -24,23 +23,27 @@ const (
 	GetTransactionByHashHandlerPattern     = "/transactions/{id}"
 	GetTransactionOperationsHandlerPattern = "/transactions/{id}/operations"
 	PostTransactionPattern                 = "/transactions"
+	GetNodeInfoPattern                     = "/"
 )
 
 type NetworkHandlerAPI struct {
-	localNode *node.LocalNode
-	network   network.Network
-	storage   *storage.LevelDBBackend
-	urlPrefix string
-	version   string
+	localNode      *node.LocalNode
+	network        network.Network
+	storage        *storage.LevelDBBackend
+	urlPrefix      string
+	version        string
+	nodeInfo       node.NodeInfo
+	GetLatestBlock func() block.Block
 }
 
-func NewNetworkHandlerAPI(localNode *node.LocalNode, network network.Network, storage *storage.LevelDBBackend, urlPrefix string) *NetworkHandlerAPI {
+func NewNetworkHandlerAPI(localNode *node.LocalNode, network network.Network, storage *storage.LevelDBBackend, urlPrefix string, nodeInfo node.NodeInfo) *NetworkHandlerAPI {
 	return &NetworkHandlerAPI{
 		localNode: localNode,
 		network:   network,
 		storage:   storage,
 		urlPrefix: urlPrefix,
 		version:   APIVersionV1,
+		nodeInfo:  nodeInfo,
 	}
 }
 
