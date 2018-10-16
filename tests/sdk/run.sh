@@ -18,6 +18,18 @@ function dumpLogsAndCleanup () {
 
 trap dumpLogsAndCleanup EXIT
 
+## Build the node runner docker image
+IMAGE=$(docker build --tag sebak:runner -q \
+    --build-arg BUILD_MODE="test" \
+    --build-arg BUILD_PKG="./cmd/sebak" \
+    --build-arg BUILD_ARGS="-coverpkg=./... -tags integration -c -o /go/bin/sebak"  \
+    ${ROOT_DIR}/ | cut -d: -f2)
+
+if [ -z ${IMAGE} ]; then
+    echo "Failed to build node runner docker image" >&2
+    exit 1
+fi
+
 ## Build the docker builder image
 IMAGE=$(docker build --tag sebak:builder_sdk -q \
     --build-arg BUILD_MODE="install" \
