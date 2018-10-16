@@ -50,8 +50,6 @@ func createTestNodeRunner(n int, conf common.Config) []*NodeRunner {
 		}
 	}
 
-	balance := common.BaseFee.MustAdd(common.BaseReserve)
-	account := block.NewBlockAccount(block.GenesisKP.Address(), balance)
 	var nodeRunners []*NodeRunner
 	for i := 0; i < n; i++ {
 		localNode := nodes[i]
@@ -64,16 +62,7 @@ func createTestNodeRunner(n int, conf common.Config) []*NodeRunner {
 		)
 
 		is, _ := consensus.NewISAAC(networkID, localNode, policy, connectionManager, conf)
-		st := storage.NewTestStorage()
-
-		account.Save(st)
-
-		commonKP, _ := keypair.Random()
-		commonAccount := block.NewBlockAccount(commonKP.Address(), 0)
-		commonAccount.Save(st)
-
-		genesisBlock, _ := block.MakeGenesisBlock(st, *account, *commonAccount, networkID)
-		genesisBlock.Save(st)
+		st := block.InitTestBlockchain()
 
 		nr, err := NewNodeRunner(string(networkID), localNode, policy, ns[i], is, st, conf)
 		if err != nil {
