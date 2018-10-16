@@ -31,7 +31,7 @@ if [ -z ${NODE_IMAGE} ]; then
 fi
 
 ## Build the docker builder image
-IMAGE=$(docker build --tag sebak:builder_sdk -q \
+IMAGE=$(docker build -q \
     --build-arg BUILD_MODE="install" \
     --build-arg BUILD_PKG="./tests/sdk" \
     ${ROOT_DIR}/ -f ${ROOT_DIR}/Dockerfile_client.build | cut -d: -f2)
@@ -41,7 +41,7 @@ if [ -z ${IMAGE} ]; then
     exit 1
 fi
 
-TEST_IMAGE=$(docker build -q \
+TEST_IMAGE=$(docker build -q --build-arg BUILDER=${IMAGE} \
     . | cut -d: -f2)
 
 if [ -z ${TEST_IMAGE} ]; then
