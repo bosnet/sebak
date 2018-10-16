@@ -13,6 +13,7 @@ import (
 	"boscoin.io/sebak/lib/storage"
 
 	"github.com/inconshreveable/log15"
+	pkgerr "github.com/pkg/errors"
 )
 
 //TODO(anarcher) another name is Finisher
@@ -49,7 +50,7 @@ func NewBlockValidator(nw network.Network, ldb *storage.LevelDBBackend, networkI
 func (v *BlockValidator) Validate(ctx context.Context, syncInfo *SyncInfo) error {
 	exists, err := v.existsBlock(ctx, v.storage, syncInfo.BlockHeight)
 	if err != nil {
-		return err
+		return pkgerr.Wrap(err, "validate: exists block")
 	}
 	if exists == true {
 		v.logger.Info("This block exists", "height", syncInfo.BlockHeight)
@@ -147,7 +148,7 @@ func (v *BlockValidator) validateBlock(ctx context.Context, si *SyncInfo, prevBl
 
 	if blk.Hash != si.Block.Hash {
 		err := errors.ErrorHashDoesNotMatch
-		return err
+		return pkgerr.Wrap(err, fmt.Sprintf("block height: %v", si.BlockHeight))
 	}
 
 	return nil
@@ -162,11 +163,11 @@ func (v *BlockValidator) validateTxs(ctx context.Context, si *SyncInfo) error {
 		}
 
 		if err := tx.IsWellFormed(v.networkID); err != nil {
-			return err
+			return pkgerr.Wrap(err, fmt.Sprintf("tx %v is not well formed", tx.H.Hash))
 		}
 
 		if err := runner.ValidateTx(v.storage, *tx); err != nil {
-			return err
+			return pkgerr.Wrap(err, fmt.Sprintf("tx %v is invalidated", tx.H.Hash))
 		}
 	}
 	return nil
@@ -179,7 +180,7 @@ func (v *BlockValidator) existsBlock(ctx context.Context, st *storage.LevelDBBac
 	default:
 		exists, err := block.ExistsBlockByHeight(st, height)
 		if err != nil {
-			return false, err
+			return false, pkgerr.Wrap(err, "existsBlock: block.ExistsBlockByHeight")
 		}
 		return exists, nil
 	}
@@ -193,7 +194,7 @@ func (v *BlockValidator) getPrevBlock(pctx context.Context, height uint64) (*blo
 
 	exists, err := block.ExistsBlockByHeight(v.storage, prevHeight)
 	if err != nil {
-		return nil, err
+		return nil, pkgerr.Wrap(err, "getPrevBlock: block.ExistsBlockByHeight")
 	}
 
 	if exists == false {
@@ -213,7 +214,7 @@ func (v *BlockValidator) getPrevBlock(pctx context.Context, height uint64) (*blo
 
 	prevBlock, err := block.GetBlockByHeight(v.storage, prevHeight)
 	if err != nil {
-		return nil, err
+		return nil, pkgerr.Wrap(err, "getPrevBlock: block.GetBlockByHeight")
 	}
 
 	return &prevBlock, nil
