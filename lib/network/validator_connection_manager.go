@@ -215,3 +215,15 @@ func (c *ValidatorConnectionManager) Broadcast(message common.Message) {
 	}
 	return
 }
+
+func (c *ValidatorConnectionManager) GetNode(address string) node.Node {
+	c.RLock()
+	defer c.RUnlock()
+
+	validator, ok := c.validators[address]
+	if !ok {
+		return nil
+	}
+
+	return validator
+}

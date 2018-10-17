@@ -83,6 +83,11 @@ func (c *HTTP2Client) Post(url string, b []byte, headers http.Header) (response 
 	return
 }
 
+// It's same interface as https://golang.org/pkg/net/http/#Client.Do
+func (c *HTTP2Client) Do(req *http.Request) (*http.Response, error) {
+	return c.client.Do(req)
+}
+
 type HTTP2StreamWriter struct {
 	DataChannel chan []byte
 	Error       error

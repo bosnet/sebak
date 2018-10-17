@@ -27,6 +27,9 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 	nodeRunner := nodeRunners[0]
 
 	rootAccount, _ := block.GetBlockAccount(nodeRunner.Storage(), rootKP.Address())
+	for _, nr := range nodeRunners {
+		rootAccount.MustSave(nr.Storage())
+	}
 
 	TestMakeBlockAccount := func(balance common.Amount) (account *block.BlockAccount, kp *keypair.Full) {
 		kp, _ = keypair.Random()
