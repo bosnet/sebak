@@ -108,7 +108,6 @@ func (f *BlockFetcher) fetch(ctx context.Context, si *SyncInfo) error {
 	f.logger.Debug("Fetch start", "height", height)
 
 	n := f.pickRandomNode(nodeAddrs)
-	f.logger.Info(fmt.Sprintf("fetching items from node: %v", n), "fetching_node", n, "height", height)
 	if n == nil {
 		return errors.New("Fetch: node not found")
 	}

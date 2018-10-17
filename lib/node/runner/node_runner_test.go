@@ -60,7 +60,7 @@ func createTestNodeRunner(n int, conf common.Config) []*NodeRunner {
 			policy,
 		)
 
-		is, _ := consensus.NewISAAC(networkID, localNode, policy, connectionManager, conf)
+		is, _ := consensus.NewISAAC(networkID, localNode, policy, connectionManager, conf, nil)
 		st := block.InitTestBlockchain()
 
 		nr, err := NewNodeRunner(string(networkID), localNode, policy, ns[i], is, st, conf)
@@ -151,8 +151,7 @@ func createTestNodeRunnersHTTP2Network(n int) (nodeRunners []*NodeRunner, rootKP
 		)
 
 		conf := common.NewConfig()
-		is, _ := consensus.NewISAAC(networkID, node, policy, connectionManager, conf)
-
+		is, _ := consensus.NewISAAC(networkID, node, policy, connectionManager, conf, nil)
 		st := block.InitTestBlockchain()
 
 		nodeRunner, _ := NewNodeRunner(string(networkID), node, policy, n, is, st, conf)

@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/url"
 	"os"
+	"sort"
 
 	uuid "github.com/satori/go.uuid"
 	"github.com/stellar/go/keypair"
@@ -151,4 +152,15 @@ func EncodeUint64ToByteSlice(i uint64) [MaxUintEncodeByte]byte {
 	var b [MaxUintEncodeByte]byte
 	binary.BigEndian.PutUint64(b[:], i)
 	return b
+}
+
+type KV struct {
+	Key   string
+	Value uint64
+}
+
+func SortDecByValue(slice []KV) {
+	sort.Slice(slice, func(i, j int) bool {
+		return slice[i].Value > slice[j].Value
+	})
 }
