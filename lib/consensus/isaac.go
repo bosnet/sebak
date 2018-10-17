@@ -1,7 +1,9 @@
 package consensus
 
 import (
+	"context"
 	"errors"
+	"fmt"
 	"sync"
 
 	logging "github.com/inconshreveable/log15"
@@ -15,15 +17,23 @@ import (
 	"boscoin.io/sebak/lib/transaction"
 )
 
+type SyncController interface {
+	SetSyncTargetBlock(ctx context.Context, height uint64, nodeAddrs []string) error
+}
+
 type ISAAC struct {
 	sync.RWMutex
 
-	latestBlock       block.Block
-	connectionManager network.ConnectionManager
-	proposerSelector  ProposerSelector
-	log               logging.Logger
-	policy            ballot.VotingThresholdPolicy
+	latestBlock         block.Block
+	connectionManager   network.ConnectionManager
+	proposerSelector    ProposerSelector
+	log                 logging.Logger
+	policy              ballot.VotingThresholdPolicy
+	nodesHeight         map[ /* Node.Address() */ string]uint64
+	syncer              SyncController
+	latestReqSyncHeight uint64
 
+	LatestBallot  ballot.Ballot
 	NetworkID     []byte
 	Node          *node.LocalNode
 	RunningRounds map[ /* Round.Index() */ string]*RunningRound
@@ -34,7 +44,7 @@ type ISAAC struct {
 // ISAAC should know network.ConnectionManager
 // because the ISAAC uses connected validators when calculating proposer
 func NewISAAC(networkID []byte, node *node.LocalNode, p ballot.VotingThresholdPolicy,
-	cm network.ConnectionManager, conf common.Config) (is *ISAAC, err error) {
+	cm network.ConnectionManager, conf common.Config, syncer SyncController) (is *ISAAC, err error) {
 
 	is = &ISAAC{
 		NetworkID:         networkID,
@@ -45,6 +55,9 @@ func NewISAAC(networkID []byte, node *node.LocalNode, p ballot.VotingThresholdPo
 		proposerSelector:  SequentialSelector{cm},
 		Conf:              conf,
 		log:               log.New(logging.Ctx{"node": node.Alias()}),
+		nodesHeight:       make(map[string]uint64),
+		syncer:            syncer,
+		LatestBallot:      ballot.Ballot{},
 	}
 
 	return
@@ -113,31 +126,78 @@ func (is *ISAAC) SelectProposer(blockHeight uint64, roundNumber uint64) string {
 	return is.proposerSelector.Select(blockHeight, roundNumber)
 }
 
-func (is *ISAAC) IsAvailableRound(round round.Round) bool {
-	// check current round is from InitRound
-	if is.LatestRound.BlockHash == "" {
-		return true
-	}
+func (is *ISAAC) SaveNodeHeight(senderAddr string, height uint64) {
+	is.nodesHeight[senderAddr] = height
+}
 
-	if round.BlockHeight < is.latestBlock.Height {
-		return false
-	} else if round.BlockHeight == is.latestBlock.Height {
+func (is *ISAAC) IsAvailableRound(round round.Round) bool {
+	if round.BlockHeight == is.latestBlock.Height {
+		if is.isInitRound(round) {
+			return true
+		}
+
 		if round.BlockHash != is.latestBlock.Hash {
 			return false
 		}
-	} else {
-		// TODO if incoming round.BlockHeight is bigger than
-		// latestBlock.Height and this round confirmed successfully,
-		// this node will get into sync state
-	}
 
-	if round.BlockHeight == is.LatestRound.BlockHeight {
-		if round.Number <= is.LatestRound.Number {
-			return false
+		if round.BlockHeight == is.LatestRound.BlockHeight {
+			if round.Number <= is.LatestRound.Number {
+				return false
+			}
 		}
+		return true
 	}
 
-	return true
+	return false
+}
+
+func (is *ISAAC) isInitRound(round round.Round) bool {
+	return is.LatestRound.BlockHash == "" && round.BlockHeight == common.GenesisBlockHeight
+}
+
+func (is *ISAAC) StartSync(height uint64, nodeAddrs []string) {
+	is.log.Debug("begin ISAAC.StartSync")
+	if is.syncer == nil || len(nodeAddrs) < 1 || is.latestReqSyncHeight >= height {
+		return
+	}
+	if is.Node.State() != node.StateSYNC {
+		is.log.Info("node state transits to sync", "height", height)
+		is.Node.SetSync()
+	}
+	is.latestReqSyncHeight = height
+	if err := is.syncer.SetSyncTargetBlock(context.Background(), height, nodeAddrs); err != nil {
+		is.log.Error("syncer.SetSyncTargetBlock", "err", err, "height", height)
+	}
+
+	return
+}
+
+// GetSyncInfo gets the height it needs to sync.
+// It returns height, node list and error.
+// The height is the smallest height above the threshold.
+// The node list is the nodes that sent the ballot when the threshold is exceeded.
+func (is *ISAAC) GetSyncInfo() (uint64, []string, error) {
+	is.log.Debug("begin ISAAC.GetSyncInfo", "is.nodesHeight", is.nodesHeight)
+	threshold := is.policy.Threshold()
+	if len(is.nodesHeight) < threshold {
+		return 1, []string{}, errors.New(fmt.Sprintf("could not find enough nodes (threshold=%d) above", threshold))
+	}
+
+	var nodesHeight []common.KV
+	for k, v := range is.nodesHeight {
+		nodesHeight = append(nodesHeight, common.KV{Key: k, Value: v})
+	}
+
+	common.SortDecByValue(nodesHeight)
+
+	height := nodesHeight[threshold-1].Value
+
+	nodeAddrs := []string{}
+	for _, kv := range nodesHeight[:threshold] {
+		nodeAddrs = append(nodeAddrs, kv.Key)
+	}
+
+	return height, nodeAddrs, nil
 }
 
 func (is *ISAAC) IsVoted(b ballot.Ballot) bool {

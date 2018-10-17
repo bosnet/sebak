@@ -118,6 +118,7 @@ func (s *Syncer) Start() error {
 }
 
 func (s *Syncer) SetSyncTargetBlock(ctx context.Context, height uint64, nodeAddrs []string) error {
+	s.logger.Info("sync start")
 	nas := make([]string, len(nodeAddrs))
 	copy(nas, nodeAddrs) // preventing data race
 	req := &requestHighestBlock{
