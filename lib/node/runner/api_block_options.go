@@ -24,15 +24,13 @@ const (
 type GetBlocksOptions struct {
 	*storage.DefaultListOptions
 
-	r *http.Request
-
 	HeightRange [2]uint64
 	Hashes      []string
 	Mode        GetBlocksOptionsMode
 }
 
 func NewGetBlocksOptionsFromRequest(r *http.Request) (options *GetBlocksOptions, err error) {
-	options = &GetBlocksOptions{r: r}
+	options = &GetBlocksOptions{}
 
 	if r == nil {
 		options.DefaultListOptions = storage.NewDefaultListOptions(
@@ -45,13 +43,13 @@ func NewGetBlocksOptionsFromRequest(r *http.Request) (options *GetBlocksOptions,
 			return
 		}
 
-		if err = options.parseBlockHeightRange(); err != nil {
+		if err = options.parseBlockHeightRange(r); err != nil {
 			return
 		}
-		if err = options.parseBlockHashes(); err != nil {
+		if err = options.parseBlockHashes(r); err != nil {
 			return
 		}
-		if err = options.parseGetBlocksOptionsMode(); err != nil {
+		if err = options.parseGetBlocksOptionsMode(r); err != nil {
 			return
 		}
 	}
@@ -59,8 +57,8 @@ func NewGetBlocksOptionsFromRequest(r *http.Request) (options *GetBlocksOptions,
 	return
 }
 
-func (g *GetBlocksOptions) parseBlockHeightRange() (err error) {
-	queries := g.r.URL.Query()
+func (g *GetBlocksOptions) parseBlockHeightRange(r *http.Request) (err error) {
+	queries := r.URL.Query()
 	heightRangeValue := queries.Get("height-range")
 	if len(heightRangeValue) < 1 {
 		return
@@ -96,22 +94,22 @@ func (g GetBlocksOptions) Height() uint64 {
 	return g.HeightRange[1] - g.HeightRange[0]
 }
 
-func (g *GetBlocksOptions) parseBlockHashes() (err error) {
-	queries := g.r.URL.Query()
+func (g *GetBlocksOptions) parseBlockHashes(r *http.Request) (err error) {
+	queries := r.URL.Query()
 
 	// hashes
 	var hashesPost []string
 	hashesGet := queries["hash"]
 
 	// `hash` can get from post data
-	if g.r.Method == "POST" {
-		if g.r.Header.Get("Content-Type") != "application/json" {
+	if r.Method == "POST" {
+		if r.Header.Get("Content-Type") != "application/json" {
 			err = errors.ErrorContentTypeNotJSON
 			return
 		}
 
 		var body []byte
-		if body, err = ioutil.ReadAll(g.r.Body); err != nil {
+		if body, err = ioutil.ReadAll(r.Body); err != nil {
 			return
 		} else if len(strings.TrimSpace(string(body))) < 1 {
 			goto end
@@ -139,8 +137,8 @@ end:
 	return
 }
 
-func (g *GetBlocksOptions) parseGetBlocksOptionsMode() error {
-	s := g.r.URL.Query().Get("mode")
+func (g *GetBlocksOptions) parseGetBlocksOptionsMode(r *http.Request) error {
+	s := r.URL.Query().Get("mode")
 	if len(s) < 1 {
 		g.Mode = GetBlocksOptionsModeHeader
 		return nil
