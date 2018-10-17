@@ -5,10 +5,10 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
-	"net/url"
-	"strconv"
+	neturl "net/url"
 	"strings"
 )
 
@@ -23,29 +23,45 @@ const (
 	UrlTransactionOperations = "/transactions/{id}/operations"
 )
 
-type QueryParams struct {
-	Limit  int
-	Order  bool
-	Cursor string
+type QueryKey string
+
+func (qk QueryKey) String() string {
+	return string(qk)
 }
 
-func (q QueryParams) toUrlValues() url.Values {
-	query := url.Values{}
-	if q.Limit > 0 {
-		query.Add("limit", strconv.Itoa(q.Limit))
-	}
+const (
+	QueryLimit  QueryKey = "limit"
+	QueryOrder  QueryKey = "order"
+	QueryCursor QueryKey = "cursor"
+	QueryType   QueryKey = "type"
+)
 
-	if q.Order {
-		query.Add("order", "true")
-	} else {
-		query.Add("order", "false")
-	}
+type Q struct {
+	Key   QueryKey
+	Value string
+}
 
-	if len(q.Cursor) > 0 {
-		query.Add("cursor", q.Cursor)
-	}
+type Queries []Q
 
-	return query
+func (qs Queries) toQueryString() string {
+	urlValues := neturl.Values{}
+	if len(qs) == 0 {
+		return ""
+	}
+	for _, q := range qs {
+		switch q.Key {
+		case QueryLimit:
+			urlValues.Add(QueryLimit.String(), q.Value)
+		case QueryOrder:
+			urlValues.Add(QueryOrder.String(), q.Value)
+		case QueryCursor:
+			urlValues.Add(QueryCursor.String(), q.Value)
+		case QueryType:
+			urlValues.Add(QueryType.String(), q.Value)
+
+		}
+	}
+	return "?" + urlValues.Encode()
 }
 
 type Client struct {
@@ -95,8 +111,9 @@ func (c *Client) Post(path string, body []byte, headers http.Header) (response *
 	return c.HTTP.Post(url, body, headers)
 }
 
-func (c *Client) LoadAccount(id string) (account Account, err error) {
+func (c *Client) LoadAccount(id string, queries ...Q) (account Account, err error) {
 	url := strings.Replace(UrlAccount, "{id}", id, -1)
+	url += Queries(queries).toQueryString()
 	headers := http.Header{}
 	headers.Set("Content-Type", "application/json")
 	resp, err := c.Get(url, headers)
@@ -108,8 +125,9 @@ func (c *Client) LoadAccount(id string) (account Account, err error) {
 	return
 }
 
-func (c *Client) LoadTransaction(id string) (transaction Transaction, err error) {
+func (c *Client) LoadTransaction(id string, queries ...Q) (transaction Transaction, err error) {
 	url := strings.Replace(UrlTransactionByHash, "{id}", id, -1)
+	url += Queries(queries).toQueryString()
 	headers := http.Header{}
 	headers.Set("Content-Type", "application/json")
 	resp, err := c.Get(url, headers)
@@ -121,8 +139,9 @@ func (c *Client) LoadTransaction(id string) (transaction Transaction, err error)
 	return
 }
 
-func (c *Client) LoadTransactions() (tPage TransactionsPage, err error) {
+func (c *Client) LoadTransactions(queries ...Q) (tPage TransactionsPage, err error) {
 	url := UrlTransactions
+	url += Queries(queries).toQueryString()
 	headers := http.Header{}
 	headers.Set("Content-Type", "application/json")
 	resp, err := c.Get(url, headers)
@@ -134,8 +153,9 @@ func (c *Client) LoadTransactions() (tPage TransactionsPage, err error) {
 	return
 }
 
-func (c *Client) LoadTransactionsByAccount(id string) (tPage TransactionsPage, err error) {
+func (c *Client) LoadTransactionsByAccount(id string, queries ...Q) (tPage TransactionsPage, err error) {
 	url := strings.Replace(UrlAccountTransactions, "{id}", id, -1)
+	url += Queries(queries).toQueryString()
 	headers := http.Header{}
 	headers.Set("Content-Type", "application/json")
 	resp, err := c.Get(url, headers)
@@ -147,8 +167,9 @@ func (c *Client) LoadTransactionsByAccount(id string) (tPage TransactionsPage, e
 	return
 }
 
-func (c *Client) LoadOperationsByAccount(id string) (oPage OperationsPage, err error) {
+func (c *Client) LoadOperationsByAccount(id string, queries ...Q) (oPage OperationsPage, err error) {
 	url := strings.Replace(UrlAccountOperations, "{id}", id, -1)
+	url += Queries(queries).toQueryString()
 	headers := http.Header{}
 	headers.Set("Content-Type", "application/json")
 	resp, err := c.Get(url, headers)
@@ -160,8 +181,9 @@ func (c *Client) LoadOperationsByAccount(id string) (oPage OperationsPage, err e
 	return
 }
 
-func (c *Client) LoadOperationsByTransaction(id string) (oPage OperationsPage, err error) {
+func (c *Client) LoadOperationsByTransaction(id string, queries ...Q) (oPage OperationsPage, err error) {
 	url := strings.Replace(UrlTransactionOperations, "{id}", id, -1)
+	url += Queries(queries).toQueryString()
 	headers := http.Header{}
 	headers.Set("Content-Type", "application/json")
 	resp, err := c.Get(url, headers)
@@ -186,36 +208,37 @@ func (c *Client) SubmitTransaction(tx []byte) (retBody []byte, err error) { //TO
 }
 
 func (c *Client) Stream(ctx context.Context, theUrl string, cursor *string, handler func(data []byte) error) (err error) {
-	query := url.Values{}
+	query := neturl.Values{}
 	if cursor != nil {
 		query.Set("cursor", string(*cursor))
 	}
 	theUrl += "?" + query.Encode()
 	var headers = http.Header{}
 	headers.Set("Accept", "text/event-stream")
-	resp, err := c.HTTP.Get(theUrl, headers)
+	resp, err := c.Get(theUrl, headers)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
 
-	scanner := bufio.NewScanner(resp.Body)
+	reader := bufio.NewReader(resp.Body)
+	for true {
+		line, err := reader.ReadBytes('\n')
+		if err != nil {
+			return err
+		}
 
-	for scanner.Scan() {
+		if len(line) == 0 {
+			continue
+		}
+		handler(line)
+
 		select {
 		case <-ctx.Done():
 			return nil
 		default:
 		}
-
-		if len(scanner.Bytes()) == 0 {
-			continue
-		}
-		data := scanner.Bytes()
-		handler(data)
 	}
-
-	err = scanner.Err()
 
 	return
 }
@@ -267,6 +290,7 @@ func (c *Client) StreamTransactionsByHash(ctx context.Context, id string, cursor
 	handlerFunc := func(b []byte) (err error) {
 		var v Transaction
 		err = json.Unmarshal(b, &v)
+		fmt.Println(err)
 		if err != nil {
 			return err
 		}

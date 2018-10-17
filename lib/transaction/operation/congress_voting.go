@@ -8,10 +8,24 @@ import (
 )
 
 type CongressVoting struct {
-	Contract []byte
+	Contract []byte `json:"contract"`
 	Voting   struct {
-		Start uint64
-		End   uint64
+		Start uint64 `json:"start"`
+		End   uint64 `json:"end"`
+	} `json:"voting"`
+}
+
+func NewCongressVoting(contract []byte, start, end uint64) CongressVoting {
+
+	return CongressVoting{
+		Contract: contract,
+		Voting: struct {
+			Start uint64 `json:"start"`
+			End   uint64 `json:"end"`
+		}{
+			Start: start,
+			End:   end,
+		},
 	}
 }
 
