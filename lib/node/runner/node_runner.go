@@ -461,6 +461,7 @@ func (nr *NodeRunner) InitRound() {
 	// get latest blocks
 	latestBlock := block.GetLatestBlock(nr.storage)
 
+	nr.log.Info("getLatestBlock in NodeRunner.InitRound", "height", latestBlock.Height)
 	nr.consensus.SetLatestBlock(latestBlock)
 	nr.consensus.SetLatestRound(round.Round{})
 
