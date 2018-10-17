@@ -63,18 +63,14 @@ func GetBlockKey(hash string) string {
 	return fmt.Sprintf("%s%s", common.BlockPrefixHash, hash)
 }
 
-func GetBlockKeyPrefixConfirmed(confirmed string) string {
-	return fmt.Sprintf("%s%s-", common.BlockPrefixConfirmed, confirmed)
-}
-
 func GetBlockKeyPrefixHeight(height uint64) string {
 	return fmt.Sprintf("%s%020d", common.BlockPrefixHeight, height)
 }
 
 func (b Block) NewBlockKeyConfirmed() string {
 	return fmt.Sprintf(
-		"%s%s%s",
-		GetBlockKeyPrefixConfirmed(b.Confirmed),
+		"%s%s-%s%s",
+		common.BlockPrefixConfirmed, b.Confirmed,
 		common.EncodeUint64ToByteSlice(b.Height),
 		common.GetUniqueIDFromUUID(),
 	)
