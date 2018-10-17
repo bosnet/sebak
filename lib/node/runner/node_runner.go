@@ -9,6 +9,7 @@ package runner
 
 import (
 	"net/http"
+	"net/http/pprof"
 	"time"
 
 	ghandlers "github.com/gorilla/handlers"
@@ -206,6 +207,7 @@ func (nr *NodeRunner) Ready() {
 	nr.network.AddHandler(nodeHandler.HandlerURLPattern(GetTransactionPattern), nodeHandler.GetNodeTransactionsHandler).
 		Methods("GET", "POST").
 		MatcherFunc(common.PostAndJSONMatcher)
+
 	nr.network.AddHandler("/metrics", promhttp.Handler().ServeHTTP)
 
 	// api handlers
@@ -245,6 +247,15 @@ func (nr *NodeRunner) Ready() {
 		apiHandler.HandlerURLPattern(api.GetTransactionsHandlerPattern),
 		TransactionsHandler,
 	).Methods("GET", "POST").MatcherFunc(common.PostAndJSONMatcher)
+
+	// pprof
+	if DebugPProf == true {
+		nr.network.AddHandler("/debug/pprof/cmdline", pprof.Cmdline)
+		nr.network.AddHandler("/debug/pprof/profile", pprof.Profile)
+		nr.network.AddHandler("/debug/pprof/symbol", pprof.Symbol)
+		nr.network.AddHandler("/debug/pprof/trace", pprof.Trace)
+		nr.network.AddHandler("/debug/pprof/*", pprof.Index)
+	}
 
 	nr.network.Ready()
 }
