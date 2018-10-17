@@ -54,6 +54,7 @@ var (
 	flagOperationsLimit     string              = common.GetENVValue("SEBAK_OPERATIONS_LIMIT", "1000")
 	flagRateLimitAPI        cmdcommon.ListFlags // "SEBAK_RATE_LIMIT_API"
 	flagRateLimitNode       cmdcommon.ListFlags // "SEBAK_RATE_LIMIT_NODE"
+	flagDebugPProf          bool                = common.GetENVValue("SEBAK_DEBUG_PPROF", "0") == "1"
 )
 
 var (
@@ -158,6 +159,7 @@ func init() {
 		"rate-limit-node",
 		fmt.Sprintf("rate limit for %s: [<ip>=]<limit>-<period>, ex) '10-S' '3.3.3.3=1000-M'", network.UrlPathPrefixNode),
 	)
+	nodeCmd.Flags().BoolVar(&flagDebugPProf, "debug-pprof", flagDebugPProf, "set debug pprof")
 
 	rootCmd.AddCommand(nodeCmd)
 }
@@ -411,6 +413,9 @@ func parseFlagsNode() {
 	if flagVerbose {
 		http2.VerboseLogs = true
 		network.VerboseLogs = true
+	}
+	if flagDebugPProf {
+		runner.DebugPProf = true
 	}
 }
 

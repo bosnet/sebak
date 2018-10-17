@@ -1,8 +1,6 @@
 package runner
 
 import (
-	"github.com/stellar/go/keypair"
-
 	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
@@ -11,6 +9,7 @@ import (
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/transaction"
+	"github.com/stellar/go/keypair"
 )
 
 var networkID []byte = []byte("sebak-test-network")
@@ -41,6 +40,61 @@ func GetTransaction() (transaction.Transaction, []byte) {
 	tx := transaction.MakeTransactionCreateAccount(block.GenesisKP, kpNewAccount.Address(), common.BaseReserve)
 	tx.B.SequenceID = uint64(0)
 	tx.Sign(block.GenesisKP, networkID)
+
+	if txByte, err := tx.Serialize(); err != nil {
+		panic(err)
+	} else {
+		return tx, txByte
+	}
+}
+
+func GetCreateAccountTransaction(sequenceID uint64, amount uint64) (transaction.Transaction, []byte, *keypair.Full) {
+	initialBalance := common.Amount(amount)
+	kpNewAccount, _ := keypair.Random()
+	tx := transaction.MakeTransactionCreateAccount(block.GenesisKP, kpNewAccount.Address(), initialBalance)
+	tx.B.SequenceID = sequenceID
+	tx.Sign(block.GenesisKP, networkID)
+
+	if txByte, err := tx.Serialize(); err != nil {
+		panic(err)
+	} else {
+		return tx, txByte, kpNewAccount
+	}
+}
+
+func GetFreezingTransaction(kpSource *keypair.Full, sequenceID uint64, amount uint64) (transaction.Transaction, []byte, *keypair.Full) {
+	initialBalance := common.Amount(amount)
+	kpNewAccount, _ := keypair.Random()
+
+	tx := transaction.MakeTransactionCreateFrozenAccount(kpSource, kpNewAccount.Address(), initialBalance, kpSource.Address())
+	tx.B.SequenceID = sequenceID
+	tx.Sign(kpSource, networkID)
+
+	if txByte, err := tx.Serialize(); err != nil {
+		panic(err)
+	} else {
+		return tx, txByte, kpNewAccount
+	}
+}
+
+func GetUnfreezingRequestTransaction(kpSource *keypair.Full, sequenceID uint64) (transaction.Transaction, []byte) {
+	tx := transaction.MakeTransactionUnfreezingRequest(kpSource)
+	tx.B.SequenceID = sequenceID
+	tx.Sign(kpSource, networkID)
+
+	if txByte, err := tx.Serialize(); err != nil {
+		panic(err)
+	} else {
+		return tx, txByte
+	}
+}
+
+func GetUnfreezingTransaction(kpSource *keypair.Full, kpTarget *keypair.Full, sequenceID uint64, amount uint64) (transaction.Transaction, []byte) {
+	unfreezingAmount := common.Amount(amount)
+
+	tx := transaction.MakeTransactionUnfreezing(kpSource, kpTarget.Address(), unfreezingAmount)
+	tx.B.SequenceID = sequenceID
+	tx.Sign(kpSource, networkID)
 
 	if txByte, err := tx.Serialize(); err != nil {
 		panic(err)

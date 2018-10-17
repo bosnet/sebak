@@ -83,3 +83,90 @@ func MakeTransactionCreateAccount(kpSource *keypair.Full, target string, amount 
 
 	return
 }
+
+func MakeTransactionCreateFrozenAccount(kpSource *keypair.Full, target string, amount common.Amount, linkedAccount string) (tx Transaction) {
+	opb := operation.NewCreateAccount(target, common.Amount(amount), linkedAccount)
+
+	op := operation.Operation{
+		H: operation.Header{
+			Type: operation.TypeCreateAccount,
+		},
+		B: opb,
+	}
+
+	txBody := Body{
+		Source:     kpSource.Address(),
+		Fee:        common.BaseFee,
+		Operations: []operation.Operation{op},
+	}
+
+	tx = Transaction{
+		T: "transaction",
+		H: Header{
+			Created: common.NowISO8601(),
+			Hash:    txBody.MakeHashString(),
+		},
+		B: txBody,
+	}
+	tx.Sign(kpSource, networkID)
+
+	return
+}
+
+func MakeTransactionUnfreezingRequest(kpSource *keypair.Full) (tx Transaction) {
+	opb := operation.NewUnfreezeRequest()
+	op := operation.Operation{
+		H: operation.Header{
+			Type: operation.TypeUnfreezingRequest,
+		},
+		B: opb,
+	}
+
+	txBody := Body{
+		Source:     kpSource.Address(),
+		Fee:        common.BaseFee,
+		Operations: []operation.Operation{op},
+	}
+
+	tx = Transaction{
+		T: "transaction",
+		H: Header{
+			Created: common.NowISO8601(),
+			Hash:    txBody.MakeHashString(),
+		},
+		B: txBody,
+	}
+
+	tx.Sign(kpSource, networkID)
+
+	return
+}
+
+func MakeTransactionUnfreezing(kpSource *keypair.Full, target string, amount common.Amount) (tx Transaction) {
+	opb := operation.NewPayment(target, common.Amount(amount))
+	op := operation.Operation{
+		H: operation.Header{
+			Type: operation.TypePayment,
+		},
+		B: opb,
+	}
+
+	txBody := Body{
+		Source:     kpSource.Address(),
+		Fee:        common.BaseFee,
+		Operations: []operation.Operation{op},
+	}
+
+	tx = Transaction{
+		T: "transaction",
+		H: Header{
+			Created: common.NowISO8601(),
+			Hash:    txBody.MakeHashString(),
+		},
+		B: txBody,
+	}
+
+	tx.Sign(kpSource, networkID)
+
+	return
+}

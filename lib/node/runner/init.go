@@ -7,6 +7,7 @@ import (
 )
 
 var log logging.Logger = logging.New("module", "noderunner")
+var DebugPProf bool = false
 
 func init() {
 	SetLogging(common.DefaultLogLevel, common.DefaultLogHandler)

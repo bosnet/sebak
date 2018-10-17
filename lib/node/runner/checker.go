@@ -598,10 +598,16 @@ func finishOperation(st *storage.LevelDBBackend, tx transaction.Transaction, op 
 		if !ok {
 			return errors.ErrorUnknownOperationType
 		}
-		return finishOperationPayment(st, tx, pop, log)
+		return finishPayment(st, tx, pop, log)
 	case operation.TypeCongressVoting, operation.TypeCongressVotingResult:
 		//Nothing to do
 		return
+	case operation.TypeUnfreezingRequest:
+		pop, ok := op.B.(operation.UnfreezeRequest)
+		if !ok {
+			return errors.ErrorUnknownOperationType
+		}
+		return finishUnfreezeRequest(st, tx, pop, log)
 	default:
 		err = errors.ErrorUnknownOperationType
 		return
@@ -636,7 +642,7 @@ func finishCreateAccount(st *storage.LevelDBBackend, tx transaction.Transaction,
 	return
 }
 
-func finishOperationPayment(st *storage.LevelDBBackend, tx transaction.Transaction, op operation.Payment, log logging.Logger) (err error) {
+func finishPayment(st *storage.LevelDBBackend, tx transaction.Transaction, op operation.Payment, log logging.Logger) (err error) {
 
 	var baSource, baTarget *block.BlockAccount
 	if baSource, err = block.GetBlockAccount(st, tx.B.Source); err != nil {
@@ -728,6 +734,13 @@ func finishInflation(st *storage.LevelDBBackend, opb operation.Inflation, log lo
 	if err = commonAccount.Save(st); err != nil {
 		return
 	}
+
+	return
+}
+
+func finishUnfreezeRequest(st *storage.LevelDBBackend, tx transaction.Transaction, opb operation.UnfreezeRequest, log logging.Logger) (err error) {
+
+	log.Debug("UnfreezeRequest done")
 
 	return
 }
