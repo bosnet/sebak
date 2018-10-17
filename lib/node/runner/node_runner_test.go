@@ -9,6 +9,7 @@ import (
 
 	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
+	"github.com/ulule/limiter"
 
 	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/block"
@@ -151,6 +152,15 @@ func createTestNodeRunnersHTTP2Network(n int) (nodeRunners []*NodeRunner, rootKP
 		)
 
 		conf := common.NewConfig()
+		conf.RateLimitRuleAPI = common.NewRateLimitRule(limiter.Rate{
+			Period: 1 * time.Second,
+			Limit:  0,
+		})
+		conf.RateLimitRuleNode = common.NewRateLimitRule(limiter.Rate{
+			Period: 1 * time.Second,
+			Limit:  0,
+		})
+
 		is, _ := consensus.NewISAAC(networkID, node, policy, connectionManager, conf)
 
 		st := block.InitTestBlockchain()
