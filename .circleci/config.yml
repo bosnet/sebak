@@ -77,7 +77,7 @@ jobs:
       - run:
           name: run tests
           command: |
-            for pkg in $(go list ./... | grep -v vendor); do
+            for pkg in $(go list ./... | grep -v vendor | grep -v tests); do
                 SEBAK_LOG_HANDLER=null go test -race -v -timeout 8m -coverprofile=profile.out "$pkg"
                 if [ -f profile.out ]; then
                     cat profile.out >> coverage.txt
