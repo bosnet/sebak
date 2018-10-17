@@ -59,11 +59,11 @@ func getTransactionRoot(txs []string) string {
 	return common.MustMakeObjectHashString(txs) // TODO make root
 }
 
-func GetBlockKey(hash string) string {
+func getBlockKey(hash string) string {
 	return fmt.Sprintf("%s%s", common.BlockPrefixHash, hash)
 }
 
-func GetBlockKeyPrefixHeight(height uint64) string {
+func getBlockKeyPrefixHeight(height uint64) string {
 	return fmt.Sprintf("%s%020d", common.BlockPrefixHeight, height)
 }
 
@@ -77,7 +77,7 @@ func (b Block) NewBlockKeyConfirmed() string {
 }
 
 func (b *Block) Save(st *storage.LevelDBBackend) (err error) {
-	key := GetBlockKey(b.Hash)
+	key := getBlockKey(b.Hash)
 
 	var exists bool
 	exists, err = st.Has(key)
@@ -94,7 +94,7 @@ func (b *Block) Save(st *storage.LevelDBBackend) (err error) {
 	if err = st.New(b.NewBlockKeyConfirmed(), b.Hash); err != nil {
 		return
 	}
-	if err = st.New(GetBlockKeyPrefixHeight(b.Height), b.Hash); err != nil {
+	if err = st.New(getBlockKeyPrefixHeight(b.Height), b.Hash); err != nil {
 		return
 	}
 
@@ -104,22 +104,22 @@ func (b *Block) Save(st *storage.LevelDBBackend) (err error) {
 }
 
 func GetBlock(st *storage.LevelDBBackend, hash string) (bt Block, err error) {
-	err = st.Get(GetBlockKey(hash), &bt)
+	err = st.Get(getBlockKey(hash), &bt)
 	return
 }
 
 func GetBlockHeader(st *storage.LevelDBBackend, hash string) (bt Header, err error) {
-	err = st.Get(GetBlockKey(hash), &bt)
+	err = st.Get(getBlockKey(hash), &bt)
 	return
 }
 
 func ExistsBlock(st *storage.LevelDBBackend, hash string) (exists bool, err error) {
-	exists, err = st.Has(GetBlockKey(hash))
+	exists, err = st.Has(getBlockKey(hash))
 	return
 }
 
 func ExistsBlockByHeight(st *storage.LevelDBBackend, height uint64) (exists bool, err error) {
-	exists, err = st.Has(GetBlockKeyPrefixHeight(height))
+	exists, err = st.Has(getBlockKeyPrefixHeight(height))
 	return
 }
 
@@ -201,7 +201,7 @@ func GetBlockHeadersByConfirmed(st *storage.LevelDBBackend, options storage.List
 
 func GetBlockByHeight(st *storage.LevelDBBackend, height uint64) (bt Block, err error) {
 	var hash string
-	if err = st.Get(GetBlockKeyPrefixHeight(height), &hash); err != nil {
+	if err = st.Get(getBlockKeyPrefixHeight(height), &hash); err != nil {
 		return
 	}
 
@@ -210,7 +210,7 @@ func GetBlockByHeight(st *storage.LevelDBBackend, height uint64) (bt Block, err 
 
 func GetBlockHeaderByHeight(st *storage.LevelDBBackend, height uint64) (bt Header, err error) {
 	var hash string
-	if err = st.Get(GetBlockKeyPrefixHeight(height), &hash); err != nil {
+	if err = st.Get(getBlockKeyPrefixHeight(height), &hash); err != nil {
 		return
 	}
 
