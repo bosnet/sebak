@@ -32,8 +32,9 @@ fi
 
 ## Build the docker builder image
 IMAGE=$(docker build -q \
-    --build-arg BUILD_MODE="install" \
-    --build-arg BUILD_PKG="./tests/sdk" \
+    --build-arg BUILD_MODE="test" \
+    --build-arg BUILD_PKG="./tests/client" \
+    --build-arg BUILD_ARGS="-c -o /go/bin/client_test"  \
     ${ROOT_DIR}/ -f ${ROOT_DIR}/Dockerfile_client.build | cut -d: -f2)
 
 if [ -z ${IMAGE} ]; then
@@ -57,7 +58,7 @@ NODE=$(docker run -d --network host --env-file=${ROOT_DIR}/docker/self.env \
 
 sleep 1
 
-docker run --rm --network host ${TEST_IMAGE}
+docker run --rm --network host ${TEST_IMAGE} $@
 # Shut down the containers - we need to do so for integration reports to be written
 docker stop ${NODE}
 # Cleanup
