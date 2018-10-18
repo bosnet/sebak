@@ -176,8 +176,9 @@ func (nr *NodeRunner) Ready() {
 	{ //CORS
 		allowedOrigins := ghandlers.AllowedOrigins([]string{"*"})
 		allowedMethods := ghandlers.AllowedMethods([]string{"GET", "POST"})
+		allowedHeaders := ghandlers.AllowedHeaders([]string{"Content-Type", "X-Requested-With", "Cache-Control", "Access-Control"})
 
-		cors := ghandlers.CORS(allowedOrigins, allowedMethods)
+		cors := ghandlers.CORS(allowedOrigins, allowedMethods, allowedHeaders)
 		err := nr.network.AddMiddleware(network.RouterNameAPI, cors)
 		if err != nil {
 			nr.log.Error("Middleware has an error", "err", err)
@@ -227,23 +228,23 @@ func (nr *NodeRunner) Ready() {
 	nr.network.AddHandler(
 		apiHandler.HandlerURLPattern(api.GetAccountHandlerPattern),
 		apiHandler.GetAccountHandler,
-	).Methods("GET")
+	).Methods("GET", "OPTIONS")
 	nr.network.AddHandler(
 		apiHandler.HandlerURLPattern(api.GetAccountTransactionsHandlerPattern),
 		apiHandler.GetTransactionsByAccountHandler,
-	).Methods("GET")
+	).Methods("GET", "OPTIONS")
 	nr.network.AddHandler(
 		apiHandler.HandlerURLPattern(api.GetAccountOperationsHandlerPattern),
 		apiHandler.GetOperationsByAccountHandler,
-	).Methods("GET")
+	).Methods("GET", "OPTIONS")
 	nr.network.AddHandler(
 		apiHandler.HandlerURLPattern(api.GetTransactionByHashHandlerPattern),
 		apiHandler.GetTransactionByHashHandler,
-	).Methods("GET")
+	).Methods("GET", "OPTIONS")
 	nr.network.AddHandler(
 		apiHandler.HandlerURLPattern(api.GetTransactionOperationsHandlerPattern),
 		apiHandler.GetOperationsByTxHashHandler,
-	).Methods("GET")
+	).Methods("GET", "OPTIONS")
 
 	TransactionsHandler := func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "POST" {
@@ -258,7 +259,7 @@ func (nr *NodeRunner) Ready() {
 	nr.network.AddHandler(
 		apiHandler.HandlerURLPattern(api.GetTransactionsHandlerPattern),
 		TransactionsHandler,
-	).Methods("GET", "POST").MatcherFunc(common.PostAndJSONMatcher)
+	).Methods("GET", "POST", "OPTIONS").MatcherFunc(common.PostAndJSONMatcher)
 
 	// pprof
 	if DebugPProf == true {
