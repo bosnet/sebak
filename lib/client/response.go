@@ -21,7 +21,7 @@ type Account struct {
 	} `json:"_links"`
 
 	Address    string `json:"address"`
-	SequenceID int64  `json:"sequence_id"`
+	SequenceID uint64 `json:"sequence_id"`
 	Balance    string `json:"balance"`
 	Linked     string `json:"linked"`
 }
@@ -40,7 +40,7 @@ type Transaction struct {
 	Hash           string `json:"hash"`
 	Source         string `json:"source"`
 	Fee            string `json:"fee"`
-	SequenceID     int64  `json:"sequence_id"`
+	SequenceID     uint64 `json:"sequence_id"`
 	Created        string `json:"created"`
 	OperationCount uint64 `json:"operation_count"`
 }
