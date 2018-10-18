@@ -19,6 +19,8 @@ const (
 	GetAccountTransactionsHandlerPattern   = "/accounts/{id}/transactions"
 	GetAccountHandlerPattern               = "/accounts/{id}"
 	GetAccountOperationsHandlerPattern     = "/accounts/{id}/operations"
+	GetAccountFrozenAccountHandlerPattern  = "/accounts/{id}/frozen-accounts"
+	GetFrozenAccountHandlerPattern         = "/frozen-accounts"
 	GetTransactionsHandlerPattern          = "/transactions"
 	GetTransactionByHashHandlerPattern     = "/transactions/{id}"
 	GetTransactionOperationsHandlerPattern = "/transactions/{id}/operations"

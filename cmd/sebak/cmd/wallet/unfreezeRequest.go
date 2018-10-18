@@ -103,7 +103,7 @@ func init() {
 	UnfreezeRequestCmd.Flags().StringVar(&flagEndpoint, "endpoint", flagEndpoint, "endpoint to send the transaction to (https / memory address)")
 	UnfreezeRequestCmd.Flags().StringVar(&flagNetworkID, "network-id", flagNetworkID, "network id")
 	UnfreezeRequestCmd.Flags().BoolVar(&flagDry, "dry-run", flagDry, "Print the transaction instead of sending it")
-	UnfreezeRequestCmd.Flags().BoolVar(&flagVerbose, "verbose", flagVerbose, "Print extra data (transaction sent, before/after balance...)")
+	UnfreezeRequestCmd.Flags().BoolVar(&flagVerbose, "verbose", flagVerbose, "Print extra data (transaction sent)")
 }
 
 //

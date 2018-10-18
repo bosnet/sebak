@@ -17,6 +17,8 @@ const (
 	UrlAccountTransactions   = "/accounts/{id}/transactions"
 	UrlAccount               = "/accounts/{id}"
 	UrlAccountOperations     = "/accounts/{id}/operations"
+	UrlAccountFrozenAccounts = "/accounts/{id}/frozen-accounts"
+	UrlFrozenAccounts        = "/frozen-accounts"
 	UrlTransactions          = "/transactions"
 	UrlTransactionByHash     = "/transactions/{id}"
 	UrlTransactionHistory    = "/transactions/{id}/history"
@@ -131,6 +133,20 @@ func (c *Client) LoadAccount(id string, queries ...Q) (account Account, err erro
 	return
 }
 
+func (c *Client) LoadFrozenAccountsByLinked(id string, queries ...Q) (fPage FrozenAccountsPage, err error) {
+	url := strings.Replace(UrlAccountFrozenAccounts, "{id}", id, -1)
+	url += Queries(queries).toQueryString()
+	err = c.getResponse(url, http.Header{}, &fPage)
+	return
+}
+
+func (c *Client) LoadAFrozenAccounts(id string, queries ...Q) (fPage FrozenAccountsPage, err error) {
+	url := strings.Replace(UrlFrozenAccounts, "{id}", id, -1)
+	url += Queries(queries).toQueryString()
+	err = c.getResponse(url, http.Header{}, &fPage)
+	return
+}
+
 func (c *Client) LoadTransaction(id string, queries ...Q) (transaction Transaction, err error) {
 	url := strings.Replace(UrlTransactionByHash, "{id}", id, -1)
 	url += Queries(queries).toQueryString()
@@ -226,6 +242,34 @@ func (c *Client) StreamAccount(ctx context.Context, id string, cursor *string, h
 	url := strings.Replace(UrlAccount, "{id}", id, -1)
 	handlerFunc := func(b []byte) (err error) {
 		var v Account
+		err = json.Unmarshal(b, &v)
+		if err != nil {
+			return err
+		}
+		handler(v)
+		return nil
+	}
+	return c.Stream(ctx, url, cursor, handlerFunc)
+}
+
+func (c *Client) StreamFrozenAccountsByLinked(ctx context.Context, id string, cursor *string, handler func(FrozenAccount)) (err error) {
+	url := strings.Replace(UrlAccountFrozenAccounts, "{id}", id, -1)
+	handlerFunc := func(b []byte) (err error) {
+		var v FrozenAccount
+		err = json.Unmarshal(b, &v)
+		if err != nil {
+			return
+		}
+		handler(v)
+		return nil
+	}
+	return c.Stream(ctx, url, cursor, handlerFunc)
+}
+
+func (c *Client) StreamFrozenAccounts(ctx context.Context, id string, cursor *string, handler func(FrozenAccount)) (err error) {
+	url := strings.Replace(UrlFrozenAccounts, "{id}", id, -1)
+	handlerFunc := func(b []byte) (err error) {
+		var v FrozenAccount
 		err = json.Unmarshal(b, &v)
 		if err != nil {
 			return err
