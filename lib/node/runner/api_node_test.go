@@ -103,8 +103,8 @@ func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, n *network.HTTP2Netw
 		p,
 	)
 
-	is, _ := consensus.NewISAAC(networkID, localNode, p, connectionManager, common.NewConfig(), nil)
 	st := block.InitTestBlockchain()
+	is, _ := consensus.NewISAAC(networkID, localNode, p, connectionManager, st, common.NewConfig(), nil)
 	if nodeRunner, err = NewNodeRunner(string(networkID), localNode, p, n, is, st, common.NewConfig()); err != nil {
 		panic(err)
 	}
@@ -226,6 +226,7 @@ func TestGetNodeInfoHandler(t *testing.T) {
 		localNode,
 		nil,
 		network.NewValidatorConnectionManager(localNode, nil, nil),
+		st,
 		common.NewConfig(),
 		nil,
 	)

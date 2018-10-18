@@ -194,14 +194,9 @@ func BallotCheckSYNC(c common.Checker, args ...interface{}) error {
 
 	defer func() {
 		if b.Round().BlockHeight == syncHeight {
-			checker.NodeRunner.Log().Debug("is.SetLatestBlock(blk)", "syncHeight", syncHeight)
 			is.LatestBallot = b
 		}
 	}()
-
-	if err = updateLatestBlockFromDatabase(is, checker.NodeRunner.storage, checker.NodeRunner.Log()); err != nil {
-		return err
-	}
 
 	if latestHeight < syncHeight-1 { // request sync until syncHeight
 		checker.NodeRunner.Log().Debug("latestHeight < syncHeight-1", "latestHeight", latestHeight, "syncHeight", syncHeight)
@@ -209,22 +204,19 @@ func BallotCheckSYNC(c common.Checker, args ...interface{}) error {
 		return NewCheckerStopCloseConsensus(checker, "ballot makes node in sync")
 	} else {
 		if latestHeight == syncHeight-1 { // finish previous and current height ballot
-			var previousBlock *block.Block
-			previousBlock, err = finishBallot(
+			_, err = finishBallot(
 				checker.NodeRunner.Storage(),
 				is.LatestBallot,
 				checker.NodeRunner.TransactionPool,
 				checker.Log,
 				checker.NodeRunner.Log(),
 			)
-			is.SetLatestBlock(*previousBlock)
 			if err != nil {
 				return err
 			}
 		}
 
-		var block *block.Block
-		block, err = finishBallot(
+		_, err = finishBallot(
 			checker.NodeRunner.Storage(),
 			checker.Ballot,
 			checker.NodeRunner.TransactionPool,
@@ -235,7 +227,6 @@ func BallotCheckSYNC(c common.Checker, args ...interface{}) error {
 			return err
 		}
 
-		checker.NodeRunner.Consensus().SetLatestBlock(*block)
 		checker.LocalNode.SetConsensus()
 		checker.NodeRunner.TransitISAACState(b.Round(), ballot.StateALLCONFIRM)
 		return NewCheckerStopCloseConsensus(checker, "ballot got consensus")
@@ -250,22 +241,15 @@ func hasBallotValidProposer(is *consensus.ISAAC, b ballot.Ballot) bool {
 	return b.Proposer() == is.SelectProposer(b.Round().BlockHeight, b.Round().Number)
 }
 
-func updateLatestBlockFromDatabase(is *consensus.ISAAC, st *storage.LevelDBBackend, log logging.Logger) error {
-	blk := block.GetLatestBlock(st)
-	if is.LatestBlock().Height < blk.Height {
-		is.SetLatestBlock(blk)
-		log.Info("is.SetLatestBlock(blk)", "blk.Height", blk.Height)
-	}
-
-	return nil
-}
-
 // BallotAlreadyFinished checks the incoming ballot in
 // valid round.
 func BallotAlreadyFinished(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotChecker)
 	ballotRound := checker.Ballot.Round()
-	if !checker.NodeRunner.Consensus().IsAvailableRound(ballotRound) {
+	if !checker.NodeRunner.Consensus().IsAvailableRound(
+		ballotRound,
+		block.GetLatestBlock(checker.NodeRunner.Storage()),
+	) {
 		err = errors.ErrorBallotAlreadyFinished
 		checker.Log.Debug("ballot already finished")
 		return
@@ -581,7 +565,6 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) (err error) {
 			return
 		}
 
-		checker.NodeRunner.Consensus().SetLatestBlock(*theBlock)
 		checker.Log.Debug("ballot was stored", "block", *theBlock)
 		checker.NodeRunner.TransitISAACState(ballotRound, ballot.StateALLCONFIRM)
 

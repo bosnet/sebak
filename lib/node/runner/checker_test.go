@@ -179,7 +179,6 @@ func (g *getMissingTransactionTesting) Prepare() {
 	g.consensusNR = g.nodeRunners[1]
 
 	g.genesisBlock = block.GetGenesis(g.proposerNR.Storage())
-	g.consensusNR.Consensus().SetLatestBlock(g.genesisBlock)
 	g.commonAccount, _ = GetCommonAccount(g.proposerNR.Storage())
 	g.initialBalance, _ = GetGenesisBalance(g.proposerNR.Storage())
 }
