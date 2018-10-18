@@ -51,16 +51,7 @@ func TestSerializeOperation(t *testing.T) {
 }
 
 func TestOperationBodyCongressVoting(t *testing.T) {
-	opb := CongressVoting{
-		Contract: []byte("dummy contract"),
-		Voting: struct {
-			Start uint64
-			End   uint64
-		}{
-			Start: 1,
-			End:   100,
-		},
-	}
+	opb := NewCongressVoting([]byte("dummy contract"), 1, 100)
 	op := Operation{
 		H: Header{Type: TypeCongressVoting},
 		B: opb,
@@ -76,33 +67,13 @@ func TestOperationBodyCongressVoting(t *testing.T) {
 }
 
 func TestOperationBodyCongressVotingResult(t *testing.T) {
-	opb := CongressVotingResult{
-		BallotStamps: struct {
-			Hash string
-			Urls []string
-		}{
-			Hash: string(common.MakeHash([]byte("dummydummy"))),
-			Urls: []string{"http://www.boscoin.io/1", "http://www.boscoin.io/2"},
-		},
-		Voters: struct {
-			Hash string
-			Urls []string
-		}{
-			Hash: string(common.MakeHash([]byte("dummydummy"))),
-			Urls: []string{"http://www.boscoin.io/3", "http://www.boscoin.io/4"},
-		},
-		Result: struct {
-			Count uint64
-			Yes   uint64
-			No    uint64
-			ABS   uint64
-		}{
-			Count: 9,
-			Yes:   2,
-			No:    3,
-			ABS:   4,
-		},
-	}
+	opb := NewCongressVotingResult(
+		string(common.MakeHash([]byte("dummydummy"))),
+		[]string{"http://www.boscoin.io/1", "http://www.boscoin.io/2"},
+		string(common.MakeHash([]byte("dummydummy"))),
+		[]string{"http://www.boscoin.io/3", "http://www.boscoin.io/4"},
+		9, 2, 3, 4,
+	)
 	op := Operation{
 		H: Header{Type: TypeCongressVotingResult},
 		B: opb,

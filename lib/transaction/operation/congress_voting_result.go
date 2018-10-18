@@ -10,18 +10,41 @@ import (
 
 type CongressVotingResult struct {
 	BallotStamps struct {
-		Hash string
-		Urls []string
-	}
+		Hash string   `json:"hash"`
+		Urls []string `json:"urls"`
+	} `json:"ballot_stamps"`
 	Voters struct {
-		Hash string
-		Urls []string
-	}
+		Hash string   `json:"hash"`
+		Urls []string `json:"urls"`
+	} `json:"voters"`
 	Result struct {
-		Count uint64
-		Yes   uint64
-		No    uint64
-		ABS   uint64
+		Count uint64 `json:"count"`
+		Yes   uint64 `json:"yes"`
+		No    uint64 `json:"no"`
+		ABS   uint64 `json:"abs"`
+	} `json:"result"`
+}
+
+func NewCongressVotingResult(
+	ballotHash string, ballotUrls []string,
+	votersHash string, votersUrls []string,
+	resultCount, resultYes, resultNo, resultABS uint64) CongressVotingResult {
+
+	return CongressVotingResult{
+		BallotStamps: struct {
+			Hash string   `json:"hash"`
+			Urls []string `json:"urls"`
+		}{ballotHash, ballotUrls},
+		Voters: struct {
+			Hash string   `json:"hash"`
+			Urls []string `json:"urls"`
+		}{votersHash, votersUrls},
+		Result: struct {
+			Count uint64 `json:"count"`
+			Yes   uint64 `json:"yes"`
+			No    uint64 `json:"no"`
+			ABS   uint64 `json:"abs"`
+		}{resultCount, resultYes, resultNo, resultABS},
 	}
 }
 

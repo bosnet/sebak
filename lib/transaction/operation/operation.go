@@ -59,6 +59,10 @@ func NewOperation(opb Body) (op Operation, err error) {
 		t = TypeInflation
 	case UnfreezeRequest:
 		t = TypeUnfreezingRequest
+	case CongressVoting:
+		t = TypeCongressVoting
+	case CongressVotingResult:
+		t = TypeCongressVotingResult
 	default:
 		err = errors.ErrorUnknownOperationType
 		return

@@ -21,7 +21,7 @@ type Account struct {
 	} `json:"_links"`
 
 	Address    string `json:"address"`
-	SequenceID int    `json:"sequence_id"`
+	SequenceID uint64 `json:"sequence_id"`
 	Balance    string `json:"balance"`
 	Linked     string `json:"linked"`
 }
@@ -40,7 +40,7 @@ type Transaction struct {
 	Hash           string `json:"hash"`
 	Source         string `json:"source"`
 	Fee            string `json:"fee"`
-	SequenceID     string `json:"sequence_id"`
+	SequenceID     uint64 `json:"sequence_id"`
 	Created        string `json:"created"`
 	OperationCount uint64 `json:"operation_count"`
 }
@@ -58,12 +58,13 @@ type TransactionsPage struct {
 
 type Operation struct {
 	Links struct {
-		Self         Link `json:"self"`
-		Transactions Link `json:"transactions"`
+		Self        Link `json:"self"`
+		Transaction Link `json:"transaction"`
 	} `json:"_links"`
-	Hash   string `json:"hash"`
-	Source string `json:"source"`
-	Type   string `json:"type"`
+	Hash   string      `json:"hash"`
+	Source string      `json:"source"`
+	Type   string      `json:"type"`
+	Body   interface{} `json:"body"`
 }
 
 type OperationsPage struct {
@@ -75,4 +76,59 @@ type OperationsPage struct {
 	Embedded struct {
 		Records []Operation `json:"records"`
 	} `json:"_embedded"`
+}
+
+type CongressVoting struct {
+	Contract []byte `json:"contract"`
+	Voting   struct {
+		Start uint64 `json:"start"`
+		End   uint64 `json:"end"`
+	} `json:"voting"`
+}
+
+type CongressVotingResult struct {
+	BallotStamps struct {
+		Hash string   `json:"hash"`
+		Urls []string `json:"urls"`
+	} `json:"ballot_stamps"`
+	Voters struct {
+		Hash string   `json:"hash"`
+		Urls []string `json:"urls"`
+	} `json:"voters"`
+	Result struct {
+		Count uint64 `json:"count"`
+		Yes   uint64 `json:"yes"`
+		No    uint64 `json:"no"`
+		ABS   uint64 `json:"abs"`
+	} `json:"result"`
+}
+
+type CreateAccount struct {
+	Target string `json:"target"`
+	Amount []byte `json:"amount"`
+	Linked string `json:"linked,omitempty"`
+}
+
+type Payment struct {
+	Target string `json:"target"`
+	Amount []byte `json:"amount"`
+}
+
+type Inflation struct {
+	Target         string `json:"target"`
+	Amount         []byte `json:"amount"`
+	InitialBalance []byte `json:"initial-balance"`
+	Ratio          string `json:"ratio"`
+	BlockHeight    uint64 `json:"block-height"`
+	BlockHash      string `json:"block-hash"`
+	TotalTxs       uint64 `json:"total-txs"`
+}
+
+type CollectTxFee struct {
+	Target      string `json:"target"`
+	Amount      []byte `json:"amount"`
+	Txs         uint64 `json:"txs"`
+	BlockHeight uint64 `json:"block-height"`
+	BlockHash   string `json:"block-hash"`
+	TotalTxs    uint64 `json:"total-txs"`
 }
