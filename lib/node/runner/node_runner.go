@@ -12,10 +12,6 @@ import (
 	"net/http/pprof"
 	"time"
 
-	ghandlers "github.com/gorilla/handlers"
-	logging "github.com/inconshreveable/log15"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-
 	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
@@ -27,6 +23,9 @@ import (
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
+	ghandlers "github.com/gorilla/handlers"
+	logging "github.com/inconshreveable/log15"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 var DefaultHandleBaseBallotCheckerFuncs = []common.CheckerFunc{
@@ -86,7 +85,8 @@ type NodeRunner struct {
 	CommonAccountAddress string
 	InitialBalance       common.Amount
 
-	Conf common.Config
+	Conf     common.Config
+	nodeInfo node.NodeInfo
 }
 
 func NewNodeRunner(
@@ -108,6 +108,8 @@ func NewNodeRunner(
 		log:       log.New(logging.Ctx{"node": localNode.Alias()}),
 		Conf:      conf,
 	}
+	nr.localNode.SetBooting()
+
 	nr.isaacStateManager = NewISAACStateManager(nr, conf)
 
 	nr.policy.SetValidators(len(nr.localNode.GetValidators()))
@@ -136,6 +138,8 @@ func NewNodeRunner(
 		nr.log.Debug("initial balance found", "amount", nr.InitialBalance)
 		nr.InitialBalance.Invariant()
 	}
+
+	nr.nodeInfo = NewNodeInfo(nr)
 
 	return
 }
@@ -211,7 +215,15 @@ func (nr *NodeRunner) Ready() {
 	nr.network.AddHandler("/metrics", promhttp.Handler().ServeHTTP)
 
 	// api handlers
-	apiHandler := api.NewNetworkHandlerAPI(nr.localNode, nr.network, nr.storage, network.UrlPathPrefixAPI)
+	apiHandler := api.NewNetworkHandlerAPI(
+		nr.localNode,
+		nr.network,
+		nr.storage,
+		network.UrlPathPrefixAPI,
+		nr.nodeInfo,
+	)
+	apiHandler.GetLatestBlock = nr.Consensus().LatestBlock
+
 	nr.network.AddHandler(
 		apiHandler.HandlerURLPattern(api.GetAccountHandlerPattern),
 		apiHandler.GetAccountHandler,
@@ -256,6 +268,8 @@ func (nr *NodeRunner) Ready() {
 		nr.network.AddHandler("/debug/pprof/trace", pprof.Trace)
 		nr.network.AddHandler("/debug/pprof/*", pprof.Index)
 	}
+
+	nr.network.AddHandler(api.GetNodeInfoPattern, apiHandler.GetNodeInfoHandler).Methods("GET")
 
 	nr.network.Ready()
 }
@@ -573,4 +587,8 @@ func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) (ballot.Ballot, error
 	nr.ConnectionManager().Broadcast(*theBallot)
 
 	return *theBallot, nil
+}
+
+func (nr *NodeRunner) NodeInfo() node.NodeInfo {
+	return nr.nodeInfo
 }

@@ -56,7 +56,7 @@ func JsonFormatEx(pretty, lineSeparated bool) logging.Format {
 	jsonMarshal := json.Marshal
 	if pretty {
 		jsonMarshal = func(v interface{}) ([]byte, error) {
-			return json.MarshalIndent(v, "", "    ")
+			return JSONMarshalIndent(v)
 		}
 	}
 

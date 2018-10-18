@@ -2,12 +2,12 @@ package common
 
 import (
 	"bytes"
+	"encoding/binary"
 	"encoding/json"
 	"io"
 	"net/url"
 	"os"
 
-	"encoding/binary"
 	uuid "github.com/satori/go.uuid"
 	"github.com/stellar/go/keypair"
 )
@@ -65,6 +65,10 @@ func InStringMap(a map[string]bool, s string) (found bool) {
 func MustJSONMarshal(o interface{}) []byte {
 	b, _ := json.Marshal(o)
 	return b
+}
+
+func JSONMarshalIndent(o interface{}) ([]byte, error) {
+	return json.MarshalIndent(o, "", "  ")
 }
 
 func ReverseStringSlice(a []string) []string {

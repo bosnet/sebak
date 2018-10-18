@@ -111,6 +111,10 @@ func (e *Endpoint) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+func (e *Endpoint) MarshalJSON() ([]byte, error) {
+	return json.Marshal(e.String())
+}
+
 func ParseEndpoint(endpoint string) (u *Endpoint, err error) {
 	var parsed *url.URL
 	parsed, err = url.Parse(endpoint)
@@ -138,8 +142,8 @@ func ParseEndpoint(endpoint string) (u *Endpoint, err error) {
 			return
 		}
 
-		if len(parsed.Host) < 1 || strings.HasPrefix(parsed.Host, "127.0.") {
-			parsed.Host = fmt.Sprintf("localhost:%s", parsed.Port())
+		if len(parsed.Host) < 1 {
+			parsed.Host = fmt.Sprintf("127.0.0.1:%s", parsed.Port())
 		}
 	}
 
