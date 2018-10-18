@@ -23,7 +23,7 @@ func TestGetTransactionByHashHandler(t *testing.T) {
 	defer storage.Close()
 	defer ts.Close()
 
-	_, _, bt, err := prepareTxWithoutSave()
+	_, _, bt, err := prepareTxWithoutSave(storage)
 	require.NoError(t, err)
 	bt.MustSave(storage)
 
@@ -64,7 +64,7 @@ func TestGetTransactionByHashHandlerStream(t *testing.T) {
 	defer storage.Close()
 	defer ts.Close()
 
-	_, _, bt, err := prepareTxWithoutSave()
+	_, _, bt, err := prepareTxWithoutSave(storage)
 	require.NoError(t, err)
 
 	// Wait until request registered to observer
@@ -131,9 +131,9 @@ func TestGetTransactionsHandler(t *testing.T) {
 		json.Unmarshal(readByte, &recv)
 		records := recv["_embedded"].(map[string]interface{})["records"].([]interface{})
 
-		require.Equal(t, len(btList), len(records), "length is not same")
+		require.Equal(t, len(btList)+1, len(records), "length is not same")
 
-		for i, r := range records {
+		for i, r := range records[1:] {
 			bt := r.(map[string]interface{})
 			hash := bt["hash"].(string)
 
@@ -151,7 +151,7 @@ func TestGetTransactionsHandlerStream(t *testing.T) {
 	defer storage.Close()
 	defer ts.Close()
 
-	_, btList, err := prepareTxsWithoutSave(10)
+	_, btList, err := prepareTxsWithoutSave(10, storage)
 	require.NoError(t, err)
 	btMap := make(map[string]block.BlockTransaction)
 	for _, bt := range btList {
@@ -187,6 +187,9 @@ func TestGetTransactionsHandlerStream(t *testing.T) {
 
 	// Check the output
 	{
+		// Discard the first entry (genesis)
+		_, err := reader.ReadBytes('\n')
+		require.NoError(t, err)
 		for n := 0; n < 10; n++ {
 			line, err := reader.ReadBytes('\n')
 			require.NoError(t, err)
@@ -252,7 +255,7 @@ func TestGetTransactionsByAccountHandlerStream(t *testing.T) {
 	defer ts.Close()
 
 	btMap := make(map[string]block.BlockTransaction)
-	kp, btList, err := prepareTxsWithoutSave(10)
+	kp, btList, err := prepareTxsWithoutSave(10, storage)
 	require.NoError(t, err)
 	for _, bt := range btList {
 		btMap[bt.Hash] = bt
@@ -338,21 +341,21 @@ func TestGetTransactionsHandlerPage(t *testing.T) {
 		query = strings.Replace(query, "{limit}", "0", 1)
 		query = strings.Replace(query, "{reverse}", "false", 1)
 		records, _ := testFunction(query)
-		require.Equal(t, len(btList), len(records), "length is not same")
+		require.Equal(t, len(btList), len(records[1:]), "length is not same")
 
-		for i, r := range records {
+		for i, r := range records[1:] {
 			bt := r.(map[string]interface{})
 			require.Equal(t, bt["hash"], btList[i].Hash, "hash is not same")
 		}
 	}
 	{
 		query := strings.Replace(QueryPattern, "{cursor}", "", 1)
-		query = strings.Replace(query, "{limit}", "5", 1)
+		query = strings.Replace(query, "{limit}", "6", 1)
 		query = strings.Replace(query, "{reverse}", "false", 1)
 		records, links := testFunction(query)
-		require.Equal(t, len(btList[:5]), len(records), "length is not same")
+		require.Equal(t, len(btList[:5]), len(records[1:]), "length is not same")
 
-		for i, r := range records {
+		for i, r := range records[1:] {
 			bt := r.(map[string]interface{})
 			require.Equal(t, bt["hash"], btList[i].Hash, "hash is not same")
 		}
@@ -374,9 +377,9 @@ func TestGetTransactionsHandlerPage(t *testing.T) {
 		query = strings.Replace(query, "{limit}", "0", 1)
 		query = strings.Replace(query, "{reverse}", "true", 1)
 		records, _ := testFunction(query)
-		require.Equal(t, len(btList), len(records), "length is not same")
+		require.Equal(t, len(btList), len(records[:len(records)-1]), "length is not same")
 
-		for i, r := range records {
+		for i, r := range records[:len(records)-1] {
 			bt := r.(map[string]interface{})
 			require.Equal(t, bt["hash"], btList[len(btList)-1-i].Hash, "hash is not same")
 		}

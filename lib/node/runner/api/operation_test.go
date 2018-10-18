@@ -131,7 +131,7 @@ func TestGetOperationsByAccountHandlerStream(t *testing.T) {
 	defer ts.Close()
 
 	boMap := make(map[string]block.BlockOperation)
-	kp, boList, err := prepareOpsWithoutSave(10)
+	kp, boList, err := prepareOpsWithoutSave(10, storage)
 	require.NoError(t, err)
 	for _, bo := range boList {
 		boMap[bo.Hash] = bo
