@@ -50,6 +50,7 @@ var (
 	flagTLSCertFile       string = common.GetENVValue("SEBAK_TLS_CERT", "sebak.crt")
 	flagTLSKeyFile        string = common.GetENVValue("SEBAK_TLS_KEY", "sebak.key")
 	flagTransactionsLimit string = common.GetENVValue("SEBAK_TRANSACTIONS_LIMIT", "1000")
+	flagUnfreezingPeriod  string = common.GetENVValue("SEBAK_UNFREEZING_PERIOD", "241920")
 	flagValidators        string = common.GetENVValue("SEBAK_VALIDATORS", "")
 	flagVerbose           bool   = common.GetENVValue("SEBAK_VERBOSE", "0") == "1"
 
@@ -149,6 +150,7 @@ func init() {
 	nodeCmd.Flags().StringVar(&flagTimeoutACCEPT, "timeout-accept", flagTimeoutACCEPT, "timeout of the accept state")
 	nodeCmd.Flags().StringVar(&flagBlockTime, "block-time", flagBlockTime, "block creation time")
 	nodeCmd.Flags().StringVar(&flagTransactionsLimit, "transactions-limit", flagTransactionsLimit, "transactions limit in a ballot")
+	nodeCmd.Flags().StringVar(&flagUnfreezingPeriod, "unfreezing-period", flagUnfreezingPeriod, "how long freezing must last")
 	nodeCmd.Flags().StringVar(&flagOperationsLimit, "operations-limit", flagOperationsLimit, "operations limit in a transaction")
 	nodeCmd.Flags().Var(
 		&flagRateLimitAPI,
@@ -316,6 +318,10 @@ func parseFlagsNode() {
 		cmdcommon.PrintFlagsError(nodeCmd, "--threshold", err)
 	} else {
 		threshold = int(tmpUint64)
+	}
+
+	if common.UnfreezingPeriod, err = strconv.ParseUint(flagUnfreezingPeriod, 10, 64); err != nil {
+		cmdcommon.PrintFlagsError(nodeCmd, "--unfreezing-period", err)
 	}
 
 	if logLevel, err = logging.LvlFromString(flagLogLevel); err != nil {
