@@ -463,33 +463,26 @@ func (nr *NodeRunner) InitRound() {
 	nr.consensus.SetLatestBlock(latestBlock)
 	nr.consensus.SetLatestRound(round.Round{})
 
+	nr.waitForConnectingEnoughNodes()
+	nr.StartStateManager()
+}
+
+func (nr *NodeRunner) waitForConnectingEnoughNodes() {
 	ticker := time.NewTicker(time.Millisecond * 5)
 	for _ = range ticker.C {
-		var notFound bool
 		connected := nr.connectionManager.AllConnected()
-		if len(connected) < 1 {
-			continue
-		}
-
-		for address, _ := range nr.localNode.GetValidators() {
-			if _, found := common.InStringArray(connected, address); !found {
-				notFound = true
-				break
-			}
-		}
-		if !notFound {
+		if len(connected) >= nr.policy.Threshold() {
 			ticker.Stop()
 			break
 		}
 	}
-
 	nr.log.Debug(
-		"caught up network and connected to all validators",
+		"caught up network and connected to enough validators",
 		"connected", nr.Policy().Connected(),
 		"validators", nr.Policy().Validators(),
 	)
 
-	nr.StartStateManager()
+	return
 }
 
 func (nr *NodeRunner) StartStateManager() {
