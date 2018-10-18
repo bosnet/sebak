@@ -195,42 +195,19 @@ func finishOperation(st *storage.LevelDBBackend, source string, op operation.Ope
 	}
 }
 
-func finishCreateAccount(st *storage.LevelDBBackend, source string, op operation.CreateAccount, log logging.Logger) (err error) {
-	if _, err = block.GetBlockAccount(st, source); err != nil {
-		err = errors.BlockAccountDoesNotExists
-		return
-	}
-
-	var baTarget *block.BlockAccount
-	if baTarget, err = block.GetBlockAccount(st, op.TargetAddress()); err == nil {
-		err = errors.BlockAccountAlreadyExists
-		return
-	} else {
-		err = nil
-	}
-
-	baTarget = block.NewBlockAccountLinked(
+func finishCreateAccount(st *storage.LevelDBBackend, source string, op operation.CreateAccount, log logging.Logger) error {
+	baTarget := block.NewBlockAccountLinked(
 		op.TargetAddress(),
 		op.GetAmount(),
 		op.Linked,
 	)
-	if err = baTarget.Save(st); err != nil {
-		return
-	}
-
-	return
+	return baTarget.Save(st)
 }
 
 func finishPayment(st *storage.LevelDBBackend, source string, op operation.Payment, log logging.Logger) (err error) {
-	if _, err = block.GetBlockAccount(st, source); err != nil {
-		err = errors.BlockAccountDoesNotExists
-		return
-	}
-
 	var baTarget *block.BlockAccount
 	if baTarget, err = block.GetBlockAccount(st, op.TargetAddress()); err != nil {
-		err = errors.BlockAccountDoesNotExists
-		return
+		panic(err)
 	}
 
 	if err = baTarget.Deposit(op.GetAmount()); err != nil {
