@@ -118,7 +118,7 @@ func (v *BlockValidator) finishBlock(ctx context.Context, syncInfo *SyncInfo) er
 		return err
 	}
 
-	if err := runner.FinishTransactions(blk, syncInfo.Txs, bs); err != nil {
+	if err := runner.FinishTransactions(blk, syncInfo.Txs, nil, bs); err != nil {
 		bs.Discard()
 		return err
 	}

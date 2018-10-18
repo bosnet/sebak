@@ -5,8 +5,6 @@ import (
 	"bytes"
 	"io"
 
-	logging "github.com/inconshreveable/log15"
-
 	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
@@ -17,6 +15,7 @@ import (
 	"boscoin.io/sebak/lib/transaction"
 	"boscoin.io/sebak/lib/transaction/operation"
 	"boscoin.io/sebak/lib/voting"
+	logging "github.com/inconshreveable/log15"
 )
 
 type CheckerStopCloseConsensus struct {
@@ -624,6 +623,7 @@ func saveBlock(checker *BallotChecker) error {
 	theBlock, err = finishBallotWithProposedTxs(
 		bs,
 		checker.Ballot,
+		checker.NodeRunner.TransactionPool.Pending,
 		proposedTransactions,
 		checker.Log,
 		checker.NodeRunner.Log(),
