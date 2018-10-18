@@ -545,7 +545,7 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 			return nil, err
 		}
 		for _, op := range tx.B.Operations {
-			if err = finishOperation(ts, tx, op, log); err != nil {
+			if err = finishOperation(ts, tx.B.Source, op, log); err != nil {
 				log.Error("failed to finish operation", "block", blk, "bt", bt, "op", op, "error", err)
 				ts.Discard()
 				return nil, err
@@ -585,20 +585,20 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 }
 
 // finishOperation do finish the task after consensus by the type of each operation.
-func finishOperation(st *storage.LevelDBBackend, tx transaction.Transaction, op operation.Operation, log logging.Logger) (err error) {
+func finishOperation(st *storage.LevelDBBackend, source string, op operation.Operation, log logging.Logger) (err error) {
 	switch op.H.Type {
 	case operation.TypeCreateAccount:
 		pop, ok := op.B.(operation.CreateAccount)
 		if !ok {
 			return errors.ErrorUnknownOperationType
 		}
-		return finishCreateAccount(st, tx, pop, log)
+		return finishCreateAccount(st, source, pop, log)
 	case operation.TypePayment:
 		pop, ok := op.B.(operation.Payment)
 		if !ok {
 			return errors.ErrorUnknownOperationType
 		}
-		return finishPayment(st, tx, pop, log)
+		return finishPayment(st, source, pop, log)
 	case operation.TypeCongressVoting, operation.TypeCongressVotingResult:
 		//Nothing to do
 		return
@@ -607,17 +607,17 @@ func finishOperation(st *storage.LevelDBBackend, tx transaction.Transaction, op 
 		if !ok {
 			return errors.ErrorUnknownOperationType
 		}
-		return finishUnfreezeRequest(st, tx, pop, log)
+		return finishUnfreezeRequest(st, source, pop, log)
 	default:
 		err = errors.ErrorUnknownOperationType
 		return
 	}
 }
 
-func finishCreateAccount(st *storage.LevelDBBackend, tx transaction.Transaction, op operation.CreateAccount, log logging.Logger) (err error) {
+func finishCreateAccount(st *storage.LevelDBBackend, source string, op operation.CreateAccount, log logging.Logger) (err error) {
 
 	var baSource, baTarget *block.BlockAccount
-	if baSource, err = block.GetBlockAccount(st, tx.B.Source); err != nil {
+	if baSource, err = block.GetBlockAccount(st, source); err != nil {
 		err = errors.ErrorBlockAccountDoesNotExists
 		return
 	}
@@ -642,10 +642,10 @@ func finishCreateAccount(st *storage.LevelDBBackend, tx transaction.Transaction,
 	return
 }
 
-func finishPayment(st *storage.LevelDBBackend, tx transaction.Transaction, op operation.Payment, log logging.Logger) (err error) {
+func finishPayment(st *storage.LevelDBBackend, source string, op operation.Payment, log logging.Logger) (err error) {
 
 	var baSource, baTarget *block.BlockAccount
-	if baSource, err = block.GetBlockAccount(st, tx.B.Source); err != nil {
+	if baSource, err = block.GetBlockAccount(st, source); err != nil {
 		err = errors.ErrorBlockAccountDoesNotExists
 		return
 	}
@@ -738,7 +738,7 @@ func finishInflation(st *storage.LevelDBBackend, opb operation.Inflation, log lo
 	return
 }
 
-func finishUnfreezeRequest(st *storage.LevelDBBackend, tx transaction.Transaction, opb operation.UnfreezeRequest, log logging.Logger) (err error) {
+func finishUnfreezeRequest(st *storage.LevelDBBackend, source string, opb operation.UnfreezeRequest, log logging.Logger) (err error) {
 
 	log.Debug("UnfreezeRequest done")
 
