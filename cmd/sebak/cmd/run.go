@@ -27,54 +27,55 @@ import (
 )
 
 const (
-	defaultLogLevel  logging.Lvl = logging.LvlInfo
-	defaultLogFormat string      = "terminal"
 	defaultBindURL   string      = "https://0.0.0.0:12345"
+	defaultLogFormat string      = "terminal"
+	defaultLogLevel  logging.Lvl = logging.LvlInfo
 )
 
 var (
-	flagKPSecretSeed        string = common.GetENVValue("SEBAK_SECRET_SEED", "")
-	flagNetworkID           string = common.GetENVValue("SEBAK_NETWORK_ID", "")
-	flagLogLevel            string = common.GetENVValue("SEBAK_LOG_LEVEL", defaultLogLevel.String())
-	flagLogFormat           string = common.GetENVValue("SEBAK_LOG_FORMAT", defaultLogFormat)
-	flagLog                 string = common.GetENVValue("SEBAK_LOG", "")
-	flagVerbose             bool   = common.GetENVValue("SEBAK_VERBOSE", "0") == "1"
-	flagBindURL             string = common.GetENVValue("SEBAK_BIND", defaultBindURL)
-	flagPublishURL          string = common.GetENVValue("SEBAK_PUBLISH", "")
-	flagStorageConfigString string
-	flagTLSCertFile         string              = common.GetENVValue("SEBAK_TLS_CERT", "sebak.crt")
-	flagTLSKeyFile          string              = common.GetENVValue("SEBAK_TLS_KEY", "sebak.key")
-	flagValidators          string              = common.GetENVValue("SEBAK_VALIDATORS", "")
-	flagThreshold           string              = common.GetENVValue("SEBAK_THRESHOLD", "67")
-	flagTimeoutINIT         string              = common.GetENVValue("SEBAK_TIMEOUT_INIT", "2")
-	flagTimeoutSIGN         string              = common.GetENVValue("SEBAK_TIMEOUT_SIGN", "2")
-	flagTimeoutACCEPT       string              = common.GetENVValue("SEBAK_TIMEOUT_ACCEPT", "2")
-	flagBlockTime           string              = common.GetENVValue("SEBAK_BLOCK_TIME", "5")
-	flagTransactionsLimit   string              = common.GetENVValue("SEBAK_TRANSACTIONS_LIMIT", "1000")
-	flagOperationsLimit     string              = common.GetENVValue("SEBAK_OPERATIONS_LIMIT", "1000")
+	flagBindURL           string = common.GetENVValue("SEBAK_BIND", defaultBindURL)
+	flagBlockTime         string = common.GetENVValue("SEBAK_BLOCK_TIME", "5")
+	flagDebugPProf        bool   = common.GetENVValue("SEBAK_DEBUG_PPROF", "0") == "1"
+	flagKPSecretSeed      string = common.GetENVValue("SEBAK_SECRET_SEED", "")
+	flagLog               string = common.GetENVValue("SEBAK_LOG", "")
+	flagLogLevel          string = common.GetENVValue("SEBAK_LOG_LEVEL", defaultLogLevel.String())
+	flagLogFormat         string = common.GetENVValue("SEBAK_LOG_FORMAT", defaultLogFormat)
+	flagNetworkID         string = common.GetENVValue("SEBAK_NETWORK_ID", "")
+	flagOperationsLimit   string = common.GetENVValue("SEBAK_OPERATIONS_LIMIT", "1000")
+	flagPublishURL        string = common.GetENVValue("SEBAK_PUBLISH", "")
+	flagThreshold         string = common.GetENVValue("SEBAK_THRESHOLD", "67")
+	flagTimeoutACCEPT     string = common.GetENVValue("SEBAK_TIMEOUT_ACCEPT", "2")
+	flagTimeoutINIT       string = common.GetENVValue("SEBAK_TIMEOUT_INIT", "2")
+	flagTimeoutSIGN       string = common.GetENVValue("SEBAK_TIMEOUT_SIGN", "2")
+	flagTLSCertFile       string = common.GetENVValue("SEBAK_TLS_CERT", "sebak.crt")
+	flagTLSKeyFile        string = common.GetENVValue("SEBAK_TLS_KEY", "sebak.key")
+	flagTransactionsLimit string = common.GetENVValue("SEBAK_TRANSACTIONS_LIMIT", "1000")
+	flagValidators        string = common.GetENVValue("SEBAK_VALIDATORS", "")
+	flagVerbose           bool   = common.GetENVValue("SEBAK_VERBOSE", "0") == "1"
+
 	flagRateLimitAPI        cmdcommon.ListFlags // "SEBAK_RATE_LIMIT_API"
 	flagRateLimitNode       cmdcommon.ListFlags // "SEBAK_RATE_LIMIT_NODE"
-	flagDebugPProf          bool                = common.GetENVValue("SEBAK_DEBUG_PPROF", "0") == "1"
+	flagStorageConfigString string
 )
 
 var (
 	nodeCmd *cobra.Command
 
-	kp                *keypair.Full
 	bindEndpoint      *common.Endpoint
-	publishEndpoint   *common.Endpoint
-	storageConfig     *storage.Config
-	validators        []*node.Validator
-	threshold         int
-	timeoutINIT       time.Duration
-	timeoutSIGN       time.Duration
-	timeoutACCEPT     time.Duration
 	blockTime         time.Duration
-	transactionsLimit uint64
-	operationsLimit   uint64
+	kp                *keypair.Full
 	localNode         *node.LocalNode
+	operationsLimit   uint64
+	publishEndpoint   *common.Endpoint
 	rateLimitRuleAPI  common.RateLimitRule
 	rateLimitRuleNode common.RateLimitRule
+	storageConfig     *storage.Config
+	threshold         int
+	timeoutACCEPT     time.Duration
+	timeoutINIT       time.Duration
+	timeoutSIGN       time.Duration
+	transactionsLimit uint64
+	validators        []*node.Validator
 
 	logLevel logging.Lvl
 	log      logging.Logger = logging.New("module", "main")
