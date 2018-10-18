@@ -23,16 +23,16 @@ type NodeInfoNode struct {
 }
 
 type NodePolicy struct {
-	NetworkID                 string        `json:"network-id"`
-	InitialBalance            common.Amount `json:"initial-balance"`
-	BaseReserve               common.Amount `json:"base-reserve"`
-	BaseFee                   common.Amount `json:"base-fee"`
-	BlockTime                 time.Duration `json:"block-time"`
-	OperationsLimit           int           `json:"operations-limit"`
-	TransactionsLimit         int           `json:"transactions-limit"`
-	GenesisBlockConfirmedTime string        `json:"genesis-block-confirmed-time"`
-	InflationRatio            string        `json:"inflation-ratio"`
-	BlockHeightEndOfInflation uint64        `json:"block-height-end-of-inflation"`
+	NetworkID                 string        `json:"network-id"`                    // network id
+	InitialBalance            common.Amount `json:"initial-balance"`               // initial balance of genesis account
+	BaseReserve               common.Amount `json:"base-reserve"`                  // base reserve for one account
+	BaseFee                   common.Amount `json:"base-fee"`                      // base fee of operation
+	BlockTime                 time.Duration `json:"block-time"`                    // block creation time
+	OperationsLimit           int           `json:"operations-limit"`              // operations limit in a transaction
+	TransactionsLimit         int           `json:"transactions-limit"`            // transactions limit in a ballot
+	GenesisBlockConfirmedTime string        `json:"genesis-block-confirmed-time"`  // confirmed time of genesis block; see `common.GenesisBlockConfirmedTime`
+	InflationRatio            string        `json:"inflation-ratio"`               // inflation ratio; see `common.InflationRatio`
+	BlockHeightEndOfInflation uint64        `json:"block-height-end-of-inflation"` // block height of inflation end; see `common.BlockHeightEndOfInflation`
 }
 
 type NodeBlockInfo struct {

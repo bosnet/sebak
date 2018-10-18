@@ -7,11 +7,10 @@ import (
 	"sync"
 	"time"
 
-	logging "github.com/inconshreveable/log15"
-
 	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/node"
+	logging "github.com/inconshreveable/log15"
 )
 
 type ValidatorConnectionManager struct {
