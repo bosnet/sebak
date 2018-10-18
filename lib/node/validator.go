@@ -46,26 +46,6 @@ func (v *Validator) Equal(a Node) bool {
 	return false
 }
 
-func (v *Validator) State() State {
-	return v.state
-}
-
-func (v *Validator) SetBooting() {
-	v.state = StateBOOTING
-}
-
-func (v *Validator) SetSync() {
-	v.state = StateSYNC
-}
-
-func (v *Validator) SetConsensus() {
-	v.state = StateCONSENSUS
-}
-
-func (v *Validator) SetTerminating() {
-	v.state = StateTERMINATING
-}
-
 func (v *Validator) Address() string {
 	return v.address
 }
@@ -83,7 +63,6 @@ func (v *Validator) MarshalJSON() ([]byte, error) {
 		"address":  v.Address(),
 		"alias":    v.Alias(),
 		"endpoint": v.Endpoint().String(),
-		"state":    v.State().String(),
 	})
 }
 
@@ -115,7 +94,6 @@ func NewValidator(address string, endpoint *common.Endpoint, alias string) (v *V
 	}
 
 	v = &Validator{
-		state:    StateNONE,
 		alias:    alias,
 		address:  address,
 		endpoint: endpoint,

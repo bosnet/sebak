@@ -151,6 +151,7 @@ func (sm *ISAACStateManager) NextHeight() {
 // Or it sets or resets timeout. If it is expired, it broadcasts B(`EXP`).
 // And it manages the node round.
 func (sm *ISAACStateManager) Start() {
+	sm.nr.localNode.SetConsensus()
 	sm.nr.Log().Debug("begin ISAACStateManager.Start()", "ISAACState", sm.State())
 	go func() {
 		timer := time.NewTimer(time.Duration(1 * time.Hour))
@@ -185,9 +186,6 @@ func (sm *ISAACStateManager) Start() {
 					sm.transitSignal()
 					sm.SetBlockTimeBuffer()
 					sm.NextHeight()
-				case ballot.StateNONE:
-					timer.Reset(sm.Conf.TimeoutINIT)
-					log.Error("Wrong ISAACState", "ISAACState", state)
 				}
 
 			case <-sm.stop:

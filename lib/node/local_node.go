@@ -67,16 +67,12 @@ func (n *LocalNode) SetBooting() {
 	n.state = StateBOOTING
 }
 
-func (n *LocalNode) SetSync() {
-	n.state = StateSYNC
-}
-
 func (n *LocalNode) SetConsensus() {
 	n.state = StateCONSENSUS
 }
 
-func (n *LocalNode) SetTerminating() {
-	n.state = StateTERMINATING
+func (n *LocalNode) SetSync() {
+	n.state = StateSYNC
 }
 
 func (n *LocalNode) Address() string {
