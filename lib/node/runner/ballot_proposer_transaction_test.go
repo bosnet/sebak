@@ -3,6 +3,7 @@ package runner
 import (
 	"testing"
 
+	"github.com/btcsuite/btcutil/base58"
 	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
 
@@ -943,8 +944,10 @@ func TestProposedTransactionReachedBlockHeightEndOfInflation(t *testing.T) {
 	{ // Height = common.BlockHeightEndOfInflation
 		genesisBlock := p.genesisBlock
 		genesisBlock.Height = common.BlockHeightEndOfInflation
+		genesisBlock.Hash = base58.Encode(common.MustMakeObjectHash(genesisBlock))
 		p.genesisBlock = genesisBlock
-		p.nr.Consensus().SetLatestBlock(p.genesisBlock)
+
+		p.genesisBlock.Save(p.nr.Storage())
 
 		blt := p.MakeBallot(4)
 
@@ -986,8 +989,9 @@ func TestProposedTransactionReachedBlockHeightEndOfInflation(t *testing.T) {
 	{ // Height = common.BlockHeightEndOfInflation + 1
 		genesisBlock := p.genesisBlock
 		genesisBlock.Height = common.BlockHeightEndOfInflation + 1
+		genesisBlock.Hash = base58.Encode(common.MustMakeObjectHash(genesisBlock))
 		p.genesisBlock = genesisBlock
-		p.nr.Consensus().SetLatestBlock(p.genesisBlock)
+		p.genesisBlock.Save(p.nr.Storage())
 
 		blt := p.MakeBallot(4)
 

@@ -521,7 +521,7 @@ func runNode() error {
 
 	syncer := c.NewSyncer()
 
-	isaac, err := consensus.NewISAAC([]byte(flagNetworkID), localNode, policy, connectionManager, conf, syncer)
+	isaac, err := consensus.NewISAAC([]byte(flagNetworkID), localNode, policy, connectionManager, st, conf, syncer)
 	if err != nil {
 		log.Crit("failed to launch consensus", "error", err)
 		return err

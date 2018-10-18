@@ -67,27 +67,6 @@ func TestErrorBallotHasOverMaxTransactionsInBallot(t *testing.T) {
 	}
 }
 
-/*
-//	TestBallotHash checks that ballot.GetHash() makes non-empty hash.
-func TestBallotHash(t *testing.T) {
-	nodeRunners := createTestNodeRunner(1)
-
-	nodeRunner := nodeRunners[0]
-
-	round := round.Round{
-		Number:      0,
-		BlockHeight: nodeRunner.Consensus().LatestBlock.Height,
-		BlockHash:   nodeRunner.Consensus().LatestBlock.Hash,
-		TotalTxs:    nodeRunner.Consensus().LatestBlock.TotalTxs,
-	}
-
-	ballot := NewBallot(nodeRunner.localNode, round, []string{})
-	ballot.Sign(kp, networkID)
-	require.NotZero(t, len(ballot.GetHash()))
-
-}
-*/
-
 func TestBallotBadConfirmedTime(t *testing.T) {
 	kp, _ := keypair.Random()
 	commonKP, _ := keypair.Random()
