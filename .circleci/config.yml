@@ -100,6 +100,18 @@ jobs:
           name: upload coverage reports
           command: bash <(curl -s https://codecov.io/bash) -F integration_tests_node
 
+  integration_tests_freezing:
+    <<: *defaults
+    steps:
+      - setup_remote_docker
+      - <<: *workspace
+      - run:
+          name: integration tests for freezing accounts
+          command: ./tests/freezing/run.sh
+      - run:
+          name: upload coverage reports
+          command: bash <(curl -s https://codecov.io/bash) -F integration_tests_freezing
+
   integration_tests_long_term:
     <<: *defaults
     steps:
@@ -151,6 +163,9 @@ workflows:
           requires:
             - generate_merged_tree
       - integration_tests_node:
+          requires:
+            - generate_merged_tree
+      - integration_tests_freezing:
           requires:
             - generate_merged_tree
       - integration_tests_long_term:

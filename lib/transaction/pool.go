@@ -9,6 +9,7 @@ type Pool struct {
 
 	Pool    map[ /* Transaction.GetHash() */ string]Transaction
 	sources map[ /* Transaction.Source() */ string] /* Transaction.GetHash() */ string
+	Pending *PendingPool
 	hashes  []string // Transaction.GetHash()
 }
 
@@ -16,6 +17,7 @@ func NewPool() *Pool {
 	return &Pool{
 		Pool:    map[string]Transaction{},
 		sources: map[string]string{},
+		Pending: NewPendingPool(),
 		hashes:  []string{},
 	}
 }
