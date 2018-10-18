@@ -272,19 +272,6 @@ func ValidateOp(st *storage.LevelDBBackend, source *block.BlockAccount, op opera
 			return errors.BlockAccountAlreadyExists
 		}
 		if source.Linked != "" {
-			// Unfreezing must be done after X period from unfreezing request
-			iterFunc, closeFunc := block.GetBlockOperationsBySource(st, source.Address, nil)
-			bo, _, _ := iterFunc()
-			closeFunc()
-			// Before unfreezing payment, unfreezing request shoud be saved
-			if bo.Type != operation.TypeUnfreezingRequest {
-				return errors.UnfreezingRequestNotRequested
-			}
-			lastblock := block.GetLatestBlock(st)
-			// unfreezing period is 241920.
-			if lastblock.Height-bo.Height < common.UnfreezingPeriod {
-				return errors.UnfreezingNotReachedExpiration
-			}
 			// If it's a frozen account we check that only whole units are frozen
 			if casted.Linked != "" && (casted.Amount%common.Unit) != 0 {
 				return errors.FrozenAccountCreationWholeUnit // FIXME
@@ -310,19 +297,6 @@ func ValidateOp(st *storage.LevelDBBackend, source *block.BlockAccount, op opera
 			expected, err = source.Balance.Sub(common.BaseFee)
 			if casted.Amount != expected {
 				return errors.FrozenAccountMustWithdrawEverything
-			}
-			// Unfreezing must be done after X period from unfreezing request
-			iterFunc, closeFunc := block.GetBlockOperationsBySource(st, source.Address, nil)
-			bo, _, _ := iterFunc()
-			closeFunc()
-			// Before unfreezing payment, unfreezing request shoud be saved
-			if bo.Type != operation.TypeUnfreezingRequest {
-				return errors.UnfreezingRequestNotRequested
-			}
-			lastblock := block.GetLatestBlock(st)
-			// unfreezing period is 241920.
-			if lastblock.Height-bo.Height < common.UnfreezingPeriod {
-				return errors.UnfreezingNotReachedExpiration
 			}
 		}
 	case operation.TypeUnfreezingRequest:
