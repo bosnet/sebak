@@ -2,10 +2,12 @@ package sync
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/storage"
@@ -154,6 +156,8 @@ func (s *Syncer) SyncProgress(ctx context.Context) (*SyncProgress, error) {
 func (s *Syncer) loop() {
 	var (
 		checkc       = s.afterFunc(s.checkInterval)
+		notifyc      = make(chan struct{})
+		onNotify     = false
 		height       = s.latestBlockHeight()
 		syncProgress = &SyncProgress{
 			StartingBlock: height,
@@ -167,13 +171,16 @@ func (s *Syncer) loop() {
 		select {
 		case <-checkc:
 			s.logger.Debug("check interval", "checkInterval", s.checkInterval)
-			// syncProgress.HighestBlock++ // TODO(anarcher): Until work together consensus
 			s.sync(syncProgress, nodeAddrs)
 			checkc = s.afterFunc(s.checkInterval)
+		case <-notifyc:
+			s.logger.Debug("got notification finished height")
+			onNotify = false // reset onNotify for singleflight
+			s.sync(syncProgress, nodeAddrs)
 		case req := <-s.requestHighestBlock:
 			height := req.height
 			nodeAddrs = req.nodeAddrs
-			s.logger.Info("updated highest Height", "height", height, "nodes", len(nodeAddrs))
+			s.logger.Info("updated highest height", "height", height, "nodes", len(nodeAddrs))
 			if height > syncProgress.CurrentBlock {
 				syncProgress.HighestBlock = height
 				s.sync(syncProgress, nodeAddrs)
@@ -183,6 +190,18 @@ func (s *Syncer) loop() {
 		case c := <-s.stop:
 			close(c)
 			return
+		}
+
+		if !onNotify && syncProgress.CurrentBlock < syncProgress.HighestBlock {
+			event := strconv.FormatUint(syncProgress.CurrentBlock, 10)
+			observer.SyncBlockWaitObserver.One(event, func(...interface{}) {
+				select {
+				case notifyc <- struct{}{}:
+				case <-s.ctx.Done():
+				}
+				s.logger.Debug("send for notify", "event", event)
+			})
+			onNotify = true
 		}
 	}
 }
