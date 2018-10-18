@@ -11,7 +11,6 @@ import (
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/node"
-	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/version"
 	"github.com/gorilla/mux"
 	"github.com/stellar/go/keypair"
@@ -19,7 +18,7 @@ import (
 )
 
 func TestAPIGetNodeInfoHandler(t *testing.T) {
-	st := storage.NewTestStorage()
+	st := block.InitTestBlockchain()
 	defer st.Close()
 
 	endpoint, _ := common.ParseEndpoint("http://1.2.3.4:5678")
@@ -60,16 +59,13 @@ func TestAPIGetNodeInfoHandler(t *testing.T) {
 		Policy: policy,
 	}
 
-	latestBlock := block.Block{
-		Header: block.Header{
-			Height:   100,
-			TotalTxs: 9,
+	apiHandler := NetworkHandlerAPI{
+		localNode: localNode,
+		storage:   st,
+		nodeInfo:  nodeInfo,
+		GetLatestBlock: func() block.Block {
+			return block.GetLatestBlock(st)
 		},
-		Hash: "findme",
-	}
-	apiHandler := NetworkHandlerAPI{localNode: localNode, storage: st, nodeInfo: nodeInfo}
-	apiHandler.GetLatestBlock = func() block.Block {
-		return latestBlock
 	}
 
 	router := mux.NewRouter()
@@ -92,6 +88,7 @@ func TestAPIGetNodeInfoHandler(t *testing.T) {
 
 	// if `node.NodeInfo.Node.Endpoint` is nil, the server URL must be
 	// `Endpoint` in the response body.
+	latestBlock := block.GetLatestBlock(st)
 	require.Equal(t, ts.URL, receivedNodeInfo.Node.Endpoint.String())
 	require.Equal(t, len(nodeInfo.Node.Validators), len(receivedNodeInfo.Node.Validators))
 	require.Equal(t, latestBlock.Height, receivedNodeInfo.Block.Height)
