@@ -62,7 +62,7 @@ func TestGetAccountHandlerStream(t *testing.T) {
 	defer storage.Close()
 	defer ts.Close()
 	ba := block.TestMakeBlockAccount()
-	err = ba.Save(storage)
+	ba.MustSave(storage)
 	require.Nil(t, err)
 
 	key := ba.Address

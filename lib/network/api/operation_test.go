@@ -39,8 +39,7 @@ func TestGetOperationsByAccountHandler(t *testing.T) {
 
 	{
 		ba := block.NewBlockAccount(kp.Address(), common.Amount(common.BaseReserve))
-		err := ba.Save(storage)
-		require.Nil(t, err)
+		ba.MustSave(storage)
 	}
 
 	{
@@ -76,8 +75,7 @@ func TestGetOperationsByAccountHandlerWithType(t *testing.T) {
 	kp, boList, err := prepareOps(storage, 0, 10, nil)
 	require.Nil(t, err)
 	ba := block.NewBlockAccount(kp.Address(), common.Amount(common.BaseReserve))
-	err = ba.Save(storage)
-	require.Nil(t, err)
+	ba.MustSave(storage)
 
 	// Do a Request
 	url := strings.Replace(GetAccountOperationsHandlerPattern, "{id}", kp.Address(), -1)
@@ -139,8 +137,7 @@ func TestGetOperationsByAccountHandlerStream(t *testing.T) {
 		boMap[bo.Hash] = bo
 	}
 	ba := block.NewBlockAccount(kp.Address(), common.Amount(common.BaseReserve))
-	err = ba.Save(storage)
-	require.Nil(t, err)
+	ba.MustSave(storage)
 
 	// Wait until request registered to observer
 	{
