@@ -70,7 +70,7 @@ func (p *ballotCheckerProposedTransaction) MakeBallot(numberOfTxs int) (blt *bal
 		p.txs = append(p.txs, tx)
 
 		// inject txs to `Pool`
-		p.nr.Consensus().TransactionPool.Add(tx)
+		p.nr.TransactionPool.Add(tx)
 	}
 
 	blt = ballot.NewBallot(p.proposerNode.Address(), p.proposerNode.Address(), rd, p.txHashes)
@@ -639,12 +639,12 @@ func TestProposedTransactionWithBiggerTransactionFeeThanCollected(t *testing.T) 
 	// with wrong `CollectTxFee.Amount` count
 	blt := p.MakeBallot(4)
 	var txHashes []string
-	p.nr.Consensus().TransactionPool.Remove(p.txHashes...)
+	p.nr.TransactionPool.Remove(p.txHashes...)
 	for _, tx := range p.txs {
 		tx.B.Fee = tx.B.Fee.MustAdd(1)
 		kp := p.keys[tx.Source()]
 		tx.Sign(kp, networkID)
-		p.nr.Consensus().TransactionPool.Add(tx)
+		p.nr.TransactionPool.Add(tx)
 		txHashes = append(txHashes, tx.GetHash())
 	}
 	blt.B.Proposed.Transactions = txHashes
@@ -710,7 +710,7 @@ func TestProposedTransactionStoreWithZeroAmount(t *testing.T) {
 		_, err := finishBallot(
 			p.nr.Storage(),
 			*blt,
-			p.nr.Consensus().TransactionPool,
+			p.nr.TransactionPool,
 			p.nr.Log(),
 			p.nr.Log(),
 		)
@@ -792,7 +792,7 @@ func TestProposedTransactionStoreWithAmount(t *testing.T) {
 		_, err := finishBallot(
 			p.nr.Storage(),
 			*blt,
-			p.nr.Consensus().TransactionPool,
+			p.nr.TransactionPool,
 			p.nr.Log(),
 			p.nr.Log(),
 		)

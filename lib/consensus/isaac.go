@@ -24,12 +24,11 @@ type ISAAC struct {
 	log               logging.Logger
 	policy            ballot.VotingThresholdPolicy
 
-	NetworkID       []byte
-	Node            *node.LocalNode
-	TransactionPool *transaction.Pool
-	RunningRounds   map[ /* Round.Index() */ string]*RunningRound
-	LatestRound     round.Round
-	Conf            common.Config
+	NetworkID     []byte
+	Node          *node.LocalNode
+	RunningRounds map[ /* Round.Index() */ string]*RunningRound
+	LatestRound   round.Round
+	Conf          common.Config
 }
 
 // ISAAC should know network.ConnectionManager
@@ -41,7 +40,6 @@ func NewISAAC(networkID []byte, node *node.LocalNode, p ballot.VotingThresholdPo
 		NetworkID:         networkID,
 		Node:              node,
 		policy:            p,
-		TransactionPool:   transaction.NewPool(),
 		RunningRounds:     map[string]*RunningRound{},
 		connectionManager: cm,
 		proposerSelector:  SequentialSelector{cm},
@@ -52,7 +50,7 @@ func NewISAAC(networkID []byte, node *node.LocalNode, p ballot.VotingThresholdPo
 	return
 }
 
-func (is *ISAAC) CloseConsensus(proposer string, round round.Round, vh ballot.VotingHole) (err error) {
+func (is *ISAAC) CloseConsensus(proposer string, round round.Round, vh ballot.VotingHole, transactionPool *transaction.Pool) (err error) {
 	is.Lock()
 	defer is.Unlock()
 
@@ -76,7 +74,7 @@ func (is *ISAAC) CloseConsensus(proposer string, round round.Round, vh ballot.Vo
 		return
 	}
 
-	is.TransactionPool.Remove(rr.Transactions[proposer]...)
+	transactionPool.Remove(rr.Transactions[proposer]...)
 
 	delete(is.RunningRounds, roundHash)
 

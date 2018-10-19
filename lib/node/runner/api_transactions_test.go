@@ -31,6 +31,7 @@ type HelperTestGetNodeTransactionsHandler struct {
 	blocks            []block.Block
 	transactionHashes []string
 	consensus         *consensus.ISAAC
+	TransactionPool   *transaction.Pool
 	router            *mux.Router
 	genesisAccount    *block.BlockAccount
 	genesisKeypair    *keypair.Full
@@ -59,8 +60,9 @@ func (p *HelperTestGetNodeTransactionsHandler) Prepare() {
 		common.NewConfig(),
 	)
 	p.consensus = isaac
+	p.TransactionPool = transaction.NewPool()
 
-	apiHandler := NetworkHandlerNode{storage: p.st, consensus: isaac}
+	apiHandler := NetworkHandlerNode{storage: p.st, consensus: isaac, transactionPool: p.TransactionPool}
 
 	p.router = mux.NewRouter()
 	p.router.HandleFunc(GetTransactionPattern, apiHandler.GetNodeTransactionsHandler).Methods("GET", "POST")
@@ -77,7 +79,7 @@ func (p *HelperTestGetNodeTransactionsHandler) Prepare() {
 
 	for j := 0; j < 3; j++ {
 		_, tx := transaction.TestMakeTransaction(networkID, 2)
-		p.consensus.TransactionPool.Add(tx)
+		p.TransactionPool.Add(tx)
 	}
 
 	return
@@ -311,7 +313,7 @@ func TestGetNodeTransactionsHandlerInTransactionPool(t *testing.T) {
 
 	{
 		var txHashes []string
-		for key, _ := range p.consensus.TransactionPool.Pool {
+		for key, _ := range p.TransactionPool.Pool {
 			txHashes = append(txHashes, key)
 			break // Only get the first value in the pool
 		}
@@ -346,7 +348,7 @@ func TestGetNodeTransactionsHandlerTooManyHashes(t *testing.T) {
 
 	{
 		var txHashes []string
-		for key, _ := range p.consensus.TransactionPool.Pool {
+		for key, _ := range p.TransactionPool.Pool {
 			txHashes = append(txHashes, key)
 			break // Only get the first value in the pool
 		}

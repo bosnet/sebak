@@ -39,14 +39,15 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 		messageData, _ := tx.Serialize()
 
 		checker := &MessageChecker{
-			DefaultChecker: common.DefaultChecker{Funcs: HandleTransactionCheckerFuncs},
-			LocalNode:      nodeRunner.Node(),
-			Consensus:      nodeRunner.Consensus(),
-			Storage:        nodeRunner.Storage(),
-			NetworkID:      networkID,
-			Message:        common.NetworkMessage{Type: "message", Data: messageData},
-			Log:            nodeRunner.Log(),
-			Conf:           nodeRunner.Conf,
+			DefaultChecker:  common.DefaultChecker{Funcs: HandleTransactionCheckerFuncs},
+			LocalNode:       nodeRunner.Node(),
+			Consensus:       nodeRunner.Consensus(),
+			TransactionPool: nodeRunner.TransactionPool,
+			Storage:         nodeRunner.Storage(),
+			NetworkID:       networkID,
+			Message:         common.NetworkMessage{Type: "message", Data: messageData},
+			Log:             nodeRunner.Log(),
+			Conf:            nodeRunner.Conf,
 		}
 
 		if err := common.RunChecker(checker, nil); err != nil {
@@ -66,7 +67,7 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 
 		runChecker(tx, nil)
 
-		require.True(t, nodeRunner.Consensus().TransactionPool.Has(tx.GetHash()), "valid transaction must be in `Pool`")
+		require.True(t, nodeRunner.TransactionPool.Has(tx.GetHash()), "valid transaction must be in `Pool`")
 	}
 
 	{ // invalid transaction: same source already in Pool
@@ -81,7 +82,7 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 
 		require.False(
 			t,
-			nodeRunner.Consensus().TransactionPool.Has(tx.GetHash()),
+			nodeRunner.TransactionPool.Has(tx.GetHash()),
 			"invalid transaction must not be in `Pool`: same source already in `Pool`",
 		)
 	}
@@ -97,7 +98,7 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 
 		require.False(
 			t,
-			nodeRunner.Consensus().TransactionPool.Has(tx.GetHash()),
+			nodeRunner.TransactionPool.Has(tx.GetHash()),
 			"invalid transaction must not be in `Pool`: source account does not exists",
 		)
 	}
@@ -115,7 +116,7 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 
 		require.False(
 			t,
-			nodeRunner.Consensus().TransactionPool.Has(tx.GetHash()),
+			nodeRunner.TransactionPool.Has(tx.GetHash()),
 			"invalid transaction must be in `Pool`: target account does not exists",
 		)
 	}
@@ -209,7 +210,7 @@ func (g *getMissingTransactionTesting) MakeBallot(numberOfTxs int) (blt *ballot.
 		txs = append(txs, tx)
 
 		// inject txs to `TransactionPool`
-		g.proposerNR.Consensus().TransactionPool.Add(tx)
+		g.proposerNR.TransactionPool.Add(tx)
 	}
 
 	blt = ballot.NewBallot(g.proposerNR.Node().Address(), g.proposerNR.Node().Address(), rd, txHashes)
@@ -281,7 +282,7 @@ func TestGetMissingTransactionAllMissing(t *testing.T) {
 
 	// check consensus node runner has all missing transactions.
 	for _, hash := range blt.Transactions() {
-		require.True(t, g.consensusNR.Consensus().TransactionPool.Has(hash))
+		require.True(t, g.consensusNR.TransactionPool.Has(hash))
 	}
 }
 
@@ -299,7 +300,7 @@ func TestGetMissingTransactionProposerAlsoMissing(t *testing.T) {
 
 	// remove 1st tx from `TransactionPool` of proposer NodeRunner
 	removedHash := blt.Transactions()[0]
-	g.proposerNR.Consensus().TransactionPool.Remove(removedHash)
+	g.proposerNR.TransactionPool.Remove(removedHash)
 
 	var ballotMessage common.NetworkMessage
 	{
@@ -342,7 +343,7 @@ func TestGetMissingTransactionProposerAlsoMissing(t *testing.T) {
 	err = common.RunChecker(checker, common.DefaultDeferFunc)
 
 	require.Equal(t, ballot.VotingNO, checker.VotingHole)
-	require.Equal(t, 0, g.consensusNR.Consensus().TransactionPool.Len())
+	require.Equal(t, 0, g.consensusNR.TransactionPool.Len())
 }
 
 type irregularIncomingBallot struct {
@@ -434,7 +435,7 @@ func (p *irregularIncomingBallot) makeBallot(state ballot.State) (blt *ballot.Ba
 	tx.Sign(p.keyA, networkID)
 
 	// inject txs to `TransactionPool`
-	p.nr.Consensus().TransactionPool.Add(tx)
+	p.nr.TransactionPool.Add(tx)
 
 	blt = ballot.NewBallot(p.nr.Node().Address(), p.nr.Node().Address(), rd, []string{tx.GetHash()})
 

@@ -13,6 +13,7 @@ import (
 	"boscoin.io/sebak/lib/network/httputils"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/storage"
+	"boscoin.io/sebak/lib/transaction"
 )
 
 const (
@@ -23,22 +24,24 @@ const (
 )
 
 type NetworkHandlerNode struct {
-	localNode *node.LocalNode
-	network   network.Network
-	storage   *storage.LevelDBBackend
-	consensus *consensus.ISAAC
-	urlPrefix string
-	conf      common.Config
+	localNode       *node.LocalNode
+	network         network.Network
+	storage         *storage.LevelDBBackend
+	consensus       *consensus.ISAAC
+	transactionPool *transaction.Pool
+	urlPrefix       string
+	conf            common.Config
 }
 
-func NewNetworkHandlerNode(localNode *node.LocalNode, network network.Network, storage *storage.LevelDBBackend, consensus *consensus.ISAAC, urlPrefix string, conf common.Config) *NetworkHandlerNode {
+func NewNetworkHandlerNode(localNode *node.LocalNode, network network.Network, storage *storage.LevelDBBackend, consensus *consensus.ISAAC, transactionPool *transaction.Pool, urlPrefix string, conf common.Config) *NetworkHandlerNode {
 	return &NetworkHandlerNode{
-		localNode: localNode,
-		network:   network,
-		storage:   storage,
-		consensus: consensus,
-		urlPrefix: urlPrefix,
-		conf:      conf,
+		localNode:       localNode,
+		network:         network,
+		storage:         storage,
+		consensus:       consensus,
+		transactionPool: transactionPool,
+		urlPrefix:       urlPrefix,
+		conf:            conf,
 	}
 }
 
@@ -109,14 +112,15 @@ func (api NetworkHandlerNode) MessageHandler(w http.ResponseWriter, r *http.Requ
 
 	message := common.NetworkMessage{Type: common.TransactionMessage, Data: body}
 	checker := &MessageChecker{
-		DefaultChecker: common.DefaultChecker{Funcs: HandleTransactionCheckerFuncs},
-		Consensus:      api.consensus,
-		Storage:        api.storage,
-		LocalNode:      api.localNode,
-		NetworkID:      api.consensus.NetworkID,
-		Message:        message,
-		Log:            log,
-		Conf:           api.conf,
+		DefaultChecker:  common.DefaultChecker{Funcs: HandleTransactionCheckerFuncs},
+		Consensus:       api.consensus,
+		TransactionPool: api.transactionPool,
+		Storage:         api.storage,
+		LocalNode:       api.localNode,
+		NetworkID:       api.consensus.NetworkID,
+		Message:         message,
+		Log:             log,
+		Conf:            api.conf,
 	}
 
 	if err = common.RunChecker(checker, common.DefaultDeferFunc); err != nil {

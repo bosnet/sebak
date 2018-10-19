@@ -38,6 +38,7 @@ func (p *HelperTestNodeMessageHandler) Prepare() {
 		p.network,
 		p.st,
 		p.consensus,
+		p.TransactionPool,
 		network.UrlPathPrefixNode,
 		p.conf,
 	)
@@ -87,7 +88,7 @@ func TestNodeMessageHandler(t *testing.T) {
 	resp, err := p.server.Client().Do(req)
 	require.Nil(t, err)
 	require.Equal(t, http.StatusOK, resp.StatusCode)
-	require.True(t, p.consensus.TransactionPool.Has(tx.GetHash()))
+	require.True(t, p.TransactionPool.Has(tx.GetHash()))
 }
 
 func TestNodeMessageHandlerNotWellformedTransaction(t *testing.T) {

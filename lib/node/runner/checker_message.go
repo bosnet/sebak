@@ -29,14 +29,15 @@ import (
 type MessageChecker struct {
 	common.DefaultChecker
 
-	Conf        common.Config
-	LocalNode   *node.LocalNode
-	NetworkID   []byte
-	Message     common.NetworkMessage
-	Log         logging.Logger
-	Consensus   *consensus.ISAAC
-	Storage     *storage.LevelDBBackend
-	Transaction transaction.Transaction
+	Conf            common.Config
+	LocalNode       *node.LocalNode
+	NetworkID       []byte
+	Message         common.NetworkMessage
+	Log             logging.Logger
+	Consensus       *consensus.ISAAC
+	TransactionPool *transaction.Pool
+	Storage         *storage.LevelDBBackend
+	Transaction     transaction.Transaction
 }
 
 // TransactionUnmarshal makes `Transaction` from
@@ -65,7 +66,7 @@ func TransactionUnmarshal(c common.Checker, args ...interface{}) (err error) {
 func HasTransaction(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*MessageChecker)
 
-	if checker.Consensus.TransactionPool.Has(checker.Transaction.GetHash()) {
+	if checker.TransactionPool.Has(checker.Transaction.GetHash()) {
 		err = errors.ErrorNewButKnownMessage
 		return
 	}
@@ -100,7 +101,7 @@ func SaveTransactionHistory(c common.Checker, args ...interface{}) (err error) {
 func MessageHasSameSource(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*MessageChecker)
 
-	if checker.Consensus.TransactionPool.IsSameSource(checker.Transaction.Source()) {
+	if checker.TransactionPool.IsSameSource(checker.Transaction.Source()) {
 		err = errors.ErrorTransactionSameSource
 		return
 	}
@@ -125,10 +126,9 @@ func PushIntoTransactionPool(c common.Checker, args ...interface{}) (err error) 
 	checker := c.(*MessageChecker)
 
 	tx := checker.Transaction
-	is := checker.Consensus
-	is.TransactionPool.Add(tx)
+	checker.TransactionPool.Add(tx)
 
-	checker.Log.Debug("push transaction into transactionPool")
+	checker.Log.Debug("push transaction into TransactionPool")
 
 	return
 }

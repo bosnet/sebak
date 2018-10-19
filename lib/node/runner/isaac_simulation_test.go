@@ -31,7 +31,7 @@ func TestISAACSimulationProposer(t *testing.T) {
 	proposer := nr.localNode
 
 	var err error
-	nr.Consensus().TransactionPool.Add(tx)
+	nr.TransactionPool.Add(tx)
 
 	// Generate proposed ballot in nr
 	roundNumber := uint64(0)
@@ -45,7 +45,7 @@ func TestISAACSimulationProposer(t *testing.T) {
 		BlockHash:   b.Hash,
 		TotalTxs:    b.TotalTxs,
 	}
-	require.True(t, nr.Consensus().TransactionPool.Has(tx.GetHash()))
+	require.True(t, nr.TransactionPool.Has(tx.GetHash()))
 
 	conf := common.NewConfig()
 
