@@ -46,8 +46,8 @@ func TestGetAccountHandler(t *testing.T) {
 		url := strings.Replace(GetAccountHandlerPattern, "{id}", unknownKey.Address(), -1)
 		req, _ := http.NewRequest("GET", ts.URL+url, nil)
 		resp, err := ts.Client().Do(req)
-		defer resp.Body.Close()
 		require.Nil(t, err)
+		defer resp.Body.Close()
 
 		require.Equal(t, http.StatusNotFound, resp.StatusCode)
 	}
