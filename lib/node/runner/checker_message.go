@@ -29,15 +29,15 @@ import (
 type MessageChecker struct {
 	common.DefaultChecker
 
-	Conf        common.Config
-	LocalNode   *node.LocalNode
-	NetworkID   []byte
-	Message     common.NetworkMessage
-	Log         logging.Logger
-	Consensus   *consensus.ISAAC
+	Conf            common.Config
+	LocalNode       *node.LocalNode
+	NetworkID       []byte
+	Message         common.NetworkMessage
+	Log             logging.Logger
+	Consensus       *consensus.ISAAC
 	TransactionPool *transaction.Pool
-	Storage     *storage.LevelDBBackend
-	Transaction transaction.Transaction
+	Storage         *storage.LevelDBBackend
+	Transaction     transaction.Transaction
 }
 
 // TransactionUnmarshal makes `Transaction` from

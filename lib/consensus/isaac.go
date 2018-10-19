@@ -24,11 +24,11 @@ type ISAAC struct {
 	log               logging.Logger
 	policy            ballot.VotingThresholdPolicy
 
-	NetworkID       []byte
-	Node            *node.LocalNode
-	RunningRounds   map[ /* Round.Index() */ string]*RunningRound
-	LatestRound     round.Round
-	Conf            common.Config
+	NetworkID     []byte
+	Node          *node.LocalNode
+	RunningRounds map[ /* Round.Index() */ string]*RunningRound
+	LatestRound   round.Round
+	Conf          common.Config
 }
 
 // ISAAC should know network.ConnectionManager

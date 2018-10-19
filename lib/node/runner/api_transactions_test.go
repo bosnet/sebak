@@ -62,7 +62,7 @@ func (p *HelperTestGetNodeTransactionsHandler) Prepare() {
 	p.consensus = isaac
 	p.TransactionPool = transaction.NewPool()
 
-	apiHandler := NetworkHandlerNode{storage: p.st, consensus: isaac, transactionPool:p.TransactionPool}
+	apiHandler := NetworkHandlerNode{storage: p.st, consensus: isaac, transactionPool: p.TransactionPool}
 
 	p.router = mux.NewRouter()
 	p.router.HandleFunc(GetTransactionPattern, apiHandler.GetNodeTransactionsHandler).Methods("GET", "POST")

@@ -23,15 +23,15 @@ func TestMessageChecker(t *testing.T) {
 	validMessage := common.NetworkMessage{Type: common.TransactionMessage, Data: b}
 	nodeRunner, localNode := MakeNodeRunner()
 	checker := &MessageChecker{
-		DefaultChecker: common.DefaultChecker{},
-		LocalNode:      localNode,
-		Consensus:      nodeRunner.Consensus(),
-		Storage:        nodeRunner.Storage(),
+		DefaultChecker:  common.DefaultChecker{},
+		LocalNode:       localNode,
+		Consensus:       nodeRunner.Consensus(),
+		Storage:         nodeRunner.Storage(),
 		TransactionPool: nodeRunner.TransactionPool,
-		NetworkID:      networkID,
-		Message:        validMessage,
-		Log:            nodeRunner.Log(),
-		Conf:           nodeRunner.Conf,
+		NetworkID:       networkID,
+		Message:         validMessage,
+		Log:             nodeRunner.Log(),
+		Conf:            nodeRunner.Conf,
 	}
 
 	err = TransactionUnmarshal(checker)
@@ -89,14 +89,14 @@ func TestMessageCheckerWithInvalidHash(t *testing.T) {
 	invalidMessage := common.NetworkMessage{Type: common.TransactionMessage, Data: b}
 	nodeRunner, localNode := MakeNodeRunner()
 	checker := &MessageChecker{
-		Consensus: nodeRunner.Consensus(),
-		Storage:   nodeRunner.Storage(),
+		Consensus:       nodeRunner.Consensus(),
+		Storage:         nodeRunner.Storage(),
 		TransactionPool: nodeRunner.TransactionPool,
-		LocalNode: localNode,
-		NetworkID: networkID,
-		Message:   invalidMessage,
-		Log:       nodeRunner.Log(),
-		Conf:      nodeRunner.Conf,
+		LocalNode:       localNode,
+		NetworkID:       networkID,
+		Message:         invalidMessage,
+		Log:             nodeRunner.Log(),
+		Conf:            nodeRunner.Conf,
 	}
 
 	err = TransactionUnmarshal(checker)
