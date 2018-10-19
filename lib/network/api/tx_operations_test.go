@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"io/ioutil"
+	"net/http"
 	"strings"
 	"sync"
 	"testing"
@@ -28,6 +29,16 @@ func TestGetOperationsByTxHashHandler(t *testing.T) {
 	require.Nil(t, err)
 
 	bt := btList[0]
+
+	{ // unknown transaction
+		url := strings.Replace(GetTransactionOperationsHandlerPattern, "{id}", "showme", -1)
+		req, _ := http.NewRequest("GET", ts.URL+url, nil)
+		resp, err := ts.Client().Do(req)
+		require.Nil(t, err)
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusNotFound, resp.StatusCode)
+	}
 
 	// Do a Request
 	url := strings.Replace(GetTransactionOperationsHandlerPattern, "{id}", bt.Hash, -1)

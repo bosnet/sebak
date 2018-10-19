@@ -5,15 +5,17 @@ import (
 	"bytes"
 	"encoding/json"
 	"io/ioutil"
+	"net/http"
+	"strings"
+	"sync"
 	"testing"
 
 	"boscoin.io/sebak/lib/block"
+	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/network/api/resource"
 	"boscoin.io/sebak/lib/transaction/operation"
 	"github.com/stretchr/testify/require"
-	"strings"
-	"sync"
 )
 
 func TestGetOperationsByAccountHandler(t *testing.T) {
@@ -25,27 +27,43 @@ func TestGetOperationsByAccountHandler(t *testing.T) {
 	kp, boList, err := prepareOps(storage, 0, 10, nil)
 	require.Nil(t, err)
 
-	// Do a Request
 	url := strings.Replace(GetAccountOperationsHandlerPattern, "{id}", kp.Address(), -1)
-	respBody, err := request(ts, url, false)
-	require.Nil(t, err)
-	defer respBody.Close()
-	reader := bufio.NewReader(respBody)
+	{
+		// unknown address
+		req, _ := http.NewRequest("GET", ts.URL+url, nil)
+		resp, err := ts.Client().Do(req)
+		require.Nil(t, err)
+		defer resp.Body.Close()
+		require.Equal(t, http.StatusNotFound, resp.StatusCode)
+	}
 
-	readByte, err := ioutil.ReadAll(reader)
-	require.Nil(t, err)
+	{
+		ba := block.NewBlockAccount(kp.Address(), common.Amount(common.BaseReserve))
+		err := ba.Save(storage)
+		require.Nil(t, err)
+	}
 
-	recv := make(map[string]interface{})
-	json.Unmarshal(readByte, &recv)
-	records := recv["_embedded"].(map[string]interface{})["records"].([]interface{})
+	{
+		// Do a Request
+		respBody, err := request(ts, url, false)
+		require.Nil(t, err)
+		defer respBody.Close()
+		reader := bufio.NewReader(respBody)
+		readByte, err := ioutil.ReadAll(reader)
+		require.Nil(t, err)
 
-	require.Equal(t, len(boList), len(records), "length is not same")
+		recv := make(map[string]interface{})
+		json.Unmarshal(readByte, &recv)
+		records := recv["_embedded"].(map[string]interface{})["records"].([]interface{})
 
-	for i, r := range records {
-		bt := r.(map[string]interface{})
-		hash := bt["hash"].(string)
+		require.Equal(t, len(boList), len(records), "length is not same")
 
-		require.Equal(t, hash, boList[i].Hash, "hash is not same")
+		for i, r := range records {
+			bt := r.(map[string]interface{})
+			hash := bt["hash"].(string)
+
+			require.Equal(t, hash, boList[i].Hash, "hash is not same")
+		}
 	}
 }
 
@@ -56,6 +74,9 @@ func TestGetOperationsByAccountHandlerWithType(t *testing.T) {
 	defer ts.Close()
 
 	kp, boList, err := prepareOps(storage, 0, 10, nil)
+	require.Nil(t, err)
+	ba := block.NewBlockAccount(kp.Address(), common.Amount(common.BaseReserve))
+	err = ba.Save(storage)
 	require.Nil(t, err)
 
 	// Do a Request
@@ -117,6 +138,9 @@ func TestGetOperationsByAccountHandlerStream(t *testing.T) {
 	for _, bo := range boList {
 		boMap[bo.Hash] = bo
 	}
+	ba := block.NewBlockAccount(kp.Address(), common.Amount(common.BaseReserve))
+	err = ba.Save(storage)
+	require.Nil(t, err)
 
 	// Wait until request registered to observer
 	{

@@ -3,8 +3,7 @@ package api
 import (
 	"fmt"
 	"net/http"
-
-	"github.com/gorilla/mux"
+	"strings"
 
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common/observer"
@@ -12,7 +11,7 @@ import (
 	"boscoin.io/sebak/lib/network/api/resource"
 	"boscoin.io/sebak/lib/network/httputils"
 	"boscoin.io/sebak/lib/storage"
-	"strings"
+	"github.com/gorilla/mux"
 )
 
 func (api NetworkHandlerAPI) GetOperationsByTxHashHandler(w http.ResponseWriter, r *http.Request) {
@@ -20,7 +19,7 @@ func (api NetworkHandlerAPI) GetOperationsByTxHashHandler(w http.ResponseWriter,
 	hash := vars["id"]
 
 	if hash == "" {
-		http.NotFound(w, r) //TODO(anarcher): 404-JSON
+		httputils.WriteJSONError(w, errors.ErrorBlockTransactionDoesNotExists)
 		return
 	}
 
@@ -42,6 +41,10 @@ func (api NetworkHandlerAPI) GetOperationsByTxHashHandler(w http.ResponseWriter,
 	}
 
 	ops, cursor := api.getOperationsByTxHash(hash, options)
+	if len(ops) < 1 {
+		httputils.WriteJSONError(w, errors.ErrorBlockTransactionDoesNotExists)
+		return
+	}
 
 	self := r.URL.String()
 	next := strings.Replace(resource.URLTransactionOperations, "{id}", hash, -1) + "?" + options.SetCursor(cursor).SetReverse(false).Encode()

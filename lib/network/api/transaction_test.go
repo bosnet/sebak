@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"io/ioutil"
+	"net/http"
 	"strings"
 	"sync"
 	"testing"
@@ -26,6 +27,15 @@ func TestGetTransactionByHashHandler(t *testing.T) {
 	_, _, bt, err := prepareTxWithoutSave()
 	require.Nil(t, err)
 	bt.MustSave(storage)
+
+	{ // unknown transaction
+		req, _ := http.NewRequest("GET", ts.URL+GetTransactionsHandlerPattern+"/findme", nil)
+		resp, err := ts.Client().Do(req)
+		require.Nil(t, err)
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusNotFound, resp.StatusCode)
+	}
 
 	var reader *bufio.Reader
 	// Do a Request
