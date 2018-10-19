@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"io/ioutil"
+	"net/http"
 	"strings"
 	"sync"
 	"testing"
@@ -39,6 +40,17 @@ func TestGetAccountHandler(t *testing.T) {
 
 		require.Equal(t, ba.Address, recv["address"], "address is not same")
 	}
+
+	{ // unknown address
+		unknownKey, _ := keypair.Random()
+		url := strings.Replace(GetAccountHandlerPattern, "{id}", unknownKey.Address(), -1)
+		req, _ := http.NewRequest("GET", ts.URL+url, nil)
+		resp, err := ts.Client().Do(req)
+		require.Nil(t, err)
+		defer resp.Body.Close()
+
+		require.Equal(t, http.StatusNotFound, resp.StatusCode)
+	}
 }
 
 func TestGetAccountHandlerStream(t *testing.T) {
@@ -50,6 +62,9 @@ func TestGetAccountHandlerStream(t *testing.T) {
 	defer storage.Close()
 	defer ts.Close()
 	ba := block.TestMakeBlockAccount()
+	ba.MustSave(storage)
+	require.Nil(t, err)
+
 	key := ba.Address
 
 	// Wait until request registered to observer

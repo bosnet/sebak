@@ -3,8 +3,7 @@ package api
 import (
 	"fmt"
 	"net/http"
-
-	"github.com/gorilla/mux"
+	"strings"
 
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common/observer"
@@ -13,7 +12,7 @@ import (
 	"boscoin.io/sebak/lib/network/httputils"
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction/operation"
-	"strings"
+	"github.com/gorilla/mux"
 )
 
 func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter, r *http.Request) {
@@ -30,6 +29,7 @@ func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter
 		http.Error(w, errors.ErrorInvalidQueryString.Error(), http.StatusBadRequest)
 		return
 	}
+
 	oType := operation.OperationType(oTypeStr)
 	var cursor []byte
 	readFunc := func() []resource.Resource {
@@ -60,6 +60,14 @@ func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter
 			es.Render(tx)
 		}
 		es.Run(observer.BlockOperationObserver, event)
+		return
+	}
+
+	if found, err := block.ExistsBlockAccount(api.storage, address); err != nil {
+		httputils.WriteJSONError(w, err)
+		return
+	} else if !found {
+		httputils.WriteJSONError(w, errors.ErrorBlockAccountDoesNotExists)
 		return
 	}
 
