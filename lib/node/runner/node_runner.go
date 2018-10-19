@@ -69,6 +69,7 @@ type NodeRunner struct {
 	policy            ballot.VotingThresholdPolicy
 	network           network.Network
 	consensus         *consensus.ISAAC
+	TransactionPool   *transaction.Pool
 	connectionManager network.ConnectionManager
 	storage           *storage.LevelDBBackend
 	isaacStateManager *ISAACStateManager
@@ -99,14 +100,15 @@ func NewNodeRunner(
 	conf common.Config,
 ) (nr *NodeRunner, err error) {
 	nr = &NodeRunner{
-		networkID: []byte(networkID),
-		localNode: localNode,
-		policy:    policy,
-		network:   n,
-		consensus: c,
-		storage:   storage,
-		log:       log.New(logging.Ctx{"node": localNode.Alias()}),
-		Conf:      conf,
+		networkID:       []byte(networkID),
+		localNode:       localNode,
+		policy:          policy,
+		network:         n,
+		consensus:       c,
+		TransactionPool: transaction.NewPool(),
+		storage:         storage,
+		log:             log.New(logging.Ctx{"node": localNode.Alias()}),
+		Conf:            conf,
 	}
 	nr.localNode.SetBooting()
 
@@ -192,6 +194,7 @@ func (nr *NodeRunner) Ready() {
 		nr.network,
 		nr.storage,
 		nr.consensus,
+		nr.TransactionPool,
 		network.UrlPathPrefixNode,
 		nr.Conf,
 	)
@@ -523,7 +526,7 @@ func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) (ballot.Ballot, error
 	}
 
 	// collect incoming transactions from `Pool`
-	availableTransactions := nr.consensus.TransactionPool.AvailableTransactions(nr.Conf.TxsLimit)
+	availableTransactions := nr.TransactionPool.AvailableTransactions(nr.Conf.TxsLimit)
 	nr.log.Debug("new round proposed", "round", round, "transactions", availableTransactions)
 
 	transactionsChecker := &BallotTransactionChecker{
@@ -543,7 +546,7 @@ func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) (ballot.Ballot, error
 	}
 
 	// remove invalid transactions
-	nr.Consensus().TransactionPool.Remove(transactionsChecker.InvalidTransactions()...)
+	nr.TransactionPool.Remove(transactionsChecker.InvalidTransactions()...)
 
 	proposerAddr := nr.consensus.SelectProposer(b.Height, roundNumber)
 	theBallot := ballot.NewBallot(nr.localNode.Address(), proposerAddr, round, transactionsChecker.ValidTransactions)
@@ -551,7 +554,7 @@ func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) (ballot.Ballot, error
 
 	var validTransactions []transaction.Transaction
 	for _, hash := range transactionsChecker.ValidTransactions {
-		if tx, found := nr.consensus.TransactionPool.Get(hash); !found {
+		if tx, found := nr.TransactionPool.Get(hash); !found {
 			return ballot.Ballot{}, errors.ErrorTransactionNotFound
 		} else {
 			validTransactions = append(validTransactions, tx)

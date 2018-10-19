@@ -81,7 +81,7 @@ func CheckMissingTransaction(c common.Checker, args ...interface{}) (err error) 
 
 	var validTransactions []string
 	for _, hash := range checker.ValidTransactions {
-		if !checker.NodeRunner.Consensus().TransactionPool.Has(hash) {
+		if !checker.NodeRunner.TransactionPool.Has(hash) {
 			continue
 		}
 		validTransactions = append(validTransactions, hash)
@@ -100,7 +100,7 @@ func BallotTransactionsSameSource(c common.Checker, args ...interface{}) (err er
 	var validTransactions []string
 	sources := map[string]bool{}
 	for _, hash := range checker.ValidTransactions {
-		tx, _ := checker.NodeRunner.Consensus().TransactionPool.Get(hash)
+		tx, _ := checker.NodeRunner.TransactionPool.Get(hash)
 		if found := common.InStringMap(sources, tx.B.Source); found {
 			if !checker.CheckTransactionsOnly {
 				err = errors.ErrorTransactionSameSource
@@ -124,7 +124,7 @@ func BallotTransactionsSourceCheck(c common.Checker, args ...interface{}) (err e
 
 	var validTransactions []string
 	for _, hash := range checker.ValidTransactions {
-		tx, _ := checker.NodeRunner.Consensus().TransactionPool.Get(hash)
+		tx, _ := checker.NodeRunner.TransactionPool.Get(hash)
 
 		if err = ValidateTx(checker.NodeRunner.Storage(), tx); err != nil {
 			if !checker.CheckTransactionsOnly {
@@ -162,7 +162,7 @@ func BallotTransactionsOperationBodyCollectTxFee(c common.Checker, args ...inter
 	} else {
 		var fee common.Amount
 		for _, hash := range checker.Transactions {
-			if tx, found := checker.NodeRunner.Consensus().TransactionPool.Get(hash); !found {
+			if tx, found := checker.NodeRunner.TransactionPool.Get(hash); !found {
 				err = errors.ErrorTransactionNotFound
 				return
 			} else {

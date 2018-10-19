@@ -27,6 +27,7 @@ func TestMessageChecker(t *testing.T) {
 		LocalNode:      localNode,
 		Consensus:      nodeRunner.Consensus(),
 		Storage:        nodeRunner.Storage(),
+		TransactionPool: nodeRunner.TransactionPool,
 		NetworkID:      networkID,
 		Message:        validMessage,
 		Log:            nodeRunner.Log(),
@@ -48,7 +49,7 @@ func TestMessageChecker(t *testing.T) {
 
 	err = PushIntoTransactionPool(checker)
 	require.Nil(t, err)
-	require.True(t, checker.Consensus.TransactionPool.Has(validTx.GetHash()))
+	require.True(t, checker.TransactionPool.Has(validTx.GetHash()))
 
 	// TransactionBroadcast(checker) is not suitable in unittest
 
@@ -90,6 +91,7 @@ func TestMessageCheckerWithInvalidHash(t *testing.T) {
 	checker := &MessageChecker{
 		Consensus: nodeRunner.Consensus(),
 		Storage:   nodeRunner.Storage(),
+		TransactionPool: nodeRunner.TransactionPool,
 		LocalNode: localNode,
 		NetworkID: networkID,
 		Message:   invalidMessage,

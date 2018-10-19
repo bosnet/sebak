@@ -250,7 +250,7 @@ func getMissingTransaction(checker *BallotChecker) (err error) {
 	// get missing transactions
 	var unknown []string
 	for _, hash := range checker.Ballot.Transactions() {
-		if checker.NodeRunner.Consensus().TransactionPool.Has(hash) {
+		if checker.NodeRunner.TransactionPool.Has(hash) {
 			continue
 		}
 		unknown = append(unknown, hash)
@@ -306,7 +306,7 @@ func getMissingTransaction(checker *BallotChecker) (err error) {
 	}
 
 	for _, tx := range receivedTransaction {
-		checker.NodeRunner.Consensus().TransactionPool.Add(tx)
+		checker.NodeRunner.TransactionPool.Add(tx)
 	}
 
 	return
@@ -467,7 +467,7 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) (err error) {
 		theBlock, err = finishBallot(
 			checker.NodeRunner.Storage(),
 			checker.Ballot,
-			checker.NodeRunner.Consensus().TransactionPool,
+			checker.NodeRunner.TransactionPool,
 			checker.Log,
 			checker.NodeRunner.Log(),
 		)
@@ -490,6 +490,7 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) (err error) {
 		checker.Ballot.Proposer(),
 		checker.Ballot.Round(),
 		checker.FinishedVotingHole,
+		checker.NodeRunner.TransactionPool,
 	)
 
 	return
