@@ -74,7 +74,9 @@ func (is *ISAAC) CloseConsensus(proposer string, round round.Round, vh ballot.Vo
 		return
 	}
 
-	transactionPool.Remove(rr.Transactions[proposer]...)
+	if vh == ballot.VotingYES {
+		transactionPool.Remove(rr.Transactions[proposer]...)
+	}
 
 	delete(is.RunningRounds, roundHash)
 
