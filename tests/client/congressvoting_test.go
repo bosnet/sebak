@@ -41,8 +41,9 @@ func TestCongressVoting(t *testing.T) {
 		body, err := tx.Serialize()
 		require.Nil(t, err)
 
-		_, err = c.SubmitTransaction(body)
+		b, err := c.SubmitTransaction(body)
 		require.Nil(t, err)
+		t.Log(string(b))
 
 		var e error
 		for second := time.Duration(0); second < time.Second*10; second = second + time.Millisecond*500 {

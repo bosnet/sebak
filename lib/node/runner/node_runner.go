@@ -19,8 +19,8 @@ import (
 	"boscoin.io/sebak/lib/consensus/round"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/network"
-	"boscoin.io/sebak/lib/node/runner/api"
 	"boscoin.io/sebak/lib/node"
+	"boscoin.io/sebak/lib/node/runner/api"
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
 	ghandlers "github.com/gorilla/handlers"
@@ -249,7 +249,7 @@ func (nr *NodeRunner) Ready() {
 
 	TransactionsHandler := func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "POST" {
-			nodeHandler.MessageHandler(w, r)
+			apiHandler.PostTransactionsHandler(w, r, nodeHandler.MessageHandler)
 			return
 		}
 
