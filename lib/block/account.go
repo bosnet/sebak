@@ -23,7 +23,7 @@ import (
 type BlockAccount struct {
 	Address    string
 	Balance    common.Amount
-	SequenceID uint64
+	SequenceID uint64 `json:"sequence_id"`
 	// An address, or "" if the account isn't frozen
 	Linked   string
 	CodeHash []byte
