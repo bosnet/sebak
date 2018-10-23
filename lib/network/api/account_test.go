@@ -3,6 +3,7 @@ package api
 import (
 	"bufio"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -24,6 +25,7 @@ func TestGetAccountHandler(t *testing.T) {
 	defer ts.Close()
 	// Make Dummy BlockAccount
 	ba := block.TestMakeBlockAccount()
+	fmt.Println(ba)
 	ba.MustSave(storage)
 	{
 		// Do a Request
@@ -36,8 +38,10 @@ func TestGetAccountHandler(t *testing.T) {
 		readByte, err := ioutil.ReadAll(reader)
 		require.Nil(t, err)
 		recv := make(map[string]interface{})
+		var ba block.BlockAccount
 		json.Unmarshal(readByte, &recv)
-
+		json.Unmarshal(readByte, &ba)
+		fmt.Println(ba)
 		require.Equal(t, ba.Address, recv["address"], "address is not same")
 	}
 
@@ -128,3 +132,23 @@ func TestGetNonExistentAccountHandler(t *testing.T) {
 		require.Equal(t, pByte, readByte)
 	}
 }
+
+func TestUnmarshal(t *testing.T) {
+	b := B{
+		"abc": "bulabula",
+		"edf": "bulabula",
+	}
+	encoded, _ := json.Marshal(b)
+
+	var a A
+	json.Unmarshal(encoded, &a)
+
+	fmt.Println(a)
+}
+
+type A struct {
+	ABC string
+	EDF string
+}
+
+type B map[string]interface{}

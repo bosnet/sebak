@@ -3,9 +3,8 @@ package resource
 import (
 	"strings"
 
-	"github.com/nvellon/hal"
-
 	"boscoin.io/sebak/lib/block"
+	"github.com/nvellon/hal"
 )
 
 type Account struct {
