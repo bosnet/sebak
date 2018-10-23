@@ -11,6 +11,13 @@ type HALResource interface {
 	Resource() *hal.Resource
 }
 
+// MustWriteJSON writes the value or an error of it to the http response as json
+func MustWriteJSON(w http.ResponseWriter, code int, v interface{}) {
+	if err := WriteJSON(w, code, v); err != nil {
+		WriteJSONError(w, err)
+	}
+}
+
 // WriteJSONError writes the error to the http response as json encoding
 func WriteJSONError(w http.ResponseWriter, err error) {
 	code := StatusCode(err) //TODO(anarcher): ErrorStateCode is more suitable?
