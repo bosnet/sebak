@@ -93,8 +93,7 @@ func SaveTransactionHistory(c common.Checker, args ...interface{}) (err error) {
 		return
 	}
 
-	bt := block.NewTransactionHistoryFromTransaction(checker.Transaction, checker.Message.Data)
-	if err = bt.Save(checker.Storage); err != nil {
+	if err = block.SaveTransactionHistory(checker.Storage, checker.Transaction, checker.Message.Data, block.BlockTransactionHistoryStatusSubmitted); err != nil {
 		return
 	}
 

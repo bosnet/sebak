@@ -3,29 +3,34 @@ package resource
 import (
 	"strings"
 
+	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/transaction"
 	"github.com/nvellon/hal"
 )
 
 type TransactionPost struct {
-	tx transaction.Transaction
+	tx   transaction.Transaction
+	hash string
 }
 
 func NewTransactionPost(tx transaction.Transaction) *TransactionPost {
 	t := &TransactionPost{
-		tx: tx,
+		tx:   tx,
+		hash: tx.B.MakeHashString(),
 	}
 	return t
 }
 
 func (t TransactionPost) GetMap() hal.Entry {
 	return hal.Entry{
-		"hash":   t.tx.H.Hash,
-		"status": "blah",
+		"hash":    t.hash,
+		"status":  block.BlockTransactionHistoryStatusSubmitted,
+		"message": t.tx.B,
 	}
 }
 func (t TransactionPost) Resource() *hal.Resource {
 	r := hal.NewResource(t, t.LinkSelf())
+	r.AddLink("history", hal.NewLink(strings.Replace(URLTransactionHistory, "{id}", t.hash, -1)))
 	return r
 }
 

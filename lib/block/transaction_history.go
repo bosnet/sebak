@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
 )
@@ -19,29 +19,42 @@ const (
 	BlockTransactionHistoryPrefixHash string = "bth-hash-" // bt-hash-<BlockTransactionHistory.Hash>
 )
 
-// TODO Is it correct to save raw `message` in BlockTransactionHistory?
-// TODO Do `BlockTransactionHistory` purge the old transactions? That is, it
-// just keep the recent transactions
+const (
+	BlockTransactionHistoryStatusSubmitted = "submitted"
+	BlockTransactionHistoryStatusConfirmed = "confirmed"
+	BlockTransactionHistoryStatusRejected  = "rejected"
+)
 
 type BlockTransactionHistory struct {
 	Hash   string `json:"hash"`
 	Source string `json:"source"`
 
-	Confirmed string `json:"confirmed"`
-	Created   string `json:"created"`
-	Message   string `json:"message"`
-
-	isSaved bool
+	Time    string	`json:"time"`
+	Created string	`json:"created"`
+	Status  string	`json:"status"`
+	Message string	`json:"message"`
 }
 
 func NewTransactionHistoryFromTransaction(tx transaction.Transaction, message []byte) BlockTransactionHistory {
 	return BlockTransactionHistory{
-		Hash:      tx.H.Hash,
-		Source:    tx.B.Source,
-		Confirmed: common.NowISO8601(),
-		Created:   tx.H.Created,
-		Message:   string(message),
+		Hash:    tx.H.Hash,
+		Source:  tx.B.Source,
+		Created: tx.H.Created,
+		Message: string(message),
 	}
+}
+
+func SaveTransactionHistory(st *storage.LevelDBBackend, tx transaction.Transaction, message []byte, status string) (err error) {
+	bth, err := GetBlockTransactionHistory(st, tx.H.Hash)
+	if err != nil {
+		bth = NewTransactionHistoryFromTransaction(tx, message)
+	}
+	if bth.Status != BlockTransactionHistoryStatusSubmitted {
+		// Only BlockTransactionHistoryStatusSubmitted can be changed
+		return nil
+	}
+	bth.Status = status
+	return bth.Save(st)
 }
 
 func GetBlockTransactionHistoryKey(hash string) string {
@@ -53,9 +66,6 @@ func (bt BlockTransactionHistory) Serialize() (encoded []byte, err error) {
 	return
 }
 func (bt *BlockTransactionHistory) Save(st *storage.LevelDBBackend) (err error) {
-	if bt.isSaved {
-		return errors.ErrorAlreadySaved
-	}
 
 	key := GetBlockTransactionHistoryKey(bt.Hash)
 
@@ -63,17 +73,18 @@ func (bt *BlockTransactionHistory) Save(st *storage.LevelDBBackend) (err error) 
 	exists, err = st.Has(key)
 	if err != nil {
 		return
-	} else if exists {
-		return errors.ErrorBlockAlreadyExists
 	}
 
-	bt.Confirmed = common.NowISO8601()
-	if err = st.New(GetBlockTransactionHistoryKey(bt.Hash), bt); err != nil {
-		return
+	bt.Time = common.NowISO8601()
+	if exists {
+		err = st.Set(key, bt)
+	} else {
+		err = st.New(GetBlockTransactionHistoryKey(bt.Hash), bt)
 	}
 
-	bt.isSaved = true
-
+	event := "saved"
+	event += " " + fmt.Sprintf("hash-%s", bt.Hash)
+	observer.BlockTransactionHistoryObserver.Trigger(event, bt)
 	return nil
 }
 
@@ -82,7 +93,6 @@ func GetBlockTransactionHistory(st *storage.LevelDBBackend, hash string) (bt Blo
 		return
 	}
 
-	bt.isSaved = true
 	return
 }
 

@@ -7,9 +7,12 @@ import (
 	"encoding/json"
 	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
+	"io/ioutil"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
+	"boscoin.io/sebak/lib/block"
 )
 
 func TestCongressVoting(t *testing.T) {
@@ -41,9 +44,9 @@ func TestCongressVoting(t *testing.T) {
 		body, err := tx.Serialize()
 		require.Nil(t, err)
 
-		b, err := c.SubmitTransaction(body)
+		pt, err := c.SubmitTransaction(body)
 		require.Nil(t, err)
-		t.Log(string(b))
+		require.Equal(t, pt.Status, block.BlockTransactionHistoryStatusSubmitted)
 
 		var e error
 		for second := time.Duration(0); second < time.Second*10; second = second + time.Millisecond*500 {

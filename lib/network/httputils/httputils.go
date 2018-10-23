@@ -54,7 +54,7 @@ func (w ResponseWriterInterceptor) Header() http.Header {
 	return w.ResponseWriter.Header()
 }
 
-func (w ResponseWriterInterceptor) WriteHeader(statusCode int) {
+func (w *ResponseWriterInterceptor) WriteHeader(statusCode int) {
 	w.code = statusCode
 }
 

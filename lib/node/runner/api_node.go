@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/consensus"
 	"boscoin.io/sebak/lib/network"
@@ -124,10 +125,10 @@ func (api NetworkHandlerNode) MessageHandler(w http.ResponseWriter, r *http.Requ
 	}
 
 	if err = common.RunChecker(checker, common.DefaultDeferFunc); err != nil {
-		if _, ok := err.(common.CheckerErrorStop); ok {
-			return
+		if len(checker.Transaction.H.Hash) > 0 {
+			block.SaveTransactionHistory(api.storage, checker.Transaction, body, block.BlockTransactionHistoryStatusRejected)
 		}
-		httputils.WriteJSONError(w, err)
+		http.Error(w, err.Error(), httputils.StatusCode(err))
 		return
 	}
 }

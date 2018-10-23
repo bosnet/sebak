@@ -5,7 +5,6 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
-	"io/ioutil"
 	"net/http"
 	neturl "net/url"
 	"strings"
@@ -19,6 +18,7 @@ const (
 	UrlAccountOperations     = "/accounts/{id}/operations"
 	UrlTransactions          = "/transactions"
 	UrlTransactionByHash     = "/transactions/{id}"
+	UrlTransactionHistory    = "/transactions/{id}/history"
 	UrlTransactionOperations = "/transactions/{id}/operations"
 )
 
@@ -80,7 +80,7 @@ func NewClient(url string) *Client {
 	}
 }
 
-func (c *Client) toResponse(resp *http.Response, response interface{}) (err error) {
+func (c *Client) ToResponse(resp *http.Response, response interface{}) (err error) {
 	defer resp.Body.Close()
 	decoder := json.NewDecoder(resp.Body)
 
@@ -101,8 +101,21 @@ func (c *Client) toResponse(resp *http.Response, response interface{}) (err erro
 }
 
 func (c *Client) Get(path string, headers http.Header) (response *http.Response, err error) {
+
 	url := c.URL + UrlPrefixForAPIV1 + path
 	return c.HTTP.Get(url, headers)
+}
+
+func (c *Client) getResponse(url string, headers http.Header, response interface{}) (err error) {
+	if len(headers.Get("Content-Type")) == 0 {
+		headers.Set("Content-Type", "application/json")
+	}
+	resp, err := c.Get(url, headers)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+	return c.ToResponse(resp, &response)
 }
 
 func (c *Client) Post(path string, body []byte, headers http.Header) (response *http.Response, err error) {
@@ -113,96 +126,62 @@ func (c *Client) Post(path string, body []byte, headers http.Header) (response *
 func (c *Client) LoadAccount(id string, queries ...Q) (account Account, err error) {
 	url := strings.Replace(UrlAccount, "{id}", id, -1)
 	url += Queries(queries).toQueryString()
-	headers := http.Header{}
-	headers.Set("Content-Type", "application/json")
-	resp, err := c.Get(url, headers)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-	err = c.toResponse(resp, &account)
+	err = c.getResponse(url, http.Header{}, &account)
 	return
 }
 
 func (c *Client) LoadTransaction(id string, queries ...Q) (transaction Transaction, err error) {
 	url := strings.Replace(UrlTransactionByHash, "{id}", id, -1)
 	url += Queries(queries).toQueryString()
-	headers := http.Header{}
-	headers.Set("Content-Type", "application/json")
-	resp, err := c.Get(url, headers)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-	err = c.toResponse(resp, &transaction)
+	err = c.getResponse(url, http.Header{}, &transaction)
+	return
+}
+
+func (c *Client) LoadTransactionHistory(id string, queries ...Q) (transaction Transaction, err error) {
+	url := strings.Replace(UrlTransactionHistory, "{id}", id, -1)
+	url += Queries(queries).toQueryString()
+	err = c.getResponse(url, http.Header{}, &transaction)
 	return
 }
 
 func (c *Client) LoadTransactions(queries ...Q) (tPage TransactionsPage, err error) {
 	url := UrlTransactions
 	url += Queries(queries).toQueryString()
-	headers := http.Header{}
-	headers.Set("Content-Type", "application/json")
-	resp, err := c.Get(url, headers)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-	err = c.toResponse(resp, &tPage)
+	err = c.getResponse(url, http.Header{}, &tPage)
 	return
 }
 
 func (c *Client) LoadTransactionsByAccount(id string, queries ...Q) (tPage TransactionsPage, err error) {
 	url := strings.Replace(UrlAccountTransactions, "{id}", id, -1)
 	url += Queries(queries).toQueryString()
-	headers := http.Header{}
-	headers.Set("Content-Type", "application/json")
-	resp, err := c.Get(url, headers)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-	err = c.toResponse(resp, &tPage)
+	err = c.getResponse(url, http.Header{}, &tPage)
 	return
 }
 
 func (c *Client) LoadOperationsByAccount(id string, queries ...Q) (oPage OperationsPage, err error) {
 	url := strings.Replace(UrlAccountOperations, "{id}", id, -1)
 	url += Queries(queries).toQueryString()
-	headers := http.Header{}
-	headers.Set("Content-Type", "application/json")
-	resp, err := c.Get(url, headers)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-	err = c.toResponse(resp, &oPage)
+	err = c.getResponse(url, http.Header{}, &oPage)
 	return
 }
 
 func (c *Client) LoadOperationsByTransaction(id string, queries ...Q) (oPage OperationsPage, err error) {
 	url := strings.Replace(UrlTransactionOperations, "{id}", id, -1)
 	url += Queries(queries).toQueryString()
-	headers := http.Header{}
-	headers.Set("Content-Type", "application/json")
-	resp, err := c.Get(url, headers)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-	err = c.toResponse(resp, &oPage)
+	err = c.getResponse(url, http.Header{}, &oPage)
 	return
 }
 
-func (c *Client) SubmitTransaction(tx []byte) (retBody []byte, err error) { //TODO: make a model for the retBody
+func (c *Client) SubmitTransaction(tx []byte) (pTransaction TransactionPost, err error) {
 	url := UrlTransactions
 	headers := http.Header{}
 	headers.Set("Content-Type", "application/json")
 	resp, err := c.Post(url, tx, headers)
-	if resp.StatusCode == http.StatusOK {
-		retBody, err = ioutil.ReadAll(resp.Body)
-	}
 	defer resp.Body.Close()
+	if err != nil {
+		return
+	}
+	err = c.ToResponse(resp, &pTransaction)
 	return
 }
 

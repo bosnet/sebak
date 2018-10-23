@@ -23,6 +23,7 @@ const (
 	GetTransactionByHashHandlerPattern     = "/transactions/{id}"
 	GetTransactionOperationsHandlerPattern = "/transactions/{id}/operations"
 	PostTransactionPattern                 = "/transactions"
+	GetTransactionHistoryHandlerPattern    = "/transactions/{id}/history"
 	GetNodeInfoPattern                     = "/"
 )
 
