@@ -28,7 +28,39 @@
         + href: `/transactions/ghf6msRhE4jRf5DPib9UHD1msadvmZs9o53V9FQTb11/operations{?cursor,limit,order}`
     + self
         + href: `/transactions/ghf6msRhE4jRf5DPib9UHD1msadvmZs9o53V9FQTb11`
-
+        
+### TransactionHistory
++ hash: `ghf6msRhE4jRf5DPib9UHD1msadvmZs9o53V9FQTb11` (string,required) - Hash of transaction. //TODO: link for the details
++ source: `GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ` (string,required) - 
++ confirmed: `2018-01-01T00:00:00.000000000Z` - Modified time of the transaction history.
++ created: `2018-01-01T00:00:00.000000000Z` - Created time of the transaction. It is set by wallet
++ status: `confirmed` (string,required) - submitted, confirmed, rejected
++ message
+    + source: GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ - Source account
+    + fee: 10000 - The fee paid by the source account for this transaction. Minimum is 10000 GON
+    + sequence_id: 1 - The last sequence number of the source account
+    + operations (array):
+        + (object):
+            + H 
+                + type: "payment" - operation type. ex. payment, create-account
+            + B
+                + target: GDTEPFWEITKFHSUO44NQABY2XHRBBH2UBVGJ2ZJPDREIOL2F6RAEBJE4 - The funded account's public key
+                + amount: 100000000 - amount in GON
+                   
+### Transaction Post
++ hash: `ghf6msRhE4jRf5DPib9UHD1msadvmZs9o53V9FQTb11` (string,required) - Hash of transaction. 
++ status: `confirmed` (string,required) - submitted, confirmed, rejected
++ message
+    + source: GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ - Source account
+    + fee: 10000 - The fee paid by the source account for this transaction. Minimum is 10000 GON
+    + sequence_id: 1 - The last sequence number of the source account
+    + operations (array):
+        + (object):
+            + H 
+                + type: "payment" - operation type. ex. payment, create-account
+            + B
+                + target: GDTEPFWEITKFHSUO44NQABY2XHRBBH2UBVGJ2ZJPDREIOL2F6RAEBJE4 - The funded account's public key
+                + amount: 100000000 - amount in GON
 
 ### Transaction Payment
 + T: transaction
@@ -40,7 +72,7 @@
 + B
     + source: GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ - Source account
     + fee: 10000 - The fee paid by the source account for this transaction. Minimum is 10000 GON
-    + sequenceID: 1 - The last sequence number of the source account
+    + sequence_id: 1 - The last sequence number of the source account
     + operations (array):
         + (object):
             + H 
@@ -53,7 +85,7 @@
 + _embedded
     + records
         + _links
-            + accounts
+            + account
                 + href: `/accounts/GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ`
             + operations
                 + href: `/transactions/ghf6msRhE4jRf5DPib9UHD1msadvmZs9o53V9FQTb11/operations{?cursor,limit,order}`
@@ -94,7 +126,7 @@
         + _links
             + self
                 + href: /operations/E4qTH5UmzHy2Psdxh8RaQomqJb1gcUZFVENimzV9YB8D-ghf6msRhE4jRf5DPib9UHD1msadvmZs9o53V9FQTb11
-            + transactions
+            + transaction
                 + href: /transactions/ghf6msRhE4jRf5DPib9UHD1msadvmZs9o53V9FQTb11
         + source: GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ
         + amount: 1000000
