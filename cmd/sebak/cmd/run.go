@@ -71,11 +71,12 @@ var (
 	flagHTTPCacheAdapter    string = common.GetENVValue("SEBAK_HTTP_CACHE_ADAPTER", "")
 	flagHTTPCachePoolSize   string = common.GetENVValue("SEBAK_HTTP_CACHE_POOL_SIZE", "10000")
 	flagHTTPCacheRedisAddrs string = common.GetENVValue("SEBAK_HTTP_CACHE_REDIS_ADDRS", "")
+
+	flagTxPoolLimit string = common.GetENVValue("SEBAK_TX_POOL_LIMIT", "100000")
 )
 
 var (
-	nodeCmd *cobra.Command
-
+	nodeCmd             *cobra.Command
 	bindEndpoint        *common.Endpoint
 	blockTime           time.Duration
 	blockTimeDelta      time.Duration
@@ -100,6 +101,7 @@ var (
 	httpCacheAdapter    string
 	httpCachePoolSize   int
 	httpCacheRedisAddrs map[string]string
+	txPoolLimit         uint64
 
 	logLevel logging.Lvl
 	log      logging.Logger = logging.New("module", "main")
@@ -180,6 +182,7 @@ func init() {
 	nodeCmd.Flags().StringVar(&flagTransactionsLimit, "transactions-limit", flagTransactionsLimit, "transactions limit in a ballot")
 	nodeCmd.Flags().StringVar(&flagUnfreezingPeriod, "unfreezing-period", flagUnfreezingPeriod, "how long freezing must last")
 	nodeCmd.Flags().StringVar(&flagOperationsLimit, "operations-limit", flagOperationsLimit, "operations limit in a transaction")
+	nodeCmd.Flags().StringVar(&flagTxPoolLimit, "txpool-limit", flagTxPoolLimit, "toperation pool limit")
 	nodeCmd.Flags().Var(
 		&flagRateLimitAPI,
 		"rate-limit-api",
@@ -361,6 +364,10 @@ func parseFlagsNode() {
 		threshold = int(tmpUint64)
 	}
 
+	if txPoolLimit, err = strconv.ParseUint(flagTxPoolLimit, 10, 64); err != nil {
+		cmdcommon.PrintFlagsError(nodeCmd, "--txpool-limit", err)
+	}
+
 	if common.UnfreezingPeriod, err = strconv.ParseUint(flagUnfreezingPeriod, 10, 64); err != nil {
 		cmdcommon.PrintFlagsError(nodeCmd, "--unfreezing-period", err)
 	}
@@ -476,6 +483,7 @@ func parseFlagsNode() {
 	parsedFlags = append(parsedFlags, "\n\tblock-time-delta", flagBlockTimeDelta)
 	parsedFlags = append(parsedFlags, "\n\ttransactions-limit", flagTransactionsLimit)
 	parsedFlags = append(parsedFlags, "\n\toperations-limit", flagOperationsLimit)
+	parsedFlags = append(parsedFlags, "\n\ttxpool-limit", flagTxPoolLimit)
 	parsedFlags = append(parsedFlags, "\n\trate-limit-api", rateLimitRuleAPI)
 	parsedFlags = append(parsedFlags, "\n\trate-limit-node", rateLimitRuleNode)
 	parsedFlags = append(parsedFlags, "\n\thttp-cache-adapter", httpCacheAdapter)
@@ -588,6 +596,7 @@ func runNode() error {
 		HTTPCachePoolSize:      httpCachePoolSize,
 		HTTPCacheRedisAddrs:    httpCacheRedisAddrs,
 		CongressAccountAddress: flagCongressAddress,
+		TxPoolLimit:            int(txPoolLimit),
 	}
 	st, err := storage.NewStorage(storageConfig)
 	if err != nil {

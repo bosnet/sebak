@@ -4,8 +4,11 @@ import (
 	"container/list"
 	"sync"
 
+	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/metrics"
 )
+
+const PoolDefaultLimit = 100000
 
 type Pool struct {
 	sync.RWMutex
@@ -15,14 +18,20 @@ type Pool struct {
 
 	hashList *list.List // Transaction.GetHash()
 	hashMap  map[ /* Transaction.GetHash() */ string]*list.Element
+
+	limit int
 }
 
-func NewPool() *Pool {
+func NewPool(limit int) *Pool {
+	if limit <= 0 {
+		limit = PoolDefaultLimit
+	}
 	return &Pool{
 		Pool:     map[string]Transaction{},
 		sources:  map[string]string{},
 		hashList: list.New(),
 		hashMap:  make(map[string]*list.Element),
+		limit:    limit,
 	}
 }
 
@@ -59,10 +68,10 @@ func (tp *Pool) GetFromSource(source string) (Transaction, bool) {
 	return tp.Get(hash)
 }
 
-func (tp *Pool) Add(tx Transaction) bool {
+func (tp *Pool) Add(tx Transaction) error {
 	txHash := tx.GetHash()
 	if tp.Has(txHash) {
-		return false
+		return errors.TransactionAlreadyExistsInPool
 	}
 
 	metrics.TxPool.AddSize(1)
@@ -70,12 +79,24 @@ func (tp *Pool) Add(tx Transaction) bool {
 	tp.Lock()
 	defer tp.Unlock()
 
+	if len(tp.Pool) >= tp.limit {
+		return errors.TransactionPoolFull
+	}
+
 	tp.Pool[txHash] = tx
 	tp.sources[tx.Source()] = txHash
 
 	e := tp.hashList.PushBack(txHash)
 	tp.hashMap[txHash] = e
 
+	return nil
+}
+
+func (tp *Pool) TryAdd(tx Transaction) bool {
+	err := tp.Add(tx)
+	if err != nil {
+		return false
+	}
 	return true
 }
 

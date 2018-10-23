@@ -105,7 +105,7 @@ func NewNodeRunner(
 		policy:          policy,
 		network:         n,
 		consensus:       c,
-		TransactionPool: transaction.NewPool(),
+		TransactionPool: transaction.NewPool(conf.TxPoolLimit),
 		storage:         storage,
 		log:             log.New(logging.Ctx{"node": localNode.Alias()}),
 		Conf:            conf,
