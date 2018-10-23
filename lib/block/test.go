@@ -108,6 +108,7 @@ func TestMakeNewBlock(transactions []string) Block {
 		round.Round{
 			BlockHeight: 0,
 			BlockHash:   "",
+			TotalTxs:    uint64(len(transactions)),
 		},
 		"",
 		transactions,

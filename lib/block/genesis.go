@@ -105,7 +105,9 @@ func MakeGenesisBlock(st *storage.LevelDBBackend, genesisAccount BlockAccount, c
 
 	blk = NewBlock(
 		"",
-		round.Round{},
+		round.Round{
+			TotalTxs: 1,
+		},
 		"",
 		[]string{tx.GetHash()},
 		common.GenesisBlockConfirmedTime,

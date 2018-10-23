@@ -95,6 +95,6 @@ func TestISAACBallotWithEmptyTransactionVoting(t *testing.T) {
 	latestBlock = nr.Consensus().LatestBlock()
 	require.Equal(t, proposer.Address(), latestBlock.Proposer)
 	require.Equal(t, uint64(2), latestBlock.Height)
-	require.Equal(t, uint64(1), latestBlock.TotalTxs)
+	require.Equal(t, uint64(2), latestBlock.TotalTxs)
 	require.Equal(t, 0, len(latestBlock.Transactions))
 }
