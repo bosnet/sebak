@@ -16,15 +16,6 @@ type SyncProgress struct {
 	HighestBlock  uint64 // Highest alleged block number in the chain
 }
 
-func (s SyncProgress) Clone() *SyncProgress {
-	sp := &SyncProgress{
-		StartingBlock: s.StartingBlock,
-		CurrentBlock:  s.CurrentBlock,
-		HighestBlock:  s.HighestBlock,
-	}
-	return sp
-}
-
 type SyncController interface {
 	SetSyncTargetBlock(ctx context.Context, height uint64, nodeAddressList []string) error
 }

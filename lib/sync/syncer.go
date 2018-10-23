@@ -186,7 +186,7 @@ func (s *Syncer) loop() {
 				s.sync(syncProgress, nodeAddrs)
 			}
 		case c := <-s.getSyncProgress:
-			c <- syncProgress.Clone()
+			c <- syncProgress
 		case c := <-s.stop:
 			close(c)
 			return
