@@ -38,7 +38,7 @@ type Header struct {
 type Body struct {
 	Source     string                `json:"source"`
 	Fee        common.Amount         `json:"fee"`
-	SequenceID uint64                `json:"sequenceid"`
+	SequenceID uint64                `json:"sequence_id"`
 	Operations []operation.Operation `json:"operations"`
 }
 

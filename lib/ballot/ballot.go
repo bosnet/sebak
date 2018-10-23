@@ -259,7 +259,7 @@ func (b *Ballot) SetProposerTransaction(ptx ProposerTransaction) {
 type BallotHeader struct {
 	Hash              string `json:"hash"`               // hash of `BallotBody`
 	Signature         string `json:"signature"`          // signed by source node of <networkID> + `Hash`
-	ProposerSignature string `json:"proposer-signature"` // signed by proposer of <networkID> + `Hash` of `BallotBodyProposed`
+	ProposerSignature string `json:"proposer_signature"` // signed by proposer of <networkID> + `Hash` of `BallotBodyProposed`
 }
 
 type BallotBodyProposed struct {
@@ -267,7 +267,7 @@ type BallotBodyProposed struct {
 	Proposer            string              `json:"proposer"`
 	Round               round.Round         `json:"round"`
 	Transactions        []string            `json:"transactions"`
-	ProposerTransaction ProposerTransaction `json:"proposer-transaction"`
+	ProposerTransaction ProposerTransaction `json:"proposer_transaction"`
 }
 
 type BallotBody struct {
