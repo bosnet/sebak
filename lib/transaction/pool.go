@@ -4,11 +4,10 @@ import (
 	"container/list"
 	"sync"
 
+	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/metrics"
 )
-
-const PoolDefaultLimit = 100000
 
 type Pool struct {
 	sync.RWMutex
@@ -24,7 +23,7 @@ type Pool struct {
 
 func NewPool(limit int) *Pool {
 	if limit <= 0 {
-		limit = PoolDefaultLimit
+		limit = common.DefaultTxPoolLimit
 	}
 	return &Pool{
 		Pool:     map[string]Transaction{},
