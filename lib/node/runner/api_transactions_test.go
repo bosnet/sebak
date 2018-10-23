@@ -60,7 +60,7 @@ func (p *HelperTestGetNodeTransactionsHandler) Prepare() {
 		common.NewConfig(),
 	)
 	p.consensus = isaac
-	p.TransactionPool = transaction.NewPool()
+	p.TransactionPool = transaction.NewPool(transaction.PoolDefaultLimit)
 
 	apiHandler := NetworkHandlerNode{storage: p.st, consensus: isaac, transactionPool: p.TransactionPool}
 

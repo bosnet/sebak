@@ -2,19 +2,29 @@ package transaction
 
 import (
 	"sync"
+
+	"boscoin.io/sebak/lib/error"
 )
+
+const PoolDefaultLimit = 100000
 
 type Pool struct {
 	sync.RWMutex
 
 	Pool    map[ /* Transaction.GetHash() */ string]Transaction
 	Sources map[ /* Transaction.Source() */ string]bool
+
+	limit int
 }
 
-func NewPool() *Pool {
+func NewPool(limit int) *Pool {
+	if limit <= 0 {
+		limit = PoolDefaultLimit
+	}
 	return &Pool{
 		Pool:    map[string]Transaction{},
 		Sources: map[string]bool{},
+		limit:   limit,
 	}
 }
 
@@ -41,17 +51,29 @@ func (tp *Pool) Get(hash string) (tx Transaction, found bool) {
 	return
 }
 
-func (tp *Pool) Add(tx Transaction) bool {
+func (tp *Pool) Add(tx Transaction) error {
 	if tp.Has(tx.GetHash()) {
-		return false
+		return errors.ErrorTransactionAlreadyExistsInPool
 	}
 
 	tp.Lock()
 	defer tp.Unlock()
 
+	if len(tp.Pool) >= tp.limit {
+		return errors.ErrorTransactionPoolFull
+	}
+
 	tp.Pool[tx.GetHash()] = tx
 	tp.Sources[tx.Source()] = true
 
+	return nil
+}
+
+func (tp *Pool) TryAdd(tx Transaction) bool {
+	err := tp.Add(tx)
+	if err != nil {
+		return false
+	}
 	return true
 }
 

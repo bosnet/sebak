@@ -78,4 +78,6 @@ var (
 	ErrorUnfreezingRequestAlreadyReceived          = NewError(171, "unfreezing request already received from client")
 	ErrorTooManyRequests                           = NewError(172, "too many requests; reached limit")
 	ErrorHTTPServerError                           = NewError(173, "Internal Server Error")
+	ErrorTransactionAlreadyExistsInPool            = NewError(174, "transaction already exists in transaction pool")
+	ErrorTransactionPoolFull                       = NewError(175, "transaction pool is full")
 )

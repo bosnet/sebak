@@ -57,6 +57,7 @@ var (
 	flagRateLimitAPI        cmdcommon.ListFlags // "SEBAK_RATE_LIMIT_API"
 	flagRateLimitNode       cmdcommon.ListFlags // "SEBAK_RATE_LIMIT_NODE"
 	flagStorageConfigString string
+	flagTxPoolLimit         string = common.GetENVValue("SEBAK_TX_POOL_LIMIT", "100000")
 )
 
 var (
@@ -77,6 +78,7 @@ var (
 	timeoutSIGN       time.Duration
 	transactionsLimit uint64
 	validators        []*node.Validator
+	txPoolLimit       uint64
 
 	logLevel logging.Lvl
 	log      logging.Logger = logging.New("module", "main")
@@ -152,6 +154,7 @@ func init() {
 	nodeCmd.Flags().StringVar(&flagTransactionsLimit, "transactions-limit", flagTransactionsLimit, "transactions limit in a ballot")
 	nodeCmd.Flags().StringVar(&flagUnfreezingPeriod, "unfreezing-period", flagUnfreezingPeriod, "how long freezing must last")
 	nodeCmd.Flags().StringVar(&flagOperationsLimit, "operations-limit", flagOperationsLimit, "operations limit in a transaction")
+	nodeCmd.Flags().StringVar(&flagTxPoolLimit, "txpool-limit", flagTxPoolLimit, "toperation pool limit")
 	nodeCmd.Flags().Var(
 		&flagRateLimitAPI,
 		"rate-limit-api",
@@ -320,6 +323,10 @@ func parseFlagsNode() {
 		threshold = int(tmpUint64)
 	}
 
+	if txPoolLimit, err = strconv.ParseUint(flagTxPoolLimit, 10, 64); err != nil {
+		cmdcommon.PrintFlagsError(nodeCmd, "--txpool-limit", err)
+	}
+
 	if common.UnfreezingPeriod, err = strconv.ParseUint(flagUnfreezingPeriod, 10, 64); err != nil {
 		cmdcommon.PrintFlagsError(nodeCmd, "--unfreezing-period", err)
 	}
@@ -394,6 +401,7 @@ func parseFlagsNode() {
 	parsedFlags = append(parsedFlags, "\n\tblock-time", flagBlockTime)
 	parsedFlags = append(parsedFlags, "\n\ttransactions-limit", flagTransactionsLimit)
 	parsedFlags = append(parsedFlags, "\n\toperations-limit", flagOperationsLimit)
+	parsedFlags = append(parsedFlags, "\n\ttxpool-limit", flagTxPoolLimit)
 	parsedFlags = append(parsedFlags, "\n\trate-limit-api", rateLimitRuleAPI)
 	parsedFlags = append(parsedFlags, "\n\trate-limit-node", rateLimitRuleNode)
 
@@ -470,6 +478,7 @@ func runNode() error {
 		OpsLimit:          int(operationsLimit),
 		RateLimitRuleAPI:  rateLimitRuleAPI,
 		RateLimitRuleNode: rateLimitRuleNode,
+		TxPoolLimit:       int(txPoolLimit),
 	}
 
 	isaac, err := consensus.NewISAAC([]byte(flagNetworkID), localNode, policy, connectionManager, conf)

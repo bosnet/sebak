@@ -15,8 +15,9 @@ type Config struct {
 	TimeoutACCEPT time.Duration
 	BlockTime     time.Duration
 
-	TxsLimit int
-	OpsLimit int
+	TxsLimit    int
+	OpsLimit    int
+	TxPoolLimit int
 
 	RateLimitRuleAPI  RateLimitRule
 	RateLimitRuleNode RateLimitRule
@@ -32,6 +33,8 @@ func NewConfig() Config {
 
 	p.TxsLimit = 1000
 	p.OpsLimit = 1000
+	p.TxPoolLimit = 100000
+
 	p.RateLimitRuleAPI = NewRateLimitRule(RateLimitAPI)
 	p.RateLimitRuleNode = NewRateLimitRule(RateLimitNode)
 
