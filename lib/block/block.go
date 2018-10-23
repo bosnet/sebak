@@ -20,7 +20,7 @@ const (
 type Block struct {
 	Header
 	Transactions        []string `json:"transactions"`         /* []Transaction.GetHash() */
-	ProposerTransaction string   `json:"proposer-transaction"` /* ProposerTransaction */
+	ProposerTransaction string   `json:"proposer_transaction"` /* ProposerTransaction */
 	//PrevConsensusResult ConsensusResult
 
 	Hash      string      `json:"hash"`

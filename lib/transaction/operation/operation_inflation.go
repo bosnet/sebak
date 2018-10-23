@@ -16,11 +16,11 @@ import (
 type Inflation struct {
 	Target         string        `json:"target"`
 	Amount         common.Amount `json:"amount"`
-	InitialBalance common.Amount `json:"initial-balance"`
+	InitialBalance common.Amount `json:"initial_balance"`
 	Ratio          string        `json:"ratio"`
-	BlockHeight    uint64        `json:"block-height"`
-	BlockHash      string        `json:"block-hash"`
-	TotalTxs       uint64        `json:"total-txs"`
+	BlockHeight    uint64        `json:"block_height"`
+	BlockHash      string        `json:"block_hash"`
+	TotalTxs       uint64        `json:"total_txs"`
 }
 
 func NewOperationBodyInflation(

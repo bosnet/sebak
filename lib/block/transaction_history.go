@@ -24,12 +24,12 @@ const (
 // just keep the recent transactions
 
 type BlockTransactionHistory struct {
-	Hash   string
-	Source string
+	Hash   string `json:"hash"`
+	Source string `json:"source"`
 
-	Confirmed string
-	Created   string
-	Message   string
+	Confirmed string `json:"confirmed"`
+	Created   string `json:"created"`
+	Message   string `json:"message"`
 
 	isSaved bool
 }

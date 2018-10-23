@@ -20,15 +20,15 @@ import (
 //  * get list by `Target` and created order
 
 type BlockOperation struct {
-	Hash string
+	Hash string `json:"hash"`
 
-	OpHash string
-	TxHash string
+	OpHash string `json:"op_hash"`
+	TxHash string `json:"tx_hash"`
 
-	Type        operation.OperationType
-	Source      string
-	Body        []byte
-	BlockHeight uint64
+	Type        operation.OperationType `json:"type"`
+	Source      string                  `json:"source"`
+	Body        []byte                  `json:"body"`
+	BlockHeight uint64                  `json:"block_height"`
 
 	// transaction will be used only for `Save` time.
 	transaction transaction.Transaction

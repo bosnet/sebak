@@ -24,19 +24,19 @@ import (
 // TODO(BlockTransaction): support counting
 
 type BlockTransaction struct {
-	Hash  string
-	Block string /* `Block.Hash` */
+	Hash  string `json:"hash"`
+	Block string/* `Block.Hash` */ `json:"block"`
 
-	SequenceID uint64
-	Signature  string
-	Source     string
-	Fee        common.Amount
-	Operations []string
-	Amount     common.Amount
+	SequenceID uint64        `json:"sequence_id"`
+	Signature  string        `json:"signature"`
+	Source     string        `json:"source"`
+	Fee        common.Amount `json:"fee"`
+	Operations []string      `json:"operations"`
+	Amount     common.Amount `json:"amount"`
 
-	Confirmed string
-	Created   string
-	Message   []byte
+	Confirmed string `json:"confirmed"`
+	Created   string `json:"created"`
+	Message   []byte `json:"message"`
 
 	transaction transaction.Transaction
 	isSaved     bool

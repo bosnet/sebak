@@ -21,13 +21,13 @@ import (
 // 	- 'ba-created-<sequential uuid1>': `BlockAccouna.Address`
 
 type BlockAccount struct {
-	Address    string
-	Balance    common.Amount
-	SequenceID uint64
+	Address    string        `json:"address"`
+	Balance    common.Amount `json:"balance"`
+	SequenceID uint64        `json:"sequence_id"`
 	// An address, or "" if the account isn't frozen
-	Linked   string
-	CodeHash []byte
-	RootHash common.Hash
+	Linked   string      `json:"linked"`
+	CodeHash []byte      `json:"code_hash"`
+	RootHash common.Hash `json:"root_hash"`
 }
 
 func NewBlockAccount(address string, balance common.Amount) *BlockAccount {

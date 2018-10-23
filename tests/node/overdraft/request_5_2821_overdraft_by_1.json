@@ -8,7 +8,7 @@
   "B": {
     "source": "GDTEPFWEITKFHSUO44NQABY2XHRBBH2UBVGJ2ZJPDREIOL2F6RAEBJE4",
     "fee": "10000",
-    "sequenceID": 0,
+    "sequence_id": 0,
     "operations": [
       {
         "H": {
