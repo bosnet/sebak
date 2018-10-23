@@ -157,19 +157,16 @@ func (nr *NodeRunner) Ready() {
 		nr.log.Error("`network.RateLimitMiddleware` for `RouterNameNode` has an error", "err", err)
 		return
 	}
-	if err := nr.network.AddMiddleware("", rateLimitMiddlewareAPI); err != nil {
-		nr.log.Error("`network.RateLimitMiddleware` for base router has an error", "err", err)
+	if err := nr.network.AddMiddleware(network.RouterNameMetric, rateLimitMiddlewareAPI); err != nil {
+		nr.log.Error("`network.RateLimitMiddleware` for `RouterNameMetric` router has an error", "err", err)
+		return
+	}
+	if err := nr.network.AddMiddleware(network.RouterNameDebug, rateLimitMiddlewareAPI); err != nil {
+		nr.log.Error("`network.RateLimitMiddleware` for `RouterNameDebug` router has an error", "err", err)
 		return
 	}
 
-	if err := nr.network.AddMiddleware(network.RouterNameAPI, network.RecoverMiddleware(nr.log)); err != nil {
-		nr.log.Error("`network.RecoverMiddleware` for `RouterNameAPI` has an error", "err", err)
-		return
-	}
-	if err := nr.network.AddMiddleware(network.RouterNameNode, network.RecoverMiddleware(nr.log)); err != nil {
-		nr.log.Error("`network.RecoverMiddleware` for `RouterNameNode` has an error", "err", err)
-		return
-	}
+	// BaseRouter's middlewares impact all sub routers.
 	if err := nr.network.AddMiddleware("", network.RecoverMiddleware(nr.log)); err != nil {
 		nr.log.Error("Middleware has an error", "err", err)
 		return
@@ -216,7 +213,7 @@ func (nr *NodeRunner) Ready() {
 		Methods("GET", "POST").
 		MatcherFunc(common.PostAndJSONMatcher)
 
-	nr.network.AddHandler("/metrics", promhttp.Handler().ServeHTTP)
+	nr.network.AddHandler(network.UrlPathPrefixMetric, promhttp.Handler().ServeHTTP)
 
 	// api handlers
 	apiHandler := api.NewNetworkHandlerAPI(
@@ -266,11 +263,11 @@ func (nr *NodeRunner) Ready() {
 
 	// pprof
 	if DebugPProf == true {
-		nr.network.AddHandler("/debug/pprof/cmdline", pprof.Cmdline)
-		nr.network.AddHandler("/debug/pprof/profile", pprof.Profile)
-		nr.network.AddHandler("/debug/pprof/symbol", pprof.Symbol)
-		nr.network.AddHandler("/debug/pprof/trace", pprof.Trace)
-		nr.network.AddHandler("/debug/pprof/*", pprof.Index)
+		nr.network.AddHandler(network.UrlPathPrefixDebug+"/pprof/cmdline", pprof.Cmdline)
+		nr.network.AddHandler(network.UrlPathPrefixDebug+"/pprof/profile", pprof.Profile)
+		nr.network.AddHandler(network.UrlPathPrefixDebug+"/pprof/symbol", pprof.Symbol)
+		nr.network.AddHandler(network.UrlPathPrefixDebug+"/pprof/trace", pprof.Trace)
+		nr.network.AddHandler(network.UrlPathPrefixDebug+"/pprof/*", pprof.Index)
 	}
 
 	nr.network.AddHandler(api.GetNodeInfoPattern, apiHandler.GetNodeInfoHandler).Methods("GET")
