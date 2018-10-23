@@ -106,7 +106,7 @@ func TestMakeNewBlock(transactions []string) Block {
 	return *NewBlock(
 		kp.Address(),
 		round.Round{
-			BlockHeight: 0,
+			BlockHeight: common.GenesisBlockHeight,
 			BlockHash:   "",
 			TotalTxs:    uint64(len(transactions)),
 			TotalOps:    uint64(len(transactions)),
