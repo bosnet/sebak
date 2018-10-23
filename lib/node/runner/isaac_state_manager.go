@@ -205,6 +205,7 @@ func (sm *ISAACStateManager) broadcastExpiredBallot(state consensus.ISAACState) 
 		BlockHeight: b.Height,
 		BlockHash:   b.Hash,
 		TotalTxs:    b.TotalTxs,
+		TotalOps:    b.TotalOps,
 	}
 
 	proposerAddr := sm.nr.consensus.SelectProposer(b.Height, state.Round)

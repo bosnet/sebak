@@ -109,6 +109,7 @@ func TestMakeNewBlock(transactions []string) Block {
 			BlockHeight: 0,
 			BlockHash:   "",
 			TotalTxs:    uint64(len(transactions)),
+			TotalOps:    uint64(len(transactions)),
 		},
 		"",
 		transactions,

@@ -7,6 +7,7 @@ type Round struct {
 	BlockHeight uint64 `json:"block-height"` // last block height
 	BlockHash   string `json:"block-hash"`   // hash of last block
 	TotalTxs    uint64 `json:"total-txs"`
+	TotalOps    uint64 `json:"total-ops"`
 }
 
 func (r Round) Index() string {

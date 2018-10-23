@@ -520,6 +520,7 @@ func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) (ballot.Ballot, error
 		BlockHeight: b.Height,
 		BlockHash:   b.Hash,
 		TotalTxs:    b.TotalTxs,
+		TotalOps:    b.TotalOps,
 	}
 
 	// collect incoming transactions from `Pool`
