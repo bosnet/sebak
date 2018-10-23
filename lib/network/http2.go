@@ -20,13 +20,17 @@ import (
 type Handlers map[string]func(http.ResponseWriter, *http.Request)
 
 const (
-	RouterNameNode = "node"
-	RouterNameAPI  = "api"
+	RouterNameNode   = "node"
+	RouterNameAPI    = "api"
+	RouterNameMetric = "metric"
+	RouterNameDebug  = "debug"
 )
 
 var (
-	UrlPathPrefixNode = fmt.Sprintf("/%s", RouterNameNode)
-	UrlPathPrefixAPI  = fmt.Sprintf("/%s", RouterNameAPI)
+	UrlPathPrefixNode   = fmt.Sprintf("/%s", RouterNameNode)
+	UrlPathPrefixAPI    = fmt.Sprintf("/%s", RouterNameAPI)
+	UrlPathPrefixDebug  = fmt.Sprintf("/%s", RouterNameDebug)
+	UrlPathPrefixMetric = fmt.Sprintf("/%s", RouterNameMetric)
 )
 
 type HTTP2MessageBroker struct {
@@ -101,8 +105,10 @@ func NewHTTP2Network(config *HTTP2NetworkConfig) (h2n *HTTP2Network) {
 	}
 	h2n.handlers = map[string]func(http.ResponseWriter, *http.Request){}
 	h2n.routers = map[string]*mux.Router{
-		RouterNameNode: baseRouter.PathPrefix(UrlPathPrefixNode).Subrouter(),
-		RouterNameAPI:  baseRouter.PathPrefix(UrlPathPrefixAPI).Subrouter(),
+		RouterNameNode:   baseRouter.PathPrefix(UrlPathPrefixNode).Subrouter(),
+		RouterNameAPI:    baseRouter.PathPrefix(UrlPathPrefixAPI).Subrouter(),
+		RouterNameMetric: baseRouter.PathPrefix(UrlPathPrefixMetric).Subrouter(),
+		RouterNameDebug:  baseRouter.PathPrefix(UrlPathPrefixDebug).Subrouter(),
 	}
 
 	h2n.config = config
@@ -179,13 +185,13 @@ func (t *HTTP2Network) AddHandler(pattern string, handler http.HandlerFunc) (rou
 	case strings.HasPrefix(pattern, UrlPathPrefixAPI):
 		routerName = RouterNameAPI
 		prefix = pattern[len(UrlPathPrefixAPI):]
+	case strings.HasPrefix(pattern, UrlPathPrefixMetric):
+		routerName = RouterNameMetric
+		prefix = pattern[len(UrlPathPrefixMetric):]
+	case strings.HasPrefix(pattern, UrlPathPrefixDebug):
+		routerName = RouterNameDebug
+		prefix = pattern[len(UrlPathPrefixDebug):]
 	default:
-		// if a pattern has a suffix *,the router sets path prefix and handler
-		if strings.HasSuffix(pattern, "*") {
-			pathPrefix := strings.TrimSuffix(pattern, "*")
-			return t.router.PathPrefix(pathPrefix).Handler(handler)
-		}
-
 		if pattern == "" || pattern == "/" {
 			return t.rootRoute.Handler(handler)
 		} else {
@@ -195,6 +201,11 @@ func (t *HTTP2Network) AddHandler(pattern string, handler http.HandlerFunc) (rou
 
 	r, _ := t.routers[routerName]
 
+	// if a pattern has a suffix *,the router sets path prefix and handler
+	if strings.HasSuffix(prefix, "*") {
+		pathPrefix := strings.TrimSuffix(prefix, "*")
+		return r.PathPrefix(pathPrefix).Handler(handler)
+	}
 	return r.HandleFunc(prefix, handler)
 }
 
