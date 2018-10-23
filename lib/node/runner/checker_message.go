@@ -62,16 +62,23 @@ func TransactionUnmarshal(c common.Checker, args ...interface{}) (err error) {
 }
 
 // HasTransaction checks transaction is in
-// `Pool`.
+// `Pool` And `Block`
 func HasTransaction(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*MessageChecker)
 
-	if checker.TransactionPool.Has(checker.Transaction.GetHash()) {
-		err = errors.ErrorNewButKnownMessage
-		return
+	hash := checker.Transaction.GetHash()
+
+	if checker.TransactionPool.Has(hash) {
+		return errors.ErrorNewButKnownMessage
 	}
 
-	return
+	if exists, err := block.ExistsBlockTransaction(checker.Storage, hash); err != nil {
+		return err
+	} else if exists {
+		return errors.ErrorNewButKnownMessage
+	}
+
+	return nil
 }
 
 // SaveTransactionHistory checks transaction is in
