@@ -16,9 +16,10 @@ type CollectTxFee struct {
 	Target      string        `json:"target"`
 	Amount      common.Amount `json:"amount"`
 	Txs         uint64        `json:"txs"`
-	BlockHeight uint64        `json:"block_height"`
-	BlockHash   string        `json:"block_hash"`
-	TotalTxs    uint64        `json:"total_txs"`
+	BlockHeight uint64        `json:"block-height"`
+	BlockHash   string        `json:"block-hash"`
+	TotalTxs    uint64        `json:"total-txs"`
+	TotalOps    uint64        `json:"total-ops"`
 }
 
 func NewCollectTxFee(

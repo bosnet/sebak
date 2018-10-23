@@ -14,7 +14,8 @@ type Header struct {
 	TransactionsRoot string    `json:"transactions_root"` // Merkle root of Txs // TODO Uint256 type
 	Timestamp        time.Time `json:"timestamp"`
 	Height           uint64    `json:"height"`
-	TotalTxs         uint64    `json:"total_txs"`
+	TotalTxs         uint64    `json:"total-txs"`
+	TotalOps         uint64    `json:"total-ops"`
 
 	// TODO smart contract fields
 }
@@ -25,6 +26,7 @@ func NewBlockHeader(round round.Round, txRoot string) *Header {
 		Timestamp:        time.Now(),
 		Height:           round.BlockHeight + 1,
 		TotalTxs:         round.TotalTxs,
+		TotalOps:         round.TotalOps,
 		TransactionsRoot: txRoot,
 	}
 }

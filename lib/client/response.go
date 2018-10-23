@@ -119,16 +119,18 @@ type Inflation struct {
 	Amount         []byte `json:"amount"`
 	InitialBalance []byte `json:"initial-balance"`
 	Ratio          string `json:"ratio"`
-	BlockHeight    uint64 `json:"block_height"`
-	BlockHash      string `json:"block_hash"`
-	TotalTxs       uint64 `json:"total_txs"`
+	BlockHeight    uint64 `json:"block-height"`
+	BlockHash      string `json:"block-hash"`
+	TotalTxs       uint64 `json:"total-txs"`
+	TotalOps       uint64 `json:"total-ops"`
 }
 
 type CollectTxFee struct {
 	Target      string `json:"target"`
 	Amount      []byte `json:"amount"`
 	Txs         uint64 `json:"txs"`
-	BlockHeight uint64 `json:"block_height"`
-	BlockHash   string `json:"block_hash"`
-	TotalTxs    uint64 `json:"total_txs"`
+	BlockHeight uint64 `json:"block-height"`
+	BlockHash   string `json:"block-hash"`
+	TotalTxs    uint64 `json:"total-txs"`
+	TotalOps    uint64 `json:"total-ops"`
 }

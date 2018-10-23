@@ -504,8 +504,10 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 	}
 
 	transactions := map[string]transaction.Transaction{}
+	var nOps int
 	for _, hash := range b.B.Proposed.Transactions {
 		tx, found := transactionPool.Get(hash)
+		nOps += len(tx.B.Operations)
 		if !found {
 			return nil, errors.ErrorTransactionNotFound
 		}
@@ -514,6 +516,7 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 
 	r := b.Round()
 	r.TotalTxs += uint64(len(transactions) + 1) // + 1 for ProposerTransaction
+	r.TotalOps += uint64(nOps + len(b.ProposerTransaction().B.Operations))
 
 	blk := block.NewBlock(
 		b.Proposer(),
@@ -535,6 +538,7 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 		"round", blk.Round,
 		"timestamp", blk.Timestamp,
 		"total-txs", blk.TotalTxs,
+		"total-ops", blk.TotalOps,
 		"proposer", blk.Proposer,
 	)
 
