@@ -515,6 +515,7 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 	}
 
 	r := b.Round()
+	r.BlockHeight++                             // next block
 	r.TotalTxs += uint64(len(transactions) + 1) // + 1 for ProposerTransaction
 	r.TotalOps += uint64(nOps + len(b.ProposerTransaction().B.Operations))
 

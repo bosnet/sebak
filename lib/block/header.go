@@ -24,7 +24,7 @@ func NewBlockHeader(round round.Round, txRoot string) *Header {
 	return &Header{
 		PrevBlockHash:    round.BlockHash,
 		Timestamp:        time.Now(),
-		Height:           round.BlockHeight + 1,
+		Height:           round.BlockHeight,
 		TotalTxs:         round.TotalTxs,
 		TotalOps:         round.TotalOps,
 		TransactionsRoot: txRoot,
