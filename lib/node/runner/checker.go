@@ -530,8 +530,8 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 	infoLog.Info("NewBlock created",
 		"height", blk.Height,
 		"round", blk.Round.Number,
-		"timestamp", blk.Header.Timestamp,
-		"total-txs", blk.Round.TotalTxs,
+		"timestamp", blk.Timestamp,
+		"total-txs", blk.TotalTxs,
 		"proposer", blk.Proposer,
 	)
 
