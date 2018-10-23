@@ -29,12 +29,6 @@ func TestSyncerSetSyncTarget(t *testing.T) {
 			infoc  = tctx.syncInfoC
 		)
 
-		{
-			bk := block.TestMakeNewBlock([]string{})
-			bk.Height = uint64(1)
-			bk.Save(tctx.st)
-		}
-
 		var (
 			height    uint64   = 10
 			nodeAddrs []string = []string{"a", "b"}
@@ -62,12 +56,19 @@ func TestSyncerSetSyncTarget(t *testing.T) {
 			}
 		}
 		require.Equal(t, len(heights), 9)
+
+		progress, err := syncer.SyncProgress(ctx)
+		require.NoError(t, err)
+		require.Equal(t, progress.StartingBlock, uint64(2))
+		require.Equal(t, progress.CurrentBlock, height)
+		require.Equal(t, progress.HighestBlock, height)
+
 	}
 	SyncerTest(t, fn)
 }
 
 func SyncerTest(t *testing.T, fn func(*SyncerTestContext)) {
-	st := storage.NewTestStorage()
+	st := block.InitTestBlockchain()
 	defer st.Close()
 	_, nw, localNode := network.CreateMemoryNetwork(nil)
 	cm := &mockConnectionManager{}
