@@ -146,7 +146,7 @@ func makeGenesisBlock(genesisAddress, commonAddress, networkID, balanceStr, stor
 		"height", b.Height,
 		"round", b.Round.Number,
 		"timestamp", b.Header.Timestamp,
-		"total txs", b.Round.TotalTxs,
+		"total-txs", b.Round.TotalTxs,
 		"proposer", b.Proposer,
 	)
 
