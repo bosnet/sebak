@@ -1,18 +1,16 @@
 package client
 
 import (
+	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/client"
 	"boscoin.io/sebak/lib/transaction"
 	"boscoin.io/sebak/lib/transaction/operation"
 	"encoding/json"
 	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
-	"io/ioutil"
 	"net/http"
-	"strings"
 	"testing"
 	"time"
-	"boscoin.io/sebak/lib/block"
 )
 
 func TestCongressVoting(t *testing.T) {

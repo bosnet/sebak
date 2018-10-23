@@ -49,7 +49,7 @@ func SaveTransactionHistory(st *storage.LevelDBBackend, tx transaction.Transacti
 	if err != nil {
 		bth = NewTransactionHistoryFromTransaction(tx, message)
 	}
-	if bth.Status != BlockTransactionHistoryStatusSubmitted {
+	if bth.Status != "" && bth.Status != BlockTransactionHistoryStatusSubmitted {
 		// Only BlockTransactionHistoryStatusSubmitted can be changed
 		return nil
 	}
