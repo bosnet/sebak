@@ -529,7 +529,7 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 	log.Debug("NewBlock created", "block", *blk)
 	infoLog.Info("NewBlock created",
 		"height", blk.Height,
-		"round", blk.Round.Number,
+		"round", blk.Round,
 		"timestamp", blk.Timestamp,
 		"total-txs", blk.TotalTxs,
 		"proposer", blk.Proposer,
