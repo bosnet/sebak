@@ -30,6 +30,9 @@ const (
 
 	// BlockHeightEndOfInflation sets the block height of inflation end.
 	BlockHeightEndOfInflation uint64 = 36000000
+
+	// DefaultTxPoolLimit is the default tx pool limit.
+	DefaultTxPoolLimit int = 1000000
 )
 
 var (
