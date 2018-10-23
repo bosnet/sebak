@@ -31,8 +31,8 @@ type BlockOperation struct {
 	BlockHeight uint64                  `json:"block_height"`
 
 	// transaction will be used only for `Save` time.
-	transaction transaction.Transaction `json:"-"`
-	isSaved     bool                    `json:"-"`
+	transaction transaction.Transaction
+	isSaved     bool
 }
 
 func NewBlockOperationKey(opHash, txHash string) string {

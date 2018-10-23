@@ -31,7 +31,7 @@ type BlockTransactionHistory struct {
 	Created   string `json:"created"`
 	Message   string `json:"message"`
 
-	isSaved bool `json:"-"`
+	isSaved bool
 }
 
 func NewTransactionHistoryFromTransaction(tx transaction.Transaction, message []byte) BlockTransactionHistory {

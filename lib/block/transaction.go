@@ -38,9 +38,9 @@ type BlockTransaction struct {
 	Created   string `json:"created"`
 	Message   []byte `json:"message"`
 
-	transaction transaction.Transaction `json:"-"`
-	isSaved     bool                    `json:"-"`
-	blockHeight uint64                  `json:"-"`
+	transaction transaction.Transaction
+	isSaved     bool
+	blockHeight uint64
 }
 
 func NewBlockTransactionFromTransaction(blockHash string, blockHeight uint64, confirmed string, tx transaction.Transaction, message []byte) BlockTransaction {
