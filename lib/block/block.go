@@ -43,7 +43,7 @@ func (bck Block) String() string {
 // `ProposerTransaction.GetHash()`.
 func NewBlock(proposer string, round round.Round, ptx string, transactions []string, confirmed string) *Block {
 	b := &Block{
-		Header:              *NewBlockHeader(round, uint64(len(transactions)), getTransactionRoot(transactions)),
+		Header:              *NewBlockHeader(round, getTransactionRoot(transactions)),
 		Transactions:        transactions,
 		ProposerTransaction: ptx,
 		Proposer:            proposer,
