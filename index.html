@@ -153,7 +153,7 @@
   "<span class="hljs-attribute">_embedded</span>": <span class="hljs-value">{
     "<span class="hljs-attribute">records</span>": <span class="hljs-value">{
       "<span class="hljs-attribute">_links</span>": <span class="hljs-value">{
-        "<span class="hljs-attribute">accounts</span>": <span class="hljs-value">{
+        "<span class="hljs-attribute">account</span>": <span class="hljs-value">{
           "<span class="hljs-attribute">href</span>": <span class="hljs-value"><span class="hljs-string">"/accounts/GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ"</span>
         </span>}</span>,
         "<span class="hljs-attribute">operations</span>": <span class="hljs-value">{
@@ -195,7 +195,7 @@
             "<span class="hljs-attribute">_links</span>": <span class="hljs-value">{
               "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"object"</span></span>,
               "<span class="hljs-attribute">properties</span>": <span class="hljs-value">{
-                "<span class="hljs-attribute">accounts</span>": <span class="hljs-value">{
+                "<span class="hljs-attribute">account</span>": <span class="hljs-value">{
                   "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"object"</span></span>,
                   "<span class="hljs-attribute">properties</span>": <span class="hljs-value">{
                     "<span class="hljs-attribute">href</span>": <span class="hljs-value">{
@@ -300,7 +300,7 @@
         "<span class="hljs-attribute">self</span>": <span class="hljs-value">{
           "<span class="hljs-attribute">href</span>": <span class="hljs-value"><span class="hljs-string">"/operations/E4qTH5UmzHy2Psdxh8RaQomqJb1gcUZFVENimzV9YB8D"</span>
         </span>}</span>,
-        "<span class="hljs-attribute">transactions</span>": <span class="hljs-value">{
+        "<span class="hljs-attribute">transaction</span>": <span class="hljs-value">{
           "<span class="hljs-attribute">href</span>": <span class="hljs-value"><span class="hljs-string">"/transactions/ghf6msRhE4jRf5DPib9UHD1msadvmZs9o53V9FQTb11"</span>
         </span>}
       </span>}</span>,
@@ -308,6 +308,7 @@
       "<span class="hljs-attribute">amount</span>": <span class="hljs-value"><span class="hljs-string">"1000000"</span></span>,
       "<span class="hljs-attribute">target</span>": <span class="hljs-value"><span class="hljs-string">"GDPWP7BOOMEKK6DUQELQD7H5NEENPLDTQQWYOIBSFS65WH7DNG7UWVKB"</span></span>,
       "<span class="hljs-attribute">hash</span>": <span class="hljs-value"><span class="hljs-string">"E4qTH5UmzHy2Psdxh8RaQomqJb1gcUZFVENimzV9YB8D"</span></span>,
+      "<span class="hljs-attribute">tx_hash</span>": <span class="hljs-value"><span class="hljs-string">"ghf6msRhE4jRf5DPib9UHD1msadvmZs9o53V9FQTb11"</span></span>,
       "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"create"</span>
     </span>}
   </span>}</span>,
@@ -344,7 +345,7 @@
                     </span>}
                   </span>}
                 </span>}</span>,
-                "<span class="hljs-attribute">transactions</span>": <span class="hljs-value">{
+                "<span class="hljs-attribute">transaction</span>": <span class="hljs-value">{
                   "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"object"</span></span>,
                   "<span class="hljs-attribute">properties</span>": <span class="hljs-value">{
                     "<span class="hljs-attribute">href</span>": <span class="hljs-value">{
@@ -364,6 +365,9 @@
               "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"string"</span>
             </span>}</span>,
             "<span class="hljs-attribute">hash</span>": <span class="hljs-value">{
+              "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"string"</span>
+            </span>}</span>,
+            "<span class="hljs-attribute">tx_hash</span>": <span class="hljs-value">{
               "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"string"</span>
             </span>}</span>,
             "<span class="hljs-attribute">type</span>": <span class="hljs-value">{
@@ -435,7 +439,7 @@
   "<span class="hljs-attribute">B</span>": <span class="hljs-value">{
     "<span class="hljs-attribute">source</span>": <span class="hljs-value"><span class="hljs-string">"GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ"</span></span>,
     "<span class="hljs-attribute">fee</span>": <span class="hljs-value"><span class="hljs-string">"10000"</span></span>,
-    "<span class="hljs-attribute">sequenceID</span>": <span class="hljs-value"><span class="hljs-string">"1"</span></span>,
+    "<span class="hljs-attribute">sequence_id</span>": <span class="hljs-value"><span class="hljs-string">"1"</span></span>,
     "<span class="hljs-attribute">operations</span>": <span class="hljs-value">[
       {
         "<span class="hljs-attribute">H</span>": <span class="hljs-value">{
@@ -487,7 +491,7 @@
           "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"string"</span></span>,
           "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"The fee paid by the source account for this transaction. Minimum is 10000 GON"</span>
         </span>}</span>,
-        "<span class="hljs-attribute">sequenceID</span>": <span class="hljs-value">{
+        "<span class="hljs-attribute">sequence_id</span>": <span class="hljs-value">{
           "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"string"</span></span>,
           "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"The last sequence number of the source account"</span>
         </span>}</span>,
@@ -498,17 +502,12 @@
     </span>}
   </span>}
 </span>}</code></pre><div style="height: 1px;"></div></div></div><div class="title"><strong>Response&nbsp;&nbsp;<code>200</code></strong><div class="collapse-button"><span class="close">Hide</span><span class="open">Show</span></div></div><div class="collapse-content"><div class="inner"><h5>Headers</h5><pre><code><span class="hljs-attribute">Content-Type</span>: <span class="hljs-string">application/json; charset=utf-8</span></code></pre><div style="height: 1px;"></div><h5>Body</h5><pre><code>{
-  "<span class="hljs-attribute">T</span>": <span class="hljs-value"><span class="hljs-string">"transaction"</span></span>,
-  "<span class="hljs-attribute">H</span>": <span class="hljs-value">{
-    "<span class="hljs-attribute">version</span>": <span class="hljs-value"><span class="hljs-string">"``"</span></span>,
-    "<span class="hljs-attribute">created</span>": <span class="hljs-value"><span class="hljs-string">"2018-01-01T00:00:00.000000000Z"</span></span>,
-    "<span class="hljs-attribute">hash</span>": <span class="hljs-value"><span class="hljs-string">"2g3ZSrEnsUWeX5Mxz5uTh2b4KVpVQS7Ek2HzZd759FHn"</span></span>,
-    "<span class="hljs-attribute">signature</span>": <span class="hljs-value"><span class="hljs-string">"3oWmCMNHExRQnZVEBSH16ZBgLE6ayz7t1fsjzTjAB6WpXMpkDJbhcL8KudqFFG21XmfSXnJH1BLhnBUh4p68yFeR"</span>
-  </span>}</span>,
-  "<span class="hljs-attribute">B</span>": <span class="hljs-value">{
+  "<span class="hljs-attribute">hash</span>": <span class="hljs-value"><span class="hljs-string">"ghf6msRhE4jRf5DPib9UHD1msadvmZs9o53V9FQTb11"</span></span>,
+  "<span class="hljs-attribute">status</span>": <span class="hljs-value"><span class="hljs-string">"confirmed"</span></span>,
+  "<span class="hljs-attribute">message</span>": <span class="hljs-value">{
     "<span class="hljs-attribute">source</span>": <span class="hljs-value"><span class="hljs-string">"GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ"</span></span>,
     "<span class="hljs-attribute">fee</span>": <span class="hljs-value"><span class="hljs-string">"10000"</span></span>,
-    "<span class="hljs-attribute">sequenceID</span>": <span class="hljs-value"><span class="hljs-string">"1"</span></span>,
+    "<span class="hljs-attribute">sequence_id</span>": <span class="hljs-value"><span class="hljs-string">"1"</span></span>,
     "<span class="hljs-attribute">operations</span>": <span class="hljs-value">[
       {
         "<span class="hljs-attribute">H</span>": <span class="hljs-value">{
@@ -525,31 +524,15 @@
   "<span class="hljs-attribute">$schema</span>": <span class="hljs-value"><span class="hljs-string">"http://json-schema.org/draft-04/schema#"</span></span>,
   "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"object"</span></span>,
   "<span class="hljs-attribute">properties</span>": <span class="hljs-value">{
-    "<span class="hljs-attribute">T</span>": <span class="hljs-value">{
-      "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"string"</span>
+    "<span class="hljs-attribute">hash</span>": <span class="hljs-value">{
+      "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"string"</span></span>,
+      "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"Hash of transaction."</span>
     </span>}</span>,
-    "<span class="hljs-attribute">H</span>": <span class="hljs-value">{
-      "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"object"</span></span>,
-      "<span class="hljs-attribute">properties</span>": <span class="hljs-value">{
-        "<span class="hljs-attribute">version</span>": <span class="hljs-value">{
-          "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"string"</span></span>,
-          "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"Transaction version"</span>
-        </span>}</span>,
-        "<span class="hljs-attribute">created</span>": <span class="hljs-value">{
-          "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"string"</span></span>,
-          "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"Created time of the transaction."</span>
-        </span>}</span>,
-        "<span class="hljs-attribute">hash</span>": <span class="hljs-value">{
-          "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"string"</span></span>,
-          "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"Hash of the transaction body."</span>
-        </span>}</span>,
-        "<span class="hljs-attribute">signature</span>": <span class="hljs-value">{
-          "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"string"</span></span>,
-          "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"Signature signed by source account"</span>
-        </span>}
-      </span>}
+    "<span class="hljs-attribute">status</span>": <span class="hljs-value">{
+      "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"string"</span></span>,
+      "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"submitted, confirmed, rejected"</span>
     </span>}</span>,
-    "<span class="hljs-attribute">B</span>": <span class="hljs-value">{
+    "<span class="hljs-attribute">message</span>": <span class="hljs-value">{
       "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"object"</span></span>,
       "<span class="hljs-attribute">properties</span>": <span class="hljs-value">{
         "<span class="hljs-attribute">source</span>": <span class="hljs-value">{
@@ -560,7 +543,7 @@
           "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"string"</span></span>,
           "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"The fee paid by the source account for this transaction. Minimum is 10000 GON"</span>
         </span>}</span>,
-        "<span class="hljs-attribute">sequenceID</span>": <span class="hljs-value">{
+        "<span class="hljs-attribute">sequence_id</span>": <span class="hljs-value">{
           "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"string"</span></span>,
           "<span class="hljs-attribute">description</span>": <span class="hljs-value"><span class="hljs-string">"The last sequence number of the source account"</span>
         </span>}</span>,
@@ -569,7 +552,11 @@
         </span>}
       </span>}
     </span>}
-  </span>}
+  </span>}</span>,
+  "<span class="hljs-attribute">required</span>": <span class="hljs-value">[
+    <span class="hljs-string">"hash"</span>,
+    <span class="hljs-string">"status"</span>
+  ]
 </span>}</code></pre><div style="height: 1px;"></div></div></div><div class="title"><strong>Response&nbsp;&nbsp;<code>500</code></strong><div class="collapse-button"><span class="close">Hide</span><span class="open">Show</span></div></div><div class="collapse-content"><div class="inner"><h5>Headers</h5><pre><code><span class="hljs-attribute">Content-Type</span>: <span class="hljs-string">application/problem+json; charset=utf-8</span></code></pre><div style="height: 1px;"></div><h5>Body</h5><pre><code>{
   "<span class="hljs-attribute">status</span>": <span class="hljs-value"><span class="hljs-number">500</span></span>,
   "<span class="hljs-attribute">title</span>": <span class="hljs-value"><span class="hljs-string">"problem error message"</span></span>,
@@ -593,7 +580,7 @@
   "<span class="hljs-attribute">_embedded</span>": <span class="hljs-value">{
     "<span class="hljs-attribute">records</span>": <span class="hljs-value">{
       "<span class="hljs-attribute">_links</span>": <span class="hljs-value">{
-        "<span class="hljs-attribute">accounts</span>": <span class="hljs-value">{
+        "<span class="hljs-attribute">account</span>": <span class="hljs-value">{
           "<span class="hljs-attribute">href</span>": <span class="hljs-value"><span class="hljs-string">"/accounts/GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ"</span>
         </span>}</span>,
         "<span class="hljs-attribute">operations</span>": <span class="hljs-value">{
@@ -635,7 +622,7 @@
             "<span class="hljs-attribute">_links</span>": <span class="hljs-value">{
               "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"object"</span></span>,
               "<span class="hljs-attribute">properties</span>": <span class="hljs-value">{
-                "<span class="hljs-attribute">accounts</span>": <span class="hljs-value">{
+                "<span class="hljs-attribute">account</span>": <span class="hljs-value">{
                   "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"object"</span></span>,
                   "<span class="hljs-attribute">properties</span>": <span class="hljs-value">{
                     "<span class="hljs-attribute">href</span>": <span class="hljs-value">{
@@ -741,7 +728,7 @@
   "<span class="hljs-attribute">created</span>": <span class="hljs-value"><span class="hljs-string">"2018-09-12T09:08:35.157472400Z"</span></span>,
   "<span class="hljs-attribute">operation_count</span>": <span class="hljs-value"><span class="hljs-number">1</span></span>,
   "<span class="hljs-attribute">_links</span>": <span class="hljs-value">{
-    "<span class="hljs-attribute">accounts</span>": <span class="hljs-value">{
+    "<span class="hljs-attribute">account</span>": <span class="hljs-value">{
       "<span class="hljs-attribute">href</span>": <span class="hljs-value"><span class="hljs-string">"/accounts/GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ"</span>
     </span>}</span>,
     "<span class="hljs-attribute">operations</span>": <span class="hljs-value">{
@@ -781,7 +768,7 @@
     "<span class="hljs-attribute">_links</span>": <span class="hljs-value">{
       "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"object"</span></span>,
       "<span class="hljs-attribute">properties</span>": <span class="hljs-value">{
-        "<span class="hljs-attribute">accounts</span>": <span class="hljs-value">{
+        "<span class="hljs-attribute">account</span>": <span class="hljs-value">{
           "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"object"</span></span>,
           "<span class="hljs-attribute">properties</span>": <span class="hljs-value">{
             "<span class="hljs-attribute">href</span>": <span class="hljs-value">{
@@ -839,7 +826,7 @@
         "<span class="hljs-attribute">self</span>": <span class="hljs-value">{
           "<span class="hljs-attribute">href</span>": <span class="hljs-value"><span class="hljs-string">"/operations/E4qTH5UmzHy2Psdxh8RaQomqJb1gcUZFVENimzV9YB8D"</span>
         </span>}</span>,
-        "<span class="hljs-attribute">transactions</span>": <span class="hljs-value">{
+        "<span class="hljs-attribute">transaction</span>": <span class="hljs-value">{
           "<span class="hljs-attribute">href</span>": <span class="hljs-value"><span class="hljs-string">"/transactions/ghf6msRhE4jRf5DPib9UHD1msadvmZs9o53V9FQTb11"</span>
         </span>}
       </span>}</span>,
@@ -847,6 +834,7 @@
       "<span class="hljs-attribute">amount</span>": <span class="hljs-value"><span class="hljs-string">"1000000"</span></span>,
       "<span class="hljs-attribute">target</span>": <span class="hljs-value"><span class="hljs-string">"GDPWP7BOOMEKK6DUQELQD7H5NEENPLDTQQWYOIBSFS65WH7DNG7UWVKB"</span></span>,
       "<span class="hljs-attribute">hash</span>": <span class="hljs-value"><span class="hljs-string">"E4qTH5UmzHy2Psdxh8RaQomqJb1gcUZFVENimzV9YB8D"</span></span>,
+      "<span class="hljs-attribute">tx_hash</span>": <span class="hljs-value"><span class="hljs-string">"ghf6msRhE4jRf5DPib9UHD1msadvmZs9o53V9FQTb11"</span></span>,
       "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"create"</span>
     </span>}
   </span>}</span>,
@@ -883,7 +871,7 @@
                     </span>}
                   </span>}
                 </span>}</span>,
-                "<span class="hljs-attribute">transactions</span>": <span class="hljs-value">{
+                "<span class="hljs-attribute">transaction</span>": <span class="hljs-value">{
                   "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"object"</span></span>,
                   "<span class="hljs-attribute">properties</span>": <span class="hljs-value">{
                     "<span class="hljs-attribute">href</span>": <span class="hljs-value">{
@@ -903,6 +891,9 @@
               "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"string"</span>
             </span>}</span>,
             "<span class="hljs-attribute">hash</span>": <span class="hljs-value">{
+              "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"string"</span>
+            </span>}</span>,
+            "<span class="hljs-attribute">tx_hash</span>": <span class="hljs-value">{
               "<span class="hljs-attribute">type</span>": <span class="hljs-value"><span class="hljs-string">"string"</span>
             </span>}</span>,
             "<span class="hljs-attribute">type</span>": <span class="hljs-value">{
@@ -962,7 +953,7 @@
     </span>}
   </span>}
 </span>}</code></pre><div style="height: 1px;"></div></div></div></div></div></section><section id="operations" class="resource-group"><h2 class="group-heading">Operations <a href="#operations" class="permalink">&para;</a></h2><p>Operations API</p>
-<div id="operations-transactions" class="resource"><h3 class="resource-heading">Transactions <a href="#operations-transactions" class="permalink">&nbsp;&para;</a></h3></div></section></div></div></div><p style="text-align: center;" class="text-muted">Generated by&nbsp;<a href="https://github.com/danielgtaylor/aglio" class="aglio">aglio</a>&nbsp;on 04 Oct 2018</p><script>/* eslint-env browser */
+<div id="operations-transactions" class="resource"><h3 class="resource-heading">Transactions <a href="#operations-transactions" class="permalink">&nbsp;&para;</a></h3></div></section></div></div></div><p style="text-align: center;" class="text-muted">Generated by&nbsp;<a href="https://github.com/danielgtaylor/aglio" class="aglio">aglio</a>&nbsp;on 23 Oct 2018</p><script>/* eslint-env browser */
 /* eslint quotes: [2, "single"] */
 'use strict';
 
