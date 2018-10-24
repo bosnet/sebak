@@ -44,13 +44,29 @@ export NODE2=$(docker run -d --network host --env-file=${ROOT_DIR}/docker/node2.
                         ${NODE_IMAGE} node --genesis=${SEBAK_GENESIS},${SEBAK_COMMON})
 export NODE3=$(docker run -d --network host --env-file=${ROOT_DIR}/docker/node3.env \
                         ${NODE_IMAGE} node --genesis=${SEBAK_GENESIS},${SEBAK_COMMON})
+export NODE4=$(docker run -d --network host --env-file=${ROOT_DIR}/docker/node4.env \
+                        ${NODE_IMAGE} node --genesis=${SEBAK_GENESIS},${SEBAK_COMMON})
 
-CONTAINERS="${CONTAINERS} ${NODE1} ${NODE2} ${NODE3}"
+CONTAINERS="${CONTAINERS} ${NODE1} ${NODE2} ${NODE3} ${NODE4}"
 
+# Give that a bit of time
 sleep 1
-docker run --rm --network host ${CLIENT_IMAGE}
+
+# Check block height after 2m
+docker run --rm --network host ${CLIENT_IMAGE} block-time.sh
+
+docker stop ${NODE4}
+docker rm -f ${NODE4}
+
+export NODE4_2=$(docker run -d --network host --env-file=${ROOT_DIR}/docker/node4.env \
+                        ${NODE_IMAGE} node --genesis=${SEBAK_GENESIS},${SEBAK_COMMON})
+
+CONTAINERS="${CONTAINERS} ${NODE4_2}"
+
+# Check that the block height of all 4 nodes are almost same
+docker run --rm --network host ${CLIENT_IMAGE} sync.sh
 
 # Shut down the containers - we need to do so for integration reports to be written
-docker stop ${NODE1} ${NODE2} ${NODE3}
+docker stop ${NODE1} ${NODE2} ${NODE3} ${NODE4_2}
 
 docker rm -f ${CONTAINERS} || true
