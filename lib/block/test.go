@@ -147,11 +147,3 @@ func TestMakeNewBlockOperation(networkID []byte, n int) (bos []BlockOperation) {
 
 	return
 }
-
-func TestMakeNewBlockTransaction(networkID []byte, n int) BlockTransaction {
-	_, tx := transaction.TestMakeTransaction(networkID, n)
-
-	block := TestMakeNewBlock([]string{tx.GetHash()})
-	a, _ := tx.Serialize()
-	return NewBlockTransactionFromTransaction(block.Hash, block.Height, block.Confirmed, tx, a)
-}
