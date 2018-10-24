@@ -128,11 +128,14 @@ func MessageValidate(c common.Checker, args ...interface{}) (err error) {
 
 // PushIntoTransactionPool add the incoming
 // transactions into `Pool`.
-func PushIntoTransactionPool(c common.Checker, args ...interface{}) (err error) {
+func PushIntoTransactionPool(c common.Checker, args ...interface{}) error {
 	checker := c.(*MessageChecker)
 
 	tx := checker.Transaction
-	checker.TransactionPool.Add(tx)
+	err := checker.TransactionPool.Add(tx)
+	if err == errors.ErrorTransactionPoolFull {
+		return err
+	}
 
 	if _, err = block.SaveTransactionPool(checker.Storage, tx); err != nil {
 		return
@@ -140,7 +143,7 @@ func PushIntoTransactionPool(c common.Checker, args ...interface{}) (err error) 
 
 	checker.Log.Debug("push transaction into TransactionPool", "transaction", tx)
 
-	return
+	return nil
 }
 
 // BroadcastTransaction broadcasts the incoming
