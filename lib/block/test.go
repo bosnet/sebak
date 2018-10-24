@@ -125,6 +125,8 @@ func TestMakeNewBlockWithPrevBlock(prevBlock Block, txs []string) Block {
 		voting.Basis{
 			Height:    prevBlock.Height,
 			BlockHash: prevBlock.Hash,
+			TotalTxs:  uint64(len(txs)),
+			TotalOps:  uint64(len(txs)),
 		},
 		"",
 		txs,
