@@ -111,7 +111,7 @@ func TestGetTransactionsHandler(t *testing.T) {
 	defer storage.Close()
 	defer ts.Close()
 
-	_, btList, err := prepareTxs(storage, 0, 10, nil)
+	_, btList, err := prepareTxs(storage, 10, nil)
 	require.NoError(t, err)
 
 	var reader *bufio.Reader
@@ -154,7 +154,7 @@ func TestGetTransactionsHandlerStream(t *testing.T) {
 
 	kp, err := keypair.Random()
 	require.NoError(t, err)
-	_, btList, err := prepareTxsWithoutSave(0, 10, kp)
+	_, btList, err := prepareTxsWithoutSave(10, kp)
 	require.NoError(t, err)
 	btMap := make(map[string]block.BlockTransaction)
 	for _, bt := range btList {
@@ -212,7 +212,7 @@ func TestGetTransactionsByAccountHandler(t *testing.T) {
 	defer storage.Close()
 	defer ts.Close()
 
-	kp, btList, err := prepareTxs(storage, 0, 10, nil)
+	kp, btList, err := prepareTxs(storage, 10, nil)
 	require.NoError(t, err)
 
 	// Do a Request
@@ -255,7 +255,7 @@ func TestGetTransactionsByAccountHandlerStream(t *testing.T) {
 	defer ts.Close()
 
 	btMap := make(map[string]block.BlockTransaction)
-	kp, btList, err := prepareTxsWithoutSave(0, 10, nil)
+	kp, btList, err := prepareTxsWithoutSave(10, nil)
 	require.NoError(t, err)
 	for _, bt := range btList {
 		btMap[bt.Hash] = bt
@@ -313,7 +313,7 @@ func TestGetTransactionsHandlerPage(t *testing.T) {
 	defer storage.Close()
 	defer ts.Close()
 
-	_, btList, err := prepareTxs(storage, 0, 10, nil)
+	_, btList, err := prepareTxs(storage, 10, nil)
 	require.NoError(t, err)
 
 	requestFunction := func(url string) ([]interface{}, map[string]interface{}) {

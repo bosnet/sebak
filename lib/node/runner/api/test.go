@@ -36,8 +36,8 @@ func prepareAPIServer() (*httptest.Server, *storage.LevelDBBackend, error) {
 	return ts, storage, nil
 }
 
-func prepareOps(storage *storage.LevelDBBackend, blockHeight uint64, count int, kp *keypair.Full) (*keypair.Full, []block.BlockOperation, error) {
-	kp, btList, err := prepareTxs(storage, blockHeight, count, kp)
+func prepareOps(storage *storage.LevelDBBackend, count int, kp *keypair.Full) (*keypair.Full, []block.BlockOperation, error) {
+	kp, btList, err := prepareTxs(storage, count, kp)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -52,7 +52,7 @@ func prepareOps(storage *storage.LevelDBBackend, blockHeight uint64, count int, 
 
 	return kp, boList, nil
 }
-func prepareOpsWithoutSave(blockHeight uint64, count int, kp *keypair.Full) (*keypair.Full, []block.BlockOperation, error) {
+func prepareOpsWithoutSave(count int, kp *keypair.Full) (*keypair.Full, []block.BlockOperation, error) {
 
 	var err error
 	if kp == nil {
@@ -71,7 +71,6 @@ func prepareOpsWithoutSave(blockHeight uint64, count int, kp *keypair.Full) (*ke
 	}
 
 	theBlock := block.TestMakeNewBlock(txHashes)
-	theBlock.Height += blockHeight
 	for _, tx := range txs {
 		for _, op := range tx.B.Operations {
 			bo, err := block.NewBlockOperationFromOperation(op, tx, theBlock.Height)
@@ -85,7 +84,7 @@ func prepareOpsWithoutSave(blockHeight uint64, count int, kp *keypair.Full) (*ke
 	return kp, boList, nil
 }
 
-func prepareTxs(storage *storage.LevelDBBackend, blockHeight uint64, count int, kp *keypair.Full) (*keypair.Full, []block.BlockTransaction, error) {
+func prepareTxs(storage *storage.LevelDBBackend, count int, kp *keypair.Full) (*keypair.Full, []block.BlockTransaction, error) {
 	var err error
 	if kp == nil {
 		kp, err = keypair.Random()
@@ -103,7 +102,6 @@ func prepareTxs(storage *storage.LevelDBBackend, blockHeight uint64, count int, 
 	}
 
 	theBlock := block.TestMakeNewBlock(txHashes)
-	theBlock.Height += blockHeight
 	err = theBlock.Save(storage)
 	if err != nil {
 		return nil, nil, err
@@ -123,7 +121,7 @@ func prepareTxs(storage *storage.LevelDBBackend, blockHeight uint64, count int, 
 	return kp, btList, nil
 }
 
-func prepareTxsWithoutSave(blockHeight uint64, count int, kp *keypair.Full) (*keypair.Full, []block.BlockTransaction, error) {
+func prepareTxsWithoutSave(count int, kp *keypair.Full) (*keypair.Full, []block.BlockTransaction, error) {
 	var err error
 	if kp == nil {
 		kp, err = keypair.Random()
@@ -141,7 +139,6 @@ func prepareTxsWithoutSave(blockHeight uint64, count int, kp *keypair.Full) (*ke
 	}
 
 	theBlock := block.TestMakeNewBlock(txHashes)
-	theBlock.Height += blockHeight
 	for _, tx := range txs {
 		a, err := tx.Serialize()
 		if err != nil {
