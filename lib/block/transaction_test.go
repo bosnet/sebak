@@ -39,7 +39,7 @@ func TestNewBlockTransaction(t *testing.T) {
 func TestBlockTransactionSaveAndGet(t *testing.T) {
 	st := storage.NewTestStorage()
 
-	bt := TestMakeNewBlockTransaction(networkID, 1)
+	bt := makeNewBlockTransaction(networkID, 1)
 	err := bt.Save(st)
 	require.NoError(t, err)
 
@@ -59,7 +59,7 @@ func TestBlockTransactionSaveAndGet(t *testing.T) {
 func TestBlockTransactionSaveExisting(t *testing.T) {
 	st := storage.NewTestStorage()
 
-	bt := TestMakeNewBlockTransaction(networkID, 1)
+	bt := makeNewBlockTransaction(networkID, 1)
 	err := bt.Save(st)
 	require.NoError(t, err)
 
@@ -224,7 +224,7 @@ func TestMultipleBlockTransactionConfirmed(t *testing.T) {
 func TestBlockTransactionMultipleSave(t *testing.T) {
 	st := storage.NewTestStorage()
 
-	bt := TestMakeNewBlockTransaction(networkID, 1)
+	bt := makeNewBlockTransaction(networkID, 1)
 	err := bt.Save(st)
 	require.NoError(t, err)
 
@@ -494,4 +494,12 @@ func TestMultipleBlockTransactionsOrderByBlockHeightAndCursor(t *testing.T) {
 			require.Equal(t, bt.Hash, halfSaved[i].Hash)
 		}
 	}
+}
+
+func makeNewBlockTransaction(networkID []byte, n int) BlockTransaction {
+	_, tx := transaction.TestMakeTransaction(networkID, n)
+
+	block := TestMakeNewBlock([]string{tx.GetHash()})
+	a, _ := tx.Serialize()
+	return NewBlockTransactionFromTransaction(block.Hash, block.Height, block.Confirmed, tx, a)
 }
