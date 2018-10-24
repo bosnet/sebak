@@ -306,7 +306,10 @@ func getMissingTransaction(checker *BallotChecker) (err error) {
 	}
 
 	for _, tx := range receivedTransaction {
-		checker.NodeRunner.TransactionPool.Add(tx)
+		err := checker.NodeRunner.TransactionPool.Add(tx)
+		if err == errors.ErrorTransactionPoolFull {
+			return err
+		}
 	}
 
 	return
