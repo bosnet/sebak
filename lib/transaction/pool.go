@@ -68,14 +68,6 @@ func (tp *Pool) Add(tx Transaction) error {
 	return nil
 }
 
-func (tp *Pool) TryAdd(tx Transaction) bool {
-	err := tp.Add(tx)
-	if err != nil {
-		return false
-	}
-	return true
-}
-
 func (tp *Pool) Remove(hashes ...string) {
 	if len(hashes) < 1 {
 		return
