@@ -57,7 +57,7 @@ func (api NetworkHandlerAPI) GetTransactionsHandler(w http.ResponseWriter, r *ht
 	prev := GetTransactionsHandlerPattern + "?" + options.SetReverse(true).Encode()
 	list := resource.NewResourceList(txs, self, next, prev)
 
-	httputils.WriteJSON(w, 200, list)
+	httputils.MustWriteJSON(w, 200, list)
 }
 
 func (api NetworkHandlerAPI) GetTransactionByHashHandler(w http.ResponseWriter, r *http.Request) {
@@ -92,13 +92,9 @@ func (api NetworkHandlerAPI) GetTransactionByHashHandler(w http.ResponseWriter, 
 	}
 	payload, err := readFunc()
 	if err == nil {
-		if err := httputils.WriteJSON(w, 200, payload); err != nil {
-			http.Error(w, "Error reading request body", http.StatusInternalServerError)
-		}
+		httputils.MustWriteJSON(w, 200, payload)
 	} else {
-		if err := httputils.WriteJSON(w, httputils.StatusCode(err), err); err != nil {
-			http.Error(w, "Error reading request body", http.StatusInternalServerError)
-		}
+		httputils.WriteJSONError(w, err)
 	}
 }
 
