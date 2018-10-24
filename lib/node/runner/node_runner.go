@@ -197,18 +197,12 @@ func (nr *NodeRunner) Ready() {
 	)
 
 	nr.network.AddHandler(nodeHandler.HandlerURLPattern(NodeInfoHandlerPattern), nodeHandler.NodeInfoHandler)
-	nr.network.AddHandler(nodeHandler.HandlerURLPattern(ConnectHandlerPattern), nodeHandler.ConnectHandler).
-		Methods("POST").
-		nr.network.AddHandler(nodeHandler.HandlerURLPattern(MessageHandlerPattern), nodeHandler.MessageHandler).
-		Methods("POST").
-		nr.network.AddHandler(nodeHandler.HandlerURLPattern(BallotHandlerPattern), nodeHandler.BallotHandler).
-		Methods("POST").
-		nr.network.AddHandler(nodeHandler.HandlerURLPattern(GetBlocksPattern), nodeHandler.GetBlocksHandler).
-		Methods("GET", "POST").
+	nr.network.AddHandler(nodeHandler.HandlerURLPattern(ConnectHandlerPattern), nodeHandler.ConnectHandler).Methods("POST")
+	nr.network.AddHandler(nodeHandler.HandlerURLPattern(MessageHandlerPattern), nodeHandler.MessageHandler).Methods("POST")
+	nr.network.AddHandler(nodeHandler.HandlerURLPattern(BallotHandlerPattern), nodeHandler.BallotHandler).Methods("POST")
+	nr.network.AddHandler(nodeHandler.HandlerURLPattern(GetBlocksPattern), nodeHandler.GetBlocksHandler).Methods("GET", "POST").
 		MatcherFunc(common.PostAndJSONMatcher)
-	nr.network.AddHandler(nodeHandler.HandlerURLPattern(GetTransactionPattern), nodeHandler.GetNodeTransactionsHandler).
-		Methods("GET", "POST").
-		MatcherFunc(common.PostAndJSONMatcher)
+	nr.network.AddHandler(nodeHandler.HandlerURLPattern(GetTransactionPattern), nodeHandler.GetNodeTransactionsHandler).Methods("GET", "POST").MatcherFunc(common.PostAndJSONMatcher)
 
 	nr.network.AddHandler(network.UrlPathPrefixMetric, promhttp.Handler().ServeHTTP)
 
