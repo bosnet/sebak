@@ -1,6 +1,7 @@
 package client
 
 import (
+	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/client"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/transaction"
@@ -212,4 +213,59 @@ func TestAccount(t *testing.T) {
 		require.Equal(t, senderBalance-account1ToAccount2-fee, senderBalance2)
 
 	}
+
+	//Payment from Account 1 to Account 2 with TransactionHistory
+	{
+		const (
+			account1ToAccount2 = 1000000
+		)
+
+		senderAccount, err := c.LoadAccount(account1Addr)
+		require.Nil(t, err)
+		senderBalance, err := strconv.ParseUint(senderAccount.Balance, 10, 64)
+
+		ob := operation.NewPayment(account2Addr, common.Amount(account1ToAccount2))
+		o, err := operation.NewOperation(ob)
+		require.Nil(t, err)
+
+		tx, err := transaction.NewTransaction(account1Addr, uint64(senderAccount.SequenceID), o)
+		require.Nil(t, err)
+
+		sender, err := keypair.Parse(account1Secret)
+		require.Nil(t, err)
+		tx.Sign(sender, []byte(NETWORK_ID))
+
+		body, err := tx.Serialize()
+		require.Nil(t, err)
+
+		pt, err := c.SubmitTransaction(body)
+		require.Nil(t, err)
+
+		for second := time.Duration(0); second < time.Second*10; second = second + time.Millisecond*500 {
+			th, err := c.LoadTransactionHistory(pt.Hash)
+			if err != nil {
+				t.Log(err)
+			}
+			if th.Status == block.TransactionHistoryStatusConfirmed {
+				break
+			}
+			time.Sleep(time.Millisecond * 500)
+		}
+
+		account2Account, err := c.LoadAccount(account2Addr)
+		require.Nil(t, err)
+
+		targetBalance, err := strconv.ParseUint(account2Account.Balance, 10, 64)
+		require.Nil(t, err)
+		require.Equal(t, uint64(account1ToAccount2*3), targetBalance)
+
+		senderAccount, err = c.LoadAccount(account1Addr)
+		require.Nil(t, err)
+
+		senderBalance2, err := strconv.ParseUint(senderAccount.Balance, 10, 64)
+		require.Nil(t, err)
+		require.Equal(t, senderBalance-account1ToAccount2-fee, senderBalance2)
+
+	}
+
 }

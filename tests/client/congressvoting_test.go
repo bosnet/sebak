@@ -1,6 +1,7 @@
 package client
 
 import (
+	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/client"
 	"boscoin.io/sebak/lib/transaction"
 	"boscoin.io/sebak/lib/transaction/operation"
@@ -41,8 +42,9 @@ func TestCongressVoting(t *testing.T) {
 		body, err := tx.Serialize()
 		require.Nil(t, err)
 
-		_, err = c.SubmitTransaction(body)
+		pt, err := c.SubmitTransaction(body)
 		require.Nil(t, err)
+		require.Equal(t, pt.Status, block.TransactionHistoryStatusSubmitted)
 
 		var e error
 		for second := time.Duration(0); second < time.Second*10; second = second + time.Millisecond*500 {

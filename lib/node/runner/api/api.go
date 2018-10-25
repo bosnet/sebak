@@ -6,9 +6,9 @@ import (
 
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/network"
-	"boscoin.io/sebak/lib/network/api/resource"
 	"boscoin.io/sebak/lib/network/httputils"
 	"boscoin.io/sebak/lib/node"
+	"boscoin.io/sebak/lib/node/runner/api/resource"
 	"boscoin.io/sebak/lib/storage"
 )
 
@@ -23,6 +23,7 @@ const (
 	GetTransactionByHashHandlerPattern     = "/transactions/{id}"
 	GetTransactionOperationsHandlerPattern = "/transactions/{id}/operations"
 	PostTransactionPattern                 = "/transactions"
+	GetTransactionHistoryHandlerPattern    = "/transactions/{id}/history"
 	GetNodeInfoPattern                     = "/"
 )
 
