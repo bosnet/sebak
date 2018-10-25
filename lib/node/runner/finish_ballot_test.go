@@ -14,12 +14,12 @@ import (
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/consensus"
-	"boscoin.io/sebak/lib/consensus/round"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
 	"boscoin.io/sebak/lib/transaction/operation"
+	"boscoin.io/sebak/lib/voting"
 )
 
 func createNodeRunnerForTestingWithFileStorage(n int, conf common.Config, recv chan struct{}) (*NodeRunner, []*node.LocalNode, string) {
@@ -95,11 +95,11 @@ func testFinishBallotWithBatch(withBatch bool, numberOfTransactions, numberOfOpe
 		var txs []transaction.Transaction
 		var txHashes []string
 
-		rd := round.Round{
-			Number:      0,
-			BlockHeight: genesisBlock.Height,
-			BlockHash:   genesisBlock.Hash,
-			TotalTxs:    genesisBlock.TotalTxs,
+		rd := voting.Basis{
+			Round:     0,
+			Height:    genesisBlock.Height,
+			BlockHash: genesisBlock.Hash,
+			TotalTxs:  genesisBlock.TotalTxs,
 		}
 
 		for i := 0; i < numberOfTransactions; i++ {

@@ -53,6 +53,7 @@ func (p *ballotCheckerProposedTransaction) MakeBallot(numberOfTxs int) (blt *bal
 		Height:    p.genesisBlock.Height,
 		BlockHash: p.genesisBlock.Hash,
 		TotalTxs:  p.genesisBlock.TotalTxs,
+		TotalOps:  p.genesisBlock.TotalOps,
 	}
 
 	for i := 0; i < numberOfTxs; i++ {
