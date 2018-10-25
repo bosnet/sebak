@@ -4,7 +4,7 @@ import (
 	"sync"
 
 	"boscoin.io/sebak/lib/ballot"
-	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/voting"
 )
 

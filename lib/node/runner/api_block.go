@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	"boscoin.io/sebak/lib/block"
-	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/transaction"
 )
 

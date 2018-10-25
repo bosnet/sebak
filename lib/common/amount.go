@@ -14,7 +14,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/errors"
 )
 
 const (

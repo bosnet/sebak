@@ -15,7 +15,7 @@ import (
 	"github.com/ulule/limiter"
 
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/network/httputils"
 )
 

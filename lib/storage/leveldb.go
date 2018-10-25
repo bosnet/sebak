@@ -11,7 +11,7 @@ import (
 	leveldbUtil "github.com/syndtr/goleveldb/leveldb/util"
 
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/errors"
 )
 
 type LevelDBCore interface {

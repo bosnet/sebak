@@ -4,7 +4,7 @@ import (
 	"sort"
 
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/errors"
 
 	"github.com/btcsuite/btcutil/base58"
 )

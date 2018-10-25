@@ -3,7 +3,7 @@ package common
 import (
 	"strings"
 
-	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/errors"
 )
 
 var (

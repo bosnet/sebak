@@ -5,7 +5,7 @@ import (
 	"net/url"
 
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/errors"
 )
 
 type CongressVotingResult struct {

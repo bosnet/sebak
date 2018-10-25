@@ -3,7 +3,7 @@ package httputils
 import (
 	"net/http"
 
-	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/errors"
 	"io"
 )
 

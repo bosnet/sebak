@@ -8,7 +8,7 @@ import (
 
 	"encoding/json"
 
-	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/errors"
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"

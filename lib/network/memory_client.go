@@ -2,7 +2,7 @@ package network
 
 import (
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/node"
 )
 
