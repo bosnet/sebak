@@ -100,7 +100,7 @@ func (st *LevelDBBackend) Discard() error {
 	var committable CommittableBackend
 	var ok bool
 	if committable, ok = st.Core.(CommittableBackend); !ok {
-		return setLevelDBCoreError(errors.New("not CommittableBackend"))
+		return errors.ErrorNotCommittableBackend
 	}
 
 	committable.Discard()
@@ -112,7 +112,7 @@ func (st *LevelDBBackend) Commit() error {
 	var committable CommittableBackend
 	var ok bool
 	if committable, ok = st.Core.(CommittableBackend); !ok {
-		return setLevelDBCoreError(errors.New("not CommittableBackend"))
+		return errors.ErrorNotCommittableBackend
 	}
 
 	return setLevelDBCoreError(committable.Commit())
