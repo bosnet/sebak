@@ -573,7 +573,7 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) (err error) {
 		}
 
 		if err = bs.Commit(); err != nil {
-			if err != errors.ErrorNotCommittableBackend {
+			if err != errors.ErrorNotCommitableCore {
 				bs.Discard()
 				return
 			}

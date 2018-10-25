@@ -26,16 +26,12 @@ func NewBatchCore(core LevelDBCore) *BatchCore {
 	}
 }
 
-func (bb *BatchCore) convertKey(key []byte) string {
-	return string(key)
-}
-
 func (bb *BatchCore) Has(key []byte, opt *leveldbOpt.ReadOptions) (bool, error) {
 	bb.RLock()
 	defer bb.RUnlock()
 
 	var found bool
-	if _, found = bb.inserted[bb.convertKey(key)]; found {
+	if _, found = bb.inserted[string(key)]; found {
 		return true, nil
 	}
 
@@ -47,7 +43,7 @@ func (bb *BatchCore) Get(key []byte, opt *leveldbOpt.ReadOptions) (b []byte, err
 	defer bb.RUnlock()
 
 	var found bool
-	if b, found = bb.inserted[bb.convertKey(key)]; found {
+	if b, found = bb.inserted[string(key)]; found {
 		return
 	}
 
@@ -63,7 +59,7 @@ func (bb *BatchCore) Put(key []byte, v []byte, opt *leveldbOpt.WriteOptions) err
 	bb.Lock()
 	defer bb.Unlock()
 
-	bb.inserted[bb.convertKey(key)] = v
+	bb.inserted[string(key)] = v
 	bb.batch.Put(key, v)
 
 	return nil
@@ -111,7 +107,7 @@ func (bb *BatchCore) Delete(key []byte, opt *leveldbOpt.WriteOptions) error {
 	bb.Lock()
 	defer bb.Unlock()
 
-	delete(bb.inserted, bb.convertKey(key))
+	delete(bb.inserted, string(key))
 	bb.batch.Delete(key)
 
 	return nil

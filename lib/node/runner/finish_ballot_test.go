@@ -310,8 +310,8 @@ func TestBenchmarkFinishBallot(t *testing.T) {
 	var err error
 
 	err = testFinishBallotWithBatch(false, 100, 100)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	err = testFinishBallotWithBatch(true, 100, 100)
-	require.Nil(t, err)
+	require.NoError(t, err)
 }
