@@ -25,7 +25,7 @@ func TestGetOperationsByTxHashHandler(t *testing.T) {
 	defer storage.Close()
 	defer ts.Close()
 
-	_, btList, err := prepareTxs(storage, 1, nil)
+	_, btList, err := prepareTxs(storage, 1)
 	require.NoError(t, err)
 
 	bt := btList[0]

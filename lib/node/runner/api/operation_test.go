@@ -24,7 +24,7 @@ func TestGetOperationsByAccountHandler(t *testing.T) {
 	defer storage.Close()
 	defer ts.Close()
 
-	kp, boList, err := prepareOps(storage, 10, nil)
+	kp, boList, err := prepareOps(storage, 10)
 	require.NoError(t, err)
 
 	url := strings.Replace(GetAccountOperationsHandlerPattern, "{id}", kp.Address(), -1)
@@ -72,7 +72,7 @@ func TestGetOperationsByAccountHandlerWithType(t *testing.T) {
 	defer storage.Close()
 	defer ts.Close()
 
-	kp, boList, err := prepareOps(storage, 10, nil)
+	kp, boList, err := prepareOps(storage, 10)
 	require.NoError(t, err)
 	ba := block.NewBlockAccount(kp.Address(), common.Amount(common.BaseReserve))
 	ba.MustSave(storage)
@@ -131,7 +131,7 @@ func TestGetOperationsByAccountHandlerStream(t *testing.T) {
 	defer ts.Close()
 
 	boMap := make(map[string]block.BlockOperation)
-	kp, boList, err := prepareOpsWithoutSave(10, nil)
+	kp, boList, err := prepareOpsWithoutSave(10)
 	require.NoError(t, err)
 	for _, bo := range boList {
 		boMap[bo.Hash] = bo

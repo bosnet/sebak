@@ -36,8 +36,8 @@ func prepareAPIServer() (*httptest.Server, *storage.LevelDBBackend, error) {
 	return ts, storage, nil
 }
 
-func prepareOps(storage *storage.LevelDBBackend, count int, kp *keypair.Full) (*keypair.Full, []block.BlockOperation, error) {
-	kp, btList, err := prepareTxs(storage, count, kp)
+func prepareOps(storage *storage.LevelDBBackend, count int) (*keypair.Full, []block.BlockOperation, error) {
+	kp, btList, err := prepareTxs(storage, count)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -52,14 +52,11 @@ func prepareOps(storage *storage.LevelDBBackend, count int, kp *keypair.Full) (*
 
 	return kp, boList, nil
 }
-func prepareOpsWithoutSave(count int, kp *keypair.Full) (*keypair.Full, []block.BlockOperation, error) {
+func prepareOpsWithoutSave(count int) (*keypair.Full, []block.BlockOperation, error) {
 
-	var err error
-	if kp == nil {
-		kp, err = keypair.Random()
-		if err != nil {
-			return nil, nil, err
-		}
+	kp, err := keypair.Random()
+	if err != nil {
+		return nil, nil, err
 	}
 	var txs []transaction.Transaction
 	var txHashes []string
@@ -84,13 +81,10 @@ func prepareOpsWithoutSave(count int, kp *keypair.Full) (*keypair.Full, []block.
 	return kp, boList, nil
 }
 
-func prepareTxs(storage *storage.LevelDBBackend, count int, kp *keypair.Full) (*keypair.Full, []block.BlockTransaction, error) {
-	var err error
-	if kp == nil {
-		kp, err = keypair.Random()
-		if err != nil {
-			return nil, nil, err
-		}
+func prepareTxs(storage *storage.LevelDBBackend, count int) (*keypair.Full, []block.BlockTransaction, error) {
+	kp, err := keypair.Random()
+	if err != nil {
+		return nil, nil, err
 	}
 	var txs []transaction.Transaction
 	var txHashes []string
@@ -121,13 +115,10 @@ func prepareTxs(storage *storage.LevelDBBackend, count int, kp *keypair.Full) (*
 	return kp, btList, nil
 }
 
-func prepareTxsWithoutSave(count int, kp *keypair.Full) (*keypair.Full, []block.BlockTransaction, error) {
-	var err error
-	if kp == nil {
-		kp, err = keypair.Random()
-		if err != nil {
-			return nil, nil, err
-		}
+func prepareTxsWithoutSave(count int) (*keypair.Full, []block.BlockTransaction, error) {
+	kp, err := keypair.Random()
+	if err != nil {
+		return nil, nil, err
 	}
 	var txs []transaction.Transaction
 	var txHashes []string
