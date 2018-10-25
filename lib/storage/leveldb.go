@@ -85,14 +85,14 @@ func (st *LevelDBBackend) OpenTransaction() (*LevelDBBackend, error) {
 }
 
 func (st *LevelDBBackend) OpenBatch() (*LevelDBBackend, error) {
-	_, ok := st.Core.(*BatchBackend)
+	_, ok := st.Core.(*BatchCore)
 	if ok {
 		return nil, errors.New("this is already BatchBackend")
 	}
 
 	return &LevelDBBackend{
 		DB:   st.DB,
-		Core: NewBatchBackend(st.DB),
+		Core: NewBatchCore(st.DB),
 	}, nil
 }
 

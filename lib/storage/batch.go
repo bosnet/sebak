@@ -9,7 +9,7 @@ import (
 	leveldbUtil "github.com/syndtr/goleveldb/leveldb/util"
 )
 
-type BatchBackend struct {
+type BatchCore struct {
 	sync.RWMutex
 
 	core  LevelDBCore
@@ -18,19 +18,19 @@ type BatchBackend struct {
 	inserted map[string][]byte
 }
 
-func NewBatchBackend(core LevelDBCore) *BatchBackend {
-	return &BatchBackend{
+func NewBatchCore(core LevelDBCore) *BatchCore {
+	return &BatchCore{
 		core:     core,
 		batch:    &leveldb.Batch{},
 		inserted: map[string][]byte{},
 	}
 }
 
-func (bb *BatchBackend) convertKey(key []byte) string {
+func (bb *BatchCore) convertKey(key []byte) string {
 	return string(key)
 }
 
-func (bb *BatchBackend) Has(key []byte, opt *leveldbOpt.ReadOptions) (bool, error) {
+func (bb *BatchCore) Has(key []byte, opt *leveldbOpt.ReadOptions) (bool, error) {
 	bb.RLock()
 	defer bb.RUnlock()
 
@@ -42,7 +42,7 @@ func (bb *BatchBackend) Has(key []byte, opt *leveldbOpt.ReadOptions) (bool, erro
 	return bb.core.Has(key, opt)
 }
 
-func (bb *BatchBackend) Get(key []byte, opt *leveldbOpt.ReadOptions) (b []byte, err error) {
+func (bb *BatchCore) Get(key []byte, opt *leveldbOpt.ReadOptions) (b []byte, err error) {
 	bb.RLock()
 	defer bb.RUnlock()
 
@@ -55,11 +55,11 @@ func (bb *BatchBackend) Get(key []byte, opt *leveldbOpt.ReadOptions) (b []byte, 
 }
 
 // NewIterator does not work with `BatchBackend`
-func (bb *BatchBackend) NewIterator(r *leveldbUtil.Range, opt *leveldbOpt.ReadOptions) leveldbIterator.Iterator {
+func (bb *BatchCore) NewIterator(r *leveldbUtil.Range, opt *leveldbOpt.ReadOptions) leveldbIterator.Iterator {
 	return bb.core.NewIterator(r, opt)
 }
 
-func (bb *BatchBackend) Put(key []byte, v []byte, opt *leveldbOpt.WriteOptions) error {
+func (bb *BatchCore) Put(key []byte, v []byte, opt *leveldbOpt.WriteOptions) error {
 	bb.Lock()
 	defer bb.Unlock()
 
@@ -71,7 +71,7 @@ func (bb *BatchBackend) Put(key []byte, v []byte, opt *leveldbOpt.WriteOptions) 
 
 // Write will write the existing contents of `BatchBackend.batch` and then
 // argument, batch will be written.
-func (bb *BatchBackend) Write(batch *leveldb.Batch, opt *leveldbOpt.WriteOptions) (err error) {
+func (bb *BatchCore) Write(batch *leveldb.Batch, opt *leveldbOpt.WriteOptions) (err error) {
 	bb.Lock()
 	defer bb.Unlock()
 
@@ -86,14 +86,14 @@ func (bb *BatchBackend) Write(batch *leveldb.Batch, opt *leveldbOpt.WriteOptions
 	return
 }
 
-func (bb *BatchBackend) Discard() {
+func (bb *BatchCore) Discard() {
 	bb.Lock()
 	defer bb.Unlock()
 
 	bb.clear()
 }
 
-func (bb *BatchBackend) Commit() (err error) {
+func (bb *BatchCore) Commit() (err error) {
 	bb.Lock()
 	defer bb.Unlock()
 
@@ -107,7 +107,7 @@ func (bb *BatchBackend) Commit() (err error) {
 	return
 }
 
-func (bb *BatchBackend) Delete(key []byte, opt *leveldbOpt.WriteOptions) error {
+func (bb *BatchCore) Delete(key []byte, opt *leveldbOpt.WriteOptions) error {
 	bb.Lock()
 	defer bb.Unlock()
 
@@ -117,14 +117,14 @@ func (bb *BatchBackend) Delete(key []byte, opt *leveldbOpt.WriteOptions) error {
 	return nil
 }
 
-func (bb *BatchBackend) Dump() []byte {
+func (bb *BatchCore) Dump() []byte {
 	bb.RLock()
 	defer bb.RUnlock()
 
 	return bb.batch.Dump()
 }
 
-func (bb *BatchBackend) clear() {
+func (bb *BatchCore) clear() {
 	bb.batch = &leveldb.Batch{}
 	bb.inserted = map[string][]byte{}
 }
