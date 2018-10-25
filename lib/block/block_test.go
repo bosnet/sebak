@@ -14,12 +14,12 @@ import (
 )
 
 func TestBlockConfirmedOrdering(t *testing.T) {
-	st := storage.NewTestStorage()
+	st := InitTestBlockchain()
 
-	var inserted []Block
-	for i := 0; i < 10; i++ {
-		bk := TestMakeNewBlock([]string{})
-		bk.Height = uint64(i)
+	genesis := GetLatestBlock(st)
+	inserted := []Block{genesis}
+	for i := genesis.Height + 1; i < 10; i++ {
+		bk := TestMakeNewBlockWithPrevBlock(inserted[len(inserted)-1], []string{})
 		bk.MustSave(st)
 		inserted = append(inserted, bk)
 	}
