@@ -1,8 +1,15 @@
 package errors
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 var New = errors.New
+
+func Newf(err *Error, format string, args ...interface{}) error {
+	return NewError(err.Code, fmt.Sprintf(format, args...))
+}
 
 var (
 	ErrorBlockAlreadyExists                        = NewError(100, "already exists in block")
