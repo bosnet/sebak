@@ -53,10 +53,7 @@ func (p *HelperTestGetBlocksHandler) createBlock() block.Block {
 		txs = append(txs, tx)
 	}
 
-	latest := block.GetLatestBlock(p.st)
-	height := int(latest.Height)
-	bk := block.TestMakeNewBlock(txHashes)
-	bk.Height = uint64(height + 1)
+	bk := block.TestMakeNewBlockWithPrevBlock(block.GetLatestBlock(p.st), txHashes)
 	bk.MustSave(p.st)
 
 	for _, tx := range txs {
