@@ -167,7 +167,7 @@ func (st *LevelDBBackend) New(k string, v interface{}) (err error) {
 	if exists, err = st.Has(k); err != nil {
 		return
 	} else if exists {
-		return errors.ErrorStorageRecordAlreadyExists
+		return errors.Newf(errors.ErrorStorageRecordAlreadyExists, "record {%v} already exists in storage", k)
 	}
 
 	var encoded []byte
@@ -197,7 +197,7 @@ func (st *LevelDBBackend) News(vs ...Item) (err error) {
 	for _, v := range vs {
 		if exists, err = st.Has(v.Key); exists || err != nil {
 			if exists {
-				err = errors.ErrorStorageRecordAlreadyExists
+				return errors.Newf(errors.ErrorStorageRecordAlreadyExists, "record {%v} already exists in storage", v.Key)
 			}
 			return
 		}
