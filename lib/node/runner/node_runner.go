@@ -264,7 +264,7 @@ func (nr *NodeRunner) Ready() {
 	nr.network.AddHandler(
 		apiHandler.HandlerURLPattern(api.GetTransactionsHandlerPattern),
 		TransactionsHandler,
-	).Methods("GET", "POST", "OPTIONS").MatcherFunc(common.PostAndJSONMatcher)
+	).Methods("GET", "POST", "OPTIONS").MatcherFunc(common.PostAndJSONMatcherForClient)
 
 	// pprof
 	if DebugPProf == true {
