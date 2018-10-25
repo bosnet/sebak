@@ -137,10 +137,10 @@ func (c *Client) LoadTransaction(id string, queries ...Q) (transaction Transacti
 	return
 }
 
-func (c *Client) LoadTransactionHistory(id string, queries ...Q) (transaction TransactionHistory, err error) {
+func (c *Client) LoadTransactionHistory(id string, queries ...Q) (transactionHistory TransactionHistory, err error) {
 	url := strings.Replace(UrlTransactionHistory, "{id}", id, -1)
 	url += Queries(queries).toQueryString()
-	err = c.getResponse(url, http.Header{}, &transaction)
+	err = c.getResponse(url, http.Header{}, &transactionHistory)
 	return
 }
 

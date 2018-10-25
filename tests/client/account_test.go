@@ -246,7 +246,7 @@ func TestAccount(t *testing.T) {
 			if err != nil {
 				t.Log(err)
 			}
-			if th.Status == block.BlockTransactionHistoryStatusConfirmed {
+			if th.Status == block.TransactionHistoryStatusConfirmed {
 				break
 			}
 			time.Sleep(time.Millisecond * 500)

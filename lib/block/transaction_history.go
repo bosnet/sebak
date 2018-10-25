@@ -20,9 +20,9 @@ const (
 )
 
 const (
-	BlockTransactionHistoryStatusSubmitted = "submitted"
-	BlockTransactionHistoryStatusConfirmed = "confirmed"
-	BlockTransactionHistoryStatusRejected  = "rejected"
+	TransactionHistoryStatusSubmitted = "submitted"
+	TransactionHistoryStatusConfirmed = "confirmed"
+	TransactionHistoryStatusRejected  = "rejected"
 )
 
 type BlockTransactionHistory struct {
@@ -49,8 +49,8 @@ func SaveTransactionHistory(st *storage.LevelDBBackend, tx transaction.Transacti
 	if err != nil {
 		bth = NewTransactionHistoryFromTransaction(tx, message)
 	}
-	if bth.Status != "" && bth.Status != BlockTransactionHistoryStatusSubmitted {
-		// Only BlockTransactionHistoryStatusSubmitted can be changed
+	if bth.Status != "" && bth.Status != TransactionHistoryStatusSubmitted {
+		// Only TransactionHistoryStatusSubmitted can be changed
 		return nil
 	}
 	bth.Status = status

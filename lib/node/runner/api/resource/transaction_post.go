@@ -24,7 +24,7 @@ func NewTransactionPost(tx transaction.Transaction) *TransactionPost {
 func (t TransactionPost) GetMap() hal.Entry {
 	return hal.Entry{
 		"hash":    t.hash,
-		"status":  block.BlockTransactionHistoryStatusSubmitted,
+		"status":  block.TransactionHistoryStatusSubmitted,
 		"message": t.tx.B,
 	}
 }
