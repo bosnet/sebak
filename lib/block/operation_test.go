@@ -98,10 +98,10 @@ func TestGetSortedBlockOperationsByTxHash(t *testing.T) {
 }
 
 func TestBlockOperationSaveByTransaction(t *testing.T) {
-	st := storage.NewTestStorage()
+	st := InitTestBlockchain()
 
 	_, tx := transaction.TestMakeTransaction(networkID, 10)
-	block := TestMakeNewBlock([]string{tx.GetHash()})
+	block := TestMakeNewBlockWithPrevBlock(GetLatestBlock(st), []string{tx.GetHash()})
 	bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, block.Confirmed, tx, common.MustJSONMarshal(tx))
 	err := bt.Save(st)
 	require.NoError(t, err)
