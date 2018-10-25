@@ -2,7 +2,6 @@ package storage
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/syndtr/goleveldb/leveldb"
 	leveldbIterator "github.com/syndtr/goleveldb/leveldb/iterator"
@@ -34,9 +33,9 @@ func setLevelDBCoreError(err error) error {
 		return nil
 	}
 
-	return errors.NewError(
-		errors.ErrorStorageCoreError.Code,
-		fmt.Sprintf("%s: %s", errors.ErrorStorageCoreError.Message, err.Error()),
+	return errors.Newf(
+		errors.ErrorStorageCoreError,
+		"%s: %s", errors.ErrorStorageCoreError.Message, err.Error(),
 	)
 }
 
