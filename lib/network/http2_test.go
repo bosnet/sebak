@@ -92,7 +92,7 @@ func TestHTTP2NetworkTLSSupport(t *testing.T) {
 	}
 
 	network, err := makeTestHTTP2NetworkForTLS(endpoint)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	defer network.Stop()
 
 	{
@@ -103,10 +103,10 @@ func TestHTTP2NetworkTLSSupport(t *testing.T) {
 			false,
 		)
 
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		_, err = client.Get(endpoint.String(), http.Header{})
-		require.Nil(t, err)
+		require.NoError(t, err)
 	}
 
 	{
@@ -117,7 +117,7 @@ func TestHTTP2NetworkTLSSupport(t *testing.T) {
 		client := &http.Client{Transport: transport}
 
 		_, err := client.Get(endpoint.String())
-		require.Nil(t, err)
+		require.NoError(t, err)
 	}
 }
 
@@ -128,10 +128,10 @@ func TestHTTP2NetworkWithoutTLS(t *testing.T) {
 	endpoint, err := common.NewEndpointFromString(
 		fmt.Sprintf("http://localhost:%s", getPort()),
 	)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	network, err := makeTestHTTP2NetworkForTLS(endpoint)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	defer network.Stop()
 
 	{
@@ -141,15 +141,15 @@ func TestHTTP2NetworkWithoutTLS(t *testing.T) {
 			defaultIdleTimeout,
 			false,
 		)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		_, err = client.Get(endpoint.String(), http.Header{})
-		require.Nil(t, err)
+		require.NoError(t, err)
 	}
 
 	{
 		// with normal HTTPClient
 		_, err := http.Get(endpoint.String())
-		require.Nil(t, err)
+		require.NoError(t, err)
 	}
 }

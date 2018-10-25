@@ -41,10 +41,10 @@ func TestBlockTransactionSaveAndGet(t *testing.T) {
 
 	bt := TestMakeNewBlockTransaction(networkID, 1)
 	err := bt.Save(st)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	fetched, err := GetBlockTransaction(st, bt.Hash)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	require.Equal(t, bt.Hash, fetched.Hash)
 	require.Equal(t, bt.SequenceID, fetched.SequenceID)
@@ -61,14 +61,14 @@ func TestBlockTransactionSaveExisting(t *testing.T) {
 
 	bt := TestMakeNewBlockTransaction(networkID, 1)
 	err := bt.Save(st)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	exists, err := ExistsBlockTransaction(st, bt.Hash)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.Equal(t, exists, true)
 
 	err = bt.Save(st)
-	require.NotNil(t, err)
+	require.Error(t, err)
 	require.Equal(t, err, errors.ErrorAlreadySaved)
 }
 
@@ -95,7 +95,7 @@ func TestMultipleBlockTransactionSource(t *testing.T) {
 		a, _ := tx.Serialize()
 		bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, block.Confirmed, tx, a)
 		err := bt.Save(st)
-		require.Nil(t, err)
+		require.NoError(t, err)
 	}
 
 	// create txs from another keypair
@@ -112,7 +112,7 @@ func TestMultipleBlockTransactionSource(t *testing.T) {
 		a, _ := tx.Serialize()
 		bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, block.Confirmed, tx, a)
 		err := bt.Save(st)
-		require.Nil(t, err)
+		require.NoError(t, err)
 	}
 
 	{
@@ -178,7 +178,7 @@ func TestMultipleBlockTransactionConfirmed(t *testing.T) {
 		a, _ := tx.Serialize()
 		bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, block.Confirmed, tx, a)
 		err := bt.Save(st)
-		require.Nil(t, err)
+		require.NoError(t, err)
 	}
 
 	var saved []BlockTransaction
@@ -226,7 +226,7 @@ func TestBlockTransactionMultipleSave(t *testing.T) {
 
 	bt := TestMakeNewBlockTransaction(networkID, 1)
 	err := bt.Save(st)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	if err = bt.Save(st); err != nil {
 		if err != errors.ErrorAlreadySaved {

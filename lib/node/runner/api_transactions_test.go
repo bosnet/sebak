@@ -138,16 +138,16 @@ func TestGetNodeTransactionsHandlerWithoutHashes(t *testing.T) {
 	u := p.URL(nil)
 
 	req, err := http.NewRequest("GET", u.String(), nil)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	resp, err := p.server.Client().Do(req)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
 	body, _ := ioutil.ReadAll(resp.Body)
 	resp.Body.Close()
 	responseError := errors.Error{}
 	err = json.Unmarshal(body, &responseError)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	require.Equal(t, errors.ErrorInvalidQueryString.Code, responseError.Code)
 }
@@ -163,13 +163,13 @@ func TestGetNodeTransactionsHandlerWithUnknownHashes(t *testing.T) {
 		u.RawQuery = fmt.Sprintf("hash=%s", unknownHashKey)
 
 		req, err := http.NewRequest("GET", u.String(), nil)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		resp, err := p.server.Client().Do(req)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 
 		rbs, err := unmarshalFromNodeItemResponseBody(resp.Body)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, 1, len(rbs[NodeItemError]))
 		require.Equal(t, errors.ErrorTransactionNotFound.Code, rbs[NodeItemError][0].(*errors.Error).Code)
 		require.Equal(t, unknownHashKey, rbs[NodeItemError][0].(*errors.Error).Data["hash"])
@@ -182,13 +182,13 @@ func TestGetNodeTransactionsHandlerWithUnknownHashes(t *testing.T) {
 		u.RawQuery = query.Encode()
 
 		req, err := http.NewRequest("GET", u.String(), nil)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		resp, err := p.server.Client().Do(req)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 
 		rbs, err := unmarshalFromNodeItemResponseBody(resp.Body)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, 1, len(rbs[NodeItemError]))
 		require.Equal(t, errors.ErrorTransactionNotFound.Code, rbs[NodeItemError][0].(*errors.Error).Code)
 		require.Equal(t, unknownHashKey, rbs[NodeItemError][0].(*errors.Error).Data["hash"])
@@ -212,16 +212,16 @@ func TestGetNodeTransactionsHandlerPOST(t *testing.T) {
 		u.RawQuery = query.Encode()
 
 		req, err := http.NewRequest("POST", u.String(), nil)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		resp, err := p.server.Client().Do(req)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
 		body, _ := ioutil.ReadAll(resp.Body)
 		resp.Body.Close()
 		responseError := errors.Error{}
 		err = json.Unmarshal(body, &responseError)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		require.Equal(t, errors.ErrorContentTypeNotJSON.Code, responseError.Code)
 	}
@@ -233,13 +233,13 @@ func TestGetNodeTransactionsHandlerPOST(t *testing.T) {
 
 		req, err := http.NewRequest("POST", u.String(), nil)
 		req.Header.Set("Content-Type", "application/json")
-		require.Nil(t, err)
+		require.NoError(t, err)
 		resp, err := p.server.Client().Do(req)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 
 		rbs, err := unmarshalFromNodeItemResponseBody(resp.Body)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		require.Equal(t, 1, len(rbs))
 		require.Equal(t, 1, len(rbs[NodeItemTransaction]))
@@ -263,13 +263,13 @@ func TestGetNodeTransactionsHandlerWithMultipleHashes(t *testing.T) {
 		u.RawQuery = query.Encode()
 
 		req, err := http.NewRequest("GET", u.String(), nil)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		resp, err := p.server.Client().Do(req)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 
 		rbs, err := unmarshalFromNodeItemResponseBody(resp.Body)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		require.Equal(t, 1, len(rbs))
 		require.Equal(t, len(txHashes), len(rbs[NodeItemTransaction]))
@@ -289,13 +289,13 @@ func TestGetNodeTransactionsHandlerWithMultipleHashes(t *testing.T) {
 
 		req, err := http.NewRequest("POST", u.String(), bytes.NewBuffer(common.MustJSONMarshal(postData)))
 		req.Header.Set("Content-Type", "application/json")
-		require.Nil(t, err)
+		require.NoError(t, err)
 		resp, err := p.server.Client().Do(req)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 
 		rbs, err := unmarshalFromNodeItemResponseBody(resp.Body)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		require.Equal(t, 1, len(rbs))
 		require.Equal(t, 2, len(rbs[NodeItemTransaction]))
@@ -325,13 +325,13 @@ func TestGetNodeTransactionsHandlerInTransactionPool(t *testing.T) {
 		u.RawQuery = query.Encode()
 
 		req, err := http.NewRequest("GET", u.String(), nil)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		resp, err := p.server.Client().Do(req)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 
 		rbs, err := unmarshalFromNodeItemResponseBody(resp.Body)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		require.Equal(t, 1, len(rbs))
 		require.Equal(t, 1, len(rbs[NodeItemTransaction]))
@@ -361,16 +361,16 @@ func TestGetNodeTransactionsHandlerTooManyHashes(t *testing.T) {
 		u.RawQuery = query.Encode()
 
 		req, err := http.NewRequest("GET", u.String(), nil)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		resp, err := p.server.Client().Do(req)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
 		body, _ := ioutil.ReadAll(resp.Body)
 		resp.Body.Close()
 		responseError := errors.Error{}
 		err = json.Unmarshal(body, &responseError)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		require.Equal(t, errors.ErrorInvalidQueryString.Code, responseError.Code)
 	}

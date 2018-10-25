@@ -44,11 +44,11 @@ func TestProblem(t *testing.T) {
 	{
 		url := ts.URL + fmt.Sprintf("/problem_status_default")
 		resp, err := http.Get(url)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		defer resp.Body.Close()
 		reader := bufio.NewReader(resp.Body)
 		readByte, err := ioutil.ReadAll(reader)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		{
 			var f interface{}
 			json.Unmarshal(readByte, &f)
@@ -66,11 +66,11 @@ func TestProblem(t *testing.T) {
 	{
 		url := ts.URL + fmt.Sprintf("/problem_status_with_detail")
 		resp, err := http.Get(url)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		defer resp.Body.Close()
 		reader := bufio.NewReader(resp.Body)
 		readByte, err := ioutil.ReadAll(reader)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		{
 			var f interface{}
 			json.Unmarshal(readByte, &f)
@@ -88,11 +88,11 @@ func TestProblem(t *testing.T) {
 	{
 		url := ts.URL + fmt.Sprintf("/problem_status_with_detail_instance")
 		resp, err := http.Get(url)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		defer resp.Body.Close()
 		reader := bufio.NewReader(resp.Body)
 		readByte, err := ioutil.ReadAll(reader)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		{
 			var f interface{}
 			json.Unmarshal(readByte, &f)
@@ -110,11 +110,11 @@ func TestProblem(t *testing.T) {
 	{
 		url := ts.URL + fmt.Sprintf("/problem_with_error")
 		resp, err := http.Get(url)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		defer resp.Body.Close()
 		reader := bufio.NewReader(resp.Body)
 		readByte, err := ioutil.ReadAll(reader)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		{
 			var f interface{}
 			json.Unmarshal(readByte, &f)

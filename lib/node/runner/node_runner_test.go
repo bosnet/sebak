@@ -286,10 +286,10 @@ func TestExpiredBallotCheckProposer(t *testing.T) {
 	}
 
 	err := BallotVote(checker)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	err = BallotIsSameProposer(checker)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	// The createNodeRunnerForTesting has FixedSelector{localNode.Address()} so the proposer is always nr(nodes[0]).
 	// The invalidBallot has nodes[1] as a proposer so it is invalid.
@@ -309,7 +309,7 @@ func TestExpiredBallotCheckProposer(t *testing.T) {
 	require.Nil(t, BallotVote(checker))
 
 	err = BallotIsSameProposer(checker)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	require.Equal(t, ballot.VotingNO, checker.VotingHole)
 }

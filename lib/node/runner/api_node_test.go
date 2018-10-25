@@ -249,9 +249,9 @@ func TestGetNodeInfoHandler(t *testing.T) {
 		u.Path = NodeInfoHandlerPattern
 
 		req, err := http.NewRequest("GET", u.String(), nil)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		resp, err := server.Client().Do(req)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 
 		body, _ := ioutil.ReadAll(resp.Body)
@@ -259,7 +259,7 @@ func TestGetNodeInfoHandler(t *testing.T) {
 
 		var received map[string]interface{}
 		err = json.Unmarshal(body, &received)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		require.Equal(t, server.URL, received["endpoint"])
 	}
@@ -272,9 +272,9 @@ func TestGetNodeInfoHandler(t *testing.T) {
 		u.Path = NodeInfoHandlerPattern
 
 		req, err := http.NewRequest("GET", u.String(), nil)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		resp, err := server.Client().Do(req)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 
 		body, _ := ioutil.ReadAll(resp.Body)
@@ -282,7 +282,7 @@ func TestGetNodeInfoHandler(t *testing.T) {
 
 		var received map[string]interface{}
 		err = json.Unmarshal(body, &received)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		require.Equal(t, publishEndpoint.String(), received["endpoint"])
 	}

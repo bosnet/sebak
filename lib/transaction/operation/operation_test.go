@@ -30,24 +30,24 @@ func TestMakeHashOfOperationBodyPayment(t *testing.T) {
 func TestIsWellFormedOperation(t *testing.T) {
 	op := TestMakeOperation(-1)
 	err := op.IsWellFormed(networkID, common.NewConfig())
-	require.Nil(t, err)
+	require.NoError(t, err)
 }
 
 func TestIsWellFormedOperationLowerAmount(t *testing.T) {
 	obp := TestMakeOperationBodyPayment(0)
 	err := obp.IsWellFormed(networkID, common.NewConfig())
-	require.NotNil(t, err)
+	require.Error(t, err)
 }
 
 func TestSerializeOperation(t *testing.T) {
 	op := TestMakeOperation(-1)
 	b, err := op.Serialize()
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.Equal(t, len(b) > 0, true)
 
 	var o Operation
 	err = json.Unmarshal(b, &o)
-	require.Nil(t, err)
+	require.NoError(t, err)
 }
 
 func TestOperationBodyCongressVoting(t *testing.T) {
@@ -62,7 +62,7 @@ func TestOperationBodyCongressVoting(t *testing.T) {
 	require.Equal(t, hashed, expected)
 
 	err := op.IsWellFormed(networkID, common.NewConfig())
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 }
 
@@ -84,6 +84,6 @@ func TestOperationBodyCongressVotingResult(t *testing.T) {
 	require.Equal(t, hashed, expected)
 
 	err := op.IsWellFormed(networkID, common.NewConfig())
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 }

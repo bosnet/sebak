@@ -75,14 +75,14 @@ func TestAPIGetNodeInfoHandler(t *testing.T) {
 	defer ts.Close()
 
 	body, err := request(ts, GetNodeInfoPattern, false)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	data, err := ioutil.ReadAll(bufio.NewReader(body))
 	body.Close()
 
 	require.NotEmpty(t, data)
 
 	receivedNodeInfo, err := node.NewNodeInfoFromJSON(data)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	require.NotNil(t, receivedNodeInfo.Node.Endpoint)
 
@@ -103,7 +103,7 @@ func TestAPIGetNodeInfoHandler(t *testing.T) {
 	localNode.SetBooting()
 
 	body, err = request(ts, GetNodeInfoPattern, false)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	data, err = ioutil.ReadAll(bufio.NewReader(body))
 	body.Close()
 

@@ -31,6 +31,6 @@ func TestValidator(t *testing.T) {
 
 	{
 		err := v.Validate(ctx, si)
-		require.Nil(t, err)
+		require.NoError(t, err)
 	}
 }

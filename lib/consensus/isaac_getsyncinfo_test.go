@@ -9,7 +9,7 @@ import (
 
 func TestGetSyncInfoNormal(t *testing.T) {
 	vt, err := NewDefaultVotingThresholdPolicy(67)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	is := ISAAC{
 		policy:      vt,
@@ -37,7 +37,7 @@ func TestGetSyncInfoNormal(t *testing.T) {
 	is.nodesHeight[valids[3]] = 10
 
 	height, nodeAddrs, err := is.GetSyncInfo()
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.Equal(t, uint64(10), height)
 	require.True(t, contains(nodeAddrs, valids[0]))
 	require.True(t, contains(nodeAddrs, valids[1]))
@@ -46,7 +46,7 @@ func TestGetSyncInfoNormal(t *testing.T) {
 }
 func TestGetSyncInfoBeforeFull(t *testing.T) {
 	vt, err := NewDefaultVotingThresholdPolicy(67)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	is := ISAAC{
 		policy:      vt,
@@ -73,7 +73,7 @@ func TestGetSyncInfoBeforeFull(t *testing.T) {
 	is.nodesHeight[valids[3]] = 10
 
 	height, nodeAddrs, err := is.GetSyncInfo()
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.Equal(t, uint64(10), height)
 	require.True(t, contains(nodeAddrs, valids[0]))
 	require.True(t, contains(nodeAddrs, valids[1]))
@@ -83,7 +83,7 @@ func TestGetSyncInfoBeforeFull(t *testing.T) {
 
 func TestGetSyncInfoFoundSmallestHeight(t *testing.T) {
 	vt, err := NewDefaultVotingThresholdPolicy(67)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	is := ISAAC{
 		policy:      vt,
@@ -109,7 +109,7 @@ func TestGetSyncInfoFoundSmallestHeight(t *testing.T) {
 
 	is.log = logging.New("module", "consensus")
 	height, nodeAddrs, err := is.GetSyncInfo()
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.Equal(t, uint64(33), height)
 
 	require.True(t, contains(nodeAddrs, nodes[1]))
@@ -120,7 +120,7 @@ func TestGetSyncInfoFoundSmallestHeight(t *testing.T) {
 
 func TestGetSyncInfoGenesis(t *testing.T) {
 	vt, err := NewDefaultVotingThresholdPolicy(67)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	is := ISAAC{
 		policy:      vt,
@@ -144,7 +144,7 @@ func TestGetSyncInfoGenesis(t *testing.T) {
 
 	is.log = logging.New("module", "consensus")
 	height, nodeAddrs, err := is.GetSyncInfo()
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.Equal(t, uint64(1), height)
 	require.Equal(t, 3, len(nodeAddrs))
 }

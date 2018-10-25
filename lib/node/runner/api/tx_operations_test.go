@@ -21,12 +21,12 @@ import (
 
 func TestGetOperationsByTxHashHandler(t *testing.T) {
 	ts, storage, err := prepareAPIServer()
-	require.Nil(t, err)
+	require.NoError(t, err)
 	defer storage.Close()
 	defer ts.Close()
 
 	_, btList, err := prepareTxs(storage, 0, 1, nil)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	bt := btList[0]
 
@@ -34,7 +34,7 @@ func TestGetOperationsByTxHashHandler(t *testing.T) {
 		url := strings.Replace(GetTransactionOperationsHandlerPattern, "{id}", "showme", -1)
 		req, _ := http.NewRequest("GET", ts.URL+url, nil)
 		resp, err := ts.Client().Do(req)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		defer resp.Body.Close()
 
 		require.Equal(t, http.StatusNotFound, resp.StatusCode)
@@ -43,16 +43,16 @@ func TestGetOperationsByTxHashHandler(t *testing.T) {
 	// Do a Request
 	url := strings.Replace(GetTransactionOperationsHandlerPattern, "{id}", bt.Hash, -1)
 	respBody, err := request(ts, url, false)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	defer respBody.Close()
 	reader := bufio.NewReader(respBody)
 
 	readByte, err := ioutil.ReadAll(reader)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	recv := make(map[string]interface{})
 	err = json.Unmarshal(readByte, &recv)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	records := recv["_embedded"].(map[string]interface{})["records"].([]interface{})
 
@@ -61,7 +61,7 @@ func TestGetOperationsByTxHashHandler(t *testing.T) {
 		hash := item["hash"].(string)
 
 		bo, err := block.GetBlockOperation(storage, hash)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.NotNil(t, bo)
 	}
 }
@@ -71,12 +71,12 @@ func TestGetOperationsByTxHashHandlerStream(t *testing.T) {
 	wg.Add(1)
 
 	ts, storage, err := prepareAPIServer()
-	require.Nil(t, err)
+	require.NoError(t, err)
 	defer storage.Close()
 	defer ts.Close()
 
 	kp, err := keypair.Random()
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	tx := transaction.TestMakeTransactionWithKeypair(networkID, 10, kp)
 	bt := block.NewBlockTransactionFromTransaction("block-hash", 1, common.NowISO8601(), tx, nil)
@@ -84,7 +84,7 @@ func TestGetOperationsByTxHashHandlerStream(t *testing.T) {
 	boMap := make(map[string]block.BlockOperation)
 	for _, op := range tx.B.Operations {
 		bo, err := block.NewBlockOperationFromOperation(op, tx, 0)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		boMap[bo.Hash] = bo
 	}
 
@@ -111,7 +111,7 @@ func TestGetOperationsByTxHashHandlerStream(t *testing.T) {
 	{
 		url := strings.Replace(GetTransactionOperationsHandlerPattern, "{id}", bt.Hash, -1)
 		respBody, err := request(ts, url, true)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		defer respBody.Close()
 		reader = bufio.NewReader(respBody)
 	}
@@ -121,14 +121,14 @@ func TestGetOperationsByTxHashHandlerStream(t *testing.T) {
 		// Do stream Request to the Server
 		for n := 0; n < 10; n++ {
 			line, err := reader.ReadBytes('\n')
-			require.Nil(t, err)
+			require.NoError(t, err)
 			line = bytes.Trim(line, "\n\t ")
 			recv := make(map[string]interface{})
 			json.Unmarshal(line, &recv)
 			bo := boMap[recv["hash"].(string)]
 			r := resource.NewOperation(&bo)
 			txS, err := json.Marshal(r.Resource())
-			require.Nil(t, err)
+			require.NoError(t, err)
 			require.Equal(t, txS, line)
 		}
 	}

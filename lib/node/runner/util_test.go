@@ -22,13 +22,13 @@ func TestGetGenesisAccount(t *testing.T) {
 	block.MakeGenesisBlock(st, *genesisAccount, *commonAccount, networkID)
 
 	fetchedGenesisAccount, err := GetGenesisAccount(st)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.Equal(t, genesisAccount.Address, fetchedGenesisAccount.Address)
 	require.Equal(t, genesisAccount.Balance, fetchedGenesisAccount.Balance)
 	require.Equal(t, genesisAccount.SequenceID, fetchedGenesisAccount.SequenceID)
 
 	fetchedCommonAccount, err := GetCommonAccount(st)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.Equal(t, commonAccount.Address, fetchedCommonAccount.Address)
 	require.Equal(t, commonAccount.Balance, fetchedCommonAccount.Balance)
 	require.Equal(t, commonAccount.SequenceID, fetchedCommonAccount.SequenceID)
@@ -47,6 +47,6 @@ func TestGetInitialBalance(t *testing.T) {
 	block.MakeGenesisBlock(st, *genesisAccount, *commonAccount, networkID)
 
 	fetchedInitialBalance, err := GetGenesisBalance(st)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.Equal(t, initialBalance, fetchedInitialBalance)
 }
