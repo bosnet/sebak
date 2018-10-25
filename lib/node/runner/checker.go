@@ -241,6 +241,20 @@ func hasBallotValidProposer(is *consensus.ISAAC, b ballot.Ballot) bool {
 	return b.Proposer() == is.SelectProposer(b.Round().BlockHeight, b.Round().Number)
 }
 
+// BallotFromItself filter the incoming ballot from itself.
+func BallotFromItself(c common.Checker, args ...interface{}) error {
+	checker := c.(*BallotChecker)
+	if checker.Ballot.State() != ballot.StateINIT {
+		return nil
+	}
+	if checker.Ballot.Source() == checker.LocalNode.Address() {
+		checker.Log.Info("Filtered")
+		return common.NewCheckerErrorStop(checker, "This INIT ballot is already checked because it is from itself")
+	}
+
+	return nil
+}
+
 // BallotAlreadyFinished checks the incoming ballot in
 // valid round.
 func BallotAlreadyFinished(c common.Checker, args ...interface{}) (err error) {

@@ -36,6 +36,7 @@ var DefaultHandleBaseBallotCheckerFuncs = []common.CheckerFunc{
 }
 
 var DefaultHandleINITBallotCheckerFuncs = []common.CheckerFunc{
+	BallotFromItself,
 	BallotAlreadyVoted,
 	BallotVote,
 	BallotIsSameProposer,
