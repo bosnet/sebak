@@ -67,7 +67,7 @@ func TestBlockFetcher(t *testing.T) {
 	//f.logger = log
 
 	ctx := context.Background()
-	si, err := f.Fetch(ctx, &SyncInfo{BlockHeight: 1})
+	si, err := f.Fetch(ctx, &SyncInfo{Height: 1})
 	require.NoError(t, err)
 	require.Equal(t, bk.Hash, si.Block.Hash)
 	require.Equal(t, bk.TransactionsRoot, si.Block.TransactionsRoot)

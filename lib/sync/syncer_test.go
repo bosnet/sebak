@@ -50,7 +50,7 @@ func TestSyncerSetSyncTarget(t *testing.T) {
 
 		var heights []uint64
 		for si := range infoc {
-			heights = append(heights, si.BlockHeight)
+			heights = append(heights, si.Height)
 			if len(heights) >= 9 {
 				close(infoc)
 			}
@@ -83,8 +83,8 @@ func SyncerTest(t *testing.T, fn func(*SyncerTestContext)) {
 	syncer.fetcher = &mockFetcher{
 		fetchFunc: func(ctx context.Context, si *SyncInfo) (*SyncInfo, error) {
 			bk := block.TestMakeNewBlock([]string{})
-			bk.Height = si.BlockHeight
-			si.BlockHeight = bk.Height
+			bk.Height = si.Height
+			si.Height = bk.Height
 			si.Block = &bk
 			return si, nil
 		},

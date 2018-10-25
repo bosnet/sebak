@@ -9,11 +9,11 @@ import (
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/common/observer"
-	"boscoin.io/sebak/lib/consensus/round"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node/runner"
 	"boscoin.io/sebak/lib/storage"
+	"boscoin.io/sebak/lib/voting"
 
 	"github.com/inconshreveable/log15"
 )
@@ -52,12 +52,12 @@ func NewBlockValidator(nw network.Network, ldb *storage.LevelDBBackend, networkI
 }
 
 func (v *BlockValidator) Validate(ctx context.Context, syncInfo *SyncInfo) error {
-	exists, err := v.existsBlock(ctx, v.storage, syncInfo.BlockHeight)
+	exists, err := v.existsBlock(ctx, v.storage, syncInfo.Height)
 	if err != nil {
 		return err
 	}
 	if exists == true {
-		v.logger.Info("This block exists", "height", syncInfo.BlockHeight)
+		v.logger.Info("This block exists", "height", syncInfo.Height)
 		return nil
 	}
 
@@ -79,7 +79,7 @@ func (v *BlockValidator) Validate(ctx context.Context, syncInfo *SyncInfo) error
 
 func (v *BlockValidator) validate(ctx context.Context, syncInfo *SyncInfo) error {
 	//Waiting to get prev block for runner.ValidateTx
-	prevBlk, err := v.getPrevBlock(ctx, syncInfo.BlockHeight)
+	prevBlk, err := v.getPrevBlock(ctx, syncInfo.Height)
 	if err != nil {
 		return err
 	}
@@ -101,11 +101,11 @@ func (v *BlockValidator) finishBlock(ctx context.Context, syncInfo *SyncInfo) er
 		return err
 	}
 
-	if exists, err := v.existsBlock(ctx, ts, syncInfo.BlockHeight); err != nil {
+	if exists, err := v.existsBlock(ctx, ts, syncInfo.Height); err != nil {
 		ts.Discard()
 		return err
 	} else if exists == true {
-		v.logger.Info("This block exists", "height", syncInfo.BlockHeight)
+		v.logger.Info("This block exists", "height", syncInfo.Height)
 		return nil
 	}
 
@@ -129,7 +129,7 @@ func (v *BlockValidator) finishBlock(ctx context.Context, syncInfo *SyncInfo) er
 		return err
 	}
 
-	v.logger.Debug(fmt.Sprintf("finish to sync block height: %v", syncInfo.BlockHeight), "height", syncInfo.BlockHeight, "hash", blk.Hash)
+	v.logger.Debug(fmt.Sprintf("finish to sync block height: %v", syncInfo.Height), "height", syncInfo.Height, "hash", blk.Hash)
 
 	if err := ts.Commit(); err != nil {
 		ts.Discard()
@@ -140,7 +140,7 @@ func (v *BlockValidator) finishBlock(ctx context.Context, syncInfo *SyncInfo) er
 	case <-ctx.Done():
 		return nil
 	default:
-		event := strconv.FormatUint(syncInfo.BlockHeight, 10)
+		event := strconv.FormatUint(syncInfo.Height, 10)
 		observer.SyncBlockWaitObserver.Trigger(event)
 	}
 
@@ -153,12 +153,12 @@ func (v *BlockValidator) validateBlock(ctx context.Context, si *SyncInfo, prevBl
 		txs = append(txs, tx.H.Hash)
 	}
 
-	r := round.Round{
-		Number:      si.Block.Round,
-		BlockHeight: si.BlockHeight,
-		BlockHash:   prevBlk.Hash,
-		TotalTxs:    si.Block.TotalTxs,
-		TotalOps:    si.Block.TotalOps,
+	r := voting.Basis{
+		Round:     si.Block.Round,
+		Height:    si.Height,
+		BlockHash: prevBlk.Hash,
+		TotalTxs:  si.Block.TotalTxs,
+		TotalOps:  si.Block.TotalOps,
 	}
 
 	blk := block.NewBlock(si.Block.Proposer, r, si.Block.ProposerTransaction, txs, si.Block.Confirmed)

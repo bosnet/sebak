@@ -286,7 +286,7 @@ func ValidateOp(st *storage.LevelDBBackend, source *block.BlockAccount, op opera
 			}
 			lastblock := block.GetLatestBlock(st)
 			// unfreezing period is 241920.
-			if lastblock.Height-bo.BlockHeight < common.UnfreezingPeriod {
+			if lastblock.Height-bo.Height < common.UnfreezingPeriod {
 				return errors.ErrorUnfreezingNotReachedExpiration
 			}
 			// If it's a frozen account we check that only whole units are frozen
@@ -325,7 +325,7 @@ func ValidateOp(st *storage.LevelDBBackend, source *block.BlockAccount, op opera
 			}
 			lastblock := block.GetLatestBlock(st)
 			// unfreezing period is 241920.
-			if lastblock.Height-bo.BlockHeight < common.UnfreezingPeriod {
+			if lastblock.Height-bo.Height < common.UnfreezingPeriod {
 				return errors.ErrorUnfreezingNotReachedExpiration
 			}
 		}

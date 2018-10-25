@@ -5,10 +5,10 @@ import (
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/consensus"
-	"boscoin.io/sebak/lib/consensus/round"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/transaction"
+	"boscoin.io/sebak/lib/voting"
 	"github.com/stellar/go/keypair"
 )
 
@@ -102,8 +102,8 @@ func GetUnfreezingTransaction(kpSource *keypair.Full, kpTarget *keypair.Full, se
 	}
 }
 
-func GenerateBallot(proposer *node.LocalNode, round round.Round, tx transaction.Transaction, ballotState ballot.State, sender *node.LocalNode, conf common.Config) *ballot.Ballot {
-	b := ballot.NewBallot(sender.Address(), proposer.Address(), round, []string{tx.GetHash()})
+func GenerateBallot(proposer *node.LocalNode, basis voting.Basis, tx transaction.Transaction, ballotState ballot.State, sender *node.LocalNode, conf common.Config) *ballot.Ballot {
+	b := ballot.NewBallot(sender.Address(), proposer.Address(), basis, []string{tx.GetHash()})
 	b.SetVote(ballot.StateINIT, ballot.VotingYES)
 
 	opi, _ := ballot.NewInflationFromBallot(*b, block.CommonKP.Address(), common.BaseReserve)
@@ -122,8 +122,8 @@ func GenerateBallot(proposer *node.LocalNode, round round.Round, tx transaction.
 	return b
 }
 
-func GenerateEmptyTxBallot(proposer *node.LocalNode, round round.Round, ballotState ballot.State, sender *node.LocalNode, conf common.Config) *ballot.Ballot {
-	b := ballot.NewBallot(sender.Address(), proposer.Address(), round, []string{})
+func GenerateEmptyTxBallot(proposer *node.LocalNode, basis voting.Basis, ballotState ballot.State, sender *node.LocalNode, conf common.Config) *ballot.Ballot {
+	b := ballot.NewBallot(sender.Address(), proposer.Address(), basis, []string{})
 	b.SetVote(ballot.StateINIT, ballot.VotingYES)
 
 	opi, _ := ballot.NewInflationFromBallot(*b, block.CommonKP.Address(), common.BaseReserve)

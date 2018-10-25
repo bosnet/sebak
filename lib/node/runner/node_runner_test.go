@@ -14,9 +14,9 @@ import (
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/consensus"
-	"boscoin.io/sebak/lib/consensus/round"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
+	"boscoin.io/sebak/lib/voting"
 )
 
 var (
@@ -264,15 +264,15 @@ func TestExpiredBallotCheckProposer(t *testing.T) {
 
 	latestBlock := nr.Consensus().LatestBlock()
 
-	round := round.Round{
-		Number:      0,
-		BlockHeight: latestBlock.Height,
-		BlockHash:   latestBlock.Hash,
-		TotalTxs:    latestBlock.TotalTxs,
+	basis := voting.Basis{
+		Round:     0,
+		Height:    latestBlock.Height,
+		BlockHash: latestBlock.Hash,
+		TotalTxs:  latestBlock.TotalTxs,
 	}
 
 	// The createNodeRunnerForTesting has FixedSelector{localNode.Address()} so the proposer is always nr(nodes[0]).
-	validBallot := GenerateEmptyTxBallot(nr.localNode, round, ballot.StateSIGN, nodes[1], common.NewConfig())
+	validBallot := GenerateEmptyTxBallot(nr.localNode, basis, ballot.StateSIGN, nodes[1], common.NewConfig())
 	validBallot.SetVote(ballot.StateSIGN, ballot.VotingEXP)
 
 	checker := &BallotChecker{
@@ -293,7 +293,7 @@ func TestExpiredBallotCheckProposer(t *testing.T) {
 
 	// The createNodeRunnerForTesting has FixedSelector{localNode.Address()} so the proposer is always nr(nodes[0]).
 	// The invalidBallot has nodes[1] as a proposer so it is invalid.
-	invalidBallot := GenerateEmptyTxBallot(nodes[1], round, ballot.StateSIGN, nodes[1], common.NewConfig())
+	invalidBallot := GenerateEmptyTxBallot(nodes[1], basis, ballot.StateSIGN, nodes[1], common.NewConfig())
 	invalidBallot.SetVote(ballot.StateSIGN, ballot.VotingEXP)
 
 	checker = &BallotChecker{

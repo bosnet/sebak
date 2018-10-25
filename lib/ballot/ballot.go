@@ -8,8 +8,8 @@ import (
 	"github.com/stellar/go/keypair"
 
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/consensus/round"
 	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/voting"
 )
 
 type Ballot struct {
@@ -17,12 +17,12 @@ type Ballot struct {
 	B BallotBody
 }
 
-func NewBallot(fromAddr string, proposerAddr string, round round.Round, transactions []string) (b *Ballot) {
+func NewBallot(fromAddr string, proposerAddr string, basis voting.Basis, transactions []string) (b *Ballot) {
 	body := BallotBody{
 		Source: fromAddr,
 		Proposed: BallotBodyProposed{
 			Proposer:     proposerAddr,
-			Round:        round,
+			VotingBasis:  basis,
 			Transactions: transactions,
 		},
 		State: StateINIT,
@@ -145,8 +145,8 @@ func (b Ballot) Source() string {
 	return b.B.Source
 }
 
-func (b Ballot) Round() round.Round {
-	return b.B.Proposed.Round
+func (b Ballot) VotingBasis() voting.Basis {
+	return b.B.Proposed.VotingBasis
 }
 
 func (b Ballot) Proposer() string {
@@ -265,7 +265,7 @@ type BallotHeader struct {
 type BallotBodyProposed struct {
 	Confirmed           string              `json:"confirmed"` // created time, ISO8601
 	Proposer            string              `json:"proposer"`
-	Round               round.Round         `json:"round"`
+	VotingBasis         voting.Basis        `json:"voting_basis"`
 	Transactions        []string            `json:"transactions"`
 	ProposerTransaction ProposerTransaction `json:"proposer_transaction"`
 }

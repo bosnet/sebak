@@ -4,9 +4,9 @@ import (
 	"github.com/stellar/go/keypair"
 
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/consensus/round"
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
+	"boscoin.io/sebak/lib/voting"
 )
 
 var networkID []byte = []byte("sebak-test-network")
@@ -105,11 +105,11 @@ func TestMakeNewBlock(transactions []string) Block {
 
 	return *NewBlock(
 		kp.Address(),
-		round.Round{
-			BlockHeight: common.GenesisBlockHeight,
-			BlockHash:   "",
-			TotalTxs:    uint64(len(transactions)),
-			TotalOps:    uint64(len(transactions)),
+		voting.Basis{
+			Height:    common.GenesisBlockHeight,
+			BlockHash: "",
+			TotalTxs:  uint64(len(transactions)),
+			TotalOps:  uint64(len(transactions)),
 		},
 		"",
 		transactions,
@@ -122,9 +122,9 @@ func TestMakeNewBlockWithPrevBlock(prevBlock Block, txs []string) Block {
 
 	return *NewBlock(
 		kp.Address(),
-		round.Round{
-			BlockHeight: prevBlock.Height,
-			BlockHash:   prevBlock.Hash,
+		voting.Basis{
+			Height:    prevBlock.Height,
+			BlockHash: prevBlock.Hash,
 		},
 		"",
 		txs,

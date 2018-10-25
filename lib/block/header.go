@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
-	"boscoin.io/sebak/lib/consensus/round"
+	"boscoin.io/sebak/lib/voting"
 )
 
 type Header struct {
@@ -20,13 +20,13 @@ type Header struct {
 	// TODO smart contract fields
 }
 
-func NewBlockHeader(round round.Round, txRoot string) *Header {
+func NewBlockHeader(basis voting.Basis, txRoot string) *Header {
 	return &Header{
-		PrevBlockHash:    round.BlockHash,
+		PrevBlockHash:    basis.BlockHash,
 		Timestamp:        time.Now(),
-		Height:           round.BlockHeight,
-		TotalTxs:         round.TotalTxs,
-		TotalOps:         round.TotalOps,
+		Height:           basis.Height,
+		TotalTxs:         basis.TotalTxs,
+		TotalOps:         basis.TotalOps,
 		TransactionsRoot: txRoot,
 	}
 }

@@ -71,7 +71,7 @@ func NewBlockFetcher(nw network.Network,
 }
 
 func (f *BlockFetcher) Fetch(ctx context.Context, syncInfo *SyncInfo) (*SyncInfo, error) {
-	height := syncInfo.BlockHeight
+	height := syncInfo.Height
 
 	TryForever(func(attempt int) (bool, error) {
 		select {
@@ -102,7 +102,7 @@ func (f *BlockFetcher) Fetch(ctx context.Context, syncInfo *SyncInfo) (*SyncInfo
 
 func (f *BlockFetcher) fetch(ctx context.Context, si *SyncInfo) error {
 	var (
-		height    = si.BlockHeight
+		height    = si.Height
 		nodeAddrs = si.NodeAddrs
 	)
 	f.logger.Debug("Fetch start", "height", height)
