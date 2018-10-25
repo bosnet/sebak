@@ -24,7 +24,7 @@ func TestHTTP2NetworkConfigHTTPSAndTLS(t *testing.T) {
 		}
 
 		_, err := NewHTTP2NetworkConfigFromEndpoint(nodeName, endpoint)
-		require.Nil(t, err)
+		require.NoError(t, err)
 	}
 
 	{ // HTTPS + TLSCertFile
@@ -38,7 +38,7 @@ func TestHTTP2NetworkConfigHTTPSAndTLS(t *testing.T) {
 		}
 
 		_, err := NewHTTP2NetworkConfigFromEndpoint(nodeName, endpoint)
-		require.NotNil(t, err)
+		require.Error(t, err)
 	}
 
 	{ // HTTPS + TLSKeyFile
@@ -52,7 +52,7 @@ func TestHTTP2NetworkConfigHTTPSAndTLS(t *testing.T) {
 		}
 
 		_, err := NewHTTP2NetworkConfigFromEndpoint(nodeName, endpoint)
-		require.NotNil(t, err)
+		require.Error(t, err)
 	}
 
 	{ // HTTP
@@ -67,6 +67,6 @@ func TestHTTP2NetworkConfigHTTPSAndTLS(t *testing.T) {
 		}
 
 		_, err := NewHTTP2NetworkConfigFromEndpoint(nodeName, endpoint)
-		require.Nil(t, err)
+		require.NoError(t, err)
 	}
 }

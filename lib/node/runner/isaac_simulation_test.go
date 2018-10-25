@@ -36,7 +36,7 @@ func TestISAACSimulationProposer(t *testing.T) {
 	// Generate proposed ballot in nr
 	roundNumber := uint64(0)
 	_, err = nr.proposeNewBallot(roundNumber)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	b := nr.Consensus().LatestBlock()
 	round := round.Round{
@@ -51,34 +51,34 @@ func TestISAACSimulationProposer(t *testing.T) {
 
 	ballotSIGN1 := GenerateBallot(proposer, round, tx, ballot.StateSIGN, nodes[1], conf)
 	err = ReceiveBallot(nr, ballotSIGN1)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	ballotSIGN2 := GenerateBallot(proposer, round, tx, ballot.StateSIGN, nodes[2], conf)
 	err = ReceiveBallot(nr, ballotSIGN2)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	ballotSIGN3 := GenerateBallot(proposer, round, tx, ballot.StateSIGN, nodes[3], conf)
 	err = ReceiveBallot(nr, ballotSIGN3)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	ballotSIGN4 := GenerateBallot(proposer, round, tx, ballot.StateSIGN, nodes[4], conf)
 	err = ReceiveBallot(nr, ballotSIGN4)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	rr := nr.Consensus().RunningRounds[round.Index()]
 	require.Equal(t, 4, len(rr.Voted[proposer.Address()].GetResult(ballot.StateSIGN)))
 
 	ballotACCEPT0 := GenerateBallot(proposer, round, tx, ballot.StateACCEPT, nodes[0], conf)
 	err = ReceiveBallot(nr, ballotACCEPT0)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	ballotACCEPT1 := GenerateBallot(proposer, round, tx, ballot.StateACCEPT, nodes[1], conf)
 	err = ReceiveBallot(nr, ballotACCEPT1)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	ballotACCEPT2 := GenerateBallot(proposer, round, tx, ballot.StateACCEPT, nodes[2], conf)
 	err = ReceiveBallot(nr, ballotACCEPT2)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	ballotACCEPT3 := GenerateBallot(proposer, round, tx, ballot.StateACCEPT, nodes[3], conf)
 	err = ReceiveBallot(nr, ballotACCEPT3)

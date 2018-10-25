@@ -34,18 +34,18 @@ func TestRecoverMiddleware(t *testing.T) {
 	defer ts.Close()
 
 	resp, err := http.Get(ts.URL + handlerURL)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	require.Equal(t, 500, resp.StatusCode)
 	require.Equal(t, "application/problem+json", resp.Header["Content-Type"][0])
 
 	bs, err := ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	var msg map[string]interface{}
 	err = json.Unmarshal(bs, &msg)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.Equal(t, "panic: "+panicMsg, msg["title"])
 }
 
@@ -73,7 +73,7 @@ func TestRateLimitMiddleWare(t *testing.T) {
 		ts := httptest.NewServer(router)
 
 		resp, err := testRequestForRateLimit(ts, handlerURL, "3.3.3.3")
-		require.Nil(t, err)
+		require.NoError(t, err)
 		ts.Close()
 
 		require.Equal(t, fmt.Sprintf("%d", rate.Limit), resp.Header.Get("X-Ratelimit-Limit"))
@@ -108,7 +108,7 @@ func TestRateLimitMiddleWare(t *testing.T) {
 		wg.Wait()
 
 		resp, err := testRequestForRateLimit(ts, handlerURL, "3.3.3.3")
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		require.Equal(t, http.StatusTooManyRequests, resp.StatusCode)
 
@@ -122,7 +122,7 @@ func TestRateLimitMiddleWare(t *testing.T) {
 		var problem httputils.Problem
 		{
 			err := json.Unmarshal(body, &problem)
-			require.Nil(t, err)
+			require.NoError(t, err)
 		}
 		require.Equal(
 			t,
@@ -172,7 +172,7 @@ func TestRateLimitMiddleWareByIPAddress(t *testing.T) {
 		wg.Wait()
 
 		resp, err := testRequestForRateLimit(ts, handlerURL, "3.3.3.3")
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		require.Equal(t, http.StatusTooManyRequests, resp.StatusCode)
 	}
@@ -193,7 +193,7 @@ func TestRateLimitMiddleWareByIPAddress(t *testing.T) {
 		req, _ := http.NewRequest("GET", ts.URL+handlerURL, nil)
 		req.Header.Set("X-Forwarded-For", allowedIP)
 		resp, err := ts.Client().Do(req)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 
@@ -233,7 +233,7 @@ func TestRateLimitMiddleWareUnlimit(t *testing.T) {
 		wg.Wait()
 
 		resp, err := testRequestForRateLimit(ts, handlerURL, "3.3.3.3")
-		require.Nil(t, err)
+		require.NoError(t, err)
 		ts.Close()
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 

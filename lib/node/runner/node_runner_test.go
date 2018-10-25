@@ -60,9 +60,8 @@ func createTestNodeRunner(n int, conf common.Config) []*NodeRunner {
 			policy,
 		)
 
-		is, _ := consensus.NewISAAC(networkID, localNode, policy, connectionManager, conf)
 		st := block.InitTestBlockchain()
-
+		is, _ := consensus.NewISAAC(networkID, localNode, policy, connectionManager, st, conf, nil)
 		nr, err := NewNodeRunner(string(networkID), localNode, policy, ns[i], is, st, conf)
 		if err != nil {
 			panic(err)
@@ -151,10 +150,8 @@ func createTestNodeRunnersHTTP2Network(n int) (nodeRunners []*NodeRunner, rootKP
 		)
 
 		conf := common.NewConfig()
-		is, _ := consensus.NewISAAC(networkID, node, policy, connectionManager, conf)
-
 		st := block.InitTestBlockchain()
-
+		is, _ := consensus.NewISAAC(networkID, node, policy, connectionManager, st, conf, nil)
 		nodeRunner, _ := NewNodeRunner(string(networkID), node, policy, n, is, st, conf)
 		nodeRunners = append(nodeRunners, nodeRunner)
 	}
@@ -289,10 +286,10 @@ func TestExpiredBallotCheckProposer(t *testing.T) {
 	}
 
 	err := BallotVote(checker)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	err = BallotIsSameProposer(checker)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	// The createNodeRunnerForTesting has FixedSelector{localNode.Address()} so the proposer is always nr(nodes[0]).
 	// The invalidBallot has nodes[1] as a proposer so it is invalid.
@@ -312,7 +309,7 @@ func TestExpiredBallotCheckProposer(t *testing.T) {
 	require.Nil(t, BallotVote(checker))
 
 	err = BallotIsSameProposer(checker)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	require.Equal(t, ballot.VotingNO, checker.VotingHole)
 }

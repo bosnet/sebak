@@ -26,14 +26,14 @@ func TestRouterHeaderMatcher(t *testing.T) {
 	{ // GET must pass
 		req, _ := http.NewRequest("GET", u.String(), nil)
 		resp, err := server.Client().Do(req)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 	}
 
 	{ // POST && empty 'Content-Type'
 		req, _ := http.NewRequest("POST", u.String(), nil)
 		resp, err := server.Client().Do(req)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, http.StatusNotFound, resp.StatusCode)
 	}
 
@@ -41,7 +41,7 @@ func TestRouterHeaderMatcher(t *testing.T) {
 		req, _ := http.NewRequest("POST", u.String(), nil)
 		req.Header.Set("Content-Type", "text/plain")
 		resp, err := server.Client().Do(req)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, http.StatusNotFound, resp.StatusCode)
 	}
 
@@ -49,7 +49,7 @@ func TestRouterHeaderMatcher(t *testing.T) {
 		req, _ := http.NewRequest("POST", u.String(), nil)
 		req.Header.Set("Content-Type", "application/json")
 		resp, err := server.Client().Do(req)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 	}
 }
@@ -70,14 +70,14 @@ func TestRouterHeaderMatcherWithMethodMatcher(t *testing.T) {
 	{ // GET msut be passed
 		req, _ := http.NewRequest("GET", u.String(), nil)
 		resp, err := server.Client().Do(req)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 	}
 
 	{ // POST && empty 'Content-Type'
 		req, _ := http.NewRequest("POST", u.String(), nil)
 		resp, err := server.Client().Do(req)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, http.StatusNotFound, resp.StatusCode)
 	}
 
@@ -85,7 +85,7 @@ func TestRouterHeaderMatcherWithMethodMatcher(t *testing.T) {
 		req, _ := http.NewRequest("POST", u.String(), nil)
 		req.Header.Set("Content-Type", "text/plain")
 		resp, err := server.Client().Do(req)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, http.StatusNotFound, resp.StatusCode)
 	}
 
@@ -93,7 +93,7 @@ func TestRouterHeaderMatcherWithMethodMatcher(t *testing.T) {
 		req, _ := http.NewRequest("POST", u.String(), nil)
 		req.Header.Set("Content-Type", "application/json")
 		resp, err := server.Client().Do(req)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 	}
 }

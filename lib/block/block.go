@@ -23,10 +23,10 @@ type Block struct {
 	ProposerTransaction string   `json:"proposer_transaction"` /* ProposerTransaction */
 	//PrevConsensusResult ConsensusResult
 
-	Hash      string      `json:"hash"`
-	Confirmed string      `json:"confirmed"`
-	Proposer  string      `json:"proposer"` /* Node.Address() */
-	Round     round.Round `json:"round"`
+	Hash      string `json:"hash"`
+	Confirmed string `json:"confirmed"`
+	Proposer  string `json:"proposer"` /* Node.Address() */
+	Round     uint64 `json:"round"`
 }
 
 func (bck Block) Serialize() (encoded []byte, err error) {
@@ -43,11 +43,11 @@ func (bck Block) String() string {
 // `ProposerTransaction.GetHash()`.
 func NewBlock(proposer string, round round.Round, ptx string, transactions []string, confirmed string) *Block {
 	b := &Block{
-		Header:              *NewBlockHeader(round, uint64(len(transactions)), getTransactionRoot(transactions)),
+		Header:              *NewBlockHeader(round, getTransactionRoot(transactions)),
 		Transactions:        transactions,
 		ProposerTransaction: ptx,
 		Proposer:            proposer,
-		Round:               round,
+		Round:               round.Number,
 		Confirmed:           confirmed,
 	}
 

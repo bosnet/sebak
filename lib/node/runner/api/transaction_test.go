@@ -12,7 +12,7 @@ import (
 
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common/observer"
-	"boscoin.io/sebak/lib/network/api/resource"
+	"boscoin.io/sebak/lib/node/runner/api/resource"
 	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
 )
@@ -20,18 +20,18 @@ import (
 func TestGetTransactionByHashHandler(t *testing.T) {
 
 	ts, storage, err := prepareAPIServer()
-	require.Nil(t, err)
+	require.NoError(t, err)
 	defer storage.Close()
 	defer ts.Close()
 
 	_, _, bt, err := prepareTxWithoutSave()
-	require.Nil(t, err)
+	require.NoError(t, err)
 	bt.MustSave(storage)
 
 	{ // unknown transaction
 		req, _ := http.NewRequest("GET", ts.URL+GetTransactionsHandlerPattern+"/findme", nil)
 		resp, err := ts.Client().Do(req)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		defer resp.Body.Close()
 
 		require.Equal(t, http.StatusNotFound, resp.StatusCode)
@@ -41,14 +41,14 @@ func TestGetTransactionByHashHandler(t *testing.T) {
 	// Do a Request
 	{
 		respBody, err := request(ts, GetTransactionsHandlerPattern+"/"+bt.Hash, false)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		defer respBody.Close()
 		reader = bufio.NewReader(respBody)
 	}
 	// Check the output
 	{
 		readByte, err := ioutil.ReadAll(reader)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		recv := make(map[string]interface{})
 		json.Unmarshal(readByte, &recv)
 
@@ -61,12 +61,12 @@ func TestGetTransactionByHashHandlerStream(t *testing.T) {
 	wg.Add(1)
 
 	ts, storage, err := prepareAPIServer()
-	require.Nil(t, err)
+	require.NoError(t, err)
 	defer storage.Close()
 	defer ts.Close()
 
 	_, _, bt, err := prepareTxWithoutSave()
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	// Wait until request registered to observer
 	{
@@ -80,7 +80,7 @@ func TestGetTransactionByHashHandlerStream(t *testing.T) {
 				observer.BlockTransactionObserver.RUnlock()
 			}
 			err = bt.Save(storage)
-			require.Nil(t, err)
+			require.NoError(t, err)
 			wg.Done()
 		}()
 	}
@@ -89,7 +89,7 @@ func TestGetTransactionByHashHandlerStream(t *testing.T) {
 	var reader *bufio.Reader
 	{
 		respBody, err := request(ts, GetTransactionsHandlerPattern+"/"+bt.Hash, true)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		defer respBody.Close()
 		reader = bufio.NewReader(respBody)
 	}
@@ -97,7 +97,7 @@ func TestGetTransactionByHashHandlerStream(t *testing.T) {
 	// Check the output
 	{
 		line, err := reader.ReadBytes('\n')
-		require.Nil(t, err)
+		require.NoError(t, err)
 		recv := make(map[string]interface{})
 		json.Unmarshal(line, &recv)
 		require.Equal(t, bt.Hash, recv["hash"], "hash is not same")
@@ -107,18 +107,18 @@ func TestGetTransactionByHashHandlerStream(t *testing.T) {
 
 func TestGetTransactionsHandler(t *testing.T) {
 	ts, storage, err := prepareAPIServer()
-	require.Nil(t, err)
+	require.NoError(t, err)
 	defer storage.Close()
 	defer ts.Close()
 
 	_, btList, err := prepareTxs(storage, 0, 10, nil)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	var reader *bufio.Reader
 	{
 		// Do a Request
 		respBody, err := request(ts, GetTransactionsHandlerPattern, false)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		defer respBody.Close()
 		reader = bufio.NewReader(respBody)
 	}
@@ -126,7 +126,7 @@ func TestGetTransactionsHandler(t *testing.T) {
 	// Check the output
 	{
 		readByte, err := ioutil.ReadAll(reader)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		recv := make(map[string]interface{})
 		json.Unmarshal(readByte, &recv)
@@ -148,14 +148,14 @@ func TestGetTransactionsHandlerStream(t *testing.T) {
 	wg.Add(1)
 
 	ts, storage, err := prepareAPIServer()
-	require.Nil(t, err)
+	require.NoError(t, err)
 	defer storage.Close()
 	defer ts.Close()
 
 	kp, err := keypair.Random()
-	require.Nil(t, err)
+	require.NoError(t, err)
 	_, btList, err := prepareTxsWithoutSave(0, 10, kp)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	btMap := make(map[string]block.BlockTransaction)
 	for _, bt := range btList {
 		btMap[bt.Hash] = bt
@@ -183,7 +183,7 @@ func TestGetTransactionsHandlerStream(t *testing.T) {
 	var reader *bufio.Reader
 	{
 		respBody, err := request(ts, GetTransactionsHandlerPattern, true)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		defer respBody.Close()
 		reader = bufio.NewReader(respBody)
 	}
@@ -192,14 +192,14 @@ func TestGetTransactionsHandlerStream(t *testing.T) {
 	{
 		for n := 0; n < 10; n++ {
 			line, err := reader.ReadBytes('\n')
-			require.Nil(t, err)
+			require.NoError(t, err)
 			line = bytes.Trim(line, "\n\t ")
 			recv := make(map[string]interface{})
 			json.Unmarshal(line, &recv)
 			bt := btMap[recv["hash"].(string)]
 			r := resource.NewTransaction(&bt)
 			txS, err := json.Marshal(r.Resource())
-			require.Nil(t, err)
+			require.NoError(t, err)
 			require.Equal(t, txS, line)
 		}
 	}
@@ -208,19 +208,19 @@ func TestGetTransactionsHandlerStream(t *testing.T) {
 
 func TestGetTransactionsByAccountHandler(t *testing.T) {
 	ts, storage, err := prepareAPIServer()
-	require.Nil(t, err)
+	require.NoError(t, err)
 	defer storage.Close()
 	defer ts.Close()
 
 	kp, btList, err := prepareTxs(storage, 0, 10, nil)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	// Do a Request
 	var reader *bufio.Reader
 	{
 		url := strings.Replace(GetAccountTransactionsHandlerPattern, "{id}", kp.Address(), -1)
 		respBody, err := request(ts, url, false)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		defer respBody.Close()
 		reader = bufio.NewReader(respBody)
 	}
@@ -228,7 +228,7 @@ func TestGetTransactionsByAccountHandler(t *testing.T) {
 	// Check the output
 	{
 		readByte, err := ioutil.ReadAll(reader)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		recv := make(map[string]interface{})
 		json.Unmarshal(readByte, &recv)
@@ -250,13 +250,13 @@ func TestGetTransactionsByAccountHandlerStream(t *testing.T) {
 	wg.Add(1)
 
 	ts, storage, err := prepareAPIServer()
-	require.Nil(t, err)
+	require.NoError(t, err)
 	defer storage.Close()
 	defer ts.Close()
 
 	btMap := make(map[string]block.BlockTransaction)
 	kp, btList, err := prepareTxsWithoutSave(0, 10, nil)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	for _, bt := range btList {
 		btMap[bt.Hash] = bt
 	}
@@ -284,7 +284,7 @@ func TestGetTransactionsByAccountHandlerStream(t *testing.T) {
 	{
 		url := strings.Replace(GetAccountTransactionsHandlerPattern, "{id}", kp.Address(), -1)
 		respBody, err := request(ts, url, true)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		defer respBody.Close()
 		reader = bufio.NewReader(respBody)
 	}
@@ -293,14 +293,14 @@ func TestGetTransactionsByAccountHandlerStream(t *testing.T) {
 	{
 		for n := 0; n < 10; n++ {
 			line, err := reader.ReadBytes('\n')
-			require.Nil(t, err)
+			require.NoError(t, err)
 			line = bytes.Trim(line, "\n\t ")
 			recv := make(map[string]interface{})
 			json.Unmarshal(line, &recv)
 			bt := btMap[recv["hash"].(string)]
 			r := resource.NewTransaction(&bt)
 			txS, err := json.Marshal(r.Resource())
-			require.Nil(t, err)
+			require.NoError(t, err)
 			require.Equal(t, txS, line)
 		}
 	}
@@ -309,21 +309,21 @@ func TestGetTransactionsByAccountHandlerStream(t *testing.T) {
 
 func TestGetTransactionsHandlerPage(t *testing.T) {
 	ts, storage, err := prepareAPIServer()
-	require.Nil(t, err)
+	require.NoError(t, err)
 	defer storage.Close()
 	defer ts.Close()
 
 	_, btList, err := prepareTxs(storage, 0, 10, nil)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	requestFunction := func(url string) ([]interface{}, map[string]interface{}) {
 		respBody, err := request(ts, url, false)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		defer respBody.Close()
 		reader := bufio.NewReader(respBody)
 
 		readByte, err := ioutil.ReadAll(reader)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		recv := make(map[string]interface{})
 		json.Unmarshal(readByte, &recv)

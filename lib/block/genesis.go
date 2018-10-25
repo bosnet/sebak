@@ -105,7 +105,11 @@ func MakeGenesisBlock(st *storage.LevelDBBackend, genesisAccount BlockAccount, c
 
 	blk = NewBlock(
 		"",
-		round.Round{},
+		round.Round{
+			BlockHeight: common.GenesisBlockHeight,
+			TotalTxs:    1,
+			TotalOps:    uint64(len(tx.B.Operations)), // op for creating genesis account and common account operations
+		},
 		"",
 		[]string{tx.GetHash()},
 		common.GenesisBlockConfirmedTime,

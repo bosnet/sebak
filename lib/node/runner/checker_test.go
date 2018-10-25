@@ -257,7 +257,7 @@ func TestGetMissingTransactionAllMissing(t *testing.T) {
 		VotingHole:     ballot.VotingNOTYET,
 	}
 	err := common.RunChecker(baseChecker, common.DefaultDeferFunc)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	var checkerFuncs = []common.CheckerFunc{
 		BallotAlreadyVoted,
@@ -278,7 +278,7 @@ func TestGetMissingTransactionAllMissing(t *testing.T) {
 	}
 
 	err = common.RunChecker(checker, common.DefaultDeferFunc)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	// check consensus node runner has all missing transactions.
 	for _, hash := range blt.Transactions() {
@@ -321,7 +321,7 @@ func TestGetMissingTransactionProposerAlsoMissing(t *testing.T) {
 		VotingHole:     ballot.VotingNOTYET,
 	}
 	err := common.RunChecker(baseChecker, common.DefaultDeferFunc)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	var checkerFuncs = []common.CheckerFunc{
 		BallotAlreadyVoted,
@@ -462,14 +462,14 @@ func TestRegularIncomingBallots(t *testing.T) {
 	// send `INIT` ballot
 	blt := p.makeBallot(ballot.StateINIT)
 	_, err := p.runChecker(*blt)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.Equal(t, 1, len(cm.Messages())) // this check node broadcast the new SIGN ballot
 
 	received := cm.Messages()[0].(ballot.Ballot)
 	require.Equal(t, blt.H.ProposerSignature, received.H.ProposerSignature)
 
 	_, err = p.runChecker(received)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.Equal(t, 1, len(cm.Messages())) // this check node does not broadcast
 }
 
@@ -492,11 +492,11 @@ func TestIrregularIncomingBallots(t *testing.T) {
 	signBallot.Sign(p.nodes[1].Keypair(), networkID)
 
 	_, err := p.runChecker(*signBallot)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.Equal(t, 0, len(cm.Messages()))
 
 	_, err = p.runChecker(*initBallot)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.Equal(t, 1, len(cm.Messages()))
 
 	// check the broadcasted ballot is valid `SIGN` ballot

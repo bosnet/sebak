@@ -39,6 +39,7 @@ type NodeBlockInfo struct {
 	Height   uint64 `json:"height"`
 	Hash     string `json:"hash"`
 	TotalTxs uint64 `json:"total-txs"`
+	TotalOps uint64 `json:"total-ops"`
 }
 
 type NodeVersion struct {

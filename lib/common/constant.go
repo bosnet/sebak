@@ -30,13 +30,16 @@ const (
 
 	// BlockHeightEndOfInflation sets the block height of inflation end.
 	BlockHeightEndOfInflation uint64 = 36000000
-	// UnfreezingPeriod is the blocks duration for unfreezing.
-	// Frozen account can be unfreezed after passing unfreezing period from unfreezing request.
-	// It can be calculated like this. 241920 = 12*60*24*14. This period is considered as about two weeks.
-	UnfreezingPeriod uint64 = 241920
 )
 
 var (
+	// UnfreezingPeriod is the number of blocks required for unfreezing to take effect.
+	// When frozen funds are unfreezed, the transaction is record in the blockchain,
+	// and after `UnfreezingPeriod`, it takes effect on the account.
+	// The default value, 241920, is equal to:
+	// 14 (days) * 24 (hours) * 60 (minutes) * 12 (60 seconds / 5 seconds per block on average)
+	UnfreezingPeriod uint64 = 241920
+
 	// BallotConfirmedTimeAllowDuration is the duration time for ballot from
 	// other nodes. If confirmed time of ballot has too late or ahead by
 	// BallotConfirmedTimeAllowDuration, it will be considered not-wellformed.

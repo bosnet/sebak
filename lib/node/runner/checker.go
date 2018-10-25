@@ -6,16 +6,18 @@ import (
 	"encoding/json"
 	"io"
 
+	logging "github.com/inconshreveable/log15"
+
 	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/consensus"
+	"boscoin.io/sebak/lib/consensus/round"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
 	"boscoin.io/sebak/lib/transaction/operation"
-	logging "github.com/inconshreveable/log15"
 )
 
 type CheckerStopCloseConsensus struct {
@@ -155,13 +157,99 @@ func BallotNotFromKnownValidators(c common.Checker, args ...interface{}) (err er
 	return
 }
 
+// BallotCheckSYNC performs sync by considering sync condition.
+// And to participate in the consensus,
+// update the latestblock by referring to the database.
+func BallotCheckSYNC(c common.Checker, args ...interface{}) error {
+	checker := c.(*BallotChecker)
+	var err error
+
+	is := checker.NodeRunner.Consensus()
+	b := checker.Ballot
+	latestHeight := is.LatestBlock().Height
+	if latestHeight >= b.Round().BlockHeight { // in consensus, not sync
+		return nil
+	}
+
+	if !isBallotAcceptYes(b) {
+		return nil
+	}
+
+	if !hasBallotValidProposer(is, b) {
+		return nil
+	}
+
+	if is.LatestBallot.H.Hash == "" {
+		is.LatestBallot = b
+	}
+
+	is.SaveNodeHeight(b.Source(), b.Round().BlockHeight)
+
+	var syncHeight uint64
+	var nodeAddrs []string
+	syncHeight, nodeAddrs, err = checker.NodeRunner.Consensus().GetSyncInfo()
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		if b.Round().BlockHeight == syncHeight {
+			is.LatestBallot = b
+		}
+	}()
+
+	if latestHeight < syncHeight-1 { // request sync until syncHeight
+		checker.NodeRunner.Log().Debug("latestHeight < syncHeight-1", "latestHeight", latestHeight, "syncHeight", syncHeight)
+		is.StartSync(syncHeight, nodeAddrs)
+		return NewCheckerStopCloseConsensus(checker, "ballot makes node in sync")
+	} else {
+		if latestHeight == syncHeight-1 { // finish previous and current height ballot
+			_, err = finishBallot(
+				checker.NodeRunner.Storage(),
+				is.LatestBallot,
+				checker.NodeRunner.TransactionPool,
+				checker.Log,
+				checker.NodeRunner.Log(),
+			)
+			if err != nil {
+				return err
+			}
+		}
+
+		_, err = finishBallot(
+			checker.NodeRunner.Storage(),
+			checker.Ballot,
+			checker.NodeRunner.TransactionPool,
+			checker.Log,
+			checker.NodeRunner.Log(),
+		)
+		if err != nil {
+			return err
+		}
+
+		checker.LocalNode.SetConsensus()
+		checker.NodeRunner.TransitISAACState(b.Round(), ballot.StateALLCONFIRM)
+		return NewCheckerStopCloseConsensus(checker, "ballot got consensus")
+	}
+}
+
+func isBallotAcceptYes(b ballot.Ballot) bool {
+	return b.State() == ballot.StateACCEPT && b.Vote() == ballot.VotingYES
+}
+
+func hasBallotValidProposer(is *consensus.ISAAC, b ballot.Ballot) bool {
+	return b.Proposer() == is.SelectProposer(b.Round().BlockHeight, b.Round().Number)
+}
+
 // BallotAlreadyFinished checks the incoming ballot in
 // valid round.
 func BallotAlreadyFinished(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotChecker)
-
-	round := checker.Ballot.Round()
-	if !checker.NodeRunner.Consensus().IsAvailableRound(round) {
+	ballotRound := checker.Ballot.Round()
+	if !checker.NodeRunner.Consensus().IsAvailableRound(
+		ballotRound,
+		block.GetLatestBlock(checker.NodeRunner.Storage()),
+	) {
 		err = errors.ErrorBallotAlreadyFinished
 		checker.Log.Debug("ballot already finished")
 		return
@@ -457,6 +545,7 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) (err error) {
 	if !checker.VotingFinished {
 		return
 	}
+	ballotRound := checker.Ballot.Round()
 	if checker.FinishedVotingHole == ballot.VotingYES {
 		if err = getMissingTransaction(checker); err != nil {
 			checker.Log.Debug("failed to get the missing transactions of ballot", "error", err)
@@ -476,9 +565,8 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) (err error) {
 			return
 		}
 
-		checker.NodeRunner.Consensus().SetLatestBlock(*theBlock)
 		checker.Log.Debug("ballot was stored", "block", *theBlock)
-		checker.NodeRunner.TransitISAACState(checker.Ballot.Round(), ballot.StateALLCONFIRM)
+		checker.NodeRunner.TransitISAACState(ballotRound, ballot.StateALLCONFIRM)
 
 		err = NewCheckerStopCloseConsensus(checker, "ballot got consensus and will be stored")
 	} else {
@@ -488,7 +576,7 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) (err error) {
 
 	checker.NodeRunner.Consensus().CloseConsensus(
 		checker.Ballot.Proposer(),
-		checker.Ballot.Round(),
+		ballotRound,
 		checker.FinishedVotingHole,
 		checker.NodeRunner.TransactionPool,
 	)
@@ -498,23 +586,33 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) (err error) {
 
 func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *transaction.Pool, log, infoLog logging.Logger) (*block.Block, error) {
 	var err error
+	var isValid bool
+	if isValid, err = isValidRound(st, b.Round(), infoLog); err != nil || !isValid {
+		return nil, err
+	}
+
 	var ts *storage.LevelDBBackend
 	if ts, err = st.OpenTransaction(); err != nil {
 		return nil, err
 	}
 
-	transactions := map[string]transaction.Transaction{}
+	var nOps int
 	for _, hash := range b.B.Proposed.Transactions {
 		tx, found := transactionPool.Get(hash)
 		if !found {
 			return nil, errors.ErrorTransactionNotFound
 		}
-		transactions[hash] = tx
+		nOps += len(tx.B.Operations)
 	}
+
+	r := b.Round()
+	r.BlockHeight++                                 // next block
+	r.TotalTxs += uint64(len(b.Transactions()) + 1) // + 1 for ProposerTransaction
+	r.TotalOps += uint64(nOps + len(b.ProposerTransaction().B.Operations))
 
 	blk := block.NewBlock(
 		b.Proposer(),
-		b.Round(),
+		r,
 		b.ProposerTransaction().GetHash(),
 		b.Transactions(),
 		b.ProposerConfirmed(),
@@ -526,52 +624,33 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 		return nil, err
 	}
 
-	log.Debug("NewBlock created", "block", *blk)
+	log.Debug("NewBlock created", "block", blk)
 	infoLog.Info("NewBlock created",
 		"height", blk.Height,
-		"round", blk.Round.Number,
-		"timestamp", blk.Header.Timestamp,
-		"total-txs", blk.Round.TotalTxs,
+		"round", blk.Round,
+		"timestamp", blk.Timestamp,
+		"total-txs", blk.TotalTxs,
+		"total-ops", blk.TotalOps,
 		"proposer", blk.Proposer,
 	)
 
-	for _, hash := range b.B.Proposed.Transactions {
-		tx := transactions[hash]
-		raw, _ := json.Marshal(tx)
-
-		bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.Confirmed, tx, raw)
-		if err = bt.Save(ts); err != nil {
-			log.Error("failed to create new BlockTransaction", "block", blk, "bt", bt, "error", err)
-			ts.Discard()
+	pTxHashes := b.B.Proposed.Transactions
+	proposedTransactions := make([]*transaction.Transaction, 0, len(pTxHashes))
+	for _, hash := range pTxHashes {
+		tx, found := transactionPool.Get(hash)
+		if !found {
+			err = errors.ErrorTransactionNotFound
 			return nil, err
 		}
-		for _, op := range tx.B.Operations {
-			if err = finishOperation(ts, tx.B.Source, op, log); err != nil {
-				log.Error("failed to finish operation", "block", blk, "bt", bt, "op", op, "error", err)
-				ts.Discard()
-				return nil, err
-			}
-		}
-
-		var baSource *block.BlockAccount
-		if baSource, err = block.GetBlockAccount(ts, tx.B.Source); err != nil {
-			err = errors.ErrorBlockAccountDoesNotExists
-			ts.Discard()
-			return nil, err
-		}
-
-		if err = baSource.Withdraw(tx.TotalAmount(true)); err != nil {
-			ts.Discard()
-			return nil, err
-		}
-
-		if err = baSource.Save(ts); err != nil {
-			ts.Discard()
-			return nil, err
-		}
+		proposedTransactions = append(proposedTransactions, &tx)
 	}
 
-	if err = finishProposerTransaction(ts, *blk, b.ProposerTransaction(), log); err != nil {
+	if err = FinishTransactions(*blk, proposedTransactions, ts); err != nil {
+		ts.Discard()
+		return nil, err
+	}
+
+	if err = FinishProposerTransaction(ts, *blk, b.ProposerTransaction(), log); err != nil {
 		log.Error("failed to finish proposer transaction", "block", blk, "ptx", b.ProposerTransaction(), "error", err)
 		ts.Discard()
 		return nil, err
@@ -583,6 +662,61 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 	}
 
 	return blk, nil
+}
+
+func isValidRound(st *storage.LevelDBBackend, r round.Round, log logging.Logger) (bool, error) {
+	latestBlock := block.GetLatestBlock(st)
+	if latestBlock.Height != r.BlockHeight {
+		log.Error(
+			"ballot height is not equal to latestBlock",
+			"in ballot", r.BlockHeight,
+			"latest height", latestBlock.Height,
+		)
+		return false, errors.New("ballot height is not equal to latestBlock")
+	}
+	if latestBlock.Hash != r.BlockHash {
+		log.Error(
+			"latest block hash in ballot is not equal to latestBlock",
+			"in ballot", r.BlockHash,
+			"latest block", latestBlock.Hash,
+		)
+		return false, errors.New("latest block hash in ballot is not equal to latestBlock")
+	}
+
+	return true, nil
+}
+
+func FinishTransactions(blk block.Block, transactions []*transaction.Transaction, ts *storage.LevelDBBackend) (err error) {
+	for _, tx := range transactions {
+		raw, _ := json.Marshal(tx)
+
+		bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.Confirmed, *tx, raw)
+		if err = bt.Save(ts); err != nil {
+			return
+		}
+		for _, op := range tx.B.Operations {
+			if err = finishOperation(ts, tx.B.Source, op, log); err != nil {
+				log.Error("failed to finish operation", "block", blk, "bt", bt, "op", op, "error", err)
+				return err
+			}
+		}
+
+		var baSource *block.BlockAccount
+		if baSource, err = block.GetBlockAccount(ts, tx.B.Source); err != nil {
+			err = errors.ErrorBlockAccountDoesNotExists
+			return
+		}
+
+		if err = baSource.Withdraw(tx.TotalAmount(true)); err != nil {
+			return
+		}
+
+		if err = baSource.Save(ts); err != nil {
+			return
+		}
+
+	}
+	return
 }
 
 // finishOperation do finish the task after consensus by the type of each operation.
@@ -667,7 +801,7 @@ func finishPayment(st *storage.LevelDBBackend, source string, op operation.Payme
 	return
 }
 
-func finishProposerTransaction(st *storage.LevelDBBackend, blk block.Block, ptx ballot.ProposerTransaction, log logging.Logger) (err error) {
+func FinishProposerTransaction(st *storage.LevelDBBackend, blk block.Block, ptx ballot.ProposerTransaction, log logging.Logger) (err error) {
 	{
 		var opb operation.CollectTxFee
 		if opb, err = ptx.CollectTxFee(); err != nil {

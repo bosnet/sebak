@@ -8,8 +8,8 @@ import (
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/error"
-	"boscoin.io/sebak/lib/network/api/resource"
 	"boscoin.io/sebak/lib/network/httputils"
+	"boscoin.io/sebak/lib/node/runner/api/resource"
 	"boscoin.io/sebak/lib/storage"
 	"github.com/gorilla/mux"
 )
@@ -51,10 +51,7 @@ func (api NetworkHandlerAPI) GetOperationsByTxHashHandler(w http.ResponseWriter,
 	prev := strings.Replace(resource.URLTransactionOperations, "{id}", hash, -1) + "?" + options.SetReverse(true).Encode()
 	list := resource.NewResourceList(ops, self, next, prev)
 
-	if err := httputils.WriteJSON(w, 200, list); err != nil {
-		httputils.WriteJSONError(w, err)
-		return
-	}
+	httputils.MustWriteJSON(w, 200, list)
 }
 
 func (api NetworkHandlerAPI) getOperationsByTxHash(txHash string, options storage.ListOptions) (txs []resource.Resource, cursor []byte) {

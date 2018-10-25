@@ -67,27 +67,6 @@ func TestErrorBallotHasOverMaxTransactionsInBallot(t *testing.T) {
 	}
 }
 
-/*
-//	TestBallotHash checks that ballot.GetHash() makes non-empty hash.
-func TestBallotHash(t *testing.T) {
-	nodeRunners := createTestNodeRunner(1)
-
-	nodeRunner := nodeRunners[0]
-
-	round := round.Round{
-		Number:      0,
-		BlockHeight: nodeRunner.Consensus().LatestBlock.Height,
-		BlockHash:   nodeRunner.Consensus().LatestBlock.Hash,
-		TotalTxs:    nodeRunner.Consensus().LatestBlock.TotalTxs,
-	}
-
-	ballot := NewBallot(nodeRunner.localNode, round, []string{})
-	ballot.Sign(kp, networkID)
-	require.NotZero(t, len(ballot.GetHash()))
-
-}
-*/
-
 func TestBallotBadConfirmedTime(t *testing.T) {
 	kp, _ := keypair.Random()
 	commonKP, _ := keypair.Random()
@@ -114,7 +93,7 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 		ballot.Sign(kp, networkID)
 
 		err := ballot.IsWellFormed(networkID, conf)
-		require.Nil(t, err)
+		require.NoError(t, err)
 	}
 
 	{ // bad `Ballot.B.Confirmed` time; too ahead
@@ -192,7 +171,7 @@ func TestBallotProposerTransaction(t *testing.T) {
 		blt := NewBallot(node.Address(), node.Address(), round, []string{})
 		blt.Sign(node.Keypair(), networkID)
 		err := blt.IsWellFormed(networkID, conf)
-		require.NotNil(t, err)
+		require.Error(t, err)
 	}
 
 	{ // with ProposerTransaction
@@ -208,15 +187,15 @@ func TestBallotProposerTransaction(t *testing.T) {
 		var ptx ProposerTransaction
 		{
 			op, err := operation.NewOperation(opb)
-			require.Nil(t, err)
+			require.NoError(t, err)
 			ptx, err = NewProposerTransaction(kp.Address(), op)
-			require.Nil(t, err)
+			require.NoError(t, err)
 		}
 
 		blt.SetProposerTransaction(ptx)
 		blt.Sign(node.Keypair(), networkID)
 		err := blt.IsWellFormed(networkID, conf)
-		require.NotNil(t, err)
+		require.Error(t, err)
 	}
 }
 
@@ -266,7 +245,7 @@ func TestIsBallotWellFormed(t *testing.T) {
 
 	err := wellBallot.IsWellFormed(networkID, common.NewConfig())
 
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	wrongSignedBallot := NewBallot(n.Address(), p.Address(), round, []string{tx.GetHash()})
 	wrongSignedBallot.SetProposerTransaction(ptx)
@@ -275,7 +254,7 @@ func TestIsBallotWellFormed(t *testing.T) {
 
 	err = wrongSignedBallot.IsWellFormed(networkID, common.NewConfig())
 
-	require.NotNil(t, err)
+	require.Error(t, err)
 
 }
 
@@ -303,7 +282,7 @@ func TestIsExpiredBallotWellFormed(t *testing.T) {
 
 	err := b.IsWellFormed(networkID, common.NewConfig())
 
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 }
 
@@ -340,6 +319,6 @@ func TestIsExpiredBallotWithProposerTransactionWellFormed(t *testing.T) {
 
 	err := b.IsWellFormed(networkID, common.NewConfig())
 
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 }

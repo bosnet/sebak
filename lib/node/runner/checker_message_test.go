@@ -35,20 +35,20 @@ func TestMessageChecker(t *testing.T) {
 	}
 
 	err = TransactionUnmarshal(checker)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.Equal(t, checker.Transaction, validTx)
 
 	err = HasTransaction(checker)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	err = SaveTransactionHistory(checker)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	var found bool
 	found, err = block.ExistsBlockTransactionHistory(checker.Storage, checker.Transaction.GetHash())
 	require.True(t, found)
 
 	err = PushIntoTransactionPool(checker)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.True(t, checker.TransactionPool.Has(validTx.GetHash()))
 
 	// TransactionBroadcast(checker) is not suitable in unittest
@@ -60,7 +60,7 @@ func TestMessageChecker(t *testing.T) {
 	require.Equal(t, err, errors.ErrorNewButKnownMessage)
 
 	err = PushIntoTransactionPool(checker)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	var CheckerFuncs = []common.CheckerFunc{
 		TransactionUnmarshal,
@@ -100,7 +100,7 @@ func TestMessageCheckerWithInvalidHash(t *testing.T) {
 	}
 
 	err = TransactionUnmarshal(checker)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	checker.Message.Data = []byte{}
 	err = TransactionUnmarshal(checker)

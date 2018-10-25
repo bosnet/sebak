@@ -41,7 +41,7 @@ func TestISAACBallotWithEmptyTransactionVoting(t *testing.T) {
 
 	// Generate proposed ballot in nr
 	_, err := nr.proposeNewBallot(0)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	round := round.Round{
 		Number:      0,
@@ -55,15 +55,15 @@ func TestISAACBallotWithEmptyTransactionVoting(t *testing.T) {
 
 	ballotSIGN1 := GenerateEmptyTxBallot(proposer, round, ballot.StateSIGN, nodes[1], conf)
 	err = ReceiveBallot(nr, ballotSIGN1)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	ballotSIGN2 := GenerateEmptyTxBallot(proposer, round, ballot.StateSIGN, nodes[2], conf)
 	err = ReceiveBallot(nr, ballotSIGN2)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	ballotSIGN3 := GenerateEmptyTxBallot(proposer, round, ballot.StateSIGN, nodes[3], conf)
 	err = ReceiveBallot(nr, ballotSIGN3)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	runningRounds := nr.Consensus().RunningRounds
 
@@ -76,15 +76,15 @@ func TestISAACBallotWithEmptyTransactionVoting(t *testing.T) {
 
 	ballotACCEPT1 := GenerateEmptyTxBallot(proposer, round, ballot.StateACCEPT, nodes[1], conf)
 	err = ReceiveBallot(nr, ballotACCEPT1)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	ballotACCEPT2 := GenerateEmptyTxBallot(proposer, round, ballot.StateACCEPT, nodes[2], conf)
 	err = ReceiveBallot(nr, ballotACCEPT2)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	ballotACCEPT3 := GenerateEmptyTxBallot(proposer, round, ballot.StateACCEPT, nodes[3], conf)
 	err = ReceiveBallot(nr, ballotACCEPT3)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	ballotACCEPT4 := GenerateEmptyTxBallot(proposer, round, ballot.StateACCEPT, nodes[4], conf)
 	err = ReceiveBallot(nr, ballotACCEPT4)
@@ -95,6 +95,6 @@ func TestISAACBallotWithEmptyTransactionVoting(t *testing.T) {
 	latestBlock = nr.Consensus().LatestBlock()
 	require.Equal(t, proposer.Address(), latestBlock.Proposer)
 	require.Equal(t, uint64(2), latestBlock.Height)
-	require.Equal(t, uint64(1), latestBlock.TotalTxs)
+	require.Equal(t, uint64(2), latestBlock.TotalTxs)
 	require.Equal(t, 0, len(latestBlock.Transactions))
 }

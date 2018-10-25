@@ -13,26 +13,26 @@ import (
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/common/observer"
-	"boscoin.io/sebak/lib/network/api/resource"
+	"boscoin.io/sebak/lib/node/runner/api/resource"
 	"boscoin.io/sebak/lib/transaction/operation"
 	"github.com/stretchr/testify/require"
 )
 
 func TestGetOperationsByAccountHandler(t *testing.T) {
 	ts, storage, err := prepareAPIServer()
-	require.Nil(t, err)
+	require.NoError(t, err)
 	defer storage.Close()
 	defer ts.Close()
 
 	kp, boList, err := prepareOps(storage, 0, 10, nil)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	url := strings.Replace(GetAccountOperationsHandlerPattern, "{id}", kp.Address(), -1)
 	{
 		// unknown address
 		req, _ := http.NewRequest("GET", ts.URL+url, nil)
 		resp, err := ts.Client().Do(req)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		defer resp.Body.Close()
 		require.Equal(t, http.StatusNotFound, resp.StatusCode)
 	}
@@ -45,11 +45,11 @@ func TestGetOperationsByAccountHandler(t *testing.T) {
 	{
 		// Do a Request
 		respBody, err := request(ts, url, false)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		defer respBody.Close()
 		reader := bufio.NewReader(respBody)
 		readByte, err := ioutil.ReadAll(reader)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		recv := make(map[string]interface{})
 		json.Unmarshal(readByte, &recv)
@@ -68,12 +68,12 @@ func TestGetOperationsByAccountHandler(t *testing.T) {
 
 func TestGetOperationsByAccountHandlerWithType(t *testing.T) {
 	ts, storage, err := prepareAPIServer()
-	require.Nil(t, err)
+	require.NoError(t, err)
 	defer storage.Close()
 	defer ts.Close()
 
 	kp, boList, err := prepareOps(storage, 0, 10, nil)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	ba := block.NewBlockAccount(kp.Address(), common.Amount(common.BaseReserve))
 	ba.MustSave(storage)
 
@@ -82,12 +82,12 @@ func TestGetOperationsByAccountHandlerWithType(t *testing.T) {
 	{
 		url := url + "?type=" + string(operation.TypeCreateAccount)
 		respBody, err := request(ts, url, false)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		defer respBody.Close()
 		reader := bufio.NewReader(respBody)
 
 		readByte, err := ioutil.ReadAll(reader)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		recv := make(map[string]interface{})
 		json.Unmarshal(readByte, &recv)
@@ -98,12 +98,12 @@ func TestGetOperationsByAccountHandlerWithType(t *testing.T) {
 	{
 		url := url + "?type=" + string(operation.TypePayment)
 		respBody, err := request(ts, url, false)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		defer respBody.Close()
 		reader := bufio.NewReader(respBody)
 
 		readByte, err := ioutil.ReadAll(reader)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		recv := make(map[string]interface{})
 		json.Unmarshal(readByte, &recv)
@@ -126,13 +126,13 @@ func TestGetOperationsByAccountHandlerStream(t *testing.T) {
 	wg.Add(1)
 
 	ts, storage, err := prepareAPIServer()
-	require.Nil(t, err)
+	require.NoError(t, err)
 	defer storage.Close()
 	defer ts.Close()
 
 	boMap := make(map[string]block.BlockOperation)
 	kp, boList, err := prepareOpsWithoutSave(0, 10, nil)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	for _, bo := range boList {
 		boMap[bo.Hash] = bo
 	}
@@ -162,7 +162,7 @@ func TestGetOperationsByAccountHandlerStream(t *testing.T) {
 	{
 		url := strings.Replace(GetAccountOperationsHandlerPattern, "{id}", kp.Address(), -1)
 		respBody, err := request(ts, url, true)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		defer respBody.Close()
 		reader = bufio.NewReader(respBody)
 	}
@@ -172,14 +172,14 @@ func TestGetOperationsByAccountHandlerStream(t *testing.T) {
 		// Do stream Request to the Server
 		for n := 0; n < 10; n++ {
 			line, err := reader.ReadBytes('\n')
-			require.Nil(t, err)
+			require.NoError(t, err)
 			line = bytes.Trim(line, "\n\t ")
 			recv := make(map[string]interface{})
 			json.Unmarshal(line, &recv)
 			bo := boMap[recv["hash"].(string)]
 			r := resource.NewOperation(&bo)
 			txS, err := json.Marshal(r.Resource())
-			require.Nil(t, err)
+			require.NoError(t, err)
 			require.Equal(t, txS, line)
 		}
 	}

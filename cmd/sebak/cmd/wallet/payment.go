@@ -132,7 +132,7 @@ func init() {
 			}
 			if flagDry == false {
 				if retbody, err = client.SendMessage(tx); err != nil {
-					log.Fatal("Network error: ", err, " body: ", retbody)
+					log.Fatal("Network error: ", err, " body: ", string(retbody))
 					os.Exit(1)
 				}
 			}

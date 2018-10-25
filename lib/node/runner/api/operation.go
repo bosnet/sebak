@@ -8,8 +8,8 @@ import (
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/error"
-	"boscoin.io/sebak/lib/network/api/resource"
 	"boscoin.io/sebak/lib/network/httputils"
+	"boscoin.io/sebak/lib/node/runner/api/resource"
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction/operation"
 	"github.com/gorilla/mux"
@@ -77,8 +77,5 @@ func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter
 	prev := strings.Replace(resource.URLAccountOperations, "{id}", address, -1) + "?" + options.SetReverse(true).Encode()
 	list := resource.NewResourceList(txs, self, next, prev)
 
-	if err := httputils.WriteJSON(w, 200, list); err != nil {
-		httputils.WriteJSONError(w, err)
-		return
-	}
+	httputils.MustWriteJSON(w, 200, list)
 }

@@ -29,17 +29,17 @@ func TestErrorsClone(t *testing.T) {
 func TestErrorsRLP(t *testing.T) {
 	{
 		_, err := rlp.EncodeToBytes(ErrorBlockAlreadyExists)
-		require.Nil(t, err)
+		require.NoError(t, err)
 	}
 
 	{ // with `SetData()`, the rlp encoded value must be different
 		encoded, err := rlp.EncodeToBytes(ErrorBlockAlreadyExists)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		e := ErrorBlockAlreadyExists.Clone()
 		e.SetData("findme", "killme")
 		encoded0, err := rlp.EncodeToBytes(e)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.NotEqual(t, encoded, encoded0)
 	}
 }

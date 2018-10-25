@@ -144,9 +144,10 @@ func makeGenesisBlock(genesisAddress, commonAddress, networkID, balanceStr, stor
 
 	log.Info("genesis block created",
 		"height", b.Height,
-		"round", b.Round.Number,
-		"timestamp", b.Header.Timestamp,
-		"total-txs", b.Round.TotalTxs,
+		"round", b.Round,
+		"timestamp", b.Timestamp,
+		"total-txs", b.TotalTxs,
+		"total-ops", b.TotalOps,
 		"proposer", b.Proposer,
 	)
 

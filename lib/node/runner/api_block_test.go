@@ -117,13 +117,13 @@ func TestGetBlocksHandler(t *testing.T) {
 	u := p.URL(nil)
 
 	req, err := http.NewRequest("GET", u.String(), nil)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	resp, err := p.server.Client().Do(req)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 	rbs, err := unmarshalFromNodeItemResponseBody(resp.Body)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.Equal(t, len(p.blocks), len(rbs[NodeItemBlockHeader]))
 
 	for i, b := range p.blocks {
@@ -145,7 +145,7 @@ func TestGetBlocksHandlerOptions(t *testing.T) {
 
 	{ // empty options
 		options, err := NewGetBlocksOptionsFromRequest(nil)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		options.SetMode(GetBlocksOptionsModeBlock)
 		u := p.URL(options.URLValues())
 
@@ -154,7 +154,7 @@ func TestGetBlocksHandlerOptions(t *testing.T) {
 
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 		rbs, err := unmarshalFromNodeItemResponseBody(resp.Body)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, len(p.blocks), len(rbs[NodeItemBlock]))
 
 		for i, b := range p.blocks {
@@ -169,7 +169,7 @@ func TestGetBlocksHandlerOptions(t *testing.T) {
 
 	{ // options.Limit = 3
 		options, err := NewGetBlocksOptionsFromRequest(nil)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		options.SetMode(GetBlocksOptionsModeBlock).SetLimit(3)
 		u := p.URL(options.URLValues())
 
@@ -178,7 +178,7 @@ func TestGetBlocksHandlerOptions(t *testing.T) {
 
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 		rbs, err := unmarshalFromNodeItemResponseBody(resp.Body)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, int(options.Limit()), len(rbs[NodeItemBlock]))
 
 		for i, b := range p.blocks[:options.Limit()] {
@@ -193,7 +193,7 @@ func TestGetBlocksHandlerOptions(t *testing.T) {
 
 	{ // options.Reverse = true
 		options, err := NewGetBlocksOptionsFromRequest(nil)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		options.SetMode(GetBlocksOptionsModeBlock).SetReverse(true)
 		u := p.URL(options.URLValues())
 
@@ -202,7 +202,7 @@ func TestGetBlocksHandlerOptions(t *testing.T) {
 
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 		rbs, err := unmarshalFromNodeItemResponseBody(resp.Body)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, len(p.blocks), len(rbs[NodeItemBlock]))
 
 		for i, b := range p.blocks {
@@ -220,7 +220,7 @@ func TestGetBlocksHandlerOptions(t *testing.T) {
 		expectedBlocks := p.blocks[cursorIndex+1:]
 
 		options, err := NewGetBlocksOptionsFromRequest(nil)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		options.SetMode(GetBlocksOptionsModeBlock).SetCursor([]byte(p.blocks[cursorIndex].Hash))
 		u := p.URL(options.URLValues())
 
@@ -229,7 +229,7 @@ func TestGetBlocksHandlerOptions(t *testing.T) {
 
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 		rbs, err := unmarshalFromNodeItemResponseBody(resp.Body)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, len(expectedBlocks), len(rbs[NodeItemBlock]))
 
 		for i, b := range expectedBlocks {
@@ -250,7 +250,7 @@ func TestGetBlocksHandlerWithInvalidLimit(t *testing.T) {
 
 	{ // options.Limit is string
 		options, err := NewGetBlocksOptionsFromRequest(nil)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		urlValues := options.URLValues()
 		urlValues.Set("limit", "killme")
 
@@ -263,7 +263,7 @@ func TestGetBlocksHandlerWithInvalidLimit(t *testing.T) {
 
 		responseError := errors.Error{}
 		err = json.Unmarshal(body, &responseError)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 		require.Equal(t, errors.ErrorInvalidQueryString.Code, responseError.Code)
@@ -271,7 +271,7 @@ func TestGetBlocksHandlerWithInvalidLimit(t *testing.T) {
 
 	{ // options.Limit is negative
 		options, err := NewGetBlocksOptionsFromRequest(nil)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		urlValues := options.URLValues()
 		urlValues.Set("limit", "-100")
 
@@ -284,7 +284,7 @@ func TestGetBlocksHandlerWithInvalidLimit(t *testing.T) {
 
 		responseError := errors.Error{}
 		err = json.Unmarshal(body, &responseError)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 		require.Equal(t, errors.ErrorInvalidQueryString.Code, responseError.Code)
@@ -298,7 +298,7 @@ func TestGetBlocksHandlerWithInvalidReverse(t *testing.T) {
 
 	{ // options.Reverse unknown value
 		options, err := NewGetBlocksOptionsFromRequest(nil)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		urlValues := options.URLValues()
 		urlValues.Set("reverse", "killme")
 
@@ -311,7 +311,7 @@ func TestGetBlocksHandlerWithInvalidReverse(t *testing.T) {
 
 		responseError := errors.Error{}
 		err = json.Unmarshal(body, &responseError)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 		require.Equal(t, errors.ErrorInvalidQueryString.Code, responseError.Code)
@@ -319,7 +319,7 @@ func TestGetBlocksHandlerWithInvalidReverse(t *testing.T) {
 
 	{ // options.Reverse capitalized
 		options, err := NewGetBlocksOptionsFromRequest(nil)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		urlValues := options.URLValues()
 		urlValues.Set("reverse", "TRUE")
 
@@ -340,7 +340,7 @@ func TestGetBlocksHandlerWithUnknownCursor(t *testing.T) {
 
 	{ // options.Cursor unknown cursor
 		options, err := NewGetBlocksOptionsFromRequest(nil)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		options.SetCursor([]byte("killme"))
 		u := p.URL(options.URLValues())
 
@@ -351,7 +351,7 @@ func TestGetBlocksHandlerWithUnknownCursor(t *testing.T) {
 
 		responseError := errors.Error{}
 		err = json.Unmarshal(body, &responseError)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 		require.Equal(t, errors.ErrorInvalidQueryString.Code, responseError.Code)
@@ -367,7 +367,7 @@ func TestGetBlocksHandlerWithHeightRange(t *testing.T) {
 		expectedLength := 2
 
 		options, err := NewGetBlocksOptionsFromRequest(nil)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		options.SetMode(GetBlocksOptionsModeBlock).SetHeightRange([2]uint64{p.blocks[1].Height, p.blocks[1+expectedLength].Height})
 		u := p.URL(options.URLValues())
 
@@ -376,7 +376,7 @@ func TestGetBlocksHandlerWithHeightRange(t *testing.T) {
 
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 		rbs, err := unmarshalFromNodeItemResponseBody(resp.Body)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, expectedLength, len(rbs[NodeItemBlock]))
 
 		for i := 1; i < 1+expectedLength; i++ {
@@ -399,7 +399,7 @@ func TestGetBlocksHandlerWithInvalidHeightRange(t *testing.T) {
 
 	{ // if value is missing, it will be ok
 		options, err := NewGetBlocksOptionsFromRequest(nil)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		u := p.URL(options.URLValues())
 		u.RawQuery = "height-range="
 
@@ -409,7 +409,7 @@ func TestGetBlocksHandlerWithInvalidHeightRange(t *testing.T) {
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 
 		rbs, err := unmarshalFromNodeItemResponseBody(resp.Body)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, len(p.blocks), len(rbs[NodeItemBlockHeader]))
 
 		for i, b := range p.blocks {
@@ -424,7 +424,7 @@ func TestGetBlocksHandlerWithInvalidHeightRange(t *testing.T) {
 
 	{ // wrong format
 		options, err := NewGetBlocksOptionsFromRequest(nil)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		u := p.URL(options.URLValues())
 		u.RawQuery = fmt.Sprintf("height-range=%d-", 1)
 
@@ -435,7 +435,7 @@ func TestGetBlocksHandlerWithInvalidHeightRange(t *testing.T) {
 
 		responseError := errors.Error{}
 		err = json.Unmarshal(body, &responseError)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 		require.Equal(t, errors.ErrorInvalidQueryString.Code, responseError.Code)
@@ -443,7 +443,7 @@ func TestGetBlocksHandlerWithInvalidHeightRange(t *testing.T) {
 
 	{ // not uint64 value
 		options, err := NewGetBlocksOptionsFromRequest(nil)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		u := p.URL(options.URLValues())
 		u.RawQuery = fmt.Sprintf("height-range=%d-%s", 1, "findme")
 
@@ -454,7 +454,7 @@ func TestGetBlocksHandlerWithInvalidHeightRange(t *testing.T) {
 
 		responseError := errors.Error{}
 		err = json.Unmarshal(body, &responseError)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 		require.Equal(t, errors.ErrorInvalidQueryString.Code, responseError.Code)
@@ -462,7 +462,7 @@ func TestGetBlocksHandlerWithInvalidHeightRange(t *testing.T) {
 
 	{ // bigger start value than end
 		options, err := NewGetBlocksOptionsFromRequest(nil)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		u := p.URL(options.URLValues())
 		u.RawQuery = fmt.Sprintf("height-range=%d-%d", 1, 0)
 
@@ -473,7 +473,7 @@ func TestGetBlocksHandlerWithInvalidHeightRange(t *testing.T) {
 
 		responseError := errors.Error{}
 		err = json.Unmarshal(body, &responseError)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 		require.Equal(t, errors.ErrorInvalidQueryString.Code, responseError.Code)
@@ -482,7 +482,7 @@ func TestGetBlocksHandlerWithInvalidHeightRange(t *testing.T) {
 	{ // height is bigger than limit, set to limit
 		var expectedLength uint64 = 2
 		options, err := NewGetBlocksOptionsFromRequest(nil)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		options.SetHeightRange([2]uint64{1, p.blocks[len(p.blocks)-1].Height}).SetLimit(expectedLength)
 		require.True(t, options.Height() > expectedLength)
 
@@ -494,7 +494,7 @@ func TestGetBlocksHandlerWithInvalidHeightRange(t *testing.T) {
 
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 		rbs, err := unmarshalFromNodeItemResponseBody(resp.Body)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, int(expectedLength), len(rbs[NodeItemBlockHeader]))
 	}
 }
@@ -511,13 +511,13 @@ func TestGetBlocksHandlerWithModeBlock(t *testing.T) {
 		u.RawQuery = fmt.Sprintf("mode=%s", GetBlocksOptionsModeBlock)
 
 		req, err := http.NewRequest("GET", u.String(), nil)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		resp, err := p.server.Client().Do(req)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 		rbs, err := unmarshalFromNodeItemResponseBody(resp.Body)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, len(p.blocks), len(rbs[NodeItemBlock]))
 
 		for i, b := range p.blocks {
@@ -543,13 +543,13 @@ func TestGetBlocksHandlerWithModeHeader(t *testing.T) {
 		u.RawQuery = fmt.Sprintf("mode=%s", GetBlocksOptionsModeHeader)
 
 		req, err := http.NewRequest("GET", u.String(), nil)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		resp, err := p.server.Client().Do(req)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 		rbs, err := unmarshalFromNodeItemResponseBody(resp.Body)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, len(p.blocks), len(rbs[NodeItemBlockHeader]))
 
 		for i, b := range p.blocks {
@@ -573,13 +573,13 @@ func TestGetBlocksHandlerWithModeFull(t *testing.T) {
 		u.RawQuery = fmt.Sprintf("mode=%s", GetBlocksOptionsModeFull)
 
 		req, err := http.NewRequest("GET", u.String(), nil)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		resp, err := p.server.Client().Do(req)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 		rbs, err := unmarshalFromNodeItemResponseBody(resp.Body)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, len(p.blocks), len(rbs[NodeItemBlock]))
 
 		for i, b := range p.blocks {
@@ -644,16 +644,16 @@ func TestGetBlocksHandlerWithInvalidMode(t *testing.T) {
 		u.RawQuery = "mode=1"
 
 		req, err := http.NewRequest("GET", u.String(), nil)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		resp, err := p.server.Client().Do(req)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		body, _ := ioutil.ReadAll(resp.Body)
 		resp.Body.Close()
 
 		responseError := errors.Error{}
 		err = json.Unmarshal(body, &responseError)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 		require.Equal(t, errors.ErrorInvalidQueryString.Code, responseError.Code)

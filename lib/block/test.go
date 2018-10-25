@@ -106,11 +106,28 @@ func TestMakeNewBlock(transactions []string) Block {
 	return *NewBlock(
 		kp.Address(),
 		round.Round{
-			BlockHeight: 0,
+			BlockHeight: common.GenesisBlockHeight,
 			BlockHash:   "",
+			TotalTxs:    uint64(len(transactions)),
+			TotalOps:    uint64(len(transactions)),
 		},
 		"",
 		transactions,
+		common.NowISO8601(),
+	)
+}
+
+func TestMakeNewBlockWithPrevBlock(prevBlock Block, txs []string) Block {
+	kp, _ := keypair.Random()
+
+	return *NewBlock(
+		kp.Address(),
+		round.Round{
+			BlockHeight: prevBlock.Height,
+			BlockHash:   prevBlock.Hash,
+		},
+		"",
+		txs,
 		common.NowISO8601(),
 	)
 }

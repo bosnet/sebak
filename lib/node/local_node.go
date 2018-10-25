@@ -19,7 +19,7 @@ import (
 )
 
 type LocalNode struct {
-	sync.Mutex
+	sync.RWMutex
 
 	keypair *keypair.Full
 
@@ -37,7 +37,7 @@ func NewLocalNode(kp *keypair.Full, bindEndpoint *common.Endpoint, alias string)
 
 	n = &LocalNode{
 		keypair:      kp,
-		state:        StateNONE,
+		state:        StateCONSENSUS,
 		alias:        alias,
 		bindEndpoint: bindEndpoint,
 		validators:   map[string]*Validator{},
@@ -60,6 +60,8 @@ func (n *LocalNode) Equal(a Node) bool {
 }
 
 func (n *LocalNode) State() State {
+	n.RLock()
+	defer n.RUnlock()
 	return n.state
 }
 
@@ -67,16 +69,14 @@ func (n *LocalNode) SetBooting() {
 	n.state = StateBOOTING
 }
 
-func (n *LocalNode) SetSync() {
-	n.state = StateSYNC
-}
-
 func (n *LocalNode) SetConsensus() {
+	n.Lock()
+	defer n.Unlock()
 	n.state = StateCONSENSUS
 }
 
-func (n *LocalNode) SetTerminating() {
-	n.state = StateTERMINATING
+func (n *LocalNode) SetSync() {
+	n.state = StateSYNC
 }
 
 func (n *LocalNode) Address() string {
