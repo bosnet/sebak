@@ -19,7 +19,7 @@ import (
 
 func TestGetAccountHandler(t *testing.T) {
 	ts, storage, err := prepareAPIServer()
-	require.Nil(t, err)
+	require.NoError(t, err)
 	defer storage.Close()
 	defer ts.Close()
 	// Make Dummy BlockAccount
@@ -29,12 +29,12 @@ func TestGetAccountHandler(t *testing.T) {
 		// Do a Request
 		url := strings.Replace(GetAccountHandlerPattern, "{id}", ba.Address, -1)
 		respBody, err := request(ts, url, false)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		defer respBody.Close()
 		reader := bufio.NewReader(respBody)
 
 		readByte, err := ioutil.ReadAll(reader)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		recv := make(map[string]interface{})
 		json.Unmarshal(readByte, &recv)
 
@@ -46,7 +46,7 @@ func TestGetAccountHandler(t *testing.T) {
 		url := strings.Replace(GetAccountHandlerPattern, "{id}", unknownKey.Address(), -1)
 		req, _ := http.NewRequest("GET", ts.URL+url, nil)
 		resp, err := ts.Client().Do(req)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		defer resp.Body.Close()
 
 		require.Equal(t, http.StatusNotFound, resp.StatusCode)
@@ -58,12 +58,12 @@ func TestGetAccountHandlerStream(t *testing.T) {
 	wg.Add(1)
 
 	ts, storage, err := prepareAPIServer()
-	require.Nil(t, err)
+	require.NoError(t, err)
 	defer storage.Close()
 	defer ts.Close()
 	ba := block.TestMakeBlockAccount()
 	ba.MustSave(storage)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	key := ba.Address
 
@@ -88,7 +88,7 @@ func TestGetAccountHandlerStream(t *testing.T) {
 	{
 		url := strings.Replace(GetAccountHandlerPattern, "{id}", key, -1)
 		respBody, err := request(ts, url, true)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		defer respBody.Close()
 		reader = bufio.NewReader(respBody)
 	}
@@ -96,7 +96,7 @@ func TestGetAccountHandlerStream(t *testing.T) {
 	// Check the output
 	{
 		line, err := reader.ReadBytes('\n')
-		require.Nil(t, err)
+		require.NoError(t, err)
 		recv := make(map[string]interface{})
 		json.Unmarshal(line, &recv)
 		require.Equal(t, key, recv["address"], "address is not same")
@@ -108,7 +108,7 @@ func TestGetAccountHandlerStream(t *testing.T) {
 func TestGetNonExistentAccountHandler(t *testing.T) {
 
 	ts, storage, err := prepareAPIServer()
-	require.Nil(t, err)
+	require.NoError(t, err)
 	defer storage.Close()
 	defer ts.Close()
 
@@ -119,12 +119,12 @@ func TestGetNonExistentAccountHandler(t *testing.T) {
 		kp, _ := keypair.Random()
 		url := strings.Replace(GetAccountHandlerPattern, "{id}", kp.Address(), -1)
 		respBody, err := request(ts, url, false)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		reader := bufio.NewReader(respBody)
 		readByte, err := ioutil.ReadAll(reader)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		pByte, err := json.Marshal(p)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, pByte, readByte)
 	}
 }

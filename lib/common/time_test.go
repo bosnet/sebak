@@ -10,7 +10,7 @@ import (
 func TestParseISO8601(t *testing.T) {
 	s := "2018-08-25T14:12:10.090758840+09:00"
 	parsed, err := ParseISO8601(s)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	require.Equal(t, 2018, parsed.Year())
 	require.Equal(t, time.Month(8), parsed.Month())
@@ -28,13 +28,13 @@ func TestParseISO8601Timezone(t *testing.T) {
 	now := time.Now()
 
 	location, err := time.LoadLocation("Europe/Amsterdam") // Wouter lives in Amsterdam.
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	nowCEST := now.In(location)
 	formattedCEST := FormatISO8601(nowCEST)
 
 	parsed, err := ParseISO8601(formattedCEST)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	require.Equal(t, time.Duration(0), now.Sub(parsed))
 }

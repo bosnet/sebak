@@ -76,7 +76,7 @@ func TestUnfreezingSimulation(t *testing.T) {
 	nr.TransactionPool.Add(tx6)
 	roundNumber := uint64(0)
 	_, err := nr.proposeNewBallot(roundNumber)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	require.False(t, nr.TransactionPool.Has(tx6.GetHash()))
 
@@ -116,7 +116,7 @@ func MakeConsensusAndBlock(t *testing.T, tx transaction.Transaction, nr *NodeRun
 	// Generate proposed ballot in nodeRunner
 	roundNumber := uint64(0)
 	_, err = nr.proposeNewBallot(roundNumber)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	b := nr.Consensus().LatestBlock()
 	round := round.Round{
@@ -132,18 +132,18 @@ func MakeConsensusAndBlock(t *testing.T, tx transaction.Transaction, nr *NodeRun
 
 	ballotSIGN1 := GenerateBallot(proposer, round, tx, ballot.StateSIGN, nodes[1], conf)
 	err = ReceiveBallot(nr, ballotSIGN1)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	ballotSIGN2 := GenerateBallot(proposer, round, tx, ballot.StateSIGN, nodes[2], conf)
 	err = ReceiveBallot(nr, ballotSIGN2)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	rr := nr.Consensus().RunningRounds[round.Index()]
 	require.Equal(t, 2, len(rr.Voted[proposer.Address()].GetResult(ballot.StateSIGN)))
 
 	ballotACCEPT1 := GenerateBallot(proposer, round, tx, ballot.StateACCEPT, nodes[1], conf)
 	err = ReceiveBallot(nr, ballotACCEPT1)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	ballotACCEPT2 := GenerateBallot(proposer, round, tx, ballot.StateACCEPT, nodes[2], conf)
 	err = ReceiveBallot(nr, ballotACCEPT2)

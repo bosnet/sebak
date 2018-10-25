@@ -1,16 +1,17 @@
 package client
 
 import (
+	"encoding/json"
+	"net/http"
+	"testing"
+	"time"
+
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/client"
 	"boscoin.io/sebak/lib/transaction"
 	"boscoin.io/sebak/lib/transaction/operation"
-	"encoding/json"
 	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
-	"net/http"
-	"testing"
-	"time"
 )
 
 func TestCongressVoting(t *testing.T) {
@@ -26,24 +27,24 @@ func TestCongressVoting(t *testing.T) {
 
 	{
 		genesisAccount, err := c.LoadAccount(genesisAddr)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		ob := operation.NewCongressVoting([]byte("dummy"), 10, 20)
 		o, err := operation.NewOperation(ob)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		tx, err := transaction.NewTransaction(genesisAddr, uint64(genesisAccount.SequenceID), o)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		sender, err := keypair.Parse(genesisSecret)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		tx.Sign(sender, []byte(NETWORK_ID))
 
 		body, err := tx.Serialize()
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		pt, err := c.SubmitTransaction(body)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, pt.Status, block.TransactionHistoryStatusSubmitted)
 
 		var e error
@@ -57,11 +58,11 @@ func TestCongressVoting(t *testing.T) {
 		require.Nil(t, e)
 
 		opage, err := c.LoadOperationsByAccount(genesisAddr, client.Q{Key: client.QueryType, Value: "congress-voting"})
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		for _, obody := range opage.Embedded.Records {
 			b, err := json.Marshal(obody.Body)
-			require.Nil(t, err)
+			require.NoError(t, err)
 			var cv client.CongressVoting
 			json.Unmarshal(b, &cv)
 			require.Equal(t, ob.Contract, cv.Contract)
@@ -88,7 +89,7 @@ func TestCongressVotingResult(t *testing.T) {
 
 	{
 		genesisAccount, err := c.LoadAccount(genesisAddr)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		ob := operation.NewCongressVotingResult(
 			"dummy1",
@@ -101,20 +102,20 @@ func TestCongressVotingResult(t *testing.T) {
 			10,
 		)
 		o, err := operation.NewOperation(ob)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		tx, err := transaction.NewTransaction(genesisAddr, uint64(genesisAccount.SequenceID), o)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		sender, err := keypair.Parse(genesisSecret)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		tx.Sign(sender, []byte(NETWORK_ID))
 
 		body, err := tx.Serialize()
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		_, err = c.SubmitTransaction(body)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		var e error
 		for second := time.Duration(0); second < time.Second*10; second = second + time.Millisecond*500 {
@@ -127,11 +128,11 @@ func TestCongressVotingResult(t *testing.T) {
 		require.Nil(t, e)
 
 		opage, err := c.LoadOperationsByAccount(genesisAddr, client.Q{Key: client.QueryType, Value: "congress-voting-result"})
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		for _, obody := range opage.Embedded.Records {
 			b, err := json.Marshal(obody.Body)
-			require.Nil(t, err)
+			require.NoError(t, err)
 			var cvr client.CongressVotingResult
 			json.Unmarshal(b, &cvr)
 			require.Equal(t, ob.BallotStamps.Hash, cvr.BallotStamps.Hash)

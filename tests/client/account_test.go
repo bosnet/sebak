@@ -41,26 +41,26 @@ func TestAccount(t *testing.T) {
 		)
 
 		genesisAccount, err := c.LoadAccount(genesisAddr)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		genesisBalance, err := strconv.ParseUint(genesisAccount.Balance, 10, 64)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		ob := operation.NewCreateAccount(account1Addr, common.Amount(genesisToAccount1), "")
 		o, err := operation.NewOperation(ob)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		tx, err := transaction.NewTransaction(genesisAddr, uint64(genesisAccount.SequenceID), o)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		sender, err := keypair.Parse(genesisSecret)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		tx.Sign(sender, []byte(NETWORK_ID))
 
 		body, err := tx.Serialize()
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		_, err = c.SubmitTransaction(body)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		var e error
 		for second := time.Duration(0); second < time.Second*10; second = second + time.Millisecond*500 {
@@ -83,14 +83,14 @@ func TestAccount(t *testing.T) {
 		require.Nil(t, e)
 
 		targetBalance, err := strconv.ParseUint(targetAccount.Balance, 10, 64)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, uint64(genesisToAccount1), targetBalance)
 
 		genesisAccount, err = c.LoadAccount(genesisAddr)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		genesisBalance2, err := strconv.ParseUint(genesisAccount.Balance, 10, 64)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, genesisBalance-genesisToAccount1-fee, genesisBalance2)
 	}
 
@@ -101,25 +101,25 @@ func TestAccount(t *testing.T) {
 		)
 
 		senderAccount, err := c.LoadAccount(account1Addr)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		senderBalance, err := strconv.ParseUint(senderAccount.Balance, 10, 64)
 
 		ob := operation.NewCreateAccount(account2Addr, common.Amount(account1ToAccount2), "")
 		o, err := operation.NewOperation(ob)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		tx, err := transaction.NewTransaction(account1Addr, uint64(senderAccount.SequenceID), o)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		sender, err := keypair.Parse(account1Secret)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		tx.Sign(sender, []byte(NETWORK_ID))
 
 		body, err := tx.Serialize()
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		_, err = c.SubmitTransaction(body)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		var e error
 		for second := time.Duration(0); second < time.Second*10; second = second + time.Millisecond*500 {
@@ -142,14 +142,14 @@ func TestAccount(t *testing.T) {
 		require.Nil(t, e)
 
 		targetBalance, err := strconv.ParseUint(account2Account.Balance, 10, 64)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, uint64(account1ToAccount2), targetBalance)
 
 		senderAccount, err = c.LoadAccount(account1Addr)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		senderBalance2, err := strconv.ParseUint(senderAccount.Balance, 10, 64)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, senderBalance-account1ToAccount2-fee, senderBalance2)
 
 	}
@@ -161,25 +161,25 @@ func TestAccount(t *testing.T) {
 		)
 
 		senderAccount, err := c.LoadAccount(account1Addr)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		senderBalance, err := strconv.ParseUint(senderAccount.Balance, 10, 64)
 
 		ob := operation.NewPayment(account2Addr, common.Amount(account1ToAccount2))
 		o, err := operation.NewOperation(ob)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		tx, err := transaction.NewTransaction(account1Addr, uint64(senderAccount.SequenceID), o)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		sender, err := keypair.Parse(account1Secret)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		tx.Sign(sender, []byte(NETWORK_ID))
 
 		body, err := tx.Serialize()
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		_, err = c.SubmitTransaction(body)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		var e error
 		for second := time.Duration(0); second < time.Second*10; second = second + time.Millisecond*500 {
@@ -202,14 +202,14 @@ func TestAccount(t *testing.T) {
 		require.Nil(t, e)
 
 		targetBalance, err := strconv.ParseUint(account2Account.Balance, 10, 64)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, uint64(account1ToAccount2*2), targetBalance)
 
 		senderAccount, err = c.LoadAccount(account1Addr)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		senderBalance2, err := strconv.ParseUint(senderAccount.Balance, 10, 64)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, senderBalance-account1ToAccount2-fee, senderBalance2)
 
 	}

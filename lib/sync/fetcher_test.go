@@ -41,9 +41,9 @@ func TestBlockFetcher(t *testing.T) {
 		allConnected: []string{kp.Address()},
 		getNodeFunc: func(addr string) node.Node {
 			ep, err := common.NewEndpointFromString("https://node1?NodeName=n1")
-			require.Nil(t, err)
+			require.NoError(t, err)
 			v, err := node.NewValidator(kp.Address(), ep, "n1")
-			require.Nil(t, err)
+			require.NoError(t, err)
 			return v
 		},
 	}

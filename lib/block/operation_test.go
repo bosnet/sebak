@@ -16,13 +16,13 @@ func TestNewBlockOperationFromOperation(t *testing.T) {
 
 	op := tx.B.Operations[0]
 	bo, err := NewBlockOperationFromOperation(op, tx, 0)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	require.Equal(t, bo.Type, op.H.Type)
 	require.Equal(t, bo.TxHash, tx.H.Hash)
 	require.Equal(t, bo.Source, tx.B.Source)
 	encoded, err := op.B.Serialize()
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.Equal(t, bo.Body, encoded)
 }
 
@@ -37,7 +37,7 @@ func TestBlockOperationSaveAndGet(t *testing.T) {
 
 	bo := bos[0]
 	fetched, err := GetBlockOperation(st, bo.Hash)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	require.Equal(t, bo.Type, fetched.Type)
 	require.Equal(t, bo.Hash, fetched.Hash)
@@ -53,7 +53,7 @@ func TestBlockOperationSaveExisting(t *testing.T) {
 	bo.MustSave(st)
 
 	exists, err := ExistsBlockOperation(st, bos[0].Hash)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.Equal(t, exists, true)
 
 	err = bo.Save(st)
@@ -104,7 +104,7 @@ func TestBlockOperationSaveByTransacton(t *testing.T) {
 	block := TestMakeNewBlock([]string{tx.GetHash()})
 	bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, block.Confirmed, tx, common.MustJSONMarshal(tx))
 	err := bt.Save(st)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	var saved []BlockOperation
 	iterFunc, closeFunc := GetBlockOperationsByTxHash(st, tx.GetHash(), nil)
@@ -124,7 +124,7 @@ func TestBlockOperationSaveByTransacton(t *testing.T) {
 		require.Equal(t, bo.TxHash, tx.H.Hash)
 		require.Equal(t, bo.Source, tx.B.Source)
 		encoded, err := op.B.Serialize()
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, bo.Body, encoded)
 	}
 }

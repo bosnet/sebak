@@ -83,9 +83,9 @@ func TestNodeMessageHandler(t *testing.T) {
 	postData, _ := tx.Serialize()
 	req, err := http.NewRequest("POST", u.String(), bytes.NewBuffer(postData))
 	req.Header.Set("Content-Type", "application/json")
-	require.Nil(t, err)
+	require.NoError(t, err)
 	resp, err := p.server.Client().Do(req)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 	require.True(t, p.TransactionPool.Has(tx.GetHash()))
 }
@@ -106,9 +106,9 @@ func TestNodeMessageHandlerNotWellformedTransaction(t *testing.T) {
 		postData, _ := tx.Serialize()
 		req, err := http.NewRequest("POST", u.String(), bytes.NewBuffer(postData))
 		req.Header.Set("Content-Type", "application/json")
-		require.Nil(t, err)
+		require.NoError(t, err)
 		resp, err := p.server.Client().Do(req)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
 		body, _ := ioutil.ReadAll(resp.Body)
@@ -117,7 +117,7 @@ func TestNodeMessageHandlerNotWellformedTransaction(t *testing.T) {
 		var responseError errors.Error
 		{
 			err := json.Unmarshal(body, &responseError)
-			require.Nil(t, err)
+			require.NoError(t, err)
 		}
 		require.Equal(t, responseError.Data["error"], errIsWellformed.(*errors.Error).Data["error"])
 		require.Equal(
@@ -141,9 +141,9 @@ func TestNodeMessageHandlerNotWellformedTransaction(t *testing.T) {
 		postData, _ := tx.Serialize()
 		req, err := http.NewRequest("POST", u.String(), bytes.NewBuffer(postData))
 		req.Header.Set("Content-Type", "application/json")
-		require.Nil(t, err)
+		require.NoError(t, err)
 		resp, err := p.server.Client().Do(req)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
 		body, _ := ioutil.ReadAll(resp.Body)
@@ -152,7 +152,7 @@ func TestNodeMessageHandlerNotWellformedTransaction(t *testing.T) {
 		var responseError errors.Error
 		{
 			err := json.Unmarshal(body, &responseError)
-			require.Nil(t, err)
+			require.NoError(t, err)
 		}
 		require.Equal(t, responseError.Data["error"], errIsWellformed.(*errors.Error).Data["error"])
 		require.Equal(
@@ -170,18 +170,18 @@ func TestNodeMessageHandlerNotWellformedTransaction(t *testing.T) {
 		{
 			req, err := http.NewRequest("POST", u.String(), bytes.NewBuffer(postData))
 			req.Header.Set("Content-Type", "application/json")
-			require.Nil(t, err)
+			require.NoError(t, err)
 			resp, err := p.server.Client().Do(req)
-			require.Nil(t, err)
+			require.NoError(t, err)
 			require.Equal(t, http.StatusOK, resp.StatusCode)
 		}
 
 		// send again
 		req, err := http.NewRequest("POST", u.String(), bytes.NewBuffer(postData))
 		req.Header.Set("Content-Type", "application/json")
-		require.Nil(t, err)
+		require.NoError(t, err)
 		resp, err := p.server.Client().Do(req)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
 		body, _ := ioutil.ReadAll(resp.Body)
@@ -190,7 +190,7 @@ func TestNodeMessageHandlerNotWellformedTransaction(t *testing.T) {
 		var responseError errors.Error
 		{
 			err := json.Unmarshal(body, &responseError)
-			require.Nil(t, err)
+			require.NoError(t, err)
 		}
 		require.Equal(t, responseError.Data["error"], errors.ErrorNewButKnownMessage.Data["error"])
 		require.Equal(

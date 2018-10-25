@@ -43,7 +43,7 @@ func TestResourceAccount(t *testing.T) {
 	{
 		_, tx := transaction.TestMakeTransaction([]byte{0x00}, 1)
 		a, err := tx.Serialize()
-		require.Nil(t, err)
+		require.NoError(t, err)
 		bt := block.NewBlockTransactionFromTransaction("dummy", 0, common.NowISO8601(), tx, a)
 		bt.MustSave(storage)
 
@@ -71,7 +71,7 @@ func TestResourceAccount(t *testing.T) {
 	{
 		_, tx := transaction.TestMakeTransaction([]byte{0x00}, 1)
 		a, err := tx.Serialize()
-		require.Nil(t, err)
+		require.NoError(t, err)
 		bt := block.NewBlockTransactionFromTransaction(common.GetUniqueIDFromUUID(), 0, common.NowISO8601(), tx, a)
 		bt.MustSave(storage)
 		bo, err := block.GetBlockOperation(storage, bt.Operations[0])
@@ -96,7 +96,7 @@ func TestResourceAccount(t *testing.T) {
 	{
 		_, tx := transaction.TestMakeTransaction([]byte{0x00}, 3)
 		a, err := tx.Serialize()
-		require.Nil(t, err)
+		require.NoError(t, err)
 		bt := block.NewBlockTransactionFromTransaction(common.GetUniqueIDFromUUID(), 0, common.NowISO8601(), tx, a)
 		bt.MustSave(storage)
 
@@ -104,7 +104,7 @@ func TestResourceAccount(t *testing.T) {
 		for _, boHash := range bt.Operations {
 			var bo block.BlockOperation
 			bo, err = block.GetBlockOperation(storage, boHash)
-			require.Nil(t, err)
+			require.NoError(t, err)
 
 			ro := NewOperation(&bo)
 			rol = append(rol, ro)
@@ -130,7 +130,7 @@ func TestResourceAccount(t *testing.T) {
 				record := v.(map[string]interface{})
 				id := record["hash"].(string)
 				bo, err := block.GetBlockOperation(storage, id)
-				require.Nil(t, err)
+				require.NoError(t, err)
 				require.Equal(t, bo.Hash, record["hash"])
 				require.Equal(t, bo.Source, record["source"])
 				require.Equal(t, string(bo.Type), record["type"])
