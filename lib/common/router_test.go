@@ -97,3 +97,49 @@ func TestRouterHeaderMatcherWithMethodMatcher(t *testing.T) {
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 	}
 }
+
+func TestRouterHeaderMatcherContentType(t *testing.T) {
+	router := mux.NewRouter()
+
+	dummyHandler := func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+		return
+	}
+
+	router.HandleFunc("/showme", dummyHandler).MatcherFunc(PostAndJSONMatcher)
+	server := httptest.NewServer(router)
+	u, _ := url.Parse(server.URL)
+	u.Path = "/showme"
+
+	{ // POST && valid 'Content-Type'
+		req, _ := http.NewRequest("POST", u.String(), nil)
+		req.Header.Set("Content-Type", "application/json")
+		resp, err := server.Client().Do(req)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+	}
+
+	{ // POST && valid 'Content-Type' with 'charset'
+		req, _ := http.NewRequest("POST", u.String(), nil)
+		req.Header.Set("Content-Type", "application/json; charset=utf-8")
+		resp, err := server.Client().Do(req)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+	}
+
+	{ // POST && valid 'Content-Type' with weird 'charset'
+		req, _ := http.NewRequest("POST", u.String(), nil)
+		req.Header.Set("Content-Type", "Application/json                  ; charset=utf-8")
+		resp, err := server.Client().Do(req)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusNotFound, resp.StatusCode)
+	}
+
+	{ // POST && valid 'Content-Type' with weird 'charset'
+		req, _ := http.NewRequest("POST", u.String(), nil)
+		req.Header.Set("Content-Type", "application/json                  ; charset=utf-8")
+		resp, err := server.Client().Do(req)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+	}
+}
