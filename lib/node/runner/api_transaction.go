@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"boscoin.io/sebak/lib/block"
-	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/errors"
 )
 
 const GetTransactionPattern string = "/transactions"

@@ -5,7 +5,7 @@ import (
 	"math"
 	"sync"
 
-	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/errors"
 )
 
 type ISAACVotingThresholdPolicy struct {

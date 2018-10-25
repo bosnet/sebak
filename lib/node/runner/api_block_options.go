@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/storage"
 )
 

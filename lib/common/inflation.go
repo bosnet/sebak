@@ -5,7 +5,7 @@ import (
 	"math"
 	"strconv"
 
-	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/errors"
 )
 
 // CalculateInflation returns the amount of inflation in every block.

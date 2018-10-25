@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/errors"
 )
 
 const (

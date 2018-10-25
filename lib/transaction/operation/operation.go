@@ -6,7 +6,7 @@ import (
 	"github.com/btcsuite/btcutil/base58"
 
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/errors"
 )
 
 type OperationType string

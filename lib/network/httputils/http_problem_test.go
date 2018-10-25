@@ -1,7 +1,7 @@
 package httputils
 
 import (
-	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/errors"
 	"bufio"
 	"encoding/json"
 	"fmt"

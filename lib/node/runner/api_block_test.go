@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"boscoin.io/sebak/lib/block"
-	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
 )

@@ -9,7 +9,7 @@ import (
 
 	logging "github.com/inconshreveable/log15"
 
-	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/errors"
 )
 
 var (
