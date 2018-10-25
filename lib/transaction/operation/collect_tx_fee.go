@@ -13,13 +13,13 @@ import (
 // fee to certain account. To prevent the hash duplication of transaction,
 // OperationBodyTransactionFee has block related data.
 type CollectTxFee struct {
-	Target      string        `json:"target"`
-	Amount      common.Amount `json:"amount"`
-	Txs         uint64        `json:"txs"`
-	BlockHeight uint64        `json:"block-height"`
-	BlockHash   string        `json:"block-hash"`
-	TotalTxs    uint64        `json:"total-txs"`
-	TotalOps    uint64        `json:"total-ops"`
+	Target    string        `json:"target"`
+	Amount    common.Amount `json:"amount"`
+	Txs       uint64        `json:"txs"`
+	Height    uint64        `json:"block-height"`
+	BlockHash string        `json:"block-hash"`
+	TotalTxs  uint64        `json:"total-txs"`
+	TotalOps  uint64        `json:"total-ops"`
 }
 
 func NewCollectTxFee(
@@ -31,12 +31,12 @@ func NewCollectTxFee(
 	totalTxs uint64,
 ) CollectTxFee {
 	return CollectTxFee{
-		Target:      target,
-		Amount:      amount,
-		Txs:         txs,
-		BlockHeight: blockHeight,
-		BlockHash:   blockHash,
-		TotalTxs:    totalTxs,
+		Target:    target,
+		Amount:    amount,
+		Txs:       txs,
+		Height:    blockHeight,
+		BlockHash: blockHash,
+		TotalTxs:  totalTxs,
 	}
 }
 

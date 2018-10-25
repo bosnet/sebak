@@ -18,7 +18,7 @@ type Inflation struct {
 	Amount         common.Amount `json:"amount"`
 	InitialBalance common.Amount `json:"initial_balance"`
 	Ratio          string        `json:"ratio"`
-	BlockHeight    uint64        `json:"block-height"`
+	Height         uint64        `json:"block-height"`
 	BlockHash      string        `json:"block-hash"`
 	TotalTxs       uint64        `json:"total-txs"`
 	TotalOps       uint64        `json:"total-ops"`
@@ -37,7 +37,7 @@ func NewOperationBodyInflation(
 		Amount:         amount,
 		InitialBalance: initialBalance,
 		Ratio:          common.InflationRatioString,
-		BlockHeight:    blockHeight,
+		Height:         blockHeight,
 		BlockHash:      blockHash,
 		TotalTxs:       totalTxs,
 	}

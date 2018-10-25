@@ -9,7 +9,7 @@ import (
 
 	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/consensus/round"
+	"boscoin.io/sebak/lib/voting"
 )
 
 // 1. All 3 Nodes.
@@ -312,12 +312,12 @@ func TestStateTransitFromTimeoutInitToAccept(t *testing.T) {
 	state := nr.isaacStateManager.State()
 	require.Equal(t, ballot.StateINIT, state.BallotState)
 
-	round := round.Round{
-		BlockHeight: state.Height,
-		Number:      state.Round,
+	basis := voting.Basis{
+		Height: state.Height,
+		Round:  state.Round,
 	}
 
-	nr.TransitISAACState(round, ballot.StateSIGN)
+	nr.TransitISAACState(basis, ballot.StateSIGN)
 	<-recvTransit
 	require.Equal(t, ballot.StateSIGN, nr.isaacStateManager.State().BallotState)
 
@@ -365,12 +365,12 @@ func TestStateTransitFromTimeoutSignToAccept(t *testing.T) {
 
 	state := nr.isaacStateManager.State()
 
-	round := round.Round{
-		BlockHeight: state.Height,
-		Number:      state.Round,
+	basis := voting.Basis{
+		Height: state.Height,
+		Round:  state.Round,
 	}
 
-	nr.TransitISAACState(round, ballot.StateACCEPT)
+	nr.TransitISAACState(basis, ballot.StateACCEPT)
 	<-recv
 
 	require.Equal(t, 2, len(cm.Messages()))

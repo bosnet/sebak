@@ -8,7 +8,7 @@ import (
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/consensus"
-	"boscoin.io/sebak/lib/consensus/round"
+	"boscoin.io/sebak/lib/voting"
 )
 
 // ISAACStateManager manages the ISAACState.
@@ -198,17 +198,17 @@ func (sm *ISAACStateManager) Start() {
 func (sm *ISAACStateManager) broadcastExpiredBallot(state consensus.ISAACState) {
 	sm.nr.Log().Debug("begin broadcastExpiredBallot", "ISAACState", state)
 	b := sm.nr.consensus.LatestBlock()
-	round := round.Round{
-		Number:      state.Round,
-		BlockHeight: b.Height,
-		BlockHash:   b.Hash,
-		TotalTxs:    b.TotalTxs,
-		TotalOps:    b.TotalOps,
+	basis := voting.Basis{
+		Round:     state.Round,
+		Height:    b.Height,
+		BlockHash: b.Hash,
+		TotalTxs:  b.TotalTxs,
+		TotalOps:  b.TotalOps,
 	}
 
 	proposerAddr := sm.nr.consensus.SelectProposer(b.Height, state.Round)
 
-	newExpiredBallot := ballot.NewBallot(sm.nr.localNode.Address(), proposerAddr, round, []string{})
+	newExpiredBallot := ballot.NewBallot(sm.nr.localNode.Address(), proposerAddr, basis, []string{})
 	newExpiredBallot.SetVote(state.BallotState.Next(), ballot.VotingEXP)
 
 	opc, _ := ballot.NewCollectTxFeeFromBallot(*newExpiredBallot, sm.nr.CommonAccountAddress)

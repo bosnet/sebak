@@ -253,8 +253,8 @@ func (s *Syncer) work(height uint64, nodeAddrs []string) bool {
 
 		var (
 			syncInfo = &SyncInfo{
-				BlockHeight: height,
-				NodeAddrs:   nodeAddrs,
+				Height:    height,
+				NodeAddrs: nodeAddrs,
 			}
 			err error
 		)

@@ -21,10 +21,10 @@ type SyncController interface {
 }
 
 type SyncInfo struct {
-	BlockHeight uint64
-	Block       *block.Block
-	Txs         []*transaction.Transaction
-	Ptx         *ballot.ProposerTransaction
+	Height uint64
+	Block  *block.Block
+	Txs    []*transaction.Transaction
+	Ptx    *ballot.ProposerTransaction
 
 	// Fetching target node addresses, `NodeAddrs` is  the validators which
 	// participated and confirmed the consensus of latest ballot.

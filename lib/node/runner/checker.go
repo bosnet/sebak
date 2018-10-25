@@ -12,12 +12,12 @@ import (
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/consensus"
-	"boscoin.io/sebak/lib/consensus/round"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
 	"boscoin.io/sebak/lib/transaction/operation"
+	"boscoin.io/sebak/lib/voting"
 )
 
 type CheckerStopCloseConsensus struct {
@@ -72,12 +72,12 @@ func BallotUnmarshal(c common.Checker, args ...interface{}) (err error) {
 
 	checker.Ballot = b
 	checker.Log = checker.Log.New(logging.Ctx{
-		"ballot":   checker.Ballot.GetHash(),
-		"state":    checker.Ballot.State(),
-		"proposer": checker.Ballot.Proposer(),
-		"round":    checker.Ballot.Round(),
-		"from":     checker.Ballot.Source(),
-		"vote":     checker.Ballot.Vote(),
+		"ballot":      checker.Ballot.GetHash(),
+		"state":       checker.Ballot.State(),
+		"proposer":    checker.Ballot.Proposer(),
+		"votingBasis": checker.Ballot.VotingBasis(),
+		"from":        checker.Ballot.Source(),
+		"vote":        checker.Ballot.Vote(),
 	})
 	checker.Log.Debug("message is verified")
 
@@ -167,7 +167,7 @@ func BallotCheckSYNC(c common.Checker, args ...interface{}) error {
 	is := checker.NodeRunner.Consensus()
 	b := checker.Ballot
 	latestHeight := is.LatestBlock().Height
-	if latestHeight >= b.Round().BlockHeight { // in consensus, not sync
+	if latestHeight >= b.VotingBasis().Height { // in consensus, not sync
 		return nil
 	}
 
@@ -183,7 +183,7 @@ func BallotCheckSYNC(c common.Checker, args ...interface{}) error {
 		is.LatestBallot = b
 	}
 
-	is.SaveNodeHeight(b.Source(), b.Round().BlockHeight)
+	is.SaveNodeHeight(b.Source(), b.VotingBasis().Height)
 
 	var syncHeight uint64
 	var nodeAddrs []string
@@ -193,7 +193,7 @@ func BallotCheckSYNC(c common.Checker, args ...interface{}) error {
 	}
 
 	defer func() {
-		if b.Round().BlockHeight == syncHeight {
+		if b.VotingBasis().Height == syncHeight {
 			is.LatestBallot = b
 		}
 	}()
@@ -228,7 +228,7 @@ func BallotCheckSYNC(c common.Checker, args ...interface{}) error {
 		}
 
 		checker.LocalNode.SetConsensus()
-		checker.NodeRunner.TransitISAACState(b.Round(), ballot.StateALLCONFIRM)
+		checker.NodeRunner.TransitISAACState(b.VotingBasis(), ballot.StateALLCONFIRM)
 		return NewCheckerStopCloseConsensus(checker, "ballot got consensus")
 	}
 }
@@ -238,14 +238,14 @@ func isBallotAcceptYes(b ballot.Ballot) bool {
 }
 
 func hasBallotValidProposer(is *consensus.ISAAC, b ballot.Ballot) bool {
-	return b.Proposer() == is.SelectProposer(b.Round().BlockHeight, b.Round().Number)
+	return b.Proposer() == is.SelectProposer(b.VotingBasis().Height, b.VotingBasis().Round)
 }
 
 // BallotAlreadyFinished checks the incoming ballot in
 // valid round.
 func BallotAlreadyFinished(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotChecker)
-	ballotRound := checker.Ballot.Round()
+	ballotRound := checker.Ballot.VotingBasis()
 	if !checker.NodeRunner.Consensus().IsAvailableRound(
 		ballotRound,
 		block.GetLatestBlock(checker.NodeRunner.Storage()),
@@ -293,7 +293,7 @@ func BallotIsSameProposer(c common.Checker, args ...interface{}) (err error) {
 		return
 	}
 
-	if !checker.NodeRunner.Consensus().HasRunningRound(checker.Ballot.Round().Index()) {
+	if !checker.NodeRunner.Consensus().HasRunningRound(checker.Ballot.VotingBasis().Index()) {
 		err = errors.New("`RunningRound` not found")
 		return
 	}
@@ -483,7 +483,7 @@ func SIGNBallotBroadcast(c common.Checker, args ...interface{}) (err error) {
 	newBallot.SetVote(ballot.StateSIGN, checker.VotingHole)
 	newBallot.Sign(checker.LocalNode.Keypair(), checker.NetworkID)
 
-	if !checker.NodeRunner.Consensus().HasRunningRound(checker.Ballot.Round().Index()) {
+	if !checker.NodeRunner.Consensus().HasRunningRound(checker.Ballot.VotingBasis().Index()) {
 		err = errors.New("RunningRound not found")
 		return
 
@@ -497,7 +497,7 @@ func SIGNBallotBroadcast(c common.Checker, args ...interface{}) (err error) {
 // TransitStateToSIGN changes ISAACState to SIGN
 func TransitStateToSIGN(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotChecker)
-	checker.NodeRunner.TransitISAACState(checker.Ballot.Round(), ballot.StateSIGN)
+	checker.NodeRunner.TransitISAACState(checker.Ballot.VotingBasis(), ballot.StateSIGN)
 
 	return
 }
@@ -515,7 +515,7 @@ func ACCEPTBallotBroadcast(c common.Checker, args ...interface{}) (err error) {
 	newBallot.SetVote(ballot.StateACCEPT, checker.FinishedVotingHole)
 	newBallot.Sign(checker.LocalNode.Keypair(), checker.NetworkID)
 
-	if !checker.NodeRunner.Consensus().HasRunningRound(checker.Ballot.Round().Index()) {
+	if !checker.NodeRunner.Consensus().HasRunningRound(checker.Ballot.VotingBasis().Index()) {
 		err = errors.New("RunningRound not found")
 		return
 
@@ -532,7 +532,7 @@ func TransitStateToACCEPT(c common.Checker, args ...interface{}) (err error) {
 	if !checker.VotingFinished {
 		return
 	}
-	checker.NodeRunner.TransitISAACState(checker.Ballot.Round(), ballot.StateACCEPT)
+	checker.NodeRunner.TransitISAACState(checker.Ballot.VotingBasis(), ballot.StateACCEPT)
 
 	return
 }
@@ -545,7 +545,7 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) (err error) {
 	if !checker.VotingFinished {
 		return
 	}
-	ballotRound := checker.Ballot.Round()
+	ballotRound := checker.Ballot.VotingBasis()
 	if checker.FinishedVotingHole == ballot.VotingYES {
 		if err = getMissingTransaction(checker); err != nil {
 			checker.Log.Debug("failed to get the missing transactions of ballot", "error", err)
@@ -587,7 +587,7 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) (err error) {
 func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *transaction.Pool, log, infoLog logging.Logger) (*block.Block, error) {
 	var err error
 	var isValid bool
-	if isValid, err = isValidRound(st, b.Round(), infoLog); err != nil || !isValid {
+	if isValid, err = isValidRound(st, b.VotingBasis(), infoLog); err != nil || !isValid {
 		return nil, err
 	}
 
@@ -605,8 +605,8 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 		nOps += len(tx.B.Operations)
 	}
 
-	r := b.Round()
-	r.BlockHeight++                                 // next block
+	r := b.VotingBasis()
+	r.Height++                                      // next block
 	r.TotalTxs += uint64(len(b.Transactions()) + 1) // + 1 for ProposerTransaction
 	r.TotalOps += uint64(nOps + len(b.ProposerTransaction().B.Operations))
 
@@ -664,12 +664,12 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 	return blk, nil
 }
 
-func isValidRound(st *storage.LevelDBBackend, r round.Round, log logging.Logger) (bool, error) {
+func isValidRound(st *storage.LevelDBBackend, r voting.Basis, log logging.Logger) (bool, error) {
 	latestBlock := block.GetLatestBlock(st)
-	if latestBlock.Height != r.BlockHeight {
+	if latestBlock.Height != r.Height {
 		log.Error(
 			"ballot height is not equal to latestBlock",
-			"in ballot", r.BlockHeight,
+			"in ballot", r.Height,
 			"latest height", latestBlock.Height,
 		)
 		return false, errors.New("ballot height is not equal to latestBlock")

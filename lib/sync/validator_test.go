@@ -25,8 +25,8 @@ func TestValidator(t *testing.T) {
 	bk2 := block.TestMakeNewBlockWithPrevBlock(bk, nil)
 
 	si := &SyncInfo{
-		BlockHeight: uint64(1),
-		Block:       &bk2,
+		Height: uint64(1),
+		Block:  &bk2,
 	}
 
 	{

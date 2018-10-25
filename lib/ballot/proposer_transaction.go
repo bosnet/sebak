@@ -33,7 +33,7 @@ func NewProposerTransaction(proposer string, ops ...operation.Operation) (ptx Pr
 }
 
 func NewCollectTxFeeFromBallot(blt Ballot, commonAccount string, txs ...transaction.Transaction) (opb operation.CollectTxFee, err error) {
-	rd := blt.Round()
+	rd := blt.VotingBasis()
 
 	var feeAmount common.Amount
 	for _, tx := range txs {
@@ -44,7 +44,7 @@ func NewCollectTxFeeFromBallot(blt Ballot, commonAccount string, txs ...transact
 		commonAccount,
 		feeAmount,
 		uint64(len(txs)),
-		rd.BlockHeight,
+		rd.Height,
 		rd.BlockHash,
 		rd.TotalTxs,
 	)
@@ -52,7 +52,7 @@ func NewCollectTxFeeFromBallot(blt Ballot, commonAccount string, txs ...transact
 }
 
 func NewInflationFromBallot(blt Ballot, commonAccount string, initialBalance common.Amount) (opb operation.Inflation, err error) {
-	rd := blt.Round()
+	rd := blt.VotingBasis()
 
 	var amount common.Amount
 	if amount, err = common.CalculateInflation(initialBalance); err != nil {
@@ -63,7 +63,7 @@ func NewInflationFromBallot(blt Ballot, commonAccount string, initialBalance com
 		commonAccount,
 		amount,
 		initialBalance,
-		rd.BlockHeight,
+		rd.Height,
 		rd.BlockHash,
 		rd.TotalTxs,
 	)
@@ -132,7 +132,7 @@ func (p ProposerTransaction) IsWellFormedWithBallot(networkID []byte, blt Ballot
 		return
 	}
 
-	rd := blt.Round()
+	rd := blt.VotingBasis()
 	{ // check OperationCollectTxFee
 		var opb operation.CollectTxFee
 		if opb, err = blt.ProposerTransaction().CollectTxFee(); err != nil {
@@ -144,7 +144,7 @@ func (p ProposerTransaction) IsWellFormedWithBallot(networkID []byte, blt Ballot
 			return
 		}
 
-		if opb.BlockHeight != rd.BlockHeight {
+		if opb.Height != rd.Height {
 			err = errors.ErrorInvalidOperation
 			return
 		}
@@ -174,7 +174,7 @@ func (p ProposerTransaction) IsWellFormedWithBallot(networkID []byte, blt Ballot
 			return
 		}
 
-		if opb.BlockHeight != rd.BlockHeight {
+		if opb.Height != rd.Height {
 			err = errors.ErrorInvalidOperation
 			return
 		}

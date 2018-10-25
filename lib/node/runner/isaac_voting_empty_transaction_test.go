@@ -7,7 +7,7 @@ import (
 
 	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/consensus/round"
+	"boscoin.io/sebak/lib/voting"
 )
 
 // Test that ballot with empty transactions have VotingYES
@@ -16,11 +16,11 @@ func TestISAACBallotWithEmptyTransaction(t *testing.T) {
 	nr, _, _ := createNodeRunnerForTesting(1, conf, nil)
 
 	latestBlock := nr.Consensus().LatestBlock()
-	round := round.Round{
-		Number:      0,
-		BlockHeight: latestBlock.Height,
-		BlockHash:   latestBlock.Hash,
-		TotalTxs:    latestBlock.TotalTxs,
+	round := voting.Basis{
+		Round:     0,
+		Height:    latestBlock.Height,
+		BlockHash: latestBlock.Hash,
+		TotalTxs:  latestBlock.TotalTxs,
 	}
 
 	b := ballot.NewBallot(nr.localNode.Address(), nr.localNode.Address(), round, []string{})
@@ -43,11 +43,11 @@ func TestISAACBallotWithEmptyTransactionVoting(t *testing.T) {
 	_, err := nr.proposeNewBallot(0)
 	require.NoError(t, err)
 
-	round := round.Round{
-		Number:      0,
-		BlockHeight: latestBlock.Height,
-		BlockHash:   latestBlock.Hash,
-		TotalTxs:    latestBlock.TotalTxs,
+	round := voting.Basis{
+		Round:     0,
+		Height:    latestBlock.Height,
+		BlockHash: latestBlock.Hash,
+		TotalTxs:  latestBlock.TotalTxs,
 	}
 
 	b := ballot.NewBallot(nr.localNode.Address(), nr.localNode.Address(), round, []string{})

@@ -10,11 +10,11 @@ import (
 
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/consensus/round"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/transaction"
 	"boscoin.io/sebak/lib/transaction/operation"
+	"boscoin.io/sebak/lib/voting"
 )
 
 var networkID []byte = []byte("sebak-test-network")
@@ -26,14 +26,14 @@ func TestErrorBallotHasOverMaxTransactionsInBallot(t *testing.T) {
 	endpoint, _ := common.NewEndpointFromString("https://localhost:1000")
 	node, _ := node.NewLocalNode(kp, endpoint, "")
 
-	round := round.Round{Number: 0, BlockHeight: 1, BlockHash: "hahaha", TotalTxs: 1}
+	basis := voting.Basis{Round: 0, Height: 1, BlockHash: "hahaha", TotalTxs: 1}
 
 	_, tx := transaction.TestMakeTransaction(networkID, 1)
 	conf := common.NewConfig()
 	conf.TxsLimit = 2
 
 	{
-		blt := NewBallot(node.Address(), node.Address(), round, []string{tx.GetHash()})
+		blt := NewBallot(node.Address(), node.Address(), basis, []string{tx.GetHash()})
 
 		opc, _ := NewCollectTxFeeFromBallot(*blt, commonKP.Address(), tx)
 		opi, _ := NewInflationFromBallot(*blt, commonKP.Address(), common.Amount(1))
@@ -53,7 +53,7 @@ func TestErrorBallotHasOverMaxTransactionsInBallot(t *testing.T) {
 			txHashes = append(txHashes, tx.GetHash())
 		}
 
-		blt := NewBallot(node.Address(), node.Address(), round, txHashes)
+		blt := NewBallot(node.Address(), node.Address(), basis, txHashes)
 
 		opc, _ := NewCollectTxFeeFromBallot(*blt, commonKP.Address(), tx)
 		opi, _ := NewInflationFromBallot(*blt, commonKP.Address(), common.Amount(1))
@@ -73,7 +73,7 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 	endpoint, _ := common.NewEndpointFromString("https://localhost:1000")
 	node, _ := node.NewLocalNode(kp, endpoint, "")
 
-	round := round.Round{Number: 0, BlockHeight: 0, BlockHash: "showme", TotalTxs: 0}
+	basis := voting.Basis{Round: 0, Height: 0, BlockHash: "showme", TotalTxs: 0}
 
 	updateBallot := func(ballot *Ballot) {
 		ballot.H.Hash = ballot.B.MakeHashString()
@@ -83,7 +83,7 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 
 	conf := common.NewConfig()
 	{
-		ballot := NewBallot(node.Address(), node.Address(), round, []string{})
+		ballot := NewBallot(node.Address(), node.Address(), basis, []string{})
 
 		opc, _ := NewCollectTxFeeFromBallot(*ballot, commonKP.Address())
 		opi, _ := NewInflationFromBallot(*ballot, commonKP.Address(), common.Amount(1))
@@ -97,7 +97,7 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 	}
 
 	{ // bad `Ballot.B.Confirmed` time; too ahead
-		ballot := NewBallot(node.Address(), node.Address(), round, []string{})
+		ballot := NewBallot(node.Address(), node.Address(), basis, []string{})
 		ballot.Sign(kp, networkID)
 
 		newConfirmed := time.Now().Add(time.Duration(2) * common.BallotConfirmedTimeAllowDuration)
@@ -109,7 +109,7 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 	}
 
 	{ // bad `Ballot.B.Confirmed` time; too behind
-		ballot := NewBallot(node.Address(), node.Address(), round, []string{})
+		ballot := NewBallot(node.Address(), node.Address(), basis, []string{})
 		ballot.Sign(kp, networkID)
 
 		newConfirmed := time.Now().Add(time.Duration(-2) * common.BallotConfirmedTimeAllowDuration)
@@ -121,7 +121,7 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 	}
 
 	{ // bad `Ballot.B.Proposed.Confirmed` time; too ahead
-		ballot := NewBallot(node.Address(), node.Address(), round, []string{})
+		ballot := NewBallot(node.Address(), node.Address(), basis, []string{})
 		ballot.Sign(kp, networkID)
 
 		newConfirmed := time.Now().Add(time.Duration(2) * common.BallotConfirmedTimeAllowDuration)
@@ -133,7 +133,7 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 	}
 
 	{ // bad `Ballot.B.Proposed.Confirmed` time; too behind
-		ballot := NewBallot(node.Address(), node.Address(), round, []string{})
+		ballot := NewBallot(node.Address(), node.Address(), basis, []string{})
 		ballot.Sign(kp, networkID)
 
 		newConfirmed := time.Now().Add(time.Duration(-2) * common.BallotConfirmedTimeAllowDuration)
@@ -148,7 +148,7 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 func TestBallotEmptyHash(t *testing.T) {
 	kp, _ := keypair.Random()
 	node, _ := node.NewLocalNode(kp, &common.Endpoint{}, "")
-	r := round.Round{}
+	r := voting.Basis{}
 	b := NewBallot(node.Address(), node.Address(), r, []string{})
 	b.Sign(kp, networkID)
 
@@ -162,27 +162,27 @@ func TestBallotProposerTransaction(t *testing.T) {
 	endpoint, _ := common.NewEndpointFromString("https://localhost:1000")
 	node, _ := node.NewLocalNode(kp, endpoint, "")
 
-	round := round.Round{Number: 0, BlockHeight: 1, BlockHash: "hahaha", TotalTxs: 1}
+	basis := voting.Basis{Round: 0, Height: 1, BlockHash: "hahaha", TotalTxs: 1}
 
 	commonKP, _ := keypair.Random()
 
 	conf := common.NewConfig()
 	{ // without ProposerTransaction
-		blt := NewBallot(node.Address(), node.Address(), round, []string{})
+		blt := NewBallot(node.Address(), node.Address(), basis, []string{})
 		blt.Sign(node.Keypair(), networkID)
 		err := blt.IsWellFormed(networkID, conf)
 		require.Error(t, err)
 	}
 
 	{ // with ProposerTransaction
-		blt := NewBallot(node.Address(), node.Address(), round, []string{})
+		blt := NewBallot(node.Address(), node.Address(), basis, []string{})
 		opb := operation.NewCollectTxFee(
 			commonKP.Address(),
 			common.Amount(10),
 			uint64(len(blt.Transactions())),
-			blt.Round().BlockHeight,
-			blt.Round().BlockHash,
-			blt.Round().TotalTxs,
+			blt.VotingBasis().Height,
+			blt.VotingBasis().BlockHash,
+			blt.VotingBasis().TotalTxs,
 		)
 		var ptx ProposerTransaction
 		{
@@ -206,9 +206,9 @@ func TestNewBallot(t *testing.T) {
 	n, _ := node.NewLocalNode(kp, nodeEndpoint, "")
 	p, _ := node.NewLocalNode(kp, proposerEndpoint, "")
 
-	round := round.Round{Number: 0, BlockHeight: 1, BlockHash: "hahaha", TotalTxs: 1}
+	basis := voting.Basis{Round: 0, Height: 1, BlockHash: "hahaha", TotalTxs: 1}
 
-	b := NewBallot(n.Address(), p.Address(), round, []string{})
+	b := NewBallot(n.Address(), p.Address(), basis, []string{})
 
 	require.Equal(t, n.Address(), b.Source())
 	require.Equal(t, p.Address(), b.Proposer())
@@ -225,13 +225,13 @@ func TestIsBallotWellFormed(t *testing.T) {
 	proposerKP, _ := keypair.Random()
 	p, _ := node.NewLocalNode(proposerKP, proposerEndpoint, "")
 
-	round := round.Round{Number: 0, BlockHeight: 1, BlockHash: "hahaha", TotalTxs: 1}
+	basis := voting.Basis{Round: 0, Height: 1, BlockHash: "hahaha", TotalTxs: 1}
 
 	initialBalance := common.Amount(common.BaseReserve)
 	kpNewAccount, _ := keypair.Random()
 	tx := transaction.MakeTransactionCreateAccount(nodeKP, kpNewAccount.Address(), initialBalance)
 
-	wellBallot := NewBallot(n.Address(), p.Address(), round, []string{tx.GetHash()})
+	wellBallot := NewBallot(n.Address(), p.Address(), basis, []string{tx.GetHash()})
 
 	commonKP, _ := keypair.Random()
 	commonAccount := block.NewBlockAccount(commonKP.Address(), 0)
@@ -247,7 +247,7 @@ func TestIsBallotWellFormed(t *testing.T) {
 
 	require.NoError(t, err)
 
-	wrongSignedBallot := NewBallot(n.Address(), p.Address(), round, []string{tx.GetHash()})
+	wrongSignedBallot := NewBallot(n.Address(), p.Address(), basis, []string{tx.GetHash()})
 	wrongSignedBallot.SetProposerTransaction(ptx)
 
 	wrongSignedBallot.Sign(nodeKP, networkID)
@@ -269,13 +269,13 @@ func TestIsExpiredBallotWellFormed(t *testing.T) {
 	proposerKP, _ := keypair.Random()
 	p, _ := node.NewLocalNode(proposerKP, proposerEndpoint, "")
 
-	round := round.Round{Number: 0, BlockHeight: 1, BlockHash: "hahaha", TotalTxs: 1}
+	basis := voting.Basis{Round: 0, Height: 1, BlockHash: "hahaha", TotalTxs: 1}
 
 	initialBalance := common.Amount(common.BaseReserve)
 	kpNewAccount, _ := keypair.Random()
 	tx := transaction.MakeTransactionCreateAccount(nodeKP, kpNewAccount.Address(), initialBalance)
 
-	b := NewBallot(n.Address(), p.Address(), round, []string{tx.GetHash()})
+	b := NewBallot(n.Address(), p.Address(), basis, []string{tx.GetHash()})
 
 	b.SetVote(StateSIGN, VotingEXP)
 	b.Sign(nodeKP, networkID)
@@ -298,13 +298,13 @@ func TestIsExpiredBallotWithProposerTransactionWellFormed(t *testing.T) {
 	proposerKP, _ := keypair.Random()
 	p, _ := node.NewLocalNode(proposerKP, proposerEndpoint, "")
 
-	round := round.Round{Number: 0, BlockHeight: 1, BlockHash: "hahaha", TotalTxs: 1}
+	basis := voting.Basis{Round: 0, Height: 1, BlockHash: "hahaha", TotalTxs: 1}
 
 	initialBalance := common.Amount(common.BaseReserve)
 	kpNewAccount, _ := keypair.Random()
 	tx := transaction.MakeTransactionCreateAccount(nodeKP, kpNewAccount.Address(), initialBalance)
 
-	b := NewBallot(n.Address(), p.Address(), round, []string{tx.GetHash()})
+	b := NewBallot(n.Address(), p.Address(), basis, []string{tx.GetHash()})
 
 	commonKP, _ := keypair.Random()
 	commonAccount := block.NewBlockAccount(commonKP.Address(), 0)

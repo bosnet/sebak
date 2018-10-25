@@ -12,7 +12,7 @@ import (
 
 	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/consensus/round"
+	"boscoin.io/sebak/lib/voting"
 )
 
 /*
@@ -39,11 +39,11 @@ func TestISAACSimulationProposer(t *testing.T) {
 	require.NoError(t, err)
 
 	b := nr.Consensus().LatestBlock()
-	round := round.Round{
-		Number:      roundNumber,
-		BlockHeight: b.Height,
-		BlockHash:   b.Hash,
-		TotalTxs:    b.TotalTxs,
+	round := voting.Basis{
+		Round:     roundNumber,
+		Height:    b.Height,
+		BlockHash: b.Hash,
+		TotalTxs:  b.TotalTxs,
 	}
 	require.True(t, nr.TransactionPool.Has(tx.GetHash()))
 

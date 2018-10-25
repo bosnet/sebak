@@ -16,13 +16,13 @@ import (
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/consensus"
-	"boscoin.io/sebak/lib/consensus/round"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/node/runner/api"
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
+	"boscoin.io/sebak/lib/voting"
 	ghandlers "github.com/gorilla/handlers"
 	logging "github.com/inconshreveable/log15"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -464,7 +464,7 @@ func (nr *NodeRunner) handleBallotMessage(message common.NetworkMessage) (err er
 
 func (nr *NodeRunner) InitRound() {
 	// get latest blocks
-	nr.consensus.SetLatestRound(round.Round{})
+	nr.consensus.SetLatestRound(voting.Basis{})
 
 	nr.waitForConnectingEnoughNodes()
 	nr.StartStateManager()
@@ -505,8 +505,8 @@ func (nr *NodeRunner) StopStateManager() {
 	return
 }
 
-func (nr *NodeRunner) TransitISAACState(round round.Round, ballotState ballot.State) {
-	nr.isaacStateManager.TransitISAACState(round.BlockHeight, round.Number, ballotState)
+func (nr *NodeRunner) TransitISAACState(round voting.Basis, ballotState ballot.State) {
+	nr.isaacStateManager.TransitISAACState(round.Height, round.Round, ballotState)
 }
 
 var NewBallotTransactionCheckerFuncs = []common.CheckerFunc{
@@ -515,19 +515,19 @@ var NewBallotTransactionCheckerFuncs = []common.CheckerFunc{
 	BallotTransactionsSourceCheck,
 }
 
-func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) (ballot.Ballot, error) {
+func (nr *NodeRunner) proposeNewBallot(round uint64) (ballot.Ballot, error) {
 	b := nr.consensus.LatestBlock()
-	round := round.Round{
-		Number:      roundNumber,
-		BlockHeight: b.Height,
-		BlockHash:   b.Hash,
-		TotalTxs:    b.TotalTxs,
-		TotalOps:    b.TotalOps,
+	basis := voting.Basis{
+		Round:     round,
+		Height:    b.Height,
+		BlockHash: b.Hash,
+		TotalTxs:  b.TotalTxs,
+		TotalOps:  b.TotalOps,
 	}
 
 	// collect incoming transactions from `Pool`
 	availableTransactions := nr.TransactionPool.AvailableTransactions(nr.Conf.TxsLimit)
-	nr.log.Debug("new round proposed", "round", round, "transactions", availableTransactions)
+	nr.log.Debug("new round proposed", "block-basis", basis, "transactions", availableTransactions)
 
 	transactionsChecker := &BallotTransactionChecker{
 		DefaultChecker:        common.DefaultChecker{Funcs: NewBallotTransactionCheckerFuncs},
@@ -548,8 +548,8 @@ func (nr *NodeRunner) proposeNewBallot(roundNumber uint64) (ballot.Ballot, error
 	// remove invalid transactions
 	nr.TransactionPool.Remove(transactionsChecker.InvalidTransactions()...)
 
-	proposerAddr := nr.consensus.SelectProposer(b.Height, roundNumber)
-	theBallot := ballot.NewBallot(nr.localNode.Address(), proposerAddr, round, transactionsChecker.ValidTransactions)
+	proposerAddr := nr.consensus.SelectProposer(b.Height, round)
+	theBallot := ballot.NewBallot(nr.localNode.Address(), proposerAddr, basis, transactionsChecker.ValidTransactions)
 	theBallot.SetVote(ballot.StateINIT, ballot.VotingYES)
 
 	var validTransactions []transaction.Transaction

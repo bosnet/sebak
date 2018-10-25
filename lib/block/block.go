@@ -8,9 +8,9 @@ import (
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/common/observer"
-	"boscoin.io/sebak/lib/consensus/round"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/storage"
+	"boscoin.io/sebak/lib/voting"
 )
 
 const (
@@ -41,13 +41,13 @@ func (bck Block) String() string {
 
 // NewBlock creates new block; `ptx` represents the
 // `ProposerTransaction.GetHash()`.
-func NewBlock(proposer string, round round.Round, ptx string, transactions []string, confirmed string) *Block {
+func NewBlock(proposer string, basis voting.Basis, ptx string, transactions []string, confirmed string) *Block {
 	b := &Block{
-		Header:              *NewBlockHeader(round, getTransactionRoot(transactions)),
+		Header:              *NewBlockHeader(basis, getTransactionRoot(transactions)),
 		Transactions:        transactions,
 		ProposerTransaction: ptx,
 		Proposer:            proposer,
-		Round:               round.Number,
+		Round:               basis.Round,
 		Confirmed:           confirmed,
 	}
 

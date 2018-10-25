@@ -4,14 +4,14 @@ import (
 	"sync"
 
 	"boscoin.io/sebak/lib/ballot"
-	"boscoin.io/sebak/lib/consensus/round"
 	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/voting"
 )
 
 type RunningRound struct {
 	sync.RWMutex
 
-	Round        round.Round
+	VotingBasis  voting.Basis
 	Proposer     string                              // LocalNode's `Proposer`
 	Transactions map[ /* Proposer */ string][]string /* Transaction.Hash */
 	Voted        map[ /* Proposer */ string]*RoundVote
@@ -28,7 +28,7 @@ func NewRunningRound(proposer string, ballot ballot.Ballot) (*RunningRound, erro
 	}
 
 	return &RunningRound{
-		Round:        ballot.Round(),
+		VotingBasis:  ballot.VotingBasis(),
 		Proposer:     proposer,
 		Transactions: transactions,
 		Voted:        voted,

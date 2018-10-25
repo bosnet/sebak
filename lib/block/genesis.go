@@ -11,11 +11,11 @@ import (
 	"github.com/stellar/go/keypair"
 
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/consensus/round"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
 	"boscoin.io/sebak/lib/transaction/operation"
+	"boscoin.io/sebak/lib/voting"
 )
 
 // Returns: Genesis block
@@ -105,10 +105,10 @@ func MakeGenesisBlock(st *storage.LevelDBBackend, genesisAccount BlockAccount, c
 
 	blk = NewBlock(
 		"",
-		round.Round{
-			BlockHeight: common.GenesisBlockHeight,
-			TotalTxs:    1,
-			TotalOps:    uint64(len(tx.B.Operations)), // op for creating genesis account and common account operations
+		voting.Basis{
+			Height:   common.GenesisBlockHeight,
+			TotalTxs: 1,
+			TotalOps: uint64(len(tx.B.Operations)), // op for creating genesis account and common account operations
 		},
 		"",
 		[]string{tx.GetHash()},

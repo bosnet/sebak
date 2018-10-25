@@ -10,10 +10,10 @@ import (
 	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/consensus/round"
 	"boscoin.io/sebak/lib/error"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/transaction"
+	"boscoin.io/sebak/lib/voting"
 )
 
 func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
@@ -184,11 +184,11 @@ func (g *getMissingTransactionTesting) Prepare() {
 }
 
 func (g *getMissingTransactionTesting) MakeBallot(numberOfTxs int) (blt *ballot.Ballot) {
-	rd := round.Round{
-		Number:      0,
-		BlockHeight: g.genesisBlock.Height,
-		BlockHash:   g.genesisBlock.Hash,
-		TotalTxs:    g.genesisBlock.TotalTxs,
+	rd := voting.Basis{
+		Round:     0,
+		Height:    g.genesisBlock.Height,
+		BlockHash: g.genesisBlock.Hash,
+		TotalTxs:  g.genesisBlock.TotalTxs,
 	}
 
 	keys := map[string]*keypair.Full{}
@@ -417,11 +417,11 @@ func (p *irregularIncomingBallot) runChecker(blt ballot.Ballot) (checker *Ballot
 }
 
 func (p *irregularIncomingBallot) makeBallot(state ballot.State) (blt *ballot.Ballot) {
-	rd := round.Round{
-		Number:      0,
-		BlockHeight: p.genesisBlock.Height,
-		BlockHash:   p.genesisBlock.Hash,
-		TotalTxs:    p.genesisBlock.TotalTxs,
+	rd := voting.Basis{
+		Round:     0,
+		Height:    p.genesisBlock.Height,
+		BlockHash: p.genesisBlock.Hash,
+		TotalTxs:  p.genesisBlock.TotalTxs,
 	}
 
 	p.keyA, _ = keypair.Random()
