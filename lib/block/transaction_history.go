@@ -29,10 +29,10 @@ type BlockTransactionHistory struct {
 	Hash   string `json:"hash"`
 	Source string `json:"source"`
 
-	Time    string	`json:"time"`
-	Created string	`json:"created"`
-	Status  string	`json:"status"`
-	Message string	`json:"message"`
+	Time    string `json:"time"`
+	Created string `json:"created"`
+	Status  string `json:"status"`
+	Message string `json:"message"`
 }
 
 func NewTransactionHistoryFromTransaction(tx transaction.Transaction, message []byte) BlockTransactionHistory {
