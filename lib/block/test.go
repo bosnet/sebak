@@ -123,7 +123,7 @@ func TestMakeNewBlockWithPrevBlock(prevBlock Block, txs []string) Block {
 	return *NewBlock(
 		kp.Address(),
 		voting.Basis{
-			Height:    prevBlock.Height,
+			Height:    prevBlock.Height + 1,
 			BlockHash: prevBlock.Hash,
 			TotalTxs:  uint64(len(txs)),
 			TotalOps:  uint64(len(txs)),
