@@ -49,10 +49,10 @@ type BallotChecker struct {
 	Message            common.NetworkMessage
 	IsNew              bool
 	Ballot             ballot.Ballot
-	VotingHole         ballot.VotingHole
+	VotingHole         voting.Hole
 	Result             consensus.RoundVoteResult
 	VotingFinished     bool
-	FinishedVotingHole ballot.VotingHole
+	FinishedVotingHole voting.Hole
 
 	Log logging.Logger
 }
@@ -234,7 +234,7 @@ func BallotCheckSYNC(c common.Checker, args ...interface{}) error {
 }
 
 func isBallotAcceptYes(b ballot.Ballot) bool {
-	return b.State() == ballot.StateACCEPT && b.Vote() == ballot.VotingYES
+	return b.State() == ballot.StateACCEPT && b.Vote() == voting.YES
 }
 
 func hasBallotValidProposer(is *consensus.ISAAC, b ballot.Ballot) bool {
@@ -285,7 +285,7 @@ func BallotVote(c common.Checker, args ...interface{}) (err error) {
 func BallotIsSameProposer(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotChecker)
 
-	if checker.VotingHole != ballot.VotingNOTYET {
+	if checker.VotingHole != voting.NOTYET {
 		return
 	}
 
@@ -299,7 +299,7 @@ func BallotIsSameProposer(c common.Checker, args ...interface{}) (err error) {
 	}
 
 	if !checker.NodeRunner.Consensus().HasSameProposer(checker.Ballot) {
-		checker.VotingHole = ballot.VotingNO
+		checker.VotingHole = voting.NO
 		checker.Log.Debug("ballot has different proposer", "proposer", checker.Ballot.Proposer())
 		return
 	}
@@ -324,7 +324,7 @@ func BallotCheckResult(c common.Checker, args ...interface{}) (err error) {
 	if checker.VotingFinished {
 		checker.Log.Debug(
 			"get result",
-			"finished VotingHole", checker.FinishedVotingHole,
+			"finished voting.Hole", checker.FinishedVotingHole,
 			"result", checker.Result,
 		)
 	}
@@ -403,12 +403,12 @@ func getMissingTransaction(checker *BallotChecker) (err error) {
 func BallotGetMissingTransaction(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotChecker)
 
-	if checker.VotingHole != ballot.VotingNOTYET {
+	if checker.VotingHole != voting.NOTYET {
 		return
 	}
 
 	if err = getMissingTransaction(checker); err != nil {
-		checker.VotingHole = ballot.VotingNO
+		checker.VotingHole = voting.NO
 		err = nil
 		checker.Log.Debug("failed to get the missing transactions of ballot", "error", err)
 	}
@@ -440,7 +440,7 @@ func INITBallotValidateTransactions(c common.Checker, args ...interface{}) (err 
 		return
 	}
 
-	if checker.VotingHole != ballot.VotingNOTYET {
+	if checker.VotingHole != voting.NOTYET {
 		return
 	}
 
@@ -451,13 +451,13 @@ func INITBallotValidateTransactions(c common.Checker, args ...interface{}) (err 
 		NetworkID:      checker.NetworkID,
 		Ballot:         checker.Ballot,
 		Transactions:   checker.Ballot.Transactions(),
-		VotingHole:     ballot.VotingNOTYET,
+		VotingHole:     voting.NOTYET,
 	}
 
 	err = common.RunChecker(transactionsChecker, common.DefaultDeferFunc)
 	if err != nil {
 		if _, ok := err.(common.CheckerErrorStop); !ok {
-			checker.VotingHole = ballot.VotingNO
+			checker.VotingHole = voting.NO
 			checker.Log.Debug("failed to handle transactions of ballot", "error", err)
 			err = nil
 			return
@@ -465,10 +465,10 @@ func INITBallotValidateTransactions(c common.Checker, args ...interface{}) (err 
 		err = nil
 	}
 
-	if transactionsChecker.VotingHole == ballot.VotingNO {
-		checker.VotingHole = ballot.VotingNO
+	if transactionsChecker.VotingHole == voting.NO {
+		checker.VotingHole = voting.NO
 	} else {
-		checker.VotingHole = ballot.VotingYES
+		checker.VotingHole = voting.YES
 	}
 
 	return
@@ -546,7 +546,7 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) (err error) {
 		return
 	}
 	ballotRound := checker.Ballot.VotingBasis()
-	if checker.FinishedVotingHole == ballot.VotingYES {
+	if checker.FinishedVotingHole == voting.YES {
 		if err = getMissingTransaction(checker); err != nil {
 			checker.Log.Debug("failed to get the missing transactions of ballot", "error", err)
 			return

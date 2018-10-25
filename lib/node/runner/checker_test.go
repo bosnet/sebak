@@ -220,7 +220,7 @@ func (g *getMissingTransactionTesting) MakeBallot(numberOfTxs int) (blt *ballot.
 
 	ptx, _ := ballot.NewProposerTransactionFromBallot(*blt, opc, opi)
 	blt.SetProposerTransaction(ptx)
-	blt.SetVote(ballot.StateINIT, ballot.VotingYES)
+	blt.SetVote(ballot.StateINIT, voting.YES)
 	blt.Sign(g.proposerNR.Node().Keypair(), networkID)
 
 	return blt
@@ -254,7 +254,7 @@ func TestGetMissingTransactionAllMissing(t *testing.T) {
 		NetworkID:      g.consensusNR.NetworkID(),
 		Message:        ballotMessage,
 		Log:            g.consensusNR.Log(),
-		VotingHole:     ballot.VotingNOTYET,
+		VotingHole:     voting.NOTYET,
 	}
 	err := common.RunChecker(baseChecker, common.DefaultDeferFunc)
 	require.NoError(t, err)
@@ -273,7 +273,7 @@ func TestGetMissingTransactionAllMissing(t *testing.T) {
 		NetworkID:      baseChecker.NetworkID,
 		Message:        ballotMessage,
 		Ballot:         baseChecker.Ballot,
-		VotingHole:     ballot.VotingNOTYET,
+		VotingHole:     voting.NOTYET,
 		Log:            baseChecker.Log,
 	}
 
@@ -318,7 +318,7 @@ func TestGetMissingTransactionProposerAlsoMissing(t *testing.T) {
 		NetworkID:      g.consensusNR.NetworkID(),
 		Message:        ballotMessage,
 		Log:            g.consensusNR.Log(),
-		VotingHole:     ballot.VotingNOTYET,
+		VotingHole:     voting.NOTYET,
 	}
 	err := common.RunChecker(baseChecker, common.DefaultDeferFunc)
 	require.NoError(t, err)
@@ -337,12 +337,12 @@ func TestGetMissingTransactionProposerAlsoMissing(t *testing.T) {
 		NetworkID:      baseChecker.NetworkID,
 		Message:        ballotMessage,
 		Ballot:         baseChecker.Ballot,
-		VotingHole:     ballot.VotingNOTYET,
+		VotingHole:     voting.NOTYET,
 		Log:            baseChecker.Log,
 	}
 	err = common.RunChecker(checker, common.DefaultDeferFunc)
 
-	require.Equal(t, ballot.VotingNO, checker.VotingHole)
+	require.Equal(t, voting.NO, checker.VotingHole)
 	require.Equal(t, 0, g.consensusNR.TransactionPool.Len())
 }
 
@@ -385,7 +385,7 @@ func (p *irregularIncomingBallot) runChecker(blt ballot.Ballot) (checker *Ballot
 		NetworkID:      p.nr.NetworkID(),
 		Message:        ballotMessage,
 		Log:            p.nr.Log(),
-		VotingHole:     ballot.VotingNOTYET,
+		VotingHole:     voting.NOTYET,
 	}
 	{
 		err := common.RunChecker(baseChecker, common.DefaultDeferFunc)
@@ -408,7 +408,7 @@ func (p *irregularIncomingBallot) runChecker(blt ballot.Ballot) (checker *Ballot
 		NetworkID:      baseChecker.NetworkID,
 		Message:        ballotMessage,
 		Ballot:         baseChecker.Ballot,
-		VotingHole:     ballot.VotingNOTYET,
+		VotingHole:     voting.NOTYET,
 		Log:            baseChecker.Log,
 	}
 	err = common.RunChecker(checker, common.DefaultDeferFunc)
@@ -444,7 +444,7 @@ func (p *irregularIncomingBallot) makeBallot(state ballot.State) (blt *ballot.Ba
 
 	ptx, _ := ballot.NewProposerTransactionFromBallot(*blt, opc, opi)
 	blt.SetProposerTransaction(ptx)
-	blt.SetVote(state, ballot.VotingYES)
+	blt.SetVote(state, voting.YES)
 	blt.Sign(p.nr.Node().Keypair(), networkID)
 
 	return blt
@@ -488,7 +488,7 @@ func TestIrregularIncomingBallots(t *testing.T) {
 
 	signBallot := &ballot.Ballot{}
 	*signBallot = *initBallot
-	signBallot.SetVote(ballot.StateSIGN, ballot.VotingYES)
+	signBallot.SetVote(ballot.StateSIGN, voting.YES)
 	signBallot.Sign(p.nodes[1].Keypair(), networkID)
 
 	_, err := p.runChecker(*signBallot)

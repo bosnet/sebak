@@ -273,7 +273,7 @@ func TestExpiredBallotCheckProposer(t *testing.T) {
 
 	// The createNodeRunnerForTesting has FixedSelector{localNode.Address()} so the proposer is always nr(nodes[0]).
 	validBallot := GenerateEmptyTxBallot(nr.localNode, basis, ballot.StateSIGN, nodes[1], common.NewConfig())
-	validBallot.SetVote(ballot.StateSIGN, ballot.VotingEXP)
+	validBallot.SetVote(ballot.StateSIGN, voting.EXP)
 
 	checker := &BallotChecker{
 		DefaultChecker: common.DefaultChecker{},
@@ -282,7 +282,7 @@ func TestExpiredBallotCheckProposer(t *testing.T) {
 		NetworkID:      nr.networkID,
 		Log:            nr.Log(),
 		Ballot:         *validBallot,
-		VotingHole:     ballot.VotingNOTYET,
+		VotingHole:     voting.NOTYET,
 	}
 
 	err := BallotVote(checker)
@@ -294,7 +294,7 @@ func TestExpiredBallotCheckProposer(t *testing.T) {
 	// The createNodeRunnerForTesting has FixedSelector{localNode.Address()} so the proposer is always nr(nodes[0]).
 	// The invalidBallot has nodes[1] as a proposer so it is invalid.
 	invalidBallot := GenerateEmptyTxBallot(nodes[1], basis, ballot.StateSIGN, nodes[1], common.NewConfig())
-	invalidBallot.SetVote(ballot.StateSIGN, ballot.VotingEXP)
+	invalidBallot.SetVote(ballot.StateSIGN, voting.EXP)
 
 	checker = &BallotChecker{
 		DefaultChecker: common.DefaultChecker{},
@@ -303,7 +303,7 @@ func TestExpiredBallotCheckProposer(t *testing.T) {
 		NetworkID:      nr.networkID,
 		Log:            nr.Log(),
 		Ballot:         *invalidBallot,
-		VotingHole:     ballot.VotingNOTYET,
+		VotingHole:     voting.NOTYET,
 	}
 
 	require.Nil(t, BallotVote(checker))
@@ -311,5 +311,5 @@ func TestExpiredBallotCheckProposer(t *testing.T) {
 	err = BallotIsSameProposer(checker)
 	require.NoError(t, err)
 
-	require.Equal(t, ballot.VotingNO, checker.VotingHole)
+	require.Equal(t, voting.NO, checker.VotingHole)
 }

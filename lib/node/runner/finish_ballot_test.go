@@ -139,7 +139,7 @@ func testFinishBallotWithBatch(withBatch bool, numberOfTransactions, numberOfOpe
 		ptx, _ := ballot.NewProposerTransactionFromBallot(*blt, opc, opi)
 
 		blt.SetProposerTransaction(ptx)
-		blt.SetVote(ballot.StateINIT, ballot.VotingYES)
+		blt.SetVote(ballot.StateINIT, voting.YES)
 		blt.Sign(proposerNode.Keypair(), networkID)
 	}
 

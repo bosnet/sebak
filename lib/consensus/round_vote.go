@@ -4,9 +4,10 @@ import (
 	logging "github.com/inconshreveable/log15"
 
 	"boscoin.io/sebak/lib/ballot"
+	"boscoin.io/sebak/lib/voting"
 )
 
-type RoundVoteResult map[ /* Node.Address() */ string]ballot.VotingHole
+type RoundVoteResult map[ /* Node.Address() */ string]voting.Hole
 
 type RoundVote struct {
 	SIGN   RoundVoteResult
@@ -64,25 +65,25 @@ func (rv *RoundVote) GetResult(state ballot.State) (result RoundVoteResult) {
 	return result
 }
 
-func (rv *RoundVote) CanGetVotingResult(policy ballot.VotingThresholdPolicy, state ballot.State, log logging.Logger) (RoundVoteResult, ballot.VotingHole, bool) {
+func (rv *RoundVote) CanGetVotingResult(policy voting.ThresholdPolicy, state ballot.State, log logging.Logger) (RoundVoteResult, voting.Hole, bool) {
 	threshold := policy.Threshold()
 	if threshold < 1 {
-		return RoundVoteResult{}, ballot.VotingNOTYET, false
+		return RoundVoteResult{}, voting.NOTYET, false
 	}
 
 	result := rv.GetResult(state)
 	if len(result) < int(threshold) {
-		return result, ballot.VotingNOTYET, false
+		return result, voting.NOTYET, false
 	}
 
 	var yes, no, expired int
 	for _, votingHole := range result {
 		switch votingHole {
-		case ballot.VotingYES:
+		case voting.YES:
 			yes++
-		case ballot.VotingNO:
+		case voting.NO:
 			no++
-		case ballot.VotingEXP:
+		case voting.EXP:
 			expired++
 		}
 	}
@@ -97,9 +98,9 @@ func (rv *RoundVote) CanGetVotingResult(policy ballot.VotingThresholdPolicy, sta
 	)
 
 	if yes >= threshold {
-		return result, ballot.VotingYES, true
+		return result, voting.YES, true
 	} else if no >= threshold {
-		return result, ballot.VotingNO, true
+		return result, voting.NO, true
 	} else {
 		// do nothing
 	}
@@ -108,10 +109,10 @@ func (rv *RoundVote) CanGetVotingResult(policy ballot.VotingThresholdPolicy, sta
 	total := policy.Validators()
 	voted := yes + no + expired
 	if cannotBeOver(total-voted, threshold, yes, no) { // draw
-		return result, ballot.VotingEXP, true
+		return result, voting.EXP, true
 	}
 
-	return result, ballot.VotingNOTYET, false
+	return result, voting.NOTYET, false
 }
 
 func cannotBeOver(remain, threshold, yes, no int) bool {

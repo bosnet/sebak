@@ -7,9 +7,9 @@ import (
 	"sync"
 	"time"
 
-	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/node"
+	"boscoin.io/sebak/lib/voting"
 	logging "github.com/inconshreveable/log15"
 )
 
@@ -18,7 +18,7 @@ type ValidatorConnectionManager struct {
 
 	localNode *node.LocalNode
 	network   Network
-	policy    ballot.VotingThresholdPolicy
+	policy    voting.ThresholdPolicy
 
 	validators map[ /* node.Address() */ string]*node.Validator
 	clients    map[ /* node.Address() */ string]NetworkClient
@@ -30,7 +30,7 @@ type ValidatorConnectionManager struct {
 func NewValidatorConnectionManager(
 	localNode *node.LocalNode,
 	network Network,
-	policy ballot.VotingThresholdPolicy,
+	policy voting.ThresholdPolicy,
 ) ConnectionManager {
 	if len(localNode.GetValidators()) == 0 {
 		panic("empty validators")

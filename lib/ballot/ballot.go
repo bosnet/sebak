@@ -26,11 +26,11 @@ func NewBallot(fromAddr string, proposerAddr string, basis voting.Basis, transac
 			Transactions: transactions,
 		},
 		State: StateINIT,
-		Vote:  VotingNOTYET,
+		Vote:  voting.NOTYET,
 	}
 
 	if len(transactions) < 1 {
-		body.Vote = VotingYES
+		body.Vote = voting.YES
 	}
 
 	b = &Ballot{
@@ -72,7 +72,7 @@ func (b Ballot) IsWellFormed(networkID []byte, conf common.Config) (err error) {
 		return
 	}
 
-	if b.Vote() != VotingEXP {
+	if b.Vote() != voting.EXP {
 		if err = b.isProposerInfoWellFormed(networkID, conf); err != nil {
 			return
 		}
@@ -165,7 +165,7 @@ func (b Ballot) ProposerConfirmed() string {
 	return b.B.Proposed.Confirmed
 }
 
-func (b Ballot) Vote() VotingHole {
+func (b Ballot) Vote() voting.Hole {
 	return b.B.Vote
 }
 
@@ -173,7 +173,7 @@ func (b *Ballot) SetSource(source string) {
 	b.B.Source = source
 }
 
-func (b *Ballot) SetVote(state State, vote VotingHole) {
+func (b *Ballot) SetVote(state State, vote voting.Hole) {
 	b.B.State = state
 	b.B.Vote = vote
 }
@@ -275,7 +275,7 @@ type BallotBody struct {
 	Proposed  BallotBodyProposed `json:"proposed"`
 	Source    string             `json:"source"`
 	State     State              `json:"state"`
-	Vote      VotingHole         `json:"vote"`
+	Vote      voting.Hole        `json:"vote"`
 	Reason    *errors.Error      `json:"reason"`
 }
 
