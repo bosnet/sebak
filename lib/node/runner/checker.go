@@ -592,7 +592,7 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 	}
 
 	var ts *storage.LevelDBBackend
-	if ts, err = st.OpenTransaction(); err != nil {
+	if ts, err = st.OpenBatch(); err != nil {
 		return nil, err
 	}
 
