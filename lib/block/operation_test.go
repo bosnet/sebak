@@ -97,7 +97,7 @@ func TestGetSortedBlockOperationsByTxHash(t *testing.T) {
 	}
 }
 
-func TestBlockOperationSaveByTransacton(t *testing.T) {
+func TestBlockOperationSaveByTransaction(t *testing.T) {
 	st := storage.NewTestStorage()
 
 	_, tx := transaction.TestMakeTransaction(networkID, 10)
