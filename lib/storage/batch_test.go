@@ -57,7 +57,7 @@ func TestBatchBackendNew(t *testing.T) {
 
 	{ // `New` must be failed because already `New`ed
 		err = bt.New(key, input)
-		require.Equal(t, errors.ErrorStorageRecordAlreadyExists, err)
+		require.Equal(t, errors.ErrorStorageRecordAlreadyExists.Code, err.(*errors.Error).Code)
 	}
 
 	{ // `Commit` batch, it must be stored in LeveldbBatch
