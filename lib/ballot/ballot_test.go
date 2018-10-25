@@ -277,7 +277,7 @@ func TestIsExpiredBallotWellFormed(t *testing.T) {
 
 	b := NewBallot(n.Address(), p.Address(), basis, []string{tx.GetHash()})
 
-	b.SetVote(StateSIGN, VotingEXP)
+	b.SetVote(StateSIGN, voting.EXP)
 	b.Sign(nodeKP, networkID)
 
 	err := b.IsWellFormed(networkID, common.NewConfig())
@@ -314,7 +314,7 @@ func TestIsExpiredBallotWithProposerTransactionWellFormed(t *testing.T) {
 	ptx, _ := NewProposerTransactionFromBallot(*b, opc, opi)
 	b.SetProposerTransaction(ptx)
 
-	b.SetVote(StateSIGN, VotingEXP)
+	b.SetVote(StateSIGN, voting.EXP)
 	b.Sign(nodeKP, networkID)
 
 	err := b.IsWellFormed(networkID, common.NewConfig())

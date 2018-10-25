@@ -101,7 +101,7 @@ func TestStateINITTimeoutNotProposer(t *testing.T) {
 			init++
 		case ballot.StateSIGN:
 			sign++
-			require.Equal(t, ballot.VotingEXP, b.Vote())
+			require.Equal(t, voting.EXP, b.Vote())
 		case ballot.StateACCEPT:
 			accept++
 		}
@@ -153,13 +153,13 @@ func TestStateSIGNTimeoutProposer(t *testing.T) {
 		switch b.State() {
 		case ballot.StateINIT:
 			init++
-			require.Equal(t, ballot.VotingYES, b.Vote())
+			require.Equal(t, voting.YES, b.Vote())
 		case ballot.StateSIGN:
 			sign++
-			require.Equal(t, ballot.VotingEXP, b.Vote())
+			require.Equal(t, voting.EXP, b.Vote())
 		case ballot.StateACCEPT:
 			accept++
-			require.Equal(t, ballot.VotingEXP, b.Vote())
+			require.Equal(t, voting.EXP, b.Vote())
 		}
 	}
 	require.Equal(t, 1, init)
@@ -209,13 +209,13 @@ func TestStateSIGNTimeoutNotProposer(t *testing.T) {
 		switch b.State() {
 		case ballot.StateINIT:
 			init++
-			require.Equal(t, ballot.VotingYES, b.Vote())
+			require.Equal(t, voting.YES, b.Vote())
 		case ballot.StateSIGN:
 			sign++
-			require.Equal(t, ballot.VotingEXP, b.Vote())
+			require.Equal(t, voting.EXP, b.Vote())
 		case ballot.StateACCEPT:
 			accept++
-			require.Equal(t, ballot.VotingEXP, b.Vote())
+			require.Equal(t, voting.EXP, b.Vote())
 		}
 	}
 	require.Equal(t, 0, init)
@@ -267,12 +267,12 @@ func TestStateACCEPTTimeoutProposerThenNotProposer(t *testing.T) {
 		switch b.State() {
 		case ballot.StateINIT:
 			init++
-			require.Equal(t, b.Vote(), ballot.VotingYES)
+			require.Equal(t, b.Vote(), voting.YES)
 		case ballot.StateSIGN:
 			sign++
 		case ballot.StateACCEPT:
 			accept++
-			require.Equal(t, b.Vote(), ballot.VotingEXP)
+			require.Equal(t, b.Vote(), voting.EXP)
 		}
 	}
 
@@ -329,7 +329,7 @@ func TestStateTransitFromTimeoutInitToAccept(t *testing.T) {
 		require.True(t, ok)
 		require.NotEqual(t, nr.localNode.Address(), b.Proposer())
 		require.Equal(t, ballot.StateACCEPT, b.State())
-		require.Equal(t, ballot.VotingEXP, b.Vote())
+		require.Equal(t, voting.EXP, b.Vote())
 	}
 }
 
@@ -360,7 +360,7 @@ func TestStateTransitFromTimeoutSignToAccept(t *testing.T) {
 		require.True(t, ok)
 		require.Equal(t, nr.localNode.Address(), b.Proposer())
 		require.Equal(t, ballot.StateINIT, b.State())
-		require.Equal(t, ballot.VotingYES, b.Vote())
+		require.Equal(t, voting.YES, b.Vote())
 	}
 
 	state := nr.isaacStateManager.State()
@@ -379,6 +379,6 @@ func TestStateTransitFromTimeoutSignToAccept(t *testing.T) {
 		require.True(t, ok)
 		require.Equal(t, nr.localNode.Address(), b.Proposer())
 		require.Equal(t, ballot.StateINIT, b.State())
-		require.Equal(t, ballot.VotingYES, b.Vote())
+		require.Equal(t, voting.YES, b.Vote())
 	}
 }

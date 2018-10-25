@@ -86,7 +86,7 @@ func (p *ballotCheckerProposedTransaction) MakeBallot(numberOfTxs int) (blt *bal
 	}
 
 	blt.SetProposerTransaction(ptx)
-	blt.SetVote(ballot.StateINIT, ballot.VotingYES)
+	blt.SetVote(ballot.StateINIT, voting.YES)
 	blt.Sign(p.proposerNode.Keypair(), networkID)
 
 	return
@@ -143,7 +143,7 @@ func TestProposedTransactionWithoutTransactions(t *testing.T) {
 		NetworkID:      p.nr.NetworkID(),
 		Message:        ballotMessage,
 		Log:            p.nr.Log(),
-		VotingHole:     ballot.VotingNOTYET,
+		VotingHole:     voting.NOTYET,
 	}
 	err = common.RunChecker(baseChecker, common.DefaultDeferFunc)
 	require.NoError(t, err)
@@ -155,12 +155,12 @@ func TestProposedTransactionWithoutTransactions(t *testing.T) {
 		NetworkID:      p.nr.NetworkID(),
 		Message:        ballotMessage,
 		Ballot:         baseChecker.Ballot,
-		VotingHole:     ballot.VotingNOTYET,
+		VotingHole:     voting.NOTYET,
 		Log:            p.nr.Log(),
 	}
 	err = common.RunChecker(checker, common.DefaultDeferFunc)
 	require.NoError(t, err)
-	require.Equal(t, ballot.VotingYES, checker.VotingHole)
+	require.Equal(t, voting.YES, checker.VotingHole)
 }
 
 func TestProposedTransactionWithTransactions(t *testing.T) {
@@ -195,7 +195,7 @@ func TestProposedTransactionWithTransactions(t *testing.T) {
 		NetworkID:      p.nr.NetworkID(),
 		Message:        ballotMessage,
 		Log:            p.nr.Log(),
-		VotingHole:     ballot.VotingNOTYET,
+		VotingHole:     voting.NOTYET,
 	}
 	err := common.RunChecker(baseChecker, common.DefaultDeferFunc)
 	require.NoError(t, err)
@@ -207,12 +207,12 @@ func TestProposedTransactionWithTransactions(t *testing.T) {
 		NetworkID:      p.nr.NetworkID(),
 		Message:        ballotMessage,
 		Ballot:         baseChecker.Ballot,
-		VotingHole:     ballot.VotingNOTYET,
+		VotingHole:     voting.NOTYET,
 		Log:            p.nr.Log(),
 	}
 	err = common.RunChecker(checker, common.DefaultDeferFunc)
 	require.NoError(t, err)
-	require.Equal(t, ballot.VotingYES, checker.VotingHole)
+	require.Equal(t, voting.YES, checker.VotingHole)
 }
 
 // TestProposedTransactionDifferentSigning checks this rule,
@@ -479,7 +479,7 @@ func TestProposedTransactionWithInflationWrongAmount(t *testing.T) {
 		NetworkID:      p.nr.NetworkID(),
 		Message:        ballotMessage,
 		Log:            p.nr.Log(),
-		VotingHole:     ballot.VotingNOTYET,
+		VotingHole:     voting.NOTYET,
 	}
 	err := common.RunChecker(baseChecker, common.DefaultDeferFunc)
 	require.NoError(t, err)
@@ -491,7 +491,7 @@ func TestProposedTransactionWithInflationWrongAmount(t *testing.T) {
 		NetworkID:      p.nr.NetworkID(),
 		Message:        ballotMessage,
 		Ballot:         baseChecker.Ballot,
-		VotingHole:     ballot.VotingNOTYET,
+		VotingHole:     voting.NOTYET,
 		Log:            p.nr.Log(),
 	}
 	err = common.RunChecker(checker, common.DefaultDeferFunc)
@@ -556,7 +556,7 @@ func TestProposedTransactionWithCollectTxFeeWrongCommonAddress(t *testing.T) {
 		NetworkID:      p.nr.NetworkID(),
 		Message:        ballotMessage,
 		Log:            p.nr.Log(),
-		VotingHole:     ballot.VotingNOTYET,
+		VotingHole:     voting.NOTYET,
 	}
 	err := common.RunChecker(baseChecker, common.DefaultDeferFunc)
 	require.NoError(t, err)
@@ -568,7 +568,7 @@ func TestProposedTransactionWithCollectTxFeeWrongCommonAddress(t *testing.T) {
 		NetworkID:      p.nr.NetworkID(),
 		Message:        ballotMessage,
 		Ballot:         baseChecker.Ballot,
-		VotingHole:     ballot.VotingNOTYET,
+		VotingHole:     voting.NOTYET,
 		Log:            p.nr.Log(),
 	}
 	err = common.RunChecker(checker, common.DefaultDeferFunc)
@@ -615,7 +615,7 @@ func TestProposedTransactionWithInflationWrongCommonAddress(t *testing.T) {
 		NetworkID:      p.nr.NetworkID(),
 		Message:        ballotMessage,
 		Log:            p.nr.Log(),
-		VotingHole:     ballot.VotingNOTYET,
+		VotingHole:     voting.NOTYET,
 	}
 	err := common.RunChecker(baseChecker, common.DefaultDeferFunc)
 	require.NoError(t, err)
@@ -627,7 +627,7 @@ func TestProposedTransactionWithInflationWrongCommonAddress(t *testing.T) {
 		NetworkID:      p.nr.NetworkID(),
 		Message:        ballotMessage,
 		Ballot:         baseChecker.Ballot,
-		VotingHole:     ballot.VotingNOTYET,
+		VotingHole:     voting.NOTYET,
 		Log:            p.nr.Log(),
 	}
 	err = common.RunChecker(checker, common.DefaultDeferFunc)
@@ -678,7 +678,7 @@ func TestProposedTransactionWithBiggerTransactionFeeThanCollected(t *testing.T) 
 		NetworkID:      p.nr.NetworkID(),
 		Message:        ballotMessage,
 		Log:            p.nr.Log(),
-		VotingHole:     ballot.VotingNOTYET,
+		VotingHole:     voting.NOTYET,
 	}
 	err := common.RunChecker(baseChecker, common.DefaultDeferFunc)
 	require.NoError(t, err)
@@ -690,12 +690,12 @@ func TestProposedTransactionWithBiggerTransactionFeeThanCollected(t *testing.T) 
 		NetworkID:      p.nr.NetworkID(),
 		Message:        ballotMessage,
 		Ballot:         baseChecker.Ballot,
-		VotingHole:     ballot.VotingNOTYET,
+		VotingHole:     voting.NOTYET,
 		Log:            p.nr.Log(),
 	}
 	err = common.RunChecker(checker, common.DefaultDeferFunc)
 	require.NoError(t, err)
-	require.Equal(t, ballot.VotingNO, checker.VotingHole)
+	require.Equal(t, voting.NO, checker.VotingHole)
 }
 
 func TestProposedTransactionStoreWithZeroAmount(t *testing.T) {
@@ -968,7 +968,7 @@ func TestProposedTransactionReachedBlockHeightEndOfInflation(t *testing.T) {
 			NetworkID:      p.nr.NetworkID(),
 			Message:        ballotMessage,
 			Log:            p.nr.Log(),
-			VotingHole:     ballot.VotingNOTYET,
+			VotingHole:     voting.NOTYET,
 		}
 		err := common.RunChecker(baseChecker, common.DefaultDeferFunc)
 		require.NoError(t, err)
@@ -980,7 +980,7 @@ func TestProposedTransactionReachedBlockHeightEndOfInflation(t *testing.T) {
 			NetworkID:      p.nr.NetworkID(),
 			Message:        ballotMessage,
 			Ballot:         baseChecker.Ballot,
-			VotingHole:     ballot.VotingNOTYET,
+			VotingHole:     voting.NOTYET,
 			Log:            p.nr.Log(),
 		}
 		err = common.RunChecker(checker, common.DefaultDeferFunc)
@@ -1012,7 +1012,7 @@ func TestProposedTransactionReachedBlockHeightEndOfInflation(t *testing.T) {
 			NetworkID:      p.nr.NetworkID(),
 			Message:        ballotMessage,
 			Log:            p.nr.Log(),
-			VotingHole:     ballot.VotingNOTYET,
+			VotingHole:     voting.NOTYET,
 		}
 		err := common.RunChecker(baseChecker, common.DefaultDeferFunc)
 		require.NoError(t, err)
@@ -1024,7 +1024,7 @@ func TestProposedTransactionReachedBlockHeightEndOfInflation(t *testing.T) {
 			NetworkID:      p.nr.NetworkID(),
 			Message:        ballotMessage,
 			Ballot:         baseChecker.Ballot,
-			VotingHole:     ballot.VotingNOTYET,
+			VotingHole:     voting.NOTYET,
 			Log:            p.nr.Log(),
 		}
 		err = common.RunChecker(checker, common.DefaultDeferFunc)

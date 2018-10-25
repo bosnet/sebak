@@ -3,10 +3,10 @@ package runner
 import (
 	"sync"
 
-	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
+	"boscoin.io/sebak/lib/voting"
 )
 
 type TestConnectionManager struct {
@@ -20,7 +20,7 @@ type TestConnectionManager struct {
 func NewTestConnectionManager(
 	localNode *node.LocalNode,
 	n network.Network,
-	policy ballot.VotingThresholdPolicy,
+	policy voting.ThresholdPolicy,
 	r chan struct{},
 ) *TestConnectionManager {
 	p := &TestConnectionManager{

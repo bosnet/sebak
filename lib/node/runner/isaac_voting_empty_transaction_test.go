@@ -10,7 +10,7 @@ import (
 	"boscoin.io/sebak/lib/voting"
 )
 
-// Test that ballot with empty transactions have VotingYES
+// Test that ballot with empty transactions have voting.YES
 func TestISAACBallotWithEmptyTransaction(t *testing.T) {
 	conf := common.NewConfig()
 	nr, _, _ := createNodeRunnerForTesting(1, conf, nil)
@@ -24,7 +24,7 @@ func TestISAACBallotWithEmptyTransaction(t *testing.T) {
 	}
 
 	b := ballot.NewBallot(nr.localNode.Address(), nr.localNode.Address(), round, []string{})
-	require.Equal(t, b.B.Vote, ballot.VotingYES)
+	require.Equal(t, b.B.Vote, voting.YES)
 }
 
 // Test that the voting process ends normally with a ballot with an empty transaction.
@@ -51,7 +51,7 @@ func TestISAACBallotWithEmptyTransactionVoting(t *testing.T) {
 	}
 
 	b := ballot.NewBallot(nr.localNode.Address(), nr.localNode.Address(), round, []string{})
-	b.SetVote(ballot.StateINIT, ballot.VotingYES)
+	b.SetVote(ballot.StateINIT, voting.YES)
 
 	ballotSIGN1 := GenerateEmptyTxBallot(proposer, round, ballot.StateSIGN, nodes[1], conf)
 	err = ReceiveBallot(nr, ballotSIGN1)

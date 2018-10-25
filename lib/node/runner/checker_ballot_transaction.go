@@ -9,6 +9,7 @@ import (
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
 	"boscoin.io/sebak/lib/transaction/operation"
+	"boscoin.io/sebak/lib/voting"
 )
 
 type BallotTransactionChecker struct {
@@ -20,7 +21,7 @@ type BallotTransactionChecker struct {
 
 	Ballot                ballot.Ballot
 	Transactions          []string
-	VotingHole            ballot.VotingHole
+	VotingHole            voting.Hole
 	ValidTransactions     []string
 	validTransactionsMap  map[string]bool
 	CheckTransactionsOnly bool
@@ -183,9 +184,9 @@ func BallotTransactionsAllValid(c common.Checker, args ...interface{}) (err erro
 	checker := c.(*BallotTransactionChecker)
 
 	if len(checker.InvalidTransactions()) > 0 {
-		checker.VotingHole = ballot.VotingNO
+		checker.VotingHole = voting.NO
 	} else {
-		checker.VotingHole = ballot.VotingYES
+		checker.VotingHole = voting.YES
 	}
 
 	return

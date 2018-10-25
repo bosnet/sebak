@@ -67,7 +67,7 @@ var DefaultHandleACCEPTBallotCheckerFuncs = []common.CheckerFunc{
 type NodeRunner struct {
 	networkID         []byte
 	localNode         *node.LocalNode
-	policy            ballot.VotingThresholdPolicy
+	policy            voting.ThresholdPolicy
 	network           network.Network
 	consensus         *consensus.ISAAC
 	TransactionPool   *transaction.Pool
@@ -94,7 +94,7 @@ type NodeRunner struct {
 func NewNodeRunner(
 	networkID string,
 	localNode *node.LocalNode,
-	policy ballot.VotingThresholdPolicy,
+	policy voting.ThresholdPolicy,
 	n network.Network,
 	c *consensus.ISAAC,
 	storage *storage.LevelDBBackend,
@@ -324,7 +324,7 @@ func (nr *NodeRunner) Storage() *storage.LevelDBBackend {
 	return nr.storage
 }
 
-func (nr *NodeRunner) Policy() ballot.VotingThresholdPolicy {
+func (nr *NodeRunner) Policy() voting.ThresholdPolicy {
 	return nr.policy
 }
 
@@ -414,7 +414,7 @@ func (nr *NodeRunner) handleBallotMessage(message common.NetworkMessage) (err er
 		NetworkID:      nr.networkID,
 		Message:        message,
 		Log:            nr.Log(),
-		VotingHole:     ballot.VotingNOTYET,
+		VotingHole:     voting.NOTYET,
 	}
 	err = common.RunChecker(baseChecker, nr.handleBallotCheckerDeferFunc)
 	if err != nil {
@@ -536,7 +536,7 @@ func (nr *NodeRunner) proposeNewBallot(round uint64) (ballot.Ballot, error) {
 		NetworkID:             nr.networkID,
 		Transactions:          availableTransactions,
 		CheckTransactionsOnly: true,
-		VotingHole:            ballot.VotingNOTYET,
+		VotingHole:            voting.NOTYET,
 	}
 
 	if err := common.RunChecker(transactionsChecker, common.DefaultDeferFunc); err != nil {
@@ -550,7 +550,7 @@ func (nr *NodeRunner) proposeNewBallot(round uint64) (ballot.Ballot, error) {
 
 	proposerAddr := nr.consensus.SelectProposer(b.Height, round)
 	theBallot := ballot.NewBallot(nr.localNode.Address(), proposerAddr, basis, transactionsChecker.ValidTransactions)
-	theBallot.SetVote(ballot.StateINIT, ballot.VotingYES)
+	theBallot.SetVote(ballot.StateINIT, voting.YES)
 
 	var validTransactions []transaction.Transaction
 	for _, hash := range transactionsChecker.ValidTransactions {
