@@ -50,7 +50,5 @@ func (api NetworkHandlerAPI) GetAccountHandler(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	if err := httputils.WriteJSON(w, 200, payload); err != nil {
-		httputils.WriteJSONError(w, err)
-	}
+	httputils.MustWriteJSON(w, 200, payload)
 }

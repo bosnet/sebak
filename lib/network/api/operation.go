@@ -77,8 +77,5 @@ func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter
 	prev := strings.Replace(resource.URLAccountOperations, "{id}", address, -1) + "?" + options.SetReverse(true).Encode()
 	list := resource.NewResourceList(txs, self, next, prev)
 
-	if err := httputils.WriteJSON(w, 200, list); err != nil {
-		httputils.WriteJSONError(w, err)
-		return
-	}
+	httputils.MustWriteJSON(w, 200, list)
 }
