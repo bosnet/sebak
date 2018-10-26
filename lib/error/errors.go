@@ -79,5 +79,5 @@ var (
 	ErrorTooManyRequests                           = NewError(172, "too many requests; reached limit")
 	ErrorHTTPServerError                           = NewError(173, "Internal Server Error")
 	ErrorBlockTransactionHistoryDoesNotExists      = NewError(174, "transaction history does not exists in block")
-	ErrorNotCommitableCore                         = NewError(175, "not CommittableBackend")
+	ErrorNotCommittableCore                        = NewError(175, "not CommittableCore")
 )
