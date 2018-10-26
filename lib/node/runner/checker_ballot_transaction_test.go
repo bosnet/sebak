@@ -34,7 +34,6 @@ func TestValidateTxPaymentMissingBlockAccount(t *testing.T) {
 	defer st.Close()
 
 	tx := transaction.Transaction{
-		T: "transaction",
 		H: transaction.Header{
 			Created: common.NowISO8601(),
 		},
@@ -99,7 +98,6 @@ func TestValidateTxWrongSequenceID(t *testing.T) {
 	bat.MustSave(st)
 
 	tx := transaction.Transaction{
-		T: "transaction",
 		H: transaction.Header{
 			Created: common.NowISO8601(),
 		},
@@ -144,7 +142,6 @@ func TestValidateTxOverBalance(t *testing.T) {
 
 	opbody := operation.Payment{Target: kpt.Address(), Amount: bas.Balance}
 	tx := transaction.Transaction{
-		T: "transaction",
 		H: transaction.Header{
 			Created: common.NowISO8601(),
 		},
@@ -201,7 +198,6 @@ func TestValidateOpCreateExistsAccount(t *testing.T) {
 	bas.MustSave(st)
 
 	tx := transaction.Transaction{
-		T: "transaction",
 		H: transaction.Header{
 			Created: common.NowISO8601(),
 		},

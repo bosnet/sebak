@@ -72,7 +72,6 @@ func MakeTransactionCreateAccount(kpSource *keypair.Full, target string, amount 
 	}
 
 	tx = Transaction{
-		T: "transaction",
 		H: Header{
 			Created: common.NowISO8601(),
 			Hash:    txBody.MakeHashString(),
@@ -101,7 +100,6 @@ func MakeTransactionCreateFrozenAccount(kpSource *keypair.Full, target string, a
 	}
 
 	tx = Transaction{
-		T: "transaction",
 		H: Header{
 			Created: common.NowISO8601(),
 			Hash:    txBody.MakeHashString(),
@@ -129,7 +127,6 @@ func MakeTransactionUnfreezingRequest(kpSource *keypair.Full) (tx Transaction) {
 	}
 
 	tx = Transaction{
-		T: "transaction",
 		H: Header{
 			Created: common.NowISO8601(),
 			Hash:    txBody.MakeHashString(),
@@ -158,7 +155,6 @@ func MakeTransactionUnfreezing(kpSource *keypair.Full, target string, amount com
 	}
 
 	tx = Transaction{
-		T: "transaction",
 		H: Header{
 			Created: common.NowISO8601(),
 			Hash:    txBody.MakeHashString(),

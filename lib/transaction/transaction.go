@@ -14,7 +14,6 @@ import (
 // TODO versioning
 
 type Transaction struct {
-	T string
 	H Header
 	B Body
 }
@@ -56,7 +55,6 @@ func (t *Transaction) UnmarshalJSON(b []byte) (err error) {
 		return
 	}
 
-	t.T = tj.T
 	t.H = tj.H
 	t.B = tj.B
 	t.H.Hash = t.B.MakeHashString()
@@ -77,7 +75,6 @@ func NewTransaction(source string, sequenceID uint64, ops ...operation.Operation
 	}
 
 	tx = Transaction{
-		T: "transaction",
 		H: Header{
 			Created: common.NowISO8601(),
 			Hash:    txBody.MakeHashString(),
@@ -117,8 +114,8 @@ func (tx Transaction) IsWellFormed(networkID []byte, conf common.Config) (err er
 	return
 }
 
-func (tx Transaction) GetType() string {
-	return tx.T
+func (tx Transaction) GetType() common.MessageType {
+	return common.TransactionMessage
 }
 
 func (tx Transaction) Equal(m common.Message) bool {

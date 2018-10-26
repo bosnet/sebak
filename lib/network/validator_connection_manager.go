@@ -201,7 +201,7 @@ func (c *ValidatorConnectionManager) Broadcast(message common.Message) {
 				var response []byte
 				if message.GetType() == common.BallotMessage {
 					response, err = client.SendBallot(message)
-				} else if message.GetType() == string(common.TransactionMessage) {
+				} else if message.GetType() == common.TransactionMessage {
 					response, err = client.SendMessage(message)
 				} else {
 					panic("invalid message")
