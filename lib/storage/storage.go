@@ -95,7 +95,7 @@ func ParseConfig(s string) (u *Config, err error) {
 	return
 }
 
-type CommittableCore interface {
+type Committable interface {
 	Discard()
 	Commit() error
 }

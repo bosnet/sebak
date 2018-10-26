@@ -97,10 +97,10 @@ func (st *LevelDBBackend) OpenBatch() (*LevelDBBackend, error) {
 }
 
 func (st *LevelDBBackend) Discard() error {
-	var committable CommittableCore
+	var committable Committable
 	var ok bool
-	if committable, ok = st.Core.(CommittableCore); !ok {
-		return errors.ErrorNotCommittableCore
+	if committable, ok = st.Core.(Committable); !ok {
+		return errors.ErrorNotCommittable
 	}
 
 	committable.Discard()
@@ -109,10 +109,10 @@ func (st *LevelDBBackend) Discard() error {
 }
 
 func (st *LevelDBBackend) Commit() error {
-	var committable CommittableCore
+	var committable Committable
 	var ok bool
-	if committable, ok = st.Core.(CommittableCore); !ok {
-		return errors.ErrorNotCommittableCore
+	if committable, ok = st.Core.(Committable); !ok {
+		return errors.ErrorNotCommittable
 	}
 
 	return setLevelDBCoreError(committable.Commit())
