@@ -136,7 +136,6 @@ func makeTransactionUnfreezingRequest(kpSource keypair.KP, seqid uint64) transac
 	}
 
 	tx := transaction.Transaction{
-		T: "transaction",
 		H: transaction.Header{
 			Created: common.NowISO8601(),
 			Hash:    txBody.MakeHashString(),

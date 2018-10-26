@@ -49,7 +49,7 @@ func NewBallotFromJSON(data []byte) (b Ballot, err error) {
 	return
 }
 
-func (b Ballot) GetType() string {
+func (b Ballot) GetType() common.MessageType {
 	return common.BallotMessage
 }
 
