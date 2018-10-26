@@ -553,16 +553,30 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) (err error) {
 		}
 
 		var theBlock *block.Block
+
+		var bs *storage.LevelDBBackend
+		if bs, err = checker.NodeRunner.Storage().OpenBatch(); err != nil {
+			return err
+		}
+
 		theBlock, err = finishBallot(
-			checker.NodeRunner.Storage(),
+			bs,
 			checker.Ballot,
 			checker.NodeRunner.TransactionPool,
 			checker.Log,
 			checker.NodeRunner.Log(),
 		)
 		if err != nil {
+			bs.Discard()
 			checker.Log.Error("failed to finish ballot", "error", err)
 			return
+		}
+
+		if err = bs.Commit(); err != nil {
+			if err != errors.ErrorNotCommitableCore {
+				bs.Discard()
+				return
+			}
 		}
 
 		checker.Log.Debug("ballot was stored", "block", *theBlock)
@@ -591,11 +605,6 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 		return nil, err
 	}
 
-	var ts *storage.LevelDBBackend
-	if ts, err = st.OpenTransaction(); err != nil {
-		return nil, err
-	}
-
 	var nOps int
 	for _, hash := range b.B.Proposed.Transactions {
 		tx, found := transactionPool.Get(hash)
@@ -618,8 +627,7 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 		b.ProposerConfirmed(),
 	)
 
-	if err = blk.Save(ts); err != nil {
-		ts.Discard()
+	if err = blk.Save(st); err != nil {
 		log.Error("failed to create new block", "block", blk, "error", err)
 		return nil, err
 	}
@@ -645,19 +653,12 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 		proposedTransactions = append(proposedTransactions, &tx)
 	}
 
-	if err = FinishTransactions(*blk, proposedTransactions, ts); err != nil {
-		ts.Discard()
+	if err = FinishTransactions(*blk, proposedTransactions, st); err != nil {
 		return nil, err
 	}
 
-	if err = FinishProposerTransaction(ts, *blk, b.ProposerTransaction(), log); err != nil {
+	if err = FinishProposerTransaction(st, *blk, b.ProposerTransaction(), log); err != nil {
 		log.Error("failed to finish proposer transaction", "block", blk, "ptx", b.ProposerTransaction(), "error", err)
-		ts.Discard()
-		return nil, err
-	}
-
-	if err = ts.Commit(); err != nil {
-		ts.Discard()
 		return nil, err
 	}
 
@@ -686,23 +687,23 @@ func isValidRound(st *storage.LevelDBBackend, r voting.Basis, log logging.Logger
 	return true, nil
 }
 
-func FinishTransactions(blk block.Block, transactions []*transaction.Transaction, ts *storage.LevelDBBackend) (err error) {
+func FinishTransactions(blk block.Block, transactions []*transaction.Transaction, st *storage.LevelDBBackend) (err error) {
 	for _, tx := range transactions {
 		raw, _ := json.Marshal(tx)
 
 		bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.Confirmed, *tx, raw)
-		if err = bt.Save(ts); err != nil {
+		if err = bt.Save(st); err != nil {
 			return
 		}
 		for _, op := range tx.B.Operations {
-			if err = finishOperation(ts, tx.B.Source, op, log); err != nil {
+			if err = finishOperation(st, tx.B.Source, op, log); err != nil {
 				log.Error("failed to finish operation", "block", blk, "bt", bt, "op", op, "error", err)
 				return err
 			}
 		}
 
 		var baSource *block.BlockAccount
-		if baSource, err = block.GetBlockAccount(ts, tx.B.Source); err != nil {
+		if baSource, err = block.GetBlockAccount(st, tx.B.Source); err != nil {
 			err = errors.ErrorBlockAccountDoesNotExists
 			return
 		}
@@ -711,7 +712,7 @@ func FinishTransactions(blk block.Block, transactions []*transaction.Transaction
 			return
 		}
 
-		if err = baSource.Save(ts); err != nil {
+		if err = baSource.Save(st); err != nil {
 			return
 		}
 

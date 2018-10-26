@@ -84,23 +84,38 @@ func (st *LevelDBBackend) OpenTransaction() (*LevelDBBackend, error) {
 	}, nil
 }
 
-func (st *LevelDBBackend) Discard() error {
-	ts, ok := st.Core.(*leveldb.Transaction)
-	if !ok {
-		return setLevelDBCoreError(errors.New("this is not *leveldb.Transaction"))
+func (st *LevelDBBackend) OpenBatch() (*LevelDBBackend, error) {
+	_, ok := st.Core.(*BatchCore)
+	if ok {
+		return nil, errors.New("this is already BatchBackend")
 	}
 
-	ts.Discard()
+	return &LevelDBBackend{
+		DB:   st.DB,
+		Core: NewBatchCore(st.DB),
+	}, nil
+}
+
+func (st *LevelDBBackend) Discard() error {
+	var committable CommitableCore
+	var ok bool
+	if committable, ok = st.Core.(CommitableCore); !ok {
+		return errors.ErrorNotCommitableCore
+	}
+
+	committable.Discard()
+
 	return nil
 }
 
 func (st *LevelDBBackend) Commit() error {
-	ts, ok := st.Core.(*leveldb.Transaction)
-	if !ok {
-		return setLevelDBCoreError(errors.New("this is not *leveldb.Transaction"))
+	var committable CommitableCore
+	var ok bool
+	if committable, ok = st.Core.(CommitableCore); !ok {
+		return errors.ErrorNotCommitableCore
 	}
 
-	return setLevelDBCoreError(ts.Commit())
+	return setLevelDBCoreError(committable.Commit())
 }
 
 func (st *LevelDBBackend) makeKey(key string) []byte {
