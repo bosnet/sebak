@@ -709,8 +709,10 @@ func TestProposedTransactionStoreWithZeroAmount(t *testing.T) {
 
 	previousCommonAccount, _ := block.GetBlockAccount(p.nr.Storage(), p.commonAccount.Address)
 
+	var blk *block.Block
 	{
-		_, err := finishBallot(
+		var err error
+		blk, err = finishBallot(
 			p.nr.Storage(),
 			*blt,
 			p.nr.TransactionPool,
@@ -728,6 +730,8 @@ func TestProposedTransactionStoreWithZeroAmount(t *testing.T) {
 	require.Equal(t, previousCommonAccount.Balance+inflationAmount, afterCommonAccount.Balance)
 
 	bt, err := block.GetBlockTransaction(p.nr.Storage(), blt.ProposerTransaction().GetHash())
+	require.NoError(t, err)
+	err = bt.SaveBlockOperations(p.nr.Storage(), *blk)
 	require.NoError(t, err)
 
 	require.Equal(t, blt.ProposerTransaction().GetHash(), bt.Hash)

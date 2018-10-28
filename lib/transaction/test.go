@@ -37,6 +37,9 @@ func TestMakeTransactionWithKeypair(networkID []byte, n int, srcKp *keypair.Full
 
 	if len(targetKps) > 0 {
 		targetAddr = targetKps[0].Address()
+	} else {
+		k, _ := keypair.Random()
+		targetAddr = k.Address()
 	}
 
 	for i := 0; i < n; i++ {

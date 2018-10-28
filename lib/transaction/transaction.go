@@ -189,3 +189,7 @@ func (tx *Transaction) Sign(kp keypair.KP, networkID []byte) {
 
 	return
 }
+
+func (tx Transaction) IsEmpty() bool {
+	return len(tx.GetHash()) < 1
+}
