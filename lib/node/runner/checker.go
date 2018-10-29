@@ -843,6 +843,10 @@ func FinishProposerTransaction(st *storage.LevelDBBackend, blk block.Block, ptx 
 		return
 	}
 
+	if _, err = block.SaveTransactionPool(st, ptx.Transaction); err != nil {
+		return
+	}
+
 	return
 }
 
