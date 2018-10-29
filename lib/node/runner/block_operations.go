@@ -91,9 +91,11 @@ func (sb *SavingBlockOperations) check() (err error) {
 
 		if err = sb.CheckByBlock(st, blk); err != nil {
 			sb.log.Error("failed to check block", "block", blk, "height", blk.Height)
-			err = st.Discard()
+			st.Discard()
 			return
-		} else if err = st.Commit(); err != nil {
+		}
+		if err = st.Commit(); err != nil {
+			st.Discard()
 			return
 		}
 		sb.log.Debug("checked block", "block", blk)
