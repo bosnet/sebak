@@ -38,12 +38,9 @@ func (sb *SavingBlockOperations) getNextBlock(height uint64) (nextBlock block.Bl
 		height = sb.checkedBlock
 	}
 
-	for {
-		height++
+	height++
 
-		nextBlock, err = block.GetBlockByHeight(sb.st, height)
-		return
-	}
+	nextBlock, err = block.GetBlockByHeight(sb.st, height)
 
 	return
 }
@@ -79,24 +76,24 @@ func (sb *SavingBlockOperations) check() (err error) {
 				err = nil
 			}
 
-			return
+			break
 		}
 
 		sb.log.Debug("check block", "block", blk)
 
 		var st *storage.LevelDBBackend
 		if st, err = sb.st.OpenBatch(); err != nil {
-			return
+			break
 		}
 
 		if err = sb.CheckByBlock(st, blk); err != nil {
 			sb.log.Error("failed to check block", "block", blk, "height", blk.Height)
 			st.Discard()
-			return
+			break
 		}
 		if err = st.Commit(); err != nil {
 			st.Discard()
-			return
+			break
 		}
 		sb.log.Debug("checked block", "block", blk)
 		sb.checkedBlock = blk.Height
@@ -108,8 +105,7 @@ func (sb *SavingBlockOperations) check() (err error) {
 
 func (sb *SavingBlockOperations) savingBlockOperationsWorker(id int, st *storage.LevelDBBackend, blk block.Block, jobs <-chan string, results chan<- error) {
 	for j := range jobs {
-		err := sb.CheckTransactionByBlock(st, blk, j)
-		results <- err
+		results <- sb.CheckTransactionByBlock(st, blk, j)
 	}
 }
 
