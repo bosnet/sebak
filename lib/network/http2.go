@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/node"
 	"github.com/gorilla/mux"
 	logging "github.com/inconshreveable/log15"
@@ -166,7 +166,7 @@ func (t *HTTP2Network) AddMiddleware(routerName string, mws ...mux.MiddlewareFun
 	} else {
 		var ok bool
 		if r, ok = t.routers[routerName]; !ok {
-			return errors.ErrorNotMatcHTTPRouter
+			return errors.NotMatcHTTPRouter
 		}
 	}
 	for _, mw := range mws {

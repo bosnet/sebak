@@ -15,7 +15,7 @@ import (
 	"github.com/ulule/limiter/drivers/store/memory"
 
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/network/httputils"
 )
 
@@ -45,11 +45,11 @@ func RecoverMiddleware(logger logging.Logger) mux.MiddlewareFunc {
 }
 
 func rateLimitReachedHandler(w http.ResponseWriter, r *http.Request) {
-	httputils.WriteJSONError(w, errors.ErrorTooManyRequests)
+	httputils.WriteJSONError(w, errors.TooManyRequests)
 }
 
 func rateLimitErrorHandler(w http.ResponseWriter, r *http.Request, err error) {
-	httputils.WriteJSONError(w, errors.ErrorHTTPServerError.Clone().SetData("error", err))
+	httputils.WriteJSONError(w, errors.HTTPServerError.Clone().SetData("error", err))
 }
 
 // RateLimitMiddleware throttles the incoming requests; if `Limit` is 0, there

@@ -2,7 +2,7 @@ package network
 
 import (
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/node"
 )
 
@@ -54,5 +54,5 @@ func (m *MemoryTransportClient) SendBallot(message common.Serializable) (body []
 }
 
 func (m *MemoryTransportClient) GetTransactions([]string) ([]byte, error) {
-	return []byte{}, errors.ErrorNotImplemented
+	return []byte{}, errors.NotImplemented
 }

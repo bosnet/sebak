@@ -4,11 +4,12 @@ import (
 	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
 	"boscoin.io/sebak/lib/transaction/operation"
+	"boscoin.io/sebak/lib/voting"
 )
 
 type BallotTransactionChecker struct {
@@ -20,7 +21,7 @@ type BallotTransactionChecker struct {
 
 	Ballot                ballot.Ballot
 	Transactions          []string
-	VotingHole            ballot.VotingHole
+	VotingHole            voting.Hole
 	ValidTransactions     []string
 	validTransactionsMap  map[string]bool
 	CheckTransactionsOnly bool
@@ -60,7 +61,7 @@ func IsNew(c common.Checker, args ...interface{}) (err error) {
 		var found bool
 		if found, err = block.ExistsBlockTransaction(checker.NodeRunner.Storage(), hash); err != nil || found {
 			if !checker.CheckTransactionsOnly {
-				err = errors.ErrorNewButKnownMessage
+				err = errors.NewButKnownMessage
 				return
 			}
 			continue
@@ -103,7 +104,7 @@ func BallotTransactionsSameSource(c common.Checker, args ...interface{}) (err er
 		tx, _ := checker.NodeRunner.TransactionPool.Get(hash)
 		if found := common.InStringMap(sources, tx.B.Source); found {
 			if !checker.CheckTransactionsOnly {
-				err = errors.ErrorTransactionSameSource
+				err = errors.TransactionSameSource
 				return
 			}
 			continue
@@ -156,21 +157,21 @@ func BallotTransactionsOperationBodyCollectTxFee(c common.Checker, args ...inter
 	// `CollectTxFee.Amount`
 	if checker.Ballot.TransactionsLength() < 1 {
 		if opb.Amount != 0 {
-			err = errors.ErrorInvalidOperation
+			err = errors.InvalidOperation
 			return
 		}
 	} else {
 		var fee common.Amount
 		for _, hash := range checker.Transactions {
 			if tx, found := checker.NodeRunner.TransactionPool.Get(hash); !found {
-				err = errors.ErrorTransactionNotFound
+				err = errors.TransactionNotFound
 				return
 			} else {
 				fee = fee.MustAdd(tx.B.Fee)
 			}
 		}
 		if opb.Amount != fee {
-			err = errors.ErrorInvalidFee
+			err = errors.InvalidFee
 			return
 		}
 	}
@@ -183,9 +184,9 @@ func BallotTransactionsAllValid(c common.Checker, args ...interface{}) (err erro
 	checker := c.(*BallotTransactionChecker)
 
 	if len(checker.InvalidTransactions()) > 0 {
-		checker.VotingHole = ballot.VotingNO
+		checker.VotingHole = voting.NO
 	} else {
-		checker.VotingHole = ballot.VotingYES
+		checker.VotingHole = voting.YES
 	}
 
 	return
@@ -213,13 +214,13 @@ func ValidateTx(st *storage.LevelDBBackend, tx transaction.Transaction) (err err
 	// check, source exists
 	var ba *block.BlockAccount
 	if ba, err = block.GetBlockAccount(st, tx.B.Source); err != nil {
-		err = errors.ErrorBlockAccountDoesNotExists
+		err = errors.BlockAccountDoesNotExists
 		return
 	}
 
 	// check, sequenceID is based on latest sequenceID
 	if !tx.IsValidSequenceID(ba.SequenceID) {
-		err = errors.ErrorTransactionInvalidSequenceID
+		err = errors.TransactionInvalidSequenceID
 		return
 	}
 
@@ -234,7 +235,7 @@ func ValidateTx(st *storage.LevelDBBackend, tx transaction.Transaction) (err err
 
 	// check, have enough balance at sequenceID
 	if bac.Balance < totalAmount {
-		err = errors.ErrorTransactionExcessAbilityToPay
+		err = errors.TransactionExcessAbilityToPay
 		return
 	}
 
@@ -269,11 +270,11 @@ func ValidateOp(st *storage.LevelDBBackend, source *block.BlockAccount, op opera
 		var ok bool
 		var casted operation.CreateAccount
 		if casted, ok = op.B.(operation.CreateAccount); !ok {
-			return errors.ErrorTypeOperationBodyNotMatched
+			return errors.TypeOperationBodyNotMatched
 		}
 		var exists bool
 		if exists, err = block.ExistsBlockAccount(st, op.B.(operation.CreateAccount).Target); err == nil && exists {
-			return errors.ErrorBlockAccountAlreadyExists
+			return errors.BlockAccountAlreadyExists
 		}
 		if source.Linked != "" {
 			// Unfreezing must be done after X period from unfreezing request
@@ -282,38 +283,38 @@ func ValidateOp(st *storage.LevelDBBackend, source *block.BlockAccount, op opera
 			closeFunc()
 			// Before unfreezing payment, unfreezing request shoud be saved
 			if bo.Type != operation.TypeUnfreezingRequest {
-				return errors.ErrorUnfreezingRequestNotRequested
+				return errors.UnfreezingRequestNotRequested
 			}
 			lastblock := block.GetLatestBlock(st)
 			// unfreezing period is 241920.
-			if lastblock.Height-bo.BlockHeight < common.UnfreezingPeriod {
-				return errors.ErrorUnfreezingNotReachedExpiration
+			if lastblock.Height-bo.Height < common.UnfreezingPeriod {
+				return errors.UnfreezingNotReachedExpiration
 			}
 			// If it's a frozen account we check that only whole units are frozen
 			if casted.Linked != "" && (casted.Amount%common.Unit) != 0 {
-				return errors.ErrorFrozenAccountCreationWholeUnit // FIXME
+				return errors.FrozenAccountCreationWholeUnit // FIXME
 			}
 		}
 	case operation.TypePayment:
 		var ok bool
 		var casted operation.Payment
 		if casted, ok = op.B.(operation.Payment); !ok {
-			return errors.ErrorTypeOperationBodyNotMatched
+			return errors.TypeOperationBodyNotMatched
 		}
 		var taccount *block.BlockAccount
 		if taccount, err = block.GetBlockAccount(st, casted.Target); err != nil {
-			return errors.ErrorBlockAccountDoesNotExists
+			return errors.BlockAccountDoesNotExists
 		}
 		// If it's a frozen account, it cannot receive payment
 		if taccount.Linked != "" {
-			return errors.ErrorFrozenAccountNoDeposit
+			return errors.FrozenAccountNoDeposit
 		}
 		if source.Linked != "" {
 			// If it's a frozen account, everything must be withdrawn
 			var expected common.Amount
 			expected, err = source.Balance.Sub(common.BaseFee)
 			if casted.Amount != expected {
-				return errors.ErrorFrozenAccountMustWithdrawEverything
+				return errors.FrozenAccountMustWithdrawEverything
 			}
 			// Unfreezing must be done after X period from unfreezing request
 			iterFunc, closeFunc := block.GetBlockOperationsBySource(st, source.Address, nil)
@@ -321,35 +322,35 @@ func ValidateOp(st *storage.LevelDBBackend, source *block.BlockAccount, op opera
 			closeFunc()
 			// Before unfreezing payment, unfreezing request shoud be saved
 			if bo.Type != operation.TypeUnfreezingRequest {
-				return errors.ErrorUnfreezingRequestNotRequested
+				return errors.UnfreezingRequestNotRequested
 			}
 			lastblock := block.GetLatestBlock(st)
 			// unfreezing period is 241920.
-			if lastblock.Height-bo.BlockHeight < common.UnfreezingPeriod {
-				return errors.ErrorUnfreezingNotReachedExpiration
+			if lastblock.Height-bo.Height < common.UnfreezingPeriod {
+				return errors.UnfreezingNotReachedExpiration
 			}
 		}
 	case operation.TypeUnfreezingRequest:
 		if _, ok := op.B.(operation.UnfreezeRequest); !ok {
-			return errors.ErrorTypeOperationBodyNotMatched
+			return errors.TypeOperationBodyNotMatched
 		}
 		// Unfreezing should be done from a frozen account
 		if source.Linked == "" {
-			return errors.ErrorUnfreezingFromInvalidAccount
+			return errors.UnfreezingFromInvalidAccount
 		}
 		// Repeated unfreeze request shoud be blocked after unfreeze request saved
 		iterFunc, closeFunc := block.GetBlockOperationsBySource(st, source.Address, nil)
 		bo, _, _ := iterFunc()
 		closeFunc()
 		if bo.Type == operation.TypeUnfreezingRequest {
-			return errors.ErrorUnfreezingRequestAlreadyReceived
+			return errors.UnfreezingRequestAlreadyReceived
 		}
 	case operation.TypeCongressVoting, operation.TypeCongressVotingResult:
 		// Nothing to do
 		return
 
 	default:
-		return errors.ErrorUnknownOperationType
+		return errors.UnknownOperationType
 	}
 	return
 }

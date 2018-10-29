@@ -14,10 +14,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/network"
-	"boscoin.io/sebak/lib/network/api"
-	"boscoin.io/sebak/lib/network/httputils"
+	"boscoin.io/sebak/lib/node/runner/api"
 	"boscoin.io/sebak/lib/transaction"
 	"boscoin.io/sebak/lib/transaction/operation"
 )
@@ -84,9 +83,9 @@ func TestNodeMessageHandler(t *testing.T) {
 	postData, _ := tx.Serialize()
 	req, err := http.NewRequest("POST", u.String(), bytes.NewBuffer(postData))
 	req.Header.Set("Content-Type", "application/json")
-	require.Nil(t, err)
+	require.NoError(t, err)
 	resp, err := p.server.Client().Do(req)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 	require.True(t, p.TransactionPool.Has(tx.GetHash()))
 }
@@ -102,29 +101,29 @@ func TestNodeMessageHandlerNotWellformedTransaction(t *testing.T) {
 		tx := p.makeTransaction()
 		tx.H.Signature = "findme"
 		errIsWellformed := tx.IsWellFormed(networkID, p.conf)
-		require.Equal(t, errors.ErrorInvalidTransaction.Code, errIsWellformed.(*errors.Error).Code)
+		require.Equal(t, errors.InvalidTransaction.Code, errIsWellformed.(*errors.Error).Code)
 
 		postData, _ := tx.Serialize()
 		req, err := http.NewRequest("POST", u.String(), bytes.NewBuffer(postData))
 		req.Header.Set("Content-Type", "application/json")
-		require.Nil(t, err)
+		require.NoError(t, err)
 		resp, err := p.server.Client().Do(req)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
 		body, _ := ioutil.ReadAll(resp.Body)
 		resp.Body.Close()
 
-		var problem httputils.Problem
+		var responseError errors.Error
 		{
-			err := json.Unmarshal(body, &problem)
-			require.Nil(t, err)
+			err := json.Unmarshal(body, &responseError)
+			require.NoError(t, err)
 		}
-		require.Equal(t, problem.Detail, errIsWellformed.(*errors.Error).Data["error"])
+		require.Equal(t, responseError.Data["error"], errIsWellformed.(*errors.Error).Data["error"])
 		require.Equal(
 			t,
-			problem.Type,
-			httputils.ProblemTypeByCode(errIsWellformed.(*errors.Error).Code),
+			responseError.Code,
+			errIsWellformed.(*errors.Error).Code,
 		)
 	}
 
@@ -137,29 +136,31 @@ func TestNodeMessageHandlerNotWellformedTransaction(t *testing.T) {
 		tx.Sign(p.genesisKeypair, networkID)
 
 		errIsWellformed := tx.IsWellFormed(networkID, p.conf)
-		require.Equal(t, errors.ErrorOperationAmountUnderflow.Code, errIsWellformed.(*errors.Error).Code)
+		require.Equal(t, errors.OperationAmountUnderflow.Code, errIsWellformed.(*errors.Error).Code)
 
 		postData, _ := tx.Serialize()
 		req, err := http.NewRequest("POST", u.String(), bytes.NewBuffer(postData))
 		req.Header.Set("Content-Type", "application/json")
-		require.Nil(t, err)
+		require.NoError(t, err)
 		resp, err := p.server.Client().Do(req)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
 		body, _ := ioutil.ReadAll(resp.Body)
 		resp.Body.Close()
 
-		var problem httputils.Problem
+		var responseError errors.Error
 		{
-			err := json.Unmarshal(body, &problem)
-			require.Nil(t, err)
+			err := json.Unmarshal(body, &responseError)
+			require.NoError(t, err)
 		}
+		require.Equal(t, responseError.Data["error"], errIsWellformed.(*errors.Error).Data["error"])
 		require.Equal(
 			t,
-			problem.Type,
-			httputils.ProblemTypeByCode(errIsWellformed.(*errors.Error).Code),
+			responseError.Code,
+			errIsWellformed.(*errors.Error).Code,
 		)
+
 	}
 
 	{ // already in history
@@ -169,33 +170,33 @@ func TestNodeMessageHandlerNotWellformedTransaction(t *testing.T) {
 		{
 			req, err := http.NewRequest("POST", u.String(), bytes.NewBuffer(postData))
 			req.Header.Set("Content-Type", "application/json")
-			require.Nil(t, err)
+			require.NoError(t, err)
 			resp, err := p.server.Client().Do(req)
-			require.Nil(t, err)
+			require.NoError(t, err)
 			require.Equal(t, http.StatusOK, resp.StatusCode)
 		}
 
 		// send again
 		req, err := http.NewRequest("POST", u.String(), bytes.NewBuffer(postData))
 		req.Header.Set("Content-Type", "application/json")
-		require.Nil(t, err)
+		require.NoError(t, err)
 		resp, err := p.server.Client().Do(req)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 
 		body, _ := ioutil.ReadAll(resp.Body)
 		resp.Body.Close()
 
-		var problem httputils.Problem
+		var responseError errors.Error
 		{
-			err := json.Unmarshal(body, &problem)
-			require.Nil(t, err)
+			err := json.Unmarshal(body, &responseError)
+			require.NoError(t, err)
 		}
-
+		require.Equal(t, responseError.Data["error"], errors.NewButKnownMessage.Data["error"])
 		require.Equal(
 			t,
-			problem.Type,
-			httputils.ProblemTypeByCode(errors.ErrorNewButKnownMessage.Code),
+			responseError.Code,
+			errors.NewButKnownMessage.Code,
 		)
 	}
 }

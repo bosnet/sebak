@@ -9,7 +9,7 @@ import (
 
 	logging "github.com/inconshreveable/log15"
 
-	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/errors"
 )
 
 var (
@@ -90,3 +90,25 @@ func JsonFormatEx(pretty, lineSeparated bool) logging.Format {
 		return b
 	})
 }
+
+// NopLogger returns a Logger with a no-op (nil) Logger
+func NopLogger() logging.Logger {
+	return &nopLogger{}
+}
+
+type nopLogger struct{}
+
+func (l *nopLogger) New(ctx ...interface{}) logging.Logger {
+	return l
+}
+
+func (l nopLogger) GetHandler() logging.Handler {
+	return nil
+}
+
+func (l nopLogger) SetHandler(logging.Handler)           {}
+func (l nopLogger) Debug(msg string, ctx ...interface{}) {}
+func (l nopLogger) Info(msg string, ctx ...interface{})  {}
+func (l nopLogger) Warn(msg string, ctx ...interface{})  {}
+func (l nopLogger) Error(msg string, ctx ...interface{}) {}
+func (l nopLogger) Crit(msg string, ctx ...interface{})  {}

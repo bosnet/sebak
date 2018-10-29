@@ -4,9 +4,9 @@ import (
 	"github.com/stellar/go/keypair"
 
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/consensus/round"
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
+	"boscoin.io/sebak/lib/voting"
 )
 
 var networkID []byte = []byte("sebak-test-network")
@@ -105,14 +105,31 @@ func TestMakeNewBlock(transactions []string) Block {
 
 	return *NewBlock(
 		kp.Address(),
-		round.Round{
-			BlockHeight: common.GenesisBlockHeight,
-			BlockHash:   "",
-			TotalTxs:    uint64(len(transactions)),
-			TotalOps:    uint64(len(transactions)),
+		voting.Basis{
+			Height:    common.GenesisBlockHeight,
+			BlockHash: "",
+			TotalTxs:  uint64(len(transactions)),
+			TotalOps:  uint64(len(transactions)),
 		},
 		"",
 		transactions,
+		common.NowISO8601(),
+	)
+}
+
+func TestMakeNewBlockWithPrevBlock(prevBlock Block, txs []string) Block {
+	kp, _ := keypair.Random()
+
+	return *NewBlock(
+		kp.Address(),
+		voting.Basis{
+			Height:    prevBlock.Height + 1,
+			BlockHash: prevBlock.Hash,
+			TotalTxs:  uint64(len(txs)),
+			TotalOps:  uint64(len(txs)),
+		},
+		"",
+		txs,
 		common.NowISO8601(),
 	)
 }
@@ -129,12 +146,4 @@ func TestMakeNewBlockOperation(networkID []byte, n int) (bos []BlockOperation) {
 	}
 
 	return
-}
-
-func TestMakeNewBlockTransaction(networkID []byte, n int) BlockTransaction {
-	_, tx := transaction.TestMakeTransaction(networkID, n)
-
-	block := TestMakeNewBlock([]string{tx.GetHash()})
-	a, _ := tx.Serialize()
-	return NewBlockTransactionFromTransaction(block.Hash, block.Height, block.Confirmed, tx, a)
 }

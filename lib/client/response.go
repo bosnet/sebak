@@ -34,7 +34,7 @@ type Link struct {
 type Transaction struct {
 	Links struct {
 		Self       Link `json:"self"`
-		Accounts   Link `json:"accounts"`
+		Account    Link `json:"account"`
 		Operations Link `json:"operations"`
 	} `json:"_links"`
 	Hash           string `json:"hash"`
@@ -43,6 +43,30 @@ type Transaction struct {
 	SequenceID     uint64 `json:"sequence_id"`
 	Created        string `json:"created"`
 	OperationCount uint64 `json:"operation_count"`
+}
+
+type TransactionPost struct {
+	Links struct {
+		Self    Link `json:"self"`
+		History Link `json:"history"`
+	} `json:"_links"`
+	Hash    string      `json:"hash"`
+	Status  string      `json:"status"`
+	Message interface{} `json:"message"`
+}
+
+type TransactionHistory struct {
+	Links struct {
+		Self        Link `json:"self"`
+		Account     Link `json:"account"`
+		Transaction Link `json:"transaction"`
+	} `json:"_links"`
+	Hash    string `json:"hash"`
+	Source  string `json:"source"`
+	Time    string `json:"time"`
+	Message string `json:"message"`
+	Created string `json:"created"`
+	Status  string `json:"status"`
 }
 
 type TransactionsPage struct {
@@ -119,18 +143,18 @@ type Inflation struct {
 	Amount         []byte `json:"amount"`
 	InitialBalance []byte `json:"initial-balance"`
 	Ratio          string `json:"ratio"`
-	BlockHeight    uint64 `json:"block-height"`
+	Height         uint64 `json:"block-height"`
 	BlockHash      string `json:"block-hash"`
 	TotalTxs       uint64 `json:"total-txs"`
 	TotalOps       uint64 `json:"total-ops"`
 }
 
 type CollectTxFee struct {
-	Target      string `json:"target"`
-	Amount      []byte `json:"amount"`
-	Txs         uint64 `json:"txs"`
-	BlockHeight uint64 `json:"block-height"`
-	BlockHash   string `json:"block-hash"`
-	TotalTxs    uint64 `json:"total-txs"`
-	TotalOps    uint64 `json:"total-ops"`
+	Target    string `json:"target"`
+	Amount    []byte `json:"amount"`
+	Txs       uint64 `json:"txs"`
+	Height    uint64 `json:"block-height"`
+	BlockHash string `json:"block-hash"`
+	TotalTxs  uint64 `json:"total-txs"`
+	TotalOps  uint64 `json:"total-ops"`
 }

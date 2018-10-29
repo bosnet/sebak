@@ -7,7 +7,7 @@ import (
 	"github.com/stellar/go/keypair"
 
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/errors"
 )
 
 // Inflation is the operation to raise inflation in every block. To
@@ -18,7 +18,7 @@ type Inflation struct {
 	Amount         common.Amount `json:"amount"`
 	InitialBalance common.Amount `json:"initial_balance"`
 	Ratio          string        `json:"ratio"`
-	BlockHeight    uint64        `json:"block-height"`
+	Height         uint64        `json:"block-height"`
 	BlockHash      string        `json:"block-hash"`
 	TotalTxs       uint64        `json:"total-txs"`
 	TotalOps       uint64        `json:"total-ops"`
@@ -37,7 +37,7 @@ func NewOperationBodyInflation(
 		Amount:         amount,
 		InitialBalance: initialBalance,
 		Ratio:          common.InflationRatioString,
-		BlockHeight:    blockHeight,
+		Height:         blockHeight,
 		BlockHash:      blockHash,
 		TotalTxs:       totalTxs,
 	}
@@ -49,23 +49,23 @@ func (o Inflation) IsWellFormed([]byte, common.Config) (err error) {
 	}
 
 	if len(o.BlockHash) < 1 {
-		err = errors.ErrorInvalidOperation
+		err = errors.InvalidOperation
 		return
 	}
 
 	if o.InitialBalance < 0 {
-		err = errors.ErrorInvalidOperation
+		err = errors.InvalidOperation
 		return
 	}
 
 	var ratio float64
 	if !strings.HasPrefix(o.Ratio, "0.") {
-		err = errors.ErrorInvalidOperation
+		err = errors.InvalidOperation
 		return
 	} else if ratio, err = common.String2InflationRatio(o.Ratio); err != nil {
 		return
 	} else if ratio < 0 || ratio > 1 {
-		err = errors.ErrorInvalidOperation
+		err = errors.InvalidOperation
 		return
 	}
 

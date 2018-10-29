@@ -18,10 +18,10 @@ func TestSaveNewBlockAccount(t *testing.T) {
 
 	b := TestMakeBlockAccount()
 	err := b.Save(st)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	exists, err := ExistsBlockAccount(st, b.Address)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.Equal(t, exists, true, "BlockAccount does not exists")
 }
 
@@ -32,10 +32,10 @@ func TestSaveExistingBlockAccount(t *testing.T) {
 	b.MustSave(st)
 
 	err := b.Deposit(common.Amount(100))
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	err = b.Save(st)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	fetched, _ := GetBlockAccount(st, b.Address)
 	require.Equal(t, b.GetBalance(), fetched.GetBalance())

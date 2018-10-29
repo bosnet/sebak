@@ -2,7 +2,6 @@ package storage
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/syndtr/goleveldb/leveldb"
 	leveldbIterator "github.com/syndtr/goleveldb/leveldb/iterator"
@@ -11,7 +10,7 @@ import (
 	leveldbUtil "github.com/syndtr/goleveldb/leveldb/util"
 
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/errors"
 )
 
 type LevelDBCore interface {
@@ -34,9 +33,9 @@ func setLevelDBCoreError(err error) error {
 		return nil
 	}
 
-	return errors.NewError(
-		errors.ErrorStorageCoreError.Code,
-		fmt.Sprintf("%s: %s", errors.ErrorStorageCoreError.Message, err.Error()),
+	return errors.Newf(
+		errors.StorageCoreError,
+		"%s: %s", errors.StorageCoreError.Message, err.Error(),
 	)
 }
 
@@ -84,23 +83,38 @@ func (st *LevelDBBackend) OpenTransaction() (*LevelDBBackend, error) {
 	}, nil
 }
 
-func (st *LevelDBBackend) Discard() error {
-	ts, ok := st.Core.(*leveldb.Transaction)
-	if !ok {
-		return setLevelDBCoreError(errors.New("this is not *leveldb.Transaction"))
+func (st *LevelDBBackend) OpenBatch() (*LevelDBBackend, error) {
+	_, ok := st.Core.(*BatchCore)
+	if ok {
+		return nil, errors.New("this is already BatchBackend")
 	}
 
-	ts.Discard()
+	return &LevelDBBackend{
+		DB:   st.DB,
+		Core: NewBatchCore(st.DB),
+	}, nil
+}
+
+func (st *LevelDBBackend) Discard() error {
+	var committable Committable
+	var ok bool
+	if committable, ok = st.Core.(Committable); !ok {
+		return errors.NotCommittable
+	}
+
+	committable.Discard()
+
 	return nil
 }
 
 func (st *LevelDBBackend) Commit() error {
-	ts, ok := st.Core.(*leveldb.Transaction)
-	if !ok {
-		return setLevelDBCoreError(errors.New("this is not *leveldb.Transaction"))
+	var committable Committable
+	var ok bool
+	if committable, ok = st.Core.(Committable); !ok {
+		return errors.NotCommittable
 	}
 
-	return setLevelDBCoreError(ts.Commit())
+	return setLevelDBCoreError(committable.Commit())
 }
 
 func (st *LevelDBBackend) makeKey(key string) []byte {
@@ -123,7 +137,7 @@ func (st *LevelDBBackend) GetRaw(k string) (b []byte, err error) {
 	var exists bool
 	if exists, err = st.Has(k); err != nil || !exists {
 		if !exists {
-			err = errors.ErrorStorageRecordDoesNotExist
+			err = errors.StorageRecordDoesNotExist
 		}
 		return
 	}
@@ -153,7 +167,7 @@ func (st *LevelDBBackend) New(k string, v interface{}) (err error) {
 	if exists, err = st.Has(k); err != nil {
 		return
 	} else if exists {
-		return errors.ErrorStorageRecordAlreadyExists
+		return errors.Newf(errors.StorageRecordAlreadyExists, "record {%v} already exists in storage", k)
 	}
 
 	var encoded []byte
@@ -183,7 +197,7 @@ func (st *LevelDBBackend) News(vs ...Item) (err error) {
 	for _, v := range vs {
 		if exists, err = st.Has(v.Key); exists || err != nil {
 			if exists {
-				err = errors.ErrorStorageRecordAlreadyExists
+				return errors.Newf(errors.StorageRecordAlreadyExists, "record {%v} already exists in storage", v.Key)
 			}
 			return
 		}
@@ -215,7 +229,7 @@ func (st *LevelDBBackend) Set(k string, v interface{}) (err error) {
 	var exists bool
 	if exists, err = st.Has(k); !exists || err != nil {
 		if !exists {
-			err = errors.ErrorStorageRecordDoesNotExist
+			err = errors.StorageRecordDoesNotExist
 			return
 		}
 		return
@@ -236,7 +250,7 @@ func (st *LevelDBBackend) Sets(vs ...Item) (err error) {
 	for _, v := range vs {
 		if exists, err = st.Has(v.Key); !exists || err != nil {
 			if !exists {
-				err = errors.ErrorStorageRecordDoesNotExist
+				err = errors.StorageRecordDoesNotExist
 				return
 			}
 			return
@@ -263,7 +277,7 @@ func (st *LevelDBBackend) Remove(k string) (err error) {
 	var exists bool
 	if exists, err = st.Has(k); !exists || err != nil {
 		if !exists {
-			err = errors.ErrorStorageRecordDoesNotExist
+			err = errors.StorageRecordDoesNotExist
 			return
 		}
 		return

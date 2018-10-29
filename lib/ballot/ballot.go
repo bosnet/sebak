@@ -8,8 +8,8 @@ import (
 	"github.com/stellar/go/keypair"
 
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/consensus/round"
-	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/errors"
+	"boscoin.io/sebak/lib/voting"
 )
 
 type Ballot struct {
@@ -17,20 +17,20 @@ type Ballot struct {
 	B BallotBody
 }
 
-func NewBallot(fromAddr string, proposerAddr string, round round.Round, transactions []string) (b *Ballot) {
+func NewBallot(fromAddr string, proposerAddr string, basis voting.Basis, transactions []string) (b *Ballot) {
 	body := BallotBody{
 		Source: fromAddr,
 		Proposed: BallotBodyProposed{
 			Proposer:     proposerAddr,
-			Round:        round,
+			VotingBasis:  basis,
 			Transactions: transactions,
 		},
 		State: StateINIT,
-		Vote:  VotingNOTYET,
+		Vote:  voting.NOTYET,
 	}
 
 	if len(transactions) < 1 {
-		body.Vote = VotingYES
+		body.Vote = voting.YES
 	}
 
 	b = &Ballot{
@@ -49,7 +49,7 @@ func NewBallotFromJSON(data []byte) (b Ballot, err error) {
 	return
 }
 
-func (b Ballot) GetType() string {
+func (b Ballot) GetType() common.MessageType {
 	return common.BallotMessage
 }
 
@@ -72,7 +72,7 @@ func (b Ballot) IsWellFormed(networkID []byte, conf common.Config) (err error) {
 		return
 	}
 
-	if b.Vote() != VotingEXP {
+	if b.Vote() != voting.EXP {
 		if err = b.isProposerInfoWellFormed(networkID, conf); err != nil {
 			return
 		}
@@ -83,12 +83,12 @@ func (b Ballot) IsWellFormed(networkID []byte, conf common.Config) (err error) {
 
 func (b Ballot) isBallotWellFormed(networkID []byte, conf common.Config) (err error) {
 	if b.TransactionsLength() > conf.TxsLimit {
-		err = errors.ErrorBallotHasOverMaxTransactionsInBallot
+		err = errors.BallotHasOverMaxTransactionsInBallot
 		return
 	}
 
 	if !b.B.State.IsValid() {
-		err = errors.ErrorInvalidState
+		err = errors.InvalidState
 		return
 	}
 
@@ -100,7 +100,7 @@ func (b Ballot) isBallotWellFormed(networkID []byte, conf common.Config) (err er
 	timeStart := now.Add(time.Duration(-1) * common.BallotConfirmedTimeAllowDuration)
 	timeEnd := now.Add(common.BallotConfirmedTimeAllowDuration)
 	if confirmed.Before(timeStart) || confirmed.After(timeEnd) {
-		err = errors.ErrorMessageHasIncorrectTime
+		err = errors.MessageHasIncorrectTime
 		return
 	}
 
@@ -122,7 +122,7 @@ func (b Ballot) isProposerInfoWellFormed(networkID []byte, conf common.Config) (
 	timeEnd := now.Add(common.BallotConfirmedTimeAllowDuration)
 
 	if proposerConfirmed.Before(timeStart) || proposerConfirmed.After(timeEnd) {
-		err = errors.ErrorMessageHasIncorrectTime
+		err = errors.MessageHasIncorrectTime
 		return
 	}
 
@@ -145,8 +145,8 @@ func (b Ballot) Source() string {
 	return b.B.Source
 }
 
-func (b Ballot) Round() round.Round {
-	return b.B.Proposed.Round
+func (b Ballot) VotingBasis() voting.Basis {
+	return b.B.Proposed.VotingBasis
 }
 
 func (b Ballot) Proposer() string {
@@ -165,7 +165,7 @@ func (b Ballot) ProposerConfirmed() string {
 	return b.B.Proposed.Confirmed
 }
 
-func (b Ballot) Vote() VotingHole {
+func (b Ballot) Vote() voting.Hole {
 	return b.B.Vote
 }
 
@@ -173,7 +173,7 @@ func (b *Ballot) SetSource(source string) {
 	b.B.Source = source
 }
 
-func (b *Ballot) SetVote(state State, vote VotingHole) {
+func (b *Ballot) SetVote(state State, vote voting.Hole) {
 	b.B.State = state
 	b.B.Vote = vote
 }
@@ -265,7 +265,7 @@ type BallotHeader struct {
 type BallotBodyProposed struct {
 	Confirmed           string              `json:"confirmed"` // created time, ISO8601
 	Proposer            string              `json:"proposer"`
-	Round               round.Round         `json:"round"`
+	VotingBasis         voting.Basis        `json:"voting_basis"`
 	Transactions        []string            `json:"transactions"`
 	ProposerTransaction ProposerTransaction `json:"proposer_transaction"`
 }
@@ -275,7 +275,7 @@ type BallotBody struct {
 	Proposed  BallotBodyProposed `json:"proposed"`
 	Source    string             `json:"source"`
 	State     State              `json:"state"`
-	Vote      VotingHole         `json:"vote"`
+	Vote      voting.Hole        `json:"vote"`
 	Reason    *errors.Error      `json:"reason"`
 }
 

@@ -10,10 +10,10 @@ import (
 	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/consensus/round"
-	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/transaction"
+	"boscoin.io/sebak/lib/voting"
 )
 
 func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
@@ -78,7 +78,7 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 		tx.B.SequenceID = rootAccount.SequenceID
 		tx.Sign(rootKP, networkID)
 
-		runChecker(tx, errors.ErrorTransactionSameSource)
+		runChecker(tx, errors.TransactionSameSource)
 
 		require.False(
 			t,
@@ -94,7 +94,7 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 
 		tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, sourceKP, targetKP)
 
-		runChecker(tx, errors.ErrorBlockAccountDoesNotExists)
+		runChecker(tx, errors.BlockAccountDoesNotExists)
 
 		require.False(
 			t,
@@ -112,7 +112,7 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 		tx.B.SequenceID = sourceAccount.SequenceID
 		tx.Sign(sourceKP, networkID)
 
-		runChecker(tx, errors.ErrorBlockAccountDoesNotExists)
+		runChecker(tx, errors.BlockAccountDoesNotExists)
 
 		require.False(
 			t,
@@ -184,11 +184,11 @@ func (g *getMissingTransactionTesting) Prepare() {
 }
 
 func (g *getMissingTransactionTesting) MakeBallot(numberOfTxs int) (blt *ballot.Ballot) {
-	rd := round.Round{
-		Number:      0,
-		BlockHeight: g.genesisBlock.Height,
-		BlockHash:   g.genesisBlock.Hash,
-		TotalTxs:    g.genesisBlock.TotalTxs,
+	rd := voting.Basis{
+		Round:     0,
+		Height:    g.genesisBlock.Height,
+		BlockHash: g.genesisBlock.Hash,
+		TotalTxs:  g.genesisBlock.TotalTxs,
 	}
 
 	keys := map[string]*keypair.Full{}
@@ -220,7 +220,7 @@ func (g *getMissingTransactionTesting) MakeBallot(numberOfTxs int) (blt *ballot.
 
 	ptx, _ := ballot.NewProposerTransactionFromBallot(*blt, opc, opi)
 	blt.SetProposerTransaction(ptx)
-	blt.SetVote(ballot.StateINIT, ballot.VotingYES)
+	blt.SetVote(ballot.StateINIT, voting.YES)
 	blt.Sign(g.proposerNR.Node().Keypair(), networkID)
 
 	return blt
@@ -254,10 +254,10 @@ func TestGetMissingTransactionAllMissing(t *testing.T) {
 		NetworkID:      g.consensusNR.NetworkID(),
 		Message:        ballotMessage,
 		Log:            g.consensusNR.Log(),
-		VotingHole:     ballot.VotingNOTYET,
+		VotingHole:     voting.NOTYET,
 	}
 	err := common.RunChecker(baseChecker, common.DefaultDeferFunc)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	var checkerFuncs = []common.CheckerFunc{
 		BallotAlreadyVoted,
@@ -273,12 +273,12 @@ func TestGetMissingTransactionAllMissing(t *testing.T) {
 		NetworkID:      baseChecker.NetworkID,
 		Message:        ballotMessage,
 		Ballot:         baseChecker.Ballot,
-		VotingHole:     ballot.VotingNOTYET,
+		VotingHole:     voting.NOTYET,
 		Log:            baseChecker.Log,
 	}
 
 	err = common.RunChecker(checker, common.DefaultDeferFunc)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	// check consensus node runner has all missing transactions.
 	for _, hash := range blt.Transactions() {
@@ -318,10 +318,10 @@ func TestGetMissingTransactionProposerAlsoMissing(t *testing.T) {
 		NetworkID:      g.consensusNR.NetworkID(),
 		Message:        ballotMessage,
 		Log:            g.consensusNR.Log(),
-		VotingHole:     ballot.VotingNOTYET,
+		VotingHole:     voting.NOTYET,
 	}
 	err := common.RunChecker(baseChecker, common.DefaultDeferFunc)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	var checkerFuncs = []common.CheckerFunc{
 		BallotAlreadyVoted,
@@ -337,12 +337,12 @@ func TestGetMissingTransactionProposerAlsoMissing(t *testing.T) {
 		NetworkID:      baseChecker.NetworkID,
 		Message:        ballotMessage,
 		Ballot:         baseChecker.Ballot,
-		VotingHole:     ballot.VotingNOTYET,
+		VotingHole:     voting.NOTYET,
 		Log:            baseChecker.Log,
 	}
 	err = common.RunChecker(checker, common.DefaultDeferFunc)
 
-	require.Equal(t, ballot.VotingNO, checker.VotingHole)
+	require.Equal(t, voting.NO, checker.VotingHole)
 	require.Equal(t, 0, g.consensusNR.TransactionPool.Len())
 }
 
@@ -385,7 +385,7 @@ func (p *irregularIncomingBallot) runChecker(blt ballot.Ballot) (checker *Ballot
 		NetworkID:      p.nr.NetworkID(),
 		Message:        ballotMessage,
 		Log:            p.nr.Log(),
-		VotingHole:     ballot.VotingNOTYET,
+		VotingHole:     voting.NOTYET,
 	}
 	{
 		err := common.RunChecker(baseChecker, common.DefaultDeferFunc)
@@ -408,7 +408,7 @@ func (p *irregularIncomingBallot) runChecker(blt ballot.Ballot) (checker *Ballot
 		NetworkID:      baseChecker.NetworkID,
 		Message:        ballotMessage,
 		Ballot:         baseChecker.Ballot,
-		VotingHole:     ballot.VotingNOTYET,
+		VotingHole:     voting.NOTYET,
 		Log:            baseChecker.Log,
 	}
 	err = common.RunChecker(checker, common.DefaultDeferFunc)
@@ -417,11 +417,11 @@ func (p *irregularIncomingBallot) runChecker(blt ballot.Ballot) (checker *Ballot
 }
 
 func (p *irregularIncomingBallot) makeBallot(state ballot.State) (blt *ballot.Ballot) {
-	rd := round.Round{
-		Number:      0,
-		BlockHeight: p.genesisBlock.Height,
-		BlockHash:   p.genesisBlock.Hash,
-		TotalTxs:    p.genesisBlock.TotalTxs,
+	rd := voting.Basis{
+		Round:     0,
+		Height:    p.genesisBlock.Height,
+		BlockHash: p.genesisBlock.Hash,
+		TotalTxs:  p.genesisBlock.TotalTxs,
 	}
 
 	p.keyA, _ = keypair.Random()
@@ -444,7 +444,7 @@ func (p *irregularIncomingBallot) makeBallot(state ballot.State) (blt *ballot.Ba
 
 	ptx, _ := ballot.NewProposerTransactionFromBallot(*blt, opc, opi)
 	blt.SetProposerTransaction(ptx)
-	blt.SetVote(state, ballot.VotingYES)
+	blt.SetVote(state, voting.YES)
 	blt.Sign(p.nr.Node().Keypair(), networkID)
 
 	return blt
@@ -462,14 +462,14 @@ func TestRegularIncomingBallots(t *testing.T) {
 	// send `INIT` ballot
 	blt := p.makeBallot(ballot.StateINIT)
 	_, err := p.runChecker(*blt)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.Equal(t, 1, len(cm.Messages())) // this check node broadcast the new SIGN ballot
 
 	received := cm.Messages()[0].(ballot.Ballot)
 	require.Equal(t, blt.H.ProposerSignature, received.H.ProposerSignature)
 
 	_, err = p.runChecker(received)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.Equal(t, 1, len(cm.Messages())) // this check node does not broadcast
 }
 
@@ -488,15 +488,15 @@ func TestIrregularIncomingBallots(t *testing.T) {
 
 	signBallot := &ballot.Ballot{}
 	*signBallot = *initBallot
-	signBallot.SetVote(ballot.StateSIGN, ballot.VotingYES)
+	signBallot.SetVote(ballot.StateSIGN, voting.YES)
 	signBallot.Sign(p.nodes[1].Keypair(), networkID)
 
 	_, err := p.runChecker(*signBallot)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.Equal(t, 0, len(cm.Messages()))
 
 	_, err = p.runChecker(*initBallot)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.Equal(t, 1, len(cm.Messages()))
 
 	// check the broadcasted ballot is valid `SIGN` ballot

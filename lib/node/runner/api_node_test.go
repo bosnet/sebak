@@ -103,8 +103,8 @@ func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, n *network.HTTP2Netw
 		p,
 	)
 
-	is, _ := consensus.NewISAAC(networkID, localNode, p, connectionManager, common.NewConfig())
 	st := block.InitTestBlockchain()
+	is, _ := consensus.NewISAAC(networkID, localNode, p, connectionManager, st, common.NewConfig(), nil)
 	if nodeRunner, err = NewNodeRunner(string(networkID), localNode, p, n, is, st, common.NewConfig()); err != nil {
 		panic(err)
 	}
@@ -226,7 +226,9 @@ func TestGetNodeInfoHandler(t *testing.T) {
 		localNode,
 		nil,
 		network.NewValidatorConnectionManager(localNode, nil, nil),
+		st,
 		common.NewConfig(),
+		nil,
 	)
 
 	var config *network.HTTP2NetworkConfig
@@ -247,9 +249,9 @@ func TestGetNodeInfoHandler(t *testing.T) {
 		u.Path = NodeInfoHandlerPattern
 
 		req, err := http.NewRequest("GET", u.String(), nil)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		resp, err := server.Client().Do(req)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 
 		body, _ := ioutil.ReadAll(resp.Body)
@@ -257,7 +259,7 @@ func TestGetNodeInfoHandler(t *testing.T) {
 
 		var received map[string]interface{}
 		err = json.Unmarshal(body, &received)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		require.Equal(t, server.URL, received["endpoint"])
 	}
@@ -270,9 +272,9 @@ func TestGetNodeInfoHandler(t *testing.T) {
 		u.Path = NodeInfoHandlerPattern
 
 		req, err := http.NewRequest("GET", u.String(), nil)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		resp, err := server.Client().Do(req)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 
 		body, _ := ioutil.ReadAll(resp.Body)
@@ -280,7 +282,7 @@ func TestGetNodeInfoHandler(t *testing.T) {
 
 		var received map[string]interface{}
 		err = json.Unmarshal(body, &received)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		require.Equal(t, publishEndpoint.String(), received["endpoint"])
 	}

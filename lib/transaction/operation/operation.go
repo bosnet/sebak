@@ -6,7 +6,7 @@ import (
 	"github.com/btcsuite/btcutil/base58"
 
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/errors"
 )
 
 type OperationType string
@@ -64,7 +64,7 @@ func NewOperation(opb Body) (op Operation, err error) {
 	case CongressVotingResult:
 		t = TypeCongressVotingResult
 	default:
-		err = errors.ErrorUnknownOperationType
+		err = errors.UnknownOperationType
 		return
 	}
 
@@ -194,7 +194,7 @@ func UnmarshalBodyJSON(t OperationType, b []byte) (body Body, err error) {
 		}
 		body = ob
 	default:
-		err = errors.ErrorInvalidOperation
+		err = errors.InvalidOperation
 		return
 	}
 

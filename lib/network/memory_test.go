@@ -12,13 +12,12 @@ import (
 )
 
 type DummyMessage struct {
-	T    string
 	Hash string
 	Data string
 }
 
 func NewDummyMessage(data string) DummyMessage {
-	d := DummyMessage{T: "dummy-message", Data: data}
+	d := DummyMessage{Data: data}
 	d.UpdateHash()
 
 	return d
@@ -28,8 +27,8 @@ func (m DummyMessage) IsWellFormed([]byte, common.Config) error {
 	return nil
 }
 
-func (m DummyMessage) GetType() string {
-	return m.T
+func (m DummyMessage) GetType() common.MessageType {
+	return common.MessageType("dummy-message")
 }
 
 func (m DummyMessage) Equal(n common.Message) bool {

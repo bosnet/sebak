@@ -11,9 +11,9 @@ import (
 	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/consensus/round"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/transaction"
+	"boscoin.io/sebak/lib/voting"
 	"github.com/stretchr/testify/require"
 )
 
@@ -76,7 +76,7 @@ func TestUnfreezingSimulation(t *testing.T) {
 	nr.TransactionPool.Add(tx6)
 	roundNumber := uint64(0)
 	_, err := nr.proposeNewBallot(roundNumber)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	require.False(t, nr.TransactionPool.Has(tx6.GetHash()))
 
@@ -109,50 +109,50 @@ func TestUnfreezingSimulation(t *testing.T) {
 	require.Equal(t, uint64(ba.Balance), uint64(99999990000))
 }
 
-func MakeConsensusAndBlock(t *testing.T, tx transaction.Transaction, nr *NodeRunner, nodes []*node.LocalNode, proposer *node.LocalNode) (block block.Block, err error) {
+func MakeConsensusAndBlock(t *testing.T, tx transaction.Transaction, nr *NodeRunner, nodes []*node.LocalNode, proposer *node.LocalNode) (block.Block, error) {
 
 	nr.TransactionPool.Add(tx)
 
 	// Generate proposed ballot in nodeRunner
-	roundNumber := uint64(0)
-	_, err = nr.proposeNewBallot(roundNumber)
-	require.Nil(t, err)
+	round := uint64(0)
+	_, err := nr.proposeNewBallot(round)
+	require.NoError(t, err)
 
 	b := nr.Consensus().LatestBlock()
-	round := round.Round{
-		Number:      roundNumber,
-		BlockHeight: b.Height,
-		BlockHash:   b.Hash,
-		TotalTxs:    b.TotalTxs,
+	basis := voting.Basis{
+		Round:     round,
+		Height:    b.Height,
+		BlockHash: b.Hash,
+		TotalTxs:  b.TotalTxs,
 	}
 
 	conf := common.NewConfig()
 
 	// Check that the transaction is in RunningRounds
 
-	ballotSIGN1 := GenerateBallot(proposer, round, tx, ballot.StateSIGN, nodes[1], conf)
+	ballotSIGN1 := GenerateBallot(proposer, basis, tx, ballot.StateSIGN, nodes[1], conf)
 	err = ReceiveBallot(nr, ballotSIGN1)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
-	ballotSIGN2 := GenerateBallot(proposer, round, tx, ballot.StateSIGN, nodes[2], conf)
+	ballotSIGN2 := GenerateBallot(proposer, basis, tx, ballot.StateSIGN, nodes[2], conf)
 	err = ReceiveBallot(nr, ballotSIGN2)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
-	rr := nr.Consensus().RunningRounds[round.Index()]
+	rr := nr.Consensus().RunningRounds[basis.Index()]
 	require.Equal(t, 2, len(rr.Voted[proposer.Address()].GetResult(ballot.StateSIGN)))
 
-	ballotACCEPT1 := GenerateBallot(proposer, round, tx, ballot.StateACCEPT, nodes[1], conf)
+	ballotACCEPT1 := GenerateBallot(proposer, basis, tx, ballot.StateACCEPT, nodes[1], conf)
 	err = ReceiveBallot(nr, ballotACCEPT1)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
-	ballotACCEPT2 := GenerateBallot(proposer, round, tx, ballot.StateACCEPT, nodes[2], conf)
+	ballotACCEPT2 := GenerateBallot(proposer, basis, tx, ballot.StateACCEPT, nodes[2], conf)
 	err = ReceiveBallot(nr, ballotACCEPT2)
 
 	require.Equal(t, 2, len(rr.Voted[proposer.Address()].GetResult(ballot.StateACCEPT)))
 
-	block = nr.Consensus().LatestBlock()
+	blk := nr.Consensus().LatestBlock()
 
-	require.Equal(t, proposer.Address(), block.Proposer)
-	require.Equal(t, 1, len(block.Transactions))
-	return
+	require.Equal(t, proposer.Address(), blk.Proposer)
+	require.Equal(t, 1, len(blk.Transactions))
+	return blk, err
 }

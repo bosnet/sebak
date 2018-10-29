@@ -6,7 +6,7 @@ import (
 	"github.com/stellar/go/keypair"
 
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/errors"
 )
 
 type CreateAccount struct {
@@ -34,12 +34,12 @@ func (o CreateAccount) IsWellFormed([]byte, common.Config) (err error) {
 	}
 
 	if int64(o.Amount) < 1 {
-		err = errors.ErrorOperationAmountUnderflow
+		err = errors.OperationAmountUnderflow
 		return
 	}
 
 	if o.Amount < common.BaseReserve {
-		err = errors.ErrorInsufficientAmountNewAccount
+		err = errors.InsufficientAmountNewAccount
 		return
 	}
 

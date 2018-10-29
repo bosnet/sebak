@@ -7,7 +7,7 @@ import (
 	"github.com/stellar/go/keypair"
 
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/transaction/operation"
 )
 
@@ -22,7 +22,7 @@ type Checker struct {
 func CheckSource(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*Checker)
 	if _, err = keypair.Parse(checker.Transaction.B.Source); err != nil {
-		err = errors.ErrorBadPublicAddress
+		err = errors.BadPublicAddress
 		return
 	}
 
@@ -33,7 +33,7 @@ func CheckOverOperationsLimit(c common.Checker, args ...interface{}) (err error)
 	checker := c.(*Checker)
 
 	if len(checker.Transaction.B.Operations) > checker.Conf.OpsLimit {
-		err = errors.ErrorTransactionHasOverMaxOperations
+		err = errors.TransactionHasOverMaxOperations
 		return
 	}
 
@@ -48,7 +48,7 @@ func CheckSequenceID(c common.Checker, args ...interface{}) (err error) {
 func CheckBaseFee(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*Checker)
 	if checker.Transaction.B.Fee < checker.Transaction.TotalBaseFee() {
-		err = errors.ErrorInvalidFee
+		err = errors.InvalidFee
 		return
 	}
 
@@ -59,13 +59,13 @@ func CheckOperationTypes(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*Checker)
 
 	if len(checker.Transaction.B.Operations) < 1 {
-		err = errors.ErrorTransactionEmptyOperations
+		err = errors.TransactionEmptyOperations
 		return
 	}
 
 	for _, op := range checker.Transaction.B.Operations {
 		if _, found := operation.KindsNormalTransaction[op.H.Type]; !found {
-			err = errors.ErrorInvalidOperation
+			err = errors.InvalidOperation
 			return
 		}
 	}
@@ -80,7 +80,7 @@ func CheckOperations(c common.Checker, args ...interface{}) (err error) {
 	for _, op := range checker.Transaction.B.Operations {
 		if pop, ok := op.B.(operation.Payable); ok {
 			if checker.Transaction.B.Source == pop.TargetAddress() {
-				err = errors.ErrorInvalidOperation
+				err = errors.InvalidOperation
 				return
 			}
 			if err = op.IsWellFormed(checker.NetworkID, checker.Conf); err != nil {
@@ -90,7 +90,7 @@ func CheckOperations(c common.Checker, args ...interface{}) (err error) {
 			// 'TargetAddress()', this transaction will be invalid.
 			u := fmt.Sprintf("%s-%s", op.H.Type, pop.TargetAddress())
 			if _, found := common.InStringArray(hashes, u); found {
-				err = errors.ErrorDuplicatedOperation
+				err = errors.DuplicatedOperation
 				return
 			}
 

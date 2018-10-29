@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/node"
 )
 
@@ -70,7 +70,7 @@ func (c *HTTP2NetworkClient) GetNodeInfo() (body []byte, err error) {
 	body, err = ioutil.ReadAll(response.Body)
 
 	if response.StatusCode != http.StatusOK {
-		err = errors.ErrorHTTPProblem.Clone().SetData("status", response.StatusCode)
+		err = errors.HTTPProblem.Clone().SetData("status", response.StatusCode)
 	}
 
 	return
@@ -90,7 +90,7 @@ func (c *HTTP2NetworkClient) Connect(n node.Node) (body []byte, err error) {
 	body, err = ioutil.ReadAll(response.Body)
 
 	if response.StatusCode != http.StatusOK {
-		err = errors.ErrorHTTPProblem.Clone().SetData("status", response.StatusCode)
+		err = errors.HTTPProblem.Clone().SetData("status", response.StatusCode)
 	}
 
 	return
@@ -116,7 +116,7 @@ func (c *HTTP2NetworkClient) SendMessage(message common.Serializable) (retBody [
 	retBody, err = ioutil.ReadAll(response.Body)
 
 	if response.StatusCode != http.StatusOK {
-		err = errors.ErrorHTTPProblem.Clone().SetData("status", response.StatusCode)
+		err = errors.HTTPProblem.Clone().SetData("status", response.StatusCode)
 	}
 
 	return
@@ -142,7 +142,7 @@ func (c *HTTP2NetworkClient) SendBallot(message common.Serializable) (retBody []
 	retBody, err = ioutil.ReadAll(response.Body)
 
 	if response.StatusCode != http.StatusOK {
-		err = errors.ErrorHTTPProblem.Clone().SetData("status", response.StatusCode)
+		err = errors.HTTPProblem.Clone().SetData("status", response.StatusCode)
 	}
 
 	return
@@ -168,7 +168,7 @@ func (c *HTTP2NetworkClient) GetTransactions(txs []string) (retBody []byte, err 
 	retBody, err = ioutil.ReadAll(response.Body)
 
 	if response.StatusCode != http.StatusOK {
-		err = errors.ErrorHTTPProblem.Clone().SetData("status", response.StatusCode)
+		err = errors.HTTPProblem.Clone().SetData("status", response.StatusCode)
 	}
 
 	return
@@ -201,7 +201,7 @@ func (client *HTTP2NetworkClient) Get(endpoint string) ([]byte, error) {
 	}
 	defer response.Body.Close()
 	if response.StatusCode != http.StatusOK {
-		return []byte{}, errors.ErrorHTTPProblem.Clone().SetData("status", response.StatusCode)
+		return []byte{}, errors.HTTPProblem.Clone().SetData("status", response.StatusCode)
 	}
 
 	return ioutil.ReadAll(response.Body)

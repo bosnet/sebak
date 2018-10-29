@@ -3,7 +3,7 @@ package common
 import (
 	"strings"
 
-	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/errors"
 )
 
 var (
@@ -14,7 +14,7 @@ var (
 // ParseBoolQueryString will parse boolean value from url.Value.
 // By default, `Reverse` is `false`. If 'true', '1', 'yes', it will be `true`
 // If 'false', '0', 'no', it will be `false`
-// If not `true` nor `false, `errors.ErrorInvalidQueryString` will be occurred.
+// If not `true` nor `false, `errors.InvalidQueryString` will be occurred.
 func ParseBoolQueryString(v string) (yesno bool, err error) {
 	if _, yesno = InStringArray(TrueQueryStringValue, strings.ToLower(v)); yesno {
 		return
@@ -24,6 +24,6 @@ func ParseBoolQueryString(v string) (yesno bool, err error) {
 		return
 	}
 
-	err = errors.ErrorInvalidQueryString
+	err = errors.InvalidQueryString
 	return
 }

@@ -7,7 +7,7 @@ import (
 
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/transaction"
 )
 
@@ -35,32 +35,32 @@ func TestMessageChecker(t *testing.T) {
 	}
 
 	err = TransactionUnmarshal(checker)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.Equal(t, checker.Transaction, validTx)
 
 	err = HasTransaction(checker)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	err = SaveTransactionHistory(checker)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	var found bool
 	found, err = block.ExistsBlockTransactionHistory(checker.Storage, checker.Transaction.GetHash())
 	require.True(t, found)
 
 	err = PushIntoTransactionPool(checker)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.True(t, checker.TransactionPool.Has(validTx.GetHash()))
 
 	// TransactionBroadcast(checker) is not suitable in unittest
 
 	err = HasTransaction(checker)
-	require.Equal(t, err, errors.ErrorNewButKnownMessage)
+	require.Equal(t, err, errors.NewButKnownMessage)
 
 	err = SaveTransactionHistory(checker)
-	require.Equal(t, err, errors.ErrorNewButKnownMessage)
+	require.Equal(t, err, errors.NewButKnownMessage)
 
 	err = PushIntoTransactionPool(checker)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	var CheckerFuncs = []common.CheckerFunc{
 		TransactionUnmarshal,
@@ -72,7 +72,7 @@ func TestMessageChecker(t *testing.T) {
 	checker.DefaultChecker = common.DefaultChecker{Funcs: CheckerFuncs}
 
 	err = common.RunChecker(checker, common.DefaultDeferFunc)
-	require.Equal(t, err, errors.ErrorNewButKnownMessage)
+	require.Equal(t, err, errors.NewButKnownMessage)
 }
 
 func TestMessageCheckerWithInvalidHash(t *testing.T) {
@@ -100,7 +100,7 @@ func TestMessageCheckerWithInvalidHash(t *testing.T) {
 	}
 
 	err = TransactionUnmarshal(checker)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	checker.Message.Data = []byte{}
 	err = TransactionUnmarshal(checker)

@@ -9,7 +9,7 @@ import (
 
 	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/consensus/round"
+	"boscoin.io/sebak/lib/voting"
 )
 
 // 1. All 3 Nodes.
@@ -101,7 +101,7 @@ func TestStateINITTimeoutNotProposer(t *testing.T) {
 			init++
 		case ballot.StateSIGN:
 			sign++
-			require.Equal(t, ballot.VotingEXP, b.Vote())
+			require.Equal(t, voting.EXP, b.Vote())
 		case ballot.StateACCEPT:
 			accept++
 		}
@@ -153,13 +153,13 @@ func TestStateSIGNTimeoutProposer(t *testing.T) {
 		switch b.State() {
 		case ballot.StateINIT:
 			init++
-			require.Equal(t, ballot.VotingYES, b.Vote())
+			require.Equal(t, voting.YES, b.Vote())
 		case ballot.StateSIGN:
 			sign++
-			require.Equal(t, ballot.VotingEXP, b.Vote())
+			require.Equal(t, voting.EXP, b.Vote())
 		case ballot.StateACCEPT:
 			accept++
-			require.Equal(t, ballot.VotingEXP, b.Vote())
+			require.Equal(t, voting.EXP, b.Vote())
 		}
 	}
 	require.Equal(t, 1, init)
@@ -209,13 +209,13 @@ func TestStateSIGNTimeoutNotProposer(t *testing.T) {
 		switch b.State() {
 		case ballot.StateINIT:
 			init++
-			require.Equal(t, ballot.VotingYES, b.Vote())
+			require.Equal(t, voting.YES, b.Vote())
 		case ballot.StateSIGN:
 			sign++
-			require.Equal(t, ballot.VotingEXP, b.Vote())
+			require.Equal(t, voting.EXP, b.Vote())
 		case ballot.StateACCEPT:
 			accept++
-			require.Equal(t, ballot.VotingEXP, b.Vote())
+			require.Equal(t, voting.EXP, b.Vote())
 		}
 	}
 	require.Equal(t, 0, init)
@@ -267,12 +267,12 @@ func TestStateACCEPTTimeoutProposerThenNotProposer(t *testing.T) {
 		switch b.State() {
 		case ballot.StateINIT:
 			init++
-			require.Equal(t, b.Vote(), ballot.VotingYES)
+			require.Equal(t, b.Vote(), voting.YES)
 		case ballot.StateSIGN:
 			sign++
 		case ballot.StateACCEPT:
 			accept++
-			require.Equal(t, b.Vote(), ballot.VotingEXP)
+			require.Equal(t, b.Vote(), voting.EXP)
 		}
 	}
 
@@ -312,12 +312,12 @@ func TestStateTransitFromTimeoutInitToAccept(t *testing.T) {
 	state := nr.isaacStateManager.State()
 	require.Equal(t, ballot.StateINIT, state.BallotState)
 
-	round := round.Round{
-		BlockHeight: state.Height,
-		Number:      state.Round,
+	basis := voting.Basis{
+		Height: state.Height,
+		Round:  state.Round,
 	}
 
-	nr.TransitISAACState(round, ballot.StateSIGN)
+	nr.TransitISAACState(basis, ballot.StateSIGN)
 	<-recvTransit
 	require.Equal(t, ballot.StateSIGN, nr.isaacStateManager.State().BallotState)
 
@@ -329,7 +329,7 @@ func TestStateTransitFromTimeoutInitToAccept(t *testing.T) {
 		require.True(t, ok)
 		require.NotEqual(t, nr.localNode.Address(), b.Proposer())
 		require.Equal(t, ballot.StateACCEPT, b.State())
-		require.Equal(t, ballot.VotingEXP, b.Vote())
+		require.Equal(t, voting.EXP, b.Vote())
 	}
 }
 
@@ -360,17 +360,17 @@ func TestStateTransitFromTimeoutSignToAccept(t *testing.T) {
 		require.True(t, ok)
 		require.Equal(t, nr.localNode.Address(), b.Proposer())
 		require.Equal(t, ballot.StateINIT, b.State())
-		require.Equal(t, ballot.VotingYES, b.Vote())
+		require.Equal(t, voting.YES, b.Vote())
 	}
 
 	state := nr.isaacStateManager.State()
 
-	round := round.Round{
-		BlockHeight: state.Height,
-		Number:      state.Round,
+	basis := voting.Basis{
+		Height: state.Height,
+		Round:  state.Round,
 	}
 
-	nr.TransitISAACState(round, ballot.StateACCEPT)
+	nr.TransitISAACState(basis, ballot.StateACCEPT)
 	<-recv
 
 	require.Equal(t, 2, len(cm.Messages()))
@@ -379,6 +379,6 @@ func TestStateTransitFromTimeoutSignToAccept(t *testing.T) {
 		require.True(t, ok)
 		require.Equal(t, nr.localNode.Address(), b.Proposer())
 		require.Equal(t, ballot.StateINIT, b.State())
-		require.Equal(t, ballot.VotingYES, b.Vote())
+		require.Equal(t, voting.YES, b.Vote())
 	}
 }

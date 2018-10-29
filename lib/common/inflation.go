@@ -5,13 +5,13 @@ import (
 	"math"
 	"strconv"
 
-	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/errors"
 )
 
 // CalculateInflation returns the amount of inflation in every block.
 func CalculateInflation(initialBalance Amount) (a Amount, err error) {
 	if initialBalance > MaximumBalance {
-		err = errors.ErrorMaximumBalanceReached
+		err = errors.MaximumBalanceReached
 		return
 	}
 

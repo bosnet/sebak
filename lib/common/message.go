@@ -6,9 +6,9 @@ import (
 )
 
 const (
-	ConnectMessage                 = "connect"
+	ConnectMessage     MessageType = "connect"
 	TransactionMessage MessageType = "transaction"
-	BallotMessage                  = "ballot"
+	BallotMessage      MessageType = "ballot"
 )
 
 type MessageType string
@@ -18,7 +18,7 @@ func (t MessageType) String() string {
 }
 
 type Message interface {
-	GetType() string
+	GetType() MessageType
 	GetHash() string
 	Serialize() ([]byte, error)
 	IsWellFormed([]byte, Config) error

@@ -10,9 +10,4 @@ type Node interface {
 	Endpoint() *common.Endpoint
 	Equal(Node) bool
 	Serialize() ([]byte, error)
-	State() State
-	SetBooting()
-	SetSync()
-	SetConsensus()
-	SetTerminating()
 }

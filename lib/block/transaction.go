@@ -6,7 +6,7 @@ import (
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/common/observer"
-	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
 	"boscoin.io/sebak/lib/transaction/operation"
@@ -109,7 +109,7 @@ func (bt BlockTransaction) NewBlockTransactionKeyByBlock(hash string) string {
 
 func (bt *BlockTransaction) Save(st *storage.LevelDBBackend) (err error) {
 	if bt.isSaved {
-		return errors.ErrorAlreadySaved
+		return errors.AlreadySaved
 	}
 
 	key := GetBlockTransactionKey(bt.Hash)
@@ -117,7 +117,7 @@ func (bt *BlockTransaction) Save(st *storage.LevelDBBackend) (err error) {
 	var exists bool
 	if exists, err = st.Has(key); exists || err != nil {
 		if exists {
-			return errors.ErrorBlockAlreadyExists
+			return errors.BlockAlreadyExists
 		}
 		return
 	}
@@ -158,6 +158,10 @@ func (bt *BlockTransaction) Save(st *storage.LevelDBBackend) (err error) {
 	event += " " + fmt.Sprintf("hash-%s", bt.Hash)
 	observer.BlockTransactionObserver.Trigger(event, bt)
 	bt.isSaved = true
+
+	if err = SaveTransactionHistory(st, bt.transaction, bt.Message, TransactionHistoryStatusConfirmed); err != nil {
+		return
+	}
 
 	return nil
 }

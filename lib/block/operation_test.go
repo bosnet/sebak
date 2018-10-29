@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/storage"
 
 	"boscoin.io/sebak/lib/transaction"
@@ -16,13 +16,13 @@ func TestNewBlockOperationFromOperation(t *testing.T) {
 
 	op := tx.B.Operations[0]
 	bo, err := NewBlockOperationFromOperation(op, tx, 0)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	require.Equal(t, bo.Type, op.H.Type)
 	require.Equal(t, bo.TxHash, tx.H.Hash)
 	require.Equal(t, bo.Source, tx.B.Source)
 	encoded, err := op.B.Serialize()
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.Equal(t, bo.Body, encoded)
 }
 
@@ -37,7 +37,7 @@ func TestBlockOperationSaveAndGet(t *testing.T) {
 
 	bo := bos[0]
 	fetched, err := GetBlockOperation(st, bo.Hash)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	require.Equal(t, bo.Type, fetched.Type)
 	require.Equal(t, bo.Hash, fetched.Hash)
@@ -53,12 +53,12 @@ func TestBlockOperationSaveExisting(t *testing.T) {
 	bo.MustSave(st)
 
 	exists, err := ExistsBlockOperation(st, bos[0].Hash)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.Equal(t, exists, true)
 
 	err = bo.Save(st)
 	require.NotNil(t, err, "An error should have been returned")
-	require.Equal(t, err, errors.ErrorAlreadySaved)
+	require.Equal(t, err, errors.AlreadySaved)
 }
 
 func TestGetSortedBlockOperationsByTxHash(t *testing.T) {
@@ -97,14 +97,14 @@ func TestGetSortedBlockOperationsByTxHash(t *testing.T) {
 	}
 }
 
-func TestBlockOperationSaveByTransacton(t *testing.T) {
-	st := storage.NewTestStorage()
+func TestBlockOperationSaveByTransaction(t *testing.T) {
+	st := InitTestBlockchain()
 
 	_, tx := transaction.TestMakeTransaction(networkID, 10)
-	block := TestMakeNewBlock([]string{tx.GetHash()})
+	block := TestMakeNewBlockWithPrevBlock(GetLatestBlock(st), []string{tx.GetHash()})
 	bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, block.Confirmed, tx, common.MustJSONMarshal(tx))
 	err := bt.Save(st)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	var saved []BlockOperation
 	iterFunc, closeFunc := GetBlockOperationsByTxHash(st, tx.GetHash(), nil)
@@ -124,7 +124,7 @@ func TestBlockOperationSaveByTransacton(t *testing.T) {
 		require.Equal(t, bo.TxHash, tx.H.Hash)
 		require.Equal(t, bo.Source, tx.B.Source)
 		encoded, err := op.B.Serialize()
-		require.Nil(t, err)
+		require.NoError(t, err)
 		require.Equal(t, bo.Body, encoded)
 	}
 }

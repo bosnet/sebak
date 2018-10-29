@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/storage"
 )
 
@@ -104,7 +104,7 @@ func (g *GetBlocksOptions) parseBlockHashes(r *http.Request) (err error) {
 	// `hash` can get from post data
 	if r.Method == "POST" {
 		if r.Header.Get("Content-Type") != "application/json" {
-			err = errors.ErrorContentTypeNotJSON
+			err = errors.ContentTypeNotJSON
 			return
 		}
 

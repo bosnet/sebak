@@ -7,14 +7,13 @@ import (
 	"github.com/stellar/go/keypair"
 
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/transaction/operation"
 )
 
 // TODO versioning
 
 type Transaction struct {
-	T string
 	H Header
 	B Body
 }
@@ -56,7 +55,6 @@ func (t *Transaction) UnmarshalJSON(b []byte) (err error) {
 		return
 	}
 
-	t.T = tj.T
 	t.H = tj.H
 	t.B = tj.B
 	t.H.Hash = t.B.MakeHashString()
@@ -65,7 +63,7 @@ func (t *Transaction) UnmarshalJSON(b []byte) (err error) {
 
 func NewTransaction(source string, sequenceID uint64, ops ...operation.Operation) (tx Transaction, err error) {
 	if len(ops) < 1 {
-		err = errors.ErrorTransactionEmptyOperations
+		err = errors.TransactionEmptyOperations
 		return
 	}
 
@@ -77,7 +75,6 @@ func NewTransaction(source string, sequenceID uint64, ops ...operation.Operation
 	}
 
 	tx = Transaction{
-		T: "transaction",
 		H: Header{
 			Created: common.NowISO8601(),
 			Hash:    txBody.MakeHashString(),
@@ -109,7 +106,7 @@ func (tx Transaction) IsWellFormed(networkID []byte, conf common.Config) (err er
 	}
 	if err = common.RunChecker(checker, common.DefaultDeferFunc); err != nil {
 		if _, ok := err.(*errors.Error); !ok {
-			err = errors.ErrorInvalidTransaction.Clone().SetData("error", err.Error())
+			err = errors.InvalidTransaction.Clone().SetData("error", err.Error())
 		}
 		return
 	}
@@ -117,8 +114,8 @@ func (tx Transaction) IsWellFormed(networkID []byte, conf common.Config) (err er
 	return
 }
 
-func (tx Transaction) GetType() string {
-	return tx.T
+func (tx Transaction) GetType() common.MessageType {
+	return common.TransactionMessage
 }
 
 func (tx Transaction) Equal(m common.Message) bool {

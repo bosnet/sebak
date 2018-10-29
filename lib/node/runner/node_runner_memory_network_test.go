@@ -20,7 +20,6 @@ func makeTransaction(kp *keypair.Full) (tx transaction.Transaction) {
 	}
 
 	tx = transaction.Transaction{
-		T: "transaction",
 		H: transaction.Header{
 			Created: common.NowISO8601(),
 			Hash:    txBody.MakeHashString(),
@@ -50,7 +49,6 @@ func makeTransactionPayment(kpSource *keypair.Full, target string, amount common
 	}
 
 	tx = transaction.Transaction{
-		T: "transaction",
 		H: transaction.Header{
 			Created: common.NowISO8601(),
 			Hash:    txBody.MakeHashString(),

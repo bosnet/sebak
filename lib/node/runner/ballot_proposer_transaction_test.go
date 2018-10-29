@@ -3,17 +3,18 @@ package runner
 import (
 	"testing"
 
+	"github.com/btcsuite/btcutil/base58"
 	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
 
 	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/consensus/round"
-	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/transaction"
 	"boscoin.io/sebak/lib/transaction/operation"
+	"boscoin.io/sebak/lib/voting"
 )
 
 type ballotCheckerProposedTransaction struct {
@@ -47,11 +48,12 @@ func (p *ballotCheckerProposedTransaction) MakeBallot(numberOfTxs int) (blt *bal
 	p.txHashes = []string{}
 	p.keys = map[string]*keypair.Full{}
 
-	rd := round.Round{
-		Number:      0,
-		BlockHeight: p.genesisBlock.Height,
-		BlockHash:   p.genesisBlock.Hash,
-		TotalTxs:    p.genesisBlock.TotalTxs,
+	rd := voting.Basis{
+		Round:     0,
+		Height:    p.genesisBlock.Height,
+		BlockHash: p.genesisBlock.Hash,
+		TotalTxs:  p.genesisBlock.TotalTxs,
+		TotalOps:  p.genesisBlock.TotalOps,
 	}
 
 	for i := 0; i < numberOfTxs; i++ {
@@ -84,7 +86,7 @@ func (p *ballotCheckerProposedTransaction) MakeBallot(numberOfTxs int) (blt *bal
 	}
 
 	blt.SetProposerTransaction(ptx)
-	blt.SetVote(ballot.StateINIT, ballot.VotingYES)
+	blt.SetVote(ballot.StateINIT, voting.YES)
 	blt.Sign(p.proposerNode.Keypair(), networkID)
 
 	return
@@ -100,7 +102,7 @@ func TestProposedTransactionWithDuplicatedOperations(t *testing.T) {
 	blt := p.MakeBallot(0)
 	{
 		err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
-		require.Nil(t, err)
+		require.NoError(t, err)
 	}
 
 	{
@@ -112,7 +114,7 @@ func TestProposedTransactionWithDuplicatedOperations(t *testing.T) {
 		blt.Sign(p.proposerNode.Keypair(), networkID)
 
 		err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
-		require.Equal(t, errors.ErrorDuplicatedOperation, err)
+		require.Equal(t, errors.DuplicatedOperation, err)
 	}
 }
 
@@ -123,7 +125,7 @@ func TestProposedTransactionWithoutTransactions(t *testing.T) {
 	blt := p.MakeBallot(0)
 
 	err := blt.IsWellFormed(networkID, common.NewConfig())
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	var ballotMessage common.NetworkMessage
 	{
@@ -141,10 +143,10 @@ func TestProposedTransactionWithoutTransactions(t *testing.T) {
 		NetworkID:      p.nr.NetworkID(),
 		Message:        ballotMessage,
 		Log:            p.nr.Log(),
-		VotingHole:     ballot.VotingNOTYET,
+		VotingHole:     voting.NOTYET,
 	}
 	err = common.RunChecker(baseChecker, common.DefaultDeferFunc)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	checker := &BallotChecker{
 		DefaultChecker: common.DefaultChecker{Funcs: DefaultHandleINITBallotCheckerFuncs},
@@ -153,12 +155,12 @@ func TestProposedTransactionWithoutTransactions(t *testing.T) {
 		NetworkID:      p.nr.NetworkID(),
 		Message:        ballotMessage,
 		Ballot:         baseChecker.Ballot,
-		VotingHole:     ballot.VotingNOTYET,
+		VotingHole:     voting.NOTYET,
 		Log:            p.nr.Log(),
 	}
 	err = common.RunChecker(checker, common.DefaultDeferFunc)
-	require.Nil(t, err)
-	require.Equal(t, ballot.VotingYES, checker.VotingHole)
+	require.NoError(t, err)
+	require.Equal(t, voting.YES, checker.VotingHole)
 }
 
 func TestProposedTransactionWithTransactions(t *testing.T) {
@@ -170,11 +172,11 @@ func TestProposedTransactionWithTransactions(t *testing.T) {
 	conf := common.NewConfig()
 	{
 		err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
-		require.Nil(t, err)
+		require.NoError(t, err)
 	}
 	{
 		err := blt.ProposerTransaction().IsWellFormedWithBallot(networkID, *blt, conf)
-		require.Nil(t, err)
+		require.NoError(t, err)
 	}
 
 	var ballotMessage common.NetworkMessage
@@ -193,10 +195,10 @@ func TestProposedTransactionWithTransactions(t *testing.T) {
 		NetworkID:      p.nr.NetworkID(),
 		Message:        ballotMessage,
 		Log:            p.nr.Log(),
-		VotingHole:     ballot.VotingNOTYET,
+		VotingHole:     voting.NOTYET,
 	}
 	err := common.RunChecker(baseChecker, common.DefaultDeferFunc)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	checker := &BallotChecker{
 		DefaultChecker: common.DefaultChecker{Funcs: DefaultHandleINITBallotCheckerFuncs},
@@ -205,12 +207,12 @@ func TestProposedTransactionWithTransactions(t *testing.T) {
 		NetworkID:      p.nr.NetworkID(),
 		Message:        ballotMessage,
 		Ballot:         baseChecker.Ballot,
-		VotingHole:     ballot.VotingNOTYET,
+		VotingHole:     voting.NOTYET,
 		Log:            p.nr.Log(),
 	}
 	err = common.RunChecker(checker, common.DefaultDeferFunc)
-	require.Nil(t, err)
-	require.Equal(t, ballot.VotingYES, checker.VotingHole)
+	require.NoError(t, err)
+	require.Equal(t, voting.YES, checker.VotingHole)
 }
 
 // TestProposedTransactionDifferentSigning checks this rule,
@@ -225,7 +227,7 @@ func TestProposedTransactionDifferentSigning(t *testing.T) {
 	conf := common.NewConfig()
 	{
 		err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
-		require.Nil(t, err)
+		require.NoError(t, err)
 	}
 
 	{ // sign different source with `Ballot.Proposer()`
@@ -238,7 +240,7 @@ func TestProposedTransactionDifferentSigning(t *testing.T) {
 		require.NotEqual(t, blt.Proposer(), ptx.Source())
 
 		err := blt.ProposerTransaction().IsWellFormedWithBallot(networkID, *blt, conf)
-		require.Equal(t, errors.ErrorInvalidProposerTransaction, err)
+		require.Equal(t, errors.InvalidProposerTransaction, err)
 	}
 }
 
@@ -260,11 +262,11 @@ func TestProposedTransactionWithTransactionsButWrongTxs(t *testing.T) {
 	conf := common.NewConfig()
 	{
 		err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
-		require.Nil(t, err)
+		require.NoError(t, err)
 	}
 	{
 		err := blt.ProposerTransaction().IsWellFormedWithBallot(networkID, *blt, conf)
-		require.Equal(t, errors.ErrorInvalidOperation, err)
+		require.Equal(t, errors.InvalidOperation, err)
 	}
 }
 
@@ -274,10 +276,10 @@ func TestProposedTransactionWithWrongOperationBodyCollectTxFeeBlockData(t *testi
 
 	conf := common.NewConfig()
 	{
-		// with wrong `CollectTxFee.BlockHeight`
+		// with wrong `CollectTxFee.Height`
 		blt := p.MakeBallot(4)
 		opb, _ := blt.ProposerTransaction().CollectTxFee()
-		opb.BlockHeight = blt.B.Proposed.Round.BlockHeight + 1
+		opb.Height = blt.B.Proposed.VotingBasis.Height + 1
 		ptx := blt.ProposerTransaction()
 		ptx.B.Operations[0].B = opb
 		blt.SetProposerTransaction(ptx)
@@ -285,11 +287,11 @@ func TestProposedTransactionWithWrongOperationBodyCollectTxFeeBlockData(t *testi
 
 		{
 			err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
-			require.Nil(t, err)
+			require.NoError(t, err)
 		}
 		{
 			err := blt.ProposerTransaction().IsWellFormedWithBallot(networkID, *blt, conf)
-			require.Equal(t, errors.ErrorInvalidOperation, err)
+			require.Equal(t, errors.InvalidOperation, err)
 		}
 	}
 
@@ -297,7 +299,7 @@ func TestProposedTransactionWithWrongOperationBodyCollectTxFeeBlockData(t *testi
 		// with wrong `CollectTxFee.BlockHash`
 		blt := p.MakeBallot(4)
 		opb, _ := blt.ProposerTransaction().CollectTxFee()
-		opb.BlockHash = blt.B.Proposed.Round.BlockHash + "showme"
+		opb.BlockHash = blt.B.Proposed.VotingBasis.BlockHash + "showme"
 		ptx := blt.ProposerTransaction()
 		ptx.B.Operations[0].B = opb
 		blt.SetProposerTransaction(ptx)
@@ -305,11 +307,11 @@ func TestProposedTransactionWithWrongOperationBodyCollectTxFeeBlockData(t *testi
 
 		{
 			err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
-			require.Nil(t, err)
+			require.NoError(t, err)
 		}
 		{
 			err := blt.ProposerTransaction().IsWellFormedWithBallot(networkID, *blt, conf)
-			require.Equal(t, errors.ErrorInvalidOperation, err)
+			require.Equal(t, errors.InvalidOperation, err)
 		}
 	}
 
@@ -317,7 +319,7 @@ func TestProposedTransactionWithWrongOperationBodyCollectTxFeeBlockData(t *testi
 		// with wrong `CollectTxFee.TotalTxs`
 		blt := p.MakeBallot(4)
 		opb, _ := blt.ProposerTransaction().CollectTxFee()
-		opb.TotalTxs = blt.B.Proposed.Round.TotalTxs + 2
+		opb.TotalTxs = blt.B.Proposed.VotingBasis.TotalTxs + 2
 		ptx := blt.ProposerTransaction()
 		ptx.B.Operations[0].B = opb
 		blt.SetProposerTransaction(ptx)
@@ -325,11 +327,11 @@ func TestProposedTransactionWithWrongOperationBodyCollectTxFeeBlockData(t *testi
 
 		{
 			err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
-			require.Nil(t, err)
+			require.NoError(t, err)
 		}
 		{
 			err := blt.ProposerTransaction().IsWellFormedWithBallot(networkID, *blt, conf)
-			require.Equal(t, errors.ErrorInvalidOperation, err)
+			require.Equal(t, errors.InvalidOperation, err)
 		}
 	}
 
@@ -346,7 +348,7 @@ func TestProposedTransactionWithWrongOperationBodyCollectTxFeeBlockData(t *testi
 
 		{
 			err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
-			require.Equal(t, errors.ErrorInvalidOperation, err)
+			require.Equal(t, errors.InvalidOperation, err)
 		}
 	}
 }
@@ -357,10 +359,10 @@ func TestProposedTransactionWithWrongOperationBodyInflationFeeBlockData(t *testi
 
 	conf := common.NewConfig()
 	{
-		// with wrong `Inflation.BlockHeight`
+		// with wrong `Inflation.Height`
 		blt := p.MakeBallot(4)
 		opb, _ := blt.ProposerTransaction().Inflation()
-		opb.BlockHeight = blt.B.Proposed.Round.BlockHeight + 1
+		opb.Height = blt.B.Proposed.VotingBasis.Height + 1
 		ptx := blt.ProposerTransaction()
 		ptx.B.Operations[1].B = opb
 		blt.SetProposerTransaction(ptx)
@@ -368,11 +370,11 @@ func TestProposedTransactionWithWrongOperationBodyInflationFeeBlockData(t *testi
 
 		{
 			err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
-			require.Nil(t, err)
+			require.NoError(t, err)
 		}
 		{
 			err := blt.ProposerTransaction().IsWellFormedWithBallot(networkID, *blt, conf)
-			require.Equal(t, errors.ErrorInvalidOperation, err)
+			require.Equal(t, errors.InvalidOperation, err)
 		}
 	}
 
@@ -380,7 +382,7 @@ func TestProposedTransactionWithWrongOperationBodyInflationFeeBlockData(t *testi
 		// with wrong `Inflation.BlockHash`
 		blt := p.MakeBallot(4)
 		opb, _ := blt.ProposerTransaction().Inflation()
-		opb.BlockHash = blt.B.Proposed.Round.BlockHash + "showme"
+		opb.BlockHash = blt.B.Proposed.VotingBasis.BlockHash + "showme"
 		ptx := blt.ProposerTransaction()
 		ptx.B.Operations[1].B = opb
 		blt.SetProposerTransaction(ptx)
@@ -388,11 +390,11 @@ func TestProposedTransactionWithWrongOperationBodyInflationFeeBlockData(t *testi
 
 		{
 			err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
-			require.Nil(t, err)
+			require.NoError(t, err)
 		}
 		{
 			err := blt.ProposerTransaction().IsWellFormedWithBallot(networkID, *blt, conf)
-			require.Equal(t, errors.ErrorInvalidOperation, err)
+			require.Equal(t, errors.InvalidOperation, err)
 		}
 	}
 
@@ -400,7 +402,7 @@ func TestProposedTransactionWithWrongOperationBodyInflationFeeBlockData(t *testi
 		// with wrong `Inflation.TotalTxs`
 		blt := p.MakeBallot(4)
 		opb, _ := blt.ProposerTransaction().Inflation()
-		opb.TotalTxs = blt.B.Proposed.Round.TotalTxs + 2
+		opb.TotalTxs = blt.B.Proposed.VotingBasis.TotalTxs + 2
 		ptx := blt.ProposerTransaction()
 		ptx.B.Operations[1].B = opb
 		blt.SetProposerTransaction(ptx)
@@ -408,11 +410,11 @@ func TestProposedTransactionWithWrongOperationBodyInflationFeeBlockData(t *testi
 
 		{
 			err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
-			require.Nil(t, err)
+			require.NoError(t, err)
 		}
 		{
 			err := blt.ProposerTransaction().IsWellFormedWithBallot(networkID, *blt, conf)
-			require.Equal(t, errors.ErrorInvalidOperation, err)
+			require.Equal(t, errors.InvalidOperation, err)
 		}
 	}
 }
@@ -433,7 +435,7 @@ func TestProposedTransactionWithCollectTxFeeWrongAmount(t *testing.T) {
 	conf := common.NewConfig()
 	{
 		err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
-		require.Equal(t, errors.ErrorInvalidOperation, err)
+		require.Equal(t, errors.InvalidOperation, err)
 	}
 }
 
@@ -453,12 +455,12 @@ func TestProposedTransactionWithInflationWrongAmount(t *testing.T) {
 	conf := common.NewConfig()
 	{
 		err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
-		require.Nil(t, err)
+		require.NoError(t, err)
 	}
 
 	{
 		err := blt.ProposerTransaction().IsWellFormedWithBallot(networkID, *blt, conf)
-		require.Nil(t, err)
+		require.NoError(t, err)
 	}
 
 	var ballotMessage common.NetworkMessage
@@ -477,10 +479,10 @@ func TestProposedTransactionWithInflationWrongAmount(t *testing.T) {
 		NetworkID:      p.nr.NetworkID(),
 		Message:        ballotMessage,
 		Log:            p.nr.Log(),
-		VotingHole:     ballot.VotingNOTYET,
+		VotingHole:     voting.NOTYET,
 	}
 	err := common.RunChecker(baseChecker, common.DefaultDeferFunc)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	checker := &BallotChecker{
 		DefaultChecker: common.DefaultChecker{Funcs: DefaultHandleINITBallotCheckerFuncs},
@@ -489,11 +491,11 @@ func TestProposedTransactionWithInflationWrongAmount(t *testing.T) {
 		NetworkID:      p.nr.NetworkID(),
 		Message:        ballotMessage,
 		Ballot:         baseChecker.Ballot,
-		VotingHole:     ballot.VotingNOTYET,
+		VotingHole:     voting.NOTYET,
 		Log:            p.nr.Log(),
 	}
 	err = common.RunChecker(checker, common.DefaultDeferFunc)
-	require.Equal(t, errors.ErrorInvalidOperation, err)
+	require.Equal(t, errors.InvalidOperation, err)
 }
 
 func TestProposedTransactionWithNotZeroFee(t *testing.T) {
@@ -510,7 +512,7 @@ func TestProposedTransactionWithNotZeroFee(t *testing.T) {
 	conf := common.NewConfig()
 	{
 		err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
-		require.Equal(t, errors.ErrorInvalidFee, err)
+		require.Equal(t, errors.InvalidFee, err)
 	}
 }
 
@@ -531,11 +533,11 @@ func TestProposedTransactionWithCollectTxFeeWrongCommonAddress(t *testing.T) {
 	conf := common.NewConfig()
 	{
 		err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
-		require.Nil(t, err)
+		require.NoError(t, err)
 	}
 	{
 		err := blt.ProposerTransaction().IsWellFormedWithBallot(networkID, *blt, conf)
-		require.Nil(t, err)
+		require.NoError(t, err)
 	}
 
 	var ballotMessage common.NetworkMessage
@@ -554,10 +556,10 @@ func TestProposedTransactionWithCollectTxFeeWrongCommonAddress(t *testing.T) {
 		NetworkID:      p.nr.NetworkID(),
 		Message:        ballotMessage,
 		Log:            p.nr.Log(),
-		VotingHole:     ballot.VotingNOTYET,
+		VotingHole:     voting.NOTYET,
 	}
 	err := common.RunChecker(baseChecker, common.DefaultDeferFunc)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	checker := &BallotChecker{
 		DefaultChecker: common.DefaultChecker{Funcs: DefaultHandleINITBallotCheckerFuncs},
@@ -566,11 +568,11 @@ func TestProposedTransactionWithCollectTxFeeWrongCommonAddress(t *testing.T) {
 		NetworkID:      p.nr.NetworkID(),
 		Message:        ballotMessage,
 		Ballot:         baseChecker.Ballot,
-		VotingHole:     ballot.VotingNOTYET,
+		VotingHole:     voting.NOTYET,
 		Log:            p.nr.Log(),
 	}
 	err = common.RunChecker(checker, common.DefaultDeferFunc)
-	require.Equal(t, errors.ErrorInvalidOperation, err)
+	require.Equal(t, errors.InvalidOperation, err)
 }
 
 func TestProposedTransactionWithInflationWrongCommonAddress(t *testing.T) {
@@ -590,11 +592,11 @@ func TestProposedTransactionWithInflationWrongCommonAddress(t *testing.T) {
 	conf := common.NewConfig()
 	{
 		err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
-		require.Nil(t, err)
+		require.NoError(t, err)
 	}
 	{
 		err := blt.ProposerTransaction().IsWellFormedWithBallot(networkID, *blt, conf)
-		require.Nil(t, err)
+		require.NoError(t, err)
 	}
 
 	var ballotMessage common.NetworkMessage
@@ -613,10 +615,10 @@ func TestProposedTransactionWithInflationWrongCommonAddress(t *testing.T) {
 		NetworkID:      p.nr.NetworkID(),
 		Message:        ballotMessage,
 		Log:            p.nr.Log(),
-		VotingHole:     ballot.VotingNOTYET,
+		VotingHole:     voting.NOTYET,
 	}
 	err := common.RunChecker(baseChecker, common.DefaultDeferFunc)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	checker := &BallotChecker{
 		DefaultChecker: common.DefaultChecker{Funcs: DefaultHandleINITBallotCheckerFuncs},
@@ -625,11 +627,11 @@ func TestProposedTransactionWithInflationWrongCommonAddress(t *testing.T) {
 		NetworkID:      p.nr.NetworkID(),
 		Message:        ballotMessage,
 		Ballot:         baseChecker.Ballot,
-		VotingHole:     ballot.VotingNOTYET,
+		VotingHole:     voting.NOTYET,
 		Log:            p.nr.Log(),
 	}
 	err = common.RunChecker(checker, common.DefaultDeferFunc)
-	require.Equal(t, errors.ErrorInvalidOperation, err)
+	require.Equal(t, errors.InvalidOperation, err)
 }
 
 func TestProposedTransactionWithBiggerTransactionFeeThanCollected(t *testing.T) {
@@ -653,11 +655,11 @@ func TestProposedTransactionWithBiggerTransactionFeeThanCollected(t *testing.T) 
 	conf := common.NewConfig()
 	{
 		err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
-		require.Nil(t, err)
+		require.NoError(t, err)
 	}
 	{
 		err := blt.ProposerTransaction().IsWellFormedWithBallot(networkID, *blt, conf)
-		require.Nil(t, err)
+		require.NoError(t, err)
 	}
 
 	var ballotMessage common.NetworkMessage
@@ -676,10 +678,10 @@ func TestProposedTransactionWithBiggerTransactionFeeThanCollected(t *testing.T) 
 		NetworkID:      p.nr.NetworkID(),
 		Message:        ballotMessage,
 		Log:            p.nr.Log(),
-		VotingHole:     ballot.VotingNOTYET,
+		VotingHole:     voting.NOTYET,
 	}
 	err := common.RunChecker(baseChecker, common.DefaultDeferFunc)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	checker := &BallotChecker{
 		DefaultChecker: common.DefaultChecker{Funcs: DefaultHandleINITBallotCheckerFuncs},
@@ -688,12 +690,12 @@ func TestProposedTransactionWithBiggerTransactionFeeThanCollected(t *testing.T) 
 		NetworkID:      p.nr.NetworkID(),
 		Message:        ballotMessage,
 		Ballot:         baseChecker.Ballot,
-		VotingHole:     ballot.VotingNOTYET,
+		VotingHole:     voting.NOTYET,
 		Log:            p.nr.Log(),
 	}
 	err = common.RunChecker(checker, common.DefaultDeferFunc)
-	require.Nil(t, err)
-	require.Equal(t, ballot.VotingNO, checker.VotingHole)
+	require.NoError(t, err)
+	require.Equal(t, voting.NO, checker.VotingHole)
 }
 
 func TestProposedTransactionStoreWithZeroAmount(t *testing.T) {
@@ -714,18 +716,18 @@ func TestProposedTransactionStoreWithZeroAmount(t *testing.T) {
 			p.nr.Log(),
 			p.nr.Log(),
 		)
-		require.Nil(t, err)
+		require.NoError(t, err)
 	}
 
 	afterCommonAccount, _ := block.GetBlockAccount(p.nr.Storage(), p.commonAccount.Address)
 
 	inflationAmount, err := common.CalculateInflation(p.initialBalance)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	require.Equal(t, previousCommonAccount.Balance+inflationAmount, afterCommonAccount.Balance)
 
 	bt, err := block.GetBlockTransaction(p.nr.Storage(), blt.ProposerTransaction().GetHash())
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	require.Equal(t, blt.ProposerTransaction().GetHash(), bt.Hash)
 	require.Equal(t, blt.ProposerTransaction().Source(), bt.Source)
@@ -751,13 +753,13 @@ func TestProposedTransactionStoreWithZeroAmount(t *testing.T) {
 		require.Equal(t, string(operation.TypeCollectTxFee), string(bos[0].Type))
 
 		opbFromBlockInterface, err := operation.UnmarshalBodyJSON(bos[0].Type, bos[0].Body)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		opbFromBlock := opbFromBlockInterface.(operation.CollectTxFee)
 
 		opb, _ := blt.ProposerTransaction().CollectTxFee()
 		require.Equal(t, opb.Amount, opbFromBlock.Amount)
 		require.Equal(t, opb.Target, opbFromBlock.Target)
-		require.Equal(t, opb.BlockHeight, opbFromBlock.BlockHeight)
+		require.Equal(t, opb.Height, opbFromBlock.Height)
 		require.Equal(t, opb.BlockHash, opbFromBlock.BlockHash)
 		require.Equal(t, opb.TotalTxs, opbFromBlock.TotalTxs)
 		require.Equal(t, opb.Txs, opbFromBlock.Txs)
@@ -767,13 +769,13 @@ func TestProposedTransactionStoreWithZeroAmount(t *testing.T) {
 		require.Equal(t, string(operation.TypeInflation), string(bos[1].Type))
 
 		opbFromBlockInterface, err := operation.UnmarshalBodyJSON(bos[1].Type, bos[1].Body)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		opbFromBlock := opbFromBlockInterface.(operation.Inflation)
 
 		opb, _ := blt.ProposerTransaction().Inflation()
 		require.Equal(t, opb.Amount, opbFromBlock.Amount)
 		require.Equal(t, opb.Target, opbFromBlock.Target)
-		require.Equal(t, opb.BlockHeight, opbFromBlock.BlockHeight)
+		require.Equal(t, opb.Height, opbFromBlock.Height)
 		require.Equal(t, opb.BlockHash, opbFromBlock.BlockHash)
 		require.Equal(t, opb.TotalTxs, opbFromBlock.TotalTxs)
 	}
@@ -796,13 +798,13 @@ func TestProposedTransactionStoreWithAmount(t *testing.T) {
 			p.nr.Log(),
 			p.nr.Log(),
 		)
-		require.Nil(t, err)
+		require.NoError(t, err)
 	}
 
 	afterCommonAccount, _ := block.GetBlockAccount(p.nr.Storage(), p.commonAccount.Address)
 
 	inflationAmount, err := common.CalculateInflation(p.initialBalance)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.Equal(t, previousCommonAccount.Balance+opb.Amount+inflationAmount, afterCommonAccount.Balance)
 }
 
@@ -814,7 +816,7 @@ func TestProposedTransactionWithNormalOperations(t *testing.T) {
 	conf := common.NewConfig()
 	{
 		err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
-		require.Nil(t, err)
+		require.NoError(t, err)
 	}
 
 	{ // with create-account operation
@@ -830,7 +832,7 @@ func TestProposedTransactionWithNormalOperations(t *testing.T) {
 		blt.Sign(p.proposerNode.Keypair(), networkID)
 
 		err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
-		require.Equal(t, errors.ErrorInvalidProposerTransaction, err)
+		require.Equal(t, errors.InvalidProposerTransaction, err)
 	}
 }
 
@@ -842,7 +844,7 @@ func TestProposedTransactionWithWrongNumberOfOperations(t *testing.T) {
 	conf := common.NewConfig()
 	{
 		err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
-		require.Nil(t, err)
+		require.NoError(t, err)
 	}
 
 	{ // more than 2
@@ -857,7 +859,7 @@ func TestProposedTransactionWithWrongNumberOfOperations(t *testing.T) {
 		blt.Sign(p.proposerNode.Keypair(), networkID)
 
 		err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
-		require.Equal(t, errors.ErrorInvalidProposerTransaction, err)
+		require.Equal(t, errors.InvalidProposerTransaction, err)
 	}
 }
 
@@ -927,7 +929,7 @@ func TestCheckInflationBlockIncrease(t *testing.T) {
 	)
 
 	inflationAmount, err := common.CalculateInflation(nr.InitialBalance)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	var previous common.Amount
 	for blockHeight := uint64(1); blockHeight < 5; blockHeight++ {
@@ -943,8 +945,10 @@ func TestProposedTransactionReachedBlockHeightEndOfInflation(t *testing.T) {
 	{ // Height = common.BlockHeightEndOfInflation
 		genesisBlock := p.genesisBlock
 		genesisBlock.Height = common.BlockHeightEndOfInflation
+		genesisBlock.Hash = base58.Encode(common.MustMakeObjectHash(genesisBlock))
 		p.genesisBlock = genesisBlock
-		p.nr.Consensus().SetLatestBlock(p.genesisBlock)
+
+		p.genesisBlock.Save(p.nr.Storage())
 
 		blt := p.MakeBallot(4)
 
@@ -964,10 +968,10 @@ func TestProposedTransactionReachedBlockHeightEndOfInflation(t *testing.T) {
 			NetworkID:      p.nr.NetworkID(),
 			Message:        ballotMessage,
 			Log:            p.nr.Log(),
-			VotingHole:     ballot.VotingNOTYET,
+			VotingHole:     voting.NOTYET,
 		}
 		err := common.RunChecker(baseChecker, common.DefaultDeferFunc)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		checker := &BallotChecker{
 			DefaultChecker: common.DefaultChecker{Funcs: DefaultHandleINITBallotCheckerFuncs},
@@ -976,18 +980,19 @@ func TestProposedTransactionReachedBlockHeightEndOfInflation(t *testing.T) {
 			NetworkID:      p.nr.NetworkID(),
 			Message:        ballotMessage,
 			Ballot:         baseChecker.Ballot,
-			VotingHole:     ballot.VotingNOTYET,
+			VotingHole:     voting.NOTYET,
 			Log:            p.nr.Log(),
 		}
 		err = common.RunChecker(checker, common.DefaultDeferFunc)
-		require.Nil(t, err)
+		require.NoError(t, err)
 	}
 
 	{ // Height = common.BlockHeightEndOfInflation + 1
 		genesisBlock := p.genesisBlock
 		genesisBlock.Height = common.BlockHeightEndOfInflation + 1
+		genesisBlock.Hash = base58.Encode(common.MustMakeObjectHash(genesisBlock))
 		p.genesisBlock = genesisBlock
-		p.nr.Consensus().SetLatestBlock(p.genesisBlock)
+		p.genesisBlock.Save(p.nr.Storage())
 
 		blt := p.MakeBallot(4)
 
@@ -1007,10 +1012,10 @@ func TestProposedTransactionReachedBlockHeightEndOfInflation(t *testing.T) {
 			NetworkID:      p.nr.NetworkID(),
 			Message:        ballotMessage,
 			Log:            p.nr.Log(),
-			VotingHole:     ballot.VotingNOTYET,
+			VotingHole:     voting.NOTYET,
 		}
 		err := common.RunChecker(baseChecker, common.DefaultDeferFunc)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		checker := &BallotChecker{
 			DefaultChecker: common.DefaultChecker{Funcs: DefaultHandleINITBallotCheckerFuncs},
@@ -1019,10 +1024,10 @@ func TestProposedTransactionReachedBlockHeightEndOfInflation(t *testing.T) {
 			NetworkID:      p.nr.NetworkID(),
 			Message:        ballotMessage,
 			Ballot:         baseChecker.Ballot,
-			VotingHole:     ballot.VotingNOTYET,
+			VotingHole:     voting.NOTYET,
 			Log:            p.nr.Log(),
 		}
 		err = common.RunChecker(checker, common.DefaultDeferFunc)
-		require.Equal(t, errors.ErrorInvalidOperation, err)
+		require.Equal(t, errors.InvalidOperation, err)
 	}
 }

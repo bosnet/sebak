@@ -8,7 +8,7 @@ import (
 
 	"encoding/json"
 
-	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/errors"
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
@@ -67,7 +67,7 @@ func (suite *TestSuite) TestIsWellFormedTransactionWithLowerFeeSuite() {
 		tx.B.Fee = tx.B.Fee.MustSub(1)
 		tx.Sign(kp, networkID)
 		err = tx.IsWellFormed(networkID, suite.conf)
-		require.Equal(suite.T(), errors.ErrorInvalidFee, err, "Transaction shouidn't pass Fee checks")
+		require.Equal(suite.T(), errors.InvalidFee, err, "Transaction shouidn't pass Fee checks")
 	}
 
 	{ // zero fee
@@ -75,7 +75,7 @@ func (suite *TestSuite) TestIsWellFormedTransactionWithLowerFeeSuite() {
 		tx.B.Fee = common.Amount(0)
 		tx.Sign(kp, networkID)
 		err = tx.IsWellFormed(networkID, suite.conf)
-		require.Equal(suite.T(), errors.ErrorInvalidFee, err, "Transaction shouidn't pass Fee checks")
+		require.Equal(suite.T(), errors.InvalidFee, err, "Transaction shouidn't pass Fee checks")
 	}
 }
 
@@ -121,7 +121,7 @@ func (suite *TestSuite) TestIsWellFormedTransactionMaxOperationsInTransactionSui
 	{ // over operation.Limit
 		_, tx := TestMakeTransaction(networkID, suite.conf.OpsLimit+1)
 		err = tx.IsWellFormed(networkID, suite.conf)
-		require.Equal(suite.T(), errors.ErrorTransactionHasOverMaxOperations, err)
+		require.Equal(suite.T(), errors.TransactionHasOverMaxOperations, err)
 	}
 
 	{ // operation.Limit

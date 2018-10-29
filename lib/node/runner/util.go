@@ -3,7 +3,7 @@ package runner
 import (
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction/operation"
@@ -13,7 +13,7 @@ import (
 func getGenesisTransaction(st *storage.LevelDBBackend) (bt block.BlockTransaction, err error) {
 	bk := block.GetGenesis(st)
 	if len(bk.Transactions) < 1 {
-		err = errors.ErrorWrongBlockFound
+		err = errors.WrongBlockFound
 		return
 	}
 
@@ -22,7 +22,7 @@ func getGenesisTransaction(st *storage.LevelDBBackend) (bt block.BlockTransactio
 	}
 
 	if len(bt.Operations) != 2 {
-		err = errors.ErrorWrongBlockFound
+		err = errors.WrongBlockFound
 		return
 	}
 

@@ -14,7 +14,7 @@ Transactions API
 
 + Response 200 (application/json; charset=utf-8)
     
-    + Attributes (Transaction Payment)
+    + Attributes (Transaction Post)
 
 + Response 500 (application/problem+json; charset=utf-8)
 

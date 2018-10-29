@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/error"
+	"boscoin.io/sebak/lib/errors"
 )
 
 func TestLevelDBBackendNew(t *testing.T) {
@@ -106,9 +106,9 @@ func TestLevelDBBackendGetRaw(t *testing.T) {
 
 	st.New("showme", "input")
 
-	// when record does not exist, it should return ErrorStorageRecordDoesNotExist
-	if _, err := st.GetRaw("vacuum"); err != errors.ErrorStorageRecordDoesNotExist {
-		t.Errorf("failed to GetRaw: want=%v have=%v", errors.ErrorStorageRecordDoesNotExist, err)
+	// when record does not exist, it should return errors.StorageRecordDoesNotExist
+	if _, err := st.GetRaw("vacuum"); err != errors.StorageRecordDoesNotExist {
+		t.Errorf("failed to GetRaw: want=%v have=%v", errors.StorageRecordDoesNotExist, err)
 	}
 }
 
