@@ -27,12 +27,12 @@ func TestBatchBackendNew(t *testing.T) {
 	{ // `Get` failed in both
 		{ // in normal LeveldbBatch
 			err := st.Get(key, &fetched)
-			require.Equal(t, errors.ErrorStorageRecordDoesNotExist, err)
+			require.Equal(t, errors.StorageRecordDoesNotExist, err)
 		}
 
 		{ // in BatchBackend
 			err := bt.Get(key, &fetched)
-			require.Equal(t, errors.ErrorStorageRecordDoesNotExist, err)
+			require.Equal(t, errors.StorageRecordDoesNotExist, err)
 		}
 	}
 
@@ -44,7 +44,7 @@ func TestBatchBackendNew(t *testing.T) {
 
 		{ // in normal LeveldbBatch
 			err := st.Get(key, &fetched)
-			require.Equal(t, errors.ErrorStorageRecordDoesNotExist, err)
+			require.Equal(t, errors.StorageRecordDoesNotExist, err)
 		}
 	}
 
@@ -57,7 +57,7 @@ func TestBatchBackendNew(t *testing.T) {
 
 	{ // `New` must be failed because already `New`ed
 		err = bt.New(key, input)
-		require.Equal(t, errors.ErrorStorageRecordAlreadyExists.Code, err.(*errors.Error).Code)
+		require.Equal(t, errors.StorageRecordAlreadyExists.Code, err.(*errors.Error).Code)
 	}
 
 	{ // `Commit` batch, it must be stored in LeveldbBatch
@@ -104,9 +104,9 @@ func TestBatchBackendDelete(t *testing.T) {
 
 	{ // after `Commit`, it must be removed in LeveldbBatch and BatchBackend
 		err = bt.Get(key, &fetched)
-		require.Equal(t, errors.ErrorStorageRecordDoesNotExist, err)
+		require.Equal(t, errors.StorageRecordDoesNotExist, err)
 
 		err = st.Get(key, &fetched)
-		require.Equal(t, errors.ErrorStorageRecordDoesNotExist, err)
+		require.Equal(t, errors.StorageRecordDoesNotExist, err)
 	}
 }

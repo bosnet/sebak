@@ -112,7 +112,7 @@ func (v *BlockValidator) finishBlock(ctx context.Context, syncInfo *SyncInfo) er
 	//TODO(anarcher): using leveldb.Tx or leveldb.Batch?
 	blk := *syncInfo.Block
 	if err := blk.Save(ts); err != nil {
-		if err == errors.ErrorBlockAlreadyExists {
+		if err == errors.BlockAlreadyExists {
 			return nil
 		}
 		return err
@@ -164,7 +164,7 @@ func (v *BlockValidator) validateBlock(ctx context.Context, si *SyncInfo, prevBl
 	blk := block.NewBlock(si.Block.Proposer, r, si.Block.ProposerTransaction, txs, si.Block.Confirmed)
 
 	if blk.Hash != si.Block.Hash {
-		err := errors.ErrorHashDoesNotMatch
+		err := errors.HashDoesNotMatch
 		return err
 	}
 
@@ -182,7 +182,7 @@ func (v *BlockValidator) validateTxs(ctx context.Context, si *SyncInfo) error {
 	for _, tx := range si.Txs {
 		hash := tx.B.MakeHashString()
 		if hash != tx.H.Hash {
-			err := errors.ErrorHashDoesNotMatch
+			err := errors.HashDoesNotMatch
 			return err
 		}
 

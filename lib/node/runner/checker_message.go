@@ -69,13 +69,13 @@ func HasTransaction(c common.Checker, args ...interface{}) (err error) {
 	hash := checker.Transaction.GetHash()
 
 	if checker.TransactionPool.Has(hash) {
-		return errors.ErrorNewButKnownMessage
+		return errors.NewButKnownMessage
 	}
 
 	if exists, err := block.ExistsBlockTransaction(checker.Storage, hash); err != nil {
 		return err
 	} else if exists {
-		return errors.ErrorNewButKnownMessage
+		return errors.NewButKnownMessage
 	}
 
 	return nil
@@ -89,7 +89,7 @@ func SaveTransactionHistory(c common.Checker, args ...interface{}) (err error) {
 	var found bool
 	if found, err = block.ExistsBlockTransactionHistory(checker.Storage, checker.Transaction.GetHash()); found && err == nil {
 		checker.Log.Debug("found in history")
-		err = errors.ErrorNewButKnownMessage
+		err = errors.NewButKnownMessage
 		return
 	}
 
@@ -108,7 +108,7 @@ func MessageHasSameSource(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*MessageChecker)
 
 	if checker.TransactionPool.IsSameSource(checker.Transaction.Source()) {
-		err = errors.ErrorTransactionSameSource
+		err = errors.TransactionSameSource
 		return
 	}
 

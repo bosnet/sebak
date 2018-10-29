@@ -63,7 +63,7 @@ func TestErrorBallotHasOverMaxTransactionsInBallot(t *testing.T) {
 		blt.Sign(node.Keypair(), networkID)
 
 		err := blt.IsWellFormed(networkID, conf)
-		require.Error(t, err, errors.ErrorBallotHasOverMaxTransactionsInBallot)
+		require.Error(t, err, errors.BallotHasOverMaxTransactionsInBallot)
 	}
 }
 
@@ -105,7 +105,7 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 		updateBallot(ballot)
 
 		err := ballot.IsWellFormed(networkID, conf)
-		require.Error(t, err, errors.ErrorMessageHasIncorrectTime)
+		require.Error(t, err, errors.MessageHasIncorrectTime)
 	}
 
 	{ // bad `Ballot.B.Confirmed` time; too behind
@@ -117,7 +117,7 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 		updateBallot(ballot)
 
 		err := ballot.IsWellFormed(networkID, conf)
-		require.Error(t, err, errors.ErrorMessageHasIncorrectTime)
+		require.Error(t, err, errors.MessageHasIncorrectTime)
 	}
 
 	{ // bad `Ballot.B.Proposed.Confirmed` time; too ahead
@@ -129,7 +129,7 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 		updateBallot(ballot)
 
 		err := ballot.IsWellFormed(networkID, conf)
-		require.Error(t, err, errors.ErrorMessageHasIncorrectTime)
+		require.Error(t, err, errors.MessageHasIncorrectTime)
 	}
 
 	{ // bad `Ballot.B.Proposed.Confirmed` time; too behind
@@ -141,7 +141,7 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 		updateBallot(ballot)
 
 		err := ballot.IsWellFormed(networkID, conf)
-		require.Error(t, err, errors.ErrorMessageHasIncorrectTime)
+		require.Error(t, err, errors.MessageHasIncorrectTime)
 	}
 }
 

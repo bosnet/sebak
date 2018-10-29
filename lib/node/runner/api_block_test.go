@@ -263,7 +263,7 @@ func TestGetBlocksHandlerWithInvalidLimit(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
-		require.Equal(t, errors.ErrorInvalidQueryString.Code, responseError.Code)
+		require.Equal(t, errors.InvalidQueryString.Code, responseError.Code)
 	}
 
 	{ // options.Limit is negative
@@ -284,7 +284,7 @@ func TestGetBlocksHandlerWithInvalidLimit(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
-		require.Equal(t, errors.ErrorInvalidQueryString.Code, responseError.Code)
+		require.Equal(t, errors.InvalidQueryString.Code, responseError.Code)
 	}
 }
 
@@ -311,7 +311,7 @@ func TestGetBlocksHandlerWithInvalidReverse(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
-		require.Equal(t, errors.ErrorInvalidQueryString.Code, responseError.Code)
+		require.Equal(t, errors.InvalidQueryString.Code, responseError.Code)
 	}
 
 	{ // options.Reverse capitalized
@@ -351,7 +351,7 @@ func TestGetBlocksHandlerWithUnknownCursor(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
-		require.Equal(t, errors.ErrorInvalidQueryString.Code, responseError.Code)
+		require.Equal(t, errors.InvalidQueryString.Code, responseError.Code)
 	}
 }
 
@@ -435,7 +435,7 @@ func TestGetBlocksHandlerWithInvalidHeightRange(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
-		require.Equal(t, errors.ErrorInvalidQueryString.Code, responseError.Code)
+		require.Equal(t, errors.InvalidQueryString.Code, responseError.Code)
 	}
 
 	{ // not uint64 value
@@ -454,7 +454,7 @@ func TestGetBlocksHandlerWithInvalidHeightRange(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
-		require.Equal(t, errors.ErrorInvalidQueryString.Code, responseError.Code)
+		require.Equal(t, errors.InvalidQueryString.Code, responseError.Code)
 	}
 
 	{ // bigger start value than end
@@ -473,7 +473,7 @@ func TestGetBlocksHandlerWithInvalidHeightRange(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
-		require.Equal(t, errors.ErrorInvalidQueryString.Code, responseError.Code)
+		require.Equal(t, errors.InvalidQueryString.Code, responseError.Code)
 	}
 
 	{ // height is bigger than limit, set to limit
@@ -653,7 +653,7 @@ func TestGetBlocksHandlerWithInvalidMode(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
-		require.Equal(t, errors.ErrorInvalidQueryString.Code, responseError.Code)
+		require.Equal(t, errors.InvalidQueryString.Code, responseError.Code)
 
 	}
 }

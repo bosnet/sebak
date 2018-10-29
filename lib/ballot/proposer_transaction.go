@@ -124,7 +124,7 @@ func (p ProposerTransaction) IsWellFormed(networkID []byte, conf common.Config) 
 
 func (p ProposerTransaction) IsWellFormedWithBallot(networkID []byte, blt Ballot, conf common.Config) (err error) {
 	if p.Source() != blt.Proposer() {
-		err = errors.ErrorInvalidProposerTransaction
+		err = errors.InvalidProposerTransaction
 		return
 	}
 
@@ -140,30 +140,30 @@ func (p ProposerTransaction) IsWellFormedWithBallot(networkID []byte, blt Ballot
 		}
 
 		if opb.Txs != uint64(blt.TransactionsLength()) {
-			err = errors.ErrorInvalidOperation
+			err = errors.InvalidOperation
 			return
 		}
 
 		if opb.Height != rd.Height {
-			err = errors.ErrorInvalidOperation
+			err = errors.InvalidOperation
 			return
 		}
 		if opb.BlockHash != rd.BlockHash {
-			err = errors.ErrorInvalidOperation
+			err = errors.InvalidOperation
 			return
 		}
 		if opb.TotalTxs != rd.TotalTxs {
-			err = errors.ErrorInvalidOperation
+			err = errors.InvalidOperation
 			return
 		}
 
 		if len(blt.Transactions()) < 1 {
 			if opb.Amount != 0 {
-				err = errors.ErrorInvalidOperation
+				err = errors.InvalidOperation
 				return
 			}
 		} else if opb.Amount < 1 {
-			err = errors.ErrorInvalidOperation
+			err = errors.InvalidOperation
 			return
 		}
 	}
@@ -175,15 +175,15 @@ func (p ProposerTransaction) IsWellFormedWithBallot(networkID []byte, blt Ballot
 		}
 
 		if opb.Height != rd.Height {
-			err = errors.ErrorInvalidOperation
+			err = errors.InvalidOperation
 			return
 		}
 		if opb.BlockHash != rd.BlockHash {
-			err = errors.ErrorInvalidOperation
+			err = errors.InvalidOperation
 			return
 		}
 		if opb.TotalTxs != rd.TotalTxs {
-			err = errors.ErrorInvalidOperation
+			err = errors.InvalidOperation
 			return
 		}
 	}
@@ -205,7 +205,7 @@ func (p ProposerTransaction) CollectTxFee() (opb operation.CollectTxFee, err err
 	}
 
 	if !found {
-		err = errors.ErrorInvalidProposerTransaction
+		err = errors.InvalidProposerTransaction
 		return
 	}
 
@@ -226,7 +226,7 @@ func (p ProposerTransaction) Inflation() (opb operation.Inflation, err error) {
 	}
 
 	if !found {
-		err = errors.ErrorInvalidProposerTransaction
+		err = errors.InvalidProposerTransaction
 		return
 	}
 
@@ -248,7 +248,7 @@ func (p *ProposerTransaction) UnmarshalJSON(b []byte) error {
 func CheckProposerTransactionFee(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*transaction.Checker)
 	if checker.Transaction.B.Fee != 0 {
-		err = errors.ErrorInvalidFee
+		err = errors.InvalidFee
 		return
 	}
 
@@ -259,18 +259,18 @@ func CheckProposerTransactionOperationTypes(c common.Checker, args ...interface{
 	checker := c.(*transaction.Checker)
 
 	if len(checker.Transaction.B.Operations) != 2 {
-		err = errors.ErrorInvalidProposerTransaction
+		err = errors.InvalidProposerTransaction
 		return
 	}
 
 	var foundTypes []string
 	for _, op := range checker.Transaction.B.Operations {
 		if _, found := TypesProposerTransaction[op.H.Type]; !found {
-			err = errors.ErrorInvalidOperation
+			err = errors.InvalidOperation
 			return
 		}
 		if _, found := common.InStringArray(foundTypes, string(op.H.Type)); found {
-			err = errors.ErrorDuplicatedOperation
+			err = errors.DuplicatedOperation
 			return
 		}
 

@@ -78,7 +78,7 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 		tx.B.SequenceID = rootAccount.SequenceID
 		tx.Sign(rootKP, networkID)
 
-		runChecker(tx, errors.ErrorTransactionSameSource)
+		runChecker(tx, errors.TransactionSameSource)
 
 		require.False(
 			t,
@@ -94,7 +94,7 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 
 		tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, sourceKP, targetKP)
 
-		runChecker(tx, errors.ErrorBlockAccountDoesNotExists)
+		runChecker(tx, errors.BlockAccountDoesNotExists)
 
 		require.False(
 			t,
@@ -112,7 +112,7 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 		tx.B.SequenceID = sourceAccount.SequenceID
 		tx.Sign(sourceKP, networkID)
 
-		runChecker(tx, errors.ErrorBlockAccountDoesNotExists)
+		runChecker(tx, errors.BlockAccountDoesNotExists)
 
 		require.False(
 			t,

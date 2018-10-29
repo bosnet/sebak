@@ -34,8 +34,8 @@ func setLevelDBCoreError(err error) error {
 	}
 
 	return errors.Newf(
-		errors.ErrorStorageCoreError,
-		"%s: %s", errors.ErrorStorageCoreError.Message, err.Error(),
+		errors.StorageCoreError,
+		"%s: %s", errors.StorageCoreError.Message, err.Error(),
 	)
 }
 
@@ -99,7 +99,7 @@ func (st *LevelDBBackend) Discard() error {
 	var committable Committable
 	var ok bool
 	if committable, ok = st.Core.(Committable); !ok {
-		return errors.ErrorNotCommittable
+		return errors.NotCommittable
 	}
 
 	committable.Discard()
@@ -111,7 +111,7 @@ func (st *LevelDBBackend) Commit() error {
 	var committable Committable
 	var ok bool
 	if committable, ok = st.Core.(Committable); !ok {
-		return errors.ErrorNotCommittable
+		return errors.NotCommittable
 	}
 
 	return setLevelDBCoreError(committable.Commit())
@@ -137,7 +137,7 @@ func (st *LevelDBBackend) GetRaw(k string) (b []byte, err error) {
 	var exists bool
 	if exists, err = st.Has(k); err != nil || !exists {
 		if !exists {
-			err = errors.ErrorStorageRecordDoesNotExist
+			err = errors.StorageRecordDoesNotExist
 		}
 		return
 	}
@@ -167,7 +167,7 @@ func (st *LevelDBBackend) New(k string, v interface{}) (err error) {
 	if exists, err = st.Has(k); err != nil {
 		return
 	} else if exists {
-		return errors.Newf(errors.ErrorStorageRecordAlreadyExists, "record {%v} already exists in storage", k)
+		return errors.Newf(errors.StorageRecordAlreadyExists, "record {%v} already exists in storage", k)
 	}
 
 	var encoded []byte
@@ -197,7 +197,7 @@ func (st *LevelDBBackend) News(vs ...Item) (err error) {
 	for _, v := range vs {
 		if exists, err = st.Has(v.Key); exists || err != nil {
 			if exists {
-				return errors.Newf(errors.ErrorStorageRecordAlreadyExists, "record {%v} already exists in storage", v.Key)
+				return errors.Newf(errors.StorageRecordAlreadyExists, "record {%v} already exists in storage", v.Key)
 			}
 			return
 		}
@@ -229,7 +229,7 @@ func (st *LevelDBBackend) Set(k string, v interface{}) (err error) {
 	var exists bool
 	if exists, err = st.Has(k); !exists || err != nil {
 		if !exists {
-			err = errors.ErrorStorageRecordDoesNotExist
+			err = errors.StorageRecordDoesNotExist
 			return
 		}
 		return
@@ -250,7 +250,7 @@ func (st *LevelDBBackend) Sets(vs ...Item) (err error) {
 	for _, v := range vs {
 		if exists, err = st.Has(v.Key); !exists || err != nil {
 			if !exists {
-				err = errors.ErrorStorageRecordDoesNotExist
+				err = errors.StorageRecordDoesNotExist
 				return
 			}
 			return
@@ -277,7 +277,7 @@ func (st *LevelDBBackend) Remove(k string) (err error) {
 	var exists bool
 	if exists, err = st.Has(k); !exists || err != nil {
 		if !exists {
-			err = errors.ErrorStorageRecordDoesNotExist
+			err = errors.StorageRecordDoesNotExist
 			return
 		}
 		return

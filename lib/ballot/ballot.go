@@ -83,12 +83,12 @@ func (b Ballot) IsWellFormed(networkID []byte, conf common.Config) (err error) {
 
 func (b Ballot) isBallotWellFormed(networkID []byte, conf common.Config) (err error) {
 	if b.TransactionsLength() > conf.TxsLimit {
-		err = errors.ErrorBallotHasOverMaxTransactionsInBallot
+		err = errors.BallotHasOverMaxTransactionsInBallot
 		return
 	}
 
 	if !b.B.State.IsValid() {
-		err = errors.ErrorInvalidState
+		err = errors.InvalidState
 		return
 	}
 
@@ -100,7 +100,7 @@ func (b Ballot) isBallotWellFormed(networkID []byte, conf common.Config) (err er
 	timeStart := now.Add(time.Duration(-1) * common.BallotConfirmedTimeAllowDuration)
 	timeEnd := now.Add(common.BallotConfirmedTimeAllowDuration)
 	if confirmed.Before(timeStart) || confirmed.After(timeEnd) {
-		err = errors.ErrorMessageHasIncorrectTime
+		err = errors.MessageHasIncorrectTime
 		return
 	}
 
@@ -122,7 +122,7 @@ func (b Ballot) isProposerInfoWellFormed(networkID []byte, conf common.Config) (
 	timeEnd := now.Add(common.BallotConfirmedTimeAllowDuration)
 
 	if proposerConfirmed.Before(timeStart) || proposerConfirmed.After(timeEnd) {
-		err = errors.ErrorMessageHasIncorrectTime
+		err = errors.MessageHasIncorrectTime
 		return
 	}
 

@@ -13,7 +13,7 @@ import (
 func getGenesisTransaction(st *storage.LevelDBBackend) (bt block.BlockTransaction, err error) {
 	bk := block.GetGenesis(st)
 	if len(bk.Transactions) < 1 {
-		err = errors.ErrorWrongBlockFound
+		err = errors.WrongBlockFound
 		return
 	}
 
@@ -22,7 +22,7 @@ func getGenesisTransaction(st *storage.LevelDBBackend) (bt block.BlockTransactio
 	}
 
 	if len(bt.Operations) != 2 {
-		err = errors.ErrorWrongBlockFound
+		err = errors.WrongBlockFound
 		return
 	}
 

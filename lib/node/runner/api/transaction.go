@@ -19,7 +19,7 @@ import (
 func (api NetworkHandlerAPI) GetTransactionsHandler(w http.ResponseWriter, r *http.Request) {
 	options, err := storage.NewDefaultListOptionsFromQuery(r.URL.Query())
 	if err != nil {
-		http.Error(w, errors.ErrorInvalidQueryString.Error(), http.StatusBadRequest)
+		http.Error(w, errors.InvalidQueryString.Error(), http.StatusBadRequest)
 		return
 	}
 	var cursor []byte
@@ -70,7 +70,7 @@ func (api NetworkHandlerAPI) GetTransactionByHashHandler(w http.ResponseWriter, 
 			return nil, err
 		}
 		if !found {
-			return nil, errors.ErrorBlockTransactionDoesNotExists
+			return nil, errors.BlockTransactionDoesNotExists
 		}
 		bt, err := block.GetBlockTransaction(api.storage, key)
 		if err != nil {
@@ -103,7 +103,7 @@ func (api NetworkHandlerAPI) GetTransactionsByAccountHandler(w http.ResponseWrit
 	address := vars["id"]
 	options, err := storage.NewDefaultListOptionsFromQuery(r.URL.Query())
 	if err != nil {
-		http.Error(w, errors.ErrorInvalidQueryString.Error(), http.StatusBadRequest)
+		http.Error(w, errors.InvalidQueryString.Error(), http.StatusBadRequest)
 		return
 	}
 	var cursor []byte

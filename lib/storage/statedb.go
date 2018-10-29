@@ -85,7 +85,7 @@ func (s *StateDB) MakeHash() ([]byte, error) {
 	hashes := make([][]byte, 0, len(ks))
 	for _, k := range ks {
 		bs, err := s.levelDB.GetRaw(k)
-		if err == errors.ErrorStorageRecordDoesNotExist {
+		if err == errors.StorageRecordDoesNotExist {
 			bs = nil
 		} else if err != nil {
 			return nil, err

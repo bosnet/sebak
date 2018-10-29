@@ -49,23 +49,23 @@ func (o Inflation) IsWellFormed([]byte, common.Config) (err error) {
 	}
 
 	if len(o.BlockHash) < 1 {
-		err = errors.ErrorInvalidOperation
+		err = errors.InvalidOperation
 		return
 	}
 
 	if o.InitialBalance < 0 {
-		err = errors.ErrorInvalidOperation
+		err = errors.InvalidOperation
 		return
 	}
 
 	var ratio float64
 	if !strings.HasPrefix(o.Ratio, "0.") {
-		err = errors.ErrorInvalidOperation
+		err = errors.InvalidOperation
 		return
 	} else if ratio, err = common.String2InflationRatio(o.Ratio); err != nil {
 		return
 	} else if ratio < 0 || ratio > 1 {
-		err = errors.ErrorInvalidOperation
+		err = errors.InvalidOperation
 		return
 	}
 

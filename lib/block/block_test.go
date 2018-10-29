@@ -203,7 +203,7 @@ func TestMakeGenesisBlockOverride(t *testing.T) {
 		require.NoError(t, err)
 
 		_, err = MakeGenesisBlock(st, *account, *commonAccount, networkID)
-		require.Equal(t, errors.ErrorBlockAlreadyExists, err)
+		require.Equal(t, errors.BlockAlreadyExists, err)
 	}
 }
 

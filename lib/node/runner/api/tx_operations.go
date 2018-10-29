@@ -19,13 +19,13 @@ func (api NetworkHandlerAPI) GetOperationsByTxHashHandler(w http.ResponseWriter,
 	hash := vars["id"]
 
 	if hash == "" {
-		httputils.WriteJSONError(w, errors.ErrorBlockTransactionDoesNotExists)
+		httputils.WriteJSONError(w, errors.BlockTransactionDoesNotExists)
 		return
 	}
 
 	options, err := storage.NewDefaultListOptionsFromQuery(r.URL.Query())
 	if err != nil {
-		http.Error(w, errors.ErrorInvalidQueryString.Error(), http.StatusBadRequest)
+		http.Error(w, errors.InvalidQueryString.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -42,7 +42,7 @@ func (api NetworkHandlerAPI) GetOperationsByTxHashHandler(w http.ResponseWriter,
 
 	ops, cursor := api.getOperationsByTxHash(hash, options)
 	if len(ops) < 1 {
-		httputils.WriteJSONError(w, errors.ErrorBlockTransactionDoesNotExists)
+		httputils.WriteJSONError(w, errors.BlockTransactionDoesNotExists)
 		return
 	}
 

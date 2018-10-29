@@ -54,7 +54,7 @@ func MakeGenesisBlock(st *storage.LevelDBBackend, genesisAccount BlockAccount, c
 	var exists bool
 	if exists, err = ExistsBlockByHeight(st, 1); exists || err != nil {
 		if exists {
-			err = errors.ErrorBlockAlreadyExists
+			err = errors.BlockAlreadyExists
 		}
 
 		return

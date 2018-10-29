@@ -166,7 +166,7 @@ func (t *HTTP2Network) AddMiddleware(routerName string, mws ...mux.MiddlewareFun
 	} else {
 		var ok bool
 		if r, ok = t.routers[routerName]; !ok {
-			return errors.ErrorNotMatcHTTPRouter
+			return errors.NotMatcHTTPRouter
 		}
 	}
 	for _, mw := range mws {

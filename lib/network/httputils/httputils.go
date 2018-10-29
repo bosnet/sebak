@@ -19,9 +19,9 @@ func IsEventStream(r *http.Request) bool {
 var (
 	// ErrorsToStatus defines errors.Error does not have 400 status code.
 	ErrorsToStatus = map[uint]int{
-		errors.ErrorTooManyRequests.Code:               http.StatusTooManyRequests,
-		errors.ErrorBlockTransactionDoesNotExists.Code: http.StatusNotFound,
-		errors.ErrorBlockAccountDoesNotExists.Code:     http.StatusNotFound,
+		errors.TooManyRequests.Code:               http.StatusTooManyRequests,
+		errors.BlockTransactionDoesNotExists.Code: http.StatusNotFound,
+		errors.BlockAccountDoesNotExists.Code:     http.StatusNotFound,
 	}
 )
 

@@ -555,7 +555,7 @@ func (nr *NodeRunner) proposeNewBallot(round uint64) (ballot.Ballot, error) {
 	var validTransactions []transaction.Transaction
 	for _, hash := range transactionsChecker.ValidTransactions {
 		if tx, found := nr.TransactionPool.Get(hash); !found {
-			return ballot.Ballot{}, errors.ErrorTransactionNotFound
+			return ballot.Ballot{}, errors.TransactionNotFound
 		} else {
 			validTransactions = append(validTransactions, tx)
 		}

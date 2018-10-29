@@ -27,7 +27,7 @@ func TestCreateAccountOperation(t *testing.T) {
 			Amount: common.Amount(common.BaseReserve - 1),
 		}
 		err := o.IsWellFormed(networkID, conf)
-		require.Equal(t, errors.ErrorInsufficientAmountNewAccount, err)
+		require.Equal(t, errors.InsufficientAmountNewAccount, err)
 	}
 
 	{ // sufficient Amount

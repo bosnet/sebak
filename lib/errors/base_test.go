@@ -9,10 +9,10 @@ import (
 )
 
 func TestErrorsClone(t *testing.T) {
-	require.Equal(t, ErrorBlockAlreadyExists, ErrorBlockAlreadyExists)
+	require.Equal(t, BlockAlreadyExists, BlockAlreadyExists)
 
-	e := ErrorBlockAlreadyExists
-	e0 := ErrorBlockAlreadyExists.Clone()
+	e := BlockAlreadyExists
+	e0 := BlockAlreadyExists.Clone()
 	require.NotEqual(t, fmt.Sprintf("%p", e), fmt.Sprintf("%p", e0))
 
 	{
@@ -28,15 +28,15 @@ func TestErrorsClone(t *testing.T) {
 
 func TestErrorsRLP(t *testing.T) {
 	{
-		_, err := rlp.EncodeToBytes(ErrorBlockAlreadyExists)
+		_, err := rlp.EncodeToBytes(BlockAlreadyExists)
 		require.NoError(t, err)
 	}
 
 	{ // with `SetData()`, the rlp encoded value must be different
-		encoded, err := rlp.EncodeToBytes(ErrorBlockAlreadyExists)
+		encoded, err := rlp.EncodeToBytes(BlockAlreadyExists)
 		require.NoError(t, err)
 
-		e := ErrorBlockAlreadyExists.Clone()
+		e := BlockAlreadyExists.Clone()
 		e.SetData("findme", "killme")
 		encoded0, err := rlp.EncodeToBytes(e)
 		require.NoError(t, err)
