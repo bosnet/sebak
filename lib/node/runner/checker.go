@@ -215,8 +215,7 @@ func BallotCheckSYNC(c common.Checker, args ...interface{}) error {
 			}
 		}
 
-		var blk *block.Block
-		blk, err = finishBallot(
+		_, err = finishBallot(
 			checker.NodeRunner.Storage(),
 			checker.Ballot,
 			checker.NodeRunner.TransactionPool,
@@ -229,7 +228,6 @@ func BallotCheckSYNC(c common.Checker, args ...interface{}) error {
 
 		checker.LocalNode.SetConsensus()
 		checker.NodeRunner.TransitISAACState(b.VotingBasis(), ballot.StateALLCONFIRM)
-		checker.NodeRunner.SavingBlockOperations().Save(*blk)
 		return NewCheckerStopCloseConsensus(checker, "ballot got consensus")
 	}
 }
@@ -596,6 +594,7 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) (err error) {
 		}
 
 		checker.Log.Debug("ballot was stored", "block", *theBlock)
+		checker.NodeRunner.SavingBlockOperations().Save(*theBlock)
 		checker.NodeRunner.TransitISAACState(ballotRound, ballot.StateALLCONFIRM)
 
 		err = NewCheckerStopCloseConsensus(checker, "ballot got consensus and will be stored")

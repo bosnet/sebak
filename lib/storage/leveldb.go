@@ -68,7 +68,7 @@ func (st *LevelDBBackend) Close() error {
 func (st *LevelDBBackend) OpenTransaction() (*LevelDBBackend, error) {
 	_, ok := st.Core.(*leveldb.Transaction)
 	if ok {
-		return nil, errors.New("this is already *leveldb.Transaction")
+		return nil, errors.AlreadyCommittable
 	}
 
 	transaction, err := st.Core.(*leveldb.DB).OpenTransaction()
@@ -86,7 +86,7 @@ func (st *LevelDBBackend) OpenTransaction() (*LevelDBBackend, error) {
 func (st *LevelDBBackend) OpenBatch() (*LevelDBBackend, error) {
 	_, ok := st.Core.(*BatchCore)
 	if ok {
-		return nil, errors.New("this is already BatchBackend")
+		return nil, errors.AlreadyCommittable
 	}
 
 	return &LevelDBBackend{

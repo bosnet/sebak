@@ -113,14 +113,14 @@ func TestSavingBlockOperationMissingInBlock(t *testing.T) {
 	sb := NewSavingBlockOperations(p.st, nil)
 
 	blk0 := p.makeBlock(block.GetGenesis(p.st))
-	err := sb.CheckByBlock(blk0)
+	err := sb.CheckByBlock(p.st, blk0)
 	require.NoError(t, err)
 
 	// blk1 will be not save it's `BlockOperation`s
 	blk1 := p.makeBlock(blk0)
 
 	blk2 := p.makeBlock(blk1)
-	err = sb.CheckByBlock(blk2)
+	err = sb.CheckByBlock(p.st, blk2)
 	require.NoError(t, err)
 
 	// check `BlockOperation`s in `blk1`

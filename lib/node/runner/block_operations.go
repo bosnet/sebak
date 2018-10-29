@@ -83,8 +83,17 @@ func (sb *SavingBlockOperations) check() (err error) {
 		}
 
 		sb.log.Debug("check block", "block", blk)
-		if err = sb.CheckByBlock(blk); err != nil {
+
+		var st *storage.LevelDBBackend
+		if st, err = sb.st.OpenBatch(); err != nil {
+			return
+		}
+
+		if err = sb.CheckByBlock(st, blk); err != nil {
 			sb.log.Error("failed to check block", "block", blk, "height", blk.Height)
+			err = st.Discard()
+			return
+		} else if err = st.Commit(); err != nil {
 			return
 		}
 		sb.log.Debug("checked block", "block", blk)
@@ -95,15 +104,40 @@ func (sb *SavingBlockOperations) check() (err error) {
 	return
 }
 
-func (sb *SavingBlockOperations) CheckByBlock(blk block.Block) (err error) {
+func (sb *SavingBlockOperations) savingBlockOperationsWorker(id int, st *storage.LevelDBBackend, blk block.Block, jobs <-chan string, results chan<- error) {
+	for j := range jobs {
+		err := sb.CheckTransactionByBlock(st, blk, j)
+		results <- err
+	}
+}
+
+func (sb *SavingBlockOperations) CheckByBlock(st *storage.LevelDBBackend, blk block.Block) (err error) {
+	ops := make(chan string, 100)
+	results := make(chan error, 100)
+	defer close(results)
+
+	numWorker := int(len(blk.Transactions) / 2)
+	if numWorker > 100 {
+		numWorker = 100
+	}
+
+	for i := 1; i <= numWorker; i++ {
+		go sb.savingBlockOperationsWorker(i, st, blk, ops, results)
+	}
 	for _, txHash := range blk.Transactions {
-		if err = sb.CheckTransactionByBlock(blk, txHash); err != nil {
+		ops <- txHash
+	}
+	close(ops)
+
+	for _ = range blk.Transactions {
+		err = <-results
+		if err != nil {
 			return
 		}
 	}
 
 	if blk.Height > common.GenesisBlockHeight { // ProposerTransaction
-		if err = sb.CheckTransactionByBlock(blk, blk.ProposerTransaction); err != nil {
+		if err = sb.CheckTransactionByBlock(st, blk, blk.ProposerTransaction); err != nil {
 			return
 		}
 	}
@@ -111,9 +145,9 @@ func (sb *SavingBlockOperations) CheckByBlock(blk block.Block) (err error) {
 	return
 }
 
-func (sb *SavingBlockOperations) CheckTransactionByBlock(blk block.Block, hash string) (err error) {
+func (sb *SavingBlockOperations) CheckTransactionByBlock(st *storage.LevelDBBackend, blk block.Block, hash string) (err error) {
 	var bt block.BlockTransaction
-	if bt, err = block.GetBlockTransaction(sb.st, hash); err != nil {
+	if bt, err = block.GetBlockTransaction(st, hash); err != nil {
 		sb.log.Error("failed to get BlockTransaction", "block", blk, "transaction", hash)
 		return
 	}
@@ -122,7 +156,7 @@ func (sb *SavingBlockOperations) CheckTransactionByBlock(blk block.Block, hash s
 		opHash := block.NewBlockOperationKey(op.MakeHashString(), hash)
 
 		var exists bool
-		if exists, err = block.ExistsBlockOperation(sb.st, opHash); err != nil {
+		if exists, err = block.ExistsBlockOperation(st, opHash); err != nil {
 			sb.log.Error(
 				"failed to check ExistsBlockOperation",
 				"block", blk,
@@ -133,7 +167,7 @@ func (sb *SavingBlockOperations) CheckTransactionByBlock(blk block.Block, hash s
 		}
 
 		if !exists {
-			bt.SaveBlockOperations(sb.st, blk)
+			bt.SaveBlockOperations(st, blk)
 			sb.log.Debug("saved missing BlockOperation", "block", blk, "transaction", hash, "operation", op)
 		}
 	}
@@ -163,9 +197,27 @@ func (sb *SavingBlockOperations) StartSaving() {
 }
 
 func (sb *SavingBlockOperations) Save(blk block.Block) {
-	sb.saveBlock <- blk
+	go func() {
+		sb.saveBlock <- blk
+	}()
 }
 
 func (sb *SavingBlockOperations) save(blk block.Block) (err error) {
-	return sb.CheckByBlock(blk)
+	sb.log.Debug("start to save BlockOperation", "block", blk)
+	defer func() {
+		sb.log.Debug("end to save BlockOperation", "block", blk, "error", err)
+	}()
+
+	var st *storage.LevelDBBackend
+	if st, err = sb.st.OpenBatch(); err != nil {
+		return
+	}
+
+	if err = sb.CheckByBlock(st, blk); err != nil {
+		err = st.Discard()
+	} else {
+		err = st.Commit()
+	}
+
+	return
 }
