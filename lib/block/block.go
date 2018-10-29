@@ -109,7 +109,7 @@ func (b *Block) Save(st *storage.LevelDBBackend) (err error) {
 
 func (b Block) PreviousBlock(st *storage.LevelDBBackend) (blk Block, err error) {
 	if b.Height == common.GenesisBlockHeight {
-		err = errors.ErrorStorageRecordDoesNotExist
+		err = errors.StorageRecordDoesNotExist
 		return
 	}
 

@@ -72,7 +72,7 @@ func (sb *SavingBlockOperations) check() (err error) {
 	var blk block.Block
 	for {
 		if blk, err = sb.getNextBlock(blk.Height); err != nil {
-			if err == errors.ErrorStorageRecordDoesNotExist {
+			if err == errors.StorageRecordDoesNotExist {
 				if checked {
 					sb.log.Debug("stop checking; all the blocks are checked", "height", sb.checkedBlock)
 				}
