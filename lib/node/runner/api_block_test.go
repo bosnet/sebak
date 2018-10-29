@@ -57,8 +57,7 @@ func (p *HelperTestGetBlocksHandler) createBlock() block.Block {
 	bk.MustSave(p.st)
 
 	for _, tx := range txs {
-		b, _ := tx.Serialize()
-		btx := block.NewBlockTransactionFromTransaction(bk.Hash, bk.Height, bk.Confirmed, tx, b)
+		btx := block.NewBlockTransactionFromTransaction(bk.Hash, bk.Height, bk.Confirmed, tx)
 		btx.MustSave(p.st)
 	}
 

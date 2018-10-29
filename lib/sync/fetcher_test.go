@@ -51,6 +51,9 @@ func TestBlockFetcher(t *testing.T) {
 	bk := block.GetLatestBlock(st)
 	tx, err := block.GetBlockTransaction(st, bk.Transactions[0])
 	require.NoError(t, err)
+	tp, err := block.GetTransactionPool(st, tx.Hash)
+	require.NoError(t, err)
+	tx.Message = tp.Message
 
 	apiHandlerFunc := func(req *http.Request) (*http.Response, error) {
 		w := httptest.NewRecorder()

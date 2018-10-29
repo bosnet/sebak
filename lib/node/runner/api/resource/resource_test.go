@@ -5,11 +5,12 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
-	"github.com/stretchr/testify/require"
 )
 
 func TestResourceAccount(t *testing.T) {
@@ -42,9 +43,7 @@ func TestResourceAccount(t *testing.T) {
 	// Transaction
 	{
 		_, tx := transaction.TestMakeTransaction([]byte{0x00}, 1)
-		a, err := tx.Serialize()
-		require.NoError(t, err)
-		bt := block.NewBlockTransactionFromTransaction("dummy", 0, common.NowISO8601(), tx, a)
+		bt := block.NewBlockTransactionFromTransaction("dummy", 0, common.NowISO8601(), tx)
 		bt.MustSave(storage)
 
 		rt := NewTransaction(&bt)
@@ -70,11 +69,9 @@ func TestResourceAccount(t *testing.T) {
 	// Operation
 	{
 		_, tx := transaction.TestMakeTransaction([]byte{0x00}, 1)
-		a, err := tx.Serialize()
-		require.NoError(t, err)
-		bt := block.NewBlockTransactionFromTransaction(common.GetUniqueIDFromUUID(), 0, common.NowISO8601(), tx, a)
+		bt := block.NewBlockTransactionFromTransaction(common.GetUniqueIDFromUUID(), 0, common.NowISO8601(), tx)
 		bt.MustSave(storage)
-		bo, err := block.GetBlockOperation(storage, bt.Operations[0])
+		bo, _ := block.GetBlockOperation(storage, bt.Operations[0])
 
 		ro := NewOperation(&bo)
 		r := ro.Resource()
@@ -95,12 +92,11 @@ func TestResourceAccount(t *testing.T) {
 	// List
 	{
 		_, tx := transaction.TestMakeTransaction([]byte{0x00}, 3)
-		a, err := tx.Serialize()
-		require.NoError(t, err)
-		bt := block.NewBlockTransactionFromTransaction(common.GetUniqueIDFromUUID(), 0, common.NowISO8601(), tx, a)
+		bt := block.NewBlockTransactionFromTransaction(common.GetUniqueIDFromUUID(), 0, common.NowISO8601(), tx)
 		bt.MustSave(storage)
 
 		var rol []Resource
+		var err error
 		for _, boHash := range bt.Operations {
 			var bo block.BlockOperation
 			bo, err = block.GetBlockOperation(storage, boHash)

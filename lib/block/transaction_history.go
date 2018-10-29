@@ -32,22 +32,20 @@ type BlockTransactionHistory struct {
 	Time    string `json:"time"`
 	Created string `json:"created"`
 	Status  string `json:"status"`
-	Message string `json:"message"`
 }
 
-func NewTransactionHistoryFromTransaction(tx transaction.Transaction, message []byte) BlockTransactionHistory {
+func NewTransactionHistoryFromTransaction(tx transaction.Transaction) BlockTransactionHistory {
 	return BlockTransactionHistory{
 		Hash:    tx.H.Hash,
 		Source:  tx.B.Source,
 		Created: tx.H.Created,
-		Message: string(message),
 	}
 }
 
-func SaveTransactionHistory(st *storage.LevelDBBackend, tx transaction.Transaction, message []byte, status string) (err error) {
+func SaveTransactionHistory(st *storage.LevelDBBackend, tx transaction.Transaction, status string) (err error) {
 	bth, err := GetBlockTransactionHistory(st, tx.H.Hash)
 	if err != nil {
-		bth = NewTransactionHistoryFromTransaction(tx, message)
+		bth = NewTransactionHistoryFromTransaction(tx)
 	}
 	if bth.Status != "" && bth.Status != TransactionHistoryStatusSubmitted {
 		// Only TransactionHistoryStatusSubmitted can be changed
