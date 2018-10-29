@@ -54,10 +54,10 @@ func TestMessageChecker(t *testing.T) {
 	// TransactionBroadcast(checker) is not suitable in unittest
 
 	err = HasTransaction(checker)
-	require.Equal(t, err, errors.ErrorNewButKnownMessage)
+	require.Equal(t, err, errors.NewButKnownMessage)
 
 	err = SaveTransactionHistory(checker)
-	require.Equal(t, err, errors.ErrorNewButKnownMessage)
+	require.Equal(t, err, errors.NewButKnownMessage)
 
 	err = PushIntoTransactionPool(checker)
 	require.NoError(t, err)
@@ -72,7 +72,7 @@ func TestMessageChecker(t *testing.T) {
 	checker.DefaultChecker = common.DefaultChecker{Funcs: CheckerFuncs}
 
 	err = common.RunChecker(checker, common.DefaultDeferFunc)
-	require.Equal(t, err, errors.ErrorNewButKnownMessage)
+	require.Equal(t, err, errors.NewButKnownMessage)
 }
 
 func TestMessageCheckerWithInvalidHash(t *testing.T) {

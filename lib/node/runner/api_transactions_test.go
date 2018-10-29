@@ -149,7 +149,7 @@ func TestGetNodeTransactionsHandlerWithoutHashes(t *testing.T) {
 	err = json.Unmarshal(body, &responseError)
 	require.NoError(t, err)
 
-	require.Equal(t, errors.ErrorInvalidQueryString.Code, responseError.Code)
+	require.Equal(t, errors.InvalidQueryString.Code, responseError.Code)
 }
 
 func TestGetNodeTransactionsHandlerWithUnknownHashes(t *testing.T) {
@@ -171,7 +171,7 @@ func TestGetNodeTransactionsHandlerWithUnknownHashes(t *testing.T) {
 		rbs, err := unmarshalFromNodeItemResponseBody(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, 1, len(rbs[NodeItemError]))
-		require.Equal(t, errors.ErrorTransactionNotFound.Code, rbs[NodeItemError][0].(*errors.Error).Code)
+		require.Equal(t, errors.TransactionNotFound.Code, rbs[NodeItemError][0].(*errors.Error).Code)
 		require.Equal(t, unknownHashKey, rbs[NodeItemError][0].(*errors.Error).Data["hash"])
 	}
 
@@ -190,7 +190,7 @@ func TestGetNodeTransactionsHandlerWithUnknownHashes(t *testing.T) {
 		rbs, err := unmarshalFromNodeItemResponseBody(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, 1, len(rbs[NodeItemError]))
-		require.Equal(t, errors.ErrorTransactionNotFound.Code, rbs[NodeItemError][0].(*errors.Error).Code)
+		require.Equal(t, errors.TransactionNotFound.Code, rbs[NodeItemError][0].(*errors.Error).Code)
 		require.Equal(t, unknownHashKey, rbs[NodeItemError][0].(*errors.Error).Data["hash"])
 
 		require.Equal(t, 1, len(rbs[NodeItemTransaction]))
@@ -223,7 +223,7 @@ func TestGetNodeTransactionsHandlerPOST(t *testing.T) {
 		err = json.Unmarshal(body, &responseError)
 		require.NoError(t, err)
 
-		require.Equal(t, errors.ErrorContentTypeNotJSON.Code, responseError.Code)
+		require.Equal(t, errors.ContentTypeNotJSON.Code, responseError.Code)
 	}
 
 	{ // with `Content-Type=application/json`
@@ -372,6 +372,6 @@ func TestGetNodeTransactionsHandlerTooManyHashes(t *testing.T) {
 		err = json.Unmarshal(body, &responseError)
 		require.NoError(t, err)
 
-		require.Equal(t, errors.ErrorInvalidQueryString.Code, responseError.Code)
+		require.Equal(t, errors.InvalidQueryString.Code, responseError.Code)
 	}
 }

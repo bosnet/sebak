@@ -22,7 +22,7 @@ func (vt *ISAACVotingThresholdPolicy) Validators() int {
 
 func (vt *ISAACVotingThresholdPolicy) SetValidators(n int) error {
 	if n < 1 {
-		return errors.ErrorVotingThresholdInvalidValidators
+		return errors.VotingThresholdInvalidValidators
 	}
 
 	vt.validators = n
@@ -39,7 +39,7 @@ func (vt *ISAACVotingThresholdPolicy) Connected() int {
 
 func (vt *ISAACVotingThresholdPolicy) SetConnected(n int) error {
 	if n < 1 {
-		return errors.ErrorVotingThresholdInvalidValidators
+		return errors.VotingThresholdInvalidValidators
 	}
 
 	vt.Lock()
@@ -74,11 +74,11 @@ func (vt *ISAACVotingThresholdPolicy) MarshalJSON() ([]byte, error) {
 
 func NewDefaultVotingThresholdPolicy(threshold int) (vt *ISAACVotingThresholdPolicy, err error) {
 	if threshold <= 0 {
-		err = errors.ErrorInvalidVotingThresholdPolicy
+		err = errors.InvalidVotingThresholdPolicy
 		return
 	}
 	if threshold > 100 {
-		err = errors.ErrorInvalidVotingThresholdPolicy
+		err = errors.InvalidVotingThresholdPolicy
 		return
 	}
 

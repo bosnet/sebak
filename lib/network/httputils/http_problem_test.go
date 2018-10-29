@@ -19,7 +19,7 @@ func TestProblem(t *testing.T) {
 
 	statusProblem := NewStatusProblem(http.StatusBadRequest)
 	detailedStatusProblem := NewDetailedStatusProblem(http.StatusBadRequest, "paramaters are not enough")
-	errorProblem := NewErrorProblem(errors.ErrorInvalidOperation, 500)
+	errorProblem := NewErrorProblem(errors.InvalidOperation, 500)
 
 	router.HandleFunc("/problem_status_default", func(w http.ResponseWriter, r *http.Request) {
 		WriteJSON(w, 500, statusProblem)

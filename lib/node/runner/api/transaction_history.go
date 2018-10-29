@@ -23,7 +23,7 @@ func (api NetworkHandlerAPI) GetTransactionHistoryHandler(w http.ResponseWriter,
 			return nil, err
 		}
 		if !found {
-			return nil, errors.ErrorBlockTransactionDoesNotExists
+			return nil, errors.BlockTransactionDoesNotExists
 		}
 		bt, err := block.GetBlockTransactionHistory(api.storage, key)
 		if err != nil {

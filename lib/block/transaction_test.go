@@ -69,7 +69,7 @@ func TestBlockTransactionSaveExisting(t *testing.T) {
 
 	err = bt.Save(st)
 	require.Error(t, err)
-	require.Equal(t, err, errors.ErrorAlreadySaved)
+	require.Equal(t, err, errors.AlreadySaved)
 }
 
 func TestMultipleBlockTransactionSource(t *testing.T) {
@@ -229,7 +229,7 @@ func TestBlockTransactionMultipleSave(t *testing.T) {
 	require.NoError(t, err)
 
 	if err = bt.Save(st); err != nil {
-		if err != errors.ErrorAlreadySaved {
+		if err != errors.AlreadySaved {
 			t.Errorf("mutiple saving will occur error, 'ErrorAlreadySaved': %v", err)
 			return
 		}

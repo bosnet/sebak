@@ -63,7 +63,7 @@ func (t *Transaction) UnmarshalJSON(b []byte) (err error) {
 
 func NewTransaction(source string, sequenceID uint64, ops ...operation.Operation) (tx Transaction, err error) {
 	if len(ops) < 1 {
-		err = errors.ErrorTransactionEmptyOperations
+		err = errors.TransactionEmptyOperations
 		return
 	}
 
@@ -106,7 +106,7 @@ func (tx Transaction) IsWellFormed(networkID []byte, conf common.Config) (err er
 	}
 	if err = common.RunChecker(checker, common.DefaultDeferFunc); err != nil {
 		if _, ok := err.(*errors.Error); !ok {
-			err = errors.ErrorInvalidTransaction.Clone().SetData("error", err.Error())
+			err = errors.InvalidTransaction.Clone().SetData("error", err.Error())
 		}
 		return
 	}

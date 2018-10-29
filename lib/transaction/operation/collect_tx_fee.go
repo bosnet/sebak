@@ -46,27 +46,27 @@ func (o CollectTxFee) IsWellFormed([]byte, common.Config) (err error) {
 	}
 
 	if len(o.BlockHash) < 1 {
-		err = errors.ErrorInvalidOperation
+		err = errors.InvalidOperation
 		return
 	}
 
 	if int64(o.Txs) > 0 && int64(o.Amount) < 1 {
-		err = errors.ErrorOperationAmountUnderflow
+		err = errors.OperationAmountUnderflow
 		return
 	}
 
 	if int64(o.Txs) == 0 && int64(o.Amount) != 0 {
-		err = errors.ErrorOperationAmountOverflow
+		err = errors.OperationAmountOverflow
 		return
 	}
 
 	if o.Txs < 1 {
 		if o.Amount != 0 {
-			err = errors.ErrorInvalidOperation
+			err = errors.InvalidOperation
 			return
 		}
 	} else if o.Amount < (common.BaseFee * common.Amount(o.Txs)) {
-		err = errors.ErrorInvalidOperation
+		err = errors.InvalidOperation
 		return
 	}
 

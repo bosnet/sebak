@@ -158,7 +158,7 @@ func (f *BlockFetcher) fetch(ctx context.Context, si *SyncInfo) error {
 	for _, bt := range bts {
 		bt, ok := bt.(block.BlockTransaction)
 		if !ok {
-			return errors.ErrorInvalidTransaction
+			return errors.InvalidTransaction
 		}
 
 		var tx transaction.Transaction

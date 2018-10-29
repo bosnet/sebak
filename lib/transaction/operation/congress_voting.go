@@ -35,11 +35,11 @@ func (o CongressVoting) Serialize() (encoded []byte, err error) {
 }
 func (o CongressVoting) IsWellFormed([]byte, common.Config) (err error) {
 	if len(o.Contract) == 0 {
-		return errors.ErrorOperationBodyInsufficient
+		return errors.OperationBodyInsufficient
 	}
 
 	if o.Voting.End < o.Voting.Start {
-		return errors.ErrorInvalidOperation
+		return errors.InvalidOperation
 	}
 	return
 }

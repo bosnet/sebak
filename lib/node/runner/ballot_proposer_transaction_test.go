@@ -114,7 +114,7 @@ func TestProposedTransactionWithDuplicatedOperations(t *testing.T) {
 		blt.Sign(p.proposerNode.Keypair(), networkID)
 
 		err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
-		require.Equal(t, errors.ErrorDuplicatedOperation, err)
+		require.Equal(t, errors.DuplicatedOperation, err)
 	}
 }
 
@@ -240,7 +240,7 @@ func TestProposedTransactionDifferentSigning(t *testing.T) {
 		require.NotEqual(t, blt.Proposer(), ptx.Source())
 
 		err := blt.ProposerTransaction().IsWellFormedWithBallot(networkID, *blt, conf)
-		require.Equal(t, errors.ErrorInvalidProposerTransaction, err)
+		require.Equal(t, errors.InvalidProposerTransaction, err)
 	}
 }
 
@@ -266,7 +266,7 @@ func TestProposedTransactionWithTransactionsButWrongTxs(t *testing.T) {
 	}
 	{
 		err := blt.ProposerTransaction().IsWellFormedWithBallot(networkID, *blt, conf)
-		require.Equal(t, errors.ErrorInvalidOperation, err)
+		require.Equal(t, errors.InvalidOperation, err)
 	}
 }
 
@@ -291,7 +291,7 @@ func TestProposedTransactionWithWrongOperationBodyCollectTxFeeBlockData(t *testi
 		}
 		{
 			err := blt.ProposerTransaction().IsWellFormedWithBallot(networkID, *blt, conf)
-			require.Equal(t, errors.ErrorInvalidOperation, err)
+			require.Equal(t, errors.InvalidOperation, err)
 		}
 	}
 
@@ -311,7 +311,7 @@ func TestProposedTransactionWithWrongOperationBodyCollectTxFeeBlockData(t *testi
 		}
 		{
 			err := blt.ProposerTransaction().IsWellFormedWithBallot(networkID, *blt, conf)
-			require.Equal(t, errors.ErrorInvalidOperation, err)
+			require.Equal(t, errors.InvalidOperation, err)
 		}
 	}
 
@@ -331,7 +331,7 @@ func TestProposedTransactionWithWrongOperationBodyCollectTxFeeBlockData(t *testi
 		}
 		{
 			err := blt.ProposerTransaction().IsWellFormedWithBallot(networkID, *blt, conf)
-			require.Equal(t, errors.ErrorInvalidOperation, err)
+			require.Equal(t, errors.InvalidOperation, err)
 		}
 	}
 
@@ -348,7 +348,7 @@ func TestProposedTransactionWithWrongOperationBodyCollectTxFeeBlockData(t *testi
 
 		{
 			err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
-			require.Equal(t, errors.ErrorInvalidOperation, err)
+			require.Equal(t, errors.InvalidOperation, err)
 		}
 	}
 }
@@ -374,7 +374,7 @@ func TestProposedTransactionWithWrongOperationBodyInflationFeeBlockData(t *testi
 		}
 		{
 			err := blt.ProposerTransaction().IsWellFormedWithBallot(networkID, *blt, conf)
-			require.Equal(t, errors.ErrorInvalidOperation, err)
+			require.Equal(t, errors.InvalidOperation, err)
 		}
 	}
 
@@ -394,7 +394,7 @@ func TestProposedTransactionWithWrongOperationBodyInflationFeeBlockData(t *testi
 		}
 		{
 			err := blt.ProposerTransaction().IsWellFormedWithBallot(networkID, *blt, conf)
-			require.Equal(t, errors.ErrorInvalidOperation, err)
+			require.Equal(t, errors.InvalidOperation, err)
 		}
 	}
 
@@ -414,7 +414,7 @@ func TestProposedTransactionWithWrongOperationBodyInflationFeeBlockData(t *testi
 		}
 		{
 			err := blt.ProposerTransaction().IsWellFormedWithBallot(networkID, *blt, conf)
-			require.Equal(t, errors.ErrorInvalidOperation, err)
+			require.Equal(t, errors.InvalidOperation, err)
 		}
 	}
 }
@@ -435,7 +435,7 @@ func TestProposedTransactionWithCollectTxFeeWrongAmount(t *testing.T) {
 	conf := common.NewConfig()
 	{
 		err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
-		require.Equal(t, errors.ErrorInvalidOperation, err)
+		require.Equal(t, errors.InvalidOperation, err)
 	}
 }
 
@@ -495,7 +495,7 @@ func TestProposedTransactionWithInflationWrongAmount(t *testing.T) {
 		Log:            p.nr.Log(),
 	}
 	err = common.RunChecker(checker, common.DefaultDeferFunc)
-	require.Equal(t, errors.ErrorInvalidOperation, err)
+	require.Equal(t, errors.InvalidOperation, err)
 }
 
 func TestProposedTransactionWithNotZeroFee(t *testing.T) {
@@ -512,7 +512,7 @@ func TestProposedTransactionWithNotZeroFee(t *testing.T) {
 	conf := common.NewConfig()
 	{
 		err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
-		require.Equal(t, errors.ErrorInvalidFee, err)
+		require.Equal(t, errors.InvalidFee, err)
 	}
 }
 
@@ -572,7 +572,7 @@ func TestProposedTransactionWithCollectTxFeeWrongCommonAddress(t *testing.T) {
 		Log:            p.nr.Log(),
 	}
 	err = common.RunChecker(checker, common.DefaultDeferFunc)
-	require.Equal(t, errors.ErrorInvalidOperation, err)
+	require.Equal(t, errors.InvalidOperation, err)
 }
 
 func TestProposedTransactionWithInflationWrongCommonAddress(t *testing.T) {
@@ -631,7 +631,7 @@ func TestProposedTransactionWithInflationWrongCommonAddress(t *testing.T) {
 		Log:            p.nr.Log(),
 	}
 	err = common.RunChecker(checker, common.DefaultDeferFunc)
-	require.Equal(t, errors.ErrorInvalidOperation, err)
+	require.Equal(t, errors.InvalidOperation, err)
 }
 
 func TestProposedTransactionWithBiggerTransactionFeeThanCollected(t *testing.T) {
@@ -832,7 +832,7 @@ func TestProposedTransactionWithNormalOperations(t *testing.T) {
 		blt.Sign(p.proposerNode.Keypair(), networkID)
 
 		err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
-		require.Equal(t, errors.ErrorInvalidProposerTransaction, err)
+		require.Equal(t, errors.InvalidProposerTransaction, err)
 	}
 }
 
@@ -859,7 +859,7 @@ func TestProposedTransactionWithWrongNumberOfOperations(t *testing.T) {
 		blt.Sign(p.proposerNode.Keypair(), networkID)
 
 		err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
-		require.Equal(t, errors.ErrorInvalidProposerTransaction, err)
+		require.Equal(t, errors.InvalidProposerTransaction, err)
 	}
 }
 
@@ -1028,6 +1028,6 @@ func TestProposedTransactionReachedBlockHeightEndOfInflation(t *testing.T) {
 			Log:            p.nr.Log(),
 		}
 		err = common.RunChecker(checker, common.DefaultDeferFunc)
-		require.Equal(t, errors.ErrorInvalidOperation, err)
+		require.Equal(t, errors.InvalidOperation, err)
 	}
 }

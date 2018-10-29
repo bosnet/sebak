@@ -20,13 +20,13 @@ func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter
 	address := vars["id"]
 	options, err := storage.NewDefaultListOptionsFromQuery(r.URL.Query())
 	if err != nil {
-		http.Error(w, errors.ErrorInvalidQueryString.Error(), http.StatusBadRequest)
+		http.Error(w, errors.InvalidQueryString.Error(), http.StatusBadRequest)
 		return
 	}
 
 	oTypeStr := r.URL.Query().Get("type")
 	if len(oTypeStr) > 0 && !operation.IsValidOperationType(oTypeStr) {
-		http.Error(w, errors.ErrorInvalidQueryString.Error(), http.StatusBadRequest)
+		http.Error(w, errors.InvalidQueryString.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -67,7 +67,7 @@ func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter
 		httputils.WriteJSONError(w, err)
 		return
 	} else if !found {
-		httputils.WriteJSONError(w, errors.ErrorBlockAccountDoesNotExists)
+		httputils.WriteJSONError(w, errors.BlockAccountDoesNotExists)
 		return
 	}
 

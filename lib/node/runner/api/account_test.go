@@ -112,7 +112,7 @@ func TestGetNonExistentAccountHandler(t *testing.T) {
 	defer storage.Close()
 	defer ts.Close()
 
-	p := httputils.NewErrorProblem(errors.ErrorBlockAccountDoesNotExists, httputils.StatusCode(errors.ErrorBlockAccountDoesNotExists))
+	p := httputils.NewErrorProblem(errors.BlockAccountDoesNotExists, httputils.StatusCode(errors.BlockAccountDoesNotExists))
 
 	{
 		// Do a Request

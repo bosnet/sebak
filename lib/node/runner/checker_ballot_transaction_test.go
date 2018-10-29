@@ -50,7 +50,7 @@ func TestValidateTxPaymentMissingBlockAccount(t *testing.T) {
 		},
 	}
 	tx.H.Hash = tx.B.MakeHashString()
-	require.Equal(t, ValidateTx(st, tx), errors.ErrorBlockAccountDoesNotExists)
+	require.Equal(t, ValidateTx(st, tx), errors.BlockAccountDoesNotExists)
 
 	// Now add the source account but not the target
 	bas := block.BlockAccount{
@@ -58,7 +58,7 @@ func TestValidateTxPaymentMissingBlockAccount(t *testing.T) {
 		Balance: common.Amount(1 * common.AmountPerCoin),
 	}
 	bas.MustSave(st)
-	require.Equal(t, ValidateTx(st, tx), errors.ErrorBlockAccountDoesNotExists)
+	require.Equal(t, ValidateTx(st, tx), errors.BlockAccountDoesNotExists)
 
 	// Now just the target
 	st1 := storage.NewTestStorage()
@@ -68,7 +68,7 @@ func TestValidateTxPaymentMissingBlockAccount(t *testing.T) {
 		Balance: common.Amount(1 * common.AmountPerCoin),
 	}
 	bat.MustSave(st1)
-	require.Equal(t, ValidateTx(st1, tx), errors.ErrorBlockAccountDoesNotExists)
+	require.Equal(t, ValidateTx(st1, tx), errors.BlockAccountDoesNotExists)
 
 	// And finally, bot
 	st2 := storage.NewTestStorage()
@@ -114,9 +114,9 @@ func TestValidateTxWrongSequenceID(t *testing.T) {
 		},
 	}
 	tx.H.Hash = tx.B.MakeHashString()
-	require.Equal(t, ValidateTx(st, tx), errors.ErrorTransactionInvalidSequenceID)
+	require.Equal(t, ValidateTx(st, tx), errors.TransactionInvalidSequenceID)
 	tx.B.SequenceID = 2
-	require.Equal(t, ValidateTx(st, tx), errors.ErrorTransactionInvalidSequenceID)
+	require.Equal(t, ValidateTx(st, tx), errors.TransactionInvalidSequenceID)
 	tx.B.SequenceID = 1
 	require.Nil(t, ValidateTx(st, tx))
 }
@@ -158,7 +158,7 @@ func TestValidateTxOverBalance(t *testing.T) {
 		},
 	}
 	tx.H.Hash = tx.B.MakeHashString()
-	require.Equal(t, ValidateTx(st, tx), errors.ErrorTransactionExcessAbilityToPay)
+	require.Equal(t, ValidateTx(st, tx), errors.TransactionExcessAbilityToPay)
 	opbody.Amount = bas.Balance.MustSub(common.BaseFee)
 	tx.B.Operations[0].B = opbody
 	require.Nil(t, ValidateTx(st, tx))
@@ -170,7 +170,7 @@ func TestValidateTxOverBalance(t *testing.T) {
 	opbody.Amount = common.Amount(2500000)
 	op.B = opbody
 	tx.B.Operations = []operation.Operation{op, op, op, op}
-	require.Equal(t, ValidateTx(st, tx), errors.ErrorTransactionExcessAbilityToPay)
+	require.Equal(t, ValidateTx(st, tx), errors.TransactionExcessAbilityToPay)
 
 	// Now the total amount of the ops + balance is equal to the balance
 	opbody.Amount = opbody.Amount.MustSub(common.BaseFee.MustMult(len(tx.B.Operations)))
@@ -214,7 +214,7 @@ func TestValidateOpCreateExistsAccount(t *testing.T) {
 		},
 	}
 	tx.H.Hash = tx.B.MakeHashString()
-	require.Equal(t, ValidateTx(st, tx), errors.ErrorBlockAccountAlreadyExists)
+	require.Equal(t, ValidateTx(st, tx), errors.BlockAccountAlreadyExists)
 
 	st1 := storage.NewTestStorage()
 	defer st1.Close()

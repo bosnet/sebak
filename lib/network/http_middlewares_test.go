@@ -127,7 +127,7 @@ func TestRateLimitMiddleWare(t *testing.T) {
 		require.Equal(
 			t,
 			problem.Type,
-			httputils.ProblemTypeByCode(errors.ErrorTooManyRequests.Code),
+			httputils.ProblemTypeByCode(errors.TooManyRequests.Code),
 		)
 
 		ts.Close()

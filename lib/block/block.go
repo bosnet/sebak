@@ -84,7 +84,7 @@ func (b *Block) Save(st *storage.LevelDBBackend) (err error) {
 	if err != nil {
 		return
 	} else if exists {
-		return errors.ErrorBlockAlreadyExists
+		return errors.BlockAlreadyExists
 	}
 
 	if err = st.New(key, b); err != nil {
@@ -224,7 +224,7 @@ func GetLatestBlock(st *storage.LevelDBBackend) Block {
 	closeFunc()
 
 	if b.Hash == "" {
-		panic(errors.ErrorBlockNotFound)
+		panic(errors.BlockNotFound)
 	}
 
 	return b

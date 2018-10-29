@@ -39,7 +39,7 @@ func (rr *RunningRound) RoundVote(proposer string) (rv *RoundVote, err error) {
 	var found bool
 	rv, found = rr.Voted[proposer]
 	if !found {
-		err = errors.ErrorRoundVoteNotFound
+		err = errors.RoundVoteNotFound
 		return
 	}
 	return

@@ -23,7 +23,7 @@ func (api NetworkHandlerAPI) GetAccountHandler(w http.ResponseWriter, r *http.Re
 			return nil, err
 		}
 		if !found {
-			return nil, errors.ErrorBlockAccountDoesNotExists
+			return nil, errors.BlockAccountDoesNotExists
 		}
 		ba, err := block.GetBlockAccount(api.storage, address)
 		if err != nil {

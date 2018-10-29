@@ -65,7 +65,7 @@ func NewBlockOperationFromOperation(op operation.Operation, tx transaction.Trans
 
 func (bo *BlockOperation) Save(st *storage.LevelDBBackend) (err error) {
 	if bo.isSaved {
-		return errors.ErrorAlreadySaved
+		return errors.AlreadySaved
 	}
 
 	key := GetBlockOperationKey(bo.Hash)
@@ -74,7 +74,7 @@ func (bo *BlockOperation) Save(st *storage.LevelDBBackend) (err error) {
 	if exists, err = st.Has(key); err != nil {
 		return
 	} else if exists {
-		return errors.ErrorBlockAlreadyExists
+		return errors.BlockAlreadyExists
 	}
 
 	if err = st.New(key, bo); err != nil {

@@ -109,7 +109,7 @@ func (bt BlockTransaction) NewBlockTransactionKeyByBlock(hash string) string {
 
 func (bt *BlockTransaction) Save(st *storage.LevelDBBackend) (err error) {
 	if bt.isSaved {
-		return errors.ErrorAlreadySaved
+		return errors.AlreadySaved
 	}
 
 	key := GetBlockTransactionKey(bt.Hash)
@@ -117,7 +117,7 @@ func (bt *BlockTransaction) Save(st *storage.LevelDBBackend) (err error) {
 	var exists bool
 	if exists, err = st.Has(key); exists || err != nil {
 		if exists {
-			return errors.ErrorBlockAlreadyExists
+			return errors.BlockAlreadyExists
 		}
 		return
 	}

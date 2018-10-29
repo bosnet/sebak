@@ -101,7 +101,7 @@ func TestNodeMessageHandlerNotWellformedTransaction(t *testing.T) {
 		tx := p.makeTransaction()
 		tx.H.Signature = "findme"
 		errIsWellformed := tx.IsWellFormed(networkID, p.conf)
-		require.Equal(t, errors.ErrorInvalidTransaction.Code, errIsWellformed.(*errors.Error).Code)
+		require.Equal(t, errors.InvalidTransaction.Code, errIsWellformed.(*errors.Error).Code)
 
 		postData, _ := tx.Serialize()
 		req, err := http.NewRequest("POST", u.String(), bytes.NewBuffer(postData))
@@ -136,7 +136,7 @@ func TestNodeMessageHandlerNotWellformedTransaction(t *testing.T) {
 		tx.Sign(p.genesisKeypair, networkID)
 
 		errIsWellformed := tx.IsWellFormed(networkID, p.conf)
-		require.Equal(t, errors.ErrorOperationAmountUnderflow.Code, errIsWellformed.(*errors.Error).Code)
+		require.Equal(t, errors.OperationAmountUnderflow.Code, errIsWellformed.(*errors.Error).Code)
 
 		postData, _ := tx.Serialize()
 		req, err := http.NewRequest("POST", u.String(), bytes.NewBuffer(postData))
@@ -192,11 +192,11 @@ func TestNodeMessageHandlerNotWellformedTransaction(t *testing.T) {
 			err := json.Unmarshal(body, &responseError)
 			require.NoError(t, err)
 		}
-		require.Equal(t, responseError.Data["error"], errors.ErrorNewButKnownMessage.Data["error"])
+		require.Equal(t, responseError.Data["error"], errors.NewButKnownMessage.Data["error"])
 		require.Equal(
 			t,
 			responseError.Code,
-			errors.ErrorNewButKnownMessage.Code,
+			errors.NewButKnownMessage.Code,
 		)
 	}
 }

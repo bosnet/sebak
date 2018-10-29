@@ -96,7 +96,7 @@ func BallotValidateOperationBodyCollectTxFee(c common.Checker, args ...interface
 
 	// check common account
 	if opb.Target != checker.NodeRunner.CommonAccountAddress {
-		err = errors.ErrorInvalidOperation
+		err = errors.InvalidOperation
 		return
 	}
 
@@ -114,16 +114,16 @@ func BallotValidateOperationBodyInflation(c common.Checker, args ...interface{})
 
 	// check common account
 	if opb.Target != checker.NodeRunner.CommonAccountAddress {
-		err = errors.ErrorInvalidOperation
+		err = errors.InvalidOperation
 		return
 	}
 	if opb.InitialBalance != checker.NodeRunner.InitialBalance {
-		err = errors.ErrorInvalidOperation
+		err = errors.InvalidOperation
 		return
 	}
 
 	if opb.Ratio != common.InflationRatioString {
-		err = errors.ErrorInvalidOperation
+		err = errors.InvalidOperation
 		return
 	}
 
@@ -136,7 +136,7 @@ func BallotValidateOperationBodyInflation(c common.Checker, args ...interface{})
 	}
 
 	if opb.Amount != expectedInflation {
-		err = errors.ErrorInvalidOperation
+		err = errors.InvalidOperation
 		return
 	}
 
@@ -153,7 +153,7 @@ func BallotNotFromKnownValidators(c common.Checker, args ...interface{}) (err er
 
 	checker.Log.Debug("ballot from unknown validator")
 
-	err = errors.ErrorBallotFromUnknownValidator
+	err = errors.BallotFromUnknownValidator
 	return
 }
 
@@ -250,7 +250,7 @@ func BallotAlreadyFinished(c common.Checker, args ...interface{}) (err error) {
 		ballotRound,
 		block.GetLatestBlock(checker.NodeRunner.Storage()),
 	) {
-		err = errors.ErrorBallotAlreadyFinished
+		err = errors.BallotAlreadyFinished
 		checker.Log.Debug("ballot already finished")
 		return
 	}
@@ -262,7 +262,7 @@ func BallotAlreadyFinished(c common.Checker, args ...interface{}) (err error) {
 func BallotAlreadyVoted(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotChecker)
 	if checker.NodeRunner.Consensus().IsVoted(checker.Ballot) {
-		err = errors.ErrorBallotAlreadyVoted
+		err = errors.BallotAlreadyVoted
 	}
 
 	return
@@ -350,7 +350,7 @@ func getMissingTransaction(checker *BallotChecker) (err error) {
 
 	client := checker.NodeRunner.ConnectionManager().GetConnection(checker.Ballot.Proposer())
 	if client == nil {
-		err = errors.ErrorBallotFromUnknownValidator
+		err = errors.BallotFromUnknownValidator
 		return
 	}
 	var body []byte
@@ -383,7 +383,7 @@ func getMissingTransaction(checker *BallotChecker) (err error) {
 		var tx transaction.Transaction
 		var ok bool
 		if tx, ok = d.(transaction.Transaction); !ok {
-			err = errors.ErrorTransactionNotFound
+			err = errors.TransactionNotFound
 			return
 		}
 		if err = tx.IsWellFormed(checker.NetworkID, checker.NodeRunner.Conf); err != nil {
@@ -436,7 +436,7 @@ func INITBallotValidateTransactions(c common.Checker, args ...interface{}) (err 
 	var voted bool
 	voted, err = checker.NodeRunner.Consensus().IsVotedByNode(checker.Ballot, checker.LocalNode.Address())
 	if voted || err != nil {
-		err = errors.ErrorBallotAlreadyVoted
+		err = errors.BallotAlreadyVoted
 		return
 	}
 
@@ -573,7 +573,7 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) (err error) {
 		}
 
 		if err = bs.Commit(); err != nil {
-			if err != errors.ErrorNotCommittable {
+			if err != errors.NotCommittable {
 				bs.Discard()
 				return
 			}
@@ -609,7 +609,7 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 	for _, hash := range b.B.Proposed.Transactions {
 		tx, found := transactionPool.Get(hash)
 		if !found {
-			return nil, errors.ErrorTransactionNotFound
+			return nil, errors.TransactionNotFound
 		}
 		nOps += len(tx.B.Operations)
 	}
@@ -647,7 +647,7 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 	for _, hash := range pTxHashes {
 		tx, found := transactionPool.Get(hash)
 		if !found {
-			err = errors.ErrorTransactionNotFound
+			err = errors.TransactionNotFound
 			return nil, err
 		}
 		proposedTransactions = append(proposedTransactions, &tx)
@@ -704,7 +704,7 @@ func FinishTransactions(blk block.Block, transactions []*transaction.Transaction
 
 		var baSource *block.BlockAccount
 		if baSource, err = block.GetBlockAccount(st, tx.B.Source); err != nil {
-			err = errors.ErrorBlockAccountDoesNotExists
+			err = errors.BlockAccountDoesNotExists
 			return
 		}
 
@@ -726,13 +726,13 @@ func finishOperation(st *storage.LevelDBBackend, source string, op operation.Ope
 	case operation.TypeCreateAccount:
 		pop, ok := op.B.(operation.CreateAccount)
 		if !ok {
-			return errors.ErrorUnknownOperationType
+			return errors.UnknownOperationType
 		}
 		return finishCreateAccount(st, source, pop, log)
 	case operation.TypePayment:
 		pop, ok := op.B.(operation.Payment)
 		if !ok {
-			return errors.ErrorUnknownOperationType
+			return errors.UnknownOperationType
 		}
 		return finishPayment(st, source, pop, log)
 	case operation.TypeCongressVoting, operation.TypeCongressVotingResult:
@@ -741,11 +741,11 @@ func finishOperation(st *storage.LevelDBBackend, source string, op operation.Ope
 	case operation.TypeUnfreezingRequest:
 		pop, ok := op.B.(operation.UnfreezeRequest)
 		if !ok {
-			return errors.ErrorUnknownOperationType
+			return errors.UnknownOperationType
 		}
 		return finishUnfreezeRequest(st, source, pop, log)
 	default:
-		err = errors.ErrorUnknownOperationType
+		err = errors.UnknownOperationType
 		return
 	}
 }
@@ -754,11 +754,11 @@ func finishCreateAccount(st *storage.LevelDBBackend, source string, op operation
 
 	var baSource, baTarget *block.BlockAccount
 	if baSource, err = block.GetBlockAccount(st, source); err != nil {
-		err = errors.ErrorBlockAccountDoesNotExists
+		err = errors.BlockAccountDoesNotExists
 		return
 	}
 	if baTarget, err = block.GetBlockAccount(st, op.TargetAddress()); err == nil {
-		err = errors.ErrorBlockAccountAlreadyExists
+		err = errors.BlockAccountAlreadyExists
 		return
 	} else {
 		err = nil
@@ -782,11 +782,11 @@ func finishPayment(st *storage.LevelDBBackend, source string, op operation.Payme
 
 	var baSource, baTarget *block.BlockAccount
 	if baSource, err = block.GetBlockAccount(st, source); err != nil {
-		err = errors.ErrorBlockAccountDoesNotExists
+		err = errors.BlockAccountDoesNotExists
 		return
 	}
 	if baTarget, err = block.GetBlockAccount(st, op.TargetAddress()); err != nil {
-		err = errors.ErrorBlockAccountDoesNotExists
+		err = errors.BlockAccountDoesNotExists
 		return
 	}
 

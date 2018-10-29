@@ -27,15 +27,15 @@ const (
 func (nh NetworkHandlerNode) GetBlocksHandler(w http.ResponseWriter, r *http.Request) {
 	options, err := NewGetBlocksOptionsFromRequest(r)
 	if err != nil {
-		http.Error(w, errors.ErrorInvalidQueryString.Error(), http.StatusBadRequest)
+		http.Error(w, errors.InvalidQueryString.Error(), http.StatusBadRequest)
 		return
 	}
 
 	if len(options.Cursor()) > 0 {
 		cursorBlock, err := block.GetBlock(nh.storage, string(options.Cursor()))
 		if err != nil {
-			if err == errors.ErrorStorageRecordDoesNotExist {
-				http.Error(w, errors.ErrorInvalidQueryString.Error(), http.StatusBadRequest)
+			if err == errors.StorageRecordDoesNotExist {
+				http.Error(w, errors.InvalidQueryString.Error(), http.StatusBadRequest)
 				return
 			}
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -51,7 +51,7 @@ func (nh NetworkHandlerNode) GetBlocksHandler(w http.ResponseWriter, r *http.Req
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			} else if !exists {
-				http.Error(w, errors.ErrorStorageRecordDoesNotExist.Error(), http.StatusNotFound)
+				http.Error(w, errors.StorageRecordDoesNotExist.Error(), http.StatusNotFound)
 				return
 			}
 		}
@@ -74,7 +74,7 @@ func (nh NetworkHandlerNode) GetBlocksHandler(w http.ResponseWriter, r *http.Req
 			if exists, err := block.ExistsBlockByHeight(nh.storage, i); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 			} else if !exists {
-				http.Error(w, errors.ErrorStorageRecordDoesNotExist.Error(), http.StatusNotFound)
+				http.Error(w, errors.StorageRecordDoesNotExist.Error(), http.StatusNotFound)
 				return
 			}
 		}
@@ -192,7 +192,7 @@ func UnmarshalNodeItemResponse(d []byte) (itemType NodeItemDataType, b interface
 		err = unmarshal(&t)
 		b = &t
 	default:
-		err = errors.ErrorInvalidMessage
+		err = errors.InvalidMessage
 	}
 
 	return

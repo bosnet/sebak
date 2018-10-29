@@ -15,7 +15,7 @@ func (nh NetworkHandlerNode) GetNodeTransactionsHandler(w http.ResponseWriter, r
 	hashes := r.URL.Query()["hash"]
 	if r.Method == "POST" {
 		if r.Header.Get("Content-Type") != "application/json" {
-			http.Error(w, errors.ErrorContentTypeNotJSON.Error(), http.StatusBadRequest)
+			http.Error(w, errors.ContentTypeNotJSON.Error(), http.StatusBadRequest)
 			return
 		}
 
@@ -25,7 +25,7 @@ func (nh NetworkHandlerNode) GetNodeTransactionsHandler(w http.ResponseWriter, r
 		if len(body) > 0 {
 			var postHashes []string
 			if err := json.Unmarshal(body, &postHashes); err != nil {
-				http.Error(w, errors.ErrorInvalidQueryString.Error(), http.StatusBadRequest)
+				http.Error(w, errors.InvalidQueryString.Error(), http.StatusBadRequest)
 				return
 			}
 
@@ -33,7 +33,7 @@ func (nh NetworkHandlerNode) GetNodeTransactionsHandler(w http.ResponseWriter, r
 		}
 	}
 	if len(hashes) < 1 {
-		http.Error(w, errors.ErrorInvalidQueryString.Error(), http.StatusBadRequest)
+		http.Error(w, errors.InvalidQueryString.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -41,7 +41,7 @@ func (nh NetworkHandlerNode) GetNodeTransactionsHandler(w http.ResponseWriter, r
 	// `Transaction`s from proposer, so it can not be over the maximum number of
 	// `Transaction`s in one `Ballot`.
 	if len(hashes) > nh.consensus.Conf.TxsLimit {
-		http.Error(w, errors.ErrorInvalidQueryString.Error(), http.StatusBadRequest)
+		http.Error(w, errors.InvalidQueryString.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -70,7 +70,7 @@ func (nh NetworkHandlerNode) GetNodeTransactionsHandler(w http.ResponseWriter, r
 			nh.renderNodeItem(w, NodeItemError, err)
 			return
 		} else if !exists {
-			nh.renderNodeItem(w, NodeItemError, errors.ErrorTransactionNotFound.Clone().SetData("hash", hash))
+			nh.renderNodeItem(w, NodeItemError, errors.TransactionNotFound.Clone().SetData("hash", hash))
 			continue
 		}
 
