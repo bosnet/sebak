@@ -96,13 +96,13 @@ func (v *BlockValidator) validate(ctx context.Context, syncInfo *SyncInfo) error
 }
 
 func (v *BlockValidator) finishBlock(ctx context.Context, syncInfo *SyncInfo) error {
-	ts, err := v.storage.OpenTransaction()
+	bs, err := v.storage.OpenBatch()
 	if err != nil {
 		return err
 	}
 
-	if exists, err := v.existsBlock(ctx, ts, syncInfo.Height); err != nil {
-		ts.Discard()
+	if exists, err := v.existsBlock(ctx, bs, syncInfo.Height); err != nil {
+		bs.Discard()
 		return err
 	} else if exists == true {
 		v.logger.Info("This block exists", "height", syncInfo.Height)
@@ -111,28 +111,28 @@ func (v *BlockValidator) finishBlock(ctx context.Context, syncInfo *SyncInfo) er
 
 	//TODO(anarcher): using leveldb.Tx or leveldb.Batch?
 	blk := *syncInfo.Block
-	if err := blk.Save(ts); err != nil {
+	if err := blk.Save(bs); err != nil {
 		if err == errors.BlockAlreadyExists {
 			return nil
 		}
 		return err
 	}
 
-	if err := runner.FinishTransactions(blk, syncInfo.Txs, ts); err != nil {
-		ts.Discard()
+	if err := runner.FinishTransactions(blk, syncInfo.Txs, bs); err != nil {
+		bs.Discard()
 		return err
 	}
 
 	ptx := syncInfo.Ptx
-	if err := runner.FinishProposerTransaction(ts, blk, *ptx, v.logger); err != nil {
-		ts.Discard()
+	if err := runner.FinishProposerTransaction(bs, blk, *ptx, v.logger); err != nil {
+		bs.Discard()
 		return err
 	}
 
 	v.logger.Debug(fmt.Sprintf("finish to sync block height: %v", syncInfo.Height), "height", syncInfo.Height, "hash", blk.Hash)
 
-	if err := ts.Commit(); err != nil {
-		ts.Discard()
+	if err := bs.Commit(); err != nil {
+		bs.Discard()
 		return err
 	}
 
