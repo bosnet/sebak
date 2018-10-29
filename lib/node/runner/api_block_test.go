@@ -593,39 +593,6 @@ func TestGetBlocksHandlerWithModeFull(t *testing.T) {
 			expectedNumberOfTransactions += len(b.Transactions)
 		}
 		require.Equal(t, expectedNumberOfTransactions, len(rbs[NodeItemBlockTransaction]))
-
-		var expectedNumberOfOperations int
-		var txInxdex int
-		var opInxdex int
-		for _, b := range p.blocks {
-			for _, txHash := range b.Transactions {
-				tx, _ := block.GetBlockTransaction(p.st, txHash)
-				expectedNumberOfOperations += len(tx.Operations)
-
-				rtx := rbs[NodeItemBlockTransaction][txInxdex].(block.BlockTransaction)
-				require.Equal(t, tx.Hash, rtx.Hash)
-
-				s, _ := tx.Serialize()
-				rs, _ := rtx.Serialize()
-				require.Equal(t, s, rs)
-
-				for _, opHash := range tx.Operations {
-					op, _ := block.GetBlockOperation(p.st, opHash)
-
-					rop := rbs[NodeItemBlockOperation][opInxdex].(block.BlockOperation)
-					require.Equal(t, op.Hash, rop.Hash)
-
-					s, _ := op.Serialize()
-					rs, _ := rop.Serialize()
-					require.Equal(t, s, rs)
-
-					opInxdex++
-				}
-
-				txInxdex++
-			}
-		}
-		require.Equal(t, expectedNumberOfOperations, len(rbs[NodeItemBlockOperation]))
 	}
 }
 
