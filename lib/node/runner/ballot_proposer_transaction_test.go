@@ -10,6 +10,7 @@ import (
 	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/consensus"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/transaction"
@@ -887,26 +888,27 @@ func TestCheckInflationBlockIncrease(t *testing.T) {
 
 	require.Equal(t, common.Amount(0), getCommonAccountBalance())
 
-	recv := make(chan struct{})
-	nr.ISAACStateManager().SetTransitSignal(func() {
-		recv <- struct{}{}
+	recv := make(chan consensus.ISAACState)
+	nr.ISAACStateManager().SetTransitSignal(func(state consensus.ISAACState) {
+		recv <- state
 	})
 
 	checkInflation := func(previous, inflationAmount common.Amount, blockHeight uint64) common.Amount {
+		var state consensus.ISAACState
 		t.Logf(
 			"> check inflation: block-height: %d previous: %d inflation: %d",
 			blockHeight,
 			previous,
 			inflationAmount,
 		)
-		<-recv // ballot.StateINIT
-		require.Equal(t, blockHeight, nr.ISAACStateManager().State().Height)
+		state = <-recv // ballot.StateINIT
+		require.Equal(t, blockHeight, state.Height)
 		<-recv // ballot.StateSIGN
 		<-recv // ballot.StateACCEPT
-		<-recv
-		require.Equal(t, ballot.StateALLCONFIRM, nr.ISAACStateManager().State().BallotState)
+		state = <-recv
+		require.Equal(t, ballot.StateALLCONFIRM, state.BallotState)
 		require.Equal(t, blockHeight+1, isaac.LatestBlock().Height)
-		require.Equal(t, blockHeight, nr.ISAACStateManager().State().Height)
+		require.Equal(t, blockHeight, state.Height)
 
 		expected := previous + inflationAmount
 		t.Logf(
