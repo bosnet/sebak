@@ -123,7 +123,7 @@ func (v *BlockValidator) finishBlock(ctx context.Context, syncInfo *SyncInfo) er
 		return err
 	}
 	for _, tx := range syncInfo.Txs {
-		if _, err := block.SaveTransactionPool(ts, *tx); err != nil {
+		if _, err := block.SaveTransactionPool(bs, *tx); err != nil {
 			return err
 		}
 	}
