@@ -40,11 +40,6 @@ func CheckOverOperationsLimit(c common.Checker, args ...interface{}) (err error)
 	return
 }
 
-func CheckSequenceID(c common.Checker, args ...interface{}) (err error) {
-	//checker := c.(*Checker)
-	return
-}
-
 func CheckBaseFee(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*Checker)
 	if checker.Transaction.B.Fee < checker.Transaction.TotalBaseFee() {

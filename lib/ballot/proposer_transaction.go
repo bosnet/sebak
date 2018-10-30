@@ -96,7 +96,6 @@ func NewProposerTransactionFromBallot(blt Ballot, opc operation.CollectTxFee, op
 
 var ProposerTransactionWellFormedCheckerFuncs = []common.CheckerFunc{
 	transaction.CheckOverOperationsLimit,
-	transaction.CheckSequenceID,
 	transaction.CheckSource,
 	CheckProposerTransactionFee,
 	CheckProposerTransactionOperationTypes,
