@@ -20,9 +20,9 @@ type ISAACStateManager struct {
 	state           consensus.ISAACState
 	stateTransit    chan consensus.ISAACState
 	stop            chan struct{}
-	blockTimeBuffer time.Duration // the time to wait to adjust the block creation time.
-	transitSignal   func()        // the function is called when the ISAACState is changed.
-	genesis         time.Time     // the time at which the GenesisBlock was saved. It is used for calculating `blockTimeBuffer`.
+	blockTimeBuffer time.Duration              // the time to wait to adjust the block creation time.
+	transitSignal   func(consensus.ISAACState) // the function is called when the ISAACState is changed.
+	genesis         time.Time                  // the time at which the GenesisBlock was saved. It is used for calculating `blockTimeBuffer`.
 
 	Conf common.Config
 }
@@ -38,7 +38,7 @@ func NewISAACStateManager(nr *NodeRunner, conf common.Config) *ISAACStateManager
 		stateTransit:    make(chan consensus.ISAACState),
 		stop:            make(chan struct{}),
 		blockTimeBuffer: 2 * time.Second,
-		transitSignal:   func() {},
+		transitSignal:   func(consensus.ISAACState) {},
 		Conf:            conf,
 	}
 
@@ -111,7 +111,7 @@ func calculateBlockTimeBuffer(goal, average, untilNow, delta time.Duration) time
 	return blockTimeBuffer
 }
 
-func (sm *ISAACStateManager) SetTransitSignal(f func()) {
+func (sm *ISAACStateManager) SetTransitSignal(f func(consensus.ISAACState)) {
 	sm.Lock()
 	defer sm.Unlock()
 	sm.transitSignal = f
@@ -167,7 +167,7 @@ func (sm *ISAACStateManager) Start() {
 				go sm.broadcastExpiredBallot(sm.State())
 				sm.setBallotState(sm.State().BallotState.Next())
 				sm.resetTimer(timer, sm.State().BallotState)
-				sm.transitSignal()
+				sm.transitSignal(sm.State())
 
 			case state := <-sm.stateTransit:
 				switch state.BallotState {
@@ -175,15 +175,15 @@ func (sm *ISAACStateManager) Start() {
 					sm.proposeOrWait(timer, state)
 				case ballot.StateSIGN:
 					sm.setState(state)
-					sm.transitSignal()
+					sm.transitSignal(state)
 					timer.Reset(sm.Conf.TimeoutSIGN)
 				case ballot.StateACCEPT:
 					sm.setState(state)
-					sm.transitSignal()
+					sm.transitSignal(state)
 					timer.Reset(sm.Conf.TimeoutACCEPT)
 				case ballot.StateALLCONFIRM:
 					sm.setState(state)
-					sm.transitSignal()
+					sm.transitSignal(state)
 					sm.SetBlockTimeBuffer()
 					sm.NextHeight()
 				}
@@ -254,7 +254,7 @@ func (sm *ISAACStateManager) proposeOrWait(timer *time.Timer, state consensus.IS
 		timer.Reset(sm.blockTimeBuffer + sm.Conf.TimeoutINIT)
 	}
 	sm.setState(state)
-	sm.transitSignal()
+	sm.transitSignal(state)
 }
 
 func (sm *ISAACStateManager) State() consensus.ISAACState {

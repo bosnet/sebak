@@ -9,6 +9,7 @@ import (
 
 	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/consensus"
 	"boscoin.io/sebak/lib/voting"
 )
 
@@ -298,9 +299,9 @@ func TestStateTransitFromTimeoutInitToAccept(t *testing.T) {
 	nr, _, _ := createNodeRunnerForTesting(3, conf, recvBroadcast)
 	nr.Consensus().SetProposerSelector(OtherSelector{nr.ConnectionManager()})
 
-	recvTransit := make(chan struct{})
-	nr.isaacStateManager.SetTransitSignal(func() {
-		recvTransit <- struct{}{}
+	recvTransit := make(chan consensus.ISAACState)
+	nr.isaacStateManager.SetTransitSignal(func(state consensus.ISAACState) {
+		recvTransit <- state
 	})
 
 	cm, ok := nr.Consensus().ConnectionManager().(*TestConnectionManager)
