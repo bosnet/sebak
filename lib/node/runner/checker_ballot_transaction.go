@@ -54,7 +54,7 @@ func (checker *BallotTransactionChecker) setValidTransactions(hashes []string) {
 	return
 }
 
-// TransactionsIsNew checks the incoming transaction is
+// IsNew checks the incoming transaction is
 // already stored or not.
 func IsNew(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotTransactionChecker)
