@@ -8,13 +8,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gorilla/mux"
+	"github.com/stellar/go/keypair"
+	"github.com/stretchr/testify/require"
+
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/version"
-	"github.com/gorilla/mux"
-	"github.com/stellar/go/keypair"
-	"github.com/stretchr/testify/require"
 )
 
 func TestAPIGetNodeInfoHandler(t *testing.T) {
@@ -94,6 +95,7 @@ func TestAPIGetNodeInfoHandler(t *testing.T) {
 	require.Equal(t, latestBlock.Height, receivedNodeInfo.Block.Height)
 	require.Equal(t, latestBlock.Hash, receivedNodeInfo.Block.Hash)
 	require.Equal(t, latestBlock.TotalTxs, receivedNodeInfo.Block.TotalTxs)
+	require.Equal(t, latestBlock.TotalOps, receivedNodeInfo.Block.TotalOps)
 
 	js, _ := json.Marshal(policy)
 	rjs, _ := json.Marshal(receivedNodeInfo.Policy)
