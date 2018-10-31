@@ -5,11 +5,12 @@ import (
 	"net/http"
 	"net/http/httptest"
 
+	"github.com/gorilla/mux"
+	"github.com/stellar/go/keypair"
+
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
-	"github.com/gorilla/mux"
-	"github.com/stellar/go/keypair"
 )
 
 var networkID []byte = []byte("sebak-test-network")
@@ -101,11 +102,7 @@ func prepareTxs(storage *storage.LevelDBBackend, count int) (*keypair.Full, []bl
 		return nil, nil, err
 	}
 	for _, tx := range txs {
-		a, err := tx.Serialize()
-		if err != nil {
-			return nil, nil, err
-		}
-		bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, theBlock.Height, theBlock.Confirmed, tx, a)
+		bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, theBlock.Height, theBlock.Confirmed, tx)
 		err = bt.Save(storage)
 		if err != nil {
 			return nil, nil, err
@@ -131,11 +128,7 @@ func prepareTxsWithoutSave(count int, st *storage.LevelDBBackend) (*keypair.Full
 
 	theBlock := block.TestMakeNewBlockWithPrevBlock(block.GetLatestBlock(st), txHashes)
 	for _, tx := range txs {
-		a, err := tx.Serialize()
-		if err != nil {
-			return nil, nil, err
-		}
-		bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, theBlock.Height, theBlock.Confirmed, tx, a)
+		bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, theBlock.Height, theBlock.Confirmed, tx)
 		btList = append(btList, bt)
 	}
 	return kp, btList, nil
@@ -148,13 +141,9 @@ func prepareTxWithoutSave(st *storage.LevelDBBackend) (*keypair.Full, *transacti
 	}
 
 	tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, kp)
-	a, err := tx.Serialize()
-	if err != nil {
-		return nil, nil, nil, err
-	}
 
 	theBlock := block.TestMakeNewBlockWithPrevBlock(block.GetLatestBlock(st), []string{tx.GetHash()})
-	bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, theBlock.Height, theBlock.Confirmed, tx, a)
+	bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, theBlock.Height, theBlock.Confirmed, tx)
 	return kp, &tx, &bt, nil
 }
 

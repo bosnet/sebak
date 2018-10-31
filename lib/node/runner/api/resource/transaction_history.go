@@ -3,8 +3,9 @@ package resource
 import (
 	"strings"
 
-	"boscoin.io/sebak/lib/block"
 	"github.com/nvellon/hal"
+
+	"boscoin.io/sebak/lib/block"
 )
 
 type TransactionHistory struct {
@@ -25,7 +26,6 @@ func (t TransactionHistory) GetMap() hal.Entry {
 		"confirmed": t.bt.Time,
 		"created":   t.bt.Created,
 		"status":    t.bt.Status,
-		"message":   t.bt.Message,
 	}
 }
 func (t TransactionHistory) Resource() *hal.Resource {

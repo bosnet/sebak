@@ -18,4 +18,5 @@ const (
 	BlockAccountPrefixCreated             = string(0x31)
 	BlockAccountSequenceIDPrefix          = string(0x32)
 	BlockAccountSequenceIDByAddressPrefix = string(0x33)
+	TransactionPoolPrefix                 = string(0x40)
 )

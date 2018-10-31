@@ -126,7 +126,7 @@ func (api NetworkHandlerNode) MessageHandler(w http.ResponseWriter, r *http.Requ
 
 	if err = common.RunChecker(checker, common.DefaultDeferFunc); err != nil {
 		if len(checker.Transaction.H.Hash) > 0 {
-			block.SaveTransactionHistory(api.storage, checker.Transaction, body, block.TransactionHistoryStatusRejected)
+			block.SaveTransactionHistory(api.storage, checker.Transaction, block.TransactionHistoryStatusRejected)
 		}
 		http.Error(w, err.Error(), httputils.StatusCode(err))
 		return

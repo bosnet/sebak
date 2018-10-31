@@ -122,6 +122,11 @@ func (v *BlockValidator) finishBlock(ctx context.Context, syncInfo *SyncInfo) er
 		bs.Discard()
 		return err
 	}
+	for _, tx := range syncInfo.Txs {
+		if _, err := block.SaveTransactionPool(bs, *tx); err != nil {
+			return err
+		}
+	}
 
 	ptx := syncInfo.Ptx
 	if err := runner.FinishProposerTransaction(bs, blk, *ptx, v.logger); err != nil {

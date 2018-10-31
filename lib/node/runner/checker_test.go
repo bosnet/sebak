@@ -211,6 +211,10 @@ func (g *getMissingTransactionTesting) MakeBallot(numberOfTxs int) (blt *ballot.
 
 		// inject txs to `TransactionPool`
 		g.proposerNR.TransactionPool.Add(tx)
+		_, err := block.SaveTransactionPool(g.proposerNR.Storage(), tx)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	blt = ballot.NewBallot(g.proposerNR.Node().Address(), g.proposerNR.Node().Address(), rd, txHashes)
@@ -245,6 +249,12 @@ func TestGetMissingTransactionAllMissing(t *testing.T) {
 			Type: common.BallotMessage,
 			Data: b,
 		}
+	}
+
+	for _, hash := range blt.Transactions() {
+		exists, err := block.ExistsTransactionPool(g.consensusNR.Storage(), hash)
+		require.NoError(t, err)
+		require.False(t, exists)
 	}
 
 	baseChecker := &BallotChecker{
@@ -282,7 +292,9 @@ func TestGetMissingTransactionAllMissing(t *testing.T) {
 
 	// check consensus node runner has all missing transactions.
 	for _, hash := range blt.Transactions() {
-		require.True(t, g.consensusNR.TransactionPool.Has(hash))
+		exists, err := block.ExistsTransactionPool(g.consensusNR.Storage(), hash)
+		require.NoError(t, err)
+		require.True(t, exists)
 	}
 }
 
@@ -301,6 +313,7 @@ func TestGetMissingTransactionProposerAlsoMissing(t *testing.T) {
 	// remove 1st tx from `TransactionPool` of proposer NodeRunner
 	removedHash := blt.Transactions()[0]
 	g.proposerNR.TransactionPool.Remove(removedHash)
+	block.DeleteTransactionPool(g.proposerNR.Storage(), removedHash)
 
 	var ballotMessage common.NetworkMessage
 	{
@@ -341,6 +354,7 @@ func TestGetMissingTransactionProposerAlsoMissing(t *testing.T) {
 		Log:            baseChecker.Log,
 	}
 	err = common.RunChecker(checker, common.DefaultDeferFunc)
+	require.NoError(t, err)
 
 	require.Equal(t, voting.NO, checker.VotingHole)
 	require.Equal(t, 0, g.consensusNR.TransactionPool.Len())
