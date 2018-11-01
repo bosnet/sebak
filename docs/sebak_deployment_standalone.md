@@ -2,7 +2,7 @@ By the nature of design, SEBAK should be deployed as composition of nodes and th
 
 ## Installation
 
-Please follow the [Installation](./sebak_Installation). If you are so busy and you already have golang (1.11 or higher) environment, do like this,
+Please follow the [Installation](./sebak_Installation.md). If you are so busy and you already have golang (1.11 or higher) environment, do like this,
 
 ```sh
 $ git clone https://github.com/bosnet/sebak.git /tmp/sebak-standalone
