@@ -331,9 +331,9 @@ func BallotCheckResult(c common.Checker, args ...interface{}) (err error) {
 	return
 }
 
-// getMissingTransaction will get the missing tranactions, that is, not in
+// insertMissingTransaction will get the missing tranactions, that is, not in
 // `TransactionPool` from proposer.
-func getMissingTransaction(checker *BallotChecker) (err error) {
+func insertMissingTransaction(checker *BallotChecker) (err error) {
 	// get missing transactions
 	var unknown []string
 	var exists bool
@@ -420,7 +420,7 @@ func BallotGetMissingTransaction(c common.Checker, args ...interface{}) (err err
 		return
 	}
 
-	if err = getMissingTransaction(checker); err != nil {
+	if err = insertMissingTransaction(checker); err != nil {
 		checker.VotingHole = voting.NO
 		err = nil
 		checker.Log.Debug("failed to get the missing transactions of ballot", "error", err)
@@ -596,7 +596,7 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) error {
 
 func saveBlock(checker *BallotChecker) error {
 	var err error
-	if err = getMissingTransaction(checker); err != nil {
+	if err = insertMissingTransaction(checker); err != nil {
 		checker.Log.Debug("failed to get the missing transactions of ballot", "error", err)
 		return err
 	}
