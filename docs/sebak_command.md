@@ -1,4 +1,4 @@
-To install `sebak` command, please check the [installation guide](SEBAK-Installation-Guide).
+To install `sebak` command, please check the [installation guide](./sebak_Installation.md).
 
 # Options
 ```

@@ -41,6 +41,6 @@ When you send a transaction, creating an account or sending a payment, *Testnet*
 | `a2` | `5,000,000` | `GB67C5RHN6EHS7MVO4ZLL3RJ3INIUXIXKZ74NVYHWW6HU3YQHMXONMXN` | `SAICU2PX2FMPRPABHU73LNDEFCMF37YNNKKDR6BSFEWREK52BXKBWKAX` |
 | `a3` | `5,000,000` | `GDKMOAHEZULSJM55MXUJ5LLHBW4QZPQHERU3ACD6MUCGB4Q2QC2E3MSJ` | `SA5YHDBS57DULW7GEGILQLSTMMNH7L5LWMAH5GDDSAYAEVTOZ3YFDVTU` |
 
-The network is initialized with 4 accounts. You can test the network with these accounts by `sebak wallet` command. For more details, please see [`sebak wallet`](SEBAK-Commands#sebak-wallet).
+The network is initialized with 4 accounts. You can test the network with these accounts by `sebak wallet` command. For more details, please see [`sebak wallet`](./sebak_command.md#sebak-wallet).
 
 > ## Creating accounts will be supported as soon as possible.

@@ -6,7 +6,7 @@ To deploy the sebak network, the basic steps are mentioned below.
 
 If you deployed network already, you should skip generating genesis block .
 
-You can run SEBAK in standalone mode, please check [Running Standalone Mode](Running-Standalone-Mode).
+You can run SEBAK in standalone mode, please check [Running Standalone Mode](./sebak_deployment_standalone.md).
 
 # How To Compose Network
 
@@ -56,7 +56,7 @@ INFO[10-29|14:57:28] genesis block created      module=main height=1 round=0 tim
 successfully created genesis block
 ```
 
-> You can also check the usage of `sebak key generate` in [SEBAK Commands](SEBAK-Commands#sebak-genesis).
+> You can also check the usage of `sebak key generate` in [SEBAK Commands](./sebak_command.md#sebak-genesis).
 
 You should make genesis block in every nodes
 
