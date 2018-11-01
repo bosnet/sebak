@@ -93,7 +93,7 @@ func SaveTransactionHistory(c common.Checker, args ...interface{}) (err error) {
 		return
 	}
 
-	if err = block.SaveTransactionHistory(checker.Storage, checker.Transaction, checker.Message.Data, block.TransactionHistoryStatusSubmitted); err != nil {
+	if err = block.SaveTransactionHistory(checker.Storage, checker.Transaction, block.TransactionHistoryStatusSubmitted); err != nil {
 		return
 	}
 
@@ -133,6 +133,10 @@ func PushIntoTransactionPool(c common.Checker, args ...interface{}) (err error) 
 
 	tx := checker.Transaction
 	checker.TransactionPool.Add(tx)
+
+	if _, err = block.SaveTransactionPool(checker.Storage, tx); err != nil {
+		return
+	}
 
 	checker.Log.Debug("push transaction into TransactionPool")
 

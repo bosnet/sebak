@@ -82,6 +82,7 @@ func (p *HelperTestGetNodeTransactionsHandler) Prepare() {
 	for j := 0; j < 3; j++ {
 		_, tx := transaction.TestMakeTransaction(networkID, 2)
 		p.TransactionPool.Add(tx)
+		block.SaveTransactionPool(p.st, tx)
 	}
 
 	return
@@ -100,6 +101,7 @@ func (p *HelperTestGetNodeTransactionsHandler) createBlock() block.Block {
 		txHashes = append(txHashes, tx.GetHash())
 		txs = append(txs, tx)
 		p.transactionHashes = append(p.transactionHashes, tx.GetHash())
+		block.SaveTransactionPool(p.st, tx)
 	}
 
 	latest := block.GetLatestBlock(p.st)
@@ -109,8 +111,7 @@ func (p *HelperTestGetNodeTransactionsHandler) createBlock() block.Block {
 	bk.MustSave(p.st)
 
 	for _, tx := range txs {
-		b, _ := tx.Serialize()
-		btx := block.NewBlockTransactionFromTransaction(bk.Hash, bk.Height, bk.Confirmed, tx, b)
+		btx := block.NewBlockTransactionFromTransaction(bk.Hash, bk.Height, bk.Confirmed, tx)
 		if err := btx.Save(p.st); err != nil {
 			panic(err)
 		}

@@ -18,13 +18,11 @@ import (
 
 func TestGetTransactionByHashHandler(t *testing.T) {
 
-	ts, storage, err := prepareAPIServer()
-	require.NoError(t, err)
+	ts, storage := prepareAPIServer()
 	defer storage.Close()
 	defer ts.Close()
 
-	_, _, bt, err := prepareTxWithoutSave(storage)
-	require.NoError(t, err)
+	_, _, bt := prepareTxWithoutSave(storage)
 	bt.MustSave(storage)
 
 	{ // unknown transaction
@@ -39,8 +37,7 @@ func TestGetTransactionByHashHandler(t *testing.T) {
 	var reader *bufio.Reader
 	// Do a Request
 	{
-		respBody, err := request(ts, GetTransactionsHandlerPattern+"/"+bt.Hash, false)
-		require.NoError(t, err)
+		respBody := request(ts, GetTransactionsHandlerPattern+"/"+bt.Hash, false)
 		defer respBody.Close()
 		reader = bufio.NewReader(respBody)
 	}
@@ -59,13 +56,11 @@ func TestGetTransactionByHashHandlerStream(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 
-	ts, storage, err := prepareAPIServer()
-	require.NoError(t, err)
+	ts, storage := prepareAPIServer()
 	defer storage.Close()
 	defer ts.Close()
 
-	_, _, bt, err := prepareTxWithoutSave(storage)
-	require.NoError(t, err)
+	_, _, bt := prepareTxWithoutSave(storage)
 
 	// Wait until request registered to observer
 	{
@@ -78,8 +73,7 @@ func TestGetTransactionByHashHandlerStream(t *testing.T) {
 				}
 				observer.BlockTransactionObserver.RUnlock()
 			}
-			err = bt.Save(storage)
-			require.NoError(t, err)
+			bt.MustSave(storage)
 			wg.Done()
 		}()
 	}
@@ -87,8 +81,7 @@ func TestGetTransactionByHashHandlerStream(t *testing.T) {
 	// Do a Request
 	var reader *bufio.Reader
 	{
-		respBody, err := request(ts, GetTransactionsHandlerPattern+"/"+bt.Hash, true)
-		require.NoError(t, err)
+		respBody := request(ts, GetTransactionsHandlerPattern+"/"+bt.Hash, true)
 		defer respBody.Close()
 		reader = bufio.NewReader(respBody)
 	}
@@ -105,19 +98,16 @@ func TestGetTransactionByHashHandlerStream(t *testing.T) {
 }
 
 func TestGetTransactionsHandler(t *testing.T) {
-	ts, storage, err := prepareAPIServer()
-	require.NoError(t, err)
+	ts, storage := prepareAPIServer()
 	defer storage.Close()
 	defer ts.Close()
 
-	_, btList, err := prepareTxs(storage, 10)
-	require.NoError(t, err)
+	_, btList := prepareTxs(storage, 10)
 
 	var reader *bufio.Reader
 	{
 		// Do a Request
-		respBody, err := request(ts, GetTransactionsHandlerPattern, false)
-		require.NoError(t, err)
+		respBody := request(ts, GetTransactionsHandlerPattern, false)
 		defer respBody.Close()
 		reader = bufio.NewReader(respBody)
 	}
@@ -146,13 +136,11 @@ func TestGetTransactionsHandlerStream(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 
-	ts, storage, err := prepareAPIServer()
-	require.NoError(t, err)
+	ts, storage := prepareAPIServer()
 	defer storage.Close()
 	defer ts.Close()
 
-	_, btList, err := prepareTxsWithoutSave(10, storage)
-	require.NoError(t, err)
+	_, btList := prepareTxsWithoutSave(10, storage)
 	btMap := make(map[string]block.BlockTransaction)
 	for _, bt := range btList {
 		btMap[bt.Hash] = bt
@@ -179,8 +167,7 @@ func TestGetTransactionsHandlerStream(t *testing.T) {
 	// Do a Request
 	var reader *bufio.Reader
 	{
-		respBody, err := request(ts, GetTransactionsHandlerPattern, true)
-		require.NoError(t, err)
+		respBody := request(ts, GetTransactionsHandlerPattern, true)
 		defer respBody.Close()
 		reader = bufio.NewReader(respBody)
 	}
@@ -207,20 +194,17 @@ func TestGetTransactionsHandlerStream(t *testing.T) {
 }
 
 func TestGetTransactionsByAccountHandler(t *testing.T) {
-	ts, storage, err := prepareAPIServer()
-	require.NoError(t, err)
+	ts, storage := prepareAPIServer()
 	defer storage.Close()
 	defer ts.Close()
 
-	kp, btList, err := prepareTxs(storage, 10)
-	require.NoError(t, err)
+	kp, btList := prepareTxs(storage, 10)
 
 	// Do a Request
 	var reader *bufio.Reader
 	{
 		url := strings.Replace(GetAccountTransactionsHandlerPattern, "{id}", kp.Address(), -1)
-		respBody, err := request(ts, url, false)
-		require.NoError(t, err)
+		respBody := request(ts, url, false)
 		defer respBody.Close()
 		reader = bufio.NewReader(respBody)
 	}
@@ -249,14 +233,12 @@ func TestGetTransactionsByAccountHandlerStream(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 
-	ts, storage, err := prepareAPIServer()
-	require.NoError(t, err)
+	ts, storage := prepareAPIServer()
 	defer storage.Close()
 	defer ts.Close()
 
 	btMap := make(map[string]block.BlockTransaction)
-	kp, btList, err := prepareTxsWithoutSave(10, storage)
-	require.NoError(t, err)
+	kp, btList := prepareTxsWithoutSave(10, storage)
 	for _, bt := range btList {
 		btMap[bt.Hash] = bt
 	}
@@ -283,8 +265,7 @@ func TestGetTransactionsByAccountHandlerStream(t *testing.T) {
 	var reader *bufio.Reader
 	{
 		url := strings.Replace(GetAccountTransactionsHandlerPattern, "{id}", kp.Address(), -1)
-		respBody, err := request(ts, url, true)
-		require.NoError(t, err)
+		respBody := request(ts, url, true)
 		defer respBody.Close()
 		reader = bufio.NewReader(respBody)
 	}
@@ -308,17 +289,14 @@ func TestGetTransactionsByAccountHandlerStream(t *testing.T) {
 }
 
 func TestGetTransactionsHandlerPage(t *testing.T) {
-	ts, storage, err := prepareAPIServer()
-	require.NoError(t, err)
+	ts, storage := prepareAPIServer()
 	defer storage.Close()
 	defer ts.Close()
 
-	_, btList, err := prepareTxs(storage, 10)
-	require.NoError(t, err)
+	_, btList := prepareTxs(storage, 10)
 
 	requestFunction := func(url string) ([]interface{}, map[string]interface{}) {
-		respBody, err := request(ts, url, false)
-		require.NoError(t, err)
+		respBody := request(ts, url, false)
 		defer respBody.Close()
 		reader := bufio.NewReader(respBody)
 

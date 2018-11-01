@@ -9,12 +9,14 @@ type Pool struct {
 
 	Pool    map[ /* Transaction.GetHash() */ string]Transaction
 	Sources map[ /* Transaction.Source() */ string]bool
+	hashes  []string // Transaction.GetHash()
 }
 
 func NewPool() *Pool {
 	return &Pool{
 		Pool:    map[string]Transaction{},
 		Sources: map[string]bool{},
+		hashes:  []string{},
 	}
 }
 
@@ -51,6 +53,7 @@ func (tp *Pool) Add(tx Transaction) bool {
 
 	tp.Pool[tx.GetHash()] = tx
 	tp.Sources[tx.Source()] = true
+	tp.hashes = append(tp.hashes, tx.GetHash())
 
 	return true
 }
@@ -67,6 +70,12 @@ func (tp *Pool) Remove(hashes ...string) {
 		if tx, found := tp.Pool[hash]; found {
 			delete(tp.Sources, tx.Source())
 			delete(tp.Pool, hash)
+			for i, h := range tp.hashes {
+				if h == hash {
+					tp.hashes = append(tp.hashes[:i], tp.hashes[i+1:]...)
+					break
+				}
+			}
 		}
 	}
 }
@@ -80,7 +89,8 @@ func (tp *Pool) AvailableTransactions(transactionLimit int) []string {
 	defer tp.RUnlock()
 
 	var ret []string
-	for key, _ := range tp.Pool {
+	// first ouput by order older hash
+	for _, key := range tp.hashes {
 		if len(ret) == transactionLimit {
 			return ret
 		}
