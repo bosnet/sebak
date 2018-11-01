@@ -89,4 +89,5 @@ var (
 	NotCommittable                            = NewError(175, "not Committable")
 	TransactionSameSourceInPool               = NewError(176, "Same transaction source found in pool")
 	AlreadyCommittable                        = NewError(177, "already Committable")
+	FailedToSaveBlockOperaton                 = NewError(178, "failed to save BlockOperation")
 )

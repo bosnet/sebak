@@ -731,6 +731,9 @@ func TestProposedTransactionStoreWithZeroAmount(t *testing.T) {
 
 	bt, err := block.GetBlockTransaction(p.nr.Storage(), blt.ProposerTransaction().GetHash())
 	require.NoError(t, err)
+	tp, err := block.GetTransactionPool(p.nr.Storage(), blt.ProposerTransaction().GetHash())
+	require.NoError(t, err)
+	bt.Message = tp.Message
 	err = bt.SaveBlockOperations(p.nr.Storage(), *blk)
 	require.NoError(t, err)
 

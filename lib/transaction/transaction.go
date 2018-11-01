@@ -134,10 +134,6 @@ func (tx Transaction) Source() string {
 	return tx.B.Source
 }
 
-func (tx Transaction) IsEmpty() bool {
-	return len(tx.H.Hash) < 1
-}
-
 // TotalAmount returns the sum of Amount of operations.
 //
 // Returns:

@@ -58,12 +58,10 @@ func NewBlockTransactionFromTransaction(blockHash string, blockHeight uint64, co
 		Fee:        tx.B.Fee,
 		Operations: opHashes,
 		Amount:     tx.TotalAmount(true),
-
-		Confirmed: confirmed,
-		Created:   tx.H.Created,
+		Confirmed:  confirmed,
+		Created:    tx.H.Created,
 
 		transaction: tx,
-
 		blockHeight: blockHeight,
 	}
 }
@@ -163,6 +161,10 @@ func (bt BlockTransaction) String() string {
 func (bt BlockTransaction) Transaction() transaction.Transaction {
 	if bt.transaction.IsEmpty() {
 		var tx transaction.Transaction
+		if len(bt.Message) < 1 {
+			return tx
+		}
+
 		if err := common.DecodeJSONValue(bt.Message, &tx); err != nil {
 			return tx
 		}
@@ -174,6 +176,11 @@ func (bt BlockTransaction) Transaction() transaction.Transaction {
 }
 
 func (bt BlockTransaction) SaveBlockOperations(st *storage.LevelDBBackend, blk Block) (err error) {
+	if bt.Transaction().IsEmpty() {
+		err = errors.FailedToSaveBlockOperaton
+		return
+	}
+
 	bt.blockHeight = blk.Height
 
 	for _, op := range bt.Transaction().B.Operations {

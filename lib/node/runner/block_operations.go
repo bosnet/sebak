@@ -103,9 +103,9 @@ func (sb *SavingBlockOperations) check() (err error) {
 	return
 }
 
-func (sb *SavingBlockOperations) savingBlockOperationsWorker(id int, st *storage.LevelDBBackend, blk block.Block, jobs <-chan string, results chan<- error) {
-	for j := range jobs {
-		results <- sb.CheckTransactionByBlock(st, blk, j)
+func (sb *SavingBlockOperations) savingBlockOperationsWorker(id int, st *storage.LevelDBBackend, blk block.Block, ops <-chan string, results chan<- error) {
+	for op := range ops {
+		results <- sb.CheckTransactionByBlock(st, blk, op)
 	}
 }
 
@@ -127,11 +127,16 @@ func (sb *SavingBlockOperations) CheckByBlock(st *storage.LevelDBBackend, blk bl
 	}
 	close(ops)
 
+	var errs []error
 	for _ = range blk.Transactions {
 		err = <-results
 		if err != nil {
-			return
+			errs = append(errs, err)
 		}
+	}
+	if len(errs) > 0 {
+		err = errors.FailedToSaveBlockOperaton.Clone().SetData("errors", errs)
+		return
 	}
 
 	if blk.Height > common.GenesisBlockHeight { // ProposerTransaction
@@ -148,6 +153,16 @@ func (sb *SavingBlockOperations) CheckTransactionByBlock(st *storage.LevelDBBack
 	if bt, err = block.GetBlockTransaction(st, hash); err != nil {
 		sb.log.Error("failed to get BlockTransaction", "block", blk, "transaction", hash)
 		return
+	}
+
+	if bt.Transaction().IsEmpty() {
+		var tp block.TransactionPool
+		if tp, err = block.GetTransactionPool(st, hash); err != nil {
+			sb.log.Error("failed to get Transaction from TransactionPool", "transaction", hash)
+			return
+		}
+
+		bt.Message = tp.Message
 	}
 
 	for _, op := range bt.Transaction().B.Operations {

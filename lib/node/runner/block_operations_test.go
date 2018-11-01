@@ -34,6 +34,7 @@ func (p *TestSavingBlockOperationHelper) makeBlock(prevBlock block.Block) block.
 	var txHashes []string
 	for i := 0; i < numTxs; i++ {
 		tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, kp)
+		block.SaveTransactionPool(p.st, tx)
 		txs = append(txs, tx)
 		txHashes = append(txHashes, tx.GetHash())
 	}
@@ -54,17 +55,16 @@ func (p *TestSavingBlockOperationHelper) makeBlock(prevBlock block.Block) block.
 	opi, _ := ballot.NewInflationFromBallot(*blt, block.CommonKP.Address(), common.BaseReserve)
 	opc, _ := ballot.NewCollectTxFeeFromBallot(*blt, block.CommonKP.Address(), txs...)
 	ptx, _ := ballot.NewProposerTransactionFromBallot(*blt, opc, opi)
-	a, _ := ptx.Serialize()
-	bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.Confirmed, ptx.Transaction, a)
+	bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.Confirmed, ptx.Transaction)
 	bt.MustSave(p.st)
+	block.SaveTransactionPool(p.st, ptx.Transaction)
 
 	blk.ProposerTransaction = ptx.GetHash()
 
 	blk.MustSave(p.st)
 
 	for _, tx := range txs {
-		a, _ := tx.Serialize()
-		bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.Confirmed, tx, a)
+		bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.Confirmed, tx)
 		bt.MustSave(p.st)
 	}
 

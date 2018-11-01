@@ -1,8 +1,6 @@
 package runner
 
 import (
-	"encoding/json"
-
 	logging "github.com/inconshreveable/log15"
 
 	"boscoin.io/sebak/lib/ballot"
@@ -82,9 +80,7 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 
 func FinishTransactions(blk block.Block, transactions []*transaction.Transaction, st *storage.LevelDBBackend) (err error) {
 	for _, tx := range transactions {
-		raw, _ := json.Marshal(tx)
-
-		bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.Confirmed, *tx, raw)
+		bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.Confirmed, *tx)
 		if err = bt.Save(st); err != nil {
 			return
 		}
@@ -216,8 +212,7 @@ func FinishProposerTransaction(st *storage.LevelDBBackend, blk block.Block, ptx 
 		}
 	}
 
-	raw, _ := json.Marshal(ptx.Transaction)
-	bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.Confirmed, ptx.Transaction, raw)
+	bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.Confirmed, ptx.Transaction)
 	if err = bt.Save(st); err != nil {
 		return
 	}
@@ -273,34 +268,6 @@ func finishInflation(st *storage.LevelDBBackend, opb operation.Inflation, log lo
 func finishUnfreezeRequest(st *storage.LevelDBBackend, source string, opb operation.UnfreezeRequest, log logging.Logger) (err error) {
 
 	log.Debug("UnfreezeRequest done")
-
-	return
-}
-
-func finishBlockOperations(st *storage.LevelDBBackend, blk block.Block) (err error) {
-	for _, txHash := range blk.Transactions {
-		var bt block.BlockTransaction
-		if bt, err = block.GetBlockTransaction(st, txHash); err != nil {
-			return
-		}
-
-		for _, op := range bt.Transaction().B.Operations {
-			var bo block.BlockOperation
-			bo, err = block.NewBlockOperationFromOperation(op, bt.Transaction(), blk.Height)
-			if err != nil {
-				return
-			}
-			if err = bo.Save(st); err != nil {
-				return
-			}
-			if pop, ok := op.B.(operation.Payable); ok {
-				target := pop.TargetAddress()
-				if err = st.New(bt.NewBlockTransactionKeyByAccount(target), bt.Hash); err != nil {
-					return
-				}
-			}
-		}
-	}
 
 	return
 }
