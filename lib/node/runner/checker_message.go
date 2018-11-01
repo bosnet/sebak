@@ -138,7 +138,7 @@ func PushIntoTransactionPool(c common.Checker, args ...interface{}) (err error) 
 		return
 	}
 
-	checker.Log.Debug("push transaction into TransactionPool")
+	checker.Log.Debug("push transaction into TransactionPool", "transaction", tx)
 
 	return
 }
