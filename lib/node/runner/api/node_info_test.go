@@ -75,8 +75,7 @@ func TestAPIGetNodeInfoHandler(t *testing.T) {
 	ts := httptest.NewServer(router)
 	defer ts.Close()
 
-	body, err := request(ts, GetNodeInfoPattern, false)
-	require.NoError(t, err)
+	body := request(ts, GetNodeInfoPattern, false)
 	data, err := ioutil.ReadAll(bufio.NewReader(body))
 	body.Close()
 
@@ -104,10 +103,9 @@ func TestAPIGetNodeInfoHandler(t *testing.T) {
 	// udpate localNode state
 	localNode.SetBooting()
 
-	body, err = request(ts, GetNodeInfoPattern, false)
-	require.NoError(t, err)
+	body = request(ts, GetNodeInfoPattern, false)
+	defer body.Close()
 	data, err = ioutil.ReadAll(bufio.NewReader(body))
-	body.Close()
 
 	receivedNodeInfo, _ = node.NewNodeInfoFromJSON(data)
 	require.Equal(t, localNode.State(), receivedNodeInfo.Node.State)

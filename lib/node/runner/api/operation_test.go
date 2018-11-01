@@ -19,13 +19,11 @@ import (
 )
 
 func TestGetOperationsByAccountHandler(t *testing.T) {
-	ts, storage, err := prepareAPIServer()
-	require.NoError(t, err)
+	ts, storage := prepareAPIServer()
 	defer storage.Close()
 	defer ts.Close()
 
-	kp, boList, err := prepareOps(storage, 10)
-	require.NoError(t, err)
+	kp, boList := prepareOps(storage, 10)
 
 	url := strings.Replace(GetAccountOperationsHandlerPattern, "{id}", kp.Address(), -1)
 	{
@@ -44,8 +42,7 @@ func TestGetOperationsByAccountHandler(t *testing.T) {
 
 	{
 		// Do a Request
-		respBody, err := request(ts, url, false)
-		require.NoError(t, err)
+		respBody := request(ts, url, false)
 		defer respBody.Close()
 		reader := bufio.NewReader(respBody)
 		readByte, err := ioutil.ReadAll(reader)
@@ -67,13 +64,11 @@ func TestGetOperationsByAccountHandler(t *testing.T) {
 }
 
 func TestGetOperationsByAccountHandlerWithType(t *testing.T) {
-	ts, storage, err := prepareAPIServer()
-	require.NoError(t, err)
+	ts, storage := prepareAPIServer()
 	defer storage.Close()
 	defer ts.Close()
 
-	kp, boList, err := prepareOps(storage, 10)
-	require.NoError(t, err)
+	kp, boList := prepareOps(storage, 10)
 	ba := block.NewBlockAccount(kp.Address(), common.Amount(common.BaseReserve))
 	ba.MustSave(storage)
 
@@ -81,8 +76,7 @@ func TestGetOperationsByAccountHandlerWithType(t *testing.T) {
 	url := strings.Replace(GetAccountOperationsHandlerPattern, "{id}", kp.Address(), -1)
 	{
 		url := url + "?type=" + string(operation.TypeCreateAccount)
-		respBody, err := request(ts, url, false)
-		require.NoError(t, err)
+		respBody := request(ts, url, false)
 		defer respBody.Close()
 		reader := bufio.NewReader(respBody)
 
@@ -97,8 +91,7 @@ func TestGetOperationsByAccountHandlerWithType(t *testing.T) {
 
 	{
 		url := url + "?type=" + string(operation.TypePayment)
-		respBody, err := request(ts, url, false)
-		require.NoError(t, err)
+		respBody := request(ts, url, false)
 		defer respBody.Close()
 		reader := bufio.NewReader(respBody)
 
@@ -125,14 +118,12 @@ func TestGetOperationsByAccountHandlerStream(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 
-	ts, storage, err := prepareAPIServer()
-	require.NoError(t, err)
+	ts, storage := prepareAPIServer()
 	defer storage.Close()
 	defer ts.Close()
 
 	boMap := make(map[string]block.BlockOperation)
-	kp, boList, err := prepareOpsWithoutSave(10, storage)
-	require.NoError(t, err)
+	kp, boList := prepareOpsWithoutSave(10, storage)
 	for _, bo := range boList {
 		boMap[bo.Hash] = bo
 	}
@@ -161,8 +152,7 @@ func TestGetOperationsByAccountHandlerStream(t *testing.T) {
 	var reader *bufio.Reader
 	{
 		url := strings.Replace(GetAccountOperationsHandlerPattern, "{id}", kp.Address(), -1)
-		respBody, err := request(ts, url, true)
-		require.NoError(t, err)
+		respBody := request(ts, url, true)
 		defer respBody.Close()
 		reader = bufio.NewReader(respBody)
 	}
