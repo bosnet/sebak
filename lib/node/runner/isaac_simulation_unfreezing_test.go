@@ -73,9 +73,11 @@ func TestUnfreezingSimulation(t *testing.T) {
 	// Generate unfreezing-transaction not yet reached unfreezing blockheight
 	tx6, _ := GetUnfreezingTransaction(kpFrozenAccount, kpNewAccount, uint64(1), uint64(99999980000))
 
-	nr.TransactionPool.Add(tx6)
-	roundNumber := uint64(0)
-	_, err := nr.proposeNewBallot(roundNumber)
+	err := ValidateTx(nr.Storage(), tx6)
+	require.Error(t, err)
+
+	round := uint64(0)
+	_, err = nr.proposeNewBallot(round)
 	require.NoError(t, err)
 
 	require.False(t, nr.TransactionPool.Has(tx6.GetHash()))
