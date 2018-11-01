@@ -18,8 +18,7 @@ import (
 )
 
 func TestGetAccountHandler(t *testing.T) {
-	ts, storage, err := prepareAPIServer()
-	require.NoError(t, err)
+	ts, storage := prepareAPIServer()
 	defer storage.Close()
 	defer ts.Close()
 	// Make Dummy BlockAccount
@@ -28,8 +27,7 @@ func TestGetAccountHandler(t *testing.T) {
 	{
 		// Do a Request
 		url := strings.Replace(GetAccountHandlerPattern, "{id}", ba.Address, -1)
-		respBody, err := request(ts, url, false)
-		require.NoError(t, err)
+		respBody := request(ts, url, false)
 		defer respBody.Close()
 		reader := bufio.NewReader(respBody)
 
@@ -57,13 +55,11 @@ func TestGetAccountHandlerStream(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 
-	ts, storage, err := prepareAPIServer()
-	require.NoError(t, err)
+	ts, storage := prepareAPIServer()
 	defer storage.Close()
 	defer ts.Close()
 	ba := block.TestMakeBlockAccount()
 	ba.MustSave(storage)
-	require.NoError(t, err)
 
 	key := ba.Address
 
@@ -87,8 +83,7 @@ func TestGetAccountHandlerStream(t *testing.T) {
 	var reader *bufio.Reader
 	{
 		url := strings.Replace(GetAccountHandlerPattern, "{id}", key, -1)
-		respBody, err := request(ts, url, true)
-		require.NoError(t, err)
+		respBody := request(ts, url, true)
 		defer respBody.Close()
 		reader = bufio.NewReader(respBody)
 	}
@@ -107,8 +102,7 @@ func TestGetAccountHandlerStream(t *testing.T) {
 // Test that getting an inexisting account returns an error
 func TestGetNonExistentAccountHandler(t *testing.T) {
 
-	ts, storage, err := prepareAPIServer()
-	require.NoError(t, err)
+	ts, storage := prepareAPIServer()
 	defer storage.Close()
 	defer ts.Close()
 
@@ -118,8 +112,7 @@ func TestGetNonExistentAccountHandler(t *testing.T) {
 		// Do a Request
 		kp, _ := keypair.Random()
 		url := strings.Replace(GetAccountHandlerPattern, "{id}", kp.Address(), -1)
-		respBody, err := request(ts, url, false)
-		require.NoError(t, err)
+		respBody := request(ts, url, false)
 		reader := bufio.NewReader(respBody)
 		readByte, err := ioutil.ReadAll(reader)
 		require.NoError(t, err)

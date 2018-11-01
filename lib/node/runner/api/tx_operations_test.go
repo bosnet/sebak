@@ -21,14 +21,11 @@ import (
 )
 
 func TestGetOperationsByTxHashHandler(t *testing.T) {
-	ts, storage, err := prepareAPIServer()
-	require.NoError(t, err)
+	ts, storage := prepareAPIServer()
 	defer storage.Close()
 	defer ts.Close()
 
-	_, btList, err := prepareTxs(storage, 1)
-	require.NoError(t, err)
-
+	_, btList := prepareTxs(storage, 1)
 	bt := btList[0]
 
 	{ // unknown transaction
@@ -43,8 +40,7 @@ func TestGetOperationsByTxHashHandler(t *testing.T) {
 
 	// Do a Request
 	url := strings.Replace(GetTransactionOperationsHandlerPattern, "{id}", bt.Hash, -1)
-	respBody, err := request(ts, url, false)
-	require.NoError(t, err)
+	respBody := request(ts, url, false)
 	defer respBody.Close()
 	reader := bufio.NewReader(respBody)
 
@@ -71,8 +67,7 @@ func TestGetOperationsByTxHashHandlerStream(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 
-	ts, storage, err := prepareAPIServer()
-	require.NoError(t, err)
+	ts, storage := prepareAPIServer()
 	defer storage.Close()
 	defer ts.Close()
 
@@ -111,8 +106,7 @@ func TestGetOperationsByTxHashHandlerStream(t *testing.T) {
 	var reader *bufio.Reader
 	{
 		url := strings.Replace(GetTransactionOperationsHandlerPattern, "{id}", bt.Hash, -1)
-		respBody, err := request(ts, url, true)
-		require.NoError(t, err)
+		respBody := request(ts, url, true)
 		defer respBody.Close()
 		reader = bufio.NewReader(respBody)
 	}

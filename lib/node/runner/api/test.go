@@ -19,7 +19,7 @@ const (
 	QueryPattern = "cursor={cursor}&limit={limit}&reverse={reverse}&type={type}"
 )
 
-func prepareAPIServer() (*httptest.Server, *storage.LevelDBBackend, error) {
+func prepareAPIServer() (*httptest.Server, *storage.LevelDBBackend) {
 	storage := block.InitTestBlockchain()
 	apiHandler := NetworkHandlerAPI{storage: storage}
 
@@ -34,30 +34,26 @@ func prepareAPIServer() (*httptest.Server, *storage.LevelDBBackend, error) {
 	router.HandleFunc(GetAccountHandlerPattern, apiHandler.GetAccountHandler).Methods("GET")
 	router.HandleFunc(GetTransactionOperationsHandlerPattern, apiHandler.GetOperationsByTxHashHandler).Methods("GET")
 	ts := httptest.NewServer(router)
-	return ts, storage, nil
+	return ts, storage
 }
 
-func prepareOps(storage *storage.LevelDBBackend, count int) (*keypair.Full, []block.BlockOperation, error) {
-	kp, btList, err := prepareTxs(storage, count)
-	if err != nil {
-		return nil, nil, err
-	}
+func prepareOps(storage *storage.LevelDBBackend, count int) (*keypair.Full, []block.BlockOperation) {
+	kp, btList := prepareTxs(storage, count)
 	var boList []block.BlockOperation
 	for _, bt := range btList {
 		bo, err := block.GetBlockOperation(storage, bt.Operations[0])
 		if err != nil {
-			return nil, nil, err
+			panic(err)
 		}
 		boList = append(boList, bo)
 	}
 
-	return kp, boList, nil
+	return kp, boList
 }
-func prepareOpsWithoutSave(count int, st *storage.LevelDBBackend) (*keypair.Full, []block.BlockOperation, error) {
-
+func prepareOpsWithoutSave(count int, st *storage.LevelDBBackend) (*keypair.Full, []block.BlockOperation) {
 	kp, err := keypair.Random()
 	if err != nil {
-		return nil, nil, err
+		panic(err)
 	}
 	var txs []transaction.Transaction
 	var txHashes []string
@@ -79,13 +75,13 @@ func prepareOpsWithoutSave(count int, st *storage.LevelDBBackend) (*keypair.Full
 		}
 	}
 
-	return kp, boList, nil
+	return kp, boList
 }
 
-func prepareTxs(storage *storage.LevelDBBackend, count int) (*keypair.Full, []block.BlockTransaction, error) {
+func prepareTxs(storage *storage.LevelDBBackend, count int) (*keypair.Full, []block.BlockTransaction) {
 	kp, err := keypair.Random()
 	if err != nil {
-		return nil, nil, err
+		panic(err)
 	}
 	var txs []transaction.Transaction
 	var txHashes []string
@@ -97,25 +93,19 @@ func prepareTxs(storage *storage.LevelDBBackend, count int) (*keypair.Full, []bl
 	}
 
 	theBlock := block.TestMakeNewBlockWithPrevBlock(block.GetLatestBlock(storage), txHashes)
-	err = theBlock.Save(storage)
-	if err != nil {
-		return nil, nil, err
-	}
+	theBlock.MustSave(storage)
 	for _, tx := range txs {
 		bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, theBlock.Height, theBlock.Confirmed, tx)
-		err = bt.Save(storage)
-		if err != nil {
-			return nil, nil, err
-		}
+		bt.MustSave(storage)
 		btList = append(btList, bt)
 	}
-	return kp, btList, nil
+	return kp, btList
 }
 
-func prepareTxsWithoutSave(count int, st *storage.LevelDBBackend) (*keypair.Full, []block.BlockTransaction, error) {
+func prepareTxsWithoutSave(count int, st *storage.LevelDBBackend) (*keypair.Full, []block.BlockTransaction) {
 	kp, err := keypair.Random()
 	if err != nil {
-		return nil, nil, err
+		panic(err)
 	}
 	var txs []transaction.Transaction
 	var txHashes []string
@@ -131,35 +121,35 @@ func prepareTxsWithoutSave(count int, st *storage.LevelDBBackend) (*keypair.Full
 		bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, theBlock.Height, theBlock.Confirmed, tx)
 		btList = append(btList, bt)
 	}
-	return kp, btList, nil
+	return kp, btList
 }
 
-func prepareTxWithoutSave(st *storage.LevelDBBackend) (*keypair.Full, *transaction.Transaction, *block.BlockTransaction, error) {
+func prepareTxWithoutSave(st *storage.LevelDBBackend) (*keypair.Full, *transaction.Transaction, *block.BlockTransaction) {
 	kp, err := keypair.Random()
 	if err != nil {
-		return nil, nil, nil, err
+		panic(err)
 	}
 
 	tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, kp)
 
 	theBlock := block.TestMakeNewBlockWithPrevBlock(block.GetLatestBlock(st), []string{tx.GetHash()})
 	bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, theBlock.Height, theBlock.Confirmed, tx)
-	return kp, &tx, &bt, nil
+	return kp, &tx, &bt
 }
 
-func request(ts *httptest.Server, url string, streaming bool) (io.ReadCloser, error) {
+func request(ts *httptest.Server, url string, streaming bool) io.ReadCloser {
 	// Do a Request
 	url = ts.URL + url
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 	if streaming {
 		req.Header.Set("Accept", "text/event-stream")
 	}
 	resp, err := ts.Client().Do(req)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
-	return resp.Body, nil
+	return resp.Body
 }
