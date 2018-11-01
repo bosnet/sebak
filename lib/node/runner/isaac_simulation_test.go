@@ -86,8 +86,6 @@ func TestISAACSimulationProposer(t *testing.T) {
 	_, ok := err.(CheckerStopCloseConsensus)
 	require.True(t, ok)
 
-	require.Equal(t, 4, len(rr.Voted[proposer.Address()].GetResult(ballot.StateACCEPT)))
-
 	block := nr.Consensus().LatestBlock()
 	require.Equal(t, proposer.Address(), block.Proposer)
 	require.Equal(t, 1, len(block.Transactions))

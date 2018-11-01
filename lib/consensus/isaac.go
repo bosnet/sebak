@@ -282,3 +282,15 @@ func (is *ISAAC) HasSameProposer(b ballot.Ballot) bool {
 func (is *ISAAC) LatestBlock() block.Block {
 	return block.GetLatestBlock(is.storage)
 }
+
+func (is *ISAAC) RemoveRunningRoundsWithSameHeight(height uint64) {
+	for hash, runningRound := range is.RunningRounds {
+		if runningRound.VotingBasis.Height > height {
+			continue
+		}
+
+		delete(runningRound.Transactions, runningRound.Proposer)
+		delete(runningRound.Voted, runningRound.Proposer)
+		delete(is.RunningRounds, hash)
+	}
+}

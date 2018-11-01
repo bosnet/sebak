@@ -148,8 +148,6 @@ func MakeConsensusAndBlock(t *testing.T, tx transaction.Transaction, nr *NodeRun
 	ballotACCEPT2 := GenerateBallot(proposer, basis, tx, ballot.StateACCEPT, nodes[2], conf)
 	err = ReceiveBallot(nr, ballotACCEPT2)
 
-	require.Equal(t, 2, len(rr.Voted[proposer.Address()].GetResult(ballot.StateACCEPT)))
-
 	blk := nr.Consensus().LatestBlock()
 
 	require.Equal(t, proposer.Address(), blk.Proposer)
