@@ -103,10 +103,6 @@ func (bo BlockOperation) Serialize() (encoded []byte, err error) {
 	return
 }
 
-func (bo BlockOperation) Transaction() transaction.Transaction {
-	return bo.transaction
-}
-
 func GetBlockOperationKey(hash string) string {
 	return fmt.Sprintf("%s%s", common.BlockOperationPrefixHash, hash)
 }
