@@ -27,6 +27,7 @@ func (api NetworkHandlerAPI) GetNodeInfoHandler(w http.ResponseWriter, r *http.R
 			Height:   latestBlock.Height,
 			Hash:     latestBlock.Hash,
 			TotalTxs: latestBlock.TotalTxs,
+			TotalOps: latestBlock.TotalOps,
 		}
 	}
 
