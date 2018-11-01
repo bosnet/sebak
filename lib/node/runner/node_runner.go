@@ -483,7 +483,7 @@ func (nr *NodeRunner) handleBallotMessage(message common.NetworkMessage) (err er
 
 func (nr *NodeRunner) InitRound() {
 	// get latest blocks
-	nr.consensus.SetLatestRound(voting.Basis{})
+	nr.consensus.SetLatestVotingBasis(voting.Basis{})
 
 	nr.waitForConnectingEnoughNodes()
 	nr.StartStateManager()

@@ -75,8 +75,8 @@ type SelfThenOtherSelector struct {
 	cm network.ConnectionManager
 }
 
-func (s SelfThenOtherSelector) Select(blockHeight uint64, roundNumber uint64) string {
-	if blockHeight < 2 && roundNumber == 0 {
+func (s SelfThenOtherSelector) Select(blockHeight uint64, round uint64) string {
+	if blockHeight < 2 && round == 0 {
 		return s.cm.GetNodeAddress()
 	} else {
 		for _, v := range s.cm.AllValidators() {
