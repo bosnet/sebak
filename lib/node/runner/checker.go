@@ -556,64 +556,92 @@ func TransitStateToACCEPT(c common.Checker, args ...interface{}) (err error) {
 
 // FinishedBallotStore will store the confirmed ballot to
 // `Block`.
-func FinishedBallotStore(c common.Checker, args ...interface{}) (err error) {
+func FinishedBallotStore(c common.Checker, args ...interface{}) error {
 	checker := c.(*BallotChecker)
 
 	if !checker.VotingFinished {
-		return
+		return nil
 	}
-	ballotRound := checker.Ballot.VotingBasis()
-	if checker.FinishedVotingHole == voting.YES {
-		if err = getMissingTransaction(checker); err != nil {
-			checker.Log.Debug("failed to get the missing transactions of ballot", "error", err)
-			return
-		}
 
-		var theBlock *block.Block
+	basis := checker.Ballot.VotingBasis()
+	basisIndex := basis.Index()
+	proposer := checker.Ballot.Proposer()
 
-		var bs *storage.LevelDBBackend
-		if bs, err = checker.NodeRunner.Storage().OpenBatch(); err != nil {
+	var err error
+	switch checker.FinishedVotingHole {
+	case voting.YES:
+		if err = saveBlock(checker); err != nil {
 			return err
 		}
+		checker.NodeRunner.TransitISAACState(checker.Ballot.VotingBasis(), ballot.StateALLCONFIRM)
+		checker.NodeRunner.Consensus().SetLatestRound(basis)
 
-		theBlock, err = finishBallot(
-			bs,
-			checker.Ballot,
-			checker.NodeRunner.TransactionPool,
-			checker.Log,
-			checker.NodeRunner.Log(),
-		)
-		if err != nil {
-			bs.Discard()
-			checker.Log.Error("failed to finish ballot", "error", err)
-			return
-		}
-
-		if err = bs.Commit(); err != nil {
-			if err != errors.NotCommittable {
-				bs.Discard()
-				return
-			}
-		}
-
-		checker.Log.Debug("ballot was stored", "block", *theBlock)
-		checker.NodeRunner.SavingBlockOperations().Save(*theBlock)
-		checker.NodeRunner.TransitISAACState(ballotRound, ballot.StateALLCONFIRM)
+		reorganizeTransactionPool(checker, basisIndex, proposer)
+		checker.NodeRunner.Consensus().RemoveRunningRoundsWithSameHeight(basis.Height)
 
 		err = NewCheckerStopCloseConsensus(checker, "ballot got consensus and will be stored")
-	} else {
+	case voting.NO, voting.EXP:
 		checker.NodeRunner.isaacStateManager.IncreaseRound()
+		checker.NodeRunner.Consensus().SetLatestRound(basis)
+
+		checker.NodeRunner.Consensus().RemoveRunningRoundsWithSameHeight(basis.Height)
+
 		err = NewCheckerStopCloseConsensus(checker, "ballot got consensus")
+	case voting.NOTYET:
+		return errors.New("invalid voting.Hole, `NOTYET`")
 	}
 
-	checker.NodeRunner.Consensus().CloseConsensus(
-		checker.Ballot.Proposer(),
-		ballotRound,
-		checker.FinishedVotingHole,
-		checker.NodeRunner.TransactionPool,
-	)
+	return err
+}
 
-	return
+func saveBlock(checker *BallotChecker) error {
+	var err error
+	if err = getMissingTransaction(checker); err != nil {
+		checker.Log.Debug("failed to get the missing transactions of ballot", "error", err)
+		return err
+	}
+
+	var bs *storage.LevelDBBackend
+	if bs, err = checker.NodeRunner.Storage().OpenBatch(); err != nil {
+		return err
+	}
+
+	var theBlock *block.Block
+	theBlock, err = finishBallot(
+		bs,
+		checker.Ballot,
+		checker.NodeRunner.TransactionPool,
+		checker.Log,
+		checker.NodeRunner.Log(),
+	)
+	if err != nil {
+		bs.Discard()
+		checker.Log.Error("failed to finish ballot", "error", err)
+		return err
+	}
+
+	if err = bs.Commit(); err != nil {
+		if err != errors.NotCommittable {
+			bs.Discard()
+			return err
+		}
+	}
+
+	checker.Log.Debug("ballot was stored", "block", *theBlock)
+	checker.NodeRunner.SavingBlockOperations().Save(*theBlock)
+
+	return nil
+}
+
+func reorganizeTransactionPool(checker *BallotChecker, basisIndex string, proposer string) error {
+	rr, found := checker.NodeRunner.Consensus().RunningRounds[basisIndex]
+	if found {
+		checker.NodeRunner.TransactionPool.Remove(rr.Transactions[proposer]...)
+	}
+
+	// [TODO] TxValidate() again
+
+	return nil
 }
 
 func isValidRound(st *storage.LevelDBBackend, r voting.Basis, log logging.Logger) (bool, error) {
