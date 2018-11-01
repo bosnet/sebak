@@ -2,7 +2,7 @@ By the nature of design, SEBAK should be deployed as composition of nodes and th
 
 ## Installation
 
-Please follow the [Installation](SEBAK-Installation-Guide). If you are so busy and you already have golang (1.11 or higher) environment, do like this,
+Please follow the [Installation](./sebak_Installation). If you are so busy and you already have golang (1.11 or higher) environment, do like this,
 
 ```sh
 $ git clone https://github.com/bosnet/sebak.git /tmp/sebak-standalone
@@ -20,7 +20,7 @@ You will get the executable `./sebak`. You can use it to deploy.
 
 ## Deploy
 
-> For the detailed deployment instruction, please check [Deploy Network](Deploy-SEBAK-Network-At-First-Time).
+> For the detailed deployment instruction, please check [Deploy Network](./sebak_deployment).
 
 For standalone mode, SEBAK already prepared the special command, `self`. You can simply give only `self` in `--validators` option. Then you will get the standalone mode of SEBAK.
 
