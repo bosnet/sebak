@@ -70,34 +70,30 @@ func TestBlockConfirmedOrdering(t *testing.T) {
 }
 
 func TestBlockHeightOrdering(t *testing.T) {
-	st := storage.NewTestStorage()
+	st := InitTestBlockchain()
 
 	// save Block, but Height will be shuffled
-	numberOfBlocks := 10
-	inserted := make([]Block, numberOfBlocks)
+	maximumHeight := 10
+	inserted := make([]Block, maximumHeight+1)
 
-	r := rand.New(rand.NewSource(time.Now().Unix()))
-	for _, i := range r.Perm(numberOfBlocks) {
+	for i := 2; i <= maximumHeight; i++ {
 		bk := TestMakeNewBlock([]string{})
 		bk.Height = uint64(i)
-		require.Nil(t, bk.Save(st))
+		require.NoError(t, bk.Save(st))
 		inserted[i] = bk
 	}
 
-	{
-		var fetched []Block
-		for i := 0; i < numberOfBlocks; i++ {
-			b, err := GetBlockByHeight(st, uint64(i))
-			require.NoError(t, err)
-			fetched = append(fetched, b)
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+	for _, i := range r.Perm(maximumHeight) {
+		if i == 0 {
+			continue
 		}
-
-		require.Equal(t, len(inserted), len(fetched))
-		for i, b := range inserted {
-			require.Equal(t, b.Hash, fetched[i].Hash)
-
+		b, err := GetBlockByHeight(st, uint64(i))
+		require.NoError(t, err)
+		if i != 1 {
+			require.Equal(t, b.Hash, inserted[i].Hash, "Mismatch for", i)
 			s, _ := b.Serialize()
-			rs, _ := fetched[i].Serialize()
+			rs, _ := inserted[i].Serialize()
 			require.Equal(t, s, rs)
 		}
 	}

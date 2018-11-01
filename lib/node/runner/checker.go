@@ -3,7 +3,6 @@ package runner
 import (
 	"bufio"
 	"bytes"
-	"encoding/json"
 	"io"
 
 	logging "github.com/inconshreveable/log15"
@@ -337,8 +336,14 @@ func BallotCheckResult(c common.Checker, args ...interface{}) (err error) {
 func getMissingTransaction(checker *BallotChecker) (err error) {
 	// get missing transactions
 	var unknown []string
+	var exists bool
 	for _, hash := range checker.Ballot.Transactions() {
 		if checker.NodeRunner.TransactionPool.Has(hash) {
+			continue
+		}
+		if exists, err = block.ExistsTransactionPool(checker.NodeRunner.Storage(), hash); err != nil {
+			return
+		} else if exists {
 			continue
 		}
 		unknown = append(unknown, hash)
@@ -393,8 +398,16 @@ func getMissingTransaction(checker *BallotChecker) (err error) {
 		receivedTransaction = append(receivedTransaction, tx)
 	}
 
+	var bs *storage.LevelDBBackend
+	bs, err = checker.NodeRunner.Storage().OpenBatch()
 	for _, tx := range receivedTransaction {
-		checker.NodeRunner.TransactionPool.Add(tx)
+		if _, err = block.SaveTransactionPool(bs, tx); err != nil {
+			return
+		}
+	}
+	if err = bs.Commit(); err != nil {
+		bs.Discard()
+		return
 	}
 
 	return
@@ -647,8 +660,12 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 	for _, hash := range pTxHashes {
 		tx, found := transactionPool.Get(hash)
 		if !found {
-			err = errors.TransactionNotFound
-			return nil, err
+			var tp block.TransactionPool
+			if tp, err = block.GetTransactionPool(st, hash); err != nil {
+				err = errors.TransactionNotFound
+				return nil, err
+			}
+			tx = tp.Transaction()
 		}
 		proposedTransactions = append(proposedTransactions, &tx)
 	}
@@ -689,9 +706,7 @@ func isValidRound(st *storage.LevelDBBackend, r voting.Basis, log logging.Logger
 
 func FinishTransactions(blk block.Block, transactions []*transaction.Transaction, st *storage.LevelDBBackend) (err error) {
 	for _, tx := range transactions {
-		raw, _ := json.Marshal(tx)
-
-		bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.Confirmed, *tx, raw)
+		bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.Confirmed, *tx)
 		if err = bt.Save(st); err != nil {
 			return
 		}
@@ -823,9 +838,12 @@ func FinishProposerTransaction(st *storage.LevelDBBackend, blk block.Block, ptx 
 		}
 	}
 
-	raw, _ := json.Marshal(ptx.Transaction)
-	bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.Confirmed, ptx.Transaction, raw)
+	bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.Confirmed, ptx.Transaction)
 	if err = bt.Save(st); err != nil {
+		return
+	}
+
+	if _, err = block.SaveTransactionPool(st, ptx.Transaction); err != nil {
 		return
 	}
 

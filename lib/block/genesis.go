@@ -117,9 +117,12 @@ func MakeGenesisBlock(st *storage.LevelDBBackend, genesisAccount BlockAccount, c
 		return
 	}
 
-	raw, _ := tx.Serialize()
-	bt := NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.Confirmed, tx, raw)
+	bt := NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.Confirmed, tx)
 	if err = bt.Save(st); err != nil {
+		return
+	}
+
+	if _, err = SaveTransactionPool(st, tx); err != nil {
 		return
 	}
 

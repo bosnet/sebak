@@ -8,13 +8,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gorilla/mux"
+	"github.com/stellar/go/keypair"
+	"github.com/stretchr/testify/require"
+
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/version"
-	"github.com/gorilla/mux"
-	"github.com/stellar/go/keypair"
-	"github.com/stretchr/testify/require"
 )
 
 func TestAPIGetNodeInfoHandler(t *testing.T) {
@@ -74,8 +75,7 @@ func TestAPIGetNodeInfoHandler(t *testing.T) {
 	ts := httptest.NewServer(router)
 	defer ts.Close()
 
-	body, err := request(ts, GetNodeInfoPattern, false)
-	require.NoError(t, err)
+	body := request(ts, GetNodeInfoPattern, false)
 	data, err := ioutil.ReadAll(bufio.NewReader(body))
 	body.Close()
 
@@ -94,6 +94,7 @@ func TestAPIGetNodeInfoHandler(t *testing.T) {
 	require.Equal(t, latestBlock.Height, receivedNodeInfo.Block.Height)
 	require.Equal(t, latestBlock.Hash, receivedNodeInfo.Block.Hash)
 	require.Equal(t, latestBlock.TotalTxs, receivedNodeInfo.Block.TotalTxs)
+	require.Equal(t, latestBlock.TotalOps, receivedNodeInfo.Block.TotalOps)
 
 	js, _ := json.Marshal(policy)
 	rjs, _ := json.Marshal(receivedNodeInfo.Policy)
@@ -102,10 +103,9 @@ func TestAPIGetNodeInfoHandler(t *testing.T) {
 	// udpate localNode state
 	localNode.SetBooting()
 
-	body, err = request(ts, GetNodeInfoPattern, false)
-	require.NoError(t, err)
+	body = request(ts, GetNodeInfoPattern, false)
+	defer body.Close()
 	data, err = ioutil.ReadAll(bufio.NewReader(body))
-	body.Close()
 
 	receivedNodeInfo, _ = node.NewNodeInfoFromJSON(data)
 	require.Equal(t, localNode.State(), receivedNodeInfo.Node.State)

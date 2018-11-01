@@ -19,7 +19,6 @@ const (
 	NodeItemBlock            NodeItemDataType = "block"
 	NodeItemBlockHeader      NodeItemDataType = "block-header"
 	NodeItemBlockTransaction NodeItemDataType = "block-transaction"
-	NodeItemBlockOperation   NodeItemDataType = "block-operation"
 	NodeItemTransaction      NodeItemDataType = "transaction"
 	NodeItemError            NodeItemDataType = "error"
 )
@@ -122,11 +121,14 @@ func (nh NetworkHandlerNode) GetBlocksHandler(w http.ResponseWriter, r *http.Req
 		if options.Mode == GetBlocksOptionsModeFull {
 			var err error
 			var tx block.BlockTransaction
-			var op block.BlockOperation
+			var tp block.TransactionPool
 
 			if tx, err = block.GetBlockTransaction(nh.storage, b.ProposerTransaction); err != nil {
 				nh.renderNodeItem(w, NodeItemError, err)
+			} else if tp, err = block.GetTransactionPool(nh.storage, tx.Hash); err != nil {
+				nh.renderNodeItem(w, NodeItemError, err)
 			} else {
+				tx.Message = tp.Message
 				nh.renderNodeItem(w, NodeItemBlockTransaction, tx)
 			}
 			for _, t := range b.Transactions {
@@ -135,14 +137,6 @@ func (nh NetworkHandlerNode) GetBlocksHandler(w http.ResponseWriter, r *http.Req
 					continue
 				}
 				nh.renderNodeItem(w, NodeItemBlockTransaction, tx)
-
-				for _, opHash := range tx.Operations {
-					if op, err = block.GetBlockOperation(nh.storage, opHash); err != nil {
-						nh.renderNodeItem(w, NodeItemError, err)
-						continue
-					}
-					nh.renderNodeItem(w, NodeItemBlockOperation, op)
-				}
 			}
 		}
 	}
@@ -177,10 +171,6 @@ func UnmarshalNodeItemResponse(d []byte) (itemType NodeItemDataType, b interface
 		b = t
 	case NodeItemBlockTransaction:
 		var t block.BlockTransaction
-		err = unmarshal(&t)
-		b = t
-	case NodeItemBlockOperation:
-		var t block.BlockOperation
 		err = unmarshal(&t)
 		b = t
 	case NodeItemTransaction:

@@ -48,25 +48,9 @@ func (nh NetworkHandlerNode) GetNodeTransactionsHandler(w http.ResponseWriter, r
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("X-SEBAK-RESULT-COUNT", string(len(hashes)))
 
-	unknown := map[string]struct{}{}
-
-	// check in `Pool`
+	// check in `block.TransactionPool`
 	for _, hash := range hashes {
-		if tx, found := nh.transactionPool.Get(hash); !found {
-			unknown[hash] = struct{}{}
-			continue
-		} else {
-			nh.renderNodeItem(w, NodeItemTransaction, tx)
-		}
-	}
-
-	// check in `BlockTransaction`
-	for _, hash := range hashes {
-		if _, found := unknown[hash]; !found {
-			continue
-		}
-
-		if exists, err := block.ExistsBlockTransaction(nh.storage, hash); err != nil {
+		if exists, err := block.ExistsTransactionPool(nh.storage, hash); err != nil {
 			nh.renderNodeItem(w, NodeItemError, err)
 			return
 		} else if !exists {
@@ -74,7 +58,7 @@ func (nh NetworkHandlerNode) GetNodeTransactionsHandler(w http.ResponseWriter, r
 			continue
 		}
 
-		btx, err := block.GetBlockTransaction(nh.storage, hash)
+		btx, err := block.GetTransactionPool(nh.storage, hash)
 		if err != nil {
 			nh.renderNodeItem(w, NodeItemError, err)
 			return

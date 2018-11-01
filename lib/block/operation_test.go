@@ -3,12 +3,12 @@ package block
 import (
 	"testing"
 
-	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/storage"
 
-	"boscoin.io/sebak/lib/transaction"
 	"github.com/stretchr/testify/require"
+
+	"boscoin.io/sebak/lib/transaction"
 )
 
 func TestNewBlockOperationFromOperation(t *testing.T) {
@@ -102,7 +102,7 @@ func TestBlockOperationSaveByTransaction(t *testing.T) {
 
 	_, tx := transaction.TestMakeTransaction(networkID, 10)
 	block := TestMakeNewBlockWithPrevBlock(GetLatestBlock(st), []string{tx.GetHash()})
-	bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, block.Confirmed, tx, common.MustJSONMarshal(tx))
+	bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, block.Confirmed, tx)
 	err := bt.Save(st)
 	require.NoError(t, err)
 
