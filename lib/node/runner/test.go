@@ -93,32 +93,6 @@ func GetFreezingTransaction(kpSource *keypair.Full, sequenceID uint64, amount ui
 	}
 }
 
-func GetUnfreezingRequestTransaction(kpSource *keypair.Full, sequenceID uint64) (transaction.Transaction, []byte) {
-	tx := transaction.MakeTransactionUnfreezingRequest(networkID, kpSource)
-	tx.B.SequenceID = sequenceID
-	tx.Sign(kpSource, networkID)
-
-	if txByte, err := tx.Serialize(); err != nil {
-		panic(err)
-	} else {
-		return tx, txByte
-	}
-}
-
-func GetUnfreezingTransaction(kpSource *keypair.Full, kpTarget *keypair.Full, sequenceID uint64, amount uint64) (transaction.Transaction, []byte) {
-	unfreezingAmount := common.Amount(amount)
-
-	tx := transaction.MakeTransactionUnfreezing(networkID, kpSource, kpTarget.Address(), unfreezingAmount)
-	tx.B.SequenceID = sequenceID
-	tx.Sign(kpSource, networkID)
-
-	if txByte, err := tx.Serialize(); err != nil {
-		panic(err)
-	} else {
-		return tx, txByte
-	}
-}
-
 func GenerateBallot(proposer *node.LocalNode, basis voting.Basis, tx transaction.Transaction, ballotState ballot.State, sender *node.LocalNode, conf common.Config) *ballot.Ballot {
 	b := ballot.NewBallot(sender.Address(), proposer.Address(), basis, []string{tx.GetHash()})
 	b.SetVote(ballot.StateINIT, voting.YES)

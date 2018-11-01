@@ -299,21 +299,6 @@ func ValidateOp(st *storage.LevelDBBackend, source *block.BlockAccount, op opera
 				return errors.FrozenAccountMustWithdrawEverything
 			}
 		}
-	case operation.TypeUnfreezingRequest:
-		if _, ok := op.B.(operation.UnfreezeRequest); !ok {
-			return errors.TypeOperationBodyNotMatched
-		}
-		// Unfreezing should be done from a frozen account
-		if source.Linked == "" {
-			return errors.UnfreezingFromInvalidAccount
-		}
-		// Repeated unfreeze request shoud be blocked after unfreeze request saved
-		iterFunc, closeFunc := block.GetBlockOperationsBySource(st, source.Address, nil)
-		bo, _, _ := iterFunc()
-		closeFunc()
-		if bo.Type == operation.TypeUnfreezingRequest {
-			return errors.UnfreezingRequestAlreadyReceived
-		}
 	case operation.TypeCongressVoting, operation.TypeCongressVotingResult:
 		// Nothing to do
 		return

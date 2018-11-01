@@ -119,24 +119,6 @@ func (suite *TestSuite) TestIsWellFormedTransactionWithLowerFeeSuite() {
 		err = tx.IsWellFormed(networkID, suite.conf)
 		require.NoError(suite.T(), err)
 	}
-
-	{ // with UnfreezeRequest, it is not zero fee
-		kp, tx := TestMakeTransaction(networkID, 3)
-
-		opb := operation.NewUnfreezeRequest()
-		op := operation.Operation{
-			H: operation.Header{Type: operation.TypeUnfreezingRequest},
-			B: opb,
-		}
-		tx.B.Operations = append(tx.B.Operations, op)
-		tx.B.Fee = common.BaseFee * 4
-		tx.Sign(kp, networkID)
-		require.Equal(suite.T(), tx.B.Fee, common.BaseFee*4)
-		require.Equal(suite.T(), len(tx.B.Operations), 4)
-
-		err = tx.IsWellFormed(networkID, suite.conf)
-		require.NoError(suite.T(), err)
-	}
 }
 
 func (suite *TestSuite) TestIsWellFormedTransactionWithInvalidSourceAddressSuite() {
