@@ -91,4 +91,4 @@ The `ISAAC` is a consensus protocol based on `PBFT`.
 1. It goes to `INIT` state with height + 1 and round 0.
 
 ## Transaction Protocol
-1. [`Transaction Protocol`](./[tech_doc]how_to_transactions_are_shared.md) is a protocol for sharing transactions between the nodes.
+1. [`Transaction Protocol`](./[tech_doc]how_transactions_are_shared.md) is a protocol for sharing transactions between the nodes.
