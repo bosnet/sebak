@@ -162,12 +162,6 @@ func finishOperation(st *storage.LevelDBBackend, pool *transaction.PendingPool, 
 	case operation.TypeCongressVoting, operation.TypeCongressVotingResult:
 		//Nothing to do
 		return
-	case operation.TypeUnfreezingRequest:
-		pop, ok := op.B.(operation.UnfreezeRequest)
-		if !ok {
-			return errors.UnknownOperationType
-		}
-		return finishUnfreezeRequest(st, source, pop, log)
 	default:
 		err = errors.UnknownOperationType
 		return
@@ -344,9 +338,5 @@ func finishInflation(st *storage.LevelDBBackend, opb operation.Inflation, log lo
 		return
 	}
 
-	return
-}
-
-func finishUnfreezeRequest(st *storage.LevelDBBackend, source string, opb operation.UnfreezeRequest, log logging.Logger) (err error) {
 	return
 }
