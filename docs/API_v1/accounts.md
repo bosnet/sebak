@@ -1,7 +1,7 @@
 # Group Accounts
 Account API
 
-## Account Details [/v1/accounts/{address}]
+## Account Details [/api/v1/accounts/{address}]
 <p> In the BOScoin network, users interact by using accounts </p>
 
 + Parameters
@@ -24,7 +24,7 @@ Account API
     + Attributes (Problem)
     
 
-## Transactions for Account [/v1/accounts/{address}/transactions?limit={limit}&reverse={reverse}&cursor={cursor}]
+## Transactions for Account [/api/v1/accounts/{address}/transactions?limit={limit}&reverse={reverse}&cursor={cursor}]
 
 + Parameters
 
@@ -51,7 +51,7 @@ Account API
     + Attributes (Problem)
 
 
-## Operations for Account [/v1/accounts/{address}/operations?limit={limit}&reverse={reverse}&cursor={cursor}]
+## Operations for Account [/api/v1/accounts/{address}/operations?limit={limit}&reverse={reverse}&cursor={cursor}]
 <p> Retrieve all operations that were included in valid transactions that affected by the account </p>
 
 <p> Streaming mode supported with header "Accept": "text/event-stream" </p>
