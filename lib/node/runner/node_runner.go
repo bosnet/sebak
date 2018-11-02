@@ -427,13 +427,14 @@ func (nr *NodeRunner) handleBallotMessage(message common.NetworkMessage) (err er
 	nr.log.Debug("got ballot", "message", message.Head(50))
 
 	baseChecker := &BallotChecker{
-		DefaultChecker: common.DefaultChecker{Funcs: nr.handleBaseBallotCheckerFuncs},
-		NodeRunner:     nr,
-		LocalNode:      nr.localNode,
-		NetworkID:      nr.networkID,
-		Message:        message,
-		Log:            nr.Log(),
-		VotingHole:     voting.NOTYET,
+		DefaultChecker:       common.DefaultChecker{Funcs: nr.handleBaseBallotCheckerFuncs},
+		NodeRunner:           nr,
+		LocalNode:            nr.localNode,
+		NetworkID:            nr.networkID,
+		Message:              message,
+		Log:                  nr.Log(),
+		VotingHole:           voting.NOTYET,
+		LatestUpdatedSources: make(map[string]struct{}),
 	}
 	err = common.RunChecker(baseChecker, nr.handleBallotCheckerDeferFunc)
 	if err != nil {
@@ -454,15 +455,16 @@ func (nr *NodeRunner) handleBallotMessage(message common.NetworkMessage) (err er
 	}
 
 	checker := &BallotChecker{
-		DefaultChecker: common.DefaultChecker{Funcs: checkerFuncs},
-		NodeRunner:     nr,
-		LocalNode:      nr.localNode,
-		NetworkID:      nr.networkID,
-		Message:        message,
-		Ballot:         baseChecker.Ballot,
-		VotingHole:     baseChecker.VotingHole,
-		IsNew:          baseChecker.IsNew,
-		Log:            baseChecker.Log,
+		DefaultChecker:       common.DefaultChecker{Funcs: checkerFuncs},
+		NodeRunner:           nr,
+		LocalNode:            nr.localNode,
+		NetworkID:            nr.networkID,
+		Message:              message,
+		Ballot:               baseChecker.Ballot,
+		VotingHole:           baseChecker.VotingHole,
+		IsNew:                baseChecker.IsNew,
+		Log:                  baseChecker.Log,
+		LatestUpdatedSources: baseChecker.LatestUpdatedSources,
 	}
 	err = common.RunChecker(checker, nr.handleBallotCheckerDeferFunc)
 	if err != nil {
@@ -531,7 +533,6 @@ func (nr *NodeRunner) TransitISAACState(round voting.Basis, ballotState ballot.S
 var NewBallotTransactionCheckerFuncs = []common.CheckerFunc{
 	IsNew,
 	BallotTransactionsSameSource,
-	BallotTransactionsSourceCheck,
 }
 
 func (nr *NodeRunner) proposeNewBallot(round uint64) (ballot.Ballot, error) {

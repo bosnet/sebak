@@ -42,16 +42,17 @@ func (c CheckerStopCloseConsensus) Checker() common.Checker {
 type BallotChecker struct {
 	common.DefaultChecker
 
-	NodeRunner         *NodeRunner
-	LocalNode          *node.LocalNode
-	NetworkID          []byte
-	Message            common.NetworkMessage
-	IsNew              bool
-	Ballot             ballot.Ballot
-	VotingHole         voting.Hole
-	Result             consensus.RoundVoteResult
-	VotingFinished     bool
-	FinishedVotingHole voting.Hole
+	NodeRunner           *NodeRunner
+	LocalNode            *node.LocalNode
+	NetworkID            []byte
+	Message              common.NetworkMessage
+	IsNew                bool
+	Ballot               ballot.Ballot
+	VotingHole           voting.Hole
+	Result               consensus.RoundVoteResult
+	VotingFinished       bool
+	FinishedVotingHole   voting.Hole
+	LatestUpdatedSources map[string]struct{}
 
 	Log logging.Logger
 }
@@ -395,6 +396,10 @@ func insertMissingTransaction(checker *BallotChecker) (err error) {
 			return
 		}
 
+		if err = ValidateTx(checker.NodeRunner.Storage(), tx); err != nil {
+			return
+		}
+
 		receivedTransaction = append(receivedTransaction, tx)
 	}
 
@@ -433,7 +438,6 @@ var INITBallotTransactionCheckerFuncs = []common.CheckerFunc{
 	IsNew,
 	CheckMissingTransaction,
 	BallotTransactionsSameSource,
-	BallotTransactionsSourceCheck,
 	BallotTransactionsOperationBodyCollectTxFee,
 	BallotTransactionsAllValid,
 }
@@ -564,8 +568,6 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) error {
 	}
 
 	basis := checker.Ballot.VotingBasis()
-	basisIndex := basis.Index()
-	proposer := checker.Ballot.Proposer()
 
 	var err error
 	switch checker.FinishedVotingHole {
@@ -576,7 +578,7 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) error {
 		checker.NodeRunner.TransitISAACState(checker.Ballot.VotingBasis(), ballot.StateALLCONFIRM)
 		checker.NodeRunner.Consensus().SetLatestVotingBasis(basis)
 
-		reorganizeTransactionPool(checker, basisIndex, proposer)
+		reorganizeTransactionPool(checker)
 		checker.NodeRunner.Consensus().RemoveRunningRoundsWithSameHeight(basis.Height)
 
 		err = NewCheckerStopCloseConsensus(checker, "ballot got consensus and will be stored")
@@ -606,11 +608,24 @@ func saveBlock(checker *BallotChecker) error {
 		return err
 	}
 
+	proposedTransactions, err := getProposedTransactions(
+		bs,
+		checker.Ballot.B.Proposed.Transactions,
+		checker.NodeRunner.TransactionPool,
+	)
+	if err != nil {
+		return err
+	}
+
+	for _, tx := range proposedTransactions {
+		checker.LatestUpdatedSources[tx.B.Source] = struct{}{}
+	}
+
 	var theBlock *block.Block
-	theBlock, err = finishBallot(
+	theBlock, err = finishBallotWithProposedTxs(
 		bs,
 		checker.Ballot,
-		checker.NodeRunner.TransactionPool,
+		proposedTransactions,
 		checker.Log,
 		checker.NodeRunner.Log(),
 	)
@@ -633,13 +648,26 @@ func saveBlock(checker *BallotChecker) error {
 	return nil
 }
 
-func reorganizeTransactionPool(checker *BallotChecker, basisIndex string, proposer string) error {
+func reorganizeTransactionPool(checker *BallotChecker) error {
+	basisIndex := checker.Ballot.VotingBasis().Index()
+	proposer := checker.Ballot.Proposer()
+	transactionPool := checker.NodeRunner.TransactionPool
 	rr, found := checker.NodeRunner.Consensus().RunningRounds[basisIndex]
 	if found {
-		checker.NodeRunner.TransactionPool.Remove(rr.Transactions[proposer]...)
+		transactionPool.Remove(rr.Transactions[proposer]...)
 	}
 
-	// [TODO] TxValidate() again
+	invalids := []string{}
+	for source := range checker.LatestUpdatedSources {
+		tx, found := transactionPool.GetFromSource(source)
+		if !found {
+			continue
+		}
+		if err := ValidateTx(checker.NodeRunner.Storage(), tx); err != nil {
+			invalids = append(invalids, tx.GetHash())
+		}
+	}
+	transactionPool.Remove(invalids...)
 
 	return nil
 }
