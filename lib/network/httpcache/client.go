@@ -87,6 +87,7 @@ func (c *Client) handleCache(next http.Handler, w http.ResponseWriter, r *http.R
 				for k, v := range resp.Header {
 					w.Header().Set(k, strings.Join(v, ","))
 				}
+				w.WriteHeader(resp.StatusCode)
 				w.Write(resp.Value)
 				return true
 			}
@@ -103,6 +104,7 @@ func (c *Client) handleCache(next http.Handler, w http.ResponseWriter, r *http.R
 		if caching {
 			resp := &Response{
 				Value:      value,
+				StatusCode: statusCode,
 				Header:     result.Header,
 				Expiration: expiration,
 			}

@@ -13,6 +13,7 @@ type Adapter interface {
 
 type Response struct {
 	Value      []byte
+	StatusCode int
 	Header     http.Header
 	Expiration *time.Time
 }
