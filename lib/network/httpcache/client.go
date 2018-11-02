@@ -8,6 +8,10 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	logging "github.com/inconshreveable/log15"
+
+	"boscoin.io/sebak/lib/common"
 )
 
 type Client struct {
@@ -15,6 +19,7 @@ type Client struct {
 	ttl         *time.Duration
 	methods     map[string]bool
 	statusCodes map[int]*time.Duration
+	logger      logging.Logger
 }
 
 type ClientOption func(c *Client) error
@@ -24,6 +29,7 @@ func NewClient(opts ...ClientOption) (*Client, error) {
 		methods:     map[string]bool{"GET": true},
 		statusCodes: map[int]*time.Duration{},
 		ttl:         nil,
+		logger:      common.NopLogger(),
 	}
 
 	for _, opt := range opts {
@@ -69,9 +75,17 @@ func WithStatusCode(code int, ttl time.Duration) ClientOption {
 	}
 }
 
+func WithLogger(logger logging.Logger) ClientOption {
+	return func(c *Client) error {
+		c.logger = logger
+		return nil
+	}
+}
+
 func (c *Client) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if ok := c.handleCache(next, w, r); !ok {
+			c.logger.Debug("page not cached", "url", r.URL.String())
 			next.ServeHTTP(w, r)
 		}
 	})
@@ -89,6 +103,7 @@ func (c *Client) handleCache(next http.Handler, w http.ResponseWriter, r *http.R
 				}
 				w.WriteHeader(resp.StatusCode)
 				w.Write(resp.Value)
+				c.logger.Debug("return cache", "url", r.URL.String())
 				return true
 			}
 			c.adapter.Remove(key)
@@ -109,6 +124,7 @@ func (c *Client) handleCache(next http.Handler, w http.ResponseWriter, r *http.R
 				Expiration: expiration,
 			}
 			c.adapter.Set(key, resp, expiration)
+			c.logger.Debug("page cached", "url", r.URL.String(), "code", statusCode, "expir", expiration)
 		}
 		for k, v := range result.Header {
 			w.Header().Set(k, strings.Join(v, ","))
