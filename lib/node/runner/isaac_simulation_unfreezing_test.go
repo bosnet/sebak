@@ -80,8 +80,6 @@ func TestUnfreezingSimulation(t *testing.T) {
 	_, err = nr.proposeNewBallot(round)
 	require.NoError(t, err)
 
-	require.False(t, nr.TransactionPool.Has(tx6.GetHash()))
-
 	ba, _ = block.GetBlockAccount(st, kpFrozenAccount.Address())
 	require.Equal(t, uint64(ba.Balance), uint64(99999990000))
 
@@ -104,10 +102,11 @@ func TestUnfreezingSimulation(t *testing.T) {
 	// Generate unfreezing transaction
 	tx10, _ := GetUnfreezingTransaction(kpFrozenAccount, kpNewAccount, uint64(1), uint64(99999980000))
 
-	b10, _ := MakeConsensusAndBlock(t, tx10, nr, nodes, proposer)
+	err = ValidateTx(nr.Storage(), tx10)
+	require.Error(t, err)
+
 	ba, _ = block.GetBlockAccount(st, kpFrozenAccount.Address())
 
-	require.Equal(t, b10.Height, uint64(9))
 	require.Equal(t, uint64(ba.Balance), uint64(99999990000))
 }
 
