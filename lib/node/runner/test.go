@@ -1,6 +1,8 @@
 package runner
 
 import (
+	"testing"
+
 	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
@@ -10,6 +12,7 @@ import (
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/transaction"
 	"boscoin.io/sebak/lib/voting"
+	"github.com/stretchr/testify/require"
 )
 
 var networkID []byte = []byte("sebak-test-network")
@@ -188,4 +191,50 @@ func createNodeRunnerForTesting(n int, conf common.Config, recv chan struct{}) (
 	nr.isaacStateManager.blockTimeBuffer = 0
 
 	return nr, nodes, connectionManager
+}
+
+func MakeConsensusAndBlock(t *testing.T, tx transaction.Transaction, nr *NodeRunner, nodes []*node.LocalNode, proposer *node.LocalNode) (block.Block, error) {
+
+	nr.TransactionPool.Add(tx)
+
+	// Generate proposed ballot in nodeRunner
+	round := uint64(0)
+	_, err := nr.proposeNewBallot(round)
+	require.NoError(t, err)
+
+	b := nr.Consensus().LatestBlock()
+	basis := voting.Basis{
+		Round:     round,
+		Height:    b.Height,
+		BlockHash: b.Hash,
+		TotalTxs:  b.TotalTxs,
+	}
+
+	conf := common.NewConfig()
+
+	// Check that the transaction is in RunningRounds
+
+	ballotSIGN1 := GenerateBallot(proposer, basis, tx, ballot.StateSIGN, nodes[1], conf)
+	err = ReceiveBallot(nr, ballotSIGN1)
+	require.NoError(t, err)
+
+	ballotSIGN2 := GenerateBallot(proposer, basis, tx, ballot.StateSIGN, nodes[2], conf)
+	err = ReceiveBallot(nr, ballotSIGN2)
+	require.NoError(t, err)
+
+	rr := nr.Consensus().RunningRounds[basis.Index()]
+	require.Equal(t, 2, len(rr.Voted[proposer.Address()].GetResult(ballot.StateSIGN)))
+
+	ballotACCEPT1 := GenerateBallot(proposer, basis, tx, ballot.StateACCEPT, nodes[1], conf)
+	err = ReceiveBallot(nr, ballotACCEPT1)
+	require.NoError(t, err)
+
+	ballotACCEPT2 := GenerateBallot(proposer, basis, tx, ballot.StateACCEPT, nodes[2], conf)
+	err = ReceiveBallot(nr, ballotACCEPT2)
+
+	blk := nr.Consensus().LatestBlock()
+
+	require.Equal(t, proposer.Address(), blk.Proposer)
+	require.Equal(t, 1, len(blk.Transactions))
+	return blk, err
 }
