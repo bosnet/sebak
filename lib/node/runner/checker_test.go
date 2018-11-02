@@ -198,6 +198,7 @@ func (g *getMissingTransactionTesting) MakeBallot(numberOfTxs int) (blt *ballot.
 		kpA := keypair.Random()
 		accountA := block.NewBlockAccount(kpA.Address(), common.Amount(common.BaseReserve)*2)
 		accountA.MustSave(g.proposerNR.Storage())
+		accountA.MustSave(g.consensusNR.Storage())
 
 		kpB := keypair.Random()
 
@@ -210,8 +211,12 @@ func (g *getMissingTransactionTesting) MakeBallot(numberOfTxs int) (blt *ballot.
 		txs = append(txs, tx)
 
 		// inject txs to `TransactionPool`
+		err := ValidateTx(g.proposerNR.Storage(), tx)
+		if err != nil {
+			panic(err)
+		}
 		g.proposerNR.TransactionPool.Add(tx)
-		_, err := block.SaveTransactionPool(g.proposerNR.Storage(), tx)
+		_, err = block.SaveTransactionPool(g.proposerNR.Storage(), tx)
 		if err != nil {
 			panic(err)
 		}
@@ -258,13 +263,14 @@ func TestGetMissingTransactionAllMissing(t *testing.T) {
 	}
 
 	baseChecker := &BallotChecker{
-		DefaultChecker: common.DefaultChecker{Funcs: DefaultHandleBaseBallotCheckerFuncs},
-		NodeRunner:     g.consensusNR,
-		LocalNode:      g.consensusNR.Node(),
-		NetworkID:      g.consensusNR.NetworkID(),
-		Message:        ballotMessage,
-		Log:            g.consensusNR.Log(),
-		VotingHole:     voting.NOTYET,
+		DefaultChecker:       common.DefaultChecker{Funcs: DefaultHandleBaseBallotCheckerFuncs},
+		NodeRunner:           g.consensusNR,
+		LocalNode:            g.consensusNR.Node(),
+		NetworkID:            g.consensusNR.NetworkID(),
+		Message:              ballotMessage,
+		Log:                  g.consensusNR.Log(),
+		VotingHole:           voting.NOTYET,
+		LatestUpdatedSources: make(map[string]struct{}),
 	}
 	err := common.RunChecker(baseChecker, common.DefaultDeferFunc)
 	require.NoError(t, err)
@@ -277,14 +283,15 @@ func TestGetMissingTransactionAllMissing(t *testing.T) {
 	}
 
 	checker := &BallotChecker{
-		DefaultChecker: common.DefaultChecker{Funcs: checkerFuncs},
-		NodeRunner:     baseChecker.NodeRunner,
-		LocalNode:      baseChecker.LocalNode,
-		NetworkID:      baseChecker.NetworkID,
-		Message:        ballotMessage,
-		Ballot:         baseChecker.Ballot,
-		VotingHole:     voting.NOTYET,
-		Log:            baseChecker.Log,
+		DefaultChecker:       common.DefaultChecker{Funcs: checkerFuncs},
+		NodeRunner:           baseChecker.NodeRunner,
+		LocalNode:            baseChecker.LocalNode,
+		NetworkID:            baseChecker.NetworkID,
+		Message:              ballotMessage,
+		Ballot:               baseChecker.Ballot,
+		VotingHole:           voting.NOTYET,
+		Log:                  baseChecker.Log,
+		LatestUpdatedSources: baseChecker.LatestUpdatedSources,
 	}
 
 	err = common.RunChecker(checker, common.DefaultDeferFunc)

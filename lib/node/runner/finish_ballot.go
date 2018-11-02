@@ -12,23 +12,41 @@ import (
 )
 
 func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *transaction.Pool, log, infoLog logging.Logger) (*block.Block, error) {
+	var proposedTransactions []*transaction.Transaction
+	var err error
+	proposedTransactions, err = getProposedTransactions(
+		st,
+		b.B.Proposed.Transactions,
+		transactionPool,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	var blk *block.Block
+	blk, err = finishBallotWithProposedTxs(
+		st,
+		b,
+		proposedTransactions,
+		log,
+		infoLog,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return blk, nil
+}
+
+func finishBallotWithProposedTxs(st *storage.LevelDBBackend, b ballot.Ballot, proposedTransactions []*transaction.Transaction, log, infoLog logging.Logger) (*block.Block, error) {
 	var err error
 	var isValid bool
 	if isValid, err = isValidRound(st, b.VotingBasis(), infoLog); err != nil || !isValid {
 		return nil, err
 	}
 
-	transactionCache := NewTransactionCache(st, transactionPool)
-
 	var nOps int
-	for _, hash := range b.B.Proposed.Transactions {
-		tx, found, err := transactionCache.Get(hash)
-		if err != nil {
-			return nil, err
-		}
-		if !found {
-			return nil, errors.TransactionNotFound
-		}
+	for _, tx := range proposedTransactions {
 		nOps += len(tx.B.Operations)
 	}
 
@@ -60,20 +78,6 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 		"proposer", blk.Proposer,
 	)
 
-	pTxHashes := b.B.Proposed.Transactions
-	proposedTransactions := make([]*transaction.Transaction, 0, len(pTxHashes))
-	for _, hash := range pTxHashes {
-		tx, found, err := transactionCache.Get(hash)
-		if err != nil {
-			return nil, err
-		}
-		if !found {
-			err = errors.TransactionNotFound
-			return nil, err
-		}
-		proposedTransactions = append(proposedTransactions, &tx)
-	}
-
 	if err = FinishTransactions(*blk, proposedTransactions, st); err != nil {
 		return nil, err
 	}
@@ -84,6 +88,23 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 	}
 
 	return blk, nil
+}
+
+func getProposedTransactions(st *storage.LevelDBBackend, pTxHashes []string, transactionPool *transaction.Pool) ([]*transaction.Transaction, error) {
+	proposedTransactions := make([]*transaction.Transaction, 0, len(pTxHashes))
+	var err error
+	for _, hash := range pTxHashes {
+		tx, found := transactionPool.Get(hash)
+		if !found {
+			var tp block.TransactionPool
+			if tp, err = block.GetTransactionPool(st, hash); err != nil {
+				return nil, errors.TransactionNotFound
+			}
+			tx = tp.Transaction()
+		}
+		proposedTransactions = append(proposedTransactions, &tx)
+	}
+	return proposedTransactions, nil
 }
 
 func FinishTransactions(blk block.Block, transactions []*transaction.Transaction, st *storage.LevelDBBackend) (err error) {

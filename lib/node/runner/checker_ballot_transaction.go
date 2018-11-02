@@ -134,36 +134,6 @@ func BallotTransactionsSameSource(c common.Checker, args ...interface{}) (err er
 	return
 }
 
-// BallotTransactionsSourceCheck calls `Transaction.Validate()`.
-func BallotTransactionsSourceCheck(c common.Checker, args ...interface{}) (err error) {
-	checker := c.(*BallotTransactionChecker)
-
-	var tx transaction.Transaction
-	var found bool
-	var validTransactions []string
-	for _, hash := range checker.ValidTransactions {
-		if tx, found, err = checker.transactionCache.Get(hash); err != nil {
-			return
-		} else if !found {
-			err = errors.TransactionNotFound
-			return
-		}
-
-		if err = ValidateTx(checker.NodeRunner.Storage(), tx); err != nil {
-			if !checker.CheckTransactionsOnly {
-				return
-			}
-			continue
-		}
-		validTransactions = append(validTransactions, hash)
-	}
-
-	err = nil
-	checker.setValidTransactions(validTransactions)
-
-	return
-}
-
 // BallotTransactionsOperationBodyCollectTxFee validates the
 // `BallotTransactionsOperationBodyCollectTxFee.Amount` is matched with the
 // collected fee of all transactions.
