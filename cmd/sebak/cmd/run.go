@@ -10,6 +10,7 @@ import (
 	"time"
 
 	logging "github.com/inconshreveable/log15"
+	isatty "github.com/mattn/go-isatty"
 	"github.com/oklog/run"
 	"github.com/spf13/cobra"
 	"github.com/stellar/go/keypair"
@@ -352,7 +353,11 @@ func parseFlagsNode() {
 	var logFormatter logging.Format
 	switch flagLogFormat {
 	case "terminal":
-		logFormatter = logging.TerminalFormat()
+		if isatty.IsTerminal(os.Stdout.Fd()) && len(flagLog) < 1 {
+			logFormatter = logging.TerminalFormat()
+		} else {
+			logFormatter = logging.LogfmtFormat()
+		}
 	case "json":
 		logFormatter = common.JsonFormatEx(false, true)
 	default:
