@@ -64,6 +64,20 @@ func GetCreateAccountTransaction(sequenceID uint64, amount uint64) (transaction.
 	}
 }
 
+func GetPaymentTransaction(kpSource *keypair.Full, target string, sequenceID uint64, amount uint64) (transaction.Transaction, []byte) {
+	balance := common.Amount(amount)
+
+	tx := transaction.MakeTransactionPayment(networkID, kpSource, target, balance)
+	tx.B.SequenceID = sequenceID
+	tx.Sign(kpSource, networkID)
+
+	if txByte, err := tx.Serialize(); err != nil {
+		panic(err)
+	} else {
+		return tx, txByte
+	}
+}
+
 func GetFreezingTransaction(kpSource *keypair.Full, sequenceID uint64, amount uint64) (transaction.Transaction, []byte, *keypair.Full) {
 	initialBalance := common.Amount(amount)
 	kpNewAccount := keypair.Random()
@@ -194,7 +208,6 @@ func createNodeRunnerForTesting(n int, conf common.Config, recv chan struct{}) (
 }
 
 func MakeConsensusAndBlock(t *testing.T, tx transaction.Transaction, nr *NodeRunner, nodes []*node.LocalNode, proposer *node.LocalNode) (block.Block, error) {
-
 	nr.TransactionPool.Add(tx)
 
 	// Generate proposed ballot in nodeRunner
