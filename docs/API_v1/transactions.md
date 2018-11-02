@@ -2,7 +2,7 @@
 Transactions API
 
 
-## Transactions [/v1/transactions]
+## Transactions [/api/v1/transactions]
 
 
 ### Payment transaction  [POST]
@@ -20,7 +20,7 @@ Transactions API
 
     + Attributes (Problem)
 
-## Transactions [/v1/transactions?limit={limit}&reverse={reverse}&cursor={cursor}]
+## Transactions [/api/v1/transactions?limit={limit}&reverse={reverse}&cursor={cursor}]
 + Parameters
     
     + limit: `100` (integer, optional)
@@ -42,7 +42,7 @@ Transactions API
 
     + Attributes (Problem)
 
-## Transaction [/v1/transactions/{hash}]
+## Transaction [/api/v1/transactions/{hash}]
 
 + Parameters
     
@@ -61,7 +61,7 @@ Transactions API
 
     + Attributes (Problem)
 
-## Operations for Trasaction [/v1/transactions/{hash}/operations?limit={limit}&reverse={reverse}&cursor={cursor}]
+## Operations for Trasaction [/api/v1/transactions/{hash}/operations?limit={limit}&reverse={reverse}&cursor={cursor}]
 
 + Parameters
     
