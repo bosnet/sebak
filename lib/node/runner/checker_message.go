@@ -108,7 +108,7 @@ func MessageHasSameSource(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*MessageChecker)
 
 	if checker.TransactionPool.IsSameSource(checker.Transaction.Source()) {
-		err = errors.TransactionSameSource
+		err = errors.TransactionSameSourceInPool
 		return
 	}
 
