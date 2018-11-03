@@ -465,6 +465,7 @@ func INITBallotValidateTransactions(c common.Checker, args ...interface{}) (err 
 		Ballot:         checker.Ballot,
 		Transactions:   checker.Ballot.Transactions(),
 		VotingHole:     voting.NOTYET,
+		transactions:   map[string]transaction.Transaction{},
 	}
 
 	err = common.RunChecker(transactionsChecker, common.DefaultDeferFunc)

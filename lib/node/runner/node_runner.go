@@ -12,6 +12,10 @@ import (
 	"net/http/pprof"
 	"time"
 
+	ghandlers "github.com/gorilla/handlers"
+	logging "github.com/inconshreveable/log15"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+
 	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
@@ -23,9 +27,6 @@ import (
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
 	"boscoin.io/sebak/lib/voting"
-	ghandlers "github.com/gorilla/handlers"
-	logging "github.com/inconshreveable/log15"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 var DefaultHandleBaseBallotCheckerFuncs = []common.CheckerFunc{
@@ -537,6 +538,7 @@ func (nr *NodeRunner) proposeNewBallot(round uint64) (ballot.Ballot, error) {
 		Transactions:          availableTransactions,
 		CheckTransactionsOnly: true,
 		VotingHole:            voting.NOTYET,
+		transactions:          map[string]transaction.Transaction{},
 	}
 
 	if err := common.RunChecker(transactionsChecker, common.DefaultDeferFunc); err != nil {
