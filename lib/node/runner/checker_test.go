@@ -78,7 +78,7 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 		tx.B.SequenceID = rootAccount.SequenceID
 		tx.Sign(rootKP, networkID)
 
-		runChecker(tx, errors.TransactionSameSource)
+		runChecker(tx, errors.TransactionSameSourceInBallot)
 
 		require.False(
 			t,

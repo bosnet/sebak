@@ -153,7 +153,7 @@ func BallotTransactionsSameSource(c common.Checker, args ...interface{}) (err er
 
 		if found := common.InStringMap(sources, tx.B.Source); found {
 			if !checker.CheckTransactionsOnly {
-				err = errors.TransactionSameSource
+				err = errors.TransactionSameSourceInBallot
 				return
 			}
 			continue
