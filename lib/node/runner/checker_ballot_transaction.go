@@ -28,12 +28,12 @@ type BallotTransactionChecker struct {
 	ValidTransactions     []string
 	validTransactionsMap  map[string]bool
 	CheckTransactionsOnly bool
-	transactions          map[string]transaction.Transaction
+	transactionsCache     map[string]transaction.Transaction
 }
 
 func (b *BallotTransactionChecker) getTransaction(hash string) (tx transaction.Transaction, found bool, err error) {
 	b.RLock()
-	tx, found = b.transactions[hash]
+	tx, found = b.transactionsCache[hash]
 	b.RUnlock()
 
 	if found {
@@ -45,7 +45,7 @@ func (b *BallotTransactionChecker) getTransaction(hash string) (tx transaction.T
 
 	tx, found = b.NodeRunner.TransactionPool.Get(hash)
 	if found {
-		b.transactions[hash] = tx
+		b.transactionsCache[hash] = tx
 		return
 	}
 
@@ -60,7 +60,7 @@ func (b *BallotTransactionChecker) getTransaction(hash string) (tx transaction.T
 		return
 	}
 	tx = tp.Transaction()
-	b.transactions[hash] = tx
+	b.transactionsCache[hash] = tx
 
 	return
 }
