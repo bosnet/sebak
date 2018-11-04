@@ -162,8 +162,6 @@ func finishCreateAccount(st *storage.LevelDBBackend, source string, op operation
 		return
 	}
 
-	log.Debug("new account created", "source", baSource, "target", baTarget)
-
 	return
 }
 
@@ -185,8 +183,6 @@ func finishPayment(st *storage.LevelDBBackend, source string, op operation.Payme
 	if err = baTarget.Save(st); err != nil {
 		return
 	}
-
-	log.Debug("payment done", "source", baSource, "target", baTarget, "amount", op.GetAmount())
 
 	return
 }
@@ -266,8 +262,5 @@ func finishInflation(st *storage.LevelDBBackend, opb operation.Inflation, log lo
 }
 
 func finishUnfreezeRequest(st *storage.LevelDBBackend, source string, opb operation.UnfreezeRequest, log logging.Logger) (err error) {
-
-	log.Debug("UnfreezeRequest done")
-
 	return
 }
