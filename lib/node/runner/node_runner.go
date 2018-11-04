@@ -556,7 +556,7 @@ func (nr *NodeRunner) proposeNewBallot(round uint64) (ballot.Ballot, error) {
 		Transactions:          availableTransactions,
 		CheckTransactionsOnly: true,
 		VotingHole:            voting.NOTYET,
-		transactionsCache:     map[string]transaction.Transaction{},
+		transactionCache:      NewTransactionCache(nr.Storage(), nr.TransactionPool),
 	}
 
 	if err := common.RunChecker(transactionsChecker, common.DefaultDeferFunc); err != nil {

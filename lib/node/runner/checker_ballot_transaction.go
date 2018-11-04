@@ -28,41 +28,7 @@ type BallotTransactionChecker struct {
 	ValidTransactions     []string
 	validTransactionsMap  map[string]bool
 	CheckTransactionsOnly bool
-	transactionsCache     map[string]transaction.Transaction
-}
-
-func (b *BallotTransactionChecker) getTransaction(hash string) (tx transaction.Transaction, found bool, err error) {
-	b.RLock()
-	tx, found = b.transactionsCache[hash]
-	b.RUnlock()
-
-	if found {
-		return
-	}
-
-	b.Lock()
-	defer b.Unlock()
-
-	tx, found = b.NodeRunner.TransactionPool.Get(hash)
-	if found {
-		b.transactionsCache[hash] = tx
-		return
-	}
-
-	if found, err = block.ExistsTransactionPool(b.NodeRunner.Storage(), hash); err != nil {
-		return
-	} else if !found {
-		return
-	}
-
-	var tp block.TransactionPool
-	if tp, err = block.GetTransactionPool(b.NodeRunner.Storage(), hash); err != nil {
-		return
-	}
-	tx = tp.Transaction()
-	b.transactionsCache[hash] = tx
-
-	return
+	transactionCache      *TransactionCache
 }
 
 func (checker *BallotTransactionChecker) InvalidTransactions() (invalids []string) {
@@ -121,7 +87,7 @@ func CheckMissingTransaction(c common.Checker, args ...interface{}) (err error) 
 	var found bool
 	var validTransactions []string
 	for _, hash := range checker.ValidTransactions {
-		if _, found, err = checker.getTransaction(hash); err != nil {
+		if _, found, err = checker.transactionCache.Get(hash); err != nil {
 			return
 		} else if !found {
 			continue
@@ -145,7 +111,7 @@ func BallotTransactionsSameSource(c common.Checker, args ...interface{}) (err er
 	var tx transaction.Transaction
 	var found bool
 	for _, hash := range checker.ValidTransactions {
-		if tx, found, err = checker.getTransaction(hash); err != nil {
+		if tx, found, err = checker.transactionCache.Get(hash); err != nil {
 			return
 		} else if !found {
 			continue
@@ -176,7 +142,7 @@ func BallotTransactionsSourceCheck(c common.Checker, args ...interface{}) (err e
 	var found bool
 	var validTransactions []string
 	for _, hash := range checker.ValidTransactions {
-		if tx, found, err = checker.getTransaction(hash); err != nil {
+		if tx, found, err = checker.transactionCache.Get(hash); err != nil {
 			return
 		} else if !found {
 			err = errors.TransactionNotFound
@@ -221,7 +187,7 @@ func BallotTransactionsOperationBodyCollectTxFee(c common.Checker, args ...inter
 		var tx transaction.Transaction
 		var found bool
 		for _, hash := range checker.Transactions {
-			if tx, found, err = checker.getTransaction(hash); err != nil {
+			if tx, found, err = checker.transactionCache.Get(hash); err != nil {
 				return
 			} else if !found {
 				err = errors.TransactionNotFound

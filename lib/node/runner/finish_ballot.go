@@ -18,9 +18,14 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 		return nil, err
 	}
 
+	transactionCache := NewTransactionCache(st, transactionPool)
+
 	var nOps int
 	for _, hash := range b.B.Proposed.Transactions {
-		tx, found := transactionPool.Get(hash)
+		tx, found, err := transactionCache.Get(hash)
+		if err != nil {
+			return nil, err
+		}
 		if !found {
 			return nil, errors.TransactionNotFound
 		}
@@ -58,7 +63,10 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 	pTxHashes := b.B.Proposed.Transactions
 	proposedTransactions := make([]*transaction.Transaction, 0, len(pTxHashes))
 	for _, hash := range pTxHashes {
-		tx, found := transactionPool.Get(hash)
+		tx, found, err := transactionCache.Get(hash)
+		if err != nil {
+			return nil, err
+		}
 		if !found {
 			err = errors.TransactionNotFound
 			return nil, err
@@ -140,12 +148,12 @@ func finishOperation(st *storage.LevelDBBackend, source string, op operation.Ope
 }
 
 func finishCreateAccount(st *storage.LevelDBBackend, source string, op operation.CreateAccount, log logging.Logger) (err error) {
-
-	var baSource, baTarget *block.BlockAccount
-	if baSource, err = block.GetBlockAccount(st, source); err != nil {
+	if _, err = block.GetBlockAccount(st, source); err != nil {
 		err = errors.BlockAccountDoesNotExists
 		return
 	}
+
+	var baTarget *block.BlockAccount
 	if baTarget, err = block.GetBlockAccount(st, op.TargetAddress()); err == nil {
 		err = errors.BlockAccountAlreadyExists
 		return
@@ -166,12 +174,12 @@ func finishCreateAccount(st *storage.LevelDBBackend, source string, op operation
 }
 
 func finishPayment(st *storage.LevelDBBackend, source string, op operation.Payment, log logging.Logger) (err error) {
-
-	var baSource, baTarget *block.BlockAccount
-	if baSource, err = block.GetBlockAccount(st, source); err != nil {
+	if _, err = block.GetBlockAccount(st, source); err != nil {
 		err = errors.BlockAccountDoesNotExists
 		return
 	}
+
+	var baTarget *block.BlockAccount
 	if baTarget, err = block.GetBlockAccount(st, op.TargetAddress()); err != nil {
 		err = errors.BlockAccountDoesNotExists
 		return

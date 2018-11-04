@@ -458,14 +458,17 @@ func INITBallotValidateTransactions(c common.Checker, args ...interface{}) (err 
 	}
 
 	transactionsChecker := &BallotTransactionChecker{
-		DefaultChecker:    common.DefaultChecker{Funcs: INITBallotTransactionCheckerFuncs},
-		NodeRunner:        checker.NodeRunner,
-		LocalNode:         checker.LocalNode,
-		NetworkID:         checker.NetworkID,
-		Ballot:            checker.Ballot,
-		Transactions:      checker.Ballot.Transactions(),
-		VotingHole:        voting.NOTYET,
-		transactionsCache: map[string]transaction.Transaction{},
+		DefaultChecker: common.DefaultChecker{Funcs: INITBallotTransactionCheckerFuncs},
+		NodeRunner:     checker.NodeRunner,
+		LocalNode:      checker.LocalNode,
+		NetworkID:      checker.NetworkID,
+		Ballot:         checker.Ballot,
+		Transactions:   checker.Ballot.Transactions(),
+		VotingHole:     voting.NOTYET,
+		transactionCache: NewTransactionCache(
+			checker.NodeRunner.Storage(),
+			checker.NodeRunner.TransactionPool,
+		),
 	}
 
 	err = common.RunChecker(transactionsChecker, common.DefaultDeferFunc)

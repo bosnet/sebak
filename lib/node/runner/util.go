@@ -1,11 +1,14 @@
 package runner
 
 import (
+	"sync"
+
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/storage"
+	"boscoin.io/sebak/lib/transaction"
 	"boscoin.io/sebak/lib/transaction/operation"
 	"boscoin.io/sebak/lib/version"
 )
@@ -124,4 +127,54 @@ func NewNodeInfo(nr *NodeRunner) node.NodeInfo {
 		Node:   nd,
 		Policy: policy,
 	}
+}
+
+type TransactionCache struct {
+	sync.RWMutex
+
+	st    *storage.LevelDBBackend
+	pool  *transaction.Pool
+	cache map[string]transaction.Transaction
+}
+
+func NewTransactionCache(st *storage.LevelDBBackend, pool *transaction.Pool) *TransactionCache {
+	return &TransactionCache{
+		st:    st,
+		pool:  pool,
+		cache: map[string]transaction.Transaction{},
+	}
+}
+
+func (b *TransactionCache) Get(hash string) (tx transaction.Transaction, found bool, err error) {
+	b.RLock()
+	tx, found = b.cache[hash]
+	b.RUnlock()
+
+	if found {
+		return
+	}
+
+	b.Lock()
+	defer b.Unlock()
+
+	tx, found = b.pool.Get(hash)
+	if found {
+		b.cache[hash] = tx
+		return
+	}
+
+	if found, err = block.ExistsTransactionPool(b.st, hash); err != nil {
+		return
+	} else if !found {
+		return
+	}
+
+	var tp block.TransactionPool
+	if tp, err = block.GetTransactionPool(b.st, hash); err != nil {
+		return
+	}
+	tx = tp.Transaction()
+	b.cache[hash] = tx
+
+	return
 }
