@@ -7,10 +7,11 @@ import (
 	"sync"
 	"time"
 
+	logging "github.com/inconshreveable/log15"
+
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/voting"
-	logging "github.com/inconshreveable/log15"
 )
 
 type ValidatorConnectionManager struct {
@@ -208,7 +209,14 @@ func (c *ValidatorConnectionManager) Broadcast(message common.Message) {
 				}
 
 				if err != nil {
-					c.log.Error("failed to broadcast", "error", err, "validator", v, "message", message, "response", string(response))
+					c.log.Error(
+						"failed to broadcast",
+						"error", err,
+						"validator", v,
+						"type", message.GetType(),
+						"message", message.GetHash(),
+						"response", string(response),
+					)
 				}
 			}(c.validators[addr])
 		}
