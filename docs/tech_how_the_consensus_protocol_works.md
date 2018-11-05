@@ -65,7 +65,7 @@ The `ISAAC` is a consensus protocol based on `PBFT`.
 1. The node checks [the proposed ballot is valid](./tech_how_to_check_a_ballot_is_valid.md).
    * If the proposed ballot is valid, the node broadcasts B(`SIGN`, `YES`).
    * If the proposed ballot is invalid, the node broadcasts B(`SIGN`, `NO`).
-   * If the proposed ballot is empty, the node broadcasts B(`SIGN`, `EXP`).
+   * If the proposed ballot is empty, the node broadcasts B(`SIGN`, `YES`).
 1. Each node receives ballots and when,
    * the number of B(`SIGN`, `YES`) is greater than or equal to 2/3 of validators, the node broadcasts B(`ACCEPT`, `YES`).
    * the number of B(`SIGN`, `NO`) is greater than or equal to 2/3 of validators, the node broadcasts B(`ACCEPT`, `NO`).
