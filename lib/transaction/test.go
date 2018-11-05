@@ -8,14 +8,6 @@ import (
 	"boscoin.io/sebak/lib/transaction/operation"
 )
 
-var (
-	kp        *keypair.Full
-)
-
-func init() {
-	kp = keypair.Random()
-}
-
 func TestMakeTransaction(networkID []byte, n int) (kp *keypair.Full, tx Transaction) {
 	kp = keypair.Random()
 
