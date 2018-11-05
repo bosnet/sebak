@@ -9,7 +9,6 @@ import (
 )
 
 var (
-	networkID []byte = []byte("sebak-test-network")
 	kp        *keypair.Full
 )
 
@@ -56,7 +55,7 @@ func TestMakeTransactionWithKeypair(networkID []byte, n int, srcKp *keypair.Full
 	return
 }
 
-func MakeTransactionCreateAccount(kpSource *keypair.Full, target string, amount common.Amount) (tx Transaction) {
+func MakeTransactionCreateAccount(networkID []byte, kpSource *keypair.Full, target string, amount common.Amount) (tx Transaction) {
 	opb := operation.NewCreateAccount(target, common.Amount(amount), "")
 
 	op := operation.Operation{
@@ -85,7 +84,7 @@ func MakeTransactionCreateAccount(kpSource *keypair.Full, target string, amount 
 	return
 }
 
-func MakeTransactionCreateFrozenAccount(kpSource *keypair.Full, target string, amount common.Amount, linkedAccount string) (tx Transaction) {
+func MakeTransactionCreateFrozenAccount(networkID []byte, kpSource *keypair.Full, target string, amount common.Amount, linkedAccount string) (tx Transaction) {
 	opb := operation.NewCreateAccount(target, common.Amount(amount), linkedAccount)
 
 	op := operation.Operation{
@@ -113,7 +112,7 @@ func MakeTransactionCreateFrozenAccount(kpSource *keypair.Full, target string, a
 	return
 }
 
-func MakeTransactionUnfreezingRequest(kpSource *keypair.Full) (tx Transaction) {
+func MakeTransactionUnfreezingRequest(networkID []byte, kpSource *keypair.Full) (tx Transaction) {
 	opb := operation.NewUnfreezeRequest()
 	op := operation.Operation{
 		H: operation.Header{
@@ -141,7 +140,7 @@ func MakeTransactionUnfreezingRequest(kpSource *keypair.Full) (tx Transaction) {
 	return
 }
 
-func MakeTransactionUnfreezing(kpSource *keypair.Full, target string, amount common.Amount) (tx Transaction) {
+func MakeTransactionUnfreezing(networkID []byte, kpSource *keypair.Full, target string, amount common.Amount) (tx Transaction) {
 	opb := operation.NewPayment(target, common.Amount(amount))
 	op := operation.Operation{
 		H: operation.Header{

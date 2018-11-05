@@ -63,7 +63,7 @@ func (p *HelperTestNodeMessageHandler) URL(urlValues url.Values) (u *url.URL) {
 
 func (p *HelperTestNodeMessageHandler) makeTransaction() (tx transaction.Transaction) {
 	receiverKP := keypair.Random()
-	tx = transaction.MakeTransactionCreateAccount(p.genesisKeypair, receiverKP.Address(), common.BaseReserve)
+	tx = transaction.MakeTransactionCreateAccount(networkID, p.genesisKeypair, receiverKP.Address(), common.BaseReserve)
 	tx.B.SequenceID = p.genesisAccount.SequenceID
 	tx.Sign(p.genesisKeypair, networkID)
 

@@ -201,7 +201,7 @@ func (g *getMissingTransactionTesting) MakeBallot(numberOfTxs int) (blt *ballot.
 
 		kpB := keypair.Random()
 
-		tx := transaction.MakeTransactionCreateAccount(kpA, kpB.Address(), common.BaseReserve)
+		tx := transaction.MakeTransactionCreateAccount(networkID, kpA, kpB.Address(), common.BaseReserve)
 		tx.B.SequenceID = accountA.SequenceID
 		tx.Sign(kpA, networkID)
 
@@ -444,7 +444,7 @@ func (p *irregularIncomingBallot) makeBallot(state ballot.State) (blt *ballot.Ba
 
 	kpB := keypair.Random()
 
-	tx := transaction.MakeTransactionCreateAccount(p.keyA, kpB.Address(), common.BaseReserve)
+	tx := transaction.MakeTransactionCreateAccount(networkID, p.keyA, kpB.Address(), common.BaseReserve)
 	tx.B.SequenceID = p.accountA.SequenceID
 	tx.Sign(p.keyA, networkID)
 
