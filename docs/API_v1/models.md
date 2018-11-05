@@ -17,15 +17,16 @@
 
 ### Transactions
 + _embedded
-    + records
-        + _links
-            + account
-                + href: `/api/v1/accounts/GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ`
-            + operations
-                + href: `/api/v1/transactions/7nLuyg8radTExzBM2WhG37AwohBwEySBw4vj2xdtdjAs/operations{?cursor,limit,order}`
-                + templated: true
-            + self
-                + href: `/api/v1/transactions`
+    + records (array)
+        + (object):
+            + _links
+                + account
+                    + href: `/api/v1/accounts/GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ`
+                + operations
+                    + href: `/api/v1/transactions/7nLuyg8radTExzBM2WhG37AwohBwEySBw4vj2xdtdjAs/operations{?cursor,limit,order}`
+                    + templated: true
+                + self
+                    + href: `/api/v1/transactions`
         + created: 2018-11-02T14:09:33.019606000+09:00
         + fee: `10000`
         + hash: 7nLuyg8radTExzBM2WhG37AwohBwEySBw4vj2xdtdjAs
