@@ -56,44 +56,38 @@
 + H 
     + version: `` - Transaction version
     + created: `2018-01-01T00:00:00.000000000Z` - Created time of the transaction.
-    + signature: `5iuxEWTtrXnBDiFXvW49jPA6crfKWFes9nXx6scHXBRysvvEMWdTTE8A5yBoqgFMuvpoLMt9ycF8FA9jz1Qyug5k` - Signature signed by source account
+    + signature: `4ty1Pv7Phc3CEeGLCP8mjZfEC259VR1MBgyVHzQXTcWjuSiwxVQ2AQKxy2HjGTCDrmdE29z8ZNZ6GxuDyEay2p9M` - Signature signed by source account
 + B
     + source: GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ - Source account
     + fee: 10000 - The fee paid by the source account for this transaction. Minimum is 10000 GON
-    + sequence_id: 1 - The last sequence number of the source account
+    + sequence_id: 0 - The last sequence number of the source account
     + operations (array)
         + (object):
             + H 
                 + type: "payment" - operation type. ex. payment, create-account
             + B
-                + target: GDEPYGGALPJ5HENXCNOQJPPDOQMA2YAXPERZ4XEAKVFFJJEVP4ZBK6QI - The funded account's public key
+                + target: GDTEPFWEITKFHSUO44NQABY2XHRBBH2UBVGJ2ZJPDREIOL2F6RAEBJE4 - The funded account's public key
                 + amount: 1000000000000- amount in GON
 
-### Transaction Post
-+ _embedded
-    + records (array)
-        + (object):
-            + _links
-                + account 
-                    + href: `/api/v1/accounts/GD6AU7AB4X4Z6SL3JGPD7QMDRJX77USEXTBHDVOQ73IGUKM27LUVBVYH`
-                + operations 
-                    + href: `/api/v1/transactions/CdigMiMHTaSaFjg9ZMH6hsWXzAee8xQokYWUS1NEL1GC/operations{?cursor,limit,order}`
-                    + templated : true
-                + self
-                    + href : `/api/v1/transactions`
-        created: `2018-04-17T5:07:31.000000000Z`
-        fee: `10000` - The fee paid by the source account for this transaction. Minimum is 10000 GON
-        hash: CdigMiMHTaSaFjg9ZMH6hsWXzAee8xQokYWUS1NEL1GC (string,required) - Hash of transaction
-        operation_count: 1
-        sequence_id: 0 - The last sequence number of the source account
-        source: GD6AU7AB4X4Z6SL3JGPD7QMDRJX77USEXTBHDVOQ73IGUKM27LUVBVYH
-+ _links
-    + next
-        + href: `/transactions?cursor=%122018-11-02T14%3A13%3A39.238098000%2B09%3A00-0edd4886-de5e-11e8-befa-8c85901cfacd&limit=100&reverse=false`
-    + prev:
-        + href: `/transactions?cursor=%122018-11-02T14%3A13%3A39.238098000%2B09%3A00-0edd4886-de5e-11e8-befa-8c85901cfacd&limit=100&reverse=true`
-    + self:
+### Transaction Post 
++ _links  
+    + history
+        + href: `/api/v1/transactions/7mRUj4cnUPaTrpByojPsT3xoRRdwG6Q9z2eLyCMapQm6/history`
+    + self
         + href: `/api/v1/transactions`
++ hash: `7mRUj4cnUPaTrpByojPsT3xoRRdwG6Q9z2eLyCMapQm6`- Hash of transaction.
++ message
+    + source: GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ - Source account
+    + fee: `10000` - The fee paid by the source account for this transaction. Minimum is 10000 GON
+    + sequence_id: 0 - The last sequence number of the source account
+    + operations (array)
+        + (object):
+            + H
+                + type:create-account - operation type. ex. payment, create-account
+            + B
+                + target: GDTEPFWEITKFHSUO44NQABY2XHRBBH2UBVGJ2ZJPDREIOL2F6RAEBJE4 - The funded account's public key
+                + amount: 1000000000000- amount in GON
++ status: `submitted` - three categories of status; submitted, confirmed, rejected
 
 ### Transaction
 + _links 

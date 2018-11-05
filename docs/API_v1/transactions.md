@@ -6,8 +6,7 @@ Transactions API
 
 
 ### Payment transaction  [POST]
-//TODO: How to make a transaction and sign
-//TODO: when sent payment transaction to node, can we get response from node? 
+//TODO: How to make a transaction and sign 
 
 + Request (application/json)
     

@@ -182,9 +182,7 @@ docker build . -t sebak
 # To clean up all orphaned images, you can run the following command
 docker rmi -f $(docker images -f "dangling=true" -q)
 ```
-
 Then you can spawn 3 nodes using the following commands:
-
 ```
 docker run --net host --rm -it --env-file=docker/node1.env sebak
 docker run --net host --rm -it --env-file=docker/node2.env sebak
