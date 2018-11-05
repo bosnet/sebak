@@ -2,7 +2,7 @@
 Operations API
 
 
-## Transactions [/v1/operations]
+## Transactions [/api/v1/operations]
 
 
 
