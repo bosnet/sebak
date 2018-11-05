@@ -42,7 +42,7 @@ func NewOperationBodyInflation(
 	}
 }
 
-func (o Inflation) IsWellFormed([]byte, common.Config) (err error) {
+func (o Inflation) IsWellFormed(common.Config) (err error) {
 	if _, err = keypair.Parse(o.Target); err != nil {
 		return
 	}

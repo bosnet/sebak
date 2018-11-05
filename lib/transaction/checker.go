@@ -83,7 +83,7 @@ func CheckOperations(c common.Checker, args ...interface{}) (err error) {
 				err = errors.InvalidOperation
 				return
 			}
-			if err = op.IsWellFormed(checker.NetworkID, checker.Conf); err != nil {
+			if err = op.IsWellFormed(checker.Conf); err != nil {
 				return
 			}
 			// if there are multiple operations which has same 'Type' and same
