@@ -111,7 +111,7 @@ var HandleTransactionCheckerFuncsWithoutBroadcast = []common.CheckerFunc{
 	PushIntoTransactionPool,
 }
 
-func (api NetworkHandlerNode) ReceiveTransaction(body []byte, funcs []common.CheckerFunc) (tx transaction.Transaction, err error) {
+func (api NetworkHandlerNode) ReceiveTransaction(body []byte, funcs []common.CheckerFunc) (transaction.Transaction, error) {
 	message := common.NetworkMessage{Type: common.TransactionMessage, Data: body}
 	checker := &MessageChecker{
 		DefaultChecker:  common.DefaultChecker{Funcs: funcs},
@@ -125,17 +125,15 @@ func (api NetworkHandlerNode) ReceiveTransaction(body []byte, funcs []common.Che
 		Conf:            api.conf,
 	}
 
-	err = common.RunChecker(checker, common.DefaultDeferFunc)
-
+	err := common.RunChecker(checker, common.DefaultDeferFunc)
 	if err != nil {
 		if len(checker.Transaction.H.Hash) > 0 {
 			block.SaveTransactionHistory(api.storage, checker.Transaction, block.TransactionHistoryStatusRejected)
 		}
-		return
+		return transaction.Transaction{}, err
 	}
 
-	tx = checker.Transaction
-	return
+	return checker.Transaction, nil
 }
 
 func (api NetworkHandlerNode) MessageHandler(w http.ResponseWriter, r *http.Request) {
