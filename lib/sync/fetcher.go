@@ -23,7 +23,6 @@ import (
 	"boscoin.io/sebak/lib/transaction"
 
 	"github.com/inconshreveable/log15"
-	pkgerrors "github.com/pkg/errors"
 )
 
 type BlockFetcher struct {
@@ -80,13 +79,12 @@ func (f *BlockFetcher) Fetch(ctx context.Context, syncInfo *SyncInfo) (*SyncInfo
 		case <-ctx.Done():
 			return false, ctx.Err()
 		default:
-			f.logger.Debug("Try to fetch", "height", height, "attempt", attempt)
+			f.logger.Debug("try to fetch", "height", height, "attempt", attempt)
 			if err := f.fetch(ctx, syncInfo); err != nil {
 				if err == context.Canceled {
 					return false, ctx.Err()
 				}
-
-				f.logger.Error(fmt.Sprintf("fetch err: %v", err), "err", err, "height", height)
+				f.logger.Error("fetch err", "err", err, "height", height)
 				c := time.After(f.retryInterval) //afterFunc?
 				select {
 				case <-ctx.Done():
@@ -107,20 +105,20 @@ func (f *BlockFetcher) fetch(ctx context.Context, si *SyncInfo) error {
 		height    = si.Height
 		nodeAddrs = si.NodeAddrs
 	)
-	f.logger.Debug("Fetch start", "height", height)
+	f.logger.Debug("fetch start", "height", height)
 
 	n := f.pickRandomNode(nodeAddrs)
 	if n == nil {
-		return errors.New("fetch: node not found")
+		return errors.NodeNotFound
 	}
-	f.logger.Debug(fmt.Sprintf("fetching items from node: %v", n), "fetching_node", n, "height", height)
+	f.logger.Debug("fetching items from node", "fetching_node", n, "height", height)
 
 	apiURL := apiClientURL(n, height)
 	f.logger.Debug("apiClient", "url", apiURL.String())
 
 	req, err := http.NewRequest("GET", apiURL.String(), nil)
 	if err != nil {
-		err := pkgerrors.Wrap(err, "api request")
+		err := errors.Wrap(err, "api request")
 		f.logger.Error("request err", "err", err, "height", height)
 		return err
 	}
@@ -137,12 +135,16 @@ func (f *BlockFetcher) fetch(ctx context.Context, si *SyncInfo) error {
 
 	items, err := f.unmarshalResp(resp.Body)
 	if err != nil {
-		err := pkgerrors.Wrap(err, "resp unmarshal")
-		body, readErr := ioutil.ReadAll(resp.Body)
-		if readErr != nil {
-			f.logger.Error("resp read err", "err", pkgerrors.Wrap(readErr, "resp unmarshal"), "height", height)
+		err := errors.Wrap(err, "resp unmarshal")
+
+		body := func() string {
+			body, readErr := ioutil.ReadAll(resp.Body)
+			if readErr != nil {
+				return readErr.Error()
+			}
+			return string(body)
 		}
-		f.logger.Debug(fmt.Sprintf("body: %v", body), "err", err, "height", height, "statusCode", resp.StatusCode, "body", body)
+		f.logger.Debug("unmarshalResp err", "err", err, "height", height, "statusCode", resp.StatusCode, "body", log15.Lazy{Fn: body})
 		return err
 	}
 
@@ -173,8 +175,8 @@ func (f *BlockFetcher) fetch(ctx context.Context, si *SyncInfo) error {
 
 		var tx transaction.Transaction
 		if err := json.Unmarshal(bt.Message, &tx); err != nil {
-			err := pkgerrors.Wrap(err, "transaction.Message unmarshal")
-			f.logger.Error(fmt.Sprintf("message: %s", bt.Message), "err", err, "height", height, "statusCode", resp.StatusCode)
+			err := errors.Wrap(err, "transaction.Message unmarshal")
+			f.logger.Error("tx.Message unmarshal err", "err", err, "height", height, "message", string(bt.Message), "statusCode", resp.StatusCode)
 			return err
 		}
 		txmap[bt.Hash] = &tx
@@ -183,9 +185,7 @@ func (f *BlockFetcher) fetch(ctx context.Context, si *SyncInfo) error {
 	for _, hash := range blk.Transactions {
 		tx, ok := txmap[hash]
 		if !ok {
-			//TODO(anarcher): Error type for controlling timeout
-			err := fmt.Errorf("tx: %s not found in block height %d", hash, height)
-			return err
+			return errors.Wrapf(errors.TransactionNotFound, "block hash: %s height: %d", hash, height)
 		}
 		si.Txs = append(si.Txs, tx)
 	}
@@ -195,8 +195,7 @@ func (f *BlockFetcher) fetch(ctx context.Context, si *SyncInfo) error {
 			ptx := &ballot.ProposerTransaction{Transaction: *tx}
 			si.Ptx = ptx
 		} else {
-			err := fmt.Errorf("proposer transactions (%v) not found in transactions", blk.ProposerTransaction)
-			return err
+			return errors.Wrapf(errors.TransactionNotFound, "proposer transaction block hash: %v", blk.ProposerTransaction)
 		}
 	}
 
