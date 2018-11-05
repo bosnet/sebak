@@ -28,19 +28,23 @@ func TestMakeHashOfOperationBodyPayment(t *testing.T) {
 }
 
 func TestIsWellFormedOperation(t *testing.T) {
-	op := TestMakeOperation(-1)
+	op := MakeTestPayment(-1)
 	err := op.IsWellFormed(common.NewConfig())
 	require.NoError(t, err)
 }
 
 func TestIsWellFormedOperationLowerAmount(t *testing.T) {
-	obp := TestMakeOperationBodyPayment(0)
+	kp := keypair.Random()
+	obp := Payment{
+		Target: kp.Address(),
+		Amount: common.Amount(0),
+	}
 	err := obp.IsWellFormed(common.NewConfig())
 	require.Error(t, err)
 }
 
 func TestSerializeOperation(t *testing.T) {
-	op := TestMakeOperation(-1)
+	op := MakeTestPayment(-1)
 	b, err := op.Serialize()
 	require.NoError(t, err)
 	require.Equal(t, len(b) > 0, true)

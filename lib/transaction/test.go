@@ -22,7 +22,7 @@ func TestMakeTransaction(networkID []byte, n int) (kp *keypair.Full, tx Transact
 
 	var ops []operation.Operation
 	for i := 0; i < n; i++ {
-		ops = append(ops, operation.TestMakeOperation(-1))
+		ops = append(ops, operation.MakeTestPayment(-1))
 	}
 
 	tx, _ = NewTransaction(kp.Address(), 0, ops...)
@@ -43,7 +43,7 @@ func TestMakeTransactionWithKeypair(networkID []byte, n int, srcKp *keypair.Full
 	}
 
 	for i := 0; i < n; i++ {
-		ops = append(ops, operation.TestMakeOperation(-1, targetAddr))
+		ops = append(ops, operation.MakeTestPaymentTo(-1, targetAddr))
 	}
 
 	tx, _ = NewTransaction(
