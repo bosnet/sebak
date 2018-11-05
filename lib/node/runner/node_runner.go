@@ -254,7 +254,10 @@ func (nr *NodeRunner) Ready() {
 
 	TransactionsHandler := func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "POST" {
-			apiHandler.PostTransactionsHandler(w, r, nodeHandler.MessageHandler)
+			apiHandler.PostTransactionsHandler(
+				w, r,
+				nodeHandler.ReceiveTransaction, HandleTransactionCheckerFuncs,
+			)
 			return
 		}
 
