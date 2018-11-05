@@ -11,8 +11,9 @@
         + href: `/api/v1/accounts/GDEPYGGALPJ5HENXCNOQJPPDOQMA2YAXPERZ4XEAKVFFJJEVP4ZBK6QI/transactions{?cursor,limit,order}` 
         + templated: true (boolean)
 + address: GDEPYGGALPJ5HENXCNOQJPPDOQMA2YAXPERZ4XEAKVFFJJEVP4ZBK6QI (string, required) - The account’s public key encoded into a base32 string representation.
-+ balance: 10000000000000000000 (string,required) - GON. 1 BOS = 10,000,000 GON
++ balance: 500000000000 (string,required) - GON. 1 BOS = 10,000,000 GON
 + sequence_id: 0 (number,required) - The Current sequence number. It needed to submitting a transaction from this account
++ linked: "" - linked with freezing account. 
 
 ### Transactions
 + _embedded
@@ -87,11 +88,11 @@
         source: GD6AU7AB4X4Z6SL3JGPD7QMDRJX77USEXTBHDVOQ73IGUKM27LUVBVYH
 + _links
     + next
-        + href: /transactions?cursor=%122018-11-02T14%3A13%3A39.238098000%2B09%3A00-0edd4886-de5e-11e8-befa-8c85901cfacd&limit=100&reverse=false
+        + href: `/transactions?cursor=%122018-11-02T14%3A13%3A39.238098000%2B09%3A00-0edd4886-de5e-11e8-befa-8c85901cfacd&limit=100&reverse=false`
     + prev:
-        + href: /transactions?cursor=%122018-11-02T14%3A13%3A39.238098000%2B09%3A00-0edd4886-de5e-11e8-befa-8c85901cfacd&limit=100&reverse=true
+        + href: `/transactions?cursor=%122018-11-02T14%3A13%3A39.238098000%2B09%3A00-0edd4886-de5e-11e8-befa-8c85901cfacd&limit=100&reverse=true`
     + self:
-        + href: /api/v1/transactions
+        + href: `/api/v1/transactions`
 
 ### Transaction
 + _links 
