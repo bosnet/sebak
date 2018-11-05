@@ -6,10 +6,13 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common/keypair"
 	"boscoin.io/sebak/lib/errors"
 )
 
 func TestCreateAccountOperation(t *testing.T) {
+	kp := keypair.Random()
+
 	conf := common.NewConfig()
 	{ // minimum Amount
 		o := CreateAccount{
