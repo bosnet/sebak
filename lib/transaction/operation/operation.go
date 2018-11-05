@@ -87,12 +87,12 @@ type Body interface {
 	// This routine is used by the transaction checker and thus is part of consensus
 	//
 	// Params:
-	//   networkid = Network id this operation was emitted on
+	//   config = Consensus configuration
 	//
 	// Returns:
 	//   An `error` if that transaction is invalid, `nil` otherwise
 	//
-	IsWellFormed([]byte, common.Config) error
+	IsWellFormed(common.Config) error
 	Serialize() ([]byte, error)
 }
 
@@ -110,8 +110,8 @@ func (o Operation) MakeHashString() string {
 	return base58.Encode(o.MakeHash())
 }
 
-func (o Operation) IsWellFormed(networkID []byte, conf common.Config) (err error) {
-	return o.B.IsWellFormed(networkID, conf)
+func (o Operation) IsWellFormed(conf common.Config) (err error) {
+	return o.B.IsWellFormed(conf)
 }
 
 func (o Operation) Serialize() (encoded []byte, err error) {
