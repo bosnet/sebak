@@ -21,7 +21,7 @@ require (
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/lib/pq v0.0.0-20180327071824-d34b9ff171c2 // indirect
 	github.com/mattn/go-colorable v0.0.9 // indirect
-	github.com/mattn/go-isatty v0.0.3 // indirect
+	github.com/mattn/go-isatty v0.0.3
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/nullstyle/go-xdr v0.0.0-20170810174627-a875e7c9fa23 // indirect
 	github.com/nvellon/hal v0.3.0
