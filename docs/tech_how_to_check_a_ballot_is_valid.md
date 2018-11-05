@@ -1,6 +1,6 @@
 # How to check a ballot is valid
 
-A node must validate the ballot with transactions from proposer(Please refer to [How the consensus protocol works](./[tech_doc]how_the_consensus_protocol_works.md)). This is because only valid ballot must be agreed and confirmed.
+A node must validate the ballot with transactions from proposer(Please refer to [How the consensus protocol works](./tech_how_the_consensus_protocol_works.md)). This is because only valid ballot must be agreed and confirmed.
 
 ## Ballot Structure
 

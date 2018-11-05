@@ -32,7 +32,7 @@ The `ISAAC` is a consensus protocol based on `PBFT`.
 
 * TIMEOUT_ACCEPT - The timeout for `ACCEPT` state. The default value is 2 sec.
 
-* TIMEOUT_ALLCONFIRM - The timeout for `ALLCONFIRM`. This value is not configurable. It is calculated based on block time and proposed time. Please check [How-to-calculate-timeout-allconfirm](./[tech_doc]how_to_calculate_timeout_allconfirm.md) in detail.
+* TIMEOUT_ALLCONFIRM - The timeout for `ALLCONFIRM`. This value is not configurable. It is calculated based on block time and proposed time. Please check [How-to-calculate-timeout-allconfirm](./tech_how_to_calculate_timeout_allconfirm.md) in detail.
 
 * B(ISAAC State, Voting Hole) - A ballot with ISAAC state and voting hole.
 
@@ -53,7 +53,7 @@ The `ISAAC` is a consensus protocol based on `PBFT`.
 ### `INIT`
 1. The timer is set to TIMEOUT_INIT.
 1. The steps to propose transactions are as follows.
-   * If the node is [proposer](./[tech_doc]how_to_select_the_proposer.md) of this round broadcasts a B(`INIT`, `YES`),
+   * If the node is [proposer](./tech_how_to_select_the_proposer.md) of this round broadcasts a B(`INIT`, `YES`),
       * The ballot includes valid transactions(only hashes) or empty transaction.
       * When it broadcasts the ballot, the node goes to the next state.
    * If the node is not proposer, it waits for and receive the B(`INIT`, `YES`).
@@ -62,7 +62,7 @@ The `ISAAC` is a consensus protocol based on `PBFT`.
 
 ### `SIGN`
 1. The timer is reset to TIMEOUT_SIGN
-1. The node checks [the proposed ballot is valid](./[tech_doc]how_to_check_a_ballot_is_valid.md).
+1. The node checks [the proposed ballot is valid](./tech_how_to_check_a_ballot_is_valid.md).
    * If the proposed ballot is valid, the node broadcasts B(`SIGN`, `YES`).
    * If the proposed ballot is invalid, the node broadcasts B(`SIGN`, `NO`).
    * If the proposed ballot is empty, the node broadcasts B(`SIGN`, `EXP`).
@@ -86,9 +86,9 @@ The `ISAAC` is a consensus protocol based on `PBFT`.
 
 ### `ALL-CONFIRM`
 1. the node confirms and saves the block with proposed transactions even though it is empty.
-1. the node filters [invalid transactions](./[tech_doc]how_to_check_a_ballot_is_valid.md#transaction-validation) in the transaction pool.
-1. The node waits for [TIMEOUT_ALLCONFIRM](./[tech_doc]how_to_calculate_timeout_allconfirm.md).
+1. the node filters [invalid transactions](./tech_how_to_check_a_ballot_is_valid.md#transaction-validation) in the transaction pool.
+1. The node waits for [TIMEOUT_ALLCONFIRM](./tech_how_to_calculate_timeout_allconfirm.md).
 1. It goes to `INIT` state with height + 1 and round 0.
 
 ## Transaction Protocol
-1. [`Transaction Protocol`](./[tech_doc]how_transactions_are_shared.md) is a protocol for sharing transactions between the nodes.
+1. [`Transaction Protocol`](./tech_how_transactions_are_shared.md) is a protocol for sharing transactions between the nodes.

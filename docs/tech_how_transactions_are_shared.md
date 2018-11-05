@@ -14,7 +14,7 @@ Transaction Protocol is used for sharing transactions.
     * If well-formed, it goes to the next step.
     * If malformed, it discards the transaction and stops this process.
 1. If the same transaction is already in the transaction pool, it stops this process.
-1. The node [validates](./[tech_doc]how_to_check_a_ballot_is_valid.md) the transaction.
+1. The node [validates](./tech_how_to_check_a_ballot_is_valid.md) the transaction.
     * If valid, it is stored in transaction pool.
     * If invalid, it discards the transaction and stops this process.
 1. The node broadcasts the transaction message to all nodes except for the sender.
