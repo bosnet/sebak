@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -22,6 +23,7 @@ import (
 	"boscoin.io/sebak/lib/transaction"
 
 	"github.com/inconshreveable/log15"
+	pkgerrors "github.com/pkg/errors"
 )
 
 type BlockFetcher struct {
@@ -84,7 +86,7 @@ func (f *BlockFetcher) Fetch(ctx context.Context, syncInfo *SyncInfo) (*SyncInfo
 					return false, ctx.Err()
 				}
 
-				f.logger.Error(err.Error(), "err", err)
+				f.logger.Error(fmt.Sprintf("fetch err: %v", err), "err", err, "height", height)
 				c := time.After(f.retryInterval) //afterFunc?
 				select {
 				case <-ctx.Done():
@@ -109,7 +111,7 @@ func (f *BlockFetcher) fetch(ctx context.Context, si *SyncInfo) error {
 
 	n := f.pickRandomNode(nodeAddrs)
 	if n == nil {
-		return errors.New("Fetch: node not found")
+		return errors.New("fetch: node not found")
 	}
 	f.logger.Debug(fmt.Sprintf("fetching items from node: %v", n), "fetching_node", n, "height", height)
 
@@ -118,6 +120,8 @@ func (f *BlockFetcher) fetch(ctx context.Context, si *SyncInfo) error {
 
 	req, err := http.NewRequest("GET", apiURL.String(), nil)
 	if err != nil {
+		err := pkgerrors.Wrap(err, "api request")
+		f.logger.Error("request err", "err", err, "height", height)
 		return err
 	}
 
@@ -133,6 +137,12 @@ func (f *BlockFetcher) fetch(ctx context.Context, si *SyncInfo) error {
 
 	items, err := f.unmarshalResp(resp.Body)
 	if err != nil {
+		err := pkgerrors.Wrap(err, "resp unmarshal")
+		body, readErr := ioutil.ReadAll(resp.Body)
+		if readErr != nil {
+			f.logger.Error("resp read err", "err", pkgerrors.Wrap(readErr, "resp unmarshal"), "height", height)
+		}
+		f.logger.Debug(fmt.Sprintf("body: %v", body), "err", err, "height", height, "statusCode", resp.StatusCode, "body", body)
 		return err
 	}
 
@@ -163,6 +173,8 @@ func (f *BlockFetcher) fetch(ctx context.Context, si *SyncInfo) error {
 
 		var tx transaction.Transaction
 		if err := json.Unmarshal(bt.Message, &tx); err != nil {
+			err := pkgerrors.Wrap(err, "transaction.Message unmarshal")
+			f.logger.Error(fmt.Sprintf("message: %s", bt.Message), "err", err, "height", height, "statusCode", resp.StatusCode)
 			return err
 		}
 		txmap[bt.Hash] = &tx
@@ -172,7 +184,7 @@ func (f *BlockFetcher) fetch(ctx context.Context, si *SyncInfo) error {
 		tx, ok := txmap[hash]
 		if !ok {
 			//TODO(anarcher): Error type for controlling timeout
-			err := fmt.Errorf("Tx: %s not found in block height %d", hash, height)
+			err := fmt.Errorf("tx: %s not found in block height %d", hash, height)
 			return err
 		}
 		si.Txs = append(si.Txs, tx)
