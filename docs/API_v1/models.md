@@ -35,11 +35,11 @@
         + source: GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ
 + _links
     + next
-        + href: /api/v1/account/GDEPYGGALPJ5HENXCNOQJPPDOQMA2YAXPERZ4XEAKVFFJJEVP4ZBK6QI/transactions?limit=100&reverse=false
+        + href: `/api/v1/account/GDEPYGGALPJ5HENXCNOQJPPDOQMA2YAXPERZ4XEAKVFFJJEVP4ZBK6QI/transactions?limit=100&reverse=false`
     + prev
-        + href: /api/v1/account/GDEPYGGALPJ5HENXCNOQJPPDOQMA2YAXPERZ4XEAKVFFJJEVP4ZBK6QI/transactions?limit=100&reverse=true
+        + href: `/api/v1/account/GDEPYGGALPJ5HENXCNOQJPPDOQMA2YAXPERZ4XEAKVFFJJEVP4ZBK6QI/transactions?limit=100&reverse=true`
     + self
-        + href: /api/v1/account/GDEPYGGALPJ5HENXCNOQJPPDOQMA2YAXPERZ4XEAKVFFJJEVP4ZBK6QI/transactions
+        + href: `/api/v1/account/GDEPYGGALPJ5HENXCNOQJPPDOQMA2YAXPERZ4XEAKVFFJJEVP4ZBK6QI/transactions`
     
 ### Operations
 + _embedded
@@ -61,7 +61,7 @@
     + source: GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ - Source account
     + fee: 10000 - The fee paid by the source account for this transaction. Minimum is 10000 GON
     + sequence_id: 1 - The last sequence number of the source account
-    + operations (array):
+    + operations (array)
         + (object):
             + H 
                 + type: "payment" - operation type. ex. payment, create-account
