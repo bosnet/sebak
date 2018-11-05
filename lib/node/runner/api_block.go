@@ -131,12 +131,17 @@ func (nh NetworkHandlerNode) GetBlocksHandler(w http.ResponseWriter, r *http.Req
 				tx.Message = tp.Message
 				nh.renderNodeItem(w, NodeItemBlockTransaction, tx)
 			}
+
 			for _, t := range b.Transactions {
 				if tx, err = block.GetBlockTransaction(nh.storage, t); err != nil {
 					nh.renderNodeItem(w, NodeItemError, err)
 					continue
+				} else if tp, err = block.GetTransactionPool(nh.storage, tx.Hash); err != nil {
+					nh.renderNodeItem(w, NodeItemError, err)
+				} else {
+					tx.Message = tp.Message
+					nh.renderNodeItem(w, NodeItemBlockTransaction, tx)
 				}
-				nh.renderNodeItem(w, NodeItemBlockTransaction, tx)
 			}
 		}
 	}
