@@ -103,16 +103,16 @@ func (sb *SavingBlockOperations) check() (err error) {
 	return
 }
 
-func (sb *SavingBlockOperations) savingBlockOperationsWorker(id int, st *storage.LevelDBBackend, blk block.Block, ops <-chan string, results chan<- error) {
-	for op := range ops {
-		results <- sb.CheckTransactionByBlock(st, blk, op)
+func (sb *SavingBlockOperations) savingBlockOperationsWorker(id int, st *storage.LevelDBBackend, blk block.Block, txs <-chan string, errChan chan<- error) {
+	for hash := range txs {
+		errChan <- sb.CheckTransactionByBlock(st, blk, hash)
 	}
 }
 
 func (sb *SavingBlockOperations) CheckByBlock(st *storage.LevelDBBackend, blk block.Block) (err error) {
-	ops := make(chan string, 100)
-	results := make(chan error, 100)
-	defer close(results)
+	txs := make(chan string, 100)
+	errChan := make(chan error, 100)
+	defer close(errChan)
 
 	numWorker := int(len(blk.Transactions) / 2)
 	if numWorker > 100 {
@@ -120,16 +120,16 @@ func (sb *SavingBlockOperations) CheckByBlock(st *storage.LevelDBBackend, blk bl
 	}
 
 	for i := 1; i <= numWorker; i++ {
-		go sb.savingBlockOperationsWorker(i, st, blk, ops, results)
+		go sb.savingBlockOperationsWorker(i, st, blk, txs, errChan)
 	}
-	for _, txHash := range blk.Transactions {
-		ops <- txHash
+	for _, hash := range blk.Transactions {
+		txs <- hash
 	}
-	close(ops)
+	close(txs)
 
 	var errs []error
 	for _ = range blk.Transactions {
-		err = <-results
+		err = <-errChan
 		if err != nil {
 			errs = append(errs, err)
 		}
@@ -190,12 +190,12 @@ func (sb *SavingBlockOperations) CheckTransactionByBlock(st *storage.LevelDBBack
 
 func (sb *SavingBlockOperations) Start() {
 	go sb.continuousCheck()
-	go sb.StartSaving()
+	go sb.startSaving()
 
 	return
 }
 
-func (sb *SavingBlockOperations) StartSaving() {
+func (sb *SavingBlockOperations) startSaving() {
 	sb.log.Debug("start saving")
 
 	for {
@@ -227,7 +227,7 @@ func (sb *SavingBlockOperations) save(blk block.Block) (err error) {
 	}
 
 	if err = sb.CheckByBlock(st, blk); err != nil {
-		err = st.Discard()
+		st.Discard()
 	} else {
 		err = st.Commit()
 	}
