@@ -13,8 +13,12 @@ import (
 	"boscoin.io/sebak/lib/version"
 )
 
-func getGenesisTransaction(st *storage.LevelDBBackend) (bt block.BlockTransaction, err error) {
-	bk := block.GetGenesis(st)
+func GetGenesisTransaction(st *storage.LevelDBBackend) (bt block.BlockTransaction, err error) {
+	var bk block.Block
+	if bk, err = block.GetBlockByHeight(st, common.GenesisBlockHeight); err != nil {
+		return
+	}
+
 	if len(bk.Transactions) < 1 {
 		err = errors.WrongBlockFound
 		return
@@ -34,7 +38,7 @@ func getGenesisTransaction(st *storage.LevelDBBackend) (bt block.BlockTransactio
 
 func getGenesisAccount(st *storage.LevelDBBackend, operationIndex int) (account *block.BlockAccount, err error) {
 	var bt block.BlockTransaction
-	if bt, err = getGenesisTransaction(st); err != nil {
+	if bt, err = GetGenesisTransaction(st); err != nil {
 		return
 	}
 
@@ -66,7 +70,7 @@ func GetCommonAccount(st *storage.LevelDBBackend) (account *block.BlockAccount, 
 
 func GetGenesisBalance(st *storage.LevelDBBackend) (balance common.Amount, err error) {
 	var bt block.BlockTransaction
-	if bt, err = getGenesisTransaction(st); err != nil {
+	if bt, err = GetGenesisTransaction(st); err != nil {
 		return
 	}
 
