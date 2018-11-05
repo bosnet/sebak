@@ -2,6 +2,7 @@ package sync
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -133,18 +134,19 @@ func (f *BlockFetcher) fetch(ctx context.Context, si *SyncInfo) error {
 		return errors.New("fetch: block not found")
 	}
 
-	items, err := f.unmarshalResp(resp.Body)
+	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		err := errors.Wrap(err, "reponse failed to unmarshal")
+		return errors.Wrap(err, "response failed to reading body")
+	}
 
-		body := func() string {
-			body, readErr := ioutil.ReadAll(resp.Body)
-			if readErr != nil {
-				return readErr.Error()
-			}
+	items, err := f.unmarshalResp(bytes.NewBuffer(body))
+	if err != nil {
+		err := errors.Wrap(err, "response failed to unmarshal")
+		code := resp.StatusCode
+		bodyFn := func() string {
 			return string(body)
 		}
-		f.logger.Debug("unmarshalResp err", "err", err, "height", height, "statusCode", resp.StatusCode, "body", log15.Lazy{Fn: body})
+		f.logger.Debug("unmarshalResp err", "err", err, "height", height, "statusCode", code, "body", log15.Lazy{Fn: bodyFn})
 		return err
 	}
 
@@ -246,7 +248,7 @@ func (f *BlockFetcher) existsBlockHeight(height uint64) bool {
 	return exists
 }
 
-func (f *BlockFetcher) unmarshalResp(body io.ReadCloser) (map[runner.NodeItemDataType][]interface{}, error) {
+func (f *BlockFetcher) unmarshalResp(body io.Reader) (map[runner.NodeItemDataType][]interface{}, error) {
 	items := map[runner.NodeItemDataType][]interface{}{}
 
 	sc := bufio.NewScanner(body)
