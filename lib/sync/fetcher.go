@@ -135,7 +135,7 @@ func (f *BlockFetcher) fetch(ctx context.Context, si *SyncInfo) error {
 
 	items, err := f.unmarshalResp(resp.Body)
 	if err != nil {
-		err := errors.Wrap(err, "resp unmarshal")
+		err := errors.Wrap(err, "reponse failed to unmarshal")
 
 		body := func() string {
 			body, readErr := ioutil.ReadAll(resp.Body)
@@ -175,7 +175,7 @@ func (f *BlockFetcher) fetch(ctx context.Context, si *SyncInfo) error {
 
 		var tx transaction.Transaction
 		if err := json.Unmarshal(bt.Message, &tx); err != nil {
-			err := errors.Wrap(err, "transaction.Message unmarshal")
+			err := errors.Wrap(err, "transaction.Message unmarshaling failed")
 			f.logger.Error("tx.Message unmarshal err", "err", err, "height", height, "message", string(bt.Message), "statusCode", resp.StatusCode)
 			return err
 		}
