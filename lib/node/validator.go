@@ -14,8 +14,7 @@ import (
 	"sync"
 
 	"boscoin.io/sebak/lib/common"
-
-	"github.com/stellar/go/keypair"
+	"boscoin.io/sebak/lib/common/keypair"
 )
 
 type ValidatorFromJSON struct {

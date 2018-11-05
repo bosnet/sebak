@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 
 	"github.com/btcsuite/btcutil/base58"
-	"github.com/stellar/go/keypair"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common/keypair"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/transaction/operation"
 )
@@ -183,7 +183,7 @@ func (tx Transaction) String() string {
 func (tx *Transaction) Sign(kp keypair.KP, networkID []byte) {
 	tx.B.Source = kp.Address()
 	tx.H.Hash = tx.B.MakeHashString()
-	signature, _ := common.MakeSignature(kp, networkID, tx.H.Hash)
+	signature, _ := keypair.MakeSignature(kp, networkID, tx.H.Hash)
 
 	tx.H.Signature = base58.Encode(signature)
 

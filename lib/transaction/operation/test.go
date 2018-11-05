@@ -3,9 +3,8 @@ package operation
 import (
 	"math/rand"
 
-	"github.com/stellar/go/keypair"
-
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common/keypair"
 )
 
 var (
@@ -14,7 +13,7 @@ var (
 )
 
 func init() {
-	kp, _ = keypair.Random()
+	kp = keypair.Random()
 }
 
 func TestMakeOperationBodyPayment(amount int, addressList ...string) Payment {
@@ -22,7 +21,7 @@ func TestMakeOperationBodyPayment(amount int, addressList ...string) Payment {
 	if len(addressList) > 0 {
 		address = addressList[0]
 	} else {
-		kp, _ := keypair.Random()
+		kp := keypair.Random()
 		address = kp.Address()
 	}
 

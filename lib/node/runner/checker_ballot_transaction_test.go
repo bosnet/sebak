@@ -16,19 +16,19 @@ import (
 
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common/keypair"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
 	"boscoin.io/sebak/lib/transaction/operation"
 
-	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
 )
 
 // Test with some missing block accounts
 func TestValidateTxPaymentMissingBlockAccount(t *testing.T) {
-	kps, _ := keypair.Random()
-	kpt, _ := keypair.Random()
+	kps := keypair.Random()
+	kpt := keypair.Random()
 
 	st := storage.NewTestStorage()
 	defer st.Close()
@@ -80,8 +80,8 @@ func TestValidateTxPaymentMissingBlockAccount(t *testing.T) {
 
 // Check for correct sequence ID
 func TestValidateTxWrongSequenceID(t *testing.T) {
-	kps, _ := keypair.Random()
-	kpt, _ := keypair.Random()
+	kps := keypair.Random()
+	kpt := keypair.Random()
 
 	st := storage.NewTestStorage()
 	defer st.Close()
@@ -123,8 +123,8 @@ func TestValidateTxWrongSequenceID(t *testing.T) {
 
 // Check sending the whole balance
 func TestValidateTxOverBalance(t *testing.T) {
-	kps, _ := keypair.Random()
-	kpt, _ := keypair.Random()
+	kps := keypair.Random()
+	kpt := keypair.Random()
 
 	st := storage.NewTestStorage()
 	defer st.Close()
@@ -180,8 +180,8 @@ func TestValidateTxOverBalance(t *testing.T) {
 
 // Test creating an already existing account
 func TestValidateOpCreateExistsAccount(t *testing.T) {
-	kps, _ := keypair.Random()
-	kpt, _ := keypair.Random()
+	kps := keypair.Random()
+	kpt := keypair.Random()
 
 	st := storage.NewTestStorage()
 	defer st.Close()

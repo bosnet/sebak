@@ -4,15 +4,14 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"io"
 	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/stellar/go/keypair"
-
-	"io"
 
 	"boscoin.io/sebak/cmd/sebak/common"
+	"boscoin.io/sebak/lib/common/keypair"
 )
 
 var (
@@ -114,7 +113,7 @@ Network Passphrase: "{{ .networkPassphrase}}"{{ end }}
 
 func generateKP(seedOrNetworkPassphrase string, fromSeed bool) (full *keypair.Full, err error) {
 	if len(seedOrNetworkPassphrase) == 0 {
-		full, err = keypair.Random()
+		full, err = keypair.RandomCanFail()
 	} else if fromSeed {
 		var kp keypair.KP
 

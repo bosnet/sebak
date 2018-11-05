@@ -1,9 +1,8 @@
 package block
 
 import (
-	"github.com/stellar/go/keypair"
-
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common/keypair"
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
 	"boscoin.io/sebak/lib/voting"
@@ -12,8 +11,7 @@ import (
 var networkID []byte = []byte("sebak-test-network")
 
 func TestMakeBlockAccount() *BlockAccount {
-	kp, _ := keypair.Random()
-	address := kp.Address()
+	address := keypair.Random().Address()
 	balance := common.Amount(common.BaseReserve)
 
 	return NewBlockAccount(address, balance)
@@ -25,15 +23,8 @@ var (
 )
 
 func init() {
-	var err error
-	GenesisKP, err = keypair.Random()
-	if err != nil {
-		panic(err)
-	}
-	CommonKP, err = keypair.Random()
-	if err != nil {
-		panic(err)
-	}
+	GenesisKP = keypair.Random()
+	CommonKP = keypair.Random()
 }
 
 //
@@ -101,7 +92,7 @@ func (b *BlockOperation) MustSave(st *storage.LevelDBBackend) {
 }
 
 func TestMakeNewBlock(transactions []string) Block {
-	kp, _ := keypair.Random()
+	kp := keypair.Random()
 
 	return *NewBlock(
 		kp.Address(),
@@ -118,7 +109,7 @@ func TestMakeNewBlock(transactions []string) Block {
 }
 
 func TestMakeNewBlockWithPrevBlock(prevBlock Block, txs []string) Block {
-	kp, _ := keypair.Random()
+	kp := keypair.Random()
 
 	return *NewBlock(
 		kp.Address(),

@@ -10,7 +10,6 @@ import (
 	"sort"
 
 	uuid "github.com/satori/go.uuid"
-	"github.com/stellar/go/keypair"
 )
 
 const MaxUintEncodeByte = 8
@@ -141,11 +140,6 @@ func IsStringMapEqualWithHash(a, b map[string]bool) bool {
 	bHash := MustMakeObjectHash(b)
 
 	return bytes.Equal(aHash, bHash)
-}
-
-// MakeSignature makes signature from given hash string
-func MakeSignature(kp keypair.KP, networkID []byte, hash string) ([]byte, error) {
-	return kp.Sign(append(networkID, []byte(hash)...))
 }
 
 func EncodeUint64ToByteSlice(i uint64) [MaxUintEncodeByte]byte {

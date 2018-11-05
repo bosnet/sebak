@@ -3,10 +3,10 @@ package block
 import (
 	"testing"
 
-	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common/keypair"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
@@ -71,8 +71,8 @@ func TestBlockTransactionSaveExisting(t *testing.T) {
 }
 
 func TestMultipleBlockTransactionSource(t *testing.T) {
-	kp, _ := keypair.Random()
-	kpAnother, _ := keypair.Random()
+	kp := keypair.Random()
+	kpAnother := keypair.Random()
 	st := storage.NewTestStorage()
 
 	numTxs := 10
@@ -154,7 +154,7 @@ func TestMultipleBlockTransactionSource(t *testing.T) {
 }
 
 func TestMultipleBlockTransactionConfirmed(t *testing.T) {
-	kp, _ := keypair.Random()
+	kp := keypair.Random()
 	st := storage.NewTestStorage()
 
 	numTxs := 10
@@ -232,8 +232,8 @@ func TestBlockTransactionMultipleSave(t *testing.T) {
 }
 
 func TestMultipleBlockTransactionGetByAccount(t *testing.T) {
-	kp, _ := keypair.Random()
-	kpAnother, _ := keypair.Random()
+	kp := keypair.Random()
+	kpAnother := keypair.Random()
 	st := storage.NewTestStorage()
 
 	numTxs := 5
@@ -306,7 +306,7 @@ func TestMultipleBlockTransactionGetByAccount(t *testing.T) {
 }
 
 func TestMultipleBlockTransactionGetByBlock(t *testing.T) {
-	kp, _ := keypair.Random()
+	kp := keypair.Random()
 	st := storage.NewTestStorage()
 
 	numTxs := 5
@@ -383,7 +383,7 @@ func TestMultipleBlockTransactionGetByBlock(t *testing.T) {
 }
 
 func TestMultipleBlockTransactionsOrderByBlockHeightAndCursor(t *testing.T) {
-	kp, _ := keypair.Random()
+	kp := keypair.Random()
 	st := storage.NewTestStorage()
 
 	numTxs := 5

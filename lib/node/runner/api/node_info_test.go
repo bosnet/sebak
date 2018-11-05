@@ -9,11 +9,11 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
 
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common/keypair"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/version"
 )
@@ -23,7 +23,7 @@ func TestAPIGetNodeInfoHandler(t *testing.T) {
 	defer st.Close()
 
 	endpoint, _ := common.ParseEndpoint("http://1.2.3.4:5678")
-	kp, _ := keypair.Random()
+	kp := keypair.Random()
 	localNode, _ := node.NewLocalNode(kp, endpoint, "")
 
 	nv := node.NodeVersion{

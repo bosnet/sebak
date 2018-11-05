@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/btcsuite/btcutil/base58"
-	"github.com/stellar/go/keypair"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common/keypair"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/voting"
 )
@@ -193,7 +193,7 @@ func (b *Ballot) SignByProposer(kp keypair.KP, networkID []byte) {
 
 	b.B.Proposed.Confirmed = common.NowISO8601()
 	hash := common.MustMakeObjectHash(b.B.Proposed)
-	signature, _ := common.MakeSignature(kp, networkID, string(hash))
+	signature, _ := keypair.MakeSignature(kp, networkID, string(hash))
 	b.H.ProposerSignature = base58.Encode(signature)
 }
 
@@ -205,7 +205,7 @@ func (b *Ballot) Sign(kp keypair.KP, networkID []byte) {
 	b.B.Confirmed = common.NowISO8601()
 	b.B.Source = kp.Address()
 	b.H.Hash = b.B.MakeHashString()
-	signature, _ := common.MakeSignature(kp, networkID, b.H.Hash)
+	signature, _ := keypair.MakeSignature(kp, networkID, b.H.Hash)
 	b.H.Signature = base58.Encode(signature)
 
 	return

@@ -4,12 +4,12 @@ import (
 	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common/keypair"
 	"boscoin.io/sebak/lib/consensus"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/transaction"
 	"boscoin.io/sebak/lib/voting"
-	"github.com/stellar/go/keypair"
 )
 
 var networkID []byte = []byte("sebak-test-network")
@@ -34,7 +34,7 @@ func MakeNodeRunner() (*NodeRunner, *node.LocalNode) {
 }
 
 func GetTransaction() (transaction.Transaction, []byte) {
-	kpNewAccount, _ := keypair.Random()
+	kpNewAccount := keypair.Random()
 
 	tx := transaction.MakeTransactionCreateAccount(block.GenesisKP, kpNewAccount.Address(), common.BaseReserve)
 	tx.B.SequenceID = uint64(0)
@@ -49,7 +49,7 @@ func GetTransaction() (transaction.Transaction, []byte) {
 
 func GetCreateAccountTransaction(sequenceID uint64, amount uint64) (transaction.Transaction, []byte, *keypair.Full) {
 	initialBalance := common.Amount(amount)
-	kpNewAccount, _ := keypair.Random()
+	kpNewAccount := keypair.Random()
 	tx := transaction.MakeTransactionCreateAccount(block.GenesisKP, kpNewAccount.Address(), initialBalance)
 	tx.B.SequenceID = sequenceID
 	tx.Sign(block.GenesisKP, networkID)
@@ -63,7 +63,7 @@ func GetCreateAccountTransaction(sequenceID uint64, amount uint64) (transaction.
 
 func GetFreezingTransaction(kpSource *keypair.Full, sequenceID uint64, amount uint64) (transaction.Transaction, []byte, *keypair.Full) {
 	initialBalance := common.Amount(amount)
-	kpNewAccount, _ := keypair.Random()
+	kpNewAccount := keypair.Random()
 
 	tx := transaction.MakeTransactionCreateFrozenAccount(kpSource, kpNewAccount.Address(), initialBalance, kpSource.Address())
 	tx.B.SequenceID = sequenceID
