@@ -6,7 +6,7 @@ Account API
 
 + Parameters
 
-    + address: `GDVSXU343JMRBXGW3F5WLRMH6L6HFZ6IYMVMFSDUDJPNTXUGNOXC2R5Y` (string, required) - a public address
+    + address: `GDEPYGGALPJ5HENXCNOQJPPDOQMA2YAXPERZ4XEAKVFFJJEVP4ZBK6QI` (string, required) - a public address
 
 ### Retrieve an account [GET]
 <p> Retrieve an account by the address </p>
@@ -28,7 +28,7 @@ Account API
 
 + Parameters
 
-    + address: `GDVSXU343JMRBXGW3F5WLRMH6L6HFZ6IYMVMFSDUDJPNTXUGNOXC2R5Y` (string, required) - a public address
+    + address: `GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ` (string, required) - a public address
     
     + limit: `100` (integer, optional)
             

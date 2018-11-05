@@ -2,7 +2,7 @@
 Transactions API
 
 
-## Transactions [/api/v1/transactions]
+## Transactions [/v1/transactions]
 
 
 ### Payment transaction  [POST]
@@ -77,7 +77,7 @@ Transactions API
 
 + Response 200 (application/hal+json; charset=utf-8)
     
-    + Attributes (Operations)
+    + Attributes (Operation)
 
 + Response 500 (application/problem+json; charset=utf-8)
 
