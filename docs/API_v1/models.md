@@ -137,10 +137,12 @@
         + body
             + target: GDEPYGGALPJ5HENXCNOQJPPDOQMA2YAXPERZ4XEAKVFFJJEVP4ZBK6QI - The funded account's public key
             + amount: `1000000000000` - amount in GON
+        
         + hash: F6SEv2QhgwZwxUARbRacxyZaufzcTxdYDXJBpvf7pNAj-7nLuyg8radTExzBM2WhG37AwohBwEySBw4vj2xdtdjAs - Hash of operation
         + source: GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ - Source account
         + tx_hash: 7nLuyg8radTExzBM2WhG37AwohBwEySBw4vj2xdtdjAs - Hash of transaction
         + type: create-account  - operation type. ex. payment, create-account
+    
     + _links
         + next
             + href: `/api/v1/transactions/7nLuyg8radTExzBM2WhG37AwohBwEySBw4vj2xdtdjAs/operations?limit=100&reverse=false`
