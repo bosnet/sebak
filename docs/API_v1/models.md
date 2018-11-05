@@ -27,12 +27,12 @@
                     + templated: true
                 + self
                     + href: `/api/v1/transactions`
-        + created: 2018-11-02T14:09:33.019606000+09:00
-        + fee: `10000`
-        + hash: 7nLuyg8radTExzBM2WhG37AwohBwEySBw4vj2xdtdjAs
+        + created: `2018-11-02T14:09:33.019606000+09:00`
+        + fee: 10000
+        + hash: 7nLuyg8radTExzBM2WhG37AwohBwEySBw4vj2xdtdjAs`
         + operation_count: 1
         + sequence_id: 0
-        + source: GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ
+        + source: `GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ`
 + _links
     + next
         + href: `/api/v1/account/GDEPYGGALPJ5HENXCNOQJPPDOQMA2YAXPERZ4XEAKVFFJJEVP4ZBK6QI/transactions?limit=100&reverse=false`
