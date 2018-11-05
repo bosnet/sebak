@@ -11,11 +11,11 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
-	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
 
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common/keypair"
 	"boscoin.io/sebak/lib/consensus"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/network"
@@ -42,7 +42,7 @@ func (p *HelperTestGetNodeTransactionsHandler) Prepare() {
 	p.st = block.InitTestBlockchain()
 	p.blocks = append(p.blocks, block.GetGenesis(p.st))
 
-	kp, _ := keypair.Random()
+	kp := keypair.Random()
 	endpoint, _ := common.NewEndpointFromString(
 		fmt.Sprintf("http://localhost:12345"),
 	)
@@ -71,7 +71,7 @@ func (p *HelperTestGetNodeTransactionsHandler) Prepare() {
 
 	p.server = httptest.NewServer(p.router)
 
-	p.genesisKeypair, _ = keypair.Random()
+	p.genesisKeypair = keypair.Random()
 	p.genesisAccount = block.NewBlockAccount(p.genesisKeypair.Address(), common.MaximumBalance)
 	p.genesisAccount.MustSave(p.st)
 

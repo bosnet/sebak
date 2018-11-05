@@ -1,16 +1,15 @@
 package transaction
 
 import (
+	"encoding/json"
 	"testing"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common/keypair"
+	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/transaction/operation"
 
-	"encoding/json"
-
-	"boscoin.io/sebak/lib/errors"
 	"github.com/btcsuite/btcutil/base58"
-	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )

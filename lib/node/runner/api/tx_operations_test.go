@@ -10,11 +10,11 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
 
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common/keypair"
 	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/node/runner/api/resource"
 	"boscoin.io/sebak/lib/transaction"
@@ -71,9 +71,7 @@ func TestGetOperationsByTxHashHandlerStream(t *testing.T) {
 	defer storage.Close()
 	defer ts.Close()
 
-	kp, err := keypair.Random()
-	require.NoError(t, err)
-
+	kp := keypair.Random()
 	tx := transaction.TestMakeTransactionWithKeypair(networkID, 10, kp)
 	bt := block.NewBlockTransactionFromTransaction("block-hash", 1, common.NowISO8601(), tx)
 

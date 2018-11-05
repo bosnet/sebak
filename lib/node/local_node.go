@@ -13,9 +13,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/stellar/go/keypair"
-
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common/keypair"
 )
 
 type LocalNode struct {

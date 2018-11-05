@@ -3,9 +3,8 @@ package transaction
 import (
 	"math/rand"
 
-	"github.com/stellar/go/keypair"
-
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common/keypair"
 	"boscoin.io/sebak/lib/transaction/operation"
 )
 
@@ -15,11 +14,11 @@ var (
 )
 
 func init() {
-	kp, _ = keypair.Random()
+	kp = keypair.Random()
 }
 
 func TestMakeTransaction(networkID []byte, n int) (kp *keypair.Full, tx Transaction) {
-	kp, _ = keypair.Random()
+	kp = keypair.Random()
 
 	var ops []operation.Operation
 	for i := 0; i < n; i++ {

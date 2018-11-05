@@ -6,9 +6,9 @@ import (
 	"net/http/httptest"
 
 	"github.com/gorilla/mux"
-	"github.com/stellar/go/keypair"
 
 	"boscoin.io/sebak/lib/block"
+	"boscoin.io/sebak/lib/common/keypair"
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
 )
@@ -51,10 +51,7 @@ func prepareOps(storage *storage.LevelDBBackend, count int) (*keypair.Full, []bl
 	return kp, boList
 }
 func prepareOpsWithoutSave(count int, st *storage.LevelDBBackend) (*keypair.Full, []block.BlockOperation) {
-	kp, err := keypair.Random()
-	if err != nil {
-		panic(err)
-	}
+	kp := keypair.Random()
 	var txs []transaction.Transaction
 	var txHashes []string
 	var boList []block.BlockOperation
@@ -79,10 +76,7 @@ func prepareOpsWithoutSave(count int, st *storage.LevelDBBackend) (*keypair.Full
 }
 
 func prepareTxs(storage *storage.LevelDBBackend, count int) (*keypair.Full, []block.BlockTransaction) {
-	kp, err := keypair.Random()
-	if err != nil {
-		panic(err)
-	}
+	kp := keypair.Random()
 	var txs []transaction.Transaction
 	var txHashes []string
 	var btList []block.BlockTransaction
@@ -103,10 +97,7 @@ func prepareTxs(storage *storage.LevelDBBackend, count int) (*keypair.Full, []bl
 }
 
 func prepareTxsWithoutSave(count int, st *storage.LevelDBBackend) (*keypair.Full, []block.BlockTransaction) {
-	kp, err := keypair.Random()
-	if err != nil {
-		panic(err)
-	}
+	kp := keypair.Random()
 	var txs []transaction.Transaction
 	var txHashes []string
 	var btList []block.BlockTransaction
@@ -125,11 +116,7 @@ func prepareTxsWithoutSave(count int, st *storage.LevelDBBackend) (*keypair.Full
 }
 
 func prepareTxWithoutSave(st *storage.LevelDBBackend) (*keypair.Full, *transaction.Transaction, *block.BlockTransaction) {
-	kp, err := keypair.Random()
-	if err != nil {
-		panic(err)
-	}
-
+	kp := keypair.Random()
 	tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, kp)
 
 	theBlock := block.TestMakeNewBlockWithPrevBlock(block.GetLatestBlock(st), []string{tx.GetHash()})

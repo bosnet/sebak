@@ -4,12 +4,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
 
 	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common/keypair"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/transaction"
@@ -29,7 +29,7 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 	rootAccount, _ := block.GetBlockAccount(nodeRunner.Storage(), rootKP.Address())
 
 	TestMakeBlockAccount := func(balance common.Amount) (account *block.BlockAccount, kp *keypair.Full) {
-		kp, _ = keypair.Random()
+		kp = keypair.Random()
 		account = block.NewBlockAccount(kp.Address(), balance)
 
 		return
@@ -195,11 +195,11 @@ func (g *getMissingTransactionTesting) MakeBallot(numberOfTxs int) (blt *ballot.
 	var txHashes []string
 	var txs []transaction.Transaction
 	for i := 0; i < numberOfTxs; i++ {
-		kpA, _ := keypair.Random()
+		kpA := keypair.Random()
 		accountA := block.NewBlockAccount(kpA.Address(), common.Amount(common.BaseReserve)*2)
 		accountA.MustSave(g.proposerNR.Storage())
 
-		kpB, _ := keypair.Random()
+		kpB := keypair.Random()
 
 		tx := transaction.MakeTransactionCreateAccount(kpA, kpB.Address(), common.BaseReserve)
 		tx.B.SequenceID = accountA.SequenceID
@@ -438,11 +438,11 @@ func (p *irregularIncomingBallot) makeBallot(state ballot.State) (blt *ballot.Ba
 		TotalTxs:  p.genesisBlock.TotalTxs,
 	}
 
-	p.keyA, _ = keypair.Random()
+	p.keyA = keypair.Random()
 	p.accountA = block.NewBlockAccount(p.keyA.Address(), common.Amount(common.BaseReserve)*2)
 	p.accountA.MustSave(p.nr.Storage())
 
-	kpB, _ := keypair.Random()
+	kpB := keypair.Random()
 
 	tx := transaction.MakeTransactionCreateAccount(p.keyA, kpB.Address(), common.BaseReserve)
 	tx.B.SequenceID = p.accountA.SequenceID

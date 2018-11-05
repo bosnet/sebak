@@ -13,12 +13,12 @@ import (
 	isatty "github.com/mattn/go-isatty"
 	"github.com/oklog/run"
 	"github.com/spf13/cobra"
-	"github.com/stellar/go/keypair"
 	"github.com/ulule/limiter"
 	"golang.org/x/net/http2"
 
 	cmdcommon "boscoin.io/sebak/cmd/sebak/common"
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common/keypair"
 	"boscoin.io/sebak/lib/consensus"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/network"

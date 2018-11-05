@@ -2,10 +2,9 @@ package runner
 
 import (
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/transaction/operation"
-
+	"boscoin.io/sebak/lib/common/keypair"
 	"boscoin.io/sebak/lib/transaction"
-	"github.com/stellar/go/keypair"
+	"boscoin.io/sebak/lib/transaction/operation"
 )
 
 func makeTransaction(kp *keypair.Full) (tx transaction.Transaction) {

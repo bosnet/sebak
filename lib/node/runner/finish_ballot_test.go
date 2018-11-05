@@ -7,12 +7,12 @@ import (
 	"testing"
 
 	logging "github.com/inconshreveable/log15"
-	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
 
 	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common/keypair"
 	"boscoin.io/sebak/lib/consensus"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
@@ -103,16 +103,16 @@ func testFinishBallotWithBatch(withBatch bool, numberOfTransactions, numberOfOpe
 		}
 
 		for i := 0; i < numberOfTransactions; i++ {
-			kpA, _ := keypair.Random()
+			kpA := keypair.Random()
 			accountA := block.NewBlockAccount(kpA.Address(), common.Amount(common.BaseReserve))
 			accountA.MustSave(nr.Storage())
 
-			kpB, _ := keypair.Random()
+			kpB := keypair.Random()
 			tx := transaction.MakeTransactionCreateAccount(kpA, kpB.Address(), common.Amount(1))
 
 			var ops []operation.Operation
 			for j := 0; j < numberOfOperations-1; j++ {
-				kpC, _ := keypair.Random()
+				kpC := keypair.Random()
 
 				opb := operation.NewCreateAccount(kpC.Address(), common.Amount(1), "")
 				op := operation.Operation{

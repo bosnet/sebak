@@ -5,11 +5,11 @@ import (
 	"time"
 
 	"github.com/btcsuite/btcutil/base58"
-	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
 
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common/keypair"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/transaction"
@@ -21,8 +21,8 @@ var networkID []byte = []byte("sebak-test-network")
 
 func TestErrorBallotHasOverMaxTransactionsInBallot(t *testing.T) {
 
-	kp, _ := keypair.Random()
-	commonKP, _ := keypair.Random()
+	kp := keypair.Random()
+	commonKP := keypair.Random()
 	endpoint, _ := common.NewEndpointFromString("https://localhost:1000")
 	node, _ := node.NewLocalNode(kp, endpoint, "")
 
@@ -68,8 +68,8 @@ func TestErrorBallotHasOverMaxTransactionsInBallot(t *testing.T) {
 }
 
 func TestBallotBadConfirmedTime(t *testing.T) {
-	kp, _ := keypair.Random()
-	commonKP, _ := keypair.Random()
+	kp := keypair.Random()
+	commonKP := keypair.Random()
 	endpoint, _ := common.NewEndpointFromString("https://localhost:1000")
 	node, _ := node.NewLocalNode(kp, endpoint, "")
 
@@ -77,7 +77,7 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 
 	updateBallot := func(ballot *Ballot) {
 		ballot.H.Hash = ballot.B.MakeHashString()
-		signature, _ := common.MakeSignature(kp, networkID, ballot.H.Hash)
+		signature, _ := keypair.MakeSignature(kp, networkID, ballot.H.Hash)
 		ballot.H.Signature = base58.Encode(signature)
 	}
 
@@ -146,7 +146,7 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 }
 
 func TestBallotEmptyHash(t *testing.T) {
-	kp, _ := keypair.Random()
+	kp := keypair.Random()
 	node, _ := node.NewLocalNode(kp, &common.Endpoint{}, "")
 	r := voting.Basis{}
 	b := NewBallot(node.Address(), node.Address(), r, []string{})
@@ -158,13 +158,13 @@ func TestBallotEmptyHash(t *testing.T) {
 // TestBallotProposerTransaction checks; the proposed Ballot must have the
 // proposed transaction.
 func TestBallotProposerTransaction(t *testing.T) {
-	kp, _ := keypair.Random()
+	kp := keypair.Random()
 	endpoint, _ := common.NewEndpointFromString("https://localhost:1000")
 	node, _ := node.NewLocalNode(kp, endpoint, "")
 
 	basis := voting.Basis{Round: 0, Height: 1, BlockHash: "hahaha", TotalTxs: 1}
 
-	commonKP, _ := keypair.Random()
+	commonKP := keypair.Random()
 
 	conf := common.NewConfig()
 	{ // without ProposerTransaction
@@ -200,7 +200,7 @@ func TestBallotProposerTransaction(t *testing.T) {
 }
 
 func TestNewBallot(t *testing.T) {
-	kp, _ := keypair.Random()
+	kp := keypair.Random()
 	nodeEndpoint, _ := common.NewEndpointFromString("https://localhost:1000")
 	proposerEndpoint, _ := common.NewEndpointFromString("https://localhost:1001")
 	n, _ := node.NewLocalNode(kp, nodeEndpoint, "")
@@ -219,21 +219,20 @@ func TestIsBallotWellFormed(t *testing.T) {
 	nodeEndpoint, _ := common.NewEndpointFromString("https://localhost:1000")
 	proposerEndpoint, _ := common.NewEndpointFromString("https://localhost:1001")
 
-	nodeKP, _ := keypair.Random()
+	nodeKP := keypair.Random()
 	n, _ := node.NewLocalNode(nodeKP, nodeEndpoint, "")
 
-	proposerKP, _ := keypair.Random()
+	proposerKP := keypair.Random()
 	p, _ := node.NewLocalNode(proposerKP, proposerEndpoint, "")
 
 	basis := voting.Basis{Round: 0, Height: 1, BlockHash: "hahaha", TotalTxs: 1}
 
 	initialBalance := common.Amount(common.BaseReserve)
-	kpNewAccount, _ := keypair.Random()
-	tx := transaction.MakeTransactionCreateAccount(nodeKP, kpNewAccount.Address(), initialBalance)
+	tx := transaction.MakeTransactionCreateAccount(nodeKP, keypair.Random().Address(), initialBalance)
 
 	wellBallot := NewBallot(n.Address(), p.Address(), basis, []string{tx.GetHash()})
 
-	commonKP, _ := keypair.Random()
+	commonKP := keypair.Random()
 	commonAccount := block.NewBlockAccount(commonKP.Address(), 0)
 
 	opi, _ := NewInflationFromBallot(*wellBallot, commonAccount.Address, initialBalance)
@@ -263,17 +262,16 @@ func TestIsExpiredBallotWellFormed(t *testing.T) {
 	nodeEndpoint, _ := common.NewEndpointFromString("https://localhost:1000")
 	proposerEndpoint, _ := common.NewEndpointFromString("https://localhost:1001")
 
-	nodeKP, _ := keypair.Random()
+	nodeKP := keypair.Random()
 	n, _ := node.NewLocalNode(nodeKP, nodeEndpoint, "")
 
-	proposerKP, _ := keypair.Random()
+	proposerKP := keypair.Random()
 	p, _ := node.NewLocalNode(proposerKP, proposerEndpoint, "")
 
 	basis := voting.Basis{Round: 0, Height: 1, BlockHash: "hahaha", TotalTxs: 1}
 
 	initialBalance := common.Amount(common.BaseReserve)
-	kpNewAccount, _ := keypair.Random()
-	tx := transaction.MakeTransactionCreateAccount(nodeKP, kpNewAccount.Address(), initialBalance)
+	tx := transaction.MakeTransactionCreateAccount(nodeKP, keypair.Random().Address(), initialBalance)
 
 	b := NewBallot(n.Address(), p.Address(), basis, []string{tx.GetHash()})
 
@@ -292,21 +290,20 @@ func TestIsExpiredBallotWithProposerTransactionWellFormed(t *testing.T) {
 	nodeEndpoint, _ := common.NewEndpointFromString("https://localhost:1000")
 	proposerEndpoint, _ := common.NewEndpointFromString("https://localhost:1001")
 
-	nodeKP, _ := keypair.Random()
+	nodeKP := keypair.Random()
 	n, _ := node.NewLocalNode(nodeKP, nodeEndpoint, "")
 
-	proposerKP, _ := keypair.Random()
+	proposerKP := keypair.Random()
 	p, _ := node.NewLocalNode(proposerKP, proposerEndpoint, "")
 
 	basis := voting.Basis{Round: 0, Height: 1, BlockHash: "hahaha", TotalTxs: 1}
 
 	initialBalance := common.Amount(common.BaseReserve)
-	kpNewAccount, _ := keypair.Random()
-	tx := transaction.MakeTransactionCreateAccount(nodeKP, kpNewAccount.Address(), initialBalance)
+	tx := transaction.MakeTransactionCreateAccount(nodeKP, keypair.Random().Address(), initialBalance)
 
 	b := NewBallot(n.Address(), p.Address(), basis, []string{tx.GetHash()})
 
-	commonKP, _ := keypair.Random()
+	commonKP := keypair.Random()
 	commonAccount := block.NewBlockAccount(commonKP.Address(), 0)
 
 	opi, _ := NewInflationFromBallot(*b, commonAccount.Address, initialBalance)

@@ -8,11 +8,11 @@ import (
 
 	logging "github.com/inconshreveable/log15"
 	"github.com/spf13/cobra"
-	"github.com/stellar/go/keypair"
 
 	cmdcommon "boscoin.io/sebak/cmd/sebak/common"
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common/keypair"
 	"boscoin.io/sebak/lib/storage"
 )
 
