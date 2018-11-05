@@ -228,7 +228,7 @@ func TestIsBallotWellFormed(t *testing.T) {
 	basis := voting.Basis{Round: 0, Height: 1, BlockHash: "hahaha", TotalTxs: 1}
 
 	initialBalance := common.Amount(common.BaseReserve)
-	tx := transaction.MakeTransactionCreateAccount(nodeKP, keypair.Random().Address(), initialBalance)
+	tx := transaction.MakeTransactionCreateAccount(networkID, nodeKP, keypair.Random().Address(), initialBalance)
 
 	wellBallot := NewBallot(n.Address(), p.Address(), basis, []string{tx.GetHash()})
 
@@ -271,7 +271,7 @@ func TestIsExpiredBallotWellFormed(t *testing.T) {
 	basis := voting.Basis{Round: 0, Height: 1, BlockHash: "hahaha", TotalTxs: 1}
 
 	initialBalance := common.Amount(common.BaseReserve)
-	tx := transaction.MakeTransactionCreateAccount(nodeKP, keypair.Random().Address(), initialBalance)
+	tx := transaction.MakeTransactionCreateAccount(networkID, nodeKP, keypair.Random().Address(), initialBalance)
 
 	b := NewBallot(n.Address(), p.Address(), basis, []string{tx.GetHash()})
 
@@ -299,7 +299,7 @@ func TestIsExpiredBallotWithProposerTransactionWellFormed(t *testing.T) {
 	basis := voting.Basis{Round: 0, Height: 1, BlockHash: "hahaha", TotalTxs: 1}
 
 	initialBalance := common.Amount(common.BaseReserve)
-	tx := transaction.MakeTransactionCreateAccount(nodeKP, keypair.Random().Address(), initialBalance)
+	tx := transaction.MakeTransactionCreateAccount(networkID, nodeKP, keypair.Random().Address(), initialBalance)
 
 	b := NewBallot(n.Address(), p.Address(), basis, []string{tx.GetHash()})
 

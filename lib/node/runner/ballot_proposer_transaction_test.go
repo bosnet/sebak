@@ -64,7 +64,7 @@ func (p *ballotCheckerProposedTransaction) MakeBallot(numberOfTxs int) (blt *bal
 
 		kpB := keypair.Random()
 
-		tx := transaction.MakeTransactionCreateAccount(kpA, kpB.Address(), common.Amount(1))
+		tx := transaction.MakeTransactionCreateAccount(networkID, kpA, kpB.Address(), common.Amount(1))
 		tx.B.SequenceID = accountA.SequenceID
 		tx.Sign(kpA, networkID)
 

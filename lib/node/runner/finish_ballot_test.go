@@ -108,7 +108,7 @@ func testFinishBallotWithBatch(withBatch bool, numberOfTransactions, numberOfOpe
 			accountA.MustSave(nr.Storage())
 
 			kpB := keypair.Random()
-			tx := transaction.MakeTransactionCreateAccount(kpA, kpB.Address(), common.Amount(1))
+			tx := transaction.MakeTransactionCreateAccount(networkID, kpA, kpB.Address(), common.Amount(1))
 
 			var ops []operation.Operation
 			for j := 0; j < numberOfOperations-1; j++ {

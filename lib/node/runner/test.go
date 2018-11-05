@@ -36,7 +36,7 @@ func MakeNodeRunner() (*NodeRunner, *node.LocalNode) {
 func GetTransaction() (transaction.Transaction, []byte) {
 	kpNewAccount := keypair.Random()
 
-	tx := transaction.MakeTransactionCreateAccount(block.GenesisKP, kpNewAccount.Address(), common.BaseReserve)
+	tx := transaction.MakeTransactionCreateAccount(networkID, block.GenesisKP, kpNewAccount.Address(), common.BaseReserve)
 	tx.B.SequenceID = uint64(0)
 	tx.Sign(block.GenesisKP, networkID)
 
@@ -50,7 +50,7 @@ func GetTransaction() (transaction.Transaction, []byte) {
 func GetCreateAccountTransaction(sequenceID uint64, amount uint64) (transaction.Transaction, []byte, *keypair.Full) {
 	initialBalance := common.Amount(amount)
 	kpNewAccount := keypair.Random()
-	tx := transaction.MakeTransactionCreateAccount(block.GenesisKP, kpNewAccount.Address(), initialBalance)
+	tx := transaction.MakeTransactionCreateAccount(networkID, block.GenesisKP, kpNewAccount.Address(), initialBalance)
 	tx.B.SequenceID = sequenceID
 	tx.Sign(block.GenesisKP, networkID)
 
@@ -65,7 +65,7 @@ func GetFreezingTransaction(kpSource *keypair.Full, sequenceID uint64, amount ui
 	initialBalance := common.Amount(amount)
 	kpNewAccount := keypair.Random()
 
-	tx := transaction.MakeTransactionCreateFrozenAccount(kpSource, kpNewAccount.Address(), initialBalance, kpSource.Address())
+	tx := transaction.MakeTransactionCreateFrozenAccount(networkID, kpSource, kpNewAccount.Address(), initialBalance, kpSource.Address())
 	tx.B.SequenceID = sequenceID
 	tx.Sign(kpSource, networkID)
 
@@ -77,7 +77,7 @@ func GetFreezingTransaction(kpSource *keypair.Full, sequenceID uint64, amount ui
 }
 
 func GetUnfreezingRequestTransaction(kpSource *keypair.Full, sequenceID uint64) (transaction.Transaction, []byte) {
-	tx := transaction.MakeTransactionUnfreezingRequest(kpSource)
+	tx := transaction.MakeTransactionUnfreezingRequest(networkID, kpSource)
 	tx.B.SequenceID = sequenceID
 	tx.Sign(kpSource, networkID)
 
@@ -91,7 +91,7 @@ func GetUnfreezingRequestTransaction(kpSource *keypair.Full, sequenceID uint64) 
 func GetUnfreezingTransaction(kpSource *keypair.Full, kpTarget *keypair.Full, sequenceID uint64, amount uint64) (transaction.Transaction, []byte) {
 	unfreezingAmount := common.Amount(amount)
 
-	tx := transaction.MakeTransactionUnfreezing(kpSource, kpTarget.Address(), unfreezingAmount)
+	tx := transaction.MakeTransactionUnfreezing(networkID, kpSource, kpTarget.Address(), unfreezingAmount)
 	tx.B.SequenceID = sequenceID
 	tx.Sign(kpSource, networkID)
 
