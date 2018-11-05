@@ -5,7 +5,7 @@ Transactions API
 ## Transactions [/v1/transactions]
 
 
-### Payment transaction  [POST]
+### Payment transaction  [POST] 
 //TODO: How to make a transaction and sign 
 
 + Request (application/json)
@@ -60,6 +60,24 @@ Transactions API
 + Response 500 (application/problem+json; charset=utf-8)
 
     + Attributes (Problem)
+
+## Transaction [/api/v1/transactions/{hash}/history]
+
++ Parameters
+
+    + hash: `7nLuyg8radTExzBM2WhG37AwohBwEySBw4vj2xdtdjAs` (string,required) - tx's hash
+
+### Get transaction history
+<p>Get more specific information of transaction. <p>
+
++ Response 200 (application/hal+json; charset=utf-8)
+
+      + Attributes (TransactionHistory)
+
++ Response 500 (application/problem+json; charset=utf-8)
+
+    + Attributes (Problem)
+
 
 ## Operations for Trasaction [/api/v1/transactions/{hash}/operations?limit={limit}&reverse={reverse}&cursor={cursor}]
 
