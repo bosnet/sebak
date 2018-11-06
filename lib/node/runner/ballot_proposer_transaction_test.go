@@ -335,23 +335,6 @@ func TestProposedTransactionWithWrongOperationBodyCollectTxFeeBlockData(t *testi
 			require.Equal(t, errors.InvalidOperation, err)
 		}
 	}
-
-	{
-		// with wrong `CollectTxFee.Txs`; this will cause the
-		// insufficient collected fee.
-		blt := p.MakeBallot(4)
-		opb, _ := blt.ProposerTransaction().CollectTxFee()
-		opb.Txs = uint64(len(blt.Transactions()) + 1)
-		ptx := blt.ProposerTransaction()
-		ptx.B.Operations[0].B = opb
-		blt.SetProposerTransaction(ptx)
-		blt.Sign(p.proposerNode.Keypair(), networkID)
-
-		{
-			err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
-			require.Equal(t, errors.InvalidOperation, err)
-		}
-	}
 }
 
 func TestProposedTransactionWithWrongOperationBodyInflationFeeBlockData(t *testing.T) {
@@ -427,6 +410,7 @@ func TestProposedTransactionWithCollectTxFeeWrongAmount(t *testing.T) {
 	// with wrong `CollectTxFee.Amount` count
 	blt := p.MakeBallot(4)
 	opb, _ := blt.ProposerTransaction().CollectTxFee()
+	opb.Txs = 0
 	opb.Amount = opb.Amount.MustSub(1)
 	ptx := blt.ProposerTransaction()
 	ptx.B.Operations[0].B = opb
@@ -436,7 +420,7 @@ func TestProposedTransactionWithCollectTxFeeWrongAmount(t *testing.T) {
 	conf := common.NewConfig()
 	{
 		err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
-		require.Equal(t, errors.InvalidOperation, err)
+		require.Equal(t, err, errors.OperationAmountOverflow)
 	}
 }
 
