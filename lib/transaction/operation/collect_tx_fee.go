@@ -49,11 +49,6 @@ func (o CollectTxFee) IsWellFormed(common.Config) (err error) {
 		return
 	}
 
-	if int64(o.Txs) > 0 && int64(o.Amount) < 1 {
-		err = errors.OperationAmountUnderflow
-		return
-	}
-
 	if int64(o.Txs) == 0 && int64(o.Amount) != 0 {
 		err = errors.OperationAmountOverflow
 		return
@@ -64,9 +59,6 @@ func (o CollectTxFee) IsWellFormed(common.Config) (err error) {
 			err = errors.InvalidOperation
 			return
 		}
-	} else if o.Amount < (common.BaseFee * common.Amount(o.Txs)) {
-		err = errors.InvalidOperation
-		return
 	}
 
 	return
@@ -82,4 +74,8 @@ func (o CollectTxFee) GetAmount() common.Amount {
 
 func (o CollectTxFee) Serialize() (encoded []byte, err error) {
 	return json.Marshal(o)
+}
+
+func (o CollectTxFee) HasFee() bool {
+	return false
 }

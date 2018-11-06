@@ -67,9 +67,20 @@ func NewTransaction(source string, sequenceID uint64, ops ...operation.Operation
 		return
 	}
 
+	var opsHaveFee int
+	for _, op := range ops {
+		if op.HasFee() {
+			opsHaveFee++
+		}
+	}
+	fee := common.Amount(0)
+	if opsHaveFee > 0 {
+		fee = common.BaseFee.MustMult(opsHaveFee)
+	}
+
 	txBody := Body{
 		Source:     source,
-		Fee:        common.BaseFee.MustMult(len(ops)),
+		Fee:        fee,
 		SequenceID: sequenceID,
 		Operations: ops,
 	}
@@ -163,7 +174,17 @@ func (tx Transaction) TotalAmount(withFee bool) common.Amount {
 
 // TotalBaseFee returns the minimum fee of transaction.
 func (tx Transaction) TotalBaseFee() common.Amount {
-	return common.BaseFee.MustMult(len(tx.B.Operations))
+	var opsHaveFee int
+	for _, op := range tx.B.Operations {
+		if op.HasFee() {
+			opsHaveFee++
+		}
+	}
+	if opsHaveFee < 1 {
+		return common.Amount(0)
+	}
+
+	return common.BaseFee.MustMult(opsHaveFee)
 }
 
 func (tx Transaction) Serialize() (encoded []byte, err error) {

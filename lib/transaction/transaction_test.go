@@ -47,6 +47,7 @@ func (suite *TestSuite) TestIsWellFormedTransactionSuite() {
 
 func (suite *TestSuite) TestIsWellFormedTransactionWithLowerFeeSuite() {
 	var err error
+	var networkID []byte = []byte("test-sebak")
 
 	{ // valid fee
 		kp, tx := TestMakeTransaction(suite.networkID, 3)
@@ -77,6 +78,64 @@ func (suite *TestSuite) TestIsWellFormedTransactionWithLowerFeeSuite() {
 		tx.Sign(kp, suite.networkID)
 		err = tx.IsWellFormed(suite.networkID, suite.conf)
 		require.Equal(suite.T(), errors.InvalidFee, err, "Transaction shouidn't pass Fee checks")
+	}
+
+	{ // with CongressVoting, it has zero fee
+		kp, tx := TestMakeTransaction(networkID, 3)
+
+		opb := operation.NewCongressVoting([]byte("dummy contract"), 1, 100)
+		op := operation.Operation{
+			H: operation.Header{Type: operation.TypeCongressVoting},
+			B: opb,
+		}
+		tx.B.Operations = append(tx.B.Operations, op)
+		tx.Sign(kp, networkID)
+		require.Equal(suite.T(), tx.B.Fee, common.BaseFee*3)
+		require.Equal(suite.T(), len(tx.B.Operations), 4)
+
+		err = tx.IsWellFormed(networkID, suite.conf)
+		require.NoError(suite.T(), err)
+	}
+
+	{ // with CongressVotingResult, it has zero fee
+		kp, tx := TestMakeTransaction(networkID, 3)
+
+		opb := operation.NewCongressVotingResult(
+			string(common.MakeHash([]byte("dummydummy"))),
+			[]string{"http://www.boscoin.io/1", "http://www.boscoin.io/2"},
+			string(common.MakeHash([]byte("dummydummy"))),
+			[]string{"http://www.boscoin.io/3", "http://www.boscoin.io/4"},
+			9, 2, 3, 4,
+		)
+		op := operation.Operation{
+			H: operation.Header{Type: operation.TypeCongressVotingResult},
+			B: opb,
+		}
+		tx.B.Operations = append(tx.B.Operations, op)
+		tx.Sign(kp, networkID)
+		require.Equal(suite.T(), tx.B.Fee, common.BaseFee*3)
+		require.Equal(suite.T(), len(tx.B.Operations), 4)
+
+		err = tx.IsWellFormed(networkID, suite.conf)
+		require.NoError(suite.T(), err)
+	}
+
+	{ // with UnfreezeRequest, it is not zero fee
+		kp, tx := TestMakeTransaction(networkID, 3)
+
+		opb := operation.NewUnfreezeRequest()
+		op := operation.Operation{
+			H: operation.Header{Type: operation.TypeUnfreezingRequest},
+			B: opb,
+		}
+		tx.B.Operations = append(tx.B.Operations, op)
+		tx.B.Fee = common.BaseFee * 4
+		tx.Sign(kp, networkID)
+		require.Equal(suite.T(), tx.B.Fee, common.BaseFee*4)
+		require.Equal(suite.T(), len(tx.B.Operations), 4)
+
+		err = tx.IsWellFormed(networkID, suite.conf)
+		require.NoError(suite.T(), err)
 	}
 }
 

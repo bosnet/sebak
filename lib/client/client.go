@@ -1,13 +1,14 @@
 package client
 
 import (
-	"boscoin.io/sebak/lib/common"
 	"bufio"
 	"context"
 	"encoding/json"
 	"net/http"
 	neturl "net/url"
 	"strings"
+
+	"boscoin.io/sebak/lib/common"
 )
 
 const (
