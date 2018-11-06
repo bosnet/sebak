@@ -44,6 +44,8 @@ func (tp *Pool) Get(hash string) (Transaction, bool) {
 }
 
 func (tp *Pool) GetFromSource(source string) (Transaction, bool) {
+	tp.RLock()
+	defer tp.RUnlock()
 	hash, found := tp.sources[source]
 	if !found {
 		return Transaction{}, false
