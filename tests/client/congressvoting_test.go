@@ -96,14 +96,15 @@ func TestCongressVotingResult(t *testing.T) {
 
 		ob := operation.NewCongressVotingResult(
 			"dummy1",
-			[]string{"a", "b"},
+			[]string{"http://localhost:12345/a", "http://localhost:12345/b"},
 			"dummy2",
-			[]string{"c", "d"},
+			[]string{"http://localhost:12345/c", "http://localhost:12345/d"},
+			"dummy3",
+			[]string{"http://localhost:12345/e", "http://localhost:12345/f"},
 			100,
 			70,
 			20,
 			10,
-			200,
 		)
 		o, err := operation.NewOperation(ob)
 		require.NoError(t, err)
