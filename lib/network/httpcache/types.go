@@ -7,7 +7,7 @@ import (
 
 type Adapter interface {
 	Get(key string) (*Response, bool)
-	Set(key string, response *Response, expiration *time.Time)
+	Set(key string, response *Response, expiration time.Time)
 	Remove(key string)
 }
 
@@ -15,5 +15,5 @@ type Response struct {
 	Value      []byte
 	StatusCode int
 	Header     http.Header
-	Expiration *time.Time
+	Expiration time.Time
 }

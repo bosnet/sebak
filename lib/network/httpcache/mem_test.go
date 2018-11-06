@@ -16,10 +16,10 @@ func TestMemCacheAdapter(t *testing.T) {
 	key := "key"
 	resp := &Response{
 		Value:      []byte("hello"),
-		Expiration: &now,
+		Expiration: now,
 	}
 
-	a.Set(key, resp, &now)
+	a.Set(key, resp, now)
 
 	cachedResp, ok := a.Get(key)
 	require.Equal(t, true, ok)

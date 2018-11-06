@@ -31,7 +31,7 @@ func (a *MemCacheAdapter) Get(key string) (*Response, bool) {
 	return nil, ok
 }
 
-func (a *MemCacheAdapter) Set(key string, resp *Response, expir *time.Time) {
+func (a *MemCacheAdapter) Set(key string, resp *Response, expir time.Time) {
 	a.lruCache.Add(key, resp)
 }
 

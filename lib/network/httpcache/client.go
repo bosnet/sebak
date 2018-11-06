@@ -16,9 +16,9 @@ import (
 
 type Client struct {
 	adapter     Adapter
-	ttl         *time.Duration
+	ttl         time.Duration
 	methods     map[string]bool
-	statusCodes map[int]*time.Duration
+	statusCodes map[int]time.Duration
 	logger      logging.Logger
 }
 
@@ -27,8 +27,8 @@ type ClientOption func(c *Client) error
 func NewClient(opts ...ClientOption) (*Client, error) {
 	c := &Client{
 		methods:     map[string]bool{"GET": true},
-		statusCodes: map[int]*time.Duration{},
-		ttl:         nil,
+		statusCodes: map[int]time.Duration{},
+		ttl:         time.Duration(0),
 		logger:      common.NopLogger(),
 	}
 
@@ -54,7 +54,7 @@ func WithAdapter(a Adapter) ClientOption {
 
 func WithExpire(ttl time.Duration) ClientOption {
 	return func(c *Client) error {
-		c.ttl = &ttl
+		c.ttl = ttl
 		return nil
 	}
 }
@@ -70,7 +70,7 @@ func WithMethods(methods ...string) ClientOption {
 
 func WithStatusCode(code int, ttl time.Duration) ClientOption {
 	return func(c *Client) error {
-		c.statusCodes[code] = &ttl
+		c.statusCodes[code] = ttl
 		return nil
 	}
 }
@@ -97,7 +97,7 @@ func (c *Client) handleCache(next http.Handler, w http.ResponseWriter, r *http.R
 		key := r.URL.String()
 		resp, ok := c.adapter.Get(key)
 		if ok {
-			if resp.Expiration == nil || resp.Expiration.After(time.Now()) {
+			if resp.Expiration.IsZero() || resp.Expiration.After(time.Now()) {
 				for k, v := range resp.Header {
 					w.Header().Set(k, strings.Join(v, ","))
 				}
@@ -136,21 +136,20 @@ func (c *Client) handleCache(next http.Handler, w http.ResponseWriter, r *http.R
 	return false
 }
 
-func (c *Client) cachingExpiration(code int) (*time.Time, bool) {
+func (c *Client) cachingExpiration(code int) (time.Time, bool) {
 	if ttl, ok := c.statusCodes[code]; ok {
 		return expiration(ttl), true
 	} else if code < 400 {
 		return expiration(c.ttl), true
 	}
-	return nil, false
+	return time.Time{}, false
 }
 
-func expiration(ttl *time.Duration) *time.Time {
-	if ttl != nil {
-		t := time.Now().Add(*ttl)
-		return &t
+func expiration(ttl time.Duration) time.Time {
+	if ttl == 0 {
+		return time.Time{}
 	}
-	return nil
+	return time.Now().Add(ttl)
 }
 
 func sortURLParams(u *url.URL) {
