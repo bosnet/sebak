@@ -47,6 +47,7 @@ func (suite *TestSuite) TestIsWellFormedTransactionSuite() {
 
 func (suite *TestSuite) TestIsWellFormedTransactionWithLowerFeeSuite() {
 	var err error
+	var networkID []byte = []byte("test-sebak")
 
 	{ // valid fee
 		kp, tx := TestMakeTransaction(suite.networkID, 3)
