@@ -110,6 +110,15 @@ func (sb *SavingBlockOperations) savingBlockOperationsWorker(id int, st *storage
 }
 
 func (sb *SavingBlockOperations) CheckByBlock(st *storage.LevelDBBackend, blk block.Block) (err error) {
+	if blk.Height > common.GenesisBlockHeight { // ProposerTransaction
+		if err = sb.CheckTransactionByBlock(st, blk, blk.ProposerTransaction); err != nil {
+			return
+		}
+	}
+	if len(blk.Transactions) < 1 {
+		return
+	}
+
 	txs := make(chan string, 100)
 	errChan := make(chan error, 100)
 	defer close(errChan)
@@ -117,32 +126,38 @@ func (sb *SavingBlockOperations) CheckByBlock(st *storage.LevelDBBackend, blk bl
 	numWorker := int(len(blk.Transactions) / 2)
 	if numWorker > 100 {
 		numWorker = 100
+	} else if numWorker < 1 {
+		numWorker = 1
 	}
 
 	for i := 1; i <= numWorker; i++ {
 		go sb.savingBlockOperationsWorker(i, st, blk, txs, errChan)
 	}
+
 	for _, hash := range blk.Transactions {
 		txs <- hash
 	}
 	close(txs)
 
 	var errs []error
-	for _ = range blk.Transactions {
-		err = <-errChan
-		if err != nil {
-			errs = append(errs, err)
+	var returned int
+errorCheck:
+	for {
+		select {
+		case err = <-errChan:
+			returned++
+			if err != nil {
+				errs = append(errs, err)
+			}
+			if returned == len(blk.Transactions) {
+				break errorCheck
+			}
 		}
 	}
+
 	if len(errs) > 0 {
 		err = errors.FailedToSaveBlockOperaton.Clone().SetData("errors", errs)
 		return
-	}
-
-	if blk.Height > common.GenesisBlockHeight { // ProposerTransaction
-		if err = sb.CheckTransactionByBlock(st, blk, blk.ProposerTransaction); err != nil {
-			return
-		}
 	}
 
 	return
