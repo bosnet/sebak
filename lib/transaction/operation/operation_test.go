@@ -77,9 +77,10 @@ func TestOperationBodyCongressVotingResult(t *testing.T) {
 		[]string{"http://www.boscoin.io/1", "http://www.boscoin.io/2"},
 		string(common.MakeHash([]byte("dummydummy"))),
 		[]string{"http://www.boscoin.io/3", "http://www.boscoin.io/4"},
+		string(common.MakeHash([]byte("dummydummy"))),
+		[]string{"http://www.boscoin.io/3", "http://www.boscoin.io/4"},
 		9, 2, 3, 4,
 		"dummy voting hash",
-		200,
 	)
 	op := Operation{
 		H: Header{Type: TypeCongressVotingResult},
@@ -94,16 +95,16 @@ func TestOperationBodyCongressVotingResult(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestOperationBodyCongressVotingResultInvalidTotalMembership(t *testing.T) {
-	var resultCount uint64 = 9
-	{ // under Result.Count
+func TestOperationBodyCongressVotingResultInvalidMembership(t *testing.T) {
+	{ // missing Hash
 		opb := NewCongressVotingResult(
 			string(common.MakeHash([]byte("dummydummy"))),
 			[]string{"http://www.boscoin.io/1", "http://www.boscoin.io/2"},
 			string(common.MakeHash([]byte("dummydummy"))),
 			[]string{"http://www.boscoin.io/3", "http://www.boscoin.io/4"},
-			resultCount, 2, 3, 4,
-			resultCount-1,
+			"",
+			[]string{"http://www.boscoin.io/3", "http://www.boscoin.io/4"},
+			9, 2, 3, 4,
 		)
 		op := Operation{
 			H: Header{Type: TypeCongressVotingResult},
@@ -114,14 +115,34 @@ func TestOperationBodyCongressVotingResultInvalidTotalMembership(t *testing.T) {
 		require.Error(t, err, errors.InvalidOperation)
 	}
 
-	{ // over Result.Count
+	{ // bad urls
 		opb := NewCongressVotingResult(
 			string(common.MakeHash([]byte("dummydummy"))),
 			[]string{"http://www.boscoin.io/1", "http://www.boscoin.io/2"},
 			string(common.MakeHash([]byte("dummydummy"))),
 			[]string{"http://www.boscoin.io/3", "http://www.boscoin.io/4"},
-			resultCount, 2, 3, 4,
-			resultCount+1,
+			string(common.MakeHash([]byte("dummydummy"))),
+			[]string{"3", "4"},
+			9, 2, 3, 4,
+		)
+		op := Operation{
+			H: Header{Type: TypeCongressVotingResult},
+			B: opb,
+		}
+
+		err := op.IsWellFormed(networkID, common.NewConfig())
+		require.Error(t, err, errors.InvalidOperation)
+	}
+
+	{ // valid
+		opb := NewCongressVotingResult(
+			string(common.MakeHash([]byte("dummydummy"))),
+			[]string{"http://www.boscoin.io/1", "http://www.boscoin.io/2"},
+			string(common.MakeHash([]byte("dummydummy"))),
+			[]string{"http://www.boscoin.io/3", "http://www.boscoin.io/4"},
+			string(common.MakeHash([]byte("dummydummy"))),
+			[]string{"http://www.boscoin.io/3", "http://www.boscoin.io/4"},
+			9, 2, 3, 4,
 		)
 		op := Operation{
 			H: Header{Type: TypeCongressVotingResult},
