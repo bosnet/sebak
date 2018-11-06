@@ -113,6 +113,10 @@ func (a Amount) MultInt64(n int64) (Amount, error) {
 
 /// Ditto
 func (a Amount) MultUint64(n uint64) (Amount, error) {
+	if n == 0 {
+		return Amount(0), nil
+	}
+
 	a.Invariant()
 	if uint64(MaximumBalance)/n < uint64(a) {
 		return invalidValue, errors.MaximumBalanceReached
