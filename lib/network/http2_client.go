@@ -10,6 +10,7 @@ import (
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/node"
+	"boscoin.io/sebak/lib/node/runner/api/resource"
 )
 
 type HTTP2NetworkClient struct {
@@ -106,6 +107,32 @@ func (c *HTTP2NetworkClient) SendMessage(message common.Serializable) (retBody [
 	}
 
 	u := c.resolvePath(UrlPathPrefixNode + "/message")
+
+	var response *http.Response
+	response, err = c.client.Post(u.String(), body, headers)
+	if err != nil {
+		return
+	}
+	defer response.Body.Close()
+	retBody, err = ioutil.ReadAll(response.Body)
+
+	if response.StatusCode != http.StatusOK {
+		err = errors.HTTPProblem.Clone().SetData("status", response.StatusCode)
+	}
+
+	return
+}
+
+func (c *HTTP2NetworkClient) SendTransaction(message common.Serializable) (retBody []byte, err error) {
+	headers := c.DefaultHeaders()
+	headers.Set("Content-Type", "application/json")
+
+	var body []byte
+	if body, err = message.Serialize(); err != nil {
+		return
+	}
+
+	u := c.resolvePath(resource.URLTransactions)
 
 	var response *http.Response
 	response, err = c.client.Post(u.String(), body, headers)
