@@ -134,7 +134,7 @@ func TestOperationBodyCongressVotingResultInvalidMembership(t *testing.T) {
 		require.Error(t, err, errors.InvalidOperation)
 	}
 
-	{ // valid
+	{ // valid operation
 		opb := NewCongressVotingResult(
 			string(common.MakeHash([]byte("dummydummy"))),
 			[]string{"http://www.boscoin.io/1", "http://www.boscoin.io/2"},
