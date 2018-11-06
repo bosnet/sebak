@@ -24,14 +24,15 @@ type CongressVotingResult struct {
 		ABS   uint64 `json:"abs"`
 	} `json:"result"`
 	CongressVotingHash string `json:"congress_voting_hash"`
+	TotalMembership uint64
 }
 
 func NewCongressVotingResult(
 	ballotHash string, ballotUrls []string,
 	votersHash string, votersUrls []string,
-	resultCount, resultYes, resultNo, resultABS uint64,
+	resultCount, resultYes, resultNo, resultABS, totalMembership uint64,
 	congressVotingHash string) CongressVotingResult {
-
+) CongressVotingResult {
 	return CongressVotingResult{
 		BallotStamps: struct {
 			Hash string   `json:"hash"`
@@ -48,6 +49,7 @@ func NewCongressVotingResult(
 			ABS   uint64 `json:"abs"`
 		}{resultCount, resultYes, resultNo, resultABS},
 		CongressVotingHash: congressVotingHash,
+		TotalMembership: totalMembership,
 	}
 }
 
@@ -73,6 +75,10 @@ func (o CongressVotingResult) IsWellFormed(common.Config) (err error) {
 		if _, err := url.Parse(u); err != nil {
 			return errors.InvalidOperation
 		}
+	}
+
+	if o.TotalMembership < o.Result.Count {
+		return errors.InvalidOperation
 	}
 
 	if o.Result.Count != o.Result.Yes+o.Result.No+o.Result.ABS {

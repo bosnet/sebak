@@ -8,6 +8,7 @@ import (
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/common/keypair"
+	"boscoin.io/sebak/lib/errors"
 )
 
 func TestMakeHashOfOperationBodyPayment(t *testing.T) {
@@ -78,6 +79,7 @@ func TestOperationBodyCongressVotingResult(t *testing.T) {
 		[]string{"http://www.boscoin.io/3", "http://www.boscoin.io/4"},
 		9, 2, 3, 4,
 		"dummy voting hash",
+		200,
 	)
 	op := Operation{
 		H: Header{Type: TypeCongressVotingResult},
@@ -90,5 +92,43 @@ func TestOperationBodyCongressVotingResult(t *testing.T) {
 
 	err := op.IsWellFormed(common.NewTestConfig())
 	require.NoError(t, err)
+}
 
+func TestOperationBodyCongressVotingResultInvalidTotalMembership(t *testing.T) {
+	var resultCount uint64 = 9
+	{ // under Result.Count
+		opb := NewCongressVotingResult(
+			string(common.MakeHash([]byte("dummydummy"))),
+			[]string{"http://www.boscoin.io/1", "http://www.boscoin.io/2"},
+			string(common.MakeHash([]byte("dummydummy"))),
+			[]string{"http://www.boscoin.io/3", "http://www.boscoin.io/4"},
+			resultCount, 2, 3, 4,
+			resultCount-1,
+		)
+		op := Operation{
+			H: Header{Type: TypeCongressVotingResult},
+			B: opb,
+		}
+
+		err := op.IsWellFormed(networkID, common.NewConfig())
+		require.Error(t, err, errors.InvalidOperation)
+	}
+
+	{ // over Result.Count
+		opb := NewCongressVotingResult(
+			string(common.MakeHash([]byte("dummydummy"))),
+			[]string{"http://www.boscoin.io/1", "http://www.boscoin.io/2"},
+			string(common.MakeHash([]byte("dummydummy"))),
+			[]string{"http://www.boscoin.io/3", "http://www.boscoin.io/4"},
+			resultCount, 2, 3, 4,
+			resultCount+1,
+		)
+		op := Operation{
+			H: Header{Type: TypeCongressVotingResult},
+			B: opb,
+		}
+
+		err := op.IsWellFormed(networkID, common.NewConfig())
+		require.NoError(t, err)
+	}
 }
