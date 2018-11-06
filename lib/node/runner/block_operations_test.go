@@ -3,12 +3,12 @@ package runner
 import (
 	"testing"
 
-	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
 
 	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common/keypair"
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
 	"boscoin.io/sebak/lib/voting"
@@ -27,7 +27,7 @@ func (p *TestSavingBlockOperationHelper) Done() {
 }
 
 func (p *TestSavingBlockOperationHelper) makeBlock(prevBlock block.Block) block.Block {
-	kp, _ := keypair.Random()
+	kp := keypair.Random()
 	numTxs := 5
 
 	var txs []transaction.Transaction
