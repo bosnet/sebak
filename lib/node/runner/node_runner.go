@@ -526,8 +526,8 @@ func (nr *NodeRunner) StopStateManager() {
 	return
 }
 
-func (nr *NodeRunner) TransitISAACState(round voting.Basis, ballotState ballot.State) {
-	nr.isaacStateManager.TransitISAACState(round.Height, round.Round, ballotState)
+func (nr *NodeRunner) TransitISAACState(basis voting.Basis, ballotState ballot.State) {
+	nr.isaacStateManager.TransitISAACState(basis.Height, basis.Round, ballotState)
 }
 
 var NewBallotTransactionCheckerFuncs = []common.CheckerFunc{

@@ -244,9 +244,8 @@ func hasBallotValidProposer(is *consensus.ISAAC, b ballot.Ballot) bool {
 // valid round.
 func BallotAlreadyFinished(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotChecker)
-	ballotRound := checker.Ballot.VotingBasis()
 	if !checker.NodeRunner.Consensus().IsAvailableRound(
-		ballotRound,
+		checker.Ballot.VotingBasis(),
 		block.GetLatestBlock(checker.NodeRunner.Storage()),
 	) {
 		err = errors.BallotAlreadyFinished
@@ -574,7 +573,7 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) error {
 		if err = saveBlock(checker); err != nil {
 			return err
 		}
-		checker.NodeRunner.TransitISAACState(checker.Ballot.VotingBasis(), ballot.StateALLCONFIRM)
+		checker.NodeRunner.TransitISAACState(basis, ballot.StateALLCONFIRM)
 		checker.NodeRunner.Consensus().SetLatestVotingBasis(basis)
 
 		reorganizeTransactionPool(checker)
