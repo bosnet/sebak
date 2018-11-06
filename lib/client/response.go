@@ -153,6 +153,7 @@ type CongressVotingResult struct {
 		ABS   uint64 `json:"abs"`
 	} `json:"result"`
 	CongressVotingHash string `json:"congress_voting_hash"`
+	TotalMembership    uint64 `json:"total_membership"`
 }
 
 type CreateAccount struct {
