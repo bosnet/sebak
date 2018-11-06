@@ -45,3 +45,7 @@ func (o Payment) TargetAddress() string {
 func (o Payment) GetAmount() common.Amount {
 	return o.Amount
 }
+
+func (o Payment) HasFee() bool {
+	return true
+}

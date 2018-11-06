@@ -83,3 +83,7 @@ func (o CollectTxFee) GetAmount() common.Amount {
 func (o CollectTxFee) Serialize() (encoded []byte, err error) {
 	return json.Marshal(o)
 }
+
+func (o CollectTxFee) HasFee() bool {
+	return false
+}

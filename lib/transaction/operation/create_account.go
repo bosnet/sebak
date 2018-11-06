@@ -52,3 +52,7 @@ func (o CreateAccount) TargetAddress() string {
 func (o CreateAccount) GetAmount() common.Amount {
 	return o.Amount
 }
+
+func (o CreateAccount) HasFee() bool {
+	return true
+}

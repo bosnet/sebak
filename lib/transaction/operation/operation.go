@@ -94,6 +94,7 @@ type Body interface {
 	//
 	IsWellFormed(common.Config) error
 	Serialize() ([]byte, error)
+	HasFee() bool
 }
 
 type Payable interface {
@@ -122,6 +123,10 @@ func (o Operation) String() string {
 	encoded, _ := json.MarshalIndent(o, "", "  ")
 
 	return string(encoded)
+}
+
+func (o Operation) HasFee() bool {
+	return o.B.HasFee()
 }
 
 type envelop struct {

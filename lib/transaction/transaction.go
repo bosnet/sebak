@@ -163,7 +163,14 @@ func (tx Transaction) TotalAmount(withFee bool) common.Amount {
 
 // TotalBaseFee returns the minimum fee of transaction.
 func (tx Transaction) TotalBaseFee() common.Amount {
-	return common.BaseFee.MustMult(len(tx.B.Operations))
+	var opsHaveFee int
+	for _, op := range tx.B.Operations {
+		if op.HasFee() {
+			opsHaveFee++
+		}
+	}
+
+	return common.BaseFee.MustMult(opsHaveFee)
 }
 
 func (tx Transaction) Serialize() (encoded []byte, err error) {

@@ -20,3 +20,7 @@ func (o UnfreezeRequest) Serialize() (encoded []byte, err error) {
 func (o UnfreezeRequest) IsWellFormed(common.Config) (err error) {
 	return
 }
+
+func (o UnfreezeRequest) HasFee() bool {
+	return true
+}
