@@ -427,8 +427,8 @@ func BallotGetMissingTransaction(c common.Checker, args ...interface{}) (err err
 
 	if err = insertMissingTransaction(checker); err != nil {
 		checker.VotingHole = voting.NO
-		err = nil
 		checker.Log.Debug("failed to get the missing transactions of ballot", "error", err)
+		err = nil
 	}
 
 	return
