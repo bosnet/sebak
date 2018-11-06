@@ -3,9 +3,13 @@ package errors
 import (
 	"errors"
 	"fmt"
+
+	pkgerrors "github.com/pkg/errors"
 )
 
 var New = errors.New
+var Wrap = pkgerrors.Wrap
+var Wrapf = pkgerrors.Wrapf
 
 func Newf(err *Error, format string, args ...interface{}) error {
 	return NewError(err.Code, fmt.Sprintf(format, args...))
@@ -90,4 +94,5 @@ var (
 	TransactionSameSourceInPool               = NewError(176, "Same transaction source found in pool")
 	AlreadyCommittable                        = NewError(177, "already Committable")
 	FailedToSaveBlockOperaton                 = NewError(178, "failed to save BlockOperation")
+	NodeNotFound                              = NewError(179, "Node not found")
 )

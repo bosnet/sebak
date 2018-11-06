@@ -2,10 +2,12 @@ package sync
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -78,13 +80,12 @@ func (f *BlockFetcher) Fetch(ctx context.Context, syncInfo *SyncInfo) (*SyncInfo
 		case <-ctx.Done():
 			return false, ctx.Err()
 		default:
-			f.logger.Debug("Try to fetch", "height", height, "attempt", attempt)
+			f.logger.Debug("try to fetch", "height", height, "attempt", attempt)
 			if err := f.fetch(ctx, syncInfo); err != nil {
 				if err == context.Canceled {
 					return false, ctx.Err()
 				}
-
-				f.logger.Error(err.Error(), "err", err)
+				f.logger.Error("fetch err", "err", err, "height", height)
 				c := time.After(f.retryInterval) //afterFunc?
 				select {
 				case <-ctx.Done():
@@ -105,19 +106,21 @@ func (f *BlockFetcher) fetch(ctx context.Context, si *SyncInfo) error {
 		height    = si.Height
 		nodeAddrs = si.NodeAddrs
 	)
-	f.logger.Debug("Fetch start", "height", height)
+	f.logger.Debug("fetch start", "height", height)
 
 	n := f.pickRandomNode(nodeAddrs)
 	if n == nil {
-		return errors.New("Fetch: node not found")
+		return errors.NodeNotFound
 	}
-	f.logger.Debug(fmt.Sprintf("fetching items from node: %v", n), "fetching_node", n, "height", height)
+	f.logger.Debug("fetching items from node", "fetching_node", n, "height", height)
 
 	apiURL := apiClientURL(n, height)
 	f.logger.Debug("apiClient", "url", apiURL.String())
 
 	req, err := http.NewRequest("GET", apiURL.String(), nil)
 	if err != nil {
+		err := errors.Wrap(err, "api request")
+		f.logger.Error("request err", "err", err, "height", height)
 		return err
 	}
 
@@ -131,8 +134,19 @@ func (f *BlockFetcher) fetch(ctx context.Context, si *SyncInfo) error {
 		return errors.New("fetch: block not found")
 	}
 
-	items, err := f.unmarshalResp(resp.Body)
+	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
+		return errors.Wrap(err, "response failed to reading body")
+	}
+
+	items, err := f.unmarshalResp(bytes.NewBuffer(body))
+	if err != nil {
+		err := errors.Wrap(err, "response failed to unmarshal")
+		code := resp.StatusCode
+		bodyFn := func() string {
+			return string(body)
+		}
+		f.logger.Debug("unmarshalResp err", "err", err, "height", height, "statusCode", code, "body", log15.Lazy{Fn: bodyFn})
 		return err
 	}
 
@@ -163,6 +177,8 @@ func (f *BlockFetcher) fetch(ctx context.Context, si *SyncInfo) error {
 
 		var tx transaction.Transaction
 		if err := json.Unmarshal(bt.Message, &tx); err != nil {
+			err := errors.Wrap(err, "transaction.Message unmarshaling failed")
+			f.logger.Error("tx.Message unmarshal err", "err", err, "height", height, "message", string(bt.Message), "statusCode", resp.StatusCode)
 			return err
 		}
 		txmap[bt.Hash] = &tx
@@ -171,9 +187,7 @@ func (f *BlockFetcher) fetch(ctx context.Context, si *SyncInfo) error {
 	for _, hash := range blk.Transactions {
 		tx, ok := txmap[hash]
 		if !ok {
-			//TODO(anarcher): Error type for controlling timeout
-			err := fmt.Errorf("Tx: %s not found in block height %d", hash, height)
-			return err
+			return errors.Wrapf(errors.TransactionNotFound, "block hash: %s height: %d", hash, height)
 		}
 		si.Txs = append(si.Txs, tx)
 	}
@@ -183,8 +197,7 @@ func (f *BlockFetcher) fetch(ctx context.Context, si *SyncInfo) error {
 			ptx := &ballot.ProposerTransaction{Transaction: *tx}
 			si.Ptx = ptx
 		} else {
-			err := fmt.Errorf("proposer transactions (%v) not found in transactions", blk.ProposerTransaction)
-			return err
+			return errors.Wrapf(errors.TransactionNotFound, "proposer transaction block hash: %v", blk.ProposerTransaction)
 		}
 	}
 
@@ -235,7 +248,7 @@ func (f *BlockFetcher) existsBlockHeight(height uint64) bool {
 	return exists
 }
 
-func (f *BlockFetcher) unmarshalResp(body io.ReadCloser) (map[runner.NodeItemDataType][]interface{}, error) {
+func (f *BlockFetcher) unmarshalResp(body io.Reader) (map[runner.NodeItemDataType][]interface{}, error) {
 	items := map[runner.NodeItemDataType][]interface{}{}
 
 	sc := bufio.NewScanner(body)
