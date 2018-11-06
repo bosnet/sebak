@@ -22,6 +22,7 @@ import (
 	"boscoin.io/sebak/lib/consensus"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/network"
+	"boscoin.io/sebak/lib/network/httpcache"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/node/runner/api"
 	"boscoin.io/sebak/lib/storage"
@@ -194,6 +195,24 @@ func (nr *NodeRunner) Ready() {
 		}
 	}
 
+	// cache middleware
+	cache := httpcache.NewMemCacheAdapter(10000)
+	defaultCacheOptions := httpcache.WithOptions(
+		httpcache.WithAdapter(cache),
+		httpcache.WithStatusCode(404, 1*time.Second),
+		httpcache.WithLogger(nr.log),
+	)
+	cacheClient, err := httpcache.NewClient(defaultCacheOptions, httpcache.WithExpire(1*time.Minute))
+	if err != nil {
+		nr.log.Error("Cache middleware has an error", "err", err)
+		return
+	}
+	baCacheClient, err := httpcache.NewClient(defaultCacheOptions, httpcache.WithExpire(1*time.Second))
+	if err != nil {
+		nr.log.Error("BlockAccount cache middleware has an error", "err", err)
+		return
+	}
+
 	// node handlers
 	nodeHandler := NewNetworkHandlerNode(
 		nr.localNode,
@@ -236,15 +255,15 @@ func (nr *NodeRunner) Ready() {
 
 	nr.network.AddHandler(
 		apiHandler.HandlerURLPattern(api.GetAccountHandlerPattern),
-		apiHandler.GetAccountHandler,
+		baCacheClient.HandlerFunc(apiHandler.GetAccountHandler),
 	).Methods("GET", "OPTIONS")
 	nr.network.AddHandler(
 		apiHandler.HandlerURLPattern(api.GetAccountTransactionsHandlerPattern),
-		apiHandler.GetTransactionsByAccountHandler,
+		cacheClient.HandlerFunc(apiHandler.GetTransactionsByAccountHandler),
 	).Methods("GET", "OPTIONS")
 	nr.network.AddHandler(
 		apiHandler.HandlerURLPattern(api.GetAccountOperationsHandlerPattern),
-		apiHandler.GetOperationsByAccountHandler,
+		cacheClient.HandlerFunc(apiHandler.GetOperationsByAccountHandler),
 	).Methods("GET", "OPTIONS")
 	nr.network.AddHandler(
 		apiHandler.HandlerURLPattern(api.GetFrozenAccountHandlerPattern),
@@ -256,15 +275,15 @@ func (nr *NodeRunner) Ready() {
 	).Methods("GET")
 	nr.network.AddHandler(
 		apiHandler.HandlerURLPattern(api.GetTransactionByHashHandlerPattern),
-		apiHandler.GetTransactionByHashHandler,
+		cacheClient.HandlerFunc(apiHandler.GetTransactionByHashHandler),
 	).Methods("GET", "OPTIONS")
 	nr.network.AddHandler(
 		apiHandler.HandlerURLPattern(api.GetTransactionOperationsHandlerPattern),
-		apiHandler.GetOperationsByTxHashHandler,
+		cacheClient.HandlerFunc(apiHandler.GetOperationsByTxHashHandler),
 	).Methods("GET", "OPTIONS")
 	nr.network.AddHandler(
 		apiHandler.HandlerURLPattern(api.GetTransactionHistoryHandlerPattern),
-		apiHandler.GetTransactionHistoryHandler,
+		cacheClient.HandlerFunc(apiHandler.GetTransactionHistoryHandler),
 	).Methods("GET", "OPTIONS")
 
 	TransactionsHandler := func(w http.ResponseWriter, r *http.Request) {
@@ -276,7 +295,7 @@ func (nr *NodeRunner) Ready() {
 			return
 		}
 
-		apiHandler.GetTransactionsHandler(w, r)
+		cacheClient.HandlerFunc(apiHandler.GetTransactionsHandler)(w, r)
 		return
 	}
 

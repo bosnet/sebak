@@ -68,6 +68,17 @@ func WithMethods(methods ...string) ClientOption {
 	}
 }
 
+func WithOptions(options ...ClientOption) ClientOption {
+	return func(c *Client) error {
+		for _, opt := range options {
+			if err := opt(c); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+}
+
 func WithStatusCode(code int, ttl time.Duration) ClientOption {
 	return func(c *Client) error {
 		c.statusCodes[code] = ttl
@@ -89,6 +100,17 @@ func (c *Client) Middleware(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 		}
 	})
+}
+
+func (c *Client) HandlerFunc(handlerFunc http.HandlerFunc) http.HandlerFunc {
+	next := http.HandlerFunc(handlerFunc)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if ok := c.handleCache(next, w, r); !ok {
+			c.logger.Debug("page not cached", "url", r.URL.String())
+			next.ServeHTTP(w, r)
+		}
+	})
+
 }
 
 func (c *Client) handleCache(next http.Handler, w http.ResponseWriter, r *http.Request) bool {
