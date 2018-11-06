@@ -88,8 +88,9 @@ type NodeRunner struct {
 	CommonAccountAddress string
 	InitialBalance       common.Amount
 
-	Conf     common.Config
-	nodeInfo node.NodeInfo
+	Conf                  common.Config
+	nodeInfo              node.NodeInfo
+	savingBlockOperations *SavingBlockOperations
 }
 
 func NewNodeRunner(
@@ -120,6 +121,15 @@ func NewNodeRunner(
 
 	nr.connectionManager = c.ConnectionManager()
 	nr.network.AddWatcher(nr.connectionManager.ConnectionWatcher)
+	nr.savingBlockOperations = NewSavingBlockOperations(
+		nr.Storage(),
+		nr.Log(),
+	)
+
+	if err = nr.savingBlockOperations.Check(); err != nil {
+		nr.log.Error("failed to check BlockOperations", "error", err)
+		return
+	}
 
 	nr.SetHandleBaseBallotCheckerFuncs(DefaultHandleBaseBallotCheckerFuncs...)
 	nr.SetHandleINITBallotCheckerFuncs(DefaultHandleINITBallotCheckerFuncs...)
@@ -291,6 +301,7 @@ func (nr *NodeRunner) Start() (err error) {
 	go nr.handleMessages()
 	go nr.ConnectValidators()
 	go nr.InitRound()
+	go nr.savingBlockOperations.Start()
 
 	if err = nr.network.Start(); err != nil {
 		return
@@ -334,6 +345,10 @@ func (nr *NodeRunner) Policy() voting.ThresholdPolicy {
 
 func (nr *NodeRunner) Log() logging.Logger {
 	return nr.log
+}
+
+func (nr *NodeRunner) SavingBlockOperations() *SavingBlockOperations {
+	return nr.savingBlockOperations
 }
 
 func (nr *NodeRunner) ISAACStateManager() *ISAACStateManager {
@@ -541,7 +556,7 @@ func (nr *NodeRunner) proposeNewBallot(round uint64) (ballot.Ballot, error) {
 		Transactions:          availableTransactions,
 		CheckTransactionsOnly: true,
 		VotingHole:            voting.NOTYET,
-		transactionsCache:     map[string]transaction.Transaction{},
+		transactionCache:      NewTransactionCache(nr.Storage(), nr.TransactionPool),
 	}
 
 	if err := common.RunChecker(transactionsChecker, common.DefaultDeferFunc); err != nil {

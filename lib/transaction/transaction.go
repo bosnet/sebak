@@ -134,10 +134,6 @@ func (tx Transaction) Source() string {
 	return tx.B.Source
 }
 
-func (tx Transaction) IsEmpty() bool {
-	return len(tx.H.Hash) < 1
-}
-
 // TotalAmount returns the sum of Amount of operations.
 //
 // Returns:
@@ -188,4 +184,8 @@ func (tx *Transaction) Sign(kp keypair.KP, networkID []byte) {
 	tx.H.Signature = base58.Encode(signature)
 
 	return
+}
+
+func (tx Transaction) IsEmpty() bool {
+	return len(tx.GetHash()) < 1
 }

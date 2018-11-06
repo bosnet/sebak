@@ -124,6 +124,9 @@ func MakeGenesisBlock(st *storage.LevelDBBackend, genesisAccount BlockAccount, c
 	if _, err = SaveTransactionPool(st, tx); err != nil {
 		return
 	}
+	if err = bt.SaveBlockOperations(st, *blk); err != nil {
+		return
+	}
 
 	return
 }
