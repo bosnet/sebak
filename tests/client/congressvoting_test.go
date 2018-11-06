@@ -148,7 +148,8 @@ func TestCongressVotingResult(t *testing.T) {
 			require.Equal(t, ob.Result.Yes, cvr.Result.Yes)
 			require.Equal(t, ob.Result.No, cvr.Result.No)
 			require.Equal(t, ob.Result.ABS, cvr.Result.ABS)
-			require.Equal(t, ob.TotalMembership, cvr.TotalMembership)
+			require.Equal(t, ob.Membership.Hash, cvr.Membership.Hash)
+			require.Equal(t, ob.Membership.Urls, cvr.Membership.Urls)
 		}
 	}
 }
