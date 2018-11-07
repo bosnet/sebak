@@ -80,6 +80,6 @@ func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter
 	}
 
 	txs := readFunc()
-	list := resource.NewResourceList(txs, p.SelfLink(), p.NextLink(cursor), p.PrevLink(cursor))
+	list := p.ResourceList(txs, cursor)
 	httputils.MustWriteJSON(w, 200, list)
 }

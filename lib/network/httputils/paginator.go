@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/node/runner/api/resource"
 )
 
 const DefaultMaxLimit uint64 = 100
@@ -60,6 +61,10 @@ func (p *Paginator) NextLink(cursor []byte) string {
 	query := p.urlValues(cursor, true).Encode()
 	link := fmt.Sprintf("%s?%s", path, query)
 	return link
+}
+
+func (p *Paginator) ResourceList(rs []resource.Resource, cursor []byte) *resource.ResourceList {
+	return resource.NewResourceList(rs, p.SelfLink(), p.NextLink(cursor), p.PrevLink(cursor))
 }
 
 func (p *Paginator) parseRequest() {
