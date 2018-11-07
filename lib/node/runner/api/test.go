@@ -91,7 +91,7 @@ func prepareTxs(storage *storage.LevelDBBackend, count int) (*keypair.Full, []bl
 	for _, tx := range txs {
 		bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, theBlock.Height, theBlock.Confirmed, tx)
 		bt.MustSave(storage)
-		if err := bt.SaveBlockOperations(storage, theBlock); err != nil {
+		if err := bt.SaveBlockOperations(storage); err != nil {
 			return nil, nil
 		}
 		btList = append(btList, bt)

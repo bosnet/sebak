@@ -175,17 +175,14 @@ func (bt BlockTransaction) Transaction() transaction.Transaction {
 	return bt.transaction
 }
 
-func (bt BlockTransaction) SaveBlockOperations(st *storage.LevelDBBackend, blk Block) (err error) {
+func (bt *BlockTransaction) SaveBlockOperations(st *storage.LevelDBBackend) (err error) {
 	if bt.Transaction().IsEmpty() {
-		err = errors.FailedToSaveBlockOperaton
-		return
+		return errors.FailedToSaveBlockOperaton
 	}
-
-	bt.blockHeight = blk.Height
 
 	for _, op := range bt.Transaction().B.Operations {
 		var bo BlockOperation
-		bo, err = NewBlockOperationFromOperation(op, bt.Transaction(), blk.Height)
+		bo, err = NewBlockOperationFromOperation(op, bt.Transaction(), bt.blockHeight)
 		if err != nil {
 			return
 		}
@@ -200,7 +197,7 @@ func (bt BlockTransaction) SaveBlockOperations(st *storage.LevelDBBackend, blk B
 		}
 	}
 
-	return
+	return nil
 }
 
 func GetBlockTransactionKeyPrefixSource(source string) string {
