@@ -614,10 +614,6 @@ func saveBlock(checker *BallotChecker) error {
 		return err
 	}
 
-	for _, tx := range proposedTransactions {
-		checker.LatestUpdatedSources[tx.B.Source] = struct{}{}
-	}
-
 	var theBlock *block.Block
 	theBlock, err = finishBallotWithProposedTxs(
 		bs,
@@ -641,6 +637,9 @@ func saveBlock(checker *BallotChecker) error {
 
 	checker.Log.Debug("ballot was stored", "block", *theBlock)
 
+	for _, tx := range proposedTransactions {
+		checker.LatestUpdatedSources[tx.B.Source] = struct{}{}
+	}
 	checker.NodeRunner.SavingBlockOperations().Save(*theBlock)
 
 	return nil
