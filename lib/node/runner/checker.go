@@ -589,6 +589,7 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) error {
 	case voting.NOTYET:
 		return errors.New("invalid voting.Hole, `NOTYET`")
 	}
+	delete(checker.NodeRunner.Consensus().RunningRounds, basis.Index())
 
 	return err
 }
