@@ -25,7 +25,7 @@ func TestStateINITProposer(t *testing.T) {
 	recv := make(chan struct{})
 	nr, _, cm := createNodeRunnerForTesting(3, conf, recv)
 
-	nr.StartStateManager()
+	nr.startStateManager()
 	defer nr.StopStateManager()
 
 	<-recv
@@ -55,7 +55,7 @@ func TestStateINITNotProposer(t *testing.T) {
 	cm, ok := nr.Consensus().ConnectionManager().(*TestConnectionManager)
 	require.True(t, ok)
 
-	nr.StartStateManager()
+	nr.startStateManager()
 	defer nr.StopStateManager()
 	time.Sleep(1 * time.Second)
 
@@ -84,7 +84,7 @@ func TestStateINITTimeoutNotProposer(t *testing.T) {
 
 	require.NotEqual(t, nr.localNode.Address(), proposer)
 
-	nr.StartStateManager()
+	nr.startStateManager()
 	defer nr.StopStateManager()
 	require.Equal(t, ballot.StateINIT, nr.isaacStateManager.State().BallotState)
 
@@ -131,7 +131,7 @@ func TestStateSIGNTimeoutProposer(t *testing.T) {
 
 	require.Equal(t, nr.localNode.Address(), proposer)
 
-	nr.StartStateManager()
+	nr.startStateManager()
 	defer nr.StopStateManager()
 
 	require.Equal(t, ballot.StateINIT, nr.isaacStateManager.State().BallotState)
@@ -193,7 +193,7 @@ func TestStateSIGNTimeoutNotProposer(t *testing.T) {
 
 	require.NotEqual(t, nr.localNode.Address(), proposer)
 
-	nr.StartStateManager()
+	nr.startStateManager()
 	defer nr.StopStateManager()
 
 	<-recv
@@ -249,7 +249,7 @@ func TestStateACCEPTTimeoutProposerThenNotProposer(t *testing.T) {
 	proposer = nr.Consensus().SelectProposer(0, 1)
 	require.NotEqual(t, nr.localNode.Address(), proposer)
 
-	nr.StartStateManager()
+	nr.startStateManager()
 	defer nr.StopStateManager()
 
 	<-recv
@@ -307,7 +307,7 @@ func TestStateTransitFromTimeoutInitToAccept(t *testing.T) {
 	cm, ok := nr.Consensus().ConnectionManager().(*TestConnectionManager)
 	require.True(t, ok)
 
-	nr.StartStateManager()
+	nr.startStateManager()
 	defer nr.StopStateManager()
 	<-recvTransit
 	state := nr.isaacStateManager.State()
@@ -351,7 +351,7 @@ func TestStateTransitFromTimeoutSignToAccept(t *testing.T) {
 	recv := make(chan struct{})
 	nr, _, cm := createNodeRunnerForTesting(3, conf, recv)
 
-	nr.StartStateManager()
+	nr.startStateManager()
 	defer nr.StopStateManager()
 	<-recv
 

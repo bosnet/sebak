@@ -488,7 +488,7 @@ func (nr *NodeRunner) InitRound() {
 	nr.consensus.SetLatestVotingBasis(voting.Basis{})
 
 	nr.waitForConnectingEnoughNodes()
-	nr.StartStateManager()
+	nr.startStateManager()
 }
 
 func (nr *NodeRunner) waitForConnectingEnoughNodes() {
@@ -509,7 +509,7 @@ func (nr *NodeRunner) waitForConnectingEnoughNodes() {
 	return
 }
 
-func (nr *NodeRunner) StartStateManager() {
+func (nr *NodeRunner) startStateManager() {
 	// check whether current running rounds exist
 	if len(nr.consensus.RunningRounds) > 0 {
 		return

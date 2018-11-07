@@ -13,7 +13,7 @@ func TestConnectionManagerBroadcaster(t *testing.T) {
 	recv := make(chan struct{})
 	nr, _, cm := createNodeRunnerForTesting(3, conf, recv)
 
-	nr.StartStateManager()
+	nr.startStateManager()
 	defer nr.StopStateManager()
 
 	<-recv
