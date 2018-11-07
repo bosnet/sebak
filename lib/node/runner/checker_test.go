@@ -263,13 +263,13 @@ func TestGetMissingTransactionAllMissing(t *testing.T) {
 	}
 
 	baseChecker := &BallotChecker{
-		DefaultChecker:       common.DefaultChecker{Funcs: DefaultHandleBaseBallotCheckerFuncs},
-		NodeRunner:           g.consensusNR,
-		LocalNode:            g.consensusNR.Node(),
-		Message:              ballotMessage,
-		Log:                  g.consensusNR.Log(),
-		VotingHole:           voting.NOTYET,
-		LatestUpdatedSources: make(map[string]struct{}),
+		DefaultChecker:     common.DefaultChecker{Funcs: DefaultHandleBaseBallotCheckerFuncs},
+		NodeRunner:         g.consensusNR,
+		LocalNode:          g.consensusNR.Node(),
+		Message:            ballotMessage,
+		Log:                g.consensusNR.Log(),
+		VotingHole:         voting.NOTYET,
+		LatestBlockSources: []string{},
 	}
 	err := common.RunChecker(baseChecker, common.DefaultDeferFunc)
 	require.NoError(t, err)
@@ -282,14 +282,14 @@ func TestGetMissingTransactionAllMissing(t *testing.T) {
 	}
 
 	checker := &BallotChecker{
-		DefaultChecker:       common.DefaultChecker{Funcs: checkerFuncs},
-		NodeRunner:           baseChecker.NodeRunner,
-		LocalNode:            baseChecker.LocalNode,
-		Message:              ballotMessage,
-		Ballot:               baseChecker.Ballot,
-		VotingHole:           voting.NOTYET,
-		Log:                  baseChecker.Log,
-		LatestUpdatedSources: baseChecker.LatestUpdatedSources,
+		DefaultChecker:     common.DefaultChecker{Funcs: checkerFuncs},
+		NodeRunner:         baseChecker.NodeRunner,
+		LocalNode:          baseChecker.LocalNode,
+		Message:            ballotMessage,
+		Ballot:             baseChecker.Ballot,
+		VotingHole:         voting.NOTYET,
+		Log:                baseChecker.Log,
+		LatestBlockSources: baseChecker.LatestBlockSources,
 	}
 
 	err = common.RunChecker(checker, common.DefaultDeferFunc)

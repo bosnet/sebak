@@ -95,6 +95,28 @@ func (tp *Pool) Remove(hashes ...string) {
 	}
 }
 
+func (tp *Pool) RemoveFromSources(sources ...string) {
+	if len(sources) < 1 {
+		return
+	}
+
+	tp.Lock()
+	defer tp.Unlock()
+
+	for _, source := range sources {
+		if hash, found := tp.sources[source]; found {
+			if _, found := tp.Pool[hash]; found {
+				delete(tp.sources, source)
+				delete(tp.Pool, hash)
+				if e, ok := tp.hashMap[hash]; ok {
+					tp.hashList.Remove(e)
+					delete(tp.hashMap, hash)
+				}
+			}
+		}
+	}
+}
+
 func (tp *Pool) AvailableTransactions(transactionLimit int) []string {
 	if transactionLimit < 1 {
 		return nil

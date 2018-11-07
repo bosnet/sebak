@@ -424,13 +424,13 @@ func (nr *NodeRunner) handleBallotMessage(message common.NetworkMessage) (err er
 	nr.log.Debug("got ballot", "message", message.Head(50))
 
 	baseChecker := &BallotChecker{
-		DefaultChecker:       common.DefaultChecker{Funcs: nr.handleBaseBallotCheckerFuncs},
-		NodeRunner:           nr,
-		LocalNode:            nr.localNode,
-		Message:              message,
-		Log:                  nr.Log(),
-		VotingHole:           voting.NOTYET,
-		LatestUpdatedSources: make(map[string]struct{}),
+		DefaultChecker:     common.DefaultChecker{Funcs: nr.handleBaseBallotCheckerFuncs},
+		NodeRunner:         nr,
+		LocalNode:          nr.localNode,
+		Message:            message,
+		Log:                nr.Log(),
+		VotingHole:         voting.NOTYET,
+		LatestBlockSources: []string{},
 	}
 	err = common.RunChecker(baseChecker, nr.handleBallotCheckerDeferFunc)
 	if err != nil {
@@ -451,15 +451,15 @@ func (nr *NodeRunner) handleBallotMessage(message common.NetworkMessage) (err er
 	}
 
 	checker := &BallotChecker{
-		DefaultChecker:       common.DefaultChecker{Funcs: checkerFuncs},
-		NodeRunner:           nr,
-		LocalNode:            nr.localNode,
-		Message:              message,
-		Ballot:               baseChecker.Ballot,
-		VotingHole:           baseChecker.VotingHole,
-		IsNew:                baseChecker.IsNew,
-		Log:                  baseChecker.Log,
-		LatestUpdatedSources: baseChecker.LatestUpdatedSources,
+		DefaultChecker:     common.DefaultChecker{Funcs: checkerFuncs},
+		NodeRunner:         nr,
+		LocalNode:          nr.localNode,
+		Message:            message,
+		Ballot:             baseChecker.Ballot,
+		VotingHole:         baseChecker.VotingHole,
+		IsNew:              baseChecker.IsNew,
+		Log:                baseChecker.Log,
+		LatestBlockSources: baseChecker.LatestBlockSources,
 	}
 	err = common.RunChecker(checker, nr.handleBallotCheckerDeferFunc)
 	if err != nil {
