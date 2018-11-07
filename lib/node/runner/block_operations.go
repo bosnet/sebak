@@ -195,7 +195,7 @@ func (sb *SavingBlockOperations) CheckTransactionByBlock(st *storage.LevelDBBack
 		}
 
 		if !exists {
-			bt.SaveBlockOperations(st, blk)
+			bt.SaveBlockOperations(st)
 			sb.log.Debug("saved missing BlockOperation", "block", blk, "transaction", hash, "operation", op)
 		}
 	}

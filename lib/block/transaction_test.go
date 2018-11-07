@@ -254,7 +254,7 @@ func TestMultipleBlockTransactionGetByAccount(t *testing.T) {
 		for _, tx := range txs {
 			bt := NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.Confirmed, tx)
 			bt.MustSave(st)
-			err := bt.SaveBlockOperations(st, blk)
+			err := bt.SaveBlockOperations(st)
 			require.NoError(t, err)
 		}
 	}
@@ -274,7 +274,7 @@ func TestMultipleBlockTransactionGetByAccount(t *testing.T) {
 		for _, tx := range txs {
 			bt := NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.Confirmed, tx)
 			bt.MustSave(st)
-			err := bt.SaveBlockOperations(st, blk)
+			err := bt.SaveBlockOperations(st)
 			require.NoError(t, err)
 		}
 	}
@@ -293,7 +293,7 @@ func TestMultipleBlockTransactionGetByAccount(t *testing.T) {
 		for _, tx := range txs {
 			bt := NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.Confirmed, tx)
 			bt.MustSave(st)
-			err := bt.SaveBlockOperations(st, blk)
+			err := bt.SaveBlockOperations(st)
 			require.NoError(t, err)
 		}
 	}

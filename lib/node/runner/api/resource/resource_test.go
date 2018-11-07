@@ -98,7 +98,7 @@ func TestResourceAccount(t *testing.T) {
 		_, tx := transaction.TestMakeTransaction([]byte{0x00}, 3)
 		bt := block.NewBlockTransactionFromTransaction(common.GetUniqueIDFromUUID(), 0, common.NowISO8601(), tx)
 		bt.MustSave(storage)
-		err = bt.SaveBlockOperations(storage, blk)
+		err = bt.SaveBlockOperations(storage)
 		require.NoError(t, err)
 
 		var rol []Resource
