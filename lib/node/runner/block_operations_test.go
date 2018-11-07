@@ -26,9 +26,8 @@ func (p *TestSavingBlockOperationHelper) Done() {
 	p.st.Close()
 }
 
-func (p *TestSavingBlockOperationHelper) makeBlock(prevBlock block.Block) block.Block {
+func (p *TestSavingBlockOperationHelper) makeBlock(prevBlock block.Block, numTxs int) block.Block {
 	kp := keypair.Random()
-	numTxs := 5
 
 	var txs []transaction.Transaction
 	var txHashes []string
@@ -76,7 +75,7 @@ func TestSavingBlockOperation(t *testing.T) {
 	p.Prepare()
 	defer p.Done()
 
-	blk := p.makeBlock(block.GetGenesis(p.st))
+	blk := p.makeBlock(block.GetGenesis(p.st), 5)
 
 	for _, txHash := range blk.Transactions {
 		bt, err := block.GetBlockTransaction(p.st, txHash)
@@ -112,14 +111,14 @@ func TestSavingBlockOperationMissingInBlock(t *testing.T) {
 
 	sb := NewSavingBlockOperations(p.st, nil)
 
-	blk0 := p.makeBlock(block.GetGenesis(p.st))
+	blk0 := p.makeBlock(block.GetGenesis(p.st), 5)
 	err := sb.CheckByBlock(p.st, blk0)
 	require.NoError(t, err)
 
 	// blk1 will be not save it's `BlockOperation`s
-	blk1 := p.makeBlock(blk0)
+	blk1 := p.makeBlock(blk0, 5)
 
-	blk2 := p.makeBlock(blk1)
+	blk2 := p.makeBlock(blk1, 5)
 	err = sb.CheckByBlock(p.st, blk2)
 	require.NoError(t, err)
 
@@ -146,5 +145,26 @@ func TestSavingBlockOperationMissingInBlock(t *testing.T) {
 			require.NoError(t, err)
 			require.True(t, exists)
 		}
+	}
+}
+
+func TestSavingBlockOperationWithEmptyTransactions(t *testing.T) {
+	p := &TestSavingBlockOperationHelper{}
+	p.Prepare()
+	defer p.Done()
+
+	// create the block, which has empty transactions.
+	blk := p.makeBlock(block.GetGenesis(p.st), 0)
+	require.Equal(t, len(blk.Transactions), 0)
+
+	sb := NewSavingBlockOperations(p.st, nil)
+	require.NoError(t, sb.Check())
+
+	bt, err := block.GetBlockTransaction(p.st, blk.ProposerTransaction)
+	require.NoError(t, err)
+	for _, opHash := range bt.Operations {
+		exists, err := block.ExistsBlockOperation(p.st, opHash)
+		require.NoError(t, err)
+		require.True(t, exists)
 	}
 }
