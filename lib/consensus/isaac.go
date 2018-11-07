@@ -14,7 +14,6 @@ import (
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/storage"
-	"boscoin.io/sebak/lib/transaction"
 	"boscoin.io/sebak/lib/voting"
 )
 
@@ -61,47 +60,6 @@ func NewISAAC(node *node.LocalNode, p voting.ThresholdPolicy,
 		nodesHeight:       make(map[string]uint64),
 		syncer:            syncer,
 		LatestBallot:      ballot.Ballot{},
-	}
-
-	return
-}
-
-func (is *ISAAC) CloseConsensus(proposer string, basis voting.Basis, vh voting.Hole, transactionPool *transaction.Pool) (err error) {
-	is.Lock()
-	defer is.Unlock()
-
-	is.SetLatestVotingBasis(basis)
-
-	if vh == voting.NOTYET {
-		err = errors.New("invalid voting.Hole, `voting.NOTYET`")
-		return
-	}
-
-	basisIndex := basis.Index()
-	rr, found := is.RunningRounds[basisIndex]
-	if !found {
-		return
-	}
-
-	if vh == voting.NO {
-		delete(rr.Transactions, proposer)
-		delete(rr.Voted, proposer)
-
-		return
-	}
-
-	if vh == voting.YES {
-		transactionPool.Remove(rr.Transactions[proposer]...)
-	}
-
-	delete(is.RunningRounds, basisIndex)
-
-	// remove all the same rounds
-	for hash, runningRound := range is.RunningRounds {
-		if runningRound.VotingBasis.Height > basis.Height {
-			continue
-		}
-		delete(is.RunningRounds, hash)
 	}
 
 	return
