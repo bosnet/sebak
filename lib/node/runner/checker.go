@@ -42,16 +42,16 @@ func (c CheckerStopCloseConsensus) Checker() common.Checker {
 type BallotChecker struct {
 	common.DefaultChecker
 
-	NodeRunner           *NodeRunner
-	LocalNode            *node.LocalNode
-	Message              common.NetworkMessage
-	IsNew                bool
-	Ballot               ballot.Ballot
-	VotingHole           voting.Hole
-	Result               consensus.RoundVoteResult
-	VotingFinished       bool
-	FinishedVotingHole   voting.Hole
-	LatestUpdatedSources map[string]struct{}
+	NodeRunner         *NodeRunner
+	LocalNode          *node.LocalNode
+	Message            common.NetworkMessage
+	IsNew              bool
+	Ballot             ballot.Ballot
+	VotingHole         voting.Hole
+	Result             consensus.RoundVoteResult
+	VotingFinished     bool
+	FinishedVotingHole voting.Hole
+	LatestBlockSources []string
 
 	Log logging.Logger
 }
@@ -575,7 +575,7 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) error {
 		}
 		checker.NodeRunner.Consensus().SetLatestVotingBasis(basis)
 
-		reorganizeTransactionPool(checker)
+		checker.NodeRunner.TransactionPool.RemoveFromSources(checker.LatestBlockSources...)
 		checker.NodeRunner.Consensus().RemoveRunningRoundsWithSameHeight(basis.Height)
 
 		err = NewCheckerStopCloseConsensus(checker, "ballot got consensus and will be stored")
@@ -639,35 +639,11 @@ func saveBlock(checker *BallotChecker) error {
 	checker.Log.Debug("ballot was stored", "block", *theBlock)
 
 	for _, tx := range proposedTransactions {
-		checker.LatestUpdatedSources[tx.B.Source] = struct{}{}
+		checker.LatestBlockSources = append(checker.LatestBlockSources, tx.B.Source)
 	}
 	checker.NodeRunner.SavingBlockOperations().Save(*theBlock)
 
 	return nil
-}
-
-func reorganizeTransactionPool(checker *BallotChecker) {
-	basisIndex := checker.Ballot.VotingBasis().Index()
-	proposer := checker.Ballot.Proposer()
-	transactionPool := checker.NodeRunner.TransactionPool
-	rr, found := checker.NodeRunner.Consensus().RunningRounds[basisIndex]
-	if found {
-		transactionPool.Remove(rr.Transactions[proposer]...)
-	}
-
-	invalids := []string{}
-	for source := range checker.LatestUpdatedSources {
-		tx, found := transactionPool.GetFromSource(source)
-		if !found {
-			continue
-		}
-		if err := ValidateTx(checker.NodeRunner.Storage(), tx); err != nil {
-			invalids = append(invalids, tx.GetHash())
-		}
-	}
-	transactionPool.Remove(invalids...)
-
-	return
 }
 
 func isValidRound(st *storage.LevelDBBackend, r voting.Basis, log logging.Logger) (bool, error) {
