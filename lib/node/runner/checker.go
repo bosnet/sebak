@@ -203,7 +203,7 @@ func BallotCheckSYNC(c common.Checker, args ...interface{}) error {
 		return NewCheckerStopCloseConsensus(checker, "ballot makes node in sync")
 	} else {
 		if latestHeight == syncHeight-1 { // finish previous and current height ballot
-			_, err = finishBallot(
+			_, _, err = finishBallot(
 				checker.NodeRunner.Storage(),
 				is.LatestBallot,
 				checker.NodeRunner.TransactionPool,
@@ -215,7 +215,7 @@ func BallotCheckSYNC(c common.Checker, args ...interface{}) error {
 			}
 		}
 
-		_, err = finishBallot(
+		_, _, err = finishBallot(
 			checker.NodeRunner.Storage(),
 			checker.Ballot,
 			checker.NodeRunner.TransactionPool,
@@ -600,29 +600,19 @@ func saveBlock(checker *BallotChecker) error {
 		checker.Log.Debug("failed to get the missing transactions of ballot", "error", err)
 		return err
 	}
-
 	var bs *storage.LevelDBBackend
 	if bs, err = checker.NodeRunner.Storage().OpenBatch(); err != nil {
 		return err
 	}
 
-	proposedTransactions, err := getProposedTransactions(
-		bs,
-		checker.Ballot.B.Proposed.Transactions,
-		checker.NodeRunner.TransactionPool,
-	)
-	if err != nil {
-		return err
-	}
-
-	var theBlock *block.Block
-	theBlock, err = finishBallotWithProposedTxs(
+	theBlock, proposedTransactions, err := finishBallot(
 		bs,
 		checker.Ballot,
-		proposedTransactions,
+		checker.NodeRunner.TransactionPool,
 		checker.Log,
 		checker.NodeRunner.Log(),
 	)
+
 	if err != nil {
 		bs.Discard()
 		checker.Log.Error("failed to finish ballot", "error", err)

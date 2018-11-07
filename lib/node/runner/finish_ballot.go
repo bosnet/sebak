@@ -11,31 +11,26 @@ import (
 	"boscoin.io/sebak/lib/transaction/operation"
 )
 
-func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *transaction.Pool, log, infoLog logging.Logger) (*block.Block, error) {
-	var proposedTransactions []*transaction.Transaction
-	var err error
-	proposedTransactions, err = getProposedTransactions(
+func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *transaction.Pool, log, infoLog logging.Logger) (*block.Block, []*transaction.Transaction, error) {
+	proposedTxs, err := getProposedTransactions(
 		st,
 		b.B.Proposed.Transactions,
 		transactionPool,
 	)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	var blk *block.Block
 	blk, err = finishBallotWithProposedTxs(
 		st,
 		b,
-		proposedTransactions,
+		proposedTxs,
 		log,
 		infoLog,
 	)
-	if err != nil {
-		return nil, err
-	}
 
-	return blk, nil
+	return blk, proposedTxs, nil
 }
 
 func finishBallotWithProposedTxs(st *storage.LevelDBBackend, b ballot.Ballot, proposedTransactions []*transaction.Transaction, log, infoLog logging.Logger) (*block.Block, error) {

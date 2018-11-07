@@ -149,7 +149,7 @@ func testFinishBallotWithBatch(withBatch bool, numberOfTransactions, numberOfOpe
 		st, _ = st.OpenBatch()
 	}
 
-	_, err := finishBallot(
+	_, _, err := finishBallot(
 		st,
 		*blt,
 		nr.TransactionPool,
