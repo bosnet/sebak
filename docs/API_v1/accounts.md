@@ -70,7 +70,7 @@ Account API
 
 + Response 200 (application/hal+json; charset=utf-8)
 
-    + Attributes (Operations)
+    + Attributes (Operation)
 
 + Response 500 (application/problem+json; charset=utf-8)
 

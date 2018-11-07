@@ -11,8 +11,8 @@
         + href: `/api/v1/accounts/GDEPYGGALPJ5HENXCNOQJPPDOQMA2YAXPERZ4XEAKVFFJJEVP4ZBK6QI/transactions{?cursor,limit,order}` 
         + templated: true (boolean)
 + address: GDEPYGGALPJ5HENXCNOQJPPDOQMA2YAXPERZ4XEAKVFFJJEVP4ZBK6QI (string, required) - The account’s public key encoded into a base32 string representation.
-+ balance: 500000000000 (string,required) - GON. 1 BOS = 10,000,000 GON
-+ sequence_id: 0 (number,required) - The Current sequence number. It needed to submitting a transaction from this account
++ balance: 500000000000 (string) - GON. 1 BOS = 10,000,000 GON
++ sequence_id: 0 (number) - The Current sequence number. It needed to submitting a transaction from this account
 + linked: "" - linked with freezing account. 
 
 ### Transactions
@@ -53,6 +53,7 @@
         + href: `/api/v1/accounts/GDEPYGGALPJ5HENXCNOQJPPDOQMA2YAXPERZ4XEAKVFFJJEVP4ZBK6QI/operations`
 
 ### Transaction Payment
++ T: transaction
 + H 
     + version: `` - Transaction version
     + created: `2018-01-01T00:00:00.000000000Z` - Created time of the transaction.
@@ -99,11 +100,11 @@
     + self
         + href: `/api/v1/transactions/`
 + created: `2018-09-12T09:08:35.157472400Z` - Created time of the transaction. It is set by wallet
-+ fee: `10000` (string,required) - The fee paid by the source account
++ fee: `10000` (string) - The fee paid by the source account
 + hash: `ghf6msRhE4jRf5DPib9UHD1msadvmZs9o53V9FQTb11` (string,required) - Hash of transaction. //TODO: link for the details
 + operation_count: 1 (number) - The number of operations in this transaction.
 + sequence_id: 0 (number) - the Sequence number of the source account.
-+ source: `GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ` (string,required) -
++ source: `GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ` (string) -
 
 ### TransactionHistory
 + _links
@@ -116,8 +117,8 @@
     + confirmed: `2018-11-02T14:09:33.021645000+09:00` - Modified time of the transaction history.
     + created: `2018-11-02T14:09:33.019606000+09:00` - Created time of the transaction. It is set by wallet
     + hash: `7nLuyg8radTExzBM2WhG37AwohBwEySBw4vj2xdtdjAs` (string,required) - Hash of transaction. //TODO: link for the details
-    + source: `GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ` (string,required) - source account
-    + status: `confirmed` (string,required) - three categories of status; submitted, confirmed, rejected
+    + source: `GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ` (string) - source account
+    + status: `confirmed` (string) - three categories of status; submitted, confirmed, rejected
         
 ### Operation
 + _embedded
