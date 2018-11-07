@@ -3,27 +3,29 @@ package api
 import (
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/gorilla/mux"
 
 	"boscoin.io/sebak/lib/block"
-	"boscoin.io/sebak/lib/client"
 	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/network/httputils"
 	"boscoin.io/sebak/lib/node/runner/api/resource"
+	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction/operation"
 )
 
 func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	address := vars["id"]
-	options, err := client.NewDefaultListOptionsFromQuery(r.URL.Query())
-	if err != nil {
-		http.Error(w, errors.InvalidQueryString.Error(), http.StatusBadRequest)
+
+	p := httputils.NewPaginator(r)
+	if err := p.Error(); err != nil {
+		httputils.WriteJSONError(w, err)
 		return
 	}
+
+	options := storage.NewDefaultListOptions(p.Reverse(), p.Cursor(), p.Limit())
 
 	oTypeStr := r.URL.Query().Get("type")
 	if len(oTypeStr) > 0 && !operation.IsValidOperationType(oTypeStr) {
@@ -78,10 +80,6 @@ func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter
 	}
 
 	txs := readFunc()
-	self := r.URL.String()
-	next := strings.Replace(resource.URLAccountOperations, "{id}", address, -1) + "?" + options.SetCursor(cursor).SetReverse(false).Encode()
-	prev := strings.Replace(resource.URLAccountOperations, "{id}", address, -1) + "?" + options.SetReverse(true).Encode()
-	list := resource.NewResourceList(txs, self, next, prev)
-
+	list := resource.NewResourceList(txs, p.SelfLink(), p.NextLink(cursor), p.PrevLink(cursor))
 	httputils.MustWriteJSON(w, 200, list)
 }
