@@ -17,3 +17,7 @@ type Response struct {
 	Header     http.Header
 	Expiration time.Time
 }
+
+type Wrapper interface {
+	WrapHandlerFunc(handlerFunc http.HandlerFunc) http.HandlerFunc
+}

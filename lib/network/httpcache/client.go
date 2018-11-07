@@ -102,7 +102,7 @@ func (c *Client) Middleware(next http.Handler) http.Handler {
 	})
 }
 
-func (c *Client) HandlerFunc(handlerFunc http.HandlerFunc) http.HandlerFunc {
+func (c *Client) WrapHandlerFunc(handlerFunc http.HandlerFunc) http.HandlerFunc {
 	next := http.HandlerFunc(handlerFunc)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if ok := c.handleCache(next, w, r); !ok {

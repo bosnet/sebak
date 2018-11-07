@@ -64,6 +64,9 @@ var (
 	flagRateLimitAPI        cmdcommon.ListFlags // "SEBAK_RATE_LIMIT_API"
 	flagRateLimitNode       cmdcommon.ListFlags // "SEBAK_RATE_LIMIT_NODE"
 	flagStorageConfigString string
+
+	flagHTTPCacheAdapter  string = common.GetENVValue("SEBAK_HTTP_CACHE_ADAPTER", "")
+	flagHTTPCachePoolSize string = common.GetENVValue("SEBAK_HTTP_CACHE_POOL_SIZE", "10000")
 )
 
 var (
@@ -89,6 +92,8 @@ var (
 	timeoutSIGN       time.Duration
 	transactionsLimit uint64
 	validators        []*node.Validator
+	httpCacheAdapter  string
+	httpCachePoolSize int
 
 	logLevel logging.Lvl
 	log      logging.Logger = logging.New("module", "main")
@@ -183,6 +188,8 @@ func init() {
 	nodeCmd.Flags().StringVar(&flagSyncFetchTimeout, "sync-fetch-timeout", flagSyncFetchTimeout, "sync fetch timeout")
 	nodeCmd.Flags().StringVar(&flagSyncRetryInterval, "sync-retry-interval", flagSyncRetryInterval, "sync retry interval")
 	nodeCmd.Flags().StringVar(&flagSyncCheckInterval, "sync-check-interval", flagSyncCheckInterval, "sync check interval")
+	nodeCmd.Flags().StringVar(&flagHTTPCacheAdapter, "http-cache-adapter", flagHTTPCacheAdapter, "http cache adapter: ex) 'mem'")
+	nodeCmd.Flags().StringVar(&flagHTTPCachePoolSize, "http-cache-pool-size", flagHTTPCachePoolSize, "http cache pool size")
 
 	rootCmd.AddCommand(nodeCmd)
 }
@@ -353,6 +360,20 @@ func parseFlagsNode() {
 	syncFetchTimeout = getTimeDuration(flagSyncFetchTimeout, sync.FetchTimeout, "--sync-fetch-timeout")
 	syncCheckInterval = getTimeDuration(flagSyncCheckInterval, sync.CheckBlockHeightInterval, "--sync-check-interval")
 
+	{
+		if ok := common.HTTPCacheAdapterNames[flagHTTPCacheAdapter]; !ok {
+			cmdcommon.PrintFlagsError(nodeCmd, "--http-cache-adapter", err)
+		} else {
+			httpCacheAdapter = flagHTTPCacheAdapter
+		}
+		var tmpUint64 uint64
+		if tmpUint64, err = strconv.ParseUint(flagHTTPCachePoolSize, 10, 64); err != nil {
+			cmdcommon.PrintFlagsError(nodeCmd, "--http-cache-pool-size", err)
+		} else {
+			httpCachePoolSize = int(tmpUint64)
+		}
+	}
+
 	if logLevel, err = logging.LvlFromString(flagLogLevel); err != nil {
 		cmdcommon.PrintFlagsError(nodeCmd, "--log-level", err)
 	}
@@ -433,6 +454,8 @@ func parseFlagsNode() {
 	parsedFlags = append(parsedFlags, "\n\toperations-limit", flagOperationsLimit)
 	parsedFlags = append(parsedFlags, "\n\trate-limit-api", rateLimitRuleAPI)
 	parsedFlags = append(parsedFlags, "\n\trate-limit-node", rateLimitRuleNode)
+	parsedFlags = append(parsedFlags, "\n\thttp-cache-adapter", httpCacheAdapter)
+	parsedFlags = append(parsedFlags, "\n\thttp-cache-pool-size", httpCachePoolSize)
 
 	// create current Node
 	localNode, err = node.NewLocalNode(kp, bindEndpoint, "")
@@ -520,6 +543,8 @@ func runNode() error {
 		OpsLimit:          int(operationsLimit),
 		RateLimitRuleAPI:  rateLimitRuleAPI,
 		RateLimitRuleNode: rateLimitRuleNode,
+		HTTPCacheAdapter:  httpCacheAdapter,
+		HTTPCachePoolSize: httpCachePoolSize,
 	}
 	st, err := storage.NewStorage(storageConfig)
 	if err != nil {

@@ -196,21 +196,38 @@ func (nr *NodeRunner) Ready() {
 	}
 
 	// cache middleware
-	cache := httpcache.NewMemCacheAdapter(10000)
-	defaultCacheOptions := httpcache.WithOptions(
-		httpcache.WithAdapter(cache),
-		httpcache.WithStatusCode(404, 1*time.Second),
-		httpcache.WithLogger(nr.log),
+	var (
+		cache   httpcache.Wrapper
+		baCache httpcache.Wrapper
 	)
-	cacheClient, err := httpcache.NewClient(defaultCacheOptions, httpcache.WithExpire(1*time.Minute))
-	if err != nil {
-		nr.log.Error("Cache middleware has an error", "err", err)
-		return
-	}
-	baCacheClient, err := httpcache.NewClient(defaultCacheOptions, httpcache.WithExpire(1*time.Second))
-	if err != nil {
-		nr.log.Error("BlockAccount cache middleware has an error", "err", err)
-		return
+
+	if nr.Conf.HTTPCacheAdapter == "" {
+		// no use cache middleware
+		cache = httpcache.NewNopClient()
+		baCache = httpcache.NewNopClient()
+		nr.log.Info("http cache is disabled")
+	} else {
+		cacheAdater, err := httpcache.NewAdapter(nr.Conf)
+		if err != nil {
+			nr.log.Error("HTTP Cache adapter has an error", "err", err)
+			return
+		}
+		defaultCacheOptions := httpcache.WithOptions(
+			httpcache.WithAdapter(cacheAdater),
+			httpcache.WithStatusCode(404, 1*time.Second),
+			httpcache.WithLogger(nr.log),
+		)
+		cache, err = httpcache.NewClient(defaultCacheOptions, httpcache.WithExpire(1*time.Minute))
+		if err != nil {
+			nr.log.Error("Cache middleware has an error", "err", err)
+			return
+		}
+		baCache, err = httpcache.NewClient(defaultCacheOptions, httpcache.WithExpire(1*time.Second))
+		if err != nil {
+			nr.log.Error("BlockAccount cache middleware has an error", "err", err)
+			return
+		}
+		nr.log.Info("http cache is enabled")
 	}
 
 	// node handlers
@@ -255,15 +272,15 @@ func (nr *NodeRunner) Ready() {
 
 	nr.network.AddHandler(
 		apiHandler.HandlerURLPattern(api.GetAccountHandlerPattern),
-		baCacheClient.HandlerFunc(apiHandler.GetAccountHandler),
+		baCache.WrapHandlerFunc(apiHandler.GetAccountHandler),
 	).Methods("GET", "OPTIONS")
 	nr.network.AddHandler(
 		apiHandler.HandlerURLPattern(api.GetAccountTransactionsHandlerPattern),
-		cacheClient.HandlerFunc(apiHandler.GetTransactionsByAccountHandler),
+		cache.WrapHandlerFunc(apiHandler.GetTransactionsByAccountHandler),
 	).Methods("GET", "OPTIONS")
 	nr.network.AddHandler(
 		apiHandler.HandlerURLPattern(api.GetAccountOperationsHandlerPattern),
-		cacheClient.HandlerFunc(apiHandler.GetOperationsByAccountHandler),
+		cache.WrapHandlerFunc(apiHandler.GetOperationsByAccountHandler),
 	).Methods("GET", "OPTIONS")
 	nr.network.AddHandler(
 		apiHandler.HandlerURLPattern(api.GetFrozenAccountHandlerPattern),
@@ -275,15 +292,15 @@ func (nr *NodeRunner) Ready() {
 	).Methods("GET")
 	nr.network.AddHandler(
 		apiHandler.HandlerURLPattern(api.GetTransactionByHashHandlerPattern),
-		cacheClient.HandlerFunc(apiHandler.GetTransactionByHashHandler),
+		cache.WrapHandlerFunc(apiHandler.GetTransactionByHashHandler),
 	).Methods("GET", "OPTIONS")
 	nr.network.AddHandler(
 		apiHandler.HandlerURLPattern(api.GetTransactionOperationsHandlerPattern),
-		cacheClient.HandlerFunc(apiHandler.GetOperationsByTxHashHandler),
+		cache.WrapHandlerFunc(apiHandler.GetOperationsByTxHashHandler),
 	).Methods("GET", "OPTIONS")
 	nr.network.AddHandler(
 		apiHandler.HandlerURLPattern(api.GetTransactionHistoryHandlerPattern),
-		cacheClient.HandlerFunc(apiHandler.GetTransactionHistoryHandler),
+		cache.WrapHandlerFunc(apiHandler.GetTransactionHistoryHandler),
 	).Methods("GET", "OPTIONS")
 
 	TransactionsHandler := func(w http.ResponseWriter, r *http.Request) {
@@ -295,7 +312,7 @@ func (nr *NodeRunner) Ready() {
 			return
 		}
 
-		cacheClient.HandlerFunc(apiHandler.GetTransactionsHandler)(w, r)
+		cache.WrapHandlerFunc(apiHandler.GetTransactionsHandler)(w, r)
 		return
 	}
 
@@ -313,7 +330,7 @@ func (nr *NodeRunner) Ready() {
 		nr.network.AddHandler(network.UrlPathPrefixDebug+"/pprof/*", pprof.Index)
 	}
 
-	nr.network.AddHandler(api.GetNodeInfoPattern, apiHandler.GetNodeInfoHandler).Methods("GET")
+	nr.network.AddHandler(api.GetNodeInfoPattern, cache.WrapHandlerFunc(apiHandler.GetNodeInfoHandler)).Methods("GET")
 
 	nr.network.Ready()
 }

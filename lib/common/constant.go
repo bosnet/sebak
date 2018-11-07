@@ -33,6 +33,10 @@ const (
 
 	// BlockHeightEndOfInflation sets the block height of inflation end.
 	BlockHeightEndOfInflation uint64 = 36000000
+
+	HTTPCacheMemoryAdapterName = "mem"
+	//HTTPCacheRedisAdapterName = "redis"
+	HTTPCachePoolSize = 10000
 )
 
 var (
@@ -64,4 +68,6 @@ var (
 		Period: 1 * time.Second,
 		Limit:  100,
 	}
+
+	HTTPCacheAdapterNames = map[string]bool{HTTPCacheMemoryAdapterName: true, "": true}
 )
