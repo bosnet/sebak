@@ -640,12 +640,13 @@ func saveBlock(checker *BallotChecker) error {
 	}
 
 	checker.Log.Debug("ballot was stored", "block", *theBlock)
+
 	checker.NodeRunner.SavingBlockOperations().Save(*theBlock)
 
 	return nil
 }
 
-func reorganizeTransactionPool(checker *BallotChecker) error {
+func reorganizeTransactionPool(checker *BallotChecker) {
 	basisIndex := checker.Ballot.VotingBasis().Index()
 	proposer := checker.Ballot.Proposer()
 	transactionPool := checker.NodeRunner.TransactionPool
@@ -666,7 +667,7 @@ func reorganizeTransactionPool(checker *BallotChecker) error {
 	}
 	transactionPool.Remove(invalids...)
 
-	return nil
+	return
 }
 
 func isValidRound(st *storage.LevelDBBackend, r voting.Basis, log logging.Logger) (bool, error) {
