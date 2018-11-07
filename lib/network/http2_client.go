@@ -10,6 +10,7 @@ import (
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/node"
+	"boscoin.io/sebak/lib/node/runner/api/resource"
 )
 
 type HTTP2NetworkClient struct {
@@ -76,76 +77,46 @@ func (c *HTTP2NetworkClient) GetNodeInfo() (body []byte, err error) {
 	return
 }
 
-func (c *HTTP2NetworkClient) Connect(n node.Node) (body []byte, err error) {
+func (c *HTTP2NetworkClient) Send(path string, message common.Serializable) (retBody []byte, err error) {
 	headers := c.DefaultHeaders()
 	headers.Set("Content-Type", "application/json")
 
-	serialized, _ := n.Serialize()
+	var body []byte
+	if body, err = message.Serialize(); err != nil {
+		return
+	}
+
+	u := c.resolvePath(path)
+
 	var response *http.Response
-	response, err = c.client.Post(c.resolvePath(UrlPathPrefixNode+"/connect").String(), serialized, headers)
+	response, err = c.client.Post(u.String(), body, headers)
 	if err != nil {
 		return
 	}
 	defer response.Body.Close()
-	body, err = ioutil.ReadAll(response.Body)
+	retBody, err = ioutil.ReadAll(response.Body)
 
 	if response.StatusCode != http.StatusOK {
 		err = errors.HTTPProblem.Clone().SetData("status", response.StatusCode)
 	}
 
 	return
+}
+
+func (c *HTTP2NetworkClient) Connect(n node.Node) (body []byte, err error) {
+	return c.Send(UrlPathPrefixNode+"/connect", n)
 }
 
 func (c *HTTP2NetworkClient) SendMessage(message common.Serializable) (retBody []byte, err error) {
-	headers := c.DefaultHeaders()
-	headers.Set("Content-Type", "application/json")
+	return c.Send(UrlPathPrefixNode+"/message", message)
+}
 
-	var body []byte
-	if body, err = message.Serialize(); err != nil {
-		return
-	}
-
-	u := c.resolvePath(UrlPathPrefixNode + "/message")
-
-	var response *http.Response
-	response, err = c.client.Post(u.String(), body, headers)
-	if err != nil {
-		return
-	}
-	defer response.Body.Close()
-	retBody, err = ioutil.ReadAll(response.Body)
-
-	if response.StatusCode != http.StatusOK {
-		err = errors.HTTPProblem.Clone().SetData("status", response.StatusCode)
-	}
-
-	return
+func (c *HTTP2NetworkClient) SendTransaction(message common.Serializable) (retBody []byte, err error) {
+	return c.Send(resource.URLTransactions, message)
 }
 
 func (c *HTTP2NetworkClient) SendBallot(message common.Serializable) (retBody []byte, err error) {
-	headers := c.DefaultHeaders()
-	headers.Set("Content-Type", "application/json")
-
-	var body []byte
-	if body, err = message.Serialize(); err != nil {
-		return
-	}
-
-	u := c.resolvePath(UrlPathPrefixNode + "/ballot")
-
-	var response *http.Response
-	response, err = c.client.Post(u.String(), body, headers)
-	if err != nil {
-		return
-	}
-	defer response.Body.Close()
-	retBody, err = ioutil.ReadAll(response.Body)
-
-	if response.StatusCode != http.StatusOK {
-		err = errors.HTTPProblem.Clone().SetData("status", response.StatusCode)
-	}
-
-	return
+	return c.Send(UrlPathPrefixNode+"/ballot", message)
 }
 
 func (c *HTTP2NetworkClient) GetTransactions(txs []string) (retBody []byte, err error) {

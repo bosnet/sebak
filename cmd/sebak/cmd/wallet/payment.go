@@ -131,7 +131,7 @@ func init() {
 				fmt.Println(tx)
 			}
 			if flagDry == false {
-				if retbody, err = client.SendMessage(tx); err != nil {
+				if retbody, err = client.SendTransaction(tx); err != nil {
 					log.Fatal("Network error: ", err, " body: ", string(retbody))
 					os.Exit(1)
 				}

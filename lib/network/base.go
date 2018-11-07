@@ -38,6 +38,7 @@ type NetworkClient interface {
 	Connect(node node.Node) ([]byte, error)
 	GetNodeInfo() ([]byte, error)
 	SendMessage(common.Serializable) ([]byte, error)
+	SendTransaction(common.Serializable) ([]byte, error)
 	SendBallot(common.Serializable) ([]byte, error)
 	GetTransactions([]string) ([]byte, error)
 }
