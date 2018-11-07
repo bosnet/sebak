@@ -33,7 +33,7 @@ func prepareAPIServer() (*httptest.Server, *storage.LevelDBBackend) {
 	router.HandleFunc(GetTransactionsHandlerPattern, apiHandler.GetTransactionsHandler).Methods("GET")
 	router.HandleFunc(GetTransactionByHashHandlerPattern, apiHandler.GetTransactionByHashHandler).Methods("GET")
 	router.HandleFunc(GetTransactionStatusHandlerPattern, apiHandler.GetTransactionStatusByHashHandler).Methods("GET")
-	router.HandleFunc(GetTransactionOperationsHandlerPattern, apiHandler.GetOperationsByTxHashHandler).Methods("GET")
+	router.HandleFunc(GetTransactionOperationsHandlerPattern, apiHandler.GetOperationsByTxHandler).Methods("GET")
 	router.HandleFunc(GetBlocksHandlerPattern, apiHandler.GetBlocksHandler).Methods("GET")
 	router.HandleFunc(GetBlockHandlerPattern, apiHandler.GetBlockHandler).Methods("GET")
 	router.HandleFunc(PostSubscribePattern, apiHandler.PostSubscribeHandler).Methods("POST")
