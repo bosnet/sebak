@@ -111,7 +111,7 @@ func TestOperationBodyCongressVotingResultInvalidMembership(t *testing.T) {
 			B: opb,
 		}
 
-		err := op.IsWellFormed(networkID, common.NewConfig())
+		err := op.IsWellFormed(common.NewConfig())
 		require.Error(t, err, errors.InvalidOperation)
 	}
 
@@ -130,7 +130,7 @@ func TestOperationBodyCongressVotingResultInvalidMembership(t *testing.T) {
 			B: opb,
 		}
 
-		err := op.IsWellFormed(networkID, common.NewConfig())
+		err := op.IsWellFormed(common.NewConfig())
 		require.Error(t, err, errors.InvalidOperation)
 	}
 
@@ -149,7 +149,7 @@ func TestOperationBodyCongressVotingResultInvalidMembership(t *testing.T) {
 			B: opb,
 		}
 
-		err := op.IsWellFormed(networkID, common.NewConfig())
+		err := op.IsWellFormed(common.NewConfig())
 		require.NoError(t, err)
 	}
 }
