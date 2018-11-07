@@ -12,7 +12,7 @@ import (
 )
 
 // ISAACStateManager manages the ISAACState.
-// The most important function `Start()` is called in StartStateManager() function in node_runner.go by goroutine.
+// The most important function `Start()` is called in startStateManager() function in node_runner.go by goroutine.
 type ISAACStateManager struct {
 	sync.RWMutex
 
