@@ -672,7 +672,7 @@ func TestProposedTransactionStoreWithZeroAmount(t *testing.T) {
 	previousCommonAccount, _ := block.GetBlockAccount(p.nr.Storage(), p.commonAccount.Address)
 
 	{
-		_, err := finishBallot(
+		_, _, err := finishBallot(
 			p.nr.Storage(),
 			*blt,
 			p.nr.TransactionPool,
@@ -759,7 +759,7 @@ func TestProposedTransactionStoreWithAmount(t *testing.T) {
 	previousCommonAccount, _ := block.GetBlockAccount(p.nr.Storage(), p.commonAccount.Address)
 
 	{
-		_, err := finishBallot(
+		_, _, err := finishBallot(
 			p.nr.Storage(),
 			*blt,
 			p.nr.TransactionPool,
