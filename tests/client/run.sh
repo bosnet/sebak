@@ -34,7 +34,7 @@ fi
 IMAGE=$(docker build -q \
     --build-arg BUILD_MODE="test" \
     --build-arg BUILD_PKG="./tests/client" \
-    --build-arg BUILD_ARGS="-c -o /go/bin/client_test"  \
+    --build-arg BUILD_ARGS="-tags client_integration_tests -c -o /go/bin/client_test"  \
     ${ROOT_DIR}/ -f ${ROOT_DIR}/Dockerfile_client.build | cut -d: -f2)
 
 if [ -z ${IMAGE} ]; then
