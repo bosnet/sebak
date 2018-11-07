@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -13,6 +12,8 @@ import (
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/common/keypair"
+	"boscoin.io/sebak/lib/errors"
+	"boscoin.io/sebak/lib/node/runner"
 	"boscoin.io/sebak/lib/storage"
 )
 
@@ -122,6 +123,30 @@ func makeGenesisBlock(genesisAddress, commonAddress, networkID, balanceStr, stor
 	}
 	defer st.Close()
 
+	created, err := checkExistingAccounts(st, flagNetworkID, genesisKP.Address(), commonKP.Address(), balance)
+	if err != nil {
+		if created {
+			return "--storage", fmt.Errorf("genesis block is already created, but: %v", err)
+		} else {
+			return "--storage", err
+		}
+	} else if created {
+		if b, err := block.GetBlockByHeight(st, common.GenesisBlockHeight); err != nil {
+			return "--storage", fmt.Errorf("failed to get genesis block: %v", err)
+		} else {
+			log.Info("genesis block already created",
+				"height", b.Height,
+				"round", b.Round,
+				"timestamp", b.Timestamp,
+				"total-txs", b.TotalTxs,
+				"total-ops", b.TotalOps,
+				"proposer", b.Proposer,
+			)
+		}
+
+		return "", nil
+	}
+
 	// check account does not exists
 	if _, err = block.GetBlockAccount(st, genesisKP.Address()); err == nil {
 		return "<public key>", errors.New("account is already created")
@@ -152,4 +177,64 @@ func makeGenesisBlock(genesisAddress, commonAddress, networkID, balanceStr, stor
 	)
 
 	return "", nil
+}
+
+func checkExistingAccounts(st *storage.LevelDBBackend, networkID, genesisAddress, commonAddress string, balance common.Amount) (created bool, err error) {
+	// check network id
+	var bt block.BlockTransaction
+	if bt, err = runner.GetGenesisTransaction(st); err != nil {
+		if err == errors.StorageRecordDoesNotExist {
+			created = false
+			err = nil
+			return
+		}
+
+		return
+	}
+
+	created = true
+
+	var genesisAccount *block.BlockAccount
+	if genesisAccount, err = runner.GetGenesisAccount(st); err != nil {
+		return
+	}
+	if genesisAccount.Address != genesisAddress {
+		err = fmt.Errorf("different genesis account address")
+		return
+	}
+
+	var commonAccount *block.BlockAccount
+	if commonAccount, err = runner.GetCommonAccount(st); err != nil {
+		return
+	}
+	if commonAccount.Address != commonAddress {
+		err = fmt.Errorf("different common account address")
+		return
+	}
+
+	var genesisBalance common.Amount
+	if genesisBalance, err = runner.GetGenesisBalance(st); err != nil {
+		return
+	}
+	if genesisBalance != balance {
+		err = fmt.Errorf("different balance")
+		return
+	}
+
+	var tp block.TransactionPool
+	if tp, err = block.GetTransactionPool(st, bt.Hash); err != nil {
+		return
+	}
+
+	tx := tp.Transaction()
+	existingSignature := tx.H.Signature
+
+	kp := keypair.Master(networkID)
+	tx.Sign(kp, []byte(networkID))
+	if existingSignature != tx.H.Signature {
+		err = fmt.Errorf("the previous genesis block was created by different networkID")
+		return
+	}
+
+	return
 }
