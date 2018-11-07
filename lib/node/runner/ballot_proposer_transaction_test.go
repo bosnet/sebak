@@ -648,7 +648,7 @@ func TestProposedTransactionStoreWithZeroAmount(t *testing.T) {
 	require.Equal(t, 2, len(bt.Operations))
 
 	var bos []block.BlockOperation
-	iterFunc, closeFunc := block.GetBlockOperationsByTxHash(p.nr.Storage(), bt.Hash, nil)
+	iterFunc, closeFunc := block.GetBlockOperationsByTx(p.nr.Storage(), bt.Hash, nil)
 	for {
 		bo, hasNext, _ := iterFunc()
 		if !hasNext {

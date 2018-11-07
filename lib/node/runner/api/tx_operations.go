@@ -12,7 +12,7 @@ import (
 	"boscoin.io/sebak/lib/storage"
 )
 
-func (api NetworkHandlerAPI) GetOperationsByTxHashHandler(w http.ResponseWriter, r *http.Request) {
+func (api NetworkHandlerAPI) GetOperationsByTxHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	hash := vars["id"]
 
@@ -30,12 +30,12 @@ func (api NetworkHandlerAPI) GetOperationsByTxHashHandler(w http.ResponseWriter,
 	options := p.ListOptions()
 
 	var blk *block.Block
-	if blk, err = api.getBlockByTxHash(hash); err != nil {
+	if blk, err = api.getBlockByTx(hash); err != nil {
 		httputils.WriteJSONError(w, err)
 		return
 	}
 
-	ops, firstCursor, cursor := api.getOperationsByTxHash(hash, blk, options)
+	ops, firstCursor, cursor := api.getOperationsByTx(hash, blk, options)
 	if len(ops) < 1 {
 		httputils.WriteJSONError(w, errors.BlockTransactionDoesNotExists)
 		return
@@ -45,8 +45,8 @@ func (api NetworkHandlerAPI) GetOperationsByTxHashHandler(w http.ResponseWriter,
 	httputils.MustWriteJSON(w, 200, list)
 }
 
-func (api NetworkHandlerAPI) getOperationsByTxHash(txHash string, blk *block.Block, options storage.ListOptions) (txs []resource.Resource, firstCursor, cursor []byte) {
-	iterFunc, closeFunc := block.GetBlockOperationsByTxHash(api.storage, txHash, options)
+func (api NetworkHandlerAPI) getOperationsByTx(txHash string, blk *block.Block, options storage.ListOptions) (txs []resource.Resource, firstCursor, cursor []byte) {
+	iterFunc, closeFunc := block.GetBlockOperationsByTx(api.storage, txHash, options)
 	for idx := 0; ; idx++ {
 		o, hasNext, c := iterFunc()
 		if !hasNext {
@@ -65,7 +65,7 @@ func (api NetworkHandlerAPI) getOperationsByTxHash(txHash string, blk *block.Blo
 	return
 }
 
-func (api NetworkHandlerAPI) getBlockByTxHash(hash string) (*block.Block, error) {
+func (api NetworkHandlerAPI) getBlockByTx(hash string) (*block.Block, error) {
 	// get block by it's `Height`
 	if found, err := block.ExistsBlockTransaction(api.storage, hash); err != nil {
 		return nil, err

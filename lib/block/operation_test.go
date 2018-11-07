@@ -80,7 +80,7 @@ func TestGetSortedBlockOperationsByTxHash(t *testing.T) {
 
 	for _, txHash := range txHashes {
 		var saved []BlockOperation
-		iterFunc, closeFunc := GetBlockOperationsByTxHash(st, txHash, nil)
+		iterFunc, closeFunc := GetBlockOperationsByTx(st, txHash, nil)
 		for {
 			bo, hasNext, _ := iterFunc()
 			if !hasNext {
@@ -108,7 +108,7 @@ func TestBlockOperationSaveByTransaction(t *testing.T) {
 	require.NoError(t, err)
 
 	var saved []BlockOperation
-	iterFunc, closeFunc := GetBlockOperationsByTxHash(st, tx.GetHash(), nil)
+	iterFunc, closeFunc := GetBlockOperationsByTx(st, tx.GetHash(), nil)
 	for {
 		bo, hasNext, _ := iterFunc()
 		if !hasNext {
