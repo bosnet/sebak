@@ -47,14 +47,14 @@ func (p *PageQuery) SelfLink() string {
 
 func (p *PageQuery) PrevLink(cursor []byte) string {
 	path := p.request.URL.Path
-	query := p.urlValues(cursor, false).Encode()
+	query := p.urlValues(cursor, true, p.limit).Encode()
 	link := fmt.Sprintf("%s?%s", path, query)
 	return link
 }
 
 func (p *PageQuery) NextLink(cursor []byte) string {
 	path := p.request.URL.Path
-	query := p.urlValues(cursor, true).Encode()
+	query := p.urlValues(cursor, false, p.limit).Encode()
 	link := fmt.Sprintf("%s?%s", path, query)
 	return link
 }
@@ -93,13 +93,13 @@ func (p *PageQuery) parseRequest() error {
 	return nil
 }
 
-func (p PageQuery) urlValues(cursor []byte, reverse bool) url.Values {
+func (p PageQuery) urlValues(cursor []byte, reverse bool, limit uint64) url.Values {
 	v := url.Values{
 		"reverse": []string{strconv.FormatBool(reverse)},
 	}
 
 	if len(cursor) > 0 {
-		v.Set("cursor", string(p.cursor))
+		v.Set("cursor", string(cursor))
 	}
 	if p.limit > 0 {
 		v.Set("limit", strconv.FormatUint(p.limit, 10))

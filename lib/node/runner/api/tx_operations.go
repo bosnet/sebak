@@ -3,10 +3,8 @@ package api
 import (
 	"fmt"
 	"net/http"
-	"strings"
 
 	"boscoin.io/sebak/lib/block"
-	"boscoin.io/sebak/lib/client"
 	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/network/httputils"
@@ -24,11 +22,13 @@ func (api NetworkHandlerAPI) GetOperationsByTxHashHandler(w http.ResponseWriter,
 		return
 	}
 
-	options, err := client.NewDefaultListOptionsFromQuery(r.URL.Query())
+	p, err := httputils.NewPageQuery(r)
 	if err != nil {
-		http.Error(w, errors.InvalidQueryString.Error(), http.StatusBadRequest)
+		httputils.WriteJSONError(w, err)
 		return
 	}
+
+	options := p.ListOptions()
 
 	if httputils.IsEventStream(r) {
 		event := fmt.Sprintf("txhash-%s", hash)
@@ -47,11 +47,7 @@ func (api NetworkHandlerAPI) GetOperationsByTxHashHandler(w http.ResponseWriter,
 		return
 	}
 
-	self := r.URL.String()
-	next := strings.Replace(resource.URLTransactionOperations, "{id}", hash, -1) + "?" + options.SetCursor(cursor).SetReverse(false).Encode()
-	prev := strings.Replace(resource.URLTransactionOperations, "{id}", hash, -1) + "?" + options.SetReverse(true).Encode()
-	list := resource.NewResourceList(ops, self, next, prev)
-
+	list := p.ResourceList(ops, cursor)
 	httputils.MustWriteJSON(w, 200, list)
 }
 
