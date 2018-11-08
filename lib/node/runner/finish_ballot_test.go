@@ -64,10 +64,10 @@ func createNodeRunnerForTestingWithFileStorage(n int, conf common.Config, recv c
 		block.MakeTestBlockchain(st)
 	}
 
-	is, _ := consensus.NewISAAC(conf.NetworkID, localNode, policy, connectionManager, st, conf, nil)
+	is, _ := consensus.NewISAAC(localNode, policy, connectionManager, st, conf, nil)
 	is.SetProposerSelector(FixedSelector{localNode.Address()})
 
-	nr, err := NewNodeRunner(string(networkID), localNode, policy, ns[0], is, st, conf)
+	nr, err := NewNodeRunner(localNode, policy, ns[0], is, st, conf)
 	if err != nil {
 		panic(err)
 	}

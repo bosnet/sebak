@@ -53,7 +53,6 @@ func (p *HelperTestGetNodeTransactionsHandler) Prepare() {
 	p.network.SetLocalNode(p.localNode)
 
 	isaac, _ := consensus.NewISAAC(
-		networkID,
 		p.localNode,
 		nil,
 		NewTestConnectionManager(p.localNode, nil, nil, make(chan struct{}, 100)),
