@@ -30,7 +30,6 @@ type Syncer struct {
 	storage           *storage.LevelDBBackend
 	network           network.Network
 	connectionManager network.ConnectionManager
-	networkID         []byte
 	commonCfg         common.Config
 	localNode         *node.LocalNode
 
@@ -53,7 +52,6 @@ type SyncerOption func(s *Syncer)
 func NewSyncer(st *storage.LevelDBBackend,
 	nw network.Network,
 	cm network.ConnectionManager,
-	networkID []byte,
 	localNode *node.LocalNode,
 	cfg common.Config,
 	opts ...SyncerOption) *Syncer {
@@ -63,7 +61,6 @@ func NewSyncer(st *storage.LevelDBBackend,
 		storage:           st,
 		network:           nw,
 		connectionManager: cm,
-		networkID:         networkID,
 		commonCfg:         cfg,
 		localNode:         localNode,
 
