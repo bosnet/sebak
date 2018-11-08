@@ -24,7 +24,7 @@ func TestNewConfig(t *testing.T) {
 
 	node, _ := node.NewLocalNode(keypair.Random(), endpoint, "")
 
-	cfg := NewConfig(conf.NetworkID, node, st, nt, cm, conf)
+	cfg := NewConfig(node, st, nt, cm, conf)
 	cfg.SyncPoolSize = 100
 	cfg.logger = common.NopLogger()
 
