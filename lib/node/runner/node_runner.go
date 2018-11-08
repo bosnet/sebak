@@ -525,6 +525,10 @@ func (nr *NodeRunner) TransitISAACState(basis voting.Basis, ballotState ballot.S
 	nr.isaacStateManager.TransitISAACState(basis.Height, basis.Round, ballotState)
 }
 
+func (nr *NodeRunner) NextHeight() {
+	nr.isaacStateManager.NextHeight()
+}
+
 var NewBallotTransactionCheckerFuncs = []common.CheckerFunc{
 	IsNew,
 	BallotTransactionsSameSource,

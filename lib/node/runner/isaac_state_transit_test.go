@@ -143,7 +143,7 @@ func TestStateSIGNTimeoutProposer(t *testing.T) {
 	nr.isaacStateManager.TransitISAACState(state.Height, state.Round, ballot.StateSIGN)
 
 	<-recv
-	require.Equal(t, ballot.StateACCEPT, nr.isaacStateManager.State().BallotState)
+	require.Equal(t, ballot.StateSIGN, nr.isaacStateManager.State().BallotState)
 	require.Equal(t, 2, len(cm.Messages()))
 
 	init, sign, accept := 0, 0, 0

@@ -857,6 +857,7 @@ func TestCheckInflationBlockIncrease(t *testing.T) {
 	nr.ISAACStateManager().SetTransitSignal(func(state consensus.ISAACState) {
 		recv <- state
 	})
+	<-recv // first ballot.StateINIT
 
 	checkInflation := func(previous, inflationAmount common.Amount, blockHeight uint64) common.Amount {
 		var state consensus.ISAACState
@@ -866,14 +867,14 @@ func TestCheckInflationBlockIncrease(t *testing.T) {
 			previous,
 			inflationAmount,
 		)
+		state = <-recv // ballot.StateSIGN
+		require.Equal(t, blockHeight, state.Height)
+		<-recv         // ballot.StateACCEPT
+		<-recv         // ballot.StateALLCONFIRM
 		state = <-recv // ballot.StateINIT
-		require.Equal(t, blockHeight, state.Height)
-		<-recv // ballot.StateSIGN
-		<-recv // ballot.StateACCEPT
-		state = <-recv
-		require.Equal(t, ballot.StateALLCONFIRM, state.BallotState)
+		require.Equal(t, ballot.StateINIT, state.BallotState)
 		require.Equal(t, blockHeight+1, isaac.LatestBlock().Height)
-		require.Equal(t, blockHeight, state.Height)
+		require.Equal(t, blockHeight+1, state.Height)
 
 		expected := previous + inflationAmount
 		t.Logf(
