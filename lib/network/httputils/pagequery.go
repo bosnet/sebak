@@ -12,69 +12,63 @@ import (
 
 const DefaultMaxLimit uint64 = 100
 
-type Paginator struct {
+type PageQuery struct {
 	request *http.Request
 	cursor  []byte
 	reverse bool
 	limit   uint64
-	err     error
 }
 
-func NewPaginator(r *http.Request) *Paginator {
-	p := &Paginator{
+func NewPageQuery(r *http.Request) (*PageQuery, error) {
+	p := &PageQuery{
 		request: r,
 		limit:   DefaultMaxLimit,
 	}
-	p.parseRequest()
-	return p
+	err := p.parseRequest()
+	return p, err
 }
 
-func (p *Paginator) Limit() uint64 {
+func (p *PageQuery) Limit() uint64 {
 	return p.limit
 }
 
-func (p *Paginator) Reverse() bool {
+func (p *PageQuery) Reverse() bool {
 	return p.reverse
 }
 
-func (p *Paginator) Cursor() []byte {
+func (p *PageQuery) Cursor() []byte {
 	return p.cursor
 }
 
-func (p *Paginator) Error() error {
-	return p.err
-}
-
-func (p *Paginator) SelfLink() string {
+func (p *PageQuery) SelfLink() string {
 	return p.request.URL.String()
 }
 
-func (p *Paginator) PrevLink(cursor []byte) string {
+func (p *PageQuery) PrevLink(cursor []byte) string {
 	path := p.request.URL.Path
 	query := p.urlValues(cursor, false).Encode()
 	link := fmt.Sprintf("%s?%s", path, query)
 	return link
 }
 
-func (p *Paginator) NextLink(cursor []byte) string {
+func (p *PageQuery) NextLink(cursor []byte) string {
 	path := p.request.URL.Path
 	query := p.urlValues(cursor, true).Encode()
 	link := fmt.Sprintf("%s?%s", path, query)
 	return link
 }
 
-func (p *Paginator) ResourceList(rs []resource.Resource, cursor []byte) *resource.ResourceList {
+func (p *PageQuery) ResourceList(rs []resource.Resource, cursor []byte) *resource.ResourceList {
 	return resource.NewResourceList(rs, p.SelfLink(), p.NextLink(cursor), p.PrevLink(cursor))
 }
 
-func (p *Paginator) parseRequest() {
+func (p *PageQuery) parseRequest() error {
 	q := p.request.URL.Query()
 	r := q.Get("reverse")
 	if r != "" {
 		reverse, err := common.ParseBoolQueryString(r)
 		if err != nil {
-			p.err = err
-			return
+			return err
 		}
 		p.reverse = reverse
 	}
@@ -87,14 +81,14 @@ func (p *Paginator) parseRequest() {
 	if l != "" {
 		limit, err := strconv.ParseUint(l, 10, 64)
 		if err != nil {
-			p.err = err
-			return
+			return err
 		}
 		p.limit = limit
 	}
+	return nil
 }
 
-func (p Paginator) urlValues(cursor []byte, reverse bool) url.Values {
+func (p PageQuery) urlValues(cursor []byte, reverse bool) url.Values {
 	v := url.Values{
 		"reverse": []string{strconv.FormatBool(reverse)},
 	}

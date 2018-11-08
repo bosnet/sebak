@@ -19,8 +19,8 @@ func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter
 	vars := mux.Vars(r)
 	address := vars["id"]
 
-	p := httputils.NewPaginator(r)
-	if err := p.Error(); err != nil {
+	p, err := httputils.NewPageQuery(r)
+	if err != nil {
 		httputils.WriteJSONError(w, err)
 		return
 	}
@@ -29,7 +29,7 @@ func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter
 
 	oTypeStr := r.URL.Query().Get("type")
 	if len(oTypeStr) > 0 && !operation.IsValidOperationType(oTypeStr) {
-		http.Error(w, errors.InvalidQueryString.Error(), http.StatusBadRequest)
+		httputils.WriteJSONError(w, errors.InvalidQueryString)
 		return
 	}
 
