@@ -1,6 +1,7 @@
 package transaction
 
 import (
+	"container/list"
 	"sync"
 )
 
@@ -9,14 +10,17 @@ type Pool struct {
 
 	Pool    map[ /* Transaction.GetHash() */ string]Transaction
 	sources map[ /* Transaction.Source() */ string] /* Transaction.GetHash() */ string
-	hashes  []string // Transaction.GetHash()
+
+	hashList *list.List // Transaction.GetHash()
+	hashMap  map[ /* Transaction.GetHash() */ string]*list.Element
 }
 
 func NewPool() *Pool {
 	return &Pool{
-		Pool:    map[string]Transaction{},
-		sources: map[string]string{},
-		hashes:  []string{},
+		Pool:     map[string]Transaction{},
+		sources:  map[string]string{},
+		hashList: list.New(),
+		hashMap:  make(map[string]*list.Element),
 	}
 }
 
@@ -64,7 +68,9 @@ func (tp *Pool) Add(tx Transaction) bool {
 
 	tp.Pool[txHash] = tx
 	tp.sources[tx.Source()] = txHash
-	tp.hashes = append(tp.hashes, txHash)
+
+	e := tp.hashList.PushBack(txHash)
+	tp.hashMap[txHash] = e
 
 	return true
 }
@@ -81,11 +87,9 @@ func (tp *Pool) Remove(hashes ...string) {
 		if tx, found := tp.Pool[hash]; found {
 			delete(tp.sources, tx.Source())
 			delete(tp.Pool, hash)
-			for i, h := range tp.hashes {
-				if h == hash {
-					tp.hashes = append(tp.hashes[:i], tp.hashes[i+1:]...)
-					break
-				}
+			if e, ok := tp.hashMap[hash]; ok {
+				tp.hashList.Remove(e)
+				delete(tp.hashMap, hash)
 			}
 		}
 	}
@@ -100,13 +104,19 @@ func (tp *Pool) AvailableTransactions(transactionLimit int) []string {
 	defer tp.RUnlock()
 
 	var ret []string
+	var cnt int
 	// first ouput by order older hash
-	for _, key := range tp.hashes {
-		if len(ret) == transactionLimit {
+	for e := tp.hashList.Front(); e != nil; e = e.Next() {
+		if cnt >= transactionLimit {
 			return ret
 		}
-		ret = append(ret, key)
+		hash, ok := e.Value.(string)
+		if ok {
+			ret = append(ret, hash)
+			cnt++
+		}
 	}
+
 	return ret
 }
 
