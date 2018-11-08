@@ -9,6 +9,8 @@ require (
 	github.com/davecgh/go-spew v1.1.0 // indirect
 	github.com/ethereum/go-ethereum v1.8.13
 	github.com/fsnotify/fsnotify v1.4.7 // indirect
+	github.com/go-redis/cache v6.3.5+incompatible
+	github.com/go-redis/redis v6.14.2+incompatible
 	github.com/go-stack/stack v1.7.0 // indirect
 	github.com/golang/protobuf v1.2.0 // indirect
 	github.com/golang/snappy v0.0.0-20170215233205-553a64147049 // indirect
@@ -42,6 +44,7 @@ require (
 	github.com/stretchr/testify v1.2.2
 	github.com/syndtr/goleveldb v0.0.0-20180331014930-714f901b98fd
 	github.com/ulule/limiter v2.2.0+incompatible
+	github.com/vmihailenco/msgpack v4.0.1+incompatible
 	golang.org/x/net v0.0.0-20180420171651-5f9ae10d9af5
 	golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f // indirect
 	golang.org/x/sys v0.0.0-20180501092740-78d5f264b493 // indirect
