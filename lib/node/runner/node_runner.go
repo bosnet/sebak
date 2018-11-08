@@ -66,7 +66,6 @@ var DefaultHandleACCEPTBallotCheckerFuncs = []common.CheckerFunc{
 }
 
 type NodeRunner struct {
-	networkID         []byte
 	localNode         *node.LocalNode
 	policy            voting.ThresholdPolicy
 	network           network.Network
@@ -102,7 +101,6 @@ func NewNodeRunner(
 	conf common.Config,
 ) (nr *NodeRunner, err error) {
 	nr = &NodeRunner{
-		networkID:       []byte(conf.NetworkID),
 		localNode:       localNode,
 		policy:          policy,
 		network:         n,
@@ -319,7 +317,7 @@ func (nr *NodeRunner) Node() *node.LocalNode {
 }
 
 func (nr *NodeRunner) NetworkID() []byte {
-	return nr.networkID
+	return nr.Conf.NetworkID
 }
 
 func (nr *NodeRunner) Network() network.Network {
@@ -429,7 +427,7 @@ func (nr *NodeRunner) handleBallotMessage(message common.NetworkMessage) (err er
 		DefaultChecker:       common.DefaultChecker{Funcs: nr.handleBaseBallotCheckerFuncs},
 		NodeRunner:           nr,
 		LocalNode:            nr.localNode,
-		NetworkID:            nr.networkID,
+		NetworkID:            nr.Conf.NetworkID,
 		Message:              message,
 		Log:                  nr.Log(),
 		VotingHole:           voting.NOTYET,
@@ -457,7 +455,7 @@ func (nr *NodeRunner) handleBallotMessage(message common.NetworkMessage) (err er
 		DefaultChecker:       common.DefaultChecker{Funcs: checkerFuncs},
 		NodeRunner:           nr,
 		LocalNode:            nr.localNode,
-		NetworkID:            nr.networkID,
+		NetworkID:            nr.Conf.NetworkID,
 		Message:              message,
 		Ballot:               baseChecker.Ballot,
 		VotingHole:           baseChecker.VotingHole,
@@ -552,7 +550,7 @@ func (nr *NodeRunner) proposeNewBallot(round uint64) (ballot.Ballot, error) {
 		DefaultChecker:        common.DefaultChecker{Funcs: NewBallotTransactionCheckerFuncs},
 		NodeRunner:            nr,
 		LocalNode:             nr.localNode,
-		NetworkID:             nr.networkID,
+		NetworkID:             nr.Conf.NetworkID,
 		Transactions:          availableTransactions,
 		CheckTransactionsOnly: true,
 		VotingHole:            voting.NOTYET,
@@ -597,7 +595,7 @@ func (nr *NodeRunner) proposeNewBallot(round uint64) (ballot.Ballot, error) {
 	}
 
 	theBallot.SetProposerTransaction(ptx)
-	theBallot.Sign(nr.localNode.Keypair(), nr.networkID)
+	theBallot.Sign(nr.localNode.Keypair(), nr.Conf.NetworkID)
 
 	nr.log.Debug("new ballot created", "ballot", theBallot)
 
