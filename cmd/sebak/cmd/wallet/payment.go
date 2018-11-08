@@ -189,7 +189,7 @@ func makeTransactionCreateAccount(kpSource keypair.KP, kpDest keypair.KP, amount
 
 	tx := transaction.Transaction{
 		H: transaction.Header{
-			Version: common.TransactionMessage_Version1,
+			Version: common.TransactionMessageVersionV1,
 			Created: common.NowISO8601(),
 			Hash:    txBody.MakeHashString(),
 		},
@@ -233,7 +233,7 @@ func makeTransactionPayment(kpSource keypair.KP, kpDest keypair.KP, amount commo
 
 	tx := transaction.Transaction{
 		H: transaction.Header{
-			Version: common.TransactionMessage_Version1,
+			Version: common.TransactionMessageVersionV1,
 			Created: common.NowISO8601(),
 			Hash:    txBody.MakeHashString(),
 		},

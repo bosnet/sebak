@@ -35,7 +35,7 @@ func TestValidateTxPaymentMissingBlockAccount(t *testing.T) {
 
 	tx := transaction.Transaction{
 		H: transaction.Header{
-			Version: common.TransactionMessage_Version1,
+			Version: common.TransactionMessageVersionV1,
 			Created: common.NowISO8601(),
 		},
 		B: transaction.Body{
@@ -100,7 +100,7 @@ func TestValidateTxWrongSequenceID(t *testing.T) {
 
 	tx := transaction.Transaction{
 		H: transaction.Header{
-			Version: common.TransactionMessage_Version1,
+			Version: common.TransactionMessageVersionV1,
 			Created: common.NowISO8601(),
 		},
 		B: transaction.Body{
@@ -145,7 +145,7 @@ func TestValidateTxOverBalance(t *testing.T) {
 	opbody := operation.Payment{Target: kpt.Address(), Amount: bas.Balance}
 	tx := transaction.Transaction{
 		H: transaction.Header{
-			Version: common.TransactionMessage_Version1,
+			Version: common.TransactionMessageVersionV1,
 			Created: common.NowISO8601(),
 		},
 		B: transaction.Body{
@@ -202,7 +202,7 @@ func TestValidateOpCreateExistsAccount(t *testing.T) {
 
 	tx := transaction.Transaction{
 		H: transaction.Header{
-			Version: common.TransactionMessage_Version1,
+			Version: common.TransactionMessageVersionV1,
 			Created: common.NowISO8601(),
 		},
 		B: transaction.Body{

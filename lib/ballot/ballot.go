@@ -35,7 +35,7 @@ func NewBallot(fromAddr string, proposerAddr string, basis voting.Basis, transac
 
 	b = &Ballot{
 		H: BallotHeader{
-			Version: common.BallotMessage_Version1,
+			Version: common.BallotMessageVersionV1,
 		},
 		B: body,
 	}
