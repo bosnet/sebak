@@ -104,14 +104,16 @@ func (tp *Pool) AvailableTransactions(transactionLimit int) []string {
 	defer tp.RUnlock()
 
 	var ret []string
+	var cnt int
 	// first ouput by order older hash
 	for e := tp.hashList.Front(); e != nil; e = e.Next() {
-		if len(ret) == transactionLimit {
+		if cnt >= transactionLimit {
 			return ret
 		}
 		hash, ok := e.Value.(string)
 		if ok {
 			ret = append(ret, hash)
+			cnt++
 		}
 	}
 
