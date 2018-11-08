@@ -114,48 +114,48 @@ func (c *Client) WrapHandlerFunc(handlerFunc http.HandlerFunc) http.HandlerFunc 
 }
 
 func (c *Client) handleCache(next http.Handler, w http.ResponseWriter, r *http.Request) bool {
-	if ok := c.methods[r.Method]; ok {
-		sortURLParams(r.URL)
-		key := r.URL.String()
-		resp, ok := c.adapter.Get(key)
-		if ok {
-			if resp.Expiration.IsZero() || resp.Expiration.After(time.Now()) {
-				for k, v := range resp.Header {
-					w.Header().Set(k, strings.Join(v, ","))
-				}
-				w.WriteHeader(resp.StatusCode)
-				w.Write(resp.Value)
-				c.logger.Debug("return cache", "url", r.URL.String())
-				return true
-			}
-			c.adapter.Remove(key)
-		}
-		rec := httptest.NewRecorder()
-		next.ServeHTTP(rec, r)
-		var (
-			result              = rec.Result()
-			statusCode          = result.StatusCode
-			value               = rec.Body.Bytes()
-			expiration, caching = c.cachingExpiration(statusCode)
-		)
-		if caching {
-			resp := &Response{
-				Value:      value,
-				StatusCode: statusCode,
-				Header:     result.Header,
-				Expiration: expiration,
-			}
-			c.adapter.Set(key, resp, expiration)
-			c.logger.Debug("page cached", "url", r.URL.String(), "code", statusCode, "expir", expiration)
-		}
-		for k, v := range result.Header {
-			w.Header().Set(k, strings.Join(v, ","))
-		}
-		w.WriteHeader(statusCode)
-		w.Write(value)
-		return true
+	if ok := c.methods[r.Method]; !ok {
+		return false
 	}
-	return false
+	sortURLParams(r.URL)
+	key := r.URL.String()
+	resp, ok := c.adapter.Get(key)
+	if ok {
+		if resp.Expiration.IsZero() || resp.Expiration.After(time.Now()) {
+			for k, v := range resp.Header {
+				w.Header().Set(k, strings.Join(v, ","))
+			}
+			w.WriteHeader(resp.StatusCode)
+			w.Write(resp.Value)
+			c.logger.Debug("return cache", "url", r.URL.String())
+			return true
+		}
+		c.adapter.Remove(key)
+	}
+	rec := httptest.NewRecorder()
+	next.ServeHTTP(rec, r)
+	var (
+		result              = rec.Result()
+		statusCode          = result.StatusCode
+		value               = rec.Body.Bytes()
+		expiration, caching = c.cachingExpiration(statusCode)
+	)
+	if caching {
+		resp := &Response{
+			Value:      value,
+			StatusCode: statusCode,
+			Header:     result.Header,
+			Expiration: expiration,
+		}
+		c.adapter.Set(key, resp, expiration)
+		c.logger.Debug("page cached", "url", r.URL.String(), "code", statusCode, "expir", expiration)
+	}
+	for k, v := range result.Header {
+		w.Header().Set(k, strings.Join(v, ","))
+	}
+	w.WriteHeader(statusCode)
+	w.Write(value)
+	return true
 }
 
 func (c *Client) cachingExpiration(code int) (time.Time, bool) {
