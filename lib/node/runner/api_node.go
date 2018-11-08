@@ -10,6 +10,7 @@ import (
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/consensus"
+	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/network/httputils"
 	"boscoin.io/sebak/lib/node"
@@ -126,8 +127,10 @@ func (api NetworkHandlerNode) ReceiveTransaction(body []byte, funcs []common.Che
 	}
 
 	err := common.RunChecker(checker, common.DefaultDeferFunc)
+	// Unfreezing payment can be sent repeatedly before expiration of unfreezing period.
+	// Transaction history of unfreezing payment should not saved during that period.
 	if err != nil {
-		if len(checker.Transaction.H.Hash) > 0 {
+		if len(checker.Transaction.H.Hash) > 0 && err != errors.UnfreezingNotReachedExpiration {
 			block.SaveTransactionHistory(api.storage, checker.Transaction, block.TransactionHistoryStatusRejected)
 		}
 		return transaction.Transaction{}, err

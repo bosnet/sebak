@@ -247,6 +247,14 @@ func (nr *NodeRunner) Ready() {
 		apiHandler.GetOperationsByAccountHandler,
 	).Methods("GET", "OPTIONS")
 	nr.network.AddHandler(
+		apiHandler.HandlerURLPattern(api.GetFrozenAccountHandlerPattern),
+		apiHandler.GetFrozenAccountsHandler,
+	).Methods("GET")
+	nr.network.AddHandler(
+		apiHandler.HandlerURLPattern(api.GetAccountFrozenAccountHandlerPattern),
+		apiHandler.GetFrozenAccountsByAccountHandler,
+	).Methods("GET")
+	nr.network.AddHandler(
 		apiHandler.HandlerURLPattern(api.GetTransactionByHashHandlerPattern),
 		apiHandler.GetTransactionByHashHandler,
 	).Methods("GET", "OPTIONS")

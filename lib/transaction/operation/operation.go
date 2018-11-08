@@ -29,6 +29,7 @@ func IsValidOperationType(oType string) bool {
 		string(TypeCongressVotingResult),
 		string(TypeCollectTxFee),
 		string(TypeInflation),
+		string(TypeUnfreezingRequest),
 	}, oType)
 	return b
 }

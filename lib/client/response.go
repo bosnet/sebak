@@ -2,6 +2,9 @@ package client
 
 import (
 	"encoding/json"
+
+	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/node/runner/api/resource"
 )
 
 type Problem struct {
@@ -24,6 +27,33 @@ type Account struct {
 	SequenceID uint64 `json:"sequence_id"`
 	Balance    string `json:"balance"`
 	Linked     string `json:"linked"`
+}
+
+type FrozenAccount struct {
+	Links struct {
+		Self Link `json:"self"`
+	} `json:"_links"`
+
+	Address                    string                      `json:"address"`
+	Linked                     string                      `json:"linked"`
+	CreateBlockHeight          uint64                      `json:"create_block_height"`
+	CreateOpHash               string                      `json:"create_op_hash"`
+	SequenceID                 uint64                      `json:"sequence_id"`
+	Amount                     common.Amount               `json:"amount"`
+	State                      resource.FrozenAccountState `json:"state"`
+	UnfreezingBlockHeight      uint64                      `json:"unfreezing_block_height"`
+	UnfreezingOpHash           string                      `json:"unfreezing_op_hash"`
+	UnfreezingRemainingBlockes uint64                      `json:"unfreezing_remaining_blockheight"`
+	PaymentOpHash              string                      `json:"payment_op_hash"`
+}
+
+type FrozenAccountsPage struct {
+	Links struct {
+		Self Link `json:"self"`
+	} `json:"_links"`
+	Embedded struct {
+		Records []FrozenAccount `json:"records"`
+	} `json:"_embedded"`
 }
 
 type Link struct {

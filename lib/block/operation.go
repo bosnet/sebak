@@ -86,6 +86,28 @@ func (bo *BlockOperation) Save(st *storage.LevelDBBackend) (err error) {
 	if err = st.New(bo.NewBlockOperationSourceKey(), bo.Hash); err != nil {
 		return
 	}
+
+	var body operation.Body
+	var casted operation.CreateAccount
+	var ok bool
+
+	if bo.Type == operation.TypeCreateAccount {
+		if body, err = operation.UnmarshalBodyJSON(bo.Type, bo.Body); err != nil {
+			return err
+		}
+		if casted, ok = body.(operation.CreateAccount); !ok {
+			return errors.TypeOperationBodyNotMatched
+		}
+		if casted.Linked != "" {
+			if err = st.New(GetBlockOperationCreateFrozenKey(casted.Target, bo.Height), bo.Hash); err != nil {
+				return err
+			}
+			if err = st.New(bo.NewBlockOperationFrozenLinkedKey(casted.Linked), bo.Hash); err != nil {
+				return err
+			}
+		}
+	}
+
 	bo.isSaved = true
 
 	event := "saved"
@@ -93,6 +115,10 @@ func (bo *BlockOperation) Save(st *storage.LevelDBBackend) (err error) {
 	event += " " + fmt.Sprintf("hash-%s", bo.Hash)
 	event += " " + fmt.Sprintf("txhash-%s", bo.TxHash)
 	event += " " + fmt.Sprintf("source-type-%s%s", bo.Source, bo.Type)
+	if casted.Linked != "" {
+		event += " frozen"
+		event += " " + fmt.Sprintf("linked-%s", casted.Linked)
+	}
 	observer.BlockOperationObserver.Trigger(event, bo)
 
 	return nil
@@ -105,6 +131,23 @@ func (bo BlockOperation) Serialize() (encoded []byte, err error) {
 
 func GetBlockOperationKey(hash string) string {
 	return fmt.Sprintf("%s%s", common.BlockOperationPrefixHash, hash)
+}
+
+func GetBlockOperationCreateFrozenKey(hash string, height uint64) string {
+	return fmt.Sprintf(
+		"%s%s%s",
+		common.BlockOperationPrefixCreateFrozen,
+		common.EncodeUint64ToByteSlice(height),
+		hash,
+	)
+}
+
+func GetBlockOperationKeyPrefixFrozenLinked(hash string) string {
+	return fmt.Sprintf(
+		"%s%s",
+		common.BlockOperationPrefixFrozenLinked,
+		hash,
+	)
 }
 
 func GetBlockOperationKeyPrefixTxHash(txHash string) string {
@@ -132,6 +175,14 @@ func (bo BlockOperation) NewBlockOperationSourceKey() string {
 		common.EncodeUint64ToByteSlice(bo.Height),
 		common.EncodeUint64ToByteSlice(bo.transaction.B.SequenceID),
 		common.GetUniqueIDFromUUID(),
+	)
+}
+
+func (bo BlockOperation) NewBlockOperationFrozenLinkedKey(hash string) string {
+	return fmt.Sprintf(
+		"%s%s",
+		GetBlockOperationKeyPrefixFrozenLinked(hash),
+		common.EncodeUint64ToByteSlice(bo.Height),
 	)
 }
 
@@ -192,5 +243,23 @@ func GetBlockOperationsBySource(st *storage.LevelDBBackend, source string, optio
 ) {
 	iterFunc, closeFunc := st.GetIterator(GetBlockOperationKeyPrefixSource(source), options)
 
+	return LoadBlockOperationsInsideIterator(st, iterFunc, closeFunc)
+}
+
+// Find all operations which created frozen account.
+func GetBlockOperationsByFrozen(st *storage.LevelDBBackend, options storage.ListOptions) (
+	func() (BlockOperation, bool, []byte),
+	func(),
+) {
+	iterFunc, closeFunc := st.GetIterator(common.BlockOperationPrefixCreateFrozen, options)
+	return LoadBlockOperationsInsideIterator(st, iterFunc, closeFunc)
+}
+
+// Find all operations which created frozen account and have the link of a general account's address.
+func GetBlockOperationsByLinked(st *storage.LevelDBBackend, hash string, options storage.ListOptions) (
+	func() (BlockOperation, bool, []byte),
+	func(),
+) {
+	iterFunc, closeFunc := st.GetIterator(GetBlockOperationKeyPrefixFrozenLinked(hash), options)
 	return LoadBlockOperationsInsideIterator(st, iterFunc, closeFunc)
 }
