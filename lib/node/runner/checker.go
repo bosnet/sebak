@@ -44,7 +44,6 @@ type BallotChecker struct {
 
 	NodeRunner           *NodeRunner
 	LocalNode            *node.LocalNode
-	NetworkID            []byte
 	Message              common.NetworkMessage
 	IsNew                bool
 	Ballot               ballot.Ballot
@@ -464,7 +463,6 @@ func INITBallotValidateTransactions(c common.Checker, args ...interface{}) (err 
 		DefaultChecker: common.DefaultChecker{Funcs: INITBallotTransactionCheckerFuncs},
 		NodeRunner:     checker.NodeRunner,
 		LocalNode:      checker.LocalNode,
-		NetworkID:      checker.NetworkID,
 		Ballot:         checker.Ballot,
 		Transactions:   checker.Ballot.Transactions(),
 		VotingHole:     voting.NOTYET,
@@ -501,7 +499,7 @@ func SIGNBallotBroadcast(c common.Checker, args ...interface{}) (err error) {
 	newBallot := checker.Ballot
 	newBallot.SetSource(checker.LocalNode.Address())
 	newBallot.SetVote(ballot.StateSIGN, checker.VotingHole)
-	newBallot.Sign(checker.LocalNode.Keypair(), checker.NetworkID)
+	newBallot.Sign(checker.LocalNode.Keypair(), checker.NodeRunner.Conf.NetworkID)
 
 	if !checker.NodeRunner.Consensus().HasRunningRound(checker.Ballot.VotingBasis().Index()) {
 		err = errors.New("RunningRound not found")
@@ -533,7 +531,7 @@ func ACCEPTBallotBroadcast(c common.Checker, args ...interface{}) (err error) {
 	newBallot := checker.Ballot
 	newBallot.SetSource(checker.LocalNode.Address())
 	newBallot.SetVote(ballot.StateACCEPT, checker.FinishedVotingHole)
-	newBallot.Sign(checker.LocalNode.Keypair(), checker.NetworkID)
+	newBallot.Sign(checker.LocalNode.Keypair(), checker.NodeRunner.Conf.NetworkID)
 
 	if !checker.NodeRunner.Consensus().HasRunningRound(checker.Ballot.VotingBasis().Index()) {
 		err = errors.New("RunningRound not found")
