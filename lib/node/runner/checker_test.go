@@ -266,7 +266,6 @@ func TestGetMissingTransactionAllMissing(t *testing.T) {
 		DefaultChecker:       common.DefaultChecker{Funcs: DefaultHandleBaseBallotCheckerFuncs},
 		NodeRunner:           g.consensusNR,
 		LocalNode:            g.consensusNR.Node(),
-		NetworkID:            g.consensusNR.NetworkID(),
 		Message:              ballotMessage,
 		Log:                  g.consensusNR.Log(),
 		VotingHole:           voting.NOTYET,
@@ -286,7 +285,6 @@ func TestGetMissingTransactionAllMissing(t *testing.T) {
 		DefaultChecker:       common.DefaultChecker{Funcs: checkerFuncs},
 		NodeRunner:           baseChecker.NodeRunner,
 		LocalNode:            baseChecker.LocalNode,
-		NetworkID:            baseChecker.NetworkID,
 		Message:              ballotMessage,
 		Ballot:               baseChecker.Ballot,
 		VotingHole:           voting.NOTYET,
@@ -335,7 +333,6 @@ func TestGetMissingTransactionProposerAlsoMissing(t *testing.T) {
 		DefaultChecker: common.DefaultChecker{Funcs: DefaultHandleBaseBallotCheckerFuncs},
 		NodeRunner:     g.consensusNR,
 		LocalNode:      g.consensusNR.Node(),
-		NetworkID:      g.consensusNR.NetworkID(),
 		Message:        ballotMessage,
 		Log:            g.consensusNR.Log(),
 		VotingHole:     voting.NOTYET,
@@ -354,7 +351,6 @@ func TestGetMissingTransactionProposerAlsoMissing(t *testing.T) {
 		DefaultChecker: common.DefaultChecker{Funcs: checkerFuncs},
 		NodeRunner:     baseChecker.NodeRunner,
 		LocalNode:      baseChecker.LocalNode,
-		NetworkID:      baseChecker.NetworkID,
 		Message:        ballotMessage,
 		Ballot:         baseChecker.Ballot,
 		VotingHole:     voting.NOTYET,
@@ -403,7 +399,6 @@ func (p *irregularIncomingBallot) runChecker(blt ballot.Ballot) (checker *Ballot
 		DefaultChecker: common.DefaultChecker{Funcs: DefaultHandleBaseBallotCheckerFuncs},
 		NodeRunner:     p.nr,
 		LocalNode:      p.nr.Node(),
-		NetworkID:      p.nr.NetworkID(),
 		Message:        ballotMessage,
 		Log:            p.nr.Log(),
 		VotingHole:     voting.NOTYET,
@@ -426,7 +421,6 @@ func (p *irregularIncomingBallot) runChecker(blt ballot.Ballot) (checker *Ballot
 		DefaultChecker: common.DefaultChecker{Funcs: funcs},
 		NodeRunner:     baseChecker.NodeRunner,
 		LocalNode:      baseChecker.LocalNode,
-		NetworkID:      baseChecker.NetworkID,
 		Message:        ballotMessage,
 		Ballot:         baseChecker.Ballot,
 		VotingHole:     voting.NOTYET,
@@ -453,7 +447,7 @@ func (p *irregularIncomingBallot) makeBallot(state ballot.State) (blt *ballot.Ba
 
 	tx := transaction.MakeTransactionCreateAccount(networkID, p.keyA, kpB.Address(), common.BaseReserve)
 	tx.B.SequenceID = p.accountA.SequenceID
-	tx.Sign(p.keyA, networkID)
+	tx.Sign(p.keyA, p.nr.Conf.NetworkID)
 
 	// inject txs to `TransactionPool`
 	p.nr.TransactionPool.Add(tx)
