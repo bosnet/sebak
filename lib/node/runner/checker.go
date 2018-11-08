@@ -580,7 +580,7 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) error {
 
 		err = NewCheckerStopCloseConsensus(checker, "ballot got consensus and will be stored")
 	case voting.NO, voting.EXP:
-		checker.NodeRunner.isaacStateManager.IncreaseRound()
+		checker.NodeRunner.isaacStateManager.NextRound()
 		checker.NodeRunner.Consensus().SetLatestVotingBasis(basis)
 
 		checker.NodeRunner.Consensus().RemoveRunningRoundsWithSameHeight(basis.Height)
