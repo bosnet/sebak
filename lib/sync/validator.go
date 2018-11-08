@@ -25,19 +25,16 @@ type BlockValidator struct {
 	storage   *storage.LevelDBBackend
 	commonCfg common.Config
 
-	networkID []byte
-
 	prevBlockWaitTimeout time.Duration // Waiting prev block if is doesn't exist
 	logger               log15.Logger
 }
 
 type BlockValidatorOption func(*BlockValidator)
 
-func NewBlockValidator(nw network.Network, ldb *storage.LevelDBBackend, networkID []byte, cfg common.Config, opts ...BlockValidatorOption) *BlockValidator {
+func NewBlockValidator(nw network.Network, ldb *storage.LevelDBBackend, cfg common.Config, opts ...BlockValidatorOption) *BlockValidator {
 	v := &BlockValidator{
 		network:              nw,
 		storage:              ldb,
-		networkID:            networkID,
 		prevBlockWaitTimeout: 10 * time.Minute,
 		commonCfg:            cfg,
 
