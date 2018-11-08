@@ -10,10 +10,11 @@ import (
 // these timeout features are used in ISAAC consensus.
 //
 type Config struct {
-	TimeoutINIT   time.Duration
-	TimeoutSIGN   time.Duration
-	TimeoutACCEPT time.Duration
-	BlockTime     time.Duration
+	TimeoutINIT       time.Duration
+	TimeoutSIGN       time.Duration
+	TimeoutACCEPT     time.Duration
+	TimeoutALLCONFIRM time.Duration
+	BlockTime         time.Duration
 
 	TxsLimit int
 	OpsLimit int
@@ -31,6 +32,7 @@ func NewConfig(networkID []byte) Config {
 	p.TimeoutINIT = 2 * time.Second
 	p.TimeoutSIGN = 2 * time.Second
 	p.TimeoutACCEPT = 2 * time.Second
+	p.TimeoutALLCONFIRM = 30 * time.Second
 	p.BlockTime = 5 * time.Second
 
 	p.TxsLimit = 1000
