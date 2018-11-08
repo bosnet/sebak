@@ -65,8 +65,8 @@ func (sm *ISAACStateManager) setTheFirstConsensusBlockTime() {
 	sm.nr.Log().Debug("set first consnsus block time", "time", sm.firstConsensusBlockTime)
 }
 
-func (sm *ISAACStateManager) SetBlockTimeBuffer() {
-	sm.nr.Log().Debug("begin ISAACStateManager.SetBlockTimeBuffer()", "ISAACState", sm.State())
+func (sm *ISAACStateManager) setBlockTimeBuffer() {
+	sm.nr.Log().Debug("begin ISAACStateManager.setBlockTimeBuffer()", "ISAACState", sm.State())
 	sm.setTheFirstConsensusBlockTime()
 	b := sm.nr.Consensus().LatestBlock()
 
@@ -178,7 +178,7 @@ func (sm *ISAACStateManager) Start() {
 			case <-timer.C:
 				sm.nr.Log().Debug("timeout", "ISAACState", sm.State())
 				if sm.State().BallotState == ballot.StateACCEPT {
-					sm.SetBlockTimeBuffer()
+					sm.setBlockTimeBuffer()
 					sm.NextRound()
 					break
 				}
@@ -202,7 +202,7 @@ func (sm *ISAACStateManager) Start() {
 				case ballot.StateALLCONFIRM:
 					sm.setState(state)
 					sm.transitSignal(state)
-					sm.SetBlockTimeBuffer()
+					sm.setBlockTimeBuffer()
 					sm.NextHeight()
 				}
 
