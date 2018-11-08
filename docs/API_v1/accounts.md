@@ -1,12 +1,12 @@
 # Group Accounts
 Account API
 
-## Account Details [/v1/accounts/{address}]
+## Account Details [/api/v1/accounts/{address}]
 <p> In the BOScoin network, users interact by using accounts </p>
 
 + Parameters
 
-    + address: `GDVSXU343JMRBXGW3F5WLRMH6L6HFZ6IYMVMFSDUDJPNTXUGNOXC2R5Y` (string, required) - a public address
+    + address: `GDEPYGGALPJ5HENXCNOQJPPDOQMA2YAXPERZ4XEAKVFFJJEVP4ZBK6QI` (string, required) - a public address
 
 ### Retrieve an account [GET]
 <p> Retrieve an account by the address </p>
@@ -24,11 +24,11 @@ Account API
     + Attributes (Problem)
     
 
-## Transactions for Account [/v1/accounts/{address}/transactions?limit={limit}&reverse={reverse}&cursor={cursor}]
+## Transactions for Account [/api/v1/accounts/{address}/transactions?limit={limit}&reverse={reverse}&cursor={cursor}]
 
 + Parameters
 
-    + address: `GDVSXU343JMRBXGW3F5WLRMH6L6HFZ6IYMVMFSDUDJPNTXUGNOXC2R5Y` (string, required) - a public address
+    + address: `GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ` (string, required) - a public address
     
     + limit: `100` (integer, optional)
             
@@ -51,7 +51,7 @@ Account API
     + Attributes (Problem)
 
 
-## Operations for Account [/v1/accounts/{address}/operations?limit={limit}&reverse={reverse}&cursor={cursor}]
+## Operations for Account [/api/v1/accounts/{address}/operations?limit={limit}&reverse={reverse}&cursor={cursor}]
 <p> Retrieve all operations that were included in valid transactions that affected by the account </p>
 
 <p> Streaming mode supported with header "Accept": "text/event-stream" </p>
@@ -70,7 +70,7 @@ Account API
 
 + Response 200 (application/hal+json; charset=utf-8)
 
-    + Attributes (Operations)
+    + Attributes (Operation)
 
 + Response 500 (application/problem+json; charset=utf-8)
 

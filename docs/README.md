@@ -1,56 +1,7 @@
-# API documents with [API blueprint](https://apiblueprint.org/)
+# Introduction 
 
-- https://apiblueprint.org/documentation/tutorial.html
+Sebak is the next BOScoin Tokennet with [ISAAC consensus protocol](https://boscoin.io/article/introduction-of-isaac-consensus-protocol-for-bosnet/). 
+ISAAC consensus protocol is based on FBA(Federated Byzantine Agreement) consensus protocol. The basic idea of ISAAC and FBA is so simple, nodes are connected each other in small group that can make agreement.  And entire connected groups can reach the same agreement results from small group. This small group of nodes, we call it `quorum` and entire group will be union of quorums. For more information about ISAAC and FBA, you can see [ISAAC consensus protocol for BOSNet](https://boscoin.io/article/introduction-of-isaac-consensus-protocol-for-bosnet/) and [The Stellar Consensus Protocol: A Federated Model for Internet-level Consensus](https://www.stellar.org/papers/stellar-consensus-protocol.pdf).
 
-Install [aglio](https://github.com/danielgtaylor/aglio):
-
-```
-brew install node
-```
-
-
-Generate HTML document:
-
-```
-npx aglio -i ./API.md -o api.html
-```
-
-Serve HTML document:
-
-- https://bosnet.github.io/sebak/api/index.html
-
-```
-git add api.html
-git commit -m 'add api.html'
-git push origin gh-pages
-
-```
-
-- https://pages.github.com
-- TODO: Intergate with CI to generate and serve html
-
----
-
-> Current We don't use it. 
-
-Install [snowboard](https://github.com/bukalapak/snowboard).
-
-Generate HTML document:
-
-```
-$ snowboard html -o output API.md
-```
-
-Serve HTML document:
-
-```
-$ snowboard html -o output -s API.md
-```
-
-Open <http://localhost:8088>.
-
-Validate API document:
-
-```
-$ snowboard lint API.md
-```
+> For help understanding of Korean developers, we provide the [Korean translated version of SCP ](https://github.com/bosnet/papers/blob/master/The-Stellar-Consensus-Protocol/The-Stellar-Consensus-Protocol.md).
+ 
