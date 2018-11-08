@@ -153,9 +153,9 @@ func (sm *ISAACStateManager) TransitISAACState(height uint64, round uint64, ball
 	}
 }
 
-func (sm *ISAACStateManager) IncreaseRound() {
+func (sm *ISAACStateManager) NextRound() {
 	state := sm.State()
-	sm.nr.Log().Debug("begin ISAACStateManager.IncreaseRound()", "height", state.Height, "round", state.Round, "state", state.BallotState)
+	sm.nr.Log().Debug("begin ISAACStateManager.NextRound()", "height", state.Height, "round", state.Round, "state", state.BallotState)
 	sm.TransitISAACState(state.Height, state.Round+1, ballot.StateINIT)
 }
 
@@ -179,7 +179,7 @@ func (sm *ISAACStateManager) Start() {
 				sm.nr.Log().Debug("timeout", "ISAACState", sm.State())
 				if sm.State().BallotState == ballot.StateACCEPT {
 					sm.SetBlockTimeBuffer()
-					sm.IncreaseRound()
+					sm.NextRound()
 					break
 				}
 				go sm.broadcastExpiredBallot(sm.State())
