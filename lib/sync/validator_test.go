@@ -16,7 +16,7 @@ func TestValidator(t *testing.T) {
 	defer st.Close()
 	_, nw, _ := network.CreateMemoryNetwork(nil)
 
-	v := NewBlockValidator(nw, st, conf.NetworkID, conf)
+	v := NewBlockValidator(nw, st, conf)
 
 	ctx := context.Background()
 

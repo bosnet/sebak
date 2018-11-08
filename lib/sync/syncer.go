@@ -94,7 +94,7 @@ func NewSyncer(st *storage.LevelDBBackend,
 	})
 	s.fetcher = fetcher
 
-	validator := NewBlockValidator(nw, st, networkID, cfg, func(v *BlockValidator) {
+	validator := NewBlockValidator(nw, st, cfg, func(v *BlockValidator) {
 		v.logger = s.logger
 	})
 	s.validator = validator
