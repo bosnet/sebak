@@ -4,9 +4,8 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/stellar/go/keypair"
-
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common/keypair"
 	"boscoin.io/sebak/lib/errors"
 )
 
@@ -43,7 +42,7 @@ func NewOperationBodyInflation(
 	}
 }
 
-func (o Inflation) IsWellFormed([]byte, common.Config) (err error) {
+func (o Inflation) IsWellFormed(common.Config) (err error) {
 	if _, err = keypair.Parse(o.Target); err != nil {
 		return
 	}
@@ -82,4 +81,8 @@ func (o Inflation) GetAmount() common.Amount {
 
 func (o Inflation) Serialize() (encoded []byte, err error) {
 	return json.Marshal(o)
+}
+
+func (o Inflation) HasFee() bool {
+	return false
 }

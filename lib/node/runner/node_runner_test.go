@@ -7,12 +7,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
 
 	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common/keypair"
 	"boscoin.io/sebak/lib/consensus"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
@@ -114,7 +114,7 @@ func createTestNodeRunnersHTTP2Network(n int) (nodeRunners []*NodeRunner, rootKP
 	var nodes []*node.LocalNode
 	var ports []int
 	for i := 0; i < n; i++ {
-		kp, _ := keypair.Random()
+		kp := keypair.Random()
 		port := common.GetFreePort(ports...)
 		if port < 1 {
 			panic("failed to find free port")

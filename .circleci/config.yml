@@ -49,7 +49,7 @@ jobs:
       - <<: *workspace
       - run:
           name: run tests
-          command: SEBAK_LOG_HANDLER=null go test -v -timeout 8m `go list ./... | grep -v tests`
+          command: SEBAK_LOG_HANDLER=null go test -v -timeout 8m ./...
 
   generate_merged_tree:
     <<: *defaults
@@ -77,7 +77,7 @@ jobs:
       - run:
           name: run tests
           command: |
-            for pkg in $(go list ./... | grep -v vendor | grep -v tests); do
+            for pkg in $(go list ./... | grep -v vendor); do
                 SEBAK_LOG_HANDLER=null go test -race -v -timeout 8m -coverprofile=profile.out "$pkg"
                 if [ -f profile.out ]; then
                     cat profile.out >> coverage.txt

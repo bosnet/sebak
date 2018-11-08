@@ -1,15 +1,18 @@
 package runner
 
 import (
+	"testing"
+
 	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common/keypair"
 	"boscoin.io/sebak/lib/consensus"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/transaction"
 	"boscoin.io/sebak/lib/voting"
-	"github.com/stellar/go/keypair"
+	"github.com/stretchr/testify/require"
 )
 
 var networkID []byte = []byte("sebak-test-network")
@@ -34,9 +37,9 @@ func MakeNodeRunner() (*NodeRunner, *node.LocalNode) {
 }
 
 func GetTransaction() (transaction.Transaction, []byte) {
-	kpNewAccount, _ := keypair.Random()
+	kpNewAccount := keypair.Random()
 
-	tx := transaction.MakeTransactionCreateAccount(block.GenesisKP, kpNewAccount.Address(), common.BaseReserve)
+	tx := transaction.MakeTransactionCreateAccount(networkID, block.GenesisKP, kpNewAccount.Address(), common.BaseReserve)
 	tx.B.SequenceID = uint64(0)
 	tx.Sign(block.GenesisKP, networkID)
 
@@ -49,8 +52,8 @@ func GetTransaction() (transaction.Transaction, []byte) {
 
 func GetCreateAccountTransaction(sequenceID uint64, amount uint64) (transaction.Transaction, []byte, *keypair.Full) {
 	initialBalance := common.Amount(amount)
-	kpNewAccount, _ := keypair.Random()
-	tx := transaction.MakeTransactionCreateAccount(block.GenesisKP, kpNewAccount.Address(), initialBalance)
+	kpNewAccount := keypair.Random()
+	tx := transaction.MakeTransactionCreateAccount(networkID, block.GenesisKP, kpNewAccount.Address(), initialBalance)
 	tx.B.SequenceID = sequenceID
 	tx.Sign(block.GenesisKP, networkID)
 
@@ -61,11 +64,25 @@ func GetCreateAccountTransaction(sequenceID uint64, amount uint64) (transaction.
 	}
 }
 
+func GetPaymentTransaction(kpSource *keypair.Full, target string, sequenceID uint64, amount uint64) (transaction.Transaction, []byte) {
+	balance := common.Amount(amount)
+
+	tx := transaction.MakeTransactionPayment(networkID, kpSource, target, balance)
+	tx.B.SequenceID = sequenceID
+	tx.Sign(kpSource, networkID)
+
+	if txByte, err := tx.Serialize(); err != nil {
+		panic(err)
+	} else {
+		return tx, txByte
+	}
+}
+
 func GetFreezingTransaction(kpSource *keypair.Full, sequenceID uint64, amount uint64) (transaction.Transaction, []byte, *keypair.Full) {
 	initialBalance := common.Amount(amount)
-	kpNewAccount, _ := keypair.Random()
+	kpNewAccount := keypair.Random()
 
-	tx := transaction.MakeTransactionCreateFrozenAccount(kpSource, kpNewAccount.Address(), initialBalance, kpSource.Address())
+	tx := transaction.MakeTransactionCreateFrozenAccount(networkID, kpSource, kpNewAccount.Address(), initialBalance, kpSource.Address())
 	tx.B.SequenceID = sequenceID
 	tx.Sign(kpSource, networkID)
 
@@ -77,7 +94,7 @@ func GetFreezingTransaction(kpSource *keypair.Full, sequenceID uint64, amount ui
 }
 
 func GetUnfreezingRequestTransaction(kpSource *keypair.Full, sequenceID uint64) (transaction.Transaction, []byte) {
-	tx := transaction.MakeTransactionUnfreezingRequest(kpSource)
+	tx := transaction.MakeTransactionUnfreezingRequest(networkID, kpSource)
 	tx.B.SequenceID = sequenceID
 	tx.Sign(kpSource, networkID)
 
@@ -91,7 +108,7 @@ func GetUnfreezingRequestTransaction(kpSource *keypair.Full, sequenceID uint64) 
 func GetUnfreezingTransaction(kpSource *keypair.Full, kpTarget *keypair.Full, sequenceID uint64, amount uint64) (transaction.Transaction, []byte) {
 	unfreezingAmount := common.Amount(amount)
 
-	tx := transaction.MakeTransactionUnfreezing(kpSource, kpTarget.Address(), unfreezingAmount)
+	tx := transaction.MakeTransactionUnfreezing(networkID, kpSource, kpTarget.Address(), unfreezingAmount)
 	tx.B.SequenceID = sequenceID
 	tx.Sign(kpSource, networkID)
 
@@ -188,4 +205,49 @@ func createNodeRunnerForTesting(n int, conf common.Config, recv chan struct{}) (
 	nr.isaacStateManager.blockTimeBuffer = 0
 
 	return nr, nodes, connectionManager
+}
+
+func MakeConsensusAndBlock(t *testing.T, tx transaction.Transaction, nr *NodeRunner, nodes []*node.LocalNode, proposer *node.LocalNode) (block.Block, error) {
+	nr.TransactionPool.Add(tx)
+
+	// Generate proposed ballot in nodeRunner
+	round := uint64(0)
+	_, err := nr.proposeNewBallot(round)
+	require.NoError(t, err)
+
+	b := nr.Consensus().LatestBlock()
+	basis := voting.Basis{
+		Round:     round,
+		Height:    b.Height,
+		BlockHash: b.Hash,
+		TotalTxs:  b.TotalTxs,
+	}
+
+	conf := common.NewConfig()
+
+	// Check that the transaction is in RunningRounds
+
+	ballotSIGN1 := GenerateBallot(proposer, basis, tx, ballot.StateSIGN, nodes[1], conf)
+	err = ReceiveBallot(nr, ballotSIGN1)
+	require.NoError(t, err)
+
+	ballotSIGN2 := GenerateBallot(proposer, basis, tx, ballot.StateSIGN, nodes[2], conf)
+	err = ReceiveBallot(nr, ballotSIGN2)
+	require.NoError(t, err)
+
+	rr := nr.Consensus().RunningRounds[basis.Index()]
+	require.Equal(t, 2, len(rr.Voted[proposer.Address()].GetResult(ballot.StateSIGN)))
+
+	ballotACCEPT1 := GenerateBallot(proposer, basis, tx, ballot.StateACCEPT, nodes[1], conf)
+	err = ReceiveBallot(nr, ballotACCEPT1)
+	require.NoError(t, err)
+
+	ballotACCEPT2 := GenerateBallot(proposer, basis, tx, ballot.StateACCEPT, nodes[2], conf)
+	err = ReceiveBallot(nr, ballotACCEPT2)
+
+	blk := nr.Consensus().LatestBlock()
+
+	require.Equal(t, proposer.Address(), blk.Proposer)
+	require.Equal(t, 1, len(blk.Transactions))
+	return blk, err
 }

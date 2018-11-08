@@ -18,11 +18,11 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
 
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common/keypair"
 	"boscoin.io/sebak/lib/consensus"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
@@ -79,7 +79,7 @@ func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, n *network.HTTP2Netw
 		return
 	}
 
-	kp, _ = keypair.Random()
+	kp = keypair.Random()
 	localNode, _ := node.NewLocalNode(kp, endpoint, "")
 	localNode.AddValidators(localNode.ConvertToValidator())
 
@@ -217,9 +217,8 @@ func TestGetNodeInfoHandler(t *testing.T) {
 	st := storage.NewTestStorage()
 	defer st.Close()
 
-	kp, _ := keypair.Random()
 	endpoint, _ := common.NewEndpointFromString("http://localhost:12345")
-	localNode, _ := node.NewLocalNode(kp, endpoint, "")
+	localNode, _ := node.NewLocalNode(keypair.Random(), endpoint, "")
 	localNode.AddValidators(localNode.ConvertToValidator())
 	isaac, _ := consensus.NewISAAC(
 		networkID,

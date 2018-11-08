@@ -6,13 +6,13 @@ import (
 	"testing"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common/keypair"
 
-	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
 )
 
 func TestNodeStateChange(t *testing.T) {
-	kp, _ := keypair.Random()
+	kp := keypair.Random()
 	endpoint, err := common.NewEndpointFromString(fmt.Sprintf("https://localhost:5000?NodeName=n1"))
 	require.Equal(t, nil, err)
 
@@ -28,7 +28,7 @@ func TestNodeStateChange(t *testing.T) {
 }
 
 func TestNodeMarshalJSON(t *testing.T) {
-	kp, _ := keypair.Random()
+	kp := keypair.Random()
 	endpoint, err := common.NewEndpointFromString(fmt.Sprintf("https://localhost:5000?NodeName=n1"))
 	require.Equal(t, nil, err)
 
@@ -52,7 +52,7 @@ func TestNodeMarshalJSON(t *testing.T) {
 }
 
 func TestNodeMarshalJSONWithValidator(t *testing.T) {
-	kp, _ := keypair.Random()
+	kp := keypair.Random()
 
 	endpoint, err := common.NewEndpointFromString(fmt.Sprintf("https://localhost:5000?NodeName=n1"))
 	require.Equal(t, nil, err)
@@ -63,8 +63,8 @@ func TestNodeMarshalJSONWithValidator(t *testing.T) {
 	endpoint3, err := common.NewEndpointFromString(fmt.Sprintf("https://localhost:5002?NodeName=n3"))
 	require.Equal(t, nil, err)
 
-	kp2, _ := keypair.Random()
-	kp3, _ := keypair.Random()
+	kp2 := keypair.Random()
+	kp3 := keypair.Random()
 
 	validator1, _ := NewValidator(kp2.Address(), endpoint2, "v1")
 	validator2, _ := NewValidator(kp3.Address(), endpoint3, "v2")

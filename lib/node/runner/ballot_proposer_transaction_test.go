@@ -4,12 +4,12 @@ import (
 	"testing"
 
 	"github.com/btcsuite/btcutil/base58"
-	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
 
 	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common/keypair"
 	"boscoin.io/sebak/lib/consensus"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/node"
@@ -58,13 +58,13 @@ func (p *ballotCheckerProposedTransaction) MakeBallot(numberOfTxs int) (blt *bal
 	}
 
 	for i := 0; i < numberOfTxs; i++ {
-		kpA, _ := keypair.Random()
+		kpA := keypair.Random()
 		accountA := block.NewBlockAccount(kpA.Address(), common.Amount(common.BaseReserve))
 		accountA.MustSave(p.nr.Storage())
 
-		kpB, _ := keypair.Random()
+		kpB := keypair.Random()
 
-		tx := transaction.MakeTransactionCreateAccount(kpA, kpB.Address(), common.Amount(1))
+		tx := transaction.MakeTransactionCreateAccount(networkID, kpA, kpB.Address(), common.Amount(1))
 		tx.B.SequenceID = accountA.SequenceID
 		tx.Sign(kpA, networkID)
 
@@ -232,7 +232,7 @@ func TestProposedTransactionDifferentSigning(t *testing.T) {
 	}
 
 	{ // sign different source with `Ballot.Proposer()`
-		newKP, _ := keypair.Random()
+		newKP := keypair.Random()
 		ptx := blt.ProposerTransaction()
 		ptx.B.Source = newKP.Address()
 		ptx.Sign(newKP, networkID)
@@ -335,23 +335,6 @@ func TestProposedTransactionWithWrongOperationBodyCollectTxFeeBlockData(t *testi
 			require.Equal(t, errors.InvalidOperation, err)
 		}
 	}
-
-	{
-		// with wrong `CollectTxFee.Txs`; this will cause the
-		// insufficient collected fee.
-		blt := p.MakeBallot(4)
-		opb, _ := blt.ProposerTransaction().CollectTxFee()
-		opb.Txs = uint64(len(blt.Transactions()) + 1)
-		ptx := blt.ProposerTransaction()
-		ptx.B.Operations[0].B = opb
-		blt.SetProposerTransaction(ptx)
-		blt.Sign(p.proposerNode.Keypair(), networkID)
-
-		{
-			err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
-			require.Equal(t, errors.InvalidOperation, err)
-		}
-	}
 }
 
 func TestProposedTransactionWithWrongOperationBodyInflationFeeBlockData(t *testing.T) {
@@ -427,6 +410,7 @@ func TestProposedTransactionWithCollectTxFeeWrongAmount(t *testing.T) {
 	// with wrong `CollectTxFee.Amount` count
 	blt := p.MakeBallot(4)
 	opb, _ := blt.ProposerTransaction().CollectTxFee()
+	opb.Txs = 0
 	opb.Amount = opb.Amount.MustSub(1)
 	ptx := blt.ProposerTransaction()
 	ptx.B.Operations[0].B = opb
@@ -436,7 +420,7 @@ func TestProposedTransactionWithCollectTxFeeWrongAmount(t *testing.T) {
 	conf := common.NewConfig()
 	{
 		err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
-		require.Equal(t, errors.InvalidOperation, err)
+		require.Equal(t, err, errors.OperationAmountOverflow)
 	}
 }
 
@@ -522,7 +506,7 @@ func TestProposedTransactionWithCollectTxFeeWrongCommonAddress(t *testing.T) {
 	p.Prepare()
 
 	// with wrong `CollectTxFee.Amount` count
-	wrongKP, _ := keypair.Random()
+	wrongKP := keypair.Random()
 	blt := p.MakeBallot(4)
 	opb, _ := blt.ProposerTransaction().CollectTxFee()
 	opb.Target = wrongKP.Address()
@@ -581,7 +565,7 @@ func TestProposedTransactionWithInflationWrongCommonAddress(t *testing.T) {
 	p.Prepare()
 
 	// with wrong `CollectTxFee.Amount` count
-	wrongKP, _ := keypair.Random()
+	wrongKP := keypair.Random()
 	blt := p.MakeBallot(4)
 	opb, _ := blt.ProposerTransaction().Inflation()
 	opb.Target = wrongKP.Address()
@@ -729,6 +713,11 @@ func TestProposedTransactionStoreWithZeroAmount(t *testing.T) {
 
 	bt, err := block.GetBlockTransaction(p.nr.Storage(), blt.ProposerTransaction().GetHash())
 	require.NoError(t, err)
+	tp, err := block.GetTransactionPool(p.nr.Storage(), blt.ProposerTransaction().GetHash())
+	require.NoError(t, err)
+	bt.Message = tp.Message
+	err = bt.SaveBlockOperations(p.nr.Storage())
+	require.NoError(t, err)
 
 	require.Equal(t, blt.ProposerTransaction().GetHash(), bt.Hash)
 	require.Equal(t, blt.ProposerTransaction().Source(), bt.Source)
@@ -824,7 +813,7 @@ func TestProposedTransactionWithNormalOperations(t *testing.T) {
 		ptx := blt.ProposerTransaction()
 		op := ptx.B.Operations[1]
 
-		kp, _ := keypair.Random()
+		kp := keypair.Random()
 		opb := operation.NewCreateAccount(kp.Address(), common.Amount(1), "")
 		newOp, _ := operation.NewOperation(opb)
 		ptx.B.Operations = []operation.Operation{op, newOp}
@@ -851,7 +840,7 @@ func TestProposedTransactionWithWrongNumberOfOperations(t *testing.T) {
 	{ // more than 2
 		ptx := blt.ProposerTransaction()
 
-		kp, _ := keypair.Random()
+		kp := keypair.Random()
 		opb := operation.NewCreateAccount(kp.Address(), common.Amount(1), "")
 		newOp, _ := operation.NewOperation(opb)
 		ptx.B.Operations = append(ptx.B.Operations, newOp)

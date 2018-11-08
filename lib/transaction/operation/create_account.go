@@ -3,9 +3,8 @@ package operation
 import (
 	"encoding/json"
 
-	"github.com/stellar/go/keypair"
-
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common/keypair"
 	"boscoin.io/sebak/lib/errors"
 )
 
@@ -28,7 +27,7 @@ func (o CreateAccount) Serialize() (encoded []byte, err error) {
 }
 
 // Implement transaction/operation : IsWellFormed
-func (o CreateAccount) IsWellFormed([]byte, common.Config) (err error) {
+func (o CreateAccount) IsWellFormed(common.Config) (err error) {
 	if _, err = keypair.Parse(o.Target); err != nil {
 		return
 	}
@@ -52,4 +51,8 @@ func (o CreateAccount) TargetAddress() string {
 
 func (o CreateAccount) GetAmount() common.Amount {
 	return o.Amount
+}
+
+func (o CreateAccount) HasFee() bool {
+	return true
 }

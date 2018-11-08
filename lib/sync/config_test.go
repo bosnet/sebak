@@ -5,10 +5,11 @@ import (
 	"testing"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common/keypair"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/storage"
-	"github.com/stellar/go/keypair"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -17,11 +18,10 @@ func TestNewConfig(t *testing.T) {
 	_, nt, _ := network.CreateMemoryNetwork(nil)
 	cm := &mockConnectionManager{}
 
-	kp, _ := keypair.Random()
 	endpoint, err := common.NewEndpointFromString(fmt.Sprintf("https://localhost:5000?NodeName=n1"))
 	require.Equal(t, nil, err)
 
-	node, _ := node.NewLocalNode(kp, endpoint, "")
+	node, _ := node.NewLocalNode(keypair.Random(), endpoint, "")
 	networkID := []byte("test-network")
 
 	cfg := NewConfig(networkID, node, st, nt, cm, common.NewConfig())

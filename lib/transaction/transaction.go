@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 
 	"github.com/btcsuite/btcutil/base58"
-	"github.com/stellar/go/keypair"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common/keypair"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/transaction/operation"
 )
@@ -67,9 +67,20 @@ func NewTransaction(source string, sequenceID uint64, ops ...operation.Operation
 		return
 	}
 
+	var opsHaveFee int
+	for _, op := range ops {
+		if op.HasFee() {
+			opsHaveFee++
+		}
+	}
+	fee := common.Amount(0)
+	if opsHaveFee > 0 {
+		fee = common.BaseFee.MustMult(opsHaveFee)
+	}
+
 	txBody := Body{
 		Source:     source,
-		Fee:        common.BaseFee.MustMult(len(ops)),
+		Fee:        fee,
 		SequenceID: sequenceID,
 		Operations: ops,
 	}
@@ -87,7 +98,6 @@ func NewTransaction(source string, sequenceID uint64, ops ...operation.Operation
 
 var TransactionWellFormedCheckerFuncs = []common.CheckerFunc{
 	CheckOverOperationsLimit,
-	CheckSequenceID,
 	CheckSource,
 	CheckBaseFee,
 	CheckOperationTypes,
@@ -134,10 +144,6 @@ func (tx Transaction) Source() string {
 	return tx.B.Source
 }
 
-func (tx Transaction) IsEmpty() bool {
-	return len(tx.H.Hash) < 1
-}
-
 // TotalAmount returns the sum of Amount of operations.
 //
 // Returns:
@@ -167,7 +173,17 @@ func (tx Transaction) TotalAmount(withFee bool) common.Amount {
 
 // TotalBaseFee returns the minimum fee of transaction.
 func (tx Transaction) TotalBaseFee() common.Amount {
-	return common.BaseFee.MustMult(len(tx.B.Operations))
+	var opsHaveFee int
+	for _, op := range tx.B.Operations {
+		if op.HasFee() {
+			opsHaveFee++
+		}
+	}
+	if opsHaveFee < 1 {
+		return common.Amount(0)
+	}
+
+	return common.BaseFee.MustMult(opsHaveFee)
 }
 
 func (tx Transaction) Serialize() (encoded []byte, err error) {
@@ -183,9 +199,13 @@ func (tx Transaction) String() string {
 func (tx *Transaction) Sign(kp keypair.KP, networkID []byte) {
 	tx.B.Source = kp.Address()
 	tx.H.Hash = tx.B.MakeHashString()
-	signature, _ := common.MakeSignature(kp, networkID, tx.H.Hash)
+	signature, _ := keypair.MakeSignature(kp, networkID, tx.H.Hash)
 
 	tx.H.Signature = base58.Encode(signature)
 
 	return
+}
+
+func (tx Transaction) IsEmpty() bool {
+	return len(tx.GetHash()) < 1
 }

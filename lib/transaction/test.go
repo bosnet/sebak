@@ -3,27 +3,17 @@ package transaction
 import (
 	"math/rand"
 
-	"github.com/stellar/go/keypair"
-
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common/keypair"
 	"boscoin.io/sebak/lib/transaction/operation"
 )
 
-var (
-	networkID []byte = []byte("sebak-test-network")
-	kp        *keypair.Full
-)
-
-func init() {
-	kp, _ = keypair.Random()
-}
-
 func TestMakeTransaction(networkID []byte, n int) (kp *keypair.Full, tx Transaction) {
-	kp, _ = keypair.Random()
+	kp = keypair.Random()
 
 	var ops []operation.Operation
 	for i := 0; i < n; i++ {
-		ops = append(ops, operation.TestMakeOperation(-1))
+		ops = append(ops, operation.MakeTestPayment(-1))
 	}
 
 	tx, _ = NewTransaction(kp.Address(), 0, ops...)
@@ -38,10 +28,13 @@ func TestMakeTransactionWithKeypair(networkID []byte, n int, srcKp *keypair.Full
 
 	if len(targetKps) > 0 {
 		targetAddr = targetKps[0].Address()
+	} else {
+		k := keypair.Random()
+		targetAddr = k.Address()
 	}
 
 	for i := 0; i < n; i++ {
-		ops = append(ops, operation.TestMakeOperation(-1, targetAddr))
+		ops = append(ops, operation.MakeTestPaymentTo(-1, targetAddr))
 	}
 
 	tx, _ = NewTransaction(
@@ -54,7 +47,7 @@ func TestMakeTransactionWithKeypair(networkID []byte, n int, srcKp *keypair.Full
 	return
 }
 
-func MakeTransactionCreateAccount(kpSource *keypair.Full, target string, amount common.Amount) (tx Transaction) {
+func MakeTransactionCreateAccount(networkID []byte, kpSource *keypair.Full, target string, amount common.Amount) (tx Transaction) {
 	opb := operation.NewCreateAccount(target, common.Amount(amount), "")
 
 	op := operation.Operation{
@@ -83,7 +76,7 @@ func MakeTransactionCreateAccount(kpSource *keypair.Full, target string, amount 
 	return
 }
 
-func MakeTransactionCreateFrozenAccount(kpSource *keypair.Full, target string, amount common.Amount, linkedAccount string) (tx Transaction) {
+func MakeTransactionCreateFrozenAccount(networkID []byte, kpSource *keypair.Full, target string, amount common.Amount, linkedAccount string) (tx Transaction) {
 	opb := operation.NewCreateAccount(target, common.Amount(amount), linkedAccount)
 
 	op := operation.Operation{
@@ -111,7 +104,35 @@ func MakeTransactionCreateFrozenAccount(kpSource *keypair.Full, target string, a
 	return
 }
 
-func MakeTransactionUnfreezingRequest(kpSource *keypair.Full) (tx Transaction) {
+func MakeTransactionPayment(networkID []byte, kpSource *keypair.Full, target string, amount common.Amount) (tx Transaction) {
+	opb := operation.NewPayment(target, common.Amount(amount))
+
+	op := operation.Operation{
+		H: operation.Header{
+			Type: operation.TypePayment,
+		},
+		B: opb,
+	}
+
+	txBody := Body{
+		Source:     kpSource.Address(),
+		Fee:        common.BaseFee,
+		Operations: []operation.Operation{op},
+	}
+
+	tx = Transaction{
+		H: Header{
+			Created: common.NowISO8601(),
+			Hash:    txBody.MakeHashString(),
+		},
+		B: txBody,
+	}
+	tx.Sign(kpSource, networkID)
+
+	return
+}
+
+func MakeTransactionUnfreezingRequest(networkID []byte, kpSource *keypair.Full) (tx Transaction) {
 	opb := operation.NewUnfreezeRequest()
 	op := operation.Operation{
 		H: operation.Header{
@@ -139,7 +160,7 @@ func MakeTransactionUnfreezingRequest(kpSource *keypair.Full) (tx Transaction) {
 	return
 }
 
-func MakeTransactionUnfreezing(kpSource *keypair.Full, target string, amount common.Amount) (tx Transaction) {
+func MakeTransactionUnfreezing(networkID []byte, kpSource *keypair.Full, target string, amount common.Amount) (tx Transaction) {
 	opb := operation.NewPayment(target, common.Amount(amount))
 	op := operation.Operation{
 		H: operation.Header{

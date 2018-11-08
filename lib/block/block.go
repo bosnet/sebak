@@ -39,6 +39,10 @@ func (bck Block) String() string {
 	return string(encoded)
 }
 
+func (bck Block) IsEmpty() bool {
+	return len(bck.Hash) < 1
+}
+
 // NewBlock creates new block; `ptx` represents the
 // `ProposerTransaction.GetHash()`.
 func NewBlock(proposer string, basis voting.Basis, ptx string, transactions []string, confirmed string) *Block {
@@ -101,6 +105,19 @@ func (b *Block) Save(st *storage.LevelDBBackend) (err error) {
 	observer.BlockObserver.Trigger(EventBlockPrefix, b)
 
 	return
+}
+
+func (b Block) PreviousBlock(st *storage.LevelDBBackend) (blk Block, err error) {
+	if b.Height == common.GenesisBlockHeight {
+		err = errors.StorageRecordDoesNotExist
+		return
+	}
+
+	return GetBlockByHeight(st, b.Height-1)
+}
+
+func (b Block) NextBlock(st *storage.LevelDBBackend) (Block, error) {
+	return GetBlockByHeight(st, b.Height+1)
 }
 
 func GetBlock(st *storage.LevelDBBackend, hash string) (bt Block, err error) {

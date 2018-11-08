@@ -6,10 +6,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common/keypair"
 	"boscoin.io/sebak/lib/errors"
 )
 
 func TestCreateAccountOperation(t *testing.T) {
+	kp := keypair.Random()
 
 	conf := common.NewConfig()
 	{ // minimum Amount
@@ -17,7 +19,7 @@ func TestCreateAccountOperation(t *testing.T) {
 			Target: kp.Address(),
 			Amount: common.Amount(common.BaseReserve),
 		}
-		err := o.IsWellFormed(networkID, conf)
+		err := o.IsWellFormed(conf)
 		require.NoError(t, err)
 	}
 
@@ -26,7 +28,7 @@ func TestCreateAccountOperation(t *testing.T) {
 			Target: kp.Address(),
 			Amount: common.Amount(common.BaseReserve - 1),
 		}
-		err := o.IsWellFormed(networkID, conf)
+		err := o.IsWellFormed(conf)
 		require.Equal(t, errors.InsufficientAmountNewAccount, err)
 	}
 
@@ -35,7 +37,7 @@ func TestCreateAccountOperation(t *testing.T) {
 			Target: kp.Address(),
 			Amount: common.Amount(common.BaseReserve + 1),
 		}
-		err := o.IsWellFormed(networkID, conf)
+		err := o.IsWellFormed(conf)
 		require.NoError(t, err)
 	}
 }

@@ -10,10 +10,11 @@ import (
 	"testing"
 
 	"boscoin.io/sebak/lib/block"
+	"boscoin.io/sebak/lib/common/keypair"
 	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/network/httputils"
-	"github.com/stellar/go/keypair"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -40,7 +41,7 @@ func TestGetAccountHandler(t *testing.T) {
 	}
 
 	{ // unknown address
-		unknownKey, _ := keypair.Random()
+		unknownKey := keypair.Random()
 		url := strings.Replace(GetAccountHandlerPattern, "{id}", unknownKey.Address(), -1)
 		req, _ := http.NewRequest("GET", ts.URL+url, nil)
 		resp, err := ts.Client().Do(req)
@@ -110,8 +111,7 @@ func TestGetNonExistentAccountHandler(t *testing.T) {
 
 	{
 		// Do a Request
-		kp, _ := keypair.Random()
-		url := strings.Replace(GetAccountHandlerPattern, "{id}", kp.Address(), -1)
+		url := strings.Replace(GetAccountHandlerPattern, "{id}", keypair.Random().Address(), -1)
 		respBody := request(ts, url, false)
 		reader := bufio.NewReader(respBody)
 		readByte, err := ioutil.ReadAll(reader)

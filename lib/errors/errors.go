@@ -3,9 +3,13 @@ package errors
 import (
 	"errors"
 	"fmt"
+
+	pkgerrors "github.com/pkg/errors"
 )
 
 var New = errors.New
+var Wrap = pkgerrors.Wrap
+var Wrapf = pkgerrors.Wrapf
 
 func Newf(err *Error, format string, args ...interface{}) error {
 	return NewError(err.Code, fmt.Sprintf(format, args...))
@@ -50,7 +54,7 @@ var (
 	RoundVoteNotFound                         = NewError(136, "`RoundVote` not found")
 	BlockNotFound                             = NewError(137, "Block not found")
 	TransactionExcessAbilityToPay             = NewError(138, "Transaction requests over ability to pay")
-	TransactionSameSource                     = NewError(139, "Same transaction source found in ballot")
+	TransactionSameSourceInBallot             = NewError(139, "Same transaction source found in ballot")
 	TransactionNotFound                       = NewError(140, "Transaction not found")
 	BallotFromUnknownValidator                = NewError(141, "ballot from unknown validator")
 	BallotAlreadyFinished                     = NewError(142, "ballot already finished")
@@ -87,4 +91,8 @@ var (
 	HTTPServerError                           = NewError(173, "Internal Server Error")
 	BlockTransactionHistoryDoesNotExists      = NewError(174, "transaction history does not exists in block")
 	NotCommittable                            = NewError(175, "not Committable")
+	TransactionSameSourceInPool               = NewError(176, "Same transaction source found in pool")
+	AlreadyCommittable                        = NewError(177, "already Committable")
+	FailedToSaveBlockOperaton                 = NewError(178, "failed to save BlockOperation")
+	NodeNotFound                              = NewError(179, "Node not found")
 )

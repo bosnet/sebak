@@ -3,48 +3,26 @@ package operation
 import (
 	"math/rand"
 
-	"github.com/stellar/go/keypair"
-
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common/keypair"
 )
 
-var (
-	networkID []byte = []byte("sebak-test-network")
-	kp        *keypair.Full
-)
-
-func init() {
-	kp, _ = keypair.Random()
+func MakeTestPayment(amount int) Operation {
+	return MakeTestPaymentTo(amount, keypair.Random().Address())
 }
 
-func TestMakeOperationBodyPayment(amount int, addressList ...string) Payment {
-	var address string
-	if len(addressList) > 0 {
-		address = addressList[0]
-	} else {
-		kp, _ := keypair.Random()
-		address = kp.Address()
-	}
-
+func MakeTestPaymentTo(amount int, address string) Operation {
 	for amount < 0 {
 		amount = rand.Intn(5000)
 	}
 
-	return Payment{
-		Target: address,
-		Amount: common.Amount(amount),
-	}
-}
-
-func TestMakeOperation(amount int, addressList ...string) Operation {
-	opb := TestMakeOperationBodyPayment(amount, addressList...)
-
-	op := Operation{
+	return Operation{
 		H: Header{
 			Type: TypePayment,
 		},
-		B: opb,
+		B: Payment{
+			Target: address,
+			Amount: common.Amount(amount),
+		},
 	}
-
-	return op
 }

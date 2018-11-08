@@ -17,6 +17,9 @@ func TestResourceAccount(t *testing.T) {
 	storage := storage.NewTestStorage()
 	defer storage.Close()
 
+	blk := block.TestMakeNewBlockWithPrevBlock(block.Block{}, []string{})
+	blk.MustSave(storage)
+
 	// Account
 	{
 		ba := block.TestMakeBlockAccount()
@@ -91,12 +94,14 @@ func TestResourceAccount(t *testing.T) {
 
 	// List
 	{
+		var err error
 		_, tx := transaction.TestMakeTransaction([]byte{0x00}, 3)
 		bt := block.NewBlockTransactionFromTransaction(common.GetUniqueIDFromUUID(), 0, common.NowISO8601(), tx)
 		bt.MustSave(storage)
+		err = bt.SaveBlockOperations(storage)
+		require.NoError(t, err)
 
 		var rol []Resource
-		var err error
 		for _, boHash := range bt.Operations {
 			var bo block.BlockOperation
 			bo, err = block.GetBlockOperation(storage, boHash)

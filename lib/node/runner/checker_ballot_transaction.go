@@ -1,6 +1,8 @@
 package runner
 
 import (
+	"sync"
+
 	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
@@ -13,6 +15,7 @@ import (
 )
 
 type BallotTransactionChecker struct {
+	sync.RWMutex
 	common.DefaultChecker
 
 	NodeRunner *NodeRunner
@@ -25,6 +28,7 @@ type BallotTransactionChecker struct {
 	ValidTransactions     []string
 	validTransactionsMap  map[string]bool
 	CheckTransactionsOnly bool
+	transactionCache      *TransactionCache
 }
 
 func (checker *BallotTransactionChecker) InvalidTransactions() (invalids []string) {
@@ -50,7 +54,7 @@ func (checker *BallotTransactionChecker) setValidTransactions(hashes []string) {
 	return
 }
 
-// TransactionsIsNew checks the incoming transaction is
+// IsNew checks the incoming transaction is
 // already stored or not.
 func IsNew(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotTransactionChecker)
@@ -80,9 +84,12 @@ func IsNew(c common.Checker, args ...interface{}) (err error) {
 func CheckMissingTransaction(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotTransactionChecker)
 
+	var found bool
 	var validTransactions []string
 	for _, hash := range checker.ValidTransactions {
-		if !checker.NodeRunner.TransactionPool.Has(hash) {
+		if _, found, err = checker.transactionCache.Get(hash); err != nil {
+			return
+		} else if !found {
 			continue
 		}
 		validTransactions = append(validTransactions, hash)
@@ -100,11 +107,19 @@ func BallotTransactionsSameSource(c common.Checker, args ...interface{}) (err er
 
 	var validTransactions []string
 	sources := map[string]bool{}
+
+	var tx transaction.Transaction
+	var found bool
 	for _, hash := range checker.ValidTransactions {
-		tx, _ := checker.NodeRunner.TransactionPool.Get(hash)
+		if tx, found, err = checker.transactionCache.Get(hash); err != nil {
+			return
+		} else if !found {
+			continue
+		}
+
 		if found := common.InStringMap(sources, tx.B.Source); found {
 			if !checker.CheckTransactionsOnly {
-				err = errors.TransactionSameSource
+				err = errors.TransactionSameSourceInBallot
 				return
 			}
 			continue
@@ -113,29 +128,6 @@ func BallotTransactionsSameSource(c common.Checker, args ...interface{}) (err er
 		sources[tx.B.Source] = true
 		validTransactions = append(validTransactions, hash)
 	}
-	err = nil
-	checker.setValidTransactions(validTransactions)
-
-	return
-}
-
-// BallotTransactionsSourceCheck calls `Transaction.Validate()`.
-func BallotTransactionsSourceCheck(c common.Checker, args ...interface{}) (err error) {
-	checker := c.(*BallotTransactionChecker)
-
-	var validTransactions []string
-	for _, hash := range checker.ValidTransactions {
-		tx, _ := checker.NodeRunner.TransactionPool.Get(hash)
-
-		if err = ValidateTx(checker.NodeRunner.Storage(), tx); err != nil {
-			if !checker.CheckTransactionsOnly {
-				return
-			}
-			continue
-		}
-		validTransactions = append(validTransactions, hash)
-	}
-
 	err = nil
 	checker.setValidTransactions(validTransactions)
 
@@ -162,13 +154,16 @@ func BallotTransactionsOperationBodyCollectTxFee(c common.Checker, args ...inter
 		}
 	} else {
 		var fee common.Amount
+		var tx transaction.Transaction
+		var found bool
 		for _, hash := range checker.Transactions {
-			if tx, found := checker.NodeRunner.TransactionPool.Get(hash); !found {
+			if tx, found, err = checker.transactionCache.Get(hash); err != nil {
+				return
+			} else if !found {
 				err = errors.TransactionNotFound
 				return
-			} else {
-				fee = fee.MustAdd(tx.B.Fee)
 			}
+			fee = fee.MustAdd(tx.B.Fee)
 		}
 		if opb.Amount != fee {
 			err = errors.InvalidFee

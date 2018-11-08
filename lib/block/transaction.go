@@ -58,12 +58,10 @@ func NewBlockTransactionFromTransaction(blockHash string, blockHeight uint64, co
 		Fee:        tx.B.Fee,
 		Operations: opHashes,
 		Amount:     tx.TotalAmount(true),
-
-		Confirmed: confirmed,
-		Created:   tx.H.Created,
+		Confirmed:  confirmed,
+		Created:    tx.H.Created,
 
 		transaction: tx,
-
 		blockHeight: blockHeight,
 	}
 }
@@ -136,22 +134,7 @@ func (bt *BlockTransaction) Save(st *storage.LevelDBBackend) (err error) {
 	if err = st.New(bt.NewBlockTransactionKeyByBlock(bt.Block), bt.Hash); err != nil {
 		return
 	}
-	for _, op := range bt.transaction.B.Operations {
-		var bo BlockOperation
-		bo, err = NewBlockOperationFromOperation(op, bt.transaction, bt.blockHeight)
-		if err != nil {
-			return
-		}
-		if err = bo.Save(st); err != nil {
-			return
-		}
-		if pop, ok := op.B.(operation.Payable); ok {
-			target := pop.TargetAddress()
-			if err = st.New(bt.NewBlockTransactionKeyByAccount(target), bt.Hash); err != nil {
-				return
-			}
-		}
-	}
+
 	event := "saved"
 	event += " " + fmt.Sprintf("source-%s", bt.Source)
 	event += " " + fmt.Sprintf("hash-%s", bt.Hash)
@@ -176,7 +159,45 @@ func (bt BlockTransaction) String() string {
 }
 
 func (bt BlockTransaction) Transaction() transaction.Transaction {
+	if bt.transaction.IsEmpty() {
+		var tx transaction.Transaction
+		if len(bt.Message) < 1 {
+			return tx
+		}
+
+		if err := common.DecodeJSONValue(bt.Message, &tx); err != nil {
+			return tx
+		}
+
+		bt.transaction = tx
+	}
+
 	return bt.transaction
+}
+
+func (bt *BlockTransaction) SaveBlockOperations(st *storage.LevelDBBackend) (err error) {
+	if bt.Transaction().IsEmpty() {
+		return errors.FailedToSaveBlockOperaton
+	}
+
+	for _, op := range bt.Transaction().B.Operations {
+		var bo BlockOperation
+		bo, err = NewBlockOperationFromOperation(op, bt.Transaction(), bt.blockHeight)
+		if err != nil {
+			return
+		}
+		if err = bo.Save(st); err != nil {
+			return
+		}
+		if pop, ok := op.B.(operation.Payable); ok {
+			err = st.New(bt.NewBlockTransactionKeyByAccount(pop.TargetAddress()), bt.Hash)
+			if err != nil {
+				return
+			}
+		}
+	}
+
+	return nil
 }
 
 func GetBlockTransactionKeyPrefixSource(source string) string {

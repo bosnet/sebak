@@ -90,8 +90,6 @@ func TestISAACBallotWithEmptyTransactionVoting(t *testing.T) {
 	err = ReceiveBallot(nr, ballotACCEPT4)
 	require.EqualError(t, err, "ballot got consensus and will be stored")
 
-	require.Equal(t, 4, len(rr.Voted[proposer.Address()].GetResult(ballot.StateACCEPT)))
-
 	latestBlock = nr.Consensus().LatestBlock()
 	require.Equal(t, proposer.Address(), latestBlock.Proposer)
 	require.Equal(t, uint64(2), latestBlock.Height)

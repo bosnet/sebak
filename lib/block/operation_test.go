@@ -30,12 +30,9 @@ func TestBlockOperationSaveAndGet(t *testing.T) {
 	st := storage.NewTestStorage()
 
 	bos := TestMakeNewBlockOperation(networkID, 1)
-	if err := bos[0].Save(st); err != nil {
-		t.Error(err)
-		return
-	}
-
 	bo := bos[0]
+	bos[0].MustSave(st)
+
 	fetched, err := GetBlockOperation(st, bo.Hash)
 	require.NoError(t, err)
 

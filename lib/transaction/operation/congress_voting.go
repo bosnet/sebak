@@ -33,7 +33,7 @@ func (o CongressVoting) Serialize() (encoded []byte, err error) {
 	encoded, err = json.Marshal(o)
 	return
 }
-func (o CongressVoting) IsWellFormed([]byte, common.Config) (err error) {
+func (o CongressVoting) IsWellFormed(common.Config) (err error) {
 	if len(o.Contract) == 0 {
 		return errors.OperationBodyInsufficient
 	}
@@ -42,4 +42,8 @@ func (o CongressVoting) IsWellFormed([]byte, common.Config) (err error) {
 		return errors.InvalidOperation
 	}
 	return
+}
+
+func (o CongressVoting) HasFee() bool {
+	return false
 }

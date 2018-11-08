@@ -20,7 +20,7 @@ for JSONFILE in $(find . -name "*.json" -type f | sort); do
          --request POST \
          --header "Content-Type: application/json" \
          --data "$(cat ${JSONFILE})" \
-         https://127.0.0.1:${PORT}/node/message \
+         https://127.0.0.1:${PORT}/api/v1/transactions \
          >/dev/null 2>&1
     # Intermediate checks
     if [ -f ${JSONFILE}.check ]; then

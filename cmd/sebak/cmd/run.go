@@ -10,14 +10,15 @@ import (
 	"time"
 
 	logging "github.com/inconshreveable/log15"
+	isatty "github.com/mattn/go-isatty"
 	"github.com/oklog/run"
 	"github.com/spf13/cobra"
-	"github.com/stellar/go/keypair"
 	"github.com/ulule/limiter"
 	"golang.org/x/net/http2"
 
 	cmdcommon "boscoin.io/sebak/cmd/sebak/common"
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common/keypair"
 	"boscoin.io/sebak/lib/consensus"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/network"
@@ -352,7 +353,11 @@ func parseFlagsNode() {
 	var logFormatter logging.Format
 	switch flagLogFormat {
 	case "terminal":
-		logFormatter = logging.TerminalFormat()
+		if isatty.IsTerminal(os.Stdout.Fd()) && len(flagLog) < 1 {
+			logFormatter = logging.TerminalFormat()
+		} else {
+			logFormatter = logging.LogfmtFormat()
+		}
 	case "json":
 		logFormatter = common.JsonFormatEx(false, true)
 	default:

@@ -12,6 +12,10 @@ import (
 	"net/http/pprof"
 	"time"
 
+	ghandlers "github.com/gorilla/handlers"
+	logging "github.com/inconshreveable/log15"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+
 	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
@@ -23,9 +27,6 @@ import (
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
 	"boscoin.io/sebak/lib/voting"
-	ghandlers "github.com/gorilla/handlers"
-	logging "github.com/inconshreveable/log15"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 var DefaultHandleBaseBallotCheckerFuncs = []common.CheckerFunc{
@@ -87,8 +88,9 @@ type NodeRunner struct {
 	CommonAccountAddress string
 	InitialBalance       common.Amount
 
-	Conf     common.Config
-	nodeInfo node.NodeInfo
+	Conf                  common.Config
+	nodeInfo              node.NodeInfo
+	savingBlockOperations *SavingBlockOperations
 }
 
 func NewNodeRunner(
@@ -119,6 +121,15 @@ func NewNodeRunner(
 
 	nr.connectionManager = c.ConnectionManager()
 	nr.network.AddWatcher(nr.connectionManager.ConnectionWatcher)
+	nr.savingBlockOperations = NewSavingBlockOperations(
+		nr.Storage(),
+		nr.Log(),
+	)
+
+	if err = nr.savingBlockOperations.Check(); err != nil {
+		nr.log.Error("failed to check BlockOperations", "error", err)
+		return
+	}
 
 	nr.SetHandleBaseBallotCheckerFuncs(DefaultHandleBaseBallotCheckerFuncs...)
 	nr.SetHandleINITBallotCheckerFuncs(DefaultHandleINITBallotCheckerFuncs...)
@@ -253,7 +264,10 @@ func (nr *NodeRunner) Ready() {
 
 	TransactionsHandler := func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "POST" {
-			apiHandler.PostTransactionsHandler(w, r, nodeHandler.MessageHandler)
+			apiHandler.PostTransactionsHandler(
+				w, r,
+				nodeHandler.ReceiveTransaction, HandleTransactionCheckerFuncs,
+			)
 			return
 		}
 
@@ -287,6 +301,7 @@ func (nr *NodeRunner) Start() (err error) {
 	go nr.handleMessages()
 	go nr.ConnectValidators()
 	go nr.InitRound()
+	go nr.savingBlockOperations.Start()
 
 	if err = nr.network.Start(); err != nil {
 		return
@@ -330,6 +345,10 @@ func (nr *NodeRunner) Policy() voting.ThresholdPolicy {
 
 func (nr *NodeRunner) Log() logging.Logger {
 	return nr.log
+}
+
+func (nr *NodeRunner) SavingBlockOperations() *SavingBlockOperations {
+	return nr.savingBlockOperations
 }
 
 func (nr *NodeRunner) ISAACStateManager() *ISAACStateManager {
@@ -408,13 +427,14 @@ func (nr *NodeRunner) handleBallotMessage(message common.NetworkMessage) (err er
 	nr.log.Debug("got ballot", "message", message.Head(50))
 
 	baseChecker := &BallotChecker{
-		DefaultChecker: common.DefaultChecker{Funcs: nr.handleBaseBallotCheckerFuncs},
-		NodeRunner:     nr,
-		LocalNode:      nr.localNode,
-		NetworkID:      nr.networkID,
-		Message:        message,
-		Log:            nr.Log(),
-		VotingHole:     voting.NOTYET,
+		DefaultChecker:       common.DefaultChecker{Funcs: nr.handleBaseBallotCheckerFuncs},
+		NodeRunner:           nr,
+		LocalNode:            nr.localNode,
+		NetworkID:            nr.networkID,
+		Message:              message,
+		Log:                  nr.Log(),
+		VotingHole:           voting.NOTYET,
+		LatestUpdatedSources: make(map[string]struct{}),
 	}
 	err = common.RunChecker(baseChecker, nr.handleBallotCheckerDeferFunc)
 	if err != nil {
@@ -435,15 +455,16 @@ func (nr *NodeRunner) handleBallotMessage(message common.NetworkMessage) (err er
 	}
 
 	checker := &BallotChecker{
-		DefaultChecker: common.DefaultChecker{Funcs: checkerFuncs},
-		NodeRunner:     nr,
-		LocalNode:      nr.localNode,
-		NetworkID:      nr.networkID,
-		Message:        message,
-		Ballot:         baseChecker.Ballot,
-		VotingHole:     baseChecker.VotingHole,
-		IsNew:          baseChecker.IsNew,
-		Log:            baseChecker.Log,
+		DefaultChecker:       common.DefaultChecker{Funcs: checkerFuncs},
+		NodeRunner:           nr,
+		LocalNode:            nr.localNode,
+		NetworkID:            nr.networkID,
+		Message:              message,
+		Ballot:               baseChecker.Ballot,
+		VotingHole:           baseChecker.VotingHole,
+		IsNew:                baseChecker.IsNew,
+		Log:                  baseChecker.Log,
+		LatestUpdatedSources: baseChecker.LatestUpdatedSources,
 	}
 	err = common.RunChecker(checker, nr.handleBallotCheckerDeferFunc)
 	if err != nil {
@@ -464,10 +485,10 @@ func (nr *NodeRunner) handleBallotMessage(message common.NetworkMessage) (err er
 
 func (nr *NodeRunner) InitRound() {
 	// get latest blocks
-	nr.consensus.SetLatestRound(voting.Basis{})
+	nr.consensus.SetLatestVotingBasis(voting.Basis{})
 
 	nr.waitForConnectingEnoughNodes()
-	nr.StartStateManager()
+	nr.startStateManager()
 }
 
 func (nr *NodeRunner) waitForConnectingEnoughNodes() {
@@ -488,7 +509,7 @@ func (nr *NodeRunner) waitForConnectingEnoughNodes() {
 	return
 }
 
-func (nr *NodeRunner) StartStateManager() {
+func (nr *NodeRunner) startStateManager() {
 	// check whether current running rounds exist
 	if len(nr.consensus.RunningRounds) > 0 {
 		return
@@ -505,14 +526,13 @@ func (nr *NodeRunner) StopStateManager() {
 	return
 }
 
-func (nr *NodeRunner) TransitISAACState(round voting.Basis, ballotState ballot.State) {
-	nr.isaacStateManager.TransitISAACState(round.Height, round.Round, ballotState)
+func (nr *NodeRunner) TransitISAACState(basis voting.Basis, ballotState ballot.State) {
+	nr.isaacStateManager.TransitISAACState(basis.Height, basis.Round, ballotState)
 }
 
 var NewBallotTransactionCheckerFuncs = []common.CheckerFunc{
 	IsNew,
 	BallotTransactionsSameSource,
-	BallotTransactionsSourceCheck,
 }
 
 func (nr *NodeRunner) proposeNewBallot(round uint64) (ballot.Ballot, error) {
@@ -537,6 +557,7 @@ func (nr *NodeRunner) proposeNewBallot(round uint64) (ballot.Ballot, error) {
 		Transactions:          availableTransactions,
 		CheckTransactionsOnly: true,
 		VotingHole:            voting.NOTYET,
+		transactionCache:      NewTransactionCache(nr.Storage(), nr.TransactionPool),
 	}
 
 	if err := common.RunChecker(transactionsChecker, common.DefaultDeferFunc); err != nil {

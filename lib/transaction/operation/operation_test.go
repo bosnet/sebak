@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common/keypair"
 )
 
 func TestMakeHashOfOperationBodyPayment(t *testing.T) {
@@ -28,19 +28,23 @@ func TestMakeHashOfOperationBodyPayment(t *testing.T) {
 }
 
 func TestIsWellFormedOperation(t *testing.T) {
-	op := TestMakeOperation(-1)
-	err := op.IsWellFormed(networkID, common.NewConfig())
+	op := MakeTestPayment(-1)
+	err := op.IsWellFormed(common.NewConfig())
 	require.NoError(t, err)
 }
 
 func TestIsWellFormedOperationLowerAmount(t *testing.T) {
-	obp := TestMakeOperationBodyPayment(0)
-	err := obp.IsWellFormed(networkID, common.NewConfig())
+	kp := keypair.Random()
+	obp := Payment{
+		Target: kp.Address(),
+		Amount: common.Amount(0),
+	}
+	err := obp.IsWellFormed(common.NewConfig())
 	require.Error(t, err)
 }
 
 func TestSerializeOperation(t *testing.T) {
-	op := TestMakeOperation(-1)
+	op := MakeTestPayment(-1)
 	b, err := op.Serialize()
 	require.NoError(t, err)
 	require.Equal(t, len(b) > 0, true)
@@ -61,7 +65,7 @@ func TestOperationBodyCongressVoting(t *testing.T) {
 	expected := "4CcZvkNYQUgvdmjGDuMx7tesCdRp3HU4CW3pbRxeqtEZ"
 	require.Equal(t, hashed, expected)
 
-	err := op.IsWellFormed(networkID, common.NewConfig())
+	err := op.IsWellFormed(common.NewConfig())
 	require.NoError(t, err)
 
 }
@@ -83,7 +87,7 @@ func TestOperationBodyCongressVotingResult(t *testing.T) {
 	expected := "8DgD3heMuNLYhnNBgPSBEquAdKXuogrSybdqt7WD87CV"
 	require.Equal(t, hashed, expected)
 
-	err := op.IsWellFormed(networkID, common.NewConfig())
+	err := op.IsWellFormed(common.NewConfig())
 	require.NoError(t, err)
 
 }

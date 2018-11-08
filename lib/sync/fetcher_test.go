@@ -9,11 +9,11 @@ import (
 
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common/keypair"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/node/runner"
 
-	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
 )
 
@@ -35,7 +35,7 @@ func TestBlockFetcher(t *testing.T) {
 	st := block.InitTestBlockchain()
 	defer st.Close()
 
-	kp, _ := keypair.Random()
+	kp := keypair.Random()
 	_, nw, localNode := network.CreateMemoryNetwork(nil)
 	cm := &mockConnectionManager{
 		allConnected: []string{kp.Address()},
@@ -49,16 +49,20 @@ func TestBlockFetcher(t *testing.T) {
 	}
 
 	bk := block.GetLatestBlock(st)
-	tx, err := block.GetBlockTransaction(st, bk.Transactions[0])
+	bt, err := block.GetBlockTransaction(st, bk.Transactions[0])
 	require.NoError(t, err)
-	tp, err := block.GetTransactionPool(st, tx.Hash)
+	tp, err := block.GetTransactionPool(st, bt.Hash)
 	require.NoError(t, err)
-	tx.Message = tp.Message
+	bt.Message = tp.Message
 
 	apiHandlerFunc := func(req *http.Request) (*http.Response, error) {
 		w := httptest.NewRecorder()
 		renderNodeItem(w, runner.NodeItemBlock, bk)
-		renderNodeItem(w, runner.NodeItemBlockTransaction, tx)
+
+		tp, _ := block.GetTransactionPool(st, bt.Hash)
+		bt.Message = tp.Message
+
+		renderNodeItem(w, runner.NodeItemBlockTransaction, bt)
 		resp := w.Result()
 		return resp, nil
 	}

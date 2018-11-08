@@ -4,9 +4,8 @@
 package network
 
 import (
+	"boscoin.io/sebak/lib/common/keypair"
 	"boscoin.io/sebak/lib/node"
-
-	"github.com/stellar/go/keypair"
 )
 
 //
@@ -18,11 +17,8 @@ import (
 //
 func CreateMemoryNetwork(prev *MemoryNetwork) (*keypair.Full, *MemoryNetwork, *node.LocalNode) {
 	mn := prev.NewMemoryNetwork()
-
-	kp, _ := keypair.Random()
+	kp := keypair.Random()
 	localNode, _ := node.NewLocalNode(kp, mn.Endpoint(), "")
-
 	mn.SetLocalNode(localNode)
-
 	return kp, mn, localNode
 }

@@ -102,18 +102,19 @@ var HandleTransactionCheckerFuncs = []common.CheckerFunc{
 	BroadcastTransaction,
 }
 
-func (api NetworkHandlerNode) MessageHandler(w http.ResponseWriter, r *http.Request) {
-	defer r.Body.Close()
+var HandleTransactionCheckerFuncsWithoutBroadcast = []common.CheckerFunc{
+	TransactionUnmarshal,
+	HasTransaction,
+	SaveTransactionHistory,
+	MessageHasSameSource,
+	MessageValidate,
+	PushIntoTransactionPool,
+}
 
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		http.Error(w, "Error reading request body", http.StatusInternalServerError)
-		return
-	}
-
+func (api NetworkHandlerNode) ReceiveTransaction(body []byte, funcs []common.CheckerFunc) (transaction.Transaction, error) {
 	message := common.NetworkMessage{Type: common.TransactionMessage, Data: body}
 	checker := &MessageChecker{
-		DefaultChecker:  common.DefaultChecker{Funcs: HandleTransactionCheckerFuncs},
+		DefaultChecker:  common.DefaultChecker{Funcs: funcs},
 		Consensus:       api.consensus,
 		TransactionPool: api.transactionPool,
 		Storage:         api.storage,
@@ -124,10 +125,27 @@ func (api NetworkHandlerNode) MessageHandler(w http.ResponseWriter, r *http.Requ
 		Conf:            api.conf,
 	}
 
-	if err = common.RunChecker(checker, common.DefaultDeferFunc); err != nil {
+	err := common.RunChecker(checker, common.DefaultDeferFunc)
+	if err != nil {
 		if len(checker.Transaction.H.Hash) > 0 {
 			block.SaveTransactionHistory(api.storage, checker.Transaction, block.TransactionHistoryStatusRejected)
 		}
+		return transaction.Transaction{}, err
+	}
+
+	return checker.Transaction, nil
+}
+
+func (api NetworkHandlerNode) MessageHandler(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Error reading request body", http.StatusInternalServerError)
+		return
+	}
+
+	if _, err = api.ReceiveTransaction(body, HandleTransactionCheckerFuncsWithoutBroadcast); err != nil {
 		http.Error(w, err.Error(), httputils.StatusCode(err))
 		return
 	}

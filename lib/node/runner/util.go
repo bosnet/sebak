@@ -1,17 +1,24 @@
 package runner
 
 import (
+	"sync"
+
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/storage"
+	"boscoin.io/sebak/lib/transaction"
 	"boscoin.io/sebak/lib/transaction/operation"
 	"boscoin.io/sebak/lib/version"
 )
 
-func getGenesisTransaction(st *storage.LevelDBBackend) (bt block.BlockTransaction, err error) {
-	bk := block.GetGenesis(st)
+func GetGenesisTransaction(st *storage.LevelDBBackend) (bt block.BlockTransaction, err error) {
+	var bk block.Block
+	if bk, err = block.GetBlockByHeight(st, common.GenesisBlockHeight); err != nil {
+		return
+	}
+
 	if len(bk.Transactions) < 1 {
 		err = errors.WrongBlockFound
 		return
@@ -31,7 +38,7 @@ func getGenesisTransaction(st *storage.LevelDBBackend) (bt block.BlockTransactio
 
 func getGenesisAccount(st *storage.LevelDBBackend, operationIndex int) (account *block.BlockAccount, err error) {
 	var bt block.BlockTransaction
-	if bt, err = getGenesisTransaction(st); err != nil {
+	if bt, err = GetGenesisTransaction(st); err != nil {
 		return
 	}
 
@@ -63,7 +70,7 @@ func GetCommonAccount(st *storage.LevelDBBackend) (account *block.BlockAccount, 
 
 func GetGenesisBalance(st *storage.LevelDBBackend) (balance common.Amount, err error) {
 	var bt block.BlockTransaction
-	if bt, err = getGenesisTransaction(st); err != nil {
+	if bt, err = GetGenesisTransaction(st); err != nil {
 		return
 	}
 
@@ -124,4 +131,54 @@ func NewNodeInfo(nr *NodeRunner) node.NodeInfo {
 		Node:   nd,
 		Policy: policy,
 	}
+}
+
+type TransactionCache struct {
+	sync.RWMutex
+
+	st    *storage.LevelDBBackend
+	pool  *transaction.Pool
+	cache map[string]transaction.Transaction
+}
+
+func NewTransactionCache(st *storage.LevelDBBackend, pool *transaction.Pool) *TransactionCache {
+	return &TransactionCache{
+		st:    st,
+		pool:  pool,
+		cache: map[string]transaction.Transaction{},
+	}
+}
+
+func (b *TransactionCache) Get(hash string) (tx transaction.Transaction, found bool, err error) {
+	b.RLock()
+	tx, found = b.cache[hash]
+	b.RUnlock()
+
+	if found {
+		return
+	}
+
+	b.Lock()
+	defer b.Unlock()
+
+	tx, found = b.pool.Get(hash)
+	if found {
+		b.cache[hash] = tx
+		return
+	}
+
+	if found, err = block.ExistsTransactionPool(b.st, hash); err != nil {
+		return
+	} else if !found {
+		return
+	}
+
+	var tp block.TransactionPool
+	if tp, err = block.GetTransactionPool(b.st, hash); err != nil {
+		return
+	}
+	tx = tp.Transaction()
+	b.cache[hash] = tx
+
+	return
 }

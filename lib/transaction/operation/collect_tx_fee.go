@@ -3,9 +3,8 @@ package operation
 import (
 	"encoding/json"
 
-	"github.com/stellar/go/keypair"
-
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common/keypair"
 	"boscoin.io/sebak/lib/errors"
 )
 
@@ -40,18 +39,13 @@ func NewCollectTxFee(
 	}
 }
 
-func (o CollectTxFee) IsWellFormed([]byte, common.Config) (err error) {
+func (o CollectTxFee) IsWellFormed(common.Config) (err error) {
 	if _, err = keypair.Parse(o.Target); err != nil {
 		return
 	}
 
 	if len(o.BlockHash) < 1 {
 		err = errors.InvalidOperation
-		return
-	}
-
-	if int64(o.Txs) > 0 && int64(o.Amount) < 1 {
-		err = errors.OperationAmountUnderflow
 		return
 	}
 
@@ -65,9 +59,6 @@ func (o CollectTxFee) IsWellFormed([]byte, common.Config) (err error) {
 			err = errors.InvalidOperation
 			return
 		}
-	} else if o.Amount < (common.BaseFee * common.Amount(o.Txs)) {
-		err = errors.InvalidOperation
-		return
 	}
 
 	return
@@ -83,4 +74,8 @@ func (o CollectTxFee) GetAmount() common.Amount {
 
 func (o CollectTxFee) Serialize() (encoded []byte, err error) {
 	return json.Marshal(o)
+}
+
+func (o CollectTxFee) HasFee() bool {
+	return false
 }

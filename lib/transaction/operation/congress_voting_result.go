@@ -51,7 +51,7 @@ func NewCongressVotingResult(
 func (o CongressVotingResult) Serialize() (encoded []byte, err error) {
 	return json.Marshal(o)
 }
-func (o CongressVotingResult) IsWellFormed([]byte, common.Config) (err error) {
+func (o CongressVotingResult) IsWellFormed(common.Config) (err error) {
 	if len(o.BallotStamps.Hash) == 0 {
 		return errors.OperationBodyInsufficient
 	}
@@ -77,4 +77,8 @@ func (o CongressVotingResult) IsWellFormed([]byte, common.Config) (err error) {
 	}
 
 	return
+}
+
+func (o CongressVotingResult) HasFee() bool {
+	return false
 }

@@ -6,10 +6,11 @@ import (
 	"time"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common/keypair"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction/operation"
-	"github.com/stellar/go/keypair"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -105,13 +106,13 @@ func TestMakeGenesisBlock(t *testing.T) {
 	st := storage.NewTestStorage()
 	defer st.Close()
 
-	genesisKP, _ := keypair.Random()
+	genesisKP := keypair.Random()
 	balance := common.Amount(100)
 	genesisAccount := NewBlockAccount(genesisKP.Address(), balance)
 	err := genesisAccount.Save(st)
 	require.NoError(t, err)
 
-	commonKP, _ := keypair.Random()
+	commonKP := keypair.Random()
 	commonAccount := NewBlockAccount(commonKP.Address(), 0)
 	err = commonAccount.Save(st)
 	require.NoError(t, err)
@@ -170,13 +171,13 @@ func TestMakeGenesisBlockOverride(t *testing.T) {
 	defer st.Close()
 
 	{ // create genesis block
-		kp, _ := keypair.Random()
+		kp := keypair.Random()
 		balance := common.Amount(100)
 		account := NewBlockAccount(kp.Address(), balance)
 		err := account.Save(st)
 		require.NoError(t, err)
 
-		commonKP, _ := keypair.Random()
+		commonKP := keypair.Random()
 		commonAccount := NewBlockAccount(commonKP.Address(), 0)
 		err = commonAccount.Save(st)
 		require.NoError(t, err)
@@ -187,13 +188,13 @@ func TestMakeGenesisBlockOverride(t *testing.T) {
 	}
 
 	{ // try again to create genesis block
-		kp, _ := keypair.Random()
+		kp := keypair.Random()
 		balance := common.Amount(100)
 		account := NewBlockAccount(kp.Address(), balance)
 		err := account.Save(st)
 		require.NoError(t, err)
 
-		commonKP, _ := keypair.Random()
+		commonKP := keypair.Random()
 		commonAccount := NewBlockAccount(commonKP.Address(), 0)
 		err = commonAccount.Save(st)
 		require.NoError(t, err)
@@ -208,12 +209,12 @@ func TestMakeGenesisBlockFindGenesisAccount(t *testing.T) {
 	defer st.Close()
 
 	// create genesis block
-	kp, _ := keypair.Random()
+	kp := keypair.Random()
 	balance := common.Amount(100)
 	account := NewBlockAccount(kp.Address(), balance)
 	account.MustSave(st)
 
-	commonKP, _ := keypair.Random()
+	commonKP := keypair.Random()
 	commonAccount := NewBlockAccount(commonKP.Address(), 0)
 	commonAccount.MustSave(st)
 
@@ -248,12 +249,12 @@ func TestMakeGenesisBlockFindCommonAccount(t *testing.T) {
 	defer st.Close()
 
 	// create genesis block
-	kp, _ := keypair.Random()
+	kp := keypair.Random()
 	balance := common.Amount(100)
 	genesisAccount := NewBlockAccount(kp.Address(), balance)
 	genesisAccount.MustSave(st)
 
-	commonKP, _ := keypair.Random()
+	commonKP := keypair.Random()
 	commonAccount := NewBlockAccount(commonKP.Address(), 0)
 	commonAccount.MustSave(st)
 

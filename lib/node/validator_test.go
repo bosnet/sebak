@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common/keypair"
 
-	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
 )
 
@@ -77,7 +77,7 @@ func TestParseValidatorFromURI(t *testing.T) {
 }
 
 func TestValidatorMarshalJSON(t *testing.T) {
-	kp, _ := keypair.Random()
+	kp := keypair.Random()
 
 	endpoint, err := common.NewEndpointFromString(fmt.Sprintf("https://localhost:5000?NodeName=n1"))
 	require.Equal(t, nil, err)
@@ -106,7 +106,7 @@ func TestValidatorNewValidatorFromString(t *testing.T) {
 }
 
 func TestValidatorUnMarshalJSON(t *testing.T) {
-	kp, _ := keypair.Random()
+	kp := keypair.Random()
 
 	endpoint, err := common.NewEndpointFromString(fmt.Sprintf("https://localhost:5000?NodeName=n1"))
 	require.Equal(t, nil, err)

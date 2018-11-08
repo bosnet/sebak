@@ -35,12 +35,12 @@ type ISAAC struct {
 	syncer              SyncController
 	latestReqSyncHeight uint64
 
-	LatestBallot  ballot.Ballot
-	NetworkID     []byte
-	Node          *node.LocalNode
-	RunningRounds map[ /* Round.Index() */ string]*RunningRound
-	LatestRound   voting.Basis
-	Conf          common.Config
+	LatestBallot      ballot.Ballot
+	NetworkID         []byte
+	Node              *node.LocalNode
+	RunningRounds     map[ /* Round.Index() */ string]*RunningRound
+	LatestVotingBasis voting.Basis
+	Conf              common.Config
 }
 
 // ISAAC should know network.ConnectionManager
@@ -70,15 +70,15 @@ func (is *ISAAC) CloseConsensus(proposer string, basis voting.Basis, vh voting.H
 	is.Lock()
 	defer is.Unlock()
 
-	is.SetLatestRound(basis)
+	is.SetLatestVotingBasis(basis)
 
 	if vh == voting.NOTYET {
 		err = errors.New("invalid voting.Hole, `voting.NOTYET`")
 		return
 	}
 
-	roundHash := basis.Index()
-	rr, found := is.RunningRounds[roundHash]
+	basisIndex := basis.Index()
+	rr, found := is.RunningRounds[basisIndex]
 	if !found {
 		return
 	}
@@ -94,7 +94,7 @@ func (is *ISAAC) CloseConsensus(proposer string, basis voting.Basis, vh voting.H
 		transactionPool.Remove(rr.Transactions[proposer]...)
 	}
 
-	delete(is.RunningRounds, roundHash)
+	delete(is.RunningRounds, basisIndex)
 
 	// remove all the same rounds
 	for hash, runningRound := range is.RunningRounds {
@@ -107,8 +107,8 @@ func (is *ISAAC) CloseConsensus(proposer string, basis voting.Basis, vh voting.H
 	return
 }
 
-func (is *ISAAC) SetLatestRound(round voting.Basis) {
-	is.LatestRound = round
+func (is *ISAAC) SetLatestVotingBasis(basis voting.Basis) {
+	is.LatestVotingBasis = basis
 }
 
 func (is *ISAAC) SetProposerSelector(p ProposerSelector) {
@@ -119,26 +119,26 @@ func (is *ISAAC) ConnectionManager() network.ConnectionManager {
 	return is.connectionManager
 }
 
-func (is *ISAAC) SelectProposer(blockHeight uint64, roundNumber uint64) string {
-	return is.proposerSelector.Select(blockHeight, roundNumber)
+func (is *ISAAC) SelectProposer(blockHeight uint64, round uint64) string {
+	return is.proposerSelector.Select(blockHeight, round)
 }
 
 func (is *ISAAC) SaveNodeHeight(senderAddr string, height uint64) {
 	is.nodesHeight[senderAddr] = height
 }
 
-func (is *ISAAC) IsAvailableRound(round voting.Basis, latestBlock block.Block) bool {
-	if round.Height == latestBlock.Height {
-		if is.isInitRound(round) {
+func (is *ISAAC) IsAvailableRound(basis voting.Basis, latestBlock block.Block) bool {
+	if basis.Height == latestBlock.Height {
+		if is.isInitRound(basis) {
 			return true
 		}
 
-		if round.BlockHash != latestBlock.Hash {
+		if basis.BlockHash != latestBlock.Hash {
 			return false
 		}
 
-		if round.Height == is.LatestRound.Height {
-			if round.Round <= is.LatestRound.Round {
+		if basis.Height == is.LatestVotingBasis.Height {
+			if basis.Round <= is.LatestVotingBasis.Round {
 				return false
 			}
 		}
@@ -148,8 +148,8 @@ func (is *ISAAC) IsAvailableRound(round voting.Basis, latestBlock block.Block) b
 	return false
 }
 
-func (is *ISAAC) isInitRound(round voting.Basis) bool {
-	return is.LatestRound.BlockHash == "" && round.Height == common.GenesisBlockHeight
+func (is *ISAAC) isInitRound(basis voting.Basis) bool {
+	return is.LatestVotingBasis.BlockHash == "" && basis.Height == common.GenesisBlockHeight
 }
 
 func (is *ISAAC) StartSync(height uint64, nodeAddrs []string) {
@@ -213,11 +213,11 @@ func (is *ISAAC) IsVoted(b ballot.Ballot) bool {
 func (is *ISAAC) Vote(b ballot.Ballot) (isNew bool, err error) {
 	is.RLock()
 	defer is.RUnlock()
-	roundHash := b.VotingBasis().Index()
+	basisIndex := b.VotingBasis().Index()
 
 	var found bool
 	var runningRound *RunningRound
-	if runningRound, found = is.RunningRounds[roundHash]; !found {
+	if runningRound, found = is.RunningRounds[basisIndex]; !found {
 		proposer := is.SelectProposer(
 			b.VotingBasis().Height,
 			b.VotingBasis().Round,
@@ -227,7 +227,7 @@ func (is *ISAAC) Vote(b ballot.Ballot) (isNew bool, err error) {
 			return true, err
 		}
 
-		is.RunningRounds[roundHash] = runningRound
+		is.RunningRounds[basisIndex] = runningRound
 		isNew = true
 	} else {
 		if _, found = runningRound.Voted[b.Proposer()]; !found {
@@ -262,10 +262,10 @@ func (is *ISAAC) IsVotedByNode(b ballot.Ballot, node string) (bool, error) {
 	}
 }
 
-func (is *ISAAC) HasRunningRound(roundHash string) bool {
+func (is *ISAAC) HasRunningRound(basisIndex string) bool {
 	is.RLock()
 	defer is.RUnlock()
-	_, found := is.RunningRounds[roundHash]
+	_, found := is.RunningRounds[basisIndex]
 	return found
 }
 
@@ -281,4 +281,16 @@ func (is *ISAAC) HasSameProposer(b ballot.Ballot) bool {
 
 func (is *ISAAC) LatestBlock() block.Block {
 	return block.GetLatestBlock(is.storage)
+}
+
+func (is *ISAAC) RemoveRunningRoundsWithSameHeight(height uint64) {
+	for hash, runningRound := range is.RunningRounds {
+		if runningRound.VotingBasis.Height > height {
+			continue
+		}
+
+		delete(runningRound.Transactions, runningRound.Proposer)
+		delete(runningRound.Voted, runningRound.Proposer)
+		delete(is.RunningRounds, hash)
+	}
 }

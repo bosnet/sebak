@@ -8,14 +8,14 @@ type Pool struct {
 	sync.RWMutex
 
 	Pool    map[ /* Transaction.GetHash() */ string]Transaction
-	Sources map[ /* Transaction.Source() */ string]bool
+	sources map[ /* Transaction.Source() */ string] /* Transaction.GetHash() */ string
 	hashes  []string // Transaction.GetHash()
 }
 
 func NewPool() *Pool {
 	return &Pool{
 		Pool:    map[string]Transaction{},
-		Sources: map[string]bool{},
+		sources: map[string]string{},
 		hashes:  []string{},
 	}
 }
@@ -35,25 +35,36 @@ func (tp *Pool) Has(hash string) bool {
 	return found
 }
 
-func (tp *Pool) Get(hash string) (tx Transaction, found bool) {
+func (tp *Pool) Get(hash string) (Transaction, bool) {
 	tp.RLock()
 	defer tp.RUnlock()
 
-	tx, found = tp.Pool[hash]
-	return
+	tx, found := tp.Pool[hash]
+	return tx, found
+}
+
+func (tp *Pool) GetFromSource(source string) (Transaction, bool) {
+	tp.RLock()
+	defer tp.RUnlock()
+	hash, found := tp.sources[source]
+	if !found {
+		return Transaction{}, false
+	}
+	return tp.Get(hash)
 }
 
 func (tp *Pool) Add(tx Transaction) bool {
-	if tp.Has(tx.GetHash()) {
+	txHash := tx.GetHash()
+	if tp.Has(txHash) {
 		return false
 	}
 
 	tp.Lock()
 	defer tp.Unlock()
 
-	tp.Pool[tx.GetHash()] = tx
-	tp.Sources[tx.Source()] = true
-	tp.hashes = append(tp.hashes, tx.GetHash())
+	tp.Pool[txHash] = tx
+	tp.sources[tx.Source()] = txHash
+	tp.hashes = append(tp.hashes, txHash)
 
 	return true
 }
@@ -68,7 +79,7 @@ func (tp *Pool) Remove(hashes ...string) {
 
 	for _, hash := range hashes {
 		if tx, found := tp.Pool[hash]; found {
-			delete(tp.Sources, tx.Source())
+			delete(tp.sources, tx.Source())
 			delete(tp.Pool, hash)
 			for i, h := range tp.hashes {
 				if h == hash {
@@ -103,7 +114,7 @@ func (tp *Pool) IsSameSource(source string) (found bool) {
 	tp.RLock()
 	defer tp.RUnlock()
 
-	_, found = tp.Sources[source]
+	_, found = tp.sources[source]
 
 	return
 }

@@ -11,11 +11,11 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"github.com/stellar/go/keypair"
 
 	cmdcommon "boscoin.io/sebak/cmd/sebak/common"
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common/keypair"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/transaction"
 	"boscoin.io/sebak/lib/transaction/operation"
@@ -131,7 +131,7 @@ func init() {
 				fmt.Println(tx)
 			}
 			if flagDry == false {
-				if retbody, err = client.SendMessage(tx); err != nil {
+				if retbody, err = client.SendTransaction(tx); err != nil {
 					log.Fatal("Network error: ", err, " body: ", string(retbody))
 					os.Exit(1)
 				}

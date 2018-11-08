@@ -96,7 +96,6 @@ func NewProposerTransactionFromBallot(blt Ballot, opc operation.CollectTxFee, op
 
 var ProposerTransactionWellFormedCheckerFuncs = []common.CheckerFunc{
 	transaction.CheckOverOperationsLimit,
-	transaction.CheckSequenceID,
 	transaction.CheckSource,
 	CheckProposerTransactionFee,
 	CheckProposerTransactionOperationTypes,
@@ -162,9 +161,6 @@ func (p ProposerTransaction) IsWellFormedWithBallot(networkID []byte, blt Ballot
 				err = errors.InvalidOperation
 				return
 			}
-		} else if opb.Amount < 1 {
-			err = errors.InvalidOperation
-			return
 		}
 	}
 

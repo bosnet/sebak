@@ -18,6 +18,9 @@ const (
 	// GenesisBlockHeight set the block height of genesis block
 	GenesisBlockHeight uint64 = 1
 
+	// FirstConsensusBlockHeight is used for calculating block time
+	FirstConsensusBlockHeight uint64 = 2
+
 	// GenesisBlockConfirmedTime is the time for the confirmed time of genesis
 	// block. This time is of the first commit of SEBAK.
 	GenesisBlockConfirmedTime string = "2018-04-17T5:07:31.000000000Z"
