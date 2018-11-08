@@ -24,6 +24,7 @@ type Message interface {
 	IsWellFormed(Config) error
 	Equal(Message) bool
 	Source() string
+	Version() string
 	// Validate(storage.LevelDBBackend) error
 }
 

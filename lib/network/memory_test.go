@@ -43,6 +43,10 @@ func (m DummyMessage) Source() string {
 	return m.Hash
 }
 
+func (m DummyMessage) Version() string {
+	return ""
+}
+
 func (m *DummyMessage) UpdateHash() {
 	m.Hash = base58.Encode(common.MustMakeObjectHash(m.Data))
 }
