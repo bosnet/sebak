@@ -103,6 +103,7 @@ func TestBlockHeightOrdering(t *testing.T) {
 // TestMakeGenesisBlock basically tests MakeGenesisBlock can make genesis block,
 // and further with genesis block, genesis account can be found.
 func TestMakeGenesisBlock(t *testing.T) {
+	conf := common.NewTestConfig()
 	st := storage.NewTestStorage()
 	defer st.Close()
 
@@ -117,7 +118,7 @@ func TestMakeGenesisBlock(t *testing.T) {
 	err = commonAccount.Save(st)
 	require.NoError(t, err)
 
-	bk, err := MakeGenesisBlock(st, *genesisAccount, *commonAccount, networkID)
+	bk, err := MakeGenesisBlock(st, *genesisAccount, *commonAccount, conf.NetworkID)
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), bk.Height)
 	require.Equal(t, 1, len(bk.Transactions))
@@ -136,7 +137,7 @@ func TestMakeGenesisBlock(t *testing.T) {
 	bt, err := GetBlockTransaction(st, bk.Transactions[0])
 	require.NoError(t, err)
 
-	genesisBlockKP := keypair.Master(string(networkID))
+	genesisBlockKP := keypair.Master(string(conf.NetworkID))
 	require.Equal(t, genesisAccount.SequenceID, bt.SequenceID)
 	require.Equal(t, common.Amount(0), bt.Fee)
 	require.Equal(t, 2, len(bt.Operations))
@@ -167,6 +168,7 @@ func TestMakeGenesisBlock(t *testing.T) {
 }
 
 func TestMakeGenesisBlockOverride(t *testing.T) {
+	conf := common.NewTestConfig()
 	st := storage.NewTestStorage()
 	defer st.Close()
 
@@ -182,7 +184,7 @@ func TestMakeGenesisBlockOverride(t *testing.T) {
 		err = commonAccount.Save(st)
 		require.NoError(t, err)
 
-		bk, err := MakeGenesisBlock(st, *account, *commonAccount, networkID)
+		bk, err := MakeGenesisBlock(st, *account, *commonAccount, conf.NetworkID)
 		require.NoError(t, err)
 		require.Equal(t, uint64(1), bk.Height)
 	}
@@ -199,12 +201,13 @@ func TestMakeGenesisBlockOverride(t *testing.T) {
 		err = commonAccount.Save(st)
 		require.NoError(t, err)
 
-		_, err = MakeGenesisBlock(st, *account, *commonAccount, networkID)
+		_, err = MakeGenesisBlock(st, *account, *commonAccount, conf.NetworkID)
 		require.Equal(t, errors.BlockAlreadyExists, err)
 	}
 }
 
 func TestMakeGenesisBlockFindGenesisAccount(t *testing.T) {
+	conf := common.NewTestConfig()
 	st := storage.NewTestStorage()
 	defer st.Close()
 
@@ -219,7 +222,7 @@ func TestMakeGenesisBlockFindGenesisAccount(t *testing.T) {
 	commonAccount.MustSave(st)
 
 	{
-		bk, err := MakeGenesisBlock(st, *account, *commonAccount, networkID)
+		bk, err := MakeGenesisBlock(st, *account, *commonAccount, conf.NetworkID)
 		require.NoError(t, err)
 		require.Equal(t, uint64(1), bk.Height)
 	}
@@ -245,6 +248,7 @@ func TestMakeGenesisBlockFindGenesisAccount(t *testing.T) {
 }
 
 func TestMakeGenesisBlockFindCommonAccount(t *testing.T) {
+	conf := common.NewTestConfig()
 	st := storage.NewTestStorage()
 	defer st.Close()
 
@@ -259,7 +263,7 @@ func TestMakeGenesisBlockFindCommonAccount(t *testing.T) {
 	commonAccount.MustSave(st)
 
 	{
-		bk, err := MakeGenesisBlock(st, *genesisAccount, *commonAccount, networkID)
+		bk, err := MakeGenesisBlock(st, *genesisAccount, *commonAccount, conf.NetworkID)
 		require.NoError(t, err)
 		require.Equal(t, uint64(1), bk.Height)
 	}

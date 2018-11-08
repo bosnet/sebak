@@ -17,10 +17,7 @@ import (
 	"boscoin.io/sebak/lib/voting"
 )
 
-var networkID []byte = []byte("sebak-test-network")
-
 func TestErrorBallotHasOverMaxTransactionsInBallot(t *testing.T) {
-
 	kp := keypair.Random()
 	commonKP := keypair.Random()
 	endpoint, _ := common.NewEndpointFromString("https://localhost:1000")
@@ -28,9 +25,9 @@ func TestErrorBallotHasOverMaxTransactionsInBallot(t *testing.T) {
 
 	basis := voting.Basis{Round: 0, Height: 1, BlockHash: "hahaha", TotalTxs: 1}
 
-	_, tx := transaction.TestMakeTransaction(networkID, 1)
-	conf := common.NewConfig()
+	conf := common.NewTestConfig()
 	conf.TxsLimit = 2
+	_, tx := transaction.TestMakeTransaction(conf.NetworkID, 1)
 
 	{
 		blt := NewBallot(node.Address(), node.Address(), basis, []string{tx.GetHash()})
@@ -40,15 +37,15 @@ func TestErrorBallotHasOverMaxTransactionsInBallot(t *testing.T) {
 		ptx, _ := NewProposerTransactionFromBallot(*blt, opc, opi)
 		blt.SetProposerTransaction(ptx)
 
-		blt.Sign(node.Keypair(), networkID)
-		require.Nil(t, blt.IsWellFormed(networkID, conf))
+		blt.Sign(node.Keypair(), conf.NetworkID)
+		require.Nil(t, blt.IsWellFormed(conf))
 	}
 
 	{
 		var txHashes []string
 		var txs []transaction.Transaction
 		for i := 0; i < conf.TxsLimit+1; i++ {
-			_, tx := transaction.TestMakeTransaction(networkID, 1)
+			_, tx := transaction.TestMakeTransaction(conf.NetworkID, 1)
 			txs = append(txs, tx)
 			txHashes = append(txHashes, tx.GetHash())
 		}
@@ -60,14 +57,15 @@ func TestErrorBallotHasOverMaxTransactionsInBallot(t *testing.T) {
 		ptx, _ := NewProposerTransactionFromBallot(*blt, opc, opi)
 		blt.SetProposerTransaction(ptx)
 
-		blt.Sign(node.Keypair(), networkID)
+		blt.Sign(node.Keypair(), conf.NetworkID)
 
-		err := blt.IsWellFormed(networkID, conf)
+		err := blt.IsWellFormed(conf)
 		require.Error(t, err, errors.BallotHasOverMaxTransactionsInBallot)
 	}
 }
 
 func TestBallotBadConfirmedTime(t *testing.T) {
+	conf := common.NewTestConfig()
 	kp := keypair.Random()
 	commonKP := keypair.Random()
 	endpoint, _ := common.NewEndpointFromString("https://localhost:1000")
@@ -77,11 +75,10 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 
 	updateBallot := func(ballot *Ballot) {
 		ballot.H.Hash = ballot.B.MakeHashString()
-		signature, _ := keypair.MakeSignature(kp, networkID, ballot.H.Hash)
+		signature, _ := keypair.MakeSignature(kp, conf.NetworkID, ballot.H.Hash)
 		ballot.H.Signature = base58.Encode(signature)
 	}
 
-	conf := common.NewConfig()
 	{
 		ballot := NewBallot(node.Address(), node.Address(), basis, []string{})
 
@@ -90,67 +87,68 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 		ptx, _ := NewProposerTransactionFromBallot(*ballot, opc, opi)
 
 		ballot.SetProposerTransaction(ptx)
-		ballot.Sign(kp, networkID)
+		ballot.Sign(kp, conf.NetworkID)
 
-		err := ballot.IsWellFormed(networkID, conf)
+		err := ballot.IsWellFormed(conf)
 		require.NoError(t, err)
 	}
 
 	{ // bad `Ballot.B.Confirmed` time; too ahead
 		ballot := NewBallot(node.Address(), node.Address(), basis, []string{})
-		ballot.Sign(kp, networkID)
+		ballot.Sign(kp, conf.NetworkID)
 
 		newConfirmed := time.Now().Add(time.Duration(2) * common.BallotConfirmedTimeAllowDuration)
 		ballot.B.Confirmed = common.FormatISO8601(newConfirmed)
 		updateBallot(ballot)
 
-		err := ballot.IsWellFormed(networkID, conf)
+		err := ballot.IsWellFormed(conf)
 		require.Error(t, err, errors.MessageHasIncorrectTime)
 	}
 
 	{ // bad `Ballot.B.Confirmed` time; too behind
 		ballot := NewBallot(node.Address(), node.Address(), basis, []string{})
-		ballot.Sign(kp, networkID)
+		ballot.Sign(kp, conf.NetworkID)
 
 		newConfirmed := time.Now().Add(time.Duration(-2) * common.BallotConfirmedTimeAllowDuration)
 		ballot.B.Confirmed = common.FormatISO8601(newConfirmed)
 		updateBallot(ballot)
 
-		err := ballot.IsWellFormed(networkID, conf)
+		err := ballot.IsWellFormed(conf)
 		require.Error(t, err, errors.MessageHasIncorrectTime)
 	}
 
 	{ // bad `Ballot.B.Proposed.Confirmed` time; too ahead
 		ballot := NewBallot(node.Address(), node.Address(), basis, []string{})
-		ballot.Sign(kp, networkID)
+		ballot.Sign(kp, conf.NetworkID)
 
 		newConfirmed := time.Now().Add(time.Duration(2) * common.BallotConfirmedTimeAllowDuration)
 		ballot.B.Proposed.Confirmed = common.FormatISO8601(newConfirmed)
 		updateBallot(ballot)
 
-		err := ballot.IsWellFormed(networkID, conf)
+		err := ballot.IsWellFormed(conf)
 		require.Error(t, err, errors.MessageHasIncorrectTime)
 	}
 
 	{ // bad `Ballot.B.Proposed.Confirmed` time; too behind
 		ballot := NewBallot(node.Address(), node.Address(), basis, []string{})
-		ballot.Sign(kp, networkID)
+		ballot.Sign(kp, conf.NetworkID)
 
 		newConfirmed := time.Now().Add(time.Duration(-2) * common.BallotConfirmedTimeAllowDuration)
 		ballot.B.Proposed.Confirmed = common.FormatISO8601(newConfirmed)
 		updateBallot(ballot)
 
-		err := ballot.IsWellFormed(networkID, conf)
+		err := ballot.IsWellFormed(conf)
 		require.Error(t, err, errors.MessageHasIncorrectTime)
 	}
 }
 
 func TestBallotEmptyHash(t *testing.T) {
+	conf := common.NewTestConfig()
 	kp := keypair.Random()
 	node, _ := node.NewLocalNode(kp, &common.Endpoint{}, "")
 	r := voting.Basis{}
 	b := NewBallot(node.Address(), node.Address(), r, []string{})
-	b.Sign(kp, networkID)
+	b.Sign(kp, conf.NetworkID)
 
 	require.True(t, len(b.GetHash()) > 0)
 }
@@ -158,19 +156,18 @@ func TestBallotEmptyHash(t *testing.T) {
 // TestBallotProposerTransaction checks; the proposed Ballot must have the
 // proposed transaction.
 func TestBallotProposerTransaction(t *testing.T) {
+	conf := common.NewTestConfig()
 	kp := keypair.Random()
+	commonKP := keypair.Random()
 	endpoint, _ := common.NewEndpointFromString("https://localhost:1000")
 	node, _ := node.NewLocalNode(kp, endpoint, "")
 
 	basis := voting.Basis{Round: 0, Height: 1, BlockHash: "hahaha", TotalTxs: 1}
 
-	commonKP := keypair.Random()
-
-	conf := common.NewConfig()
 	{ // without ProposerTransaction
 		blt := NewBallot(node.Address(), node.Address(), basis, []string{})
-		blt.Sign(node.Keypair(), networkID)
-		err := blt.IsWellFormed(networkID, conf)
+		blt.Sign(node.Keypair(), conf.NetworkID)
+		err := blt.IsWellFormed(conf)
 		require.Error(t, err)
 	}
 
@@ -193,8 +190,8 @@ func TestBallotProposerTransaction(t *testing.T) {
 		}
 
 		blt.SetProposerTransaction(ptx)
-		blt.Sign(node.Keypair(), networkID)
-		err := blt.IsWellFormed(networkID, conf)
+		blt.Sign(node.Keypair(), conf.NetworkID)
+		err := blt.IsWellFormed(conf)
 		require.Error(t, err)
 	}
 }
@@ -216,6 +213,7 @@ func TestNewBallot(t *testing.T) {
 
 // In this test, we can check that the normal ballot(not expired) should be signed by proposer.
 func TestIsBallotWellFormed(t *testing.T) {
+	conf := common.NewTestConfig()
 	nodeEndpoint, _ := common.NewEndpointFromString("https://localhost:1000")
 	proposerEndpoint, _ := common.NewEndpointFromString("https://localhost:1001")
 
@@ -228,7 +226,7 @@ func TestIsBallotWellFormed(t *testing.T) {
 	basis := voting.Basis{Round: 0, Height: 1, BlockHash: "hahaha", TotalTxs: 1}
 
 	initialBalance := common.Amount(common.BaseReserve)
-	tx := transaction.MakeTransactionCreateAccount(networkID, nodeKP, keypair.Random().Address(), initialBalance)
+	tx := transaction.MakeTransactionCreateAccount(conf.NetworkID, nodeKP, keypair.Random().Address(), initialBalance)
 
 	wellBallot := NewBallot(n.Address(), p.Address(), basis, []string{tx.GetHash()})
 
@@ -240,18 +238,18 @@ func TestIsBallotWellFormed(t *testing.T) {
 	ptx, _ := NewProposerTransactionFromBallot(*wellBallot, opc, opi)
 	wellBallot.SetProposerTransaction(ptx)
 
-	wellBallot.Sign(proposerKP, networkID)
+	wellBallot.Sign(proposerKP, conf.NetworkID)
 
-	err := wellBallot.IsWellFormed(networkID, common.NewConfig())
+	err := wellBallot.IsWellFormed(conf)
 
 	require.NoError(t, err)
 
 	wrongSignedBallot := NewBallot(n.Address(), p.Address(), basis, []string{tx.GetHash()})
 	wrongSignedBallot.SetProposerTransaction(ptx)
 
-	wrongSignedBallot.Sign(nodeKP, networkID)
+	wrongSignedBallot.Sign(nodeKP, conf.NetworkID)
 
-	err = wrongSignedBallot.IsWellFormed(networkID, common.NewConfig())
+	err = wrongSignedBallot.IsWellFormed(conf)
 
 	require.Error(t, err)
 
@@ -259,6 +257,7 @@ func TestIsBallotWellFormed(t *testing.T) {
 
 // We can check that expired ballot could be signed by node key pair(not proposer).
 func TestIsExpiredBallotWellFormed(t *testing.T) {
+	conf := common.NewTestConfig()
 	nodeEndpoint, _ := common.NewEndpointFromString("https://localhost:1000")
 	proposerEndpoint, _ := common.NewEndpointFromString("https://localhost:1001")
 
@@ -271,14 +270,14 @@ func TestIsExpiredBallotWellFormed(t *testing.T) {
 	basis := voting.Basis{Round: 0, Height: 1, BlockHash: "hahaha", TotalTxs: 1}
 
 	initialBalance := common.Amount(common.BaseReserve)
-	tx := transaction.MakeTransactionCreateAccount(networkID, nodeKP, keypair.Random().Address(), initialBalance)
+	tx := transaction.MakeTransactionCreateAccount(conf.NetworkID, nodeKP, keypair.Random().Address(), initialBalance)
 
 	b := NewBallot(n.Address(), p.Address(), basis, []string{tx.GetHash()})
 
 	b.SetVote(StateSIGN, voting.EXP)
-	b.Sign(nodeKP, networkID)
+	b.Sign(nodeKP, conf.NetworkID)
 
-	err := b.IsWellFormed(networkID, common.NewConfig())
+	err := b.IsWellFormed(conf)
 
 	require.NoError(t, err)
 
@@ -287,6 +286,7 @@ func TestIsExpiredBallotWellFormed(t *testing.T) {
 // This test is the same as TestIsExpiredBallotWellFormed except that the proposal transaction is added.
 // As a result, in expired ballot's validation, it does not matter whether there is a proposal transaction or not.
 func TestIsExpiredBallotWithProposerTransactionWellFormed(t *testing.T) {
+	conf := common.NewTestConfig()
 	nodeEndpoint, _ := common.NewEndpointFromString("https://localhost:1000")
 	proposerEndpoint, _ := common.NewEndpointFromString("https://localhost:1001")
 
@@ -299,7 +299,7 @@ func TestIsExpiredBallotWithProposerTransactionWellFormed(t *testing.T) {
 	basis := voting.Basis{Round: 0, Height: 1, BlockHash: "hahaha", TotalTxs: 1}
 
 	initialBalance := common.Amount(common.BaseReserve)
-	tx := transaction.MakeTransactionCreateAccount(networkID, nodeKP, keypair.Random().Address(), initialBalance)
+	tx := transaction.MakeTransactionCreateAccount(conf.NetworkID, nodeKP, keypair.Random().Address(), initialBalance)
 
 	b := NewBallot(n.Address(), p.Address(), basis, []string{tx.GetHash()})
 
@@ -312,9 +312,9 @@ func TestIsExpiredBallotWithProposerTransactionWellFormed(t *testing.T) {
 	b.SetProposerTransaction(ptx)
 
 	b.SetVote(StateSIGN, voting.EXP)
-	b.Sign(nodeKP, networkID)
+	b.Sign(nodeKP, conf.NetworkID)
 
-	err := b.IsWellFormed(networkID, common.NewConfig())
+	err := b.IsWellFormed(conf)
 
 	require.NoError(t, err)
 

@@ -26,7 +26,7 @@ TestUnfreezingSimulation indicates the following:
 	7. The transaction `tx1` is removed because it is not valid anymore.
 */
 func TestModifiedSourceValidate(t *testing.T) {
-	nr, nodes, _ := createNodeRunnerForTesting(3, common.NewConfig(), nil)
+	nr, nodes, _ := createNodeRunnerForTesting(3, common.NewTestConfig(), nil)
 
 	st := nr.storage
 

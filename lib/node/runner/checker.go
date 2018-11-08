@@ -66,7 +66,7 @@ func BallotUnmarshal(c common.Checker, args ...interface{}) (err error) {
 		return
 	}
 
-	if err = b.IsWellFormed(checker.NetworkID, checker.NodeRunner.Conf); err != nil {
+	if err = b.IsWellFormed(checker.NodeRunner.Conf); err != nil {
 		return
 	}
 
@@ -391,7 +391,7 @@ func insertMissingTransaction(checker *BallotChecker) (err error) {
 			err = errors.TransactionNotFound
 			return
 		}
-		if err = tx.IsWellFormed(checker.NetworkID, checker.NodeRunner.Conf); err != nil {
+		if err = tx.IsWellFormed(checker.NodeRunner.Conf); err != nil {
 			return
 		}
 

@@ -23,7 +23,7 @@ func NewDummyMessage(data string) DummyMessage {
 	return d
 }
 
-func (m DummyMessage) IsWellFormed([]byte, common.Config) error {
+func (m DummyMessage) IsWellFormed(common.Config) error {
 	return nil
 }
 

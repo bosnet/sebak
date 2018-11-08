@@ -8,8 +8,6 @@ import (
 	"boscoin.io/sebak/lib/voting"
 )
 
-var networkID []byte = []byte("sebak-test-network")
-
 func TestMakeBlockAccount() *BlockAccount {
 	address := keypair.Random().Address()
 	balance := common.Amount(common.BaseReserve)
@@ -40,6 +38,7 @@ func init() {
 //   st = Storage to write the blockchain to
 //
 func MakeTestBlockchain(st *storage.LevelDBBackend) {
+	conf := common.NewTestConfig()
 	balance := common.MaximumBalance
 	genesisAccount := NewBlockAccount(GenesisKP.Address(), balance)
 	if err := genesisAccount.Save(st); err != nil {
@@ -51,7 +50,7 @@ func MakeTestBlockchain(st *storage.LevelDBBackend) {
 		panic(err)
 	}
 
-	if _, err := MakeGenesisBlock(st, *genesisAccount, *commonAccount, networkID); err != nil {
+	if _, err := MakeGenesisBlock(st, *genesisAccount, *commonAccount, conf.NetworkID); err != nil {
 		panic(err)
 	}
 }

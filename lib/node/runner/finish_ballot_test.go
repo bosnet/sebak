@@ -64,7 +64,7 @@ func createNodeRunnerForTestingWithFileStorage(n int, conf common.Config, recv c
 		block.MakeTestBlockchain(st)
 	}
 
-	is, _ := consensus.NewISAAC(networkID, localNode, policy, connectionManager, st, common.NewConfig(), nil)
+	is, _ := consensus.NewISAAC(conf.NetworkID, localNode, policy, connectionManager, st, conf, nil)
 	is.SetProposerSelector(FixedSelector{localNode.Address()})
 
 	nr, err := NewNodeRunner(string(networkID), localNode, policy, ns[0], is, st, conf)
@@ -77,7 +77,8 @@ func createNodeRunnerForTestingWithFileStorage(n int, conf common.Config, recv c
 }
 
 func testFinishBallotWithBatch(withBatch bool, numberOfTransactions, numberOfOperations int) error {
-	nr, localNodes, dir := createNodeRunnerForTestingWithFileStorage(1, common.NewConfig(), nil)
+	conf := common.NewTestConfig()
+	nr, localNodes, dir := createNodeRunnerForTestingWithFileStorage(1, conf, nil)
 	defer func() {
 		nr.Storage().Close()
 		os.RemoveAll(dir)
@@ -108,7 +109,7 @@ func testFinishBallotWithBatch(withBatch bool, numberOfTransactions, numberOfOpe
 			accountA.MustSave(nr.Storage())
 
 			kpB := keypair.Random()
-			tx := transaction.MakeTransactionCreateAccount(networkID, kpA, kpB.Address(), common.Amount(1))
+			tx := transaction.MakeTransactionCreateAccount(conf.NetworkID, kpA, kpB.Address(), common.Amount(1))
 
 			var ops []operation.Operation
 			for j := 0; j < numberOfOperations-1; j++ {
@@ -125,7 +126,7 @@ func testFinishBallotWithBatch(withBatch bool, numberOfTransactions, numberOfOpe
 			}
 			tx.B.Operations = append(tx.B.Operations, ops...)
 			tx.B.SequenceID = accountA.SequenceID
-			tx.Sign(kpA, networkID)
+			tx.Sign(kpA, conf.NetworkID)
 
 			txHashes = append(txHashes, tx.GetHash())
 			txs = append(txs, tx)
@@ -140,7 +141,7 @@ func testFinishBallotWithBatch(withBatch bool, numberOfTransactions, numberOfOpe
 
 		blt.SetProposerTransaction(ptx)
 		blt.SetVote(ballot.StateINIT, voting.YES)
-		blt.Sign(proposerNode.Keypair(), networkID)
+		blt.Sign(proposerNode.Keypair(), conf.NetworkID)
 	}
 
 	st := nr.Storage()

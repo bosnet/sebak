@@ -24,6 +24,7 @@ type ballotCheckerProposedTransaction struct {
 	commonAccount  *block.BlockAccount
 	proposerNode   *node.LocalNode
 	nr             *NodeRunner
+	config         common.Config
 
 	txs      []transaction.Transaction
 	txHashes []string
@@ -31,7 +32,8 @@ type ballotCheckerProposedTransaction struct {
 }
 
 func (p *ballotCheckerProposedTransaction) Prepare() {
-	nr, localNodes, _ := createNodeRunnerForTesting(2, common.NewConfig(), nil)
+	p.config = common.NewTestConfig()
+	nr, localNodes, _ := createNodeRunnerForTesting(2, p.config, nil)
 	p.nr = nr
 
 	p.genesisBlock = block.GetGenesis(nr.Storage())
@@ -97,12 +99,11 @@ func TestProposedTransactionWithDuplicatedOperations(t *testing.T) {
 	p := &ballotCheckerProposedTransaction{}
 	p.Prepare()
 
-	conf := common.NewConfig()
-	conf.OpsLimit = 1000
+	p.config.OpsLimit = 1000
 
 	blt := p.MakeBallot(0)
 	{
-		err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
+		err := blt.ProposerTransaction().IsWellFormed(p.config)
 		require.NoError(t, err)
 	}
 
@@ -114,7 +115,7 @@ func TestProposedTransactionWithDuplicatedOperations(t *testing.T) {
 		blt.SetProposerTransaction(ptx)
 		blt.Sign(p.proposerNode.Keypair(), networkID)
 
-		err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
+		err := blt.ProposerTransaction().IsWellFormed(p.config)
 		require.Equal(t, errors.DuplicatedOperation, err)
 	}
 }
@@ -125,7 +126,7 @@ func TestProposedTransactionWithoutTransactions(t *testing.T) {
 
 	blt := p.MakeBallot(0)
 
-	err := blt.IsWellFormed(networkID, common.NewConfig())
+	err := blt.IsWellFormed(p.config)
 	require.NoError(t, err)
 
 	var ballotMessage common.NetworkMessage
@@ -170,13 +171,12 @@ func TestProposedTransactionWithTransactions(t *testing.T) {
 
 	// with valid `CollectTxFee.Txs` count
 	blt := p.MakeBallot(3)
-	conf := common.NewConfig()
 	{
-		err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
+		err := blt.ProposerTransaction().IsWellFormed(p.config)
 		require.NoError(t, err)
 	}
 	{
-		err := blt.ProposerTransaction().IsWellFormedWithBallot(networkID, *blt, conf)
+		err := blt.ProposerTransaction().IsWellFormedWithBallot(*blt, p.config)
 		require.NoError(t, err)
 	}
 
@@ -225,9 +225,8 @@ func TestProposedTransactionDifferentSigning(t *testing.T) {
 
 	blt := p.MakeBallot(3)
 
-	conf := common.NewConfig()
 	{
-		err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
+		err := blt.ProposerTransaction().IsWellFormed(p.config)
 		require.NoError(t, err)
 	}
 
@@ -240,7 +239,7 @@ func TestProposedTransactionDifferentSigning(t *testing.T) {
 
 		require.NotEqual(t, blt.Proposer(), ptx.Source())
 
-		err := blt.ProposerTransaction().IsWellFormedWithBallot(networkID, *blt, conf)
+		err := blt.ProposerTransaction().IsWellFormedWithBallot(*blt, p.config)
 		require.Equal(t, errors.InvalidProposerTransaction, err)
 	}
 }
@@ -260,13 +259,12 @@ func TestProposedTransactionWithTransactionsButWrongTxs(t *testing.T) {
 	blt.SetProposerTransaction(ptx)
 	blt.Sign(p.proposerNode.Keypair(), networkID)
 
-	conf := common.NewConfig()
 	{
-		err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
+		err := blt.ProposerTransaction().IsWellFormed(p.config)
 		require.NoError(t, err)
 	}
 	{
-		err := blt.ProposerTransaction().IsWellFormedWithBallot(networkID, *blt, conf)
+		err := blt.ProposerTransaction().IsWellFormedWithBallot(*blt, p.config)
 		require.Equal(t, errors.InvalidOperation, err)
 	}
 }
@@ -275,7 +273,6 @@ func TestProposedTransactionWithWrongOperationBodyCollectTxFeeBlockData(t *testi
 	p := &ballotCheckerProposedTransaction{}
 	p.Prepare()
 
-	conf := common.NewConfig()
 	{
 		// with wrong `CollectTxFee.Height`
 		blt := p.MakeBallot(4)
@@ -287,11 +284,11 @@ func TestProposedTransactionWithWrongOperationBodyCollectTxFeeBlockData(t *testi
 		blt.Sign(p.proposerNode.Keypair(), networkID)
 
 		{
-			err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
+			err := blt.ProposerTransaction().IsWellFormed(p.config)
 			require.NoError(t, err)
 		}
 		{
-			err := blt.ProposerTransaction().IsWellFormedWithBallot(networkID, *blt, conf)
+			err := blt.ProposerTransaction().IsWellFormedWithBallot(*blt, p.config)
 			require.Equal(t, errors.InvalidOperation, err)
 		}
 	}
@@ -304,14 +301,14 @@ func TestProposedTransactionWithWrongOperationBodyCollectTxFeeBlockData(t *testi
 		ptx := blt.ProposerTransaction()
 		ptx.B.Operations[0].B = opb
 		blt.SetProposerTransaction(ptx)
-		blt.Sign(p.proposerNode.Keypair(), networkID)
+		blt.Sign(p.proposerNode.Keypair(), p.config.NetworkID)
 
 		{
-			err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
+			err := blt.ProposerTransaction().IsWellFormed(p.config)
 			require.NoError(t, err)
 		}
 		{
-			err := blt.ProposerTransaction().IsWellFormedWithBallot(networkID, *blt, conf)
+			err := blt.ProposerTransaction().IsWellFormedWithBallot(*blt, p.config)
 			require.Equal(t, errors.InvalidOperation, err)
 		}
 	}
@@ -324,14 +321,14 @@ func TestProposedTransactionWithWrongOperationBodyCollectTxFeeBlockData(t *testi
 		ptx := blt.ProposerTransaction()
 		ptx.B.Operations[0].B = opb
 		blt.SetProposerTransaction(ptx)
-		blt.Sign(p.proposerNode.Keypair(), networkID)
+		blt.Sign(p.proposerNode.Keypair(), p.config.NetworkID)
 
 		{
-			err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
+			err := blt.ProposerTransaction().IsWellFormed(p.config)
 			require.NoError(t, err)
 		}
 		{
-			err := blt.ProposerTransaction().IsWellFormedWithBallot(networkID, *blt, conf)
+			err := blt.ProposerTransaction().IsWellFormedWithBallot(*blt, p.config)
 			require.Equal(t, errors.InvalidOperation, err)
 		}
 	}
@@ -341,7 +338,6 @@ func TestProposedTransactionWithWrongOperationBodyInflationFeeBlockData(t *testi
 	p := &ballotCheckerProposedTransaction{}
 	p.Prepare()
 
-	conf := common.NewConfig()
 	{
 		// with wrong `Inflation.Height`
 		blt := p.MakeBallot(4)
@@ -350,14 +346,14 @@ func TestProposedTransactionWithWrongOperationBodyInflationFeeBlockData(t *testi
 		ptx := blt.ProposerTransaction()
 		ptx.B.Operations[1].B = opb
 		blt.SetProposerTransaction(ptx)
-		blt.Sign(p.proposerNode.Keypair(), networkID)
+		blt.Sign(p.proposerNode.Keypair(), p.config.NetworkID)
 
 		{
-			err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
+			err := blt.ProposerTransaction().IsWellFormed(p.config)
 			require.NoError(t, err)
 		}
 		{
-			err := blt.ProposerTransaction().IsWellFormedWithBallot(networkID, *blt, conf)
+			err := blt.ProposerTransaction().IsWellFormedWithBallot(*blt, p.config)
 			require.Equal(t, errors.InvalidOperation, err)
 		}
 	}
@@ -370,14 +366,14 @@ func TestProposedTransactionWithWrongOperationBodyInflationFeeBlockData(t *testi
 		ptx := blt.ProposerTransaction()
 		ptx.B.Operations[1].B = opb
 		blt.SetProposerTransaction(ptx)
-		blt.Sign(p.proposerNode.Keypair(), networkID)
+		blt.Sign(p.proposerNode.Keypair(), p.config.NetworkID)
 
 		{
-			err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
+			err := blt.ProposerTransaction().IsWellFormed(p.config)
 			require.NoError(t, err)
 		}
 		{
-			err := blt.ProposerTransaction().IsWellFormedWithBallot(networkID, *blt, conf)
+			err := blt.ProposerTransaction().IsWellFormedWithBallot(*blt, p.config)
 			require.Equal(t, errors.InvalidOperation, err)
 		}
 	}
@@ -390,14 +386,14 @@ func TestProposedTransactionWithWrongOperationBodyInflationFeeBlockData(t *testi
 		ptx := blt.ProposerTransaction()
 		ptx.B.Operations[1].B = opb
 		blt.SetProposerTransaction(ptx)
-		blt.Sign(p.proposerNode.Keypair(), networkID)
+		blt.Sign(p.proposerNode.Keypair(), p.config.NetworkID)
 
 		{
-			err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
+			err := blt.ProposerTransaction().IsWellFormed(p.config)
 			require.NoError(t, err)
 		}
 		{
-			err := blt.ProposerTransaction().IsWellFormedWithBallot(networkID, *blt, conf)
+			err := blt.ProposerTransaction().IsWellFormedWithBallot(*blt, p.config)
 			require.Equal(t, errors.InvalidOperation, err)
 		}
 	}
@@ -415,11 +411,10 @@ func TestProposedTransactionWithCollectTxFeeWrongAmount(t *testing.T) {
 	ptx := blt.ProposerTransaction()
 	ptx.B.Operations[0].B = opb
 	blt.SetProposerTransaction(ptx)
-	blt.Sign(p.proposerNode.Keypair(), networkID)
+	blt.Sign(p.proposerNode.Keypair(), p.config.NetworkID)
 
-	conf := common.NewConfig()
 	{
-		err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
+		err := blt.ProposerTransaction().IsWellFormed(p.config)
 		require.Equal(t, err, errors.OperationAmountOverflow)
 	}
 }
@@ -435,16 +430,15 @@ func TestProposedTransactionWithInflationWrongAmount(t *testing.T) {
 	ptx := blt.ProposerTransaction()
 	ptx.B.Operations[1].B = opb
 	blt.SetProposerTransaction(ptx)
-	blt.Sign(p.proposerNode.Keypair(), networkID)
+	blt.Sign(p.proposerNode.Keypair(), p.config.NetworkID)
 
-	conf := common.NewConfig()
 	{
-		err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
+		err := blt.ProposerTransaction().IsWellFormed(p.config)
 		require.NoError(t, err)
 	}
 
 	{
-		err := blt.ProposerTransaction().IsWellFormedWithBallot(networkID, *blt, conf)
+		err := blt.ProposerTransaction().IsWellFormedWithBallot(*blt, p.config)
 		require.NoError(t, err)
 	}
 
@@ -494,9 +488,8 @@ func TestProposedTransactionWithNotZeroFee(t *testing.T) {
 	blt.SetProposerTransaction(ptx)
 	blt.Sign(p.proposerNode.Keypair(), networkID)
 
-	conf := common.NewConfig()
 	{
-		err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
+		err := blt.ProposerTransaction().IsWellFormed(p.config)
 		require.Equal(t, errors.InvalidFee, err)
 	}
 }
@@ -515,13 +508,12 @@ func TestProposedTransactionWithCollectTxFeeWrongCommonAddress(t *testing.T) {
 	blt.SetProposerTransaction(ptx)
 	blt.Sign(p.proposerNode.Keypair(), networkID)
 
-	conf := common.NewConfig()
 	{
-		err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
+		err := blt.ProposerTransaction().IsWellFormed(p.config)
 		require.NoError(t, err)
 	}
 	{
-		err := blt.ProposerTransaction().IsWellFormedWithBallot(networkID, *blt, conf)
+		err := blt.ProposerTransaction().IsWellFormedWithBallot(*blt, p.config)
 		require.NoError(t, err)
 	}
 
@@ -574,13 +566,12 @@ func TestProposedTransactionWithInflationWrongCommonAddress(t *testing.T) {
 	blt.SetProposerTransaction(ptx)
 	blt.Sign(p.proposerNode.Keypair(), networkID)
 
-	conf := common.NewConfig()
 	{
-		err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
+		err := blt.ProposerTransaction().IsWellFormed(p.config)
 		require.NoError(t, err)
 	}
 	{
-		err := blt.ProposerTransaction().IsWellFormedWithBallot(networkID, *blt, conf)
+		err := blt.ProposerTransaction().IsWellFormedWithBallot(*blt, p.config)
 		require.NoError(t, err)
 	}
 
@@ -637,13 +628,12 @@ func TestProposedTransactionWithBiggerTransactionFeeThanCollected(t *testing.T) 
 	blt.B.Proposed.Transactions = txHashes
 	blt.Sign(p.proposerNode.Keypair(), networkID)
 
-	conf := common.NewConfig()
 	{
-		err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
+		err := blt.ProposerTransaction().IsWellFormed(p.config)
 		require.NoError(t, err)
 	}
 	{
-		err := blt.ProposerTransaction().IsWellFormedWithBallot(networkID, *blt, conf)
+		err := blt.ProposerTransaction().IsWellFormedWithBallot(*blt, p.config)
 		require.NoError(t, err)
 	}
 
@@ -803,9 +793,8 @@ func TestProposedTransactionWithNormalOperations(t *testing.T) {
 	p.Prepare()
 
 	blt := p.MakeBallot(0)
-	conf := common.NewConfig()
 	{
-		err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
+		err := blt.ProposerTransaction().IsWellFormed(p.config)
 		require.NoError(t, err)
 	}
 
@@ -821,7 +810,7 @@ func TestProposedTransactionWithNormalOperations(t *testing.T) {
 		blt.SetProposerTransaction(ptx)
 		blt.Sign(p.proposerNode.Keypair(), networkID)
 
-		err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
+		err := blt.ProposerTransaction().IsWellFormed(p.config)
 		require.Equal(t, errors.InvalidProposerTransaction, err)
 	}
 }
@@ -831,9 +820,8 @@ func TestProposedTransactionWithWrongNumberOfOperations(t *testing.T) {
 	p.Prepare()
 
 	blt := p.MakeBallot(0)
-	conf := common.NewConfig()
 	{
-		err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
+		err := blt.ProposerTransaction().IsWellFormed(p.config)
 		require.NoError(t, err)
 	}
 
@@ -848,7 +836,7 @@ func TestProposedTransactionWithWrongNumberOfOperations(t *testing.T) {
 		blt.SetProposerTransaction(ptx)
 		blt.Sign(p.proposerNode.Keypair(), networkID)
 
-		err := blt.ProposerTransaction().IsWellFormed(networkID, conf)
+		err := blt.ProposerTransaction().IsWellFormed(p.config)
 		require.Equal(t, errors.InvalidProposerTransaction, err)
 	}
 }

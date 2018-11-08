@@ -15,9 +15,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var networkID []byte = []byte("sebak-test-network")
+var networkID []byte = []byte("sebak-unittest")
 
 func MakeNodeRunner() (*NodeRunner, *node.LocalNode) {
+	conf := common.NewTestConfig()
 	_, n, localNode := network.CreateMemoryNetwork(nil)
 
 	policy, _ := consensus.NewDefaultVotingThresholdPolicy(66)
@@ -29,10 +30,9 @@ func MakeNodeRunner() (*NodeRunner, *node.LocalNode) {
 		policy,
 	)
 
-	conf := common.NewConfig()
 	st := block.InitTestBlockchain()
-	is, _ := consensus.NewISAAC(networkID, localNode, policy, connectionManager, st, conf, nil)
-	nodeRunner, _ := NewNodeRunner(string(networkID), localNode, policy, n, is, st, conf)
+	is, _ := consensus.NewISAAC(conf.NetworkID, localNode, policy, connectionManager, st, conf, nil)
+	nodeRunner, _ := NewNodeRunner(string(conf.NetworkID), localNode, policy, n, is, st, conf)
 	return nodeRunner, localNode
 }
 
@@ -132,7 +132,7 @@ func GenerateBallot(proposer *node.LocalNode, basis voting.Basis, tx transaction
 	b.SetVote(ballotState, voting.YES)
 	b.Sign(sender.Keypair(), networkID)
 
-	if err := b.IsWellFormed(networkID, conf); err != nil {
+	if err := b.IsWellFormed(conf); err != nil {
 		panic(err)
 	}
 
@@ -152,7 +152,7 @@ func GenerateEmptyTxBallot(proposer *node.LocalNode, basis voting.Basis, ballotS
 	b.SetVote(ballotState, voting.YES)
 	b.Sign(sender.Keypair(), networkID)
 
-	if err := b.IsWellFormed(networkID, conf); err != nil {
+	if err := b.IsWellFormed(conf); err != nil {
 		panic(err)
 	}
 
@@ -195,7 +195,7 @@ func createNodeRunnerForTesting(n int, conf common.Config, recv chan struct{}) (
 	)
 
 	st := block.InitTestBlockchain()
-	is, _ := consensus.NewISAAC(networkID, localNode, policy, connectionManager, st, common.NewConfig(), nil)
+	is, _ := consensus.NewISAAC(networkID, localNode, policy, connectionManager, st, common.NewTestConfig(), nil)
 	is.SetProposerSelector(FixedSelector{localNode.Address()})
 
 	nr, err := NewNodeRunner(string(networkID), localNode, policy, ns[0], is, st, conf)
@@ -223,7 +223,7 @@ func MakeConsensusAndBlock(t *testing.T, tx transaction.Transaction, nr *NodeRun
 		TotalTxs:  b.TotalTxs,
 	}
 
-	conf := common.NewConfig()
+	conf := common.NewTestConfig()
 
 	// Check that the transaction is in RunningRounds
 

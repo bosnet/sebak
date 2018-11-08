@@ -73,7 +73,7 @@ func createTestNodeRunner(n int, conf common.Config) []*NodeRunner {
 }
 
 func createTestNodeRunnerWithReady(n int) []*NodeRunner {
-	nodeRunners := createTestNodeRunner(n, common.NewConfig())
+	nodeRunners := createTestNodeRunner(n, common.NewTestConfig())
 
 	for _, nr := range nodeRunners {
 		go nr.Start()
@@ -149,10 +149,10 @@ func createTestNodeRunnersHTTP2Network(n int) (nodeRunners []*NodeRunner, rootKP
 			policy,
 		)
 
-		conf := common.NewConfig()
+		conf := common.NewTestConfig()
 		st := block.InitTestBlockchain()
-		is, _ := consensus.NewISAAC(networkID, node, policy, connectionManager, st, conf, nil)
-		nodeRunner, _ := NewNodeRunner(string(networkID), node, policy, n, is, st, conf)
+		is, _ := consensus.NewISAAC(conf.NetworkID, node, policy, connectionManager, st, conf, nil)
+		nodeRunner, _ := NewNodeRunner(string(conf.NetworkID), node, policy, n, is, st, conf)
 		nodeRunners = append(nodeRunners, nodeRunner)
 	}
 
@@ -206,7 +206,7 @@ func createTestNodeRunnersHTTP2NetworkWithReady(n int) (nodeRunners []*NodeRunne
 
 // Check that createTestNodeRunner creates the appropriate number of node runners.
 func TestCreateNodeRunner(t *testing.T) {
-	nodeRunners := createTestNodeRunner(3, common.NewConfig())
+	nodeRunners := createTestNodeRunner(3, common.NewTestConfig())
 
 	require.Equal(t, 3, len(nodeRunners))
 }
@@ -257,7 +257,8 @@ func TestNodeRunnerSaveBlock(t *testing.T) {
 // We can make sure to check the proposer of the expired ballot.
 // If the proposer of a ballot is different from the node, the node votes with VotingNo
 func TestExpiredBallotCheckProposer(t *testing.T) {
-	nr, nodes, _ := createNodeRunnerForTesting(2, common.NewConfig(), nil)
+	conf := common.NewTestConfig()
+	nr, nodes, _ := createNodeRunnerForTesting(2, conf, nil)
 
 	_, ok := nr.Consensus().ConnectionManager().(*TestConnectionManager)
 	require.True(t, ok)
@@ -272,7 +273,7 @@ func TestExpiredBallotCheckProposer(t *testing.T) {
 	}
 
 	// The createNodeRunnerForTesting has FixedSelector{localNode.Address()} so the proposer is always nr(nodes[0]).
-	validBallot := GenerateEmptyTxBallot(nr.localNode, basis, ballot.StateSIGN, nodes[1], common.NewConfig())
+	validBallot := GenerateEmptyTxBallot(nr.localNode, basis, ballot.StateSIGN, nodes[1], conf)
 	validBallot.SetVote(ballot.StateSIGN, voting.EXP)
 
 	checker := &BallotChecker{
@@ -293,7 +294,7 @@ func TestExpiredBallotCheckProposer(t *testing.T) {
 
 	// The createNodeRunnerForTesting has FixedSelector{localNode.Address()} so the proposer is always nr(nodes[0]).
 	// The invalidBallot has nodes[1] as a proposer so it is invalid.
-	invalidBallot := GenerateEmptyTxBallot(nodes[1], basis, ballot.StateSIGN, nodes[1], common.NewConfig())
+	invalidBallot := GenerateEmptyTxBallot(nodes[1], basis, ballot.StateSIGN, nodes[1], common.NewTestConfig())
 	invalidBallot.SetVote(ballot.StateSIGN, voting.EXP)
 
 	checker = &BallotChecker{

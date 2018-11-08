@@ -14,6 +14,7 @@ import (
 )
 
 func TestNewConfig(t *testing.T) {
+	conf := common.NewTestConfig()
 	st := storage.NewTestStorage()
 	_, nt, _ := network.CreateMemoryNetwork(nil)
 	cm := &mockConnectionManager{}
@@ -22,9 +23,8 @@ func TestNewConfig(t *testing.T) {
 	require.Equal(t, nil, err)
 
 	node, _ := node.NewLocalNode(keypair.Random(), endpoint, "")
-	networkID := []byte("test-network")
 
-	cfg := NewConfig(networkID, node, st, nt, cm, common.NewConfig())
+	cfg := NewConfig(conf.NetworkID, node, st, nt, cm, conf)
 	cfg.SyncPoolSize = 100
 	cfg.logger = common.NopLogger()
 

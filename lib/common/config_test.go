@@ -12,7 +12,7 @@ import (
 
 //	TestConfigDefault tests the default timeout values.
 func TestConfigDefault(t *testing.T) {
-	n := NewConfig()
+	n := NewTestConfig()
 	require.Equal(t, 2*time.Second, n.TimeoutINIT)
 	require.Equal(t, 2*time.Second, n.TimeoutSIGN)
 	require.Equal(t, 2*time.Second, n.TimeoutACCEPT)
@@ -24,7 +24,7 @@ func TestConfigDefault(t *testing.T) {
 
 //	TestConfigSetAndGet tests setting timeout fields and checking.
 func TestConfigSetAndGet(t *testing.T) {
-	n := NewConfig()
+	n := NewTestConfig()
 	n.TimeoutINIT = 3 * time.Second
 	n.TimeoutSIGN = 1 * time.Second
 	n.TimeoutACCEPT = 1 * time.Second

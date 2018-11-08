@@ -17,7 +17,7 @@ import (
 // 2. Proposer itself.
 // 3. When `ISAACStateManager` starts, the node proposes ballot to validators.
 func TestStateINITProposer(t *testing.T) {
-	conf := common.NewConfig()
+	conf := common.NewTestConfig()
 	conf.TimeoutINIT = time.Hour
 	conf.TimeoutSIGN = time.Hour
 	conf.TimeoutACCEPT = time.Hour
@@ -43,7 +43,7 @@ func TestStateINITProposer(t *testing.T) {
 // 3. When `ISAACStateManager` starts, the node waits a ballot by proposer.
 // 4. But TimeoutINIT is an hour, so it doesn't broadcast anything.
 func TestStateINITNotProposer(t *testing.T) {
-	conf := common.NewConfig()
+	conf := common.NewTestConfig()
 	conf.TimeoutINIT = time.Hour
 	conf.TimeoutSIGN = time.Hour
 	conf.TimeoutACCEPT = time.Hour
@@ -68,7 +68,7 @@ func TestStateINITNotProposer(t *testing.T) {
 // 4. But TimeoutINIT is a millisecond.
 // 5. After timeout, the node broadcasts B(`SIGN`, `EXP`)
 func TestStateINITTimeoutNotProposer(t *testing.T) {
-	conf := common.NewConfig()
+	conf := common.NewTestConfig()
 	conf.TimeoutINIT = 200 * time.Millisecond
 	conf.TimeoutSIGN = time.Hour
 	conf.TimeoutACCEPT = time.Hour
@@ -119,7 +119,7 @@ func TestStateINITTimeoutNotProposer(t *testing.T) {
 // 5. But TimeoutSIGN is a millisecond.
 // 6. After timeout, the node broadcasts B(`ACCEPT`, `EXP`)
 func TestStateSIGNTimeoutProposer(t *testing.T) {
-	conf := common.NewConfig()
+	conf := common.NewTestConfig()
 	conf.TimeoutINIT = time.Hour
 	conf.TimeoutSIGN = 200 * time.Millisecond
 	conf.TimeoutACCEPT = time.Hour
@@ -177,7 +177,7 @@ func TestStateSIGNTimeoutProposer(t *testing.T) {
 // 7. TimeoutSIGN is a millisecond.
 // 8. After timeout, the node broadcasts B(`ACCEPT`, `EXP`).
 func TestStateSIGNTimeoutNotProposer(t *testing.T) {
-	conf := common.NewConfig()
+	conf := common.NewTestConfig()
 	conf.TimeoutINIT = 200 * time.Millisecond
 	conf.TimeoutSIGN = 200 * time.Millisecond
 	conf.TimeoutACCEPT = time.Hour
@@ -231,7 +231,7 @@ func TestStateSIGNTimeoutNotProposer(t *testing.T) {
 // 5. TimeoutSIGN is a millisecond.
 // 6. After timeout, the node broadcasts B(`ACCEPT`, `EXP`).
 func TestStateACCEPTTimeoutProposerThenNotProposer(t *testing.T) {
-	conf := common.NewConfig()
+	conf := common.NewTestConfig()
 	conf.TimeoutINIT = time.Hour
 	conf.TimeoutSIGN = 200 * time.Millisecond
 	conf.TimeoutACCEPT = 200 * time.Millisecond
@@ -290,7 +290,7 @@ func TestStateACCEPTTimeoutProposerThenNotProposer(t *testing.T) {
 // 6. TimeoutSIGN is a millisecond.
 // 7. After timeout, the node broadcasts B(`ACCEPT`, `EXP`).
 func TestStateTransitFromTimeoutInitToAccept(t *testing.T) {
-	conf := common.NewConfig()
+	conf := common.NewTestConfig()
 	conf.TimeoutINIT = time.Hour
 	conf.TimeoutSIGN = 200 * time.Millisecond
 	conf.TimeoutACCEPT = 200 * time.Millisecond
@@ -343,7 +343,7 @@ func TestStateTransitFromTimeoutInitToAccept(t *testing.T) {
 // 1. TimeoutACCEPT is a millisecond.
 // 1. After timeout, ISAACState is back to `INIT`
 func TestStateTransitFromTimeoutSignToAccept(t *testing.T) {
-	conf := common.NewConfig()
+	conf := common.NewTestConfig()
 	conf.TimeoutINIT = time.Hour
 	conf.TimeoutSIGN = time.Hour
 	conf.TimeoutACCEPT = 200 * time.Millisecond

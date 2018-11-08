@@ -505,6 +505,7 @@ func runNode() error {
 		TimeoutINIT:       timeoutINIT,
 		TimeoutSIGN:       timeoutSIGN,
 		TimeoutACCEPT:     timeoutACCEPT,
+		NetworkID:         []byte(flagNetworkID),
 		BlockTime:         blockTime,
 		TxsLimit:          int(transactionsLimit),
 		OpsLimit:          int(operationsLimit),

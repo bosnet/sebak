@@ -13,7 +13,7 @@ import (
 func TestCreateAccountOperation(t *testing.T) {
 	kp := keypair.Random()
 
-	conf := common.NewConfig()
+	conf := common.NewTestConfig()
 	{ // minimum Amount
 		o := CreateAccount{
 			Target: kp.Address(),

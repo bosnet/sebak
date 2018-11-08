@@ -9,7 +9,7 @@ import (
 
 // In TestProposerSelector test, the proposer is always the node itself because of SelfProposerCalculator.
 func TestProposerSelector(t *testing.T) {
-	nodeRunners := createTestNodeRunner(1, common.NewConfig())
+	nodeRunners := createTestNodeRunner(1, common.NewTestConfig())
 
 	nodeRunner := nodeRunners[0]
 
@@ -22,7 +22,7 @@ func TestProposerSelector(t *testing.T) {
 func TestNodesHaveSameProposers(t *testing.T) {
 	numberOfNodes := 3
 
-	nodeRunners := createTestNodeRunner(numberOfNodes, common.NewConfig())
+	nodeRunners := createTestNodeRunner(numberOfNodes, common.NewTestConfig())
 
 	nr0 := nodeRunners[0]
 	nr1 := nodeRunners[1]

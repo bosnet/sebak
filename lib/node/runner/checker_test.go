@@ -380,7 +380,7 @@ type irregularIncomingBallot struct {
 }
 
 func (p *irregularIncomingBallot) prepare() {
-	p.nr, p.nodes, _ = createNodeRunnerForTesting(2, common.NewConfig(), nil)
+	p.nr, p.nodes, _ = createNodeRunnerForTesting(2, common.NewTestConfig(), nil)
 
 	p.genesisBlock = block.GetGenesis(p.nr.Storage())
 	p.commonAccount, _ = GetCommonAccount(p.nr.Storage())

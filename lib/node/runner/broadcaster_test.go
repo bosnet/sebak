@@ -8,7 +8,7 @@ import (
 )
 
 func TestConnectionManagerBroadcaster(t *testing.T) {
-	conf := common.NewConfig()
+	conf := common.NewTestConfig()
 
 	recv := make(chan struct{})
 	nr, _, cm := createNodeRunnerForTesting(3, conf, recv)
