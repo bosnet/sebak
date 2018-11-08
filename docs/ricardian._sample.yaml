@@ -1,29 +1,3 @@
-# How to make a ricardian contract for PF proposal.
-
-In Boscoin, ricardian contract is written in yaml format.
-
-There are fields which proposer should fill out.
-
-Field | Content | Type
-:----|:--------|:----------------
-Title | Title of PF | string
-Abstract | Brief summary of the PF | string
-Id | Identification code of the PF | string
-Proposer | Name of individual or organization who submit proposal | string
-Proposer account | Sebak network public address of proposer(BOScoin public address) | string
-Execution duration | PF execution duration(blocks) |  uint64
-The amount of issuance | The amount of coins issued through the PF in BOS unit(BOS = 10000000Gon) | uint64
-PF budget account | Issued coin will be sent to PF budget account(BOScoin public address) | string
-Execution condition | Condition which should satisfy to pass voting | string
-Definitions | definitions of terms used in proposal | string
-Detailed description | Detailed description about the PF | string
-Limitations on Warranties | Limitations on Warranties about the PF | string
-
----
-
-Here's the example of ricardian contract with yaml format.
-
-```
 title: Membership Reward PF
 
 Abstract: |
@@ -205,5 +179,4 @@ Limitations on Warranties: |
       interference with normal operation of the server by a third party, or unauthorized usage of Members’ information, 
       to the extent permitted under the relevant laws. Any gains or rights, acquired through illegal access to the BlockchainOS Inc.’s server, 
       interference with normal operation of the server by a third party, or unauthorized usage of Members’ information, shall be forfeited. 
-      The forfeiture does not include any damage compensation. 
-```
+      The forfeiture does not include any damage compensation.
