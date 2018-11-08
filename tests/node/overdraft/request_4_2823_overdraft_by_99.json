@@ -1,7 +1,7 @@
 {
   "T": "transaction",
   "H": {
-    "version": "",
+    "version": "0x00",
     "created": "2018-09-27T14:33:37.938031382+09:00",
     "signature": "uVfEmWiRDampA22wjGjAaRa8PmpMaZQ9yjdT1KwX6BKee85hPKvvaorU8kS6iDexQ1G5ziyxLbEE2rQtXLD2KWj"
   },
