@@ -21,7 +21,6 @@ type Config struct {
 	storage           *storage.LevelDBBackend
 	network           network.Network
 	connectionManager network.ConnectionManager
-	networkID         []byte
 	localNode         *node.LocalNode
 	logger            log15.Logger
 	commonCfg         common.Config
@@ -32,8 +31,7 @@ type Config struct {
 	CheckBlockHeightInterval time.Duration
 }
 
-func NewConfig(networkID []byte,
-	localNode *node.LocalNode,
+func NewConfig(localNode *node.LocalNode,
 	st *storage.LevelDBBackend,
 	nt network.Network,
 	cm network.ConnectionManager,
@@ -43,7 +41,6 @@ func NewConfig(networkID []byte,
 		network:           nt,
 		connectionManager: cm,
 		logger:            log.New(log15.Ctx{"node": localNode.Alias()}),
-		networkID:         networkID,
 		commonCfg:         cfg,
 		localNode:         localNode,
 

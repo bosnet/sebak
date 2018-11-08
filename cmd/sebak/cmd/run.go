@@ -518,7 +518,7 @@ func runNode() error {
 		return err
 	}
 
-	c := sync.NewConfig([]byte(flagNetworkID), localNode, st, nt, connectionManager, conf)
+	c := sync.NewConfig(localNode, st, nt, connectionManager, conf)
 	//Place setting config
 	c.SyncPoolSize = syncPoolSize
 	c.FetchTimeout = syncFetchTimeout
