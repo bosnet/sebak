@@ -45,11 +45,11 @@ type ISAAC struct {
 
 // ISAAC should know network.ConnectionManager
 // because the ISAAC uses connected validators when calculating proposer
-func NewISAAC(networkID []byte, node *node.LocalNode, p voting.ThresholdPolicy,
+func NewISAAC(node *node.LocalNode, p voting.ThresholdPolicy,
 	cm network.ConnectionManager, st *storage.LevelDBBackend, conf common.Config, syncer SyncController) (is *ISAAC, err error) {
 
 	is = &ISAAC{
-		NetworkID:         networkID,
+		NetworkID:         conf.NetworkID,
 		Node:              node,
 		policy:            p,
 		RunningRounds:     map[string]*RunningRound{},

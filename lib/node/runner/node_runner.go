@@ -94,7 +94,6 @@ type NodeRunner struct {
 }
 
 func NewNodeRunner(
-	networkID string,
 	localNode *node.LocalNode,
 	policy voting.ThresholdPolicy,
 	n network.Network,
@@ -103,7 +102,7 @@ func NewNodeRunner(
 	conf common.Config,
 ) (nr *NodeRunner, err error) {
 	nr = &NodeRunner{
-		networkID:       []byte(networkID),
+		networkID:       []byte(conf.NetworkID),
 		localNode:       localNode,
 		policy:          policy,
 		network:         n,
