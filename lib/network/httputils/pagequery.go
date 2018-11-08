@@ -8,6 +8,7 @@ import (
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/node/runner/api/resource"
+	"boscoin.io/sebak/lib/storage"
 )
 
 const DefaultMaxLimit uint64 = 100
@@ -56,6 +57,10 @@ func (p *PageQuery) NextLink(cursor []byte) string {
 	query := p.urlValues(cursor, true).Encode()
 	link := fmt.Sprintf("%s?%s", path, query)
 	return link
+}
+
+func (p *PageQuery) ListOptions() storage.ListOptions {
+	return storage.NewDefaultListOptions(p.Reverse(), p.Cursor(), p.Limit())
 }
 
 func (p *PageQuery) ResourceList(rs []resource.Resource, cursor []byte) *resource.ResourceList {
