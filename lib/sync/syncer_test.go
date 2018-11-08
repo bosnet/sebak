@@ -77,7 +77,7 @@ func SyncerTest(t *testing.T, fn func(*SyncerTestContext)) {
 	tickc := make(chan time.Time)
 	infoc := make(chan *SyncInfo)
 
-	syncer := NewSyncer(st, nw, cm, conf.NetworkID, localNode, conf)
+	syncer := NewSyncer(st, nw, cm, localNode, conf)
 	defer syncer.Stop()
 
 	syncer.fetcher = &mockFetcher{

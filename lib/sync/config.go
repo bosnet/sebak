@@ -56,7 +56,7 @@ func NewConfig(networkID []byte,
 }
 
 func (c *Config) NewSyncer() *Syncer {
-	s := NewSyncer(c.storage, c.network, c.connectionManager, c.networkID, c.localNode, c.commonCfg, func(s *Syncer) {
+	s := NewSyncer(c.storage, c.network, c.connectionManager, c.localNode, c.commonCfg, func(s *Syncer) {
 		s.poolSize = c.SyncPoolSize
 		s.fetchTimeout = c.FetchTimeout
 		s.retryInterval = c.RetryInterval
