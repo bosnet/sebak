@@ -12,6 +12,7 @@ import (
 	logging "github.com/inconshreveable/log15"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/network/httputils"
 )
 
 type Client struct {
@@ -114,6 +115,9 @@ func (c *Client) WrapHandlerFunc(handlerFunc http.HandlerFunc) http.HandlerFunc 
 }
 
 func (c *Client) handleCache(next http.Handler, w http.ResponseWriter, r *http.Request) bool {
+	if httputils.IsEventStream(r) {
+		return false
+	}
 	if ok := c.methods[r.Method]; !ok {
 		return false
 	}
