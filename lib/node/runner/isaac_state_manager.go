@@ -209,9 +209,9 @@ func (sm *ISAACStateManager) Start() {
 					sm.transitSignal(state)
 					timer.Reset(sm.Conf.TimeoutACCEPT)
 				case ballot.StateALLCONFIRM:
-					timer.Reset(time.Minute)
 					sm.setState(state)
 					sm.transitSignal(state)
+					timer.Reset(sm.Conf.TimeoutALLCONFIRM)
 				}
 
 			case <-sm.stop:
@@ -257,6 +257,8 @@ func (sm *ISAACStateManager) resetTimer(timer *time.Timer, state ballot.State) {
 		timer.Reset(sm.Conf.TimeoutSIGN)
 	case ballot.StateACCEPT:
 		timer.Reset(sm.Conf.TimeoutACCEPT)
+	case ballot.StateALLCONFIRM:
+		timer.Reset(sm.Conf.TimeoutALLCONFIRM)
 	}
 }
 

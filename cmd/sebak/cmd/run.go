@@ -51,6 +51,7 @@ var (
 	flagSyncRetryInterval string = common.GetENVValue("SEBAK_SYNC_RETRY_INTERVAL", "10s")
 	flagThreshold         string = common.GetENVValue("SEBAK_THRESHOLD", "67")
 	flagTimeoutACCEPT     string = common.GetENVValue("SEBAK_TIMEOUT_ACCEPT", "2")
+	flagTimeoutALLCONFIRM string = common.GetENVValue("SEBAK_TIMEOUT_ALLCONFIRM", "30")
 	flagTimeoutINIT       string = common.GetENVValue("SEBAK_TIMEOUT_INIT", "2")
 	flagTimeoutSIGN       string = common.GetENVValue("SEBAK_TIMEOUT_SIGN", "2")
 	flagTLSCertFile       string = common.GetENVValue("SEBAK_TLS_CERT", "sebak.crt")
@@ -83,6 +84,7 @@ var (
 	syncRetryInterval time.Duration
 	threshold         int
 	timeoutACCEPT     time.Duration
+	timeoutALLCONFIRM time.Duration
 	timeoutINIT       time.Duration
 	timeoutSIGN       time.Duration
 	transactionsLimit uint64
@@ -158,6 +160,7 @@ func init() {
 	nodeCmd.Flags().StringVar(&flagTimeoutINIT, "timeout-init", flagTimeoutINIT, "timeout of the init state")
 	nodeCmd.Flags().StringVar(&flagTimeoutSIGN, "timeout-sign", flagTimeoutSIGN, "timeout of the sign state")
 	nodeCmd.Flags().StringVar(&flagTimeoutACCEPT, "timeout-accept", flagTimeoutACCEPT, "timeout of the accept state")
+	nodeCmd.Flags().StringVar(&flagTimeoutALLCONFIRM, "timeout-allconfirm", flagTimeoutALLCONFIRM, "timeout of the allconfirm state")
 	nodeCmd.Flags().StringVar(&flagBlockTime, "block-time", flagBlockTime, "block creation time")
 	nodeCmd.Flags().StringVar(&flagTransactionsLimit, "transactions-limit", flagTransactionsLimit, "transactions limit in a ballot")
 	nodeCmd.Flags().StringVar(&flagUnfreezingPeriod, "unfreezing-period", flagUnfreezingPeriod, "how long freezing must last")
@@ -317,6 +320,7 @@ func parseFlagsNode() {
 	timeoutINIT = getTime(flagTimeoutINIT, 2*time.Second, "--timeout-init")
 	timeoutSIGN = getTime(flagTimeoutSIGN, 2*time.Second, "--timeout-sign")
 	timeoutACCEPT = getTime(flagTimeoutACCEPT, 2*time.Second, "--timeout-accept")
+	timeoutALLCONFIRM = getTime(flagTimeoutALLCONFIRM, 30*time.Second, "--timeout-accept")
 	blockTime = getTime(flagBlockTime, 5*time.Second, "--block-time")
 
 	if transactionsLimit, err = strconv.ParseUint(flagTransactionsLimit, 10, 64); err != nil {
@@ -420,6 +424,7 @@ func parseFlagsNode() {
 	parsedFlags = append(parsedFlags, "\n\ttimeout-init", flagTimeoutINIT)
 	parsedFlags = append(parsedFlags, "\n\ttimeout-sign", flagTimeoutSIGN)
 	parsedFlags = append(parsedFlags, "\n\ttimeout-accept", flagTimeoutACCEPT)
+	parsedFlags = append(parsedFlags, "\n\ttimeout-allconfirm", flagTimeoutALLCONFIRM)
 	parsedFlags = append(parsedFlags, "\n\tblock-time", flagBlockTime)
 	parsedFlags = append(parsedFlags, "\n\ttransactions-limit", flagTransactionsLimit)
 	parsedFlags = append(parsedFlags, "\n\toperations-limit", flagOperationsLimit)
@@ -505,6 +510,7 @@ func runNode() error {
 		TimeoutINIT:       timeoutINIT,
 		TimeoutSIGN:       timeoutSIGN,
 		TimeoutACCEPT:     timeoutACCEPT,
+		TimeoutALLCONFIRM: timeoutALLCONFIRM,
 		NetworkID:         []byte(flagNetworkID),
 		BlockTime:         blockTime,
 		TxsLimit:          int(transactionsLimit),
