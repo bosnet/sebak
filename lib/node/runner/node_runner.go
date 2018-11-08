@@ -197,13 +197,15 @@ func (nr *NodeRunner) Ready() {
 
 	// cache middleware
 	var (
-		cache   httpcache.Wrapper
-		baCache httpcache.Wrapper
+		cache     httpcache.Wrapper
+		listCache httpcache.Wrapper
+		baCache   httpcache.Wrapper
 	)
 
 	if nr.Conf.HTTPCacheAdapter == "" {
 		// no use cache middleware
 		cache = httpcache.NewNopClient()
+		listCache = httpcache.NewNopClient()
 		baCache = httpcache.NewNopClient()
 		nr.log.Info("http cache is disabled")
 	} else {
@@ -220,6 +222,11 @@ func (nr *NodeRunner) Ready() {
 		cache, err = httpcache.NewClient(defaultCacheOptions, httpcache.WithExpire(1*time.Minute))
 		if err != nil {
 			nr.log.Error("Cache middleware has an error", "err", err)
+			return
+		}
+		listCache, err = httpcache.NewClient(defaultCacheOptions, httpcache.WithExpire(3*time.Second))
+		if err != nil {
+			nr.log.Error("List cache middleware has an error", "err", err)
 			return
 		}
 		baCache, err = httpcache.NewClient(defaultCacheOptions, httpcache.WithExpire(1*time.Second))
@@ -276,11 +283,11 @@ func (nr *NodeRunner) Ready() {
 	).Methods("GET", "OPTIONS")
 	nr.network.AddHandler(
 		apiHandler.HandlerURLPattern(api.GetAccountTransactionsHandlerPattern),
-		cache.WrapHandlerFunc(apiHandler.GetTransactionsByAccountHandler),
+		listCache.WrapHandlerFunc(apiHandler.GetTransactionsByAccountHandler),
 	).Methods("GET", "OPTIONS")
 	nr.network.AddHandler(
 		apiHandler.HandlerURLPattern(api.GetAccountOperationsHandlerPattern),
-		cache.WrapHandlerFunc(apiHandler.GetOperationsByAccountHandler),
+		listCache.WrapHandlerFunc(apiHandler.GetOperationsByAccountHandler),
 	).Methods("GET", "OPTIONS")
 	nr.network.AddHandler(
 		apiHandler.HandlerURLPattern(api.GetFrozenAccountHandlerPattern),
@@ -296,11 +303,11 @@ func (nr *NodeRunner) Ready() {
 	).Methods("GET", "OPTIONS")
 	nr.network.AddHandler(
 		apiHandler.HandlerURLPattern(api.GetTransactionOperationsHandlerPattern),
-		cache.WrapHandlerFunc(apiHandler.GetOperationsByTxHashHandler),
+		listCache.WrapHandlerFunc(apiHandler.GetOperationsByTxHashHandler),
 	).Methods("GET", "OPTIONS")
 	nr.network.AddHandler(
 		apiHandler.HandlerURLPattern(api.GetTransactionHistoryHandlerPattern),
-		cache.WrapHandlerFunc(apiHandler.GetTransactionHistoryHandler),
+		listCache.WrapHandlerFunc(apiHandler.GetTransactionHistoryHandler),
 	).Methods("GET", "OPTIONS")
 
 	TransactionsHandler := func(w http.ResponseWriter, r *http.Request) {
