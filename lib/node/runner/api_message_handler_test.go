@@ -31,7 +31,7 @@ type HelperTestNodeMessageHandler struct {
 func (p *HelperTestNodeMessageHandler) Prepare() {
 	p.HelperTestGetNodeTransactionsHandler.Prepare()
 
-	p.conf = common.NewConfig()
+	p.conf = common.NewTestConfig()
 	p.nodeHandler = NewNetworkHandlerNode(
 		p.localNode,
 		p.network,
@@ -78,7 +78,7 @@ func TestNodeMessageHandler(t *testing.T) {
 	u := p.URL(nil)
 
 	tx := p.makeTransaction()
-	require.Nil(t, tx.IsWellFormed(networkID, p.conf))
+	require.Nil(t, tx.IsWellFormed(p.conf))
 
 	postData, _ := tx.Serialize()
 	req, err := http.NewRequest("POST", u.String(), bytes.NewBuffer(postData))
@@ -100,7 +100,7 @@ func TestNodeMessageHandlerNotWellformedTransaction(t *testing.T) {
 	{ // invalid signature
 		tx := p.makeTransaction()
 		tx.H.Signature = "findme"
-		errIsWellformed := tx.IsWellFormed(networkID, p.conf)
+		errIsWellformed := tx.IsWellFormed(p.conf)
 		require.Equal(t, errors.InvalidTransaction.Code, errIsWellformed.(*errors.Error).Code)
 
 		postData, _ := tx.Serialize()
@@ -135,7 +135,7 @@ func TestNodeMessageHandlerNotWellformedTransaction(t *testing.T) {
 		tx.B.Operations[0].B = opb
 		tx.Sign(p.genesisKeypair, networkID)
 
-		errIsWellformed := tx.IsWellFormed(networkID, p.conf)
+		errIsWellformed := tx.IsWellFormed(p.conf)
 		require.Equal(t, errors.OperationAmountUnderflow.Code, errIsWellformed.(*errors.Error).Code)
 
 		postData, _ := tx.Serialize()

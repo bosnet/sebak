@@ -16,18 +16,16 @@ import (
 
 type TestSuite struct {
 	suite.Suite
-	conf      common.Config
-	networkID []byte
+	conf common.Config
 }
 
 func (suite *TestSuite) SetupTest() {
-	suite.conf = common.NewConfig()
+	suite.conf = common.NewTestConfig()
 	suite.conf.OpsLimit = 10
-	suite.networkID = []byte("sebak-unittest-tx-suite")
 }
 
 func (suite *TestSuite) TestLoadTransactionSuite() {
-	_, tx := TestMakeTransaction(suite.networkID, 1)
+	_, tx := TestMakeTransaction(suite.conf.NetworkID, 1)
 
 	b, err := tx.Serialize()
 	require.Nil(suite.T(), err)
@@ -39,49 +37,48 @@ func (suite *TestSuite) TestLoadTransactionSuite() {
 }
 
 func (suite *TestSuite) TestIsWellFormedTransactionSuite() {
-	_, tx := TestMakeTransaction(suite.networkID, 1)
+	_, tx := TestMakeTransaction(suite.conf.NetworkID, 1)
 
-	err := tx.IsWellFormed(suite.networkID, suite.conf)
+	err := tx.IsWellFormed(suite.conf)
 	require.Nil(suite.T(), err)
 }
 
 func (suite *TestSuite) TestIsWellFormedTransactionWithLowerFeeSuite() {
 	var err error
-	var networkID []byte = []byte("test-sebak")
 
 	{ // valid fee
-		kp, tx := TestMakeTransaction(suite.networkID, 3)
-		tx.Sign(kp, suite.networkID)
-		err = tx.IsWellFormed(suite.networkID, suite.conf)
+		kp, tx := TestMakeTransaction(suite.conf.NetworkID, 3)
+		tx.Sign(kp, suite.conf.NetworkID)
+		err = tx.IsWellFormed(suite.conf)
 		require.Nil(suite.T(), err)
 	}
 
 	{ // fee is over than len(Operations) * BaseFee
-		kp, tx := TestMakeTransaction(suite.networkID, 3)
+		kp, tx := TestMakeTransaction(suite.conf.NetworkID, 3)
 		tx.B.Fee = tx.B.Fee.MustAdd(1)
-		tx.Sign(kp, suite.networkID)
-		err = tx.IsWellFormed(suite.networkID, suite.conf)
+		tx.Sign(kp, suite.conf.NetworkID)
+		err = tx.IsWellFormed(suite.conf)
 		require.Nil(suite.T(), err)
 	}
 
 	{ // fee is lower than len(Operations) * BaseFee
-		kp, tx := TestMakeTransaction(suite.networkID, 3)
+		kp, tx := TestMakeTransaction(suite.conf.NetworkID, 3)
 		tx.B.Fee = tx.B.Fee.MustSub(1)
-		tx.Sign(kp, suite.networkID)
-		err = tx.IsWellFormed(suite.networkID, suite.conf)
+		tx.Sign(kp, suite.conf.NetworkID)
+		err = tx.IsWellFormed(suite.conf)
 		require.Equal(suite.T(), errors.InvalidFee, err, "Transaction shouidn't pass Fee checks")
 	}
 
 	{ // zero fee
-		kp, tx := TestMakeTransaction(suite.networkID, 3)
+		kp, tx := TestMakeTransaction(suite.conf.NetworkID, 3)
 		tx.B.Fee = common.Amount(0)
-		tx.Sign(kp, suite.networkID)
-		err = tx.IsWellFormed(suite.networkID, suite.conf)
+		tx.Sign(kp, suite.conf.NetworkID)
+		err = tx.IsWellFormed(suite.conf)
 		require.Equal(suite.T(), errors.InvalidFee, err, "Transaction shouidn't pass Fee checks")
 	}
 
 	{ // with CongressVoting, it has zero fee
-		kp, tx := TestMakeTransaction(networkID, 3)
+		kp, tx := TestMakeTransaction(suite.conf.NetworkID, 3)
 
 		opb := operation.NewCongressVoting([]byte("dummy contract"), 1, 100)
 		op := operation.Operation{
@@ -89,16 +86,16 @@ func (suite *TestSuite) TestIsWellFormedTransactionWithLowerFeeSuite() {
 			B: opb,
 		}
 		tx.B.Operations = append(tx.B.Operations, op)
-		tx.Sign(kp, networkID)
+		tx.Sign(kp, suite.conf.NetworkID)
 		require.Equal(suite.T(), tx.B.Fee, common.BaseFee*3)
 		require.Equal(suite.T(), len(tx.B.Operations), 4)
 
-		err = tx.IsWellFormed(networkID, suite.conf)
+		err = tx.IsWellFormed(suite.conf)
 		require.NoError(suite.T(), err)
 	}
 
 	{ // with CongressVotingResult, it has zero fee
-		kp, tx := TestMakeTransaction(networkID, 3)
+		kp, tx := TestMakeTransaction(suite.conf.NetworkID, 3)
 
 		opb := operation.NewCongressVotingResult(
 			string(common.MakeHash([]byte("dummydummy"))),
@@ -112,16 +109,16 @@ func (suite *TestSuite) TestIsWellFormedTransactionWithLowerFeeSuite() {
 			B: opb,
 		}
 		tx.B.Operations = append(tx.B.Operations, op)
-		tx.Sign(kp, networkID)
+		tx.Sign(kp, suite.conf.NetworkID)
 		require.Equal(suite.T(), tx.B.Fee, common.BaseFee*3)
 		require.Equal(suite.T(), len(tx.B.Operations), 4)
 
-		err = tx.IsWellFormed(networkID, suite.conf)
+		err = tx.IsWellFormed(suite.conf)
 		require.NoError(suite.T(), err)
 	}
 
 	{ // with UnfreezeRequest, it is not zero fee
-		kp, tx := TestMakeTransaction(networkID, 3)
+		kp, tx := TestMakeTransaction(suite.conf.NetworkID, 3)
 
 		opb := operation.NewUnfreezeRequest()
 		op := operation.Operation{
@@ -130,11 +127,11 @@ func (suite *TestSuite) TestIsWellFormedTransactionWithLowerFeeSuite() {
 		}
 		tx.B.Operations = append(tx.B.Operations, op)
 		tx.B.Fee = common.BaseFee * 4
-		tx.Sign(kp, networkID)
+		tx.Sign(kp, suite.conf.NetworkID)
 		require.Equal(suite.T(), tx.B.Fee, common.BaseFee*4)
 		require.Equal(suite.T(), len(tx.B.Operations), 4)
 
-		err = tx.IsWellFormed(networkID, suite.conf)
+		err = tx.IsWellFormed(suite.conf)
 		require.NoError(suite.T(), err)
 	}
 }
@@ -142,36 +139,36 @@ func (suite *TestSuite) TestIsWellFormedTransactionWithLowerFeeSuite() {
 func (suite *TestSuite) TestIsWellFormedTransactionWithInvalidSourceAddressSuite() {
 	var err error
 
-	_, tx := TestMakeTransaction(suite.networkID, 1)
+	_, tx := TestMakeTransaction(suite.conf.NetworkID, 1)
 	tx.B.Source = "invalid-address"
-	err = tx.IsWellFormed(suite.networkID, suite.conf)
+	err = tx.IsWellFormed(suite.conf)
 	require.NotNil(suite.T(), err)
 }
 
 func (suite *TestSuite) TestIsWellFormedTransactionWithTargetAddressIsSameWithSourceAddressSuite() {
 	var err error
 
-	_, tx := TestMakeTransaction(suite.networkID, 1)
+	_, tx := TestMakeTransaction(suite.conf.NetworkID, 1)
 	if pop, ok := tx.B.Operations[0].B.(operation.Payable); ok {
 		tx.B.Source = pop.TargetAddress()
 	} else {
 		require.True(suite.T(), ok)
 	}
-	err = tx.IsWellFormed(suite.networkID, suite.conf)
+	err = tx.IsWellFormed(suite.conf)
 	require.NotNil(suite.T(), err, "Transaction to self should be rejected")
 }
 
 func (suite *TestSuite) TestIsWellFormedTransactionWithInvalidSignatureSuite() {
 	var err error
 
-	_, tx := TestMakeTransaction(suite.networkID, 1)
-	err = tx.IsWellFormed(suite.networkID, suite.conf)
+	_, tx := TestMakeTransaction(suite.conf.NetworkID, 1)
+	err = tx.IsWellFormed(suite.conf)
 	require.Nil(suite.T(), err)
 
-	newSignature, _ := keypair.Master("find me").Sign(append(suite.networkID, []byte(tx.B.MakeHashString())...))
+	newSignature, _ := keypair.Master("find me").Sign(append(suite.conf.NetworkID, []byte(tx.B.MakeHashString())...))
 	tx.H.Signature = base58.Encode(newSignature)
 
-	err = tx.IsWellFormed(suite.networkID, suite.conf)
+	err = tx.IsWellFormed(suite.conf)
 	require.NotNil(suite.T(), err)
 }
 
@@ -179,14 +176,14 @@ func (suite *TestSuite) TestIsWellFormedTransactionMaxOperationsInTransactionSui
 	var err error
 
 	{ // over operation.Limit
-		_, tx := TestMakeTransaction(suite.networkID, suite.conf.OpsLimit+1)
-		err = tx.IsWellFormed(suite.networkID, suite.conf)
+		_, tx := TestMakeTransaction(suite.conf.NetworkID, suite.conf.OpsLimit+1)
+		err = tx.IsWellFormed(suite.conf)
 		require.Equal(suite.T(), errors.TransactionHasOverMaxOperations, err)
 	}
 
 	{ // operation.Limit
-		_, tx := TestMakeTransaction(suite.networkID, suite.conf.OpsLimit)
-		err = tx.IsWellFormed(suite.networkID, suite.conf)
+		_, tx := TestMakeTransaction(suite.conf.NetworkID, suite.conf.OpsLimit)
+		err = tx.IsWellFormed(suite.conf)
 		require.Nil(suite.T(), err)
 	}
 }

@@ -50,7 +50,7 @@ func TransactionUnmarshal(c common.Checker, args ...interface{}) (err error) {
 		return
 	}
 
-	if err = tx.IsWellFormed(checker.NetworkID, checker.Conf); err != nil {
+	if err = tx.IsWellFormed(checker.Conf); err != nil {
 		return
 	}
 

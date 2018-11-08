@@ -18,11 +18,14 @@ type Config struct {
 	TxsLimit int
 	OpsLimit int
 
+	NetworkID []byte
+
+	// Those fields are not consensus-related
 	RateLimitRuleAPI  RateLimitRule
 	RateLimitRuleNode RateLimitRule
 }
 
-func NewConfig() Config {
+func NewConfig(networkID []byte) Config {
 	p := Config{}
 
 	p.TimeoutINIT = 2 * time.Second
@@ -32,6 +35,8 @@ func NewConfig() Config {
 
 	p.TxsLimit = 1000
 	p.OpsLimit = 1000
+	p.NetworkID = networkID
+
 	p.RateLimitRuleAPI = NewRateLimitRule(RateLimitAPI)
 	p.RateLimitRuleNode = NewRateLimitRule(RateLimitNode)
 

@@ -13,7 +13,7 @@ import (
 	"boscoin.io/sebak/lib/transaction"
 )
 
-var networkID []byte = []byte("sebak-test-network")
+var networkID []byte = []byte("sebak-unittest")
 
 const (
 	QueryPattern = "cursor={cursor}&limit={limit}&reverse={reverse}&type={type}"

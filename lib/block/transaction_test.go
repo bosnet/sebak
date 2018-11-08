@@ -13,7 +13,8 @@ import (
 )
 
 func TestNewBlockTransaction(t *testing.T) {
-	_, tx := transaction.TestMakeTransaction(networkID, 1)
+	conf := common.NewTestConfig()
+	_, tx := transaction.TestMakeTransaction(conf.NetworkID, 1)
 	block := TestMakeNewBlock([]string{tx.GetHash()})
 	bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, block.Confirmed, tx)
 
@@ -35,9 +36,10 @@ func TestNewBlockTransaction(t *testing.T) {
 }
 
 func TestBlockTransactionSaveAndGet(t *testing.T) {
+	conf := common.NewTestConfig()
 	st := storage.NewTestStorage()
 
-	bt := makeNewBlockTransaction(networkID, 1)
+	bt := makeNewBlockTransaction(conf.NetworkID, 1)
 	err := bt.Save(st)
 	require.NoError(t, err)
 
@@ -55,9 +57,10 @@ func TestBlockTransactionSaveAndGet(t *testing.T) {
 }
 
 func TestBlockTransactionSaveExisting(t *testing.T) {
+	conf := common.NewTestConfig()
 	st := storage.NewTestStorage()
 
-	bt := makeNewBlockTransaction(networkID, 1)
+	bt := makeNewBlockTransaction(conf.NetworkID, 1)
 	err := bt.Save(st)
 	require.NoError(t, err)
 
@@ -71,6 +74,7 @@ func TestBlockTransactionSaveExisting(t *testing.T) {
 }
 
 func TestMultipleBlockTransactionSource(t *testing.T) {
+	conf := common.NewTestConfig()
 	kp := keypair.Random()
 	kpAnother := keypair.Random()
 	st := storage.NewTestStorage()
@@ -81,7 +85,7 @@ func TestMultipleBlockTransactionSource(t *testing.T) {
 	var txHashes []string
 	var createdOrder []string
 	for i := 0; i < numTxs; i++ {
-		tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, kp)
+		tx := transaction.TestMakeTransactionWithKeypair(conf.NetworkID, 1, kp)
 		txs = append(txs, tx)
 		createdOrder = append(createdOrder, tx.GetHash())
 		txHashes = append(txHashes, tx.GetHash())
@@ -99,7 +103,7 @@ func TestMultipleBlockTransactionSource(t *testing.T) {
 	txs = []transaction.Transaction{}
 	txHashes = []string{}
 	for i := 0; i < numTxs; i++ {
-		tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, kpAnother)
+		tx := transaction.TestMakeTransactionWithKeypair(conf.NetworkID, 1, kpAnother)
 		txs = append(txs, tx)
 		txHashes = append(txHashes, tx.GetHash())
 	}
@@ -154,6 +158,7 @@ func TestMultipleBlockTransactionSource(t *testing.T) {
 }
 
 func TestMultipleBlockTransactionConfirmed(t *testing.T) {
+	conf := common.NewTestConfig()
 	kp := keypair.Random()
 	st := storage.NewTestStorage()
 
@@ -163,7 +168,7 @@ func TestMultipleBlockTransactionConfirmed(t *testing.T) {
 	var txHashes []string
 	var createdOrder []string
 	for i := 0; i < numTxs; i++ {
-		tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, kp)
+		tx := transaction.TestMakeTransactionWithKeypair(conf.NetworkID, 1, kp)
 		createdOrder = append(createdOrder, tx.GetHash())
 		txs = append(txs, tx)
 		txHashes = append(txHashes, tx.GetHash())
@@ -217,9 +222,10 @@ func TestMultipleBlockTransactionConfirmed(t *testing.T) {
 }
 
 func TestBlockTransactionMultipleSave(t *testing.T) {
+	conf := common.NewTestConfig()
 	st := storage.NewTestStorage()
 
-	bt := makeNewBlockTransaction(networkID, 1)
+	bt := makeNewBlockTransaction(conf.NetworkID, 1)
 	err := bt.Save(st)
 	require.NoError(t, err)
 
@@ -232,6 +238,7 @@ func TestBlockTransactionMultipleSave(t *testing.T) {
 }
 
 func TestMultipleBlockTransactionGetByAccount(t *testing.T) {
+	conf := common.NewTestConfig()
 	kp := keypair.Random()
 	kpAnother := keypair.Random()
 	st := storage.NewTestStorage()
@@ -244,7 +251,7 @@ func TestMultipleBlockTransactionGetByAccount(t *testing.T) {
 	var blk Block
 	{
 		for i := 0; i < numTxs; i++ {
-			tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, kp)
+			tx := transaction.TestMakeTransactionWithKeypair(conf.NetworkID, 1, kp)
 			txs = append(txs, tx)
 			createdOrder = append(createdOrder, tx.GetHash())
 			txHashes = append(txHashes, tx.GetHash())
@@ -264,7 +271,7 @@ func TestMultipleBlockTransactionGetByAccount(t *testing.T) {
 		txs = []transaction.Transaction{}
 		txHashes = []string{}
 		for i := 0; i < numTxs; i++ {
-			tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, kpAnother, kp)
+			tx := transaction.TestMakeTransactionWithKeypair(conf.NetworkID, 1, kpAnother, kp)
 			txs = append(txs, tx)
 			createdOrder = append(createdOrder, tx.GetHash())
 			txHashes = append(txHashes, tx.GetHash())
@@ -284,7 +291,7 @@ func TestMultipleBlockTransactionGetByAccount(t *testing.T) {
 		txs = []transaction.Transaction{}
 		txHashes = []string{}
 		for i := 0; i < numTxs; i++ {
-			tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, kpAnother)
+			tx := transaction.TestMakeTransactionWithKeypair(conf.NetworkID, 1, kpAnother)
 			txs = append(txs, tx)
 			txHashes = append(txHashes, tx.GetHash())
 		}
@@ -319,6 +326,7 @@ func TestMultipleBlockTransactionGetByAccount(t *testing.T) {
 }
 
 func TestMultipleBlockTransactionGetByBlock(t *testing.T) {
+	conf := common.NewTestConfig()
 	kp := keypair.Random()
 	st := storage.NewTestStorage()
 
@@ -328,7 +336,7 @@ func TestMultipleBlockTransactionGetByBlock(t *testing.T) {
 	var txHashes0 []string
 	var createdOrder0 []string
 	for i := 0; i < numTxs; i++ {
-		tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, kp)
+		tx := transaction.TestMakeTransactionWithKeypair(conf.NetworkID, 1, kp)
 		txs0 = append(txs0, tx)
 		createdOrder0 = append(createdOrder0, tx.GetHash())
 		txHashes0 = append(txHashes0, tx.GetHash())
@@ -344,7 +352,7 @@ func TestMultipleBlockTransactionGetByBlock(t *testing.T) {
 	var txHashes1 []string
 	var createdOrder1 []string
 	for i := 0; i < numTxs; i++ {
-		tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, kp)
+		tx := transaction.TestMakeTransactionWithKeypair(conf.NetworkID, 1, kp)
 		txs1 = append(txs1, tx)
 		createdOrder1 = append(createdOrder1, tx.GetHash())
 		txHashes1 = append(txHashes1, tx.GetHash())
@@ -396,6 +404,7 @@ func TestMultipleBlockTransactionGetByBlock(t *testing.T) {
 }
 
 func TestMultipleBlockTransactionsOrderByBlockHeightAndCursor(t *testing.T) {
+	conf := common.NewTestConfig()
 	kp := keypair.Random()
 	st := storage.NewTestStorage()
 
@@ -410,7 +419,7 @@ func TestMultipleBlockTransactionsOrderByBlockHeightAndCursor(t *testing.T) {
 		txs := []transaction.Transaction{}
 		txHashes := []string{}
 		for i := 0; i < numTxs; i++ {
-			tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, kp)
+			tx := transaction.TestMakeTransactionWithKeypair(conf.NetworkID, 1, kp)
 			txs = append(txs, tx)
 			createdOrder = append(createdOrder, tx.GetHash())
 			txHashes = append(txHashes, tx.GetHash())
@@ -432,7 +441,7 @@ func TestMultipleBlockTransactionsOrderByBlockHeightAndCursor(t *testing.T) {
 		txs := []transaction.Transaction{}
 		txHashes := []string{}
 		for i := 0; i < numTxs; i++ {
-			tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, kp)
+			tx := transaction.TestMakeTransactionWithKeypair(conf.NetworkID, 1, kp)
 			txs = append(txs, tx)
 			createdOrder = append(createdOrder, tx.GetHash())
 			txHashes = append(txHashes, tx.GetHash())

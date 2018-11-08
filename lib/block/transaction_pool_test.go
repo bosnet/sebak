@@ -12,9 +12,10 @@ import (
 )
 
 func TestTransactionPool(t *testing.T) {
+	conf := common.NewTestConfig()
 	st := storage.NewTestStorage()
 
-	_, tx := transaction.TestMakeTransaction(networkID, 1)
+	_, tx := transaction.TestMakeTransaction(conf.NetworkID, 1)
 
 	var tp TransactionPool
 	var err error

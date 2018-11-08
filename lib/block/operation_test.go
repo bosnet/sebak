@@ -3,16 +3,17 @@ package block
 import (
 	"testing"
 
+	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/storage"
+	"boscoin.io/sebak/lib/transaction"
 
 	"github.com/stretchr/testify/require"
-
-	"boscoin.io/sebak/lib/transaction"
 )
 
 func TestNewBlockOperationFromOperation(t *testing.T) {
-	_, tx := transaction.TestMakeTransaction(networkID, 1)
+	conf := common.NewTestConfig()
+	_, tx := transaction.TestMakeTransaction(conf.NetworkID, 1)
 
 	op := tx.B.Operations[0]
 	bo, err := NewBlockOperationFromOperation(op, tx, 0)
@@ -27,9 +28,10 @@ func TestNewBlockOperationFromOperation(t *testing.T) {
 }
 
 func TestBlockOperationSaveAndGet(t *testing.T) {
+	conf := common.NewTestConfig()
 	st := storage.NewTestStorage()
 
-	bos := TestMakeNewBlockOperation(networkID, 1)
+	bos := TestMakeNewBlockOperation(conf.NetworkID, 1)
 	bo := bos[0]
 	bos[0].MustSave(st)
 
@@ -43,9 +45,10 @@ func TestBlockOperationSaveAndGet(t *testing.T) {
 }
 
 func TestBlockOperationSaveExisting(t *testing.T) {
+	conf := common.NewTestConfig()
 	st := storage.NewTestStorage()
 
-	bos := TestMakeNewBlockOperation(networkID, 1)
+	bos := TestMakeNewBlockOperation(conf.NetworkID, 1)
 	bo := bos[0]
 	bo.MustSave(st)
 
@@ -59,13 +62,14 @@ func TestBlockOperationSaveExisting(t *testing.T) {
 }
 
 func TestGetSortedBlockOperationsByTxHash(t *testing.T) {
+	conf := common.NewTestConfig()
 	st := storage.NewTestStorage()
 
 	// create 30 `BlockOperation`
 	var txHashes []string
 	createdOrder := map[string][]string{}
 	for _ = range [3]int{0, 0, 0} {
-		bos := TestMakeNewBlockOperation(networkID, 10)
+		bos := TestMakeNewBlockOperation(conf.NetworkID, 10)
 		txHashes = append(txHashes, bos[0].TxHash)
 
 		for _, bo := range bos {
@@ -95,9 +99,10 @@ func TestGetSortedBlockOperationsByTxHash(t *testing.T) {
 }
 
 func TestBlockOperationSaveByTransaction(t *testing.T) {
+	conf := common.NewTestConfig()
 	st := InitTestBlockchain()
 
-	_, tx := transaction.TestMakeTransaction(networkID, 10)
+	_, tx := transaction.TestMakeTransaction(conf.NetworkID, 10)
 	block := TestMakeNewBlockWithPrevBlock(GetLatestBlock(st), []string{tx.GetHash()})
 	bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, block.Confirmed, tx)
 	err := bt.Save(st)

@@ -67,13 +67,13 @@ func (b Ballot) String() string {
 	return string(encoded)
 }
 
-func (b Ballot) IsWellFormed(networkID []byte, conf common.Config) (err error) {
-	if err = b.isBallotWellFormed(networkID, conf); err != nil {
+func (b Ballot) IsWellFormed(conf common.Config) (err error) {
+	if err = b.isBallotWellFormed(conf); err != nil {
 		return
 	}
 
 	if b.Vote() != voting.EXP {
-		if err = b.isProposerInfoWellFormed(networkID, conf); err != nil {
+		if err = b.isProposerInfoWellFormed(conf); err != nil {
 			return
 		}
 	}
@@ -81,7 +81,7 @@ func (b Ballot) IsWellFormed(networkID []byte, conf common.Config) (err error) {
 	return
 }
 
-func (b Ballot) isBallotWellFormed(networkID []byte, conf common.Config) (err error) {
+func (b Ballot) isBallotWellFormed(conf common.Config) (err error) {
 	if b.TransactionsLength() > conf.TxsLimit {
 		err = errors.BallotHasOverMaxTransactionsInBallot
 		return
@@ -104,14 +104,14 @@ func (b Ballot) isBallotWellFormed(networkID []byte, conf common.Config) (err er
 		return
 	}
 
-	if err = b.VerifySource(networkID); err != nil {
+	if err = b.VerifySource(conf.NetworkID); err != nil {
 		return
 	}
 
 	return
 }
 
-func (b Ballot) isProposerInfoWellFormed(networkID []byte, conf common.Config) (err error) {
+func (b Ballot) isProposerInfoWellFormed(conf common.Config) (err error) {
 	var proposerConfirmed time.Time
 	if proposerConfirmed, err = common.ParseISO8601(b.ProposerConfirmed()); err != nil {
 		return
@@ -126,11 +126,11 @@ func (b Ballot) isProposerInfoWellFormed(networkID []byte, conf common.Config) (
 		return
 	}
 
-	if err = b.ProposerTransaction().IsWellFormedWithBallot(networkID, b, conf); err != nil {
+	if err = b.ProposerTransaction().IsWellFormedWithBallot(b, conf); err != nil {
 		return
 	}
 
-	if err = b.VerifyProposer(networkID); err != nil {
+	if err = b.VerifyProposer(conf.NetworkID); err != nil {
 		return
 	}
 

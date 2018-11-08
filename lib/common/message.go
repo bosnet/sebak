@@ -21,7 +21,7 @@ type Message interface {
 	GetType() MessageType
 	GetHash() string
 	Serialize() ([]byte, error)
-	IsWellFormed([]byte, Config) error
+	IsWellFormed(Config) error
 	Equal(Message) bool
 	Source() string
 	// Validate(storage.LevelDBBackend) error

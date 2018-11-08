@@ -24,7 +24,8 @@ TestISAACSimulationProposer indicates the following:
 	4. The node receives a ballot that exceeds the threshold, and the block is confirmed.
 */
 func TestISAACSimulationProposer(t *testing.T) {
-	nr, nodes, _ := createNodeRunnerForTesting(5, common.NewConfig(), nil)
+	conf := common.NewTestConfig()
+	nr, nodes, _ := createNodeRunnerForTesting(5, conf, nil)
 	tx, _ := GetTransaction()
 
 	// `nr` is proposer's runner
@@ -46,8 +47,6 @@ func TestISAACSimulationProposer(t *testing.T) {
 		TotalTxs:  b.TotalTxs,
 	}
 	require.True(t, nr.TransactionPool.Has(tx.GetHash()))
-
-	conf := common.NewConfig()
 
 	ballotSIGN1 := GenerateBallot(proposer, votingBasis, tx, ballot.StateSIGN, nodes[1], conf)
 	err = ReceiveBallot(nr, ballotSIGN1)

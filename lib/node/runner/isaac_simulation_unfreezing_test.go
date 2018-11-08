@@ -22,7 +22,7 @@ TestUnfreezingSimulation indicates the following:
 	5. Unfreezing tx will not be processed untill X period pass.
 */
 func TestUnfreezingSimulation(t *testing.T) {
-	nr, nodes, _ := createNodeRunnerForTesting(3, common.NewConfig(), nil)
+	nr, nodes, _ := createNodeRunnerForTesting(3, common.NewTestConfig(), nil)
 
 	st := nr.storage
 

@@ -11,13 +11,12 @@ import (
 )
 
 func TestValidator(t *testing.T) {
+	conf := common.NewTestConfig()
 	st := block.InitTestBlockchain()
 	defer st.Close()
-
-	networkID := []byte("test-network")
 	_, nw, _ := network.CreateMemoryNetwork(nil)
 
-	v := NewBlockValidator(nw, st, networkID, common.NewConfig())
+	v := NewBlockValidator(nw, st, conf.NetworkID, conf)
 
 	ctx := context.Background()
 

@@ -44,7 +44,7 @@ func GetGenesis(st *storage.LevelDBBackend) Block {
 //   * `CreateAccount.Amount` is 0
 //   * `CreateAccount.Target` is common account
 // * `Transaction.B.Fee` is 0
-func MakeGenesisBlock(st *storage.LevelDBBackend, genesisAccount BlockAccount, commonAccount BlockAccount, networdID []byte) (blk *Block, err error) {
+func MakeGenesisBlock(st *storage.LevelDBBackend, genesisAccount BlockAccount, commonAccount BlockAccount, networkID []byte) (blk *Block, err error) {
 	if genesisAccount.Address == commonAccount.Address {
 		err = fmt.Errorf("genesis account and common account are same.")
 		return
@@ -99,7 +99,7 @@ func MakeGenesisBlock(st *storage.LevelDBBackend, genesisAccount BlockAccount, c
 	}
 
 	kp := keypair.Master(string(networkID))
-	tx.Sign(kp, []byte(networdID))
+	tx.Sign(kp, []byte(networkID))
 
 	blk = NewBlock(
 		"",

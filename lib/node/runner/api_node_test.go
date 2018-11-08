@@ -70,6 +70,7 @@ func pingAndWait(t *testing.T, c0 network.NetworkClient) {
 }
 
 func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, n *network.HTTP2Network, nodeRunner *NodeRunner) {
+	conf := common.NewTestConfig()
 	g := network.NewKeyGenerator(dirPath, certPath, keyPath)
 
 	var config *network.HTTP2NetworkConfig
@@ -104,8 +105,8 @@ func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, n *network.HTTP2Netw
 	)
 
 	st := block.InitTestBlockchain()
-	is, _ := consensus.NewISAAC(networkID, localNode, p, connectionManager, st, common.NewConfig(), nil)
-	if nodeRunner, err = NewNodeRunner(string(networkID), localNode, p, n, is, st, common.NewConfig()); err != nil {
+	is, _ := consensus.NewISAAC(networkID, localNode, p, connectionManager, st, conf, nil)
+	if nodeRunner, err = NewNodeRunner(string(networkID), localNode, p, n, is, st, conf); err != nil {
 		panic(err)
 	}
 
@@ -226,7 +227,7 @@ func TestGetNodeInfoHandler(t *testing.T) {
 		nil,
 		network.NewValidatorConnectionManager(localNode, nil, nil),
 		st,
-		common.NewConfig(),
+		common.NewTestConfig(),
 		nil,
 	)
 

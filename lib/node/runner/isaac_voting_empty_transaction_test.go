@@ -12,7 +12,7 @@ import (
 
 // Test that ballot with empty transactions have voting.YES
 func TestISAACBallotWithEmptyTransaction(t *testing.T) {
-	conf := common.NewConfig()
+	conf := common.NewTestConfig()
 	nr, _, _ := createNodeRunnerForTesting(1, conf, nil)
 
 	latestBlock := nr.Consensus().LatestBlock()
@@ -29,7 +29,7 @@ func TestISAACBallotWithEmptyTransaction(t *testing.T) {
 
 // Test that the voting process ends normally with a ballot with an empty transaction.
 func TestISAACBallotWithEmptyTransactionVoting(t *testing.T) {
-	conf := common.NewConfig()
+	conf := common.NewTestConfig()
 	nr, nodes, _ := createNodeRunnerForTesting(5, conf, nil)
 
 	// `nodeRunner` is proposer's runner

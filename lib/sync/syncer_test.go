@@ -68,16 +68,16 @@ func TestSyncerSetSyncTarget(t *testing.T) {
 }
 
 func SyncerTest(t *testing.T, fn func(*SyncerTestContext)) {
+	conf := common.NewTestConfig()
 	st := block.InitTestBlockchain()
 	defer st.Close()
 	_, nw, localNode := network.CreateMemoryNetwork(nil)
 	cm := &mockConnectionManager{}
-	networkID := []byte("test-network")
 
 	tickc := make(chan time.Time)
 	infoc := make(chan *SyncInfo)
 
-	syncer := NewSyncer(st, nw, cm, networkID, localNode, common.NewConfig())
+	syncer := NewSyncer(st, nw, cm, conf.NetworkID, localNode, conf)
 	defer syncer.Stop()
 
 	syncer.fetcher = &mockFetcher{

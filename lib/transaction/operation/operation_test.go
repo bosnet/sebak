@@ -29,7 +29,7 @@ func TestMakeHashOfOperationBodyPayment(t *testing.T) {
 
 func TestIsWellFormedOperation(t *testing.T) {
 	op := MakeTestPayment(-1)
-	err := op.IsWellFormed(common.NewConfig())
+	err := op.IsWellFormed(common.NewTestConfig())
 	require.NoError(t, err)
 }
 
@@ -39,7 +39,7 @@ func TestIsWellFormedOperationLowerAmount(t *testing.T) {
 		Target: kp.Address(),
 		Amount: common.Amount(0),
 	}
-	err := obp.IsWellFormed(common.NewConfig())
+	err := obp.IsWellFormed(common.NewTestConfig())
 	require.Error(t, err)
 }
 
@@ -65,7 +65,7 @@ func TestOperationBodyCongressVoting(t *testing.T) {
 	expected := "4CcZvkNYQUgvdmjGDuMx7tesCdRp3HU4CW3pbRxeqtEZ"
 	require.Equal(t, hashed, expected)
 
-	err := op.IsWellFormed(common.NewConfig())
+	err := op.IsWellFormed(common.NewTestConfig())
 	require.NoError(t, err)
 
 }
@@ -87,7 +87,7 @@ func TestOperationBodyCongressVotingResult(t *testing.T) {
 	expected := "8DgD3heMuNLYhnNBgPSBEquAdKXuogrSybdqt7WD87CV"
 	require.Equal(t, hashed, expected)
 
-	err := op.IsWellFormed(common.NewConfig())
+	err := op.IsWellFormed(common.NewTestConfig())
 	require.NoError(t, err)
 
 }

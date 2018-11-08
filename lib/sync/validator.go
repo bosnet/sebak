@@ -179,7 +179,7 @@ func (v *BlockValidator) validateBlock(ctx context.Context, si *SyncInfo, prevBl
 func (v *BlockValidator) validateTxs(ctx context.Context, si *SyncInfo) error {
 	// proposer transaction
 	if si.Ptx != nil {
-		if err := si.Ptx.IsWellFormed(v.networkID, v.commonCfg); err != nil {
+		if err := si.Ptx.IsWellFormed(v.commonCfg); err != nil {
 			return err
 		}
 	}
@@ -191,7 +191,7 @@ func (v *BlockValidator) validateTxs(ctx context.Context, si *SyncInfo) error {
 			return err
 		}
 
-		if err := tx.IsWellFormed(v.networkID, v.commonCfg); err != nil {
+		if err := tx.IsWellFormed(v.commonCfg); err != nil {
 			return err
 		}
 

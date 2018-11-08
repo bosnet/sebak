@@ -105,12 +105,12 @@ var TransactionWellFormedCheckerFuncs = []common.CheckerFunc{
 	CheckVerifySignature,
 }
 
-func (tx Transaction) IsWellFormed(networkID []byte, conf common.Config) (err error) {
+func (tx Transaction) IsWellFormed(conf common.Config) (err error) {
 	// TODO check `Version` format with SemVer
 
 	checker := &Checker{
 		DefaultChecker: common.DefaultChecker{Funcs: TransactionWellFormedCheckerFuncs},
-		NetworkID:      networkID,
+		NetworkID:      conf.NetworkID,
 		Transaction:    tx,
 		Conf:           conf,
 	}
