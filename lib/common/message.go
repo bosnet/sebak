@@ -9,6 +9,9 @@ const (
 	ConnectMessage     MessageType = "connect"
 	TransactionMessage MessageType = "transaction"
 	BallotMessage      MessageType = "ballot"
+
+	TransactionVersionV1 = "1"
+	BallotVersionV1      = "1"
 )
 
 type MessageType string
@@ -24,6 +27,7 @@ type Message interface {
 	IsWellFormed(Config) error
 	Equal(Message) bool
 	Source() string
+	Version() string
 	// Validate(storage.LevelDBBackend) error
 }
 

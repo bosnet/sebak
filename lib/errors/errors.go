@@ -95,4 +95,5 @@ var (
 	AlreadyCommittable                        = NewError(177, "already Committable")
 	FailedToSaveBlockOperaton                 = NewError(178, "failed to save BlockOperation")
 	NodeNotFound                              = NewError(179, "Node not found")
+	InvalidMessageVersion                     = NewError(180, "message version is invalid")
 )
