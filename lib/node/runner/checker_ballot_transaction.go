@@ -214,7 +214,7 @@ func ValidateTx(st *storage.LevelDBBackend, tx transaction.Transaction) (err err
 	}
 
 	// check, version is correct
-	if !tx.IsValidVersion(common.TransactionVersionV1V1) {
+	if !tx.IsValidVersion(common.TransactionVersionV1) {
 		err = errors.InvalidMessageVersion
 		return
 	}

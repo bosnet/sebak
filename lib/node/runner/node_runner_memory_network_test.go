@@ -49,7 +49,7 @@ func makeTransactionPayment(kpSource *keypair.Full, target string, amount common
 
 	tx = transaction.Transaction{
 		H: transaction.Header{
-			Version: common.TransactionVersionV1V1,
+			Version: common.TransactionVersionV1,
 			Created: common.NowISO8601(),
 			Hash:    txBody.MakeHashString(),
 		},
