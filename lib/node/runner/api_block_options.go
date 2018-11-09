@@ -162,7 +162,7 @@ func (g *GetBlocksOptions) parseGetBlocksOptionsMode(r *http.Request) error {
 }
 
 func (g GetBlocksOptions) Template() string {
-	return "{?cursor,limit,order,height-range,hash,mode}"
+	return "{?cursor,limit,reverse,height-range,hash,mode}"
 }
 
 func (g GetBlocksOptions) URLValues() url.Values {
