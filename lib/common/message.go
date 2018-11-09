@@ -6,11 +6,12 @@ import (
 )
 
 const (
-	ConnectMessage       MessageType = "connect"
-	TransactionMessage   MessageType = "transaction"
-	BallotMessage        MessageType = "ballot"
-	TransactionVersionV1             = "1"
-	BallotVersionV1                  = "1"
+	ConnectMessage     MessageType = "connect"
+	TransactionMessage MessageType = "transaction"
+	BallotMessage      MessageType = "ballot"
+
+	TransactionVersionV1 = "1"
+	BallotVersionV1      = "1"
 )
 
 type MessageType string
