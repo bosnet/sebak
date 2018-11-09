@@ -25,8 +25,9 @@ type Config struct {
 	RateLimitRuleAPI  RateLimitRule
 	RateLimitRuleNode RateLimitRule
 
-	HTTPCacheAdapter  string
-	HTTPCachePoolSize int
+	HTTPCacheAdapter    string
+	HTTPCachePoolSize   int
+	HTTPCacheRedisAddrs map[string]string
 }
 
 func NewConfig(networkID []byte) Config {

@@ -65,35 +65,37 @@ var (
 	flagRateLimitNode       cmdcommon.ListFlags // "SEBAK_RATE_LIMIT_NODE"
 	flagStorageConfigString string
 
-	flagHTTPCacheAdapter  string = common.GetENVValue("SEBAK_HTTP_CACHE_ADAPTER", "")
-	flagHTTPCachePoolSize string = common.GetENVValue("SEBAK_HTTP_CACHE_POOL_SIZE", "10000")
+	flagHTTPCacheAdapter    string = common.GetENVValue("SEBAK_HTTP_CACHE_ADAPTER", "")
+	flagHTTPCachePoolSize   string = common.GetENVValue("SEBAK_HTTP_CACHE_POOL_SIZE", "10000")
+	flagHTTPCacheRedisAddrs string = common.GetENVValue("SEBAK_HTTP_CACHE_REDIS_ADDRS", "")
 )
 
 var (
 	nodeCmd *cobra.Command
 
-	bindEndpoint      *common.Endpoint
-	blockTime         time.Duration
-	kp                *keypair.Full
-	localNode         *node.LocalNode
-	operationsLimit   uint64
-	publishEndpoint   *common.Endpoint
-	rateLimitRuleAPI  common.RateLimitRule
-	rateLimitRuleNode common.RateLimitRule
-	storageConfig     *storage.Config
-	syncCheckInterval time.Duration
-	syncFetchTimeout  time.Duration
-	syncPoolSize      uint64
-	syncRetryInterval time.Duration
-	threshold         int
-	timeoutACCEPT     time.Duration
-	timeoutALLCONFIRM time.Duration
-	timeoutINIT       time.Duration
-	timeoutSIGN       time.Duration
-	transactionsLimit uint64
-	validators        []*node.Validator
-	httpCacheAdapter  string
-	httpCachePoolSize int
+	bindEndpoint        *common.Endpoint
+	blockTime           time.Duration
+	kp                  *keypair.Full
+	localNode           *node.LocalNode
+	operationsLimit     uint64
+	publishEndpoint     *common.Endpoint
+	rateLimitRuleAPI    common.RateLimitRule
+	rateLimitRuleNode   common.RateLimitRule
+	storageConfig       *storage.Config
+	syncCheckInterval   time.Duration
+	syncFetchTimeout    time.Duration
+	syncPoolSize        uint64
+	syncRetryInterval   time.Duration
+	threshold           int
+	timeoutACCEPT       time.Duration
+	timeoutALLCONFIRM   time.Duration
+	timeoutINIT         time.Duration
+	timeoutSIGN         time.Duration
+	transactionsLimit   uint64
+	validators          []*node.Validator
+	httpCacheAdapter    string
+	httpCachePoolSize   int
+	httpCacheRedisAddrs map[string]string
 
 	logLevel logging.Lvl
 	log      logging.Logger = logging.New("module", "main")
@@ -190,6 +192,7 @@ func init() {
 	nodeCmd.Flags().StringVar(&flagSyncCheckInterval, "sync-check-interval", flagSyncCheckInterval, "sync check interval")
 	nodeCmd.Flags().StringVar(&flagHTTPCacheAdapter, "http-cache-adapter", flagHTTPCacheAdapter, "http cache adapter: ex) 'mem'")
 	nodeCmd.Flags().StringVar(&flagHTTPCachePoolSize, "http-cache-pool-size", flagHTTPCachePoolSize, "http cache pool size")
+	nodeCmd.Flags().StringVar(&flagHTTPCacheRedisAddrs, "http-cache-redis-addrs", flagHTTPCacheRedisAddrs, "http cache redis address")
 
 	rootCmd.AddCommand(nodeCmd)
 }
@@ -372,6 +375,16 @@ func parseFlagsNode() {
 		} else {
 			httpCachePoolSize = int(tmpUint64)
 		}
+		if httpCacheAdapter == common.HTTPCacheRedisAdapterName {
+			httpCacheRedisAddrs, err = parseHTTPCacheRedisAddrs(flagHTTPCacheRedisAddrs)
+			if err != nil {
+				cmdcommon.PrintFlagsError(nodeCmd, "--http-cache-redis-addrs", err)
+			}
+			if len(httpCacheRedisAddrs) <= 0 {
+				err := fmt.Errorf("redis addrs is empty")
+				cmdcommon.PrintFlagsError(nodeCmd, "--http-cache-redis-addrs", err)
+			}
+		}
 	}
 
 	if logLevel, err = logging.LvlFromString(flagLogLevel); err != nil {
@@ -486,6 +499,19 @@ func parseFlagsNode() {
 	}
 }
 
+func parseHTTPCacheRedisAddrs(s string) (map[string]string, error) {
+	addrs := make(map[string]string)
+	splitted := strings.Fields(strings.TrimSpace(s))
+	for _, s := range splitted {
+		addr := strings.Split(s, "=")
+		if len(addr) != 2 {
+			return nil, fmt.Errorf("address has wrong format")
+		}
+		addrs[addr[0]] = addr[1]
+	}
+	return addrs, nil
+}
+
 func getTime(timeoutStr string, defaultValue time.Duration, errMessage string) time.Duration {
 	var timeoutDuration time.Duration
 	if tmpUint64, err := strconv.ParseUint(timeoutStr, 10, 64); err != nil {
@@ -533,18 +559,19 @@ func runNode() error {
 	)
 
 	conf := common.Config{
-		TimeoutINIT:       timeoutINIT,
-		TimeoutSIGN:       timeoutSIGN,
-		TimeoutACCEPT:     timeoutACCEPT,
-		TimeoutALLCONFIRM: timeoutALLCONFIRM,
-		NetworkID:         []byte(flagNetworkID),
-		BlockTime:         blockTime,
-		TxsLimit:          int(transactionsLimit),
-		OpsLimit:          int(operationsLimit),
-		RateLimitRuleAPI:  rateLimitRuleAPI,
-		RateLimitRuleNode: rateLimitRuleNode,
-		HTTPCacheAdapter:  httpCacheAdapter,
-		HTTPCachePoolSize: httpCachePoolSize,
+		TimeoutINIT:         timeoutINIT,
+		TimeoutSIGN:         timeoutSIGN,
+		TimeoutACCEPT:       timeoutACCEPT,
+		TimeoutALLCONFIRM:   timeoutALLCONFIRM,
+		NetworkID:           []byte(flagNetworkID),
+		BlockTime:           blockTime,
+		TxsLimit:            int(transactionsLimit),
+		OpsLimit:            int(operationsLimit),
+		RateLimitRuleAPI:    rateLimitRuleAPI,
+		RateLimitRuleNode:   rateLimitRuleNode,
+		HTTPCacheAdapter:    httpCacheAdapter,
+		HTTPCachePoolSize:   httpCachePoolSize,
+		HTTPCacheRedisAddrs: httpCacheRedisAddrs,
 	}
 	st, err := storage.NewStorage(storageConfig)
 	if err != nil {

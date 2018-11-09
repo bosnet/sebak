@@ -13,9 +13,7 @@ func NewAdapter(cfg common.Config) (Adapter, error) {
 		return adapter, nil
 	case common.HTTPCacheRedisAdapterName:
 		opts := &RedisRingOptions{
-			Addrs: map[string]string{
-				"server": ":6379", // todo(anarcher): from config
-			},
+			Addrs: cfg.HTTPCacheRedisAddrs,
 		}
 		adapter := NewRedisCacheAdapter(opts)
 		return adapter, nil
