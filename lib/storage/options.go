@@ -3,8 +3,6 @@ package storage
 import (
 	"net/url"
 	"strconv"
-
-	"boscoin.io/sebak/lib/common"
 )
 
 var DefaultMaxLimitListOptions uint64 = 100
@@ -33,40 +31,6 @@ func NewDefaultListOptions(reverse bool, cursor []byte, limit uint64) *DefaultLi
 		cursor:  cursor,
 		limit:   limit,
 	}
-}
-
-// NewDefaultListOptionsFromQuery makes ListOptions from url.Query.
-func NewDefaultListOptionsFromQuery(v url.Values) (options *DefaultListOptions, err error) {
-	var reverse bool
-	var cursor []byte
-	var limit uint64 = DefaultMaxLimitListOptions
-
-	r := v.Get("reverse")
-	if len(r) > 0 {
-		if reverse, err = common.ParseBoolQueryString(r); err != nil {
-			return
-		}
-	}
-
-	r = v.Get("cursor")
-	if len(r) > 0 {
-		cursor = []byte(r)
-	}
-
-	r = v.Get("limit")
-	if len(r) > 0 {
-		if limit, err = strconv.ParseUint(r, 10, 64); err != nil {
-			return
-		}
-	}
-
-	options = &DefaultListOptions{
-		reverse: reverse,
-		cursor:  cursor,
-		limit:   limit,
-	}
-
-	return
 }
 
 func (o DefaultListOptions) Reverse() bool {

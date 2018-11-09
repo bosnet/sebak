@@ -6,11 +6,11 @@ import (
 	"strings"
 
 	"boscoin.io/sebak/lib/block"
+	"boscoin.io/sebak/lib/client"
 	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/network/httputils"
 	"boscoin.io/sebak/lib/node/runner/api/resource"
-	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction/operation"
 	"github.com/gorilla/mux"
 )
@@ -18,7 +18,7 @@ import (
 func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	address := vars["id"]
-	options, err := storage.NewDefaultListOptionsFromQuery(r.URL.Query())
+	options, err := client.NewDefaultListOptionsFromQuery(r.URL.Query())
 	if err != nil {
 		http.Error(w, errors.InvalidQueryString.Error(), http.StatusBadRequest)
 		return

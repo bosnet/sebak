@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"boscoin.io/sebak/lib/block"
+	"boscoin.io/sebak/lib/client"
 	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/network/httputils"
@@ -23,7 +24,7 @@ func (api NetworkHandlerAPI) GetOperationsByTxHashHandler(w http.ResponseWriter,
 		return
 	}
 
-	options, err := storage.NewDefaultListOptionsFromQuery(r.URL.Query())
+	options, err := client.NewDefaultListOptionsFromQuery(r.URL.Query())
 	if err != nil {
 		http.Error(w, errors.InvalidQueryString.Error(), http.StatusBadRequest)
 		return
