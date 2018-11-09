@@ -9,8 +9,8 @@ const (
 	ConnectMessage              MessageType = "connect"
 	TransactionMessage          MessageType = "transaction"
 	BallotMessage               MessageType = "ballot"
-	TransactionMessageVersionV1             = "txv1"
-	BallotMessageVersionV1                  = "blv1"
+	TransactionMessageVersionV1             = "1"
+	BallotMessageVersionV1                  = "1"
 )
 
 type MessageType string
