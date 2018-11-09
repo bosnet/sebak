@@ -33,7 +33,7 @@ func (qk QueryKey) String() string {
 
 const (
 	QueryLimit  QueryKey = "limit"
-	QueryOrder  QueryKey = "order"
+	QueryOrder  QueryKey = "reverse"
 	QueryCursor QueryKey = "cursor"
 	QueryType   QueryKey = "type"
 )
