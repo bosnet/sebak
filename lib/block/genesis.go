@@ -92,7 +92,7 @@ func MakeGenesisBlock(st *storage.LevelDBBackend, genesisAccount BlockAccount, c
 
 	tx := transaction.Transaction{
 		H: transaction.Header{
-			Version: common.TransactionMessageVersionV1,
+			Version: common.TransactionVersionV1V1,
 			Created: common.GenesisBlockConfirmedTime,
 			Hash:    txBody.MakeHashString(),
 		},
