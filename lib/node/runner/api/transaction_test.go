@@ -48,8 +48,8 @@ func TestGetTransactionByHashHandler(t *testing.T) {
 		recv := make(map[string]interface{})
 		json.Unmarshal(readByte, &recv)
 
-		require.Equal(t, bt.Hash, recv["hash"], "hash is not same")
-		require.Equal(t, bt.Block, recv["block"], "block is not same")
+		require.Equal(t, bt.Hash, recv["hash"], "hash is not the same")
+		require.Equal(t, bt.Block, recv["block"], "block is not the same")
 	}
 }
 
@@ -93,8 +93,8 @@ func TestGetTransactionByHashHandlerStream(t *testing.T) {
 		require.NoError(t, err)
 		recv := make(map[string]interface{})
 		json.Unmarshal(line, &recv)
-		require.Equal(t, bt.Hash, recv["hash"], "hash is not same")
-		require.Equal(t, bt.Block, recv["block"], "block is not same")
+		require.Equal(t, bt.Hash, recv["hash"], "hash is not the same")
+		require.Equal(t, bt.Block, recv["block"], "block is not the same")
 	}
 	wg.Wait()
 }
@@ -123,15 +123,15 @@ func TestGetTransactionsHandler(t *testing.T) {
 		json.Unmarshal(readByte, &recv)
 		records := recv["_embedded"].(map[string]interface{})["records"].([]interface{})
 
-		require.Equal(t, len(btList)+1, len(records), "length is not same")
+		require.Equal(t, len(btList)+1, len(records), "length is not the same")
 
 		for i, r := range records[1:] {
 			bt := r.(map[string]interface{})
 			hash := bt["hash"].(string)
 			block := bt["block"].(string)
 
-			require.Equal(t, hash, btList[i].Hash, "hash is not same")
-			require.Equal(t, block, btList[i].Block, "block is not same")
+			require.Equal(t, hash, btList[i].Hash, "hash is not the same")
+			require.Equal(t, block, btList[i].Block, "block is not the same")
 		}
 	}
 }
@@ -222,15 +222,15 @@ func TestGetTransactionsByAccountHandler(t *testing.T) {
 		json.Unmarshal(readByte, &recv)
 		records := recv["_embedded"].(map[string]interface{})["records"].([]interface{})
 
-		require.Equal(t, len(btList), len(records), "length is not same")
+		require.Equal(t, len(btList), len(records), "length is not the same")
 
 		for i, r := range records {
 			bt := r.(map[string]interface{})
 			hash := bt["hash"].(string)
 			block := bt["block"].(string)
 
-			require.Equal(t, hash, btList[i].Hash, "hash is not same")
-			require.Equal(t, block, btList[i].Block, "block is not same")
+			require.Equal(t, hash, btList[i].Hash, "hash is not the same")
+			require.Equal(t, block, btList[i].Block, "block is not the same")
 		}
 	}
 }
@@ -325,12 +325,12 @@ func TestGetTransactionsHandlerPage(t *testing.T) {
 		query = strings.Replace(query, "{limit}", "0", 1)
 		query = strings.Replace(query, "{reverse}", "false", 1)
 		records, _ := testFunction(query)
-		require.Equal(t, len(btList), len(records[1:]), "length is not same")
+		require.Equal(t, len(btList), len(records[1:]), "length is not the same")
 
 		for i, r := range records[1:] {
 			bt := r.(map[string]interface{})
-			require.Equal(t, bt["hash"], btList[i].Hash, "hash is not same")
-			require.Equal(t, bt["block"], btList[i].Block, "block is not same")
+			require.Equal(t, bt["hash"], btList[i].Hash, "hash is not the same")
+			require.Equal(t, bt["block"], btList[i].Block, "block is not the same")
 		}
 	}
 	{
@@ -338,24 +338,24 @@ func TestGetTransactionsHandlerPage(t *testing.T) {
 		query = strings.Replace(query, "{limit}", "6", 1)
 		query = strings.Replace(query, "{reverse}", "false", 1)
 		records, links := testFunction(query)
-		require.Equal(t, len(btList[:5]), len(records[1:]), "length is not same")
+		require.Equal(t, len(btList[:5]), len(records[1:]), "length is not the same")
 
 		for i, r := range records[1:] {
 			bt := r.(map[string]interface{})
-			require.Equal(t, bt["hash"], btList[i].Hash, "hash is not same")
-			require.Equal(t, bt["block"], btList[i].Block, "block is not same")
+			require.Equal(t, bt["hash"], btList[i].Hash, "hash is not the same")
+			require.Equal(t, bt["block"], btList[i].Block, "block is not the same")
 		}
 
 		nextLink := links["next"].(map[string]interface{})["href"].(string)
 
 		{
 			records, _ := requestFunction(nextLink)
-			require.Equal(t, len(btList[5:]), len(records), "length is not same")
+			require.Equal(t, len(btList[5:]), len(records), "length is not the same")
 
 			for i, r := range records {
 				bt := r.(map[string]interface{})
-				require.Equal(t, bt["hash"], btList[5+i].Hash, "hash is not same")
-				require.Equal(t, bt["block"], btList[5+i].Block, "block is not same")
+				require.Equal(t, bt["hash"], btList[5+i].Hash, "hash is not the same")
+				require.Equal(t, bt["block"], btList[5+i].Block, "block is not the same")
 			}
 		}
 	}
@@ -364,12 +364,12 @@ func TestGetTransactionsHandlerPage(t *testing.T) {
 		query = strings.Replace(query, "{limit}", "0", 1)
 		query = strings.Replace(query, "{reverse}", "true", 1)
 		records, _ := testFunction(query)
-		require.Equal(t, len(btList), len(records[:len(records)-1]), "length is not same")
+		require.Equal(t, len(btList), len(records[:len(records)-1]), "length is not the same")
 
 		for i, r := range records[:len(records)-1] {
 			bt := r.(map[string]interface{})
-			require.Equal(t, bt["hash"], btList[len(btList)-1-i].Hash, "hash is not same")
-			require.Equal(t, bt["block"], btList[len(btList)-1-i].Block, "block is not same")
+			require.Equal(t, bt["hash"], btList[len(btList)-1-i].Hash, "hash is not the same")
+			require.Equal(t, bt["block"], btList[len(btList)-1-i].Block, "block is not the same")
 		}
 	}
 	{
@@ -377,12 +377,12 @@ func TestGetTransactionsHandlerPage(t *testing.T) {
 		query = strings.Replace(query, "{limit}", "5", 1)
 		query = strings.Replace(query, "{reverse}", "true", 1)
 		records, _ := testFunction(query)
-		require.Equal(t, len(btList[5:]), len(records), "length is not same")
+		require.Equal(t, len(btList[5:]), len(records), "length is not the same")
 
 		for i, r := range records {
 			bt := r.(map[string]interface{})
-			require.Equal(t, bt["hash"], btList[len(btList)-1-i].Hash, "hash is not same")
-			require.Equal(t, bt["block"], btList[len(btList)-1-i].Block, "block is not same")
+			require.Equal(t, bt["hash"], btList[len(btList)-1-i].Hash, "hash is not the same")
+			require.Equal(t, bt["block"], btList[len(btList)-1-i].Block, "block is not the same")
 
 		}
 	}
