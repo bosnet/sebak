@@ -24,7 +24,7 @@ Limitations on Warranties | Limitations on Warranties about the PF | string
 Here's the example of ricardian contract with yaml format.
 
 ```
-title: Membership Reward PF
+Title: Membership Reward PF
 
 Abstract:
     This document is a contract between you and BlockchainOS Inc., which will be referred to as Membership reward PF contract. 
