@@ -77,13 +77,13 @@ Definitions:
         thereby earning the right to vote and receive the Membership reward.
 
     - Public Financing (PF):
-        Public Financing means a financial business model where the Community issues additional BOScoin by its decision via Congress Voting. 
-        The Community makes the decision by reviewing each PF proposal.
+        - Public Financing means a financial business model where the Community issues additional BOScoin by its decision via Congress Voting. 
+          The Community makes the decision by reviewing each PF proposal.
 
-    - Process:
-        Once a PF proposal is suggested which requires the use of a certain volume of BOScoin, 
-        Congress members decide whether to issue and use additional BOScoin via Congress Voting, 
-        depending on the result - additional BOScoin may or may not be issued and used.
+        - Process:
+          Once a PF proposal is suggested which requires the use of a certain volume of BOScoin, 
+          Congress members decide whether to issue and use additional BOScoin via Congress Voting, 
+          depending on the result - additional BOScoin may or may not be issued and used.
 
     - Frozen qualities:
         Frozen qualities mean lifting of the freezing after 241,920 block height (approximately 2 weeks) 
@@ -146,6 +146,7 @@ Detailed description:
           Number_of_Frozen_BOScoin_in_BOSNet_system = The total number of frozen BOS in Frozen accounts linked in Membership accounts in BOSNet. 
         - To calculate the amount of Membership reward per member, 
           Number_of_Frozen_BOScoin will be counted every 17,280 blocks. 
+
     - Membership reward will be distributed in accordance with the following rules: 
         - The calculation of Membership reward starts at 13:00, December 7th, 2018 (UTC+09:00). 
         - The first distribution of Membership reward will include 172,800 blocks (approximately 10 days) of rewards. 
@@ -157,6 +158,7 @@ Detailed description:
         - Freezing can be conducted only in a Membership account. 
         - Upon user's request of Freezing, Frozen account will be created and the requested BOScoin will be transferred to the Frozen account. 
         - Frozen account is for one-time use. Additional freezing is conducted via creation of additional Frozen accounts.
+        
     - Unfreezing action:
         - Upon user's request of unfreezing, freezing is lifted after 241,920 block height (approximately 2 weeks). 
         - If unfreezing is completed, BOScoin in Frozen account can be transferred to the General account linked to the Frozen account. 
