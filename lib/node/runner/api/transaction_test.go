@@ -49,6 +49,7 @@ func TestGetTransactionByHashHandler(t *testing.T) {
 		json.Unmarshal(readByte, &recv)
 
 		require.Equal(t, bt.Hash, recv["hash"], "hash is not same")
+		require.Equal(t, bt.Block, recv["block"], "block is not same")
 	}
 }
 
@@ -93,6 +94,7 @@ func TestGetTransactionByHashHandlerStream(t *testing.T) {
 		recv := make(map[string]interface{})
 		json.Unmarshal(line, &recv)
 		require.Equal(t, bt.Hash, recv["hash"], "hash is not same")
+		require.Equal(t, bt.Block, recv["block"], "block is not same")
 	}
 	wg.Wait()
 }
@@ -126,8 +128,10 @@ func TestGetTransactionsHandler(t *testing.T) {
 		for i, r := range records[1:] {
 			bt := r.(map[string]interface{})
 			hash := bt["hash"].(string)
+			block := bt["block"].(string)
 
 			require.Equal(t, hash, btList[i].Hash, "hash is not same")
+			require.Equal(t, block, btList[i].Block, "block is not same")
 		}
 	}
 }
@@ -223,8 +227,10 @@ func TestGetTransactionsByAccountHandler(t *testing.T) {
 		for i, r := range records {
 			bt := r.(map[string]interface{})
 			hash := bt["hash"].(string)
+			block := bt["block"].(string)
 
 			require.Equal(t, hash, btList[i].Hash, "hash is not same")
+			require.Equal(t, block, btList[i].Block, "block is not same")
 		}
 	}
 }
@@ -324,6 +330,7 @@ func TestGetTransactionsHandlerPage(t *testing.T) {
 		for i, r := range records[1:] {
 			bt := r.(map[string]interface{})
 			require.Equal(t, bt["hash"], btList[i].Hash, "hash is not same")
+			require.Equal(t, bt["block"], btList[i].Block, "block is not same")
 		}
 	}
 	{
@@ -336,6 +343,7 @@ func TestGetTransactionsHandlerPage(t *testing.T) {
 		for i, r := range records[1:] {
 			bt := r.(map[string]interface{})
 			require.Equal(t, bt["hash"], btList[i].Hash, "hash is not same")
+			require.Equal(t, bt["block"], btList[i].Block, "block is not same")
 		}
 
 		nextLink := links["next"].(map[string]interface{})["href"].(string)
@@ -347,6 +355,7 @@ func TestGetTransactionsHandlerPage(t *testing.T) {
 			for i, r := range records {
 				bt := r.(map[string]interface{})
 				require.Equal(t, bt["hash"], btList[5+i].Hash, "hash is not same")
+				require.Equal(t, bt["block"], btList[5+i].Block, "block is not same")
 			}
 		}
 	}
@@ -360,6 +369,7 @@ func TestGetTransactionsHandlerPage(t *testing.T) {
 		for i, r := range records[:len(records)-1] {
 			bt := r.(map[string]interface{})
 			require.Equal(t, bt["hash"], btList[len(btList)-1-i].Hash, "hash is not same")
+			require.Equal(t, bt["block"], btList[len(btList)-1-i].Block, "block is not same")
 		}
 	}
 	{
@@ -372,6 +382,8 @@ func TestGetTransactionsHandlerPage(t *testing.T) {
 		for i, r := range records {
 			bt := r.(map[string]interface{})
 			require.Equal(t, bt["hash"], btList[len(btList)-1-i].Hash, "hash is not same")
+			require.Equal(t, bt["block"], btList[len(btList)-1-i].Block, "block is not same")
+
 		}
 	}
 }

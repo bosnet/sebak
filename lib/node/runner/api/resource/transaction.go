@@ -21,6 +21,7 @@ func NewTransaction(bt *block.BlockTransaction) *Transaction {
 func (t Transaction) GetMap() hal.Entry {
 	return hal.Entry{
 		"hash":            t.bt.Hash,
+		"block":           t.bt.Block,
 		"source":          t.bt.Source,
 		"fee":             t.bt.Fee.String(),
 		"sequence_id":     t.bt.SequenceID,
