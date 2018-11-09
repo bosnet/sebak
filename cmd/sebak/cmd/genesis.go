@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	initialBalance = "1,000,000,000,000.0000000"
+	initialBalance = "500,000,000.0000000"
 )
 
 var (
