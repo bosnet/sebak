@@ -100,6 +100,9 @@ func TestSavingBlockOperation(t *testing.T) {
 			exists, err := block.ExistsBlockOperation(p.st, opHash)
 			require.NoError(t, err)
 			require.True(t, exists)
+			bo, err := block.GetBlockOperation(p.st, opHash)
+			require.NoError(t, err)
+			require.Equal(t, blk.Height, bo.Height)
 		}
 	}
 }
