@@ -97,7 +97,7 @@ func (o *DefaultListOptions) SetLimit(l uint64) ListOptions {
 }
 
 func (o DefaultListOptions) Template() string {
-	return "{?cursor,limit,order}"
+	return "{?cursor,limit,reverse}"
 }
 
 func (o DefaultListOptions) URLValues() url.Values {
