@@ -66,7 +66,7 @@ func MakeTransactionCreateAccount(networkID []byte, kpSource *keypair.Full, targ
 
 	tx = Transaction{
 		H: Header{
-			Version: common.TransactionVersionV1V1,
+			Version: common.TransactionVersionV1,
 			Created: common.NowISO8601(),
 			Hash:    txBody.MakeHashString(),
 		},
@@ -123,7 +123,7 @@ func MakeTransactionPayment(networkID []byte, kpSource *keypair.Full, target str
 
 	tx = Transaction{
 		H: Header{
-			Version: common.TransactionVersionV1V1,
+			Version: common.TransactionVersionV1,
 			Created: common.NowISO8601(),
 			Hash:    txBody.MakeHashString(),
 		},
