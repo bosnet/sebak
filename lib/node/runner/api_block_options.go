@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"boscoin.io/sebak/lib/client"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/storage"
 )
@@ -39,7 +40,7 @@ func NewGetBlocksOptionsFromRequest(r *http.Request) (options *GetBlocksOptions,
 			storage.DefaultMaxLimitListOptions,
 		)
 	} else {
-		if options.DefaultListOptions, err = storage.NewDefaultListOptionsFromQuery(r.URL.Query()); err != nil {
+		if options.DefaultListOptions, err = client.NewDefaultListOptionsFromQuery(r.URL.Query()); err != nil {
 			return
 		}
 

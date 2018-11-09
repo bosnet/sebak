@@ -6,9 +6,11 @@ import (
 	"encoding/json"
 	"net/http"
 	neturl "net/url"
+	"strconv"
 	"strings"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/storage"
 )
 
 const (
@@ -81,6 +83,34 @@ func NewClient(url string) *Client {
 		URL:  url,
 		HTTP: httpClient,
 	}
+}
+
+// NewDefaultListOptionsFromQuery makes ListOptions from url.Query.
+func NewDefaultListOptionsFromQuery(v neturl.Values) (options *storage.DefaultListOptions, err error) {
+	var reverse bool
+	var cursor []byte
+	var limit uint64 = storage.DefaultMaxLimitListOptions
+
+	r := v.Get(string(QueryOrder))
+	if len(r) > 0 {
+		if reverse, err = common.ParseBoolQueryString(r); err != nil {
+			return nil, err
+		}
+	}
+
+	r = v.Get(string(QueryCursor))
+	if len(r) > 0 {
+		cursor = []byte(r)
+	}
+
+	r = v.Get(string(QueryLimit))
+	if len(r) > 0 {
+		if limit, err = strconv.ParseUint(r, 10, 64); err != nil {
+			return nil, err
+		}
+	}
+
+	return storage.NewDefaultListOptions(reverse, cursor, limit), nil
 }
 
 func (c *Client) ToResponse(resp *http.Response, response interface{}) (err error) {
