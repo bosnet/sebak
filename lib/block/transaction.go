@@ -180,6 +180,15 @@ func (bt *BlockTransaction) SaveBlockOperations(st *storage.LevelDBBackend) (err
 		return errors.FailedToSaveBlockOperaton
 	}
 
+	if bt.blockHeight < 1 {
+		var blk Block
+		if blk, err = GetBlock(st, bt.Block); err != nil {
+			return
+		} else {
+			bt.blockHeight = blk.Height
+		}
+	}
+
 	for _, op := range bt.Transaction().B.Operations {
 		var bo BlockOperation
 		bo, err = NewBlockOperationFromOperation(op, bt.Transaction(), bt.blockHeight)
