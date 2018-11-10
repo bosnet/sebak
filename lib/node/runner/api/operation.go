@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/gorilla/mux"
+
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/client"
 	"boscoin.io/sebak/lib/common/observer"
@@ -12,7 +14,6 @@ import (
 	"boscoin.io/sebak/lib/network/httputils"
 	"boscoin.io/sebak/lib/node/runner/api/resource"
 	"boscoin.io/sebak/lib/transaction/operation"
-	"github.com/gorilla/mux"
 )
 
 func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter, r *http.Request) {
@@ -34,16 +35,21 @@ func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter
 	var cursor []byte
 	readFunc := func() []resource.Resource {
 		var txs []resource.Resource
-		iterFunc, closeFunc := block.GetBlockOperationsBySource(api.storage, address, options)
+
+		var iterFunc func() (block.BlockOperation, bool, []byte)
+		var closeFunc func()
+		if len(oType) > 0 {
+			iterFunc, closeFunc = block.GetBlockOperationsBySourceAndType(api.storage, address, oType, options)
+		} else {
+			iterFunc, closeFunc = block.GetBlockOperationsBySource(api.storage, address, options)
+		}
 		for {
 			t, hasNext, c := iterFunc()
 			cursor = c
 			if !hasNext {
 				break
 			}
-			if len(oType) == 0 || (len(oType) > 0 && t.Type == oType) {
-				txs = append(txs, resource.NewOperation(&t))
-			}
+			txs = append(txs, resource.NewOperation(&t))
 		}
 		closeFunc()
 		return txs

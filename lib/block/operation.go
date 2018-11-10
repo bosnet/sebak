@@ -87,6 +87,10 @@ func (bo *BlockOperation) Save(st *storage.LevelDBBackend) (err error) {
 		return
 	}
 
+	if err = st.New(bo.NewBlockOperationSourceAndTypeKey(), bo.Hash); err != nil {
+		return
+	}
+
 	var body operation.Body
 	var casted operation.CreateAccount
 	var ok bool
@@ -158,6 +162,10 @@ func GetBlockOperationKeyPrefixSource(source string) string {
 	return fmt.Sprintf("%s%s-", common.BlockOperationPrefixSource, source)
 }
 
+func GetBlockOperationKeyPrefixSourceAndType(source string, ty operation.OperationType) string {
+	return fmt.Sprintf("%s%s%s-", common.BlockOperationPrefixSource, source, string(ty))
+}
+
 func (bo BlockOperation) NewBlockOperationTxHashKey() string {
 	return fmt.Sprintf(
 		"%s%s%s%s",
@@ -183,6 +191,16 @@ func (bo BlockOperation) NewBlockOperationFrozenLinkedKey(hash string) string {
 		"%s%s",
 		GetBlockOperationKeyPrefixFrozenLinked(hash),
 		common.EncodeUint64ToByteSlice(bo.Height),
+	)
+}
+
+func (bo BlockOperation) NewBlockOperationSourceAndTypeKey() string {
+	return fmt.Sprintf(
+		"%s%s%s%s",
+		GetBlockOperationKeyPrefixSourceAndType(bo.Source, bo.Type),
+		common.EncodeUint64ToByteSlice(bo.Height),
+		common.EncodeUint64ToByteSlice(bo.transaction.B.SequenceID),
+		common.GetUniqueIDFromUUID(),
 	)
 }
 
@@ -261,5 +279,13 @@ func GetBlockOperationsByLinked(st *storage.LevelDBBackend, hash string, options
 	func(),
 ) {
 	iterFunc, closeFunc := st.GetIterator(GetBlockOperationKeyPrefixFrozenLinked(hash), options)
+	return LoadBlockOperationsInsideIterator(st, iterFunc, closeFunc)
+}
+
+func GetBlockOperationsBySourceAndType(st *storage.LevelDBBackend, source string, ty operation.OperationType, options storage.ListOptions) (
+	func() (BlockOperation, bool, []byte),
+	func(),
+) {
+	iterFunc, closeFunc := st.GetIterator(GetBlockOperationKeyPrefixSourceAndType(source, ty), options)
 	return LoadBlockOperationsInsideIterator(st, iterFunc, closeFunc)
 }
