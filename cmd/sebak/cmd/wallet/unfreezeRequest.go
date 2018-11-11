@@ -130,7 +130,7 @@ func makeTransactionUnfreezingRequest(kpSource keypair.KP, seqid uint64) transac
 
 	txBody := transaction.Body{
 		Source:     kpSource.Address(),
-		Fee:        common.Amount(common.BaseFee),
+		Fee:        common.Amount(0),
 		SequenceID: seqid,
 		Operations: []operation.Operation{op},
 	}

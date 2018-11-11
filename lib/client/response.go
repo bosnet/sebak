@@ -168,6 +168,17 @@ type Payment struct {
 	Amount []byte `json:"amount"`
 }
 
+type Freezing struct {
+	Target string `json:"target"`
+	Amount []byte `json:"amount"`
+	Linked string `json:"linked"`
+}
+
+type Unfreezing struct {
+	Target string `json:"target"`
+	Amount []byte `json:"amount"`
+}
+
 type Inflation struct {
 	Target         string `json:"target"`
 	Amount         []byte `json:"amount"`

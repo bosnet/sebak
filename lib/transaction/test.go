@@ -78,18 +78,18 @@ func MakeTransactionCreateAccount(networkID []byte, kpSource *keypair.Full, targ
 }
 
 func MakeTransactionCreateFrozenAccount(networkID []byte, kpSource *keypair.Full, target string, amount common.Amount, linkedAccount string) (tx Transaction) {
-	opb := operation.NewCreateAccount(target, common.Amount(amount), linkedAccount)
+	opb := operation.NewFreezing(target, common.Amount(amount), linkedAccount)
 
 	op := operation.Operation{
 		H: operation.Header{
-			Type: operation.TypeCreateAccount,
+			Type: operation.TypeFreezing,
 		},
 		B: opb,
 	}
 
 	txBody := Body{
 		Source:     kpSource.Address(),
-		Fee:        common.BaseFee,
+		Fee:        common.Amount(0),
 		Operations: []operation.Operation{op},
 	}
 
@@ -145,7 +145,7 @@ func MakeTransactionUnfreezingRequest(networkID []byte, kpSource *keypair.Full) 
 
 	txBody := Body{
 		Source:     kpSource.Address(),
-		Fee:        common.BaseFee,
+		Fee:        common.Amount(0),
 		Operations: []operation.Operation{op},
 	}
 
@@ -163,17 +163,17 @@ func MakeTransactionUnfreezingRequest(networkID []byte, kpSource *keypair.Full) 
 }
 
 func MakeTransactionUnfreezing(networkID []byte, kpSource *keypair.Full, target string, amount common.Amount) (tx Transaction) {
-	opb := operation.NewPayment(target, common.Amount(amount))
+	opb := operation.NewUnfreezing(target, common.Amount(amount))
 	op := operation.Operation{
 		H: operation.Header{
-			Type: operation.TypePayment,
+			Type: operation.TypeUnfreezing,
 		},
 		B: opb,
 	}
 
 	txBody := Body{
 		Source:     kpSource.Address(),
-		Fee:        common.BaseFee,
+		Fee:        common.Amount(0),
 		Operations: []operation.Operation{op},
 	}
 

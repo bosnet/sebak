@@ -92,14 +92,14 @@ func (bo *BlockOperation) Save(st *storage.LevelDBBackend) (err error) {
 	}
 
 	var body operation.Body
-	var casted operation.CreateAccount
+	var casted operation.Freezing
 	var ok bool
 
-	if bo.Type == operation.TypeCreateAccount {
+	if bo.Type == operation.TypeFreezing {
 		if body, err = operation.UnmarshalBodyJSON(bo.Type, bo.Body); err != nil {
 			return err
 		}
-		if casted, ok = body.(operation.CreateAccount); !ok {
+		if casted, ok = body.(operation.Freezing); !ok {
 			return errors.TypeOperationBodyNotMatched
 		}
 		if casted.Linked != "" {

@@ -151,6 +151,18 @@ func finishOperation(st *storage.LevelDBBackend, source string, op operation.Ope
 	case operation.TypeCongressVoting, operation.TypeCongressVotingResult:
 		//Nothing to do
 		return
+	case operation.TypeFreezing:
+		pop, ok := op.B.(operation.Freezing)
+		if !ok {
+			return errors.UnknownOperationType
+		}
+		return finishFreezing(st, source, pop, log)
+	case operation.TypeUnfreezing:
+		pop, ok := op.B.(operation.Unfreezing)
+		if !ok {
+			return errors.UnknownOperationType
+		}
+		return finishUnfreezing(st, source, pop, log)
 	case operation.TypeUnfreezingRequest:
 		pop, ok := op.B.(operation.UnfreezeRequest)
 		if !ok {
@@ -279,6 +291,54 @@ func finishInflation(st *storage.LevelDBBackend, opb operation.Inflation, log lo
 	}
 
 	if err = commonAccount.Save(st); err != nil {
+		return
+	}
+
+	return
+}
+
+func finishFreezing(st *storage.LevelDBBackend, source string, op operation.Freezing, log logging.Logger) (err error) {
+	if _, err = block.GetBlockAccount(st, source); err != nil {
+		err = errors.BlockAccountDoesNotExists
+		return
+	}
+
+	var baTarget *block.BlockAccount
+	if baTarget, err = block.GetBlockAccount(st, op.TargetAddress()); err == nil {
+		err = errors.BlockAccountAlreadyExists
+		return
+	} else {
+		err = nil
+	}
+
+	baTarget = block.NewBlockAccountLinked(
+		op.TargetAddress(),
+		op.GetAmount(),
+		op.Linked,
+	)
+	if err = baTarget.Save(st); err != nil {
+		return
+	}
+
+	return
+}
+
+func finishUnfreezing(st *storage.LevelDBBackend, source string, op operation.Unfreezing, log logging.Logger) (err error) {
+	if _, err = block.GetBlockAccount(st, source); err != nil {
+		err = errors.BlockAccountDoesNotExists
+		return
+	}
+
+	var baTarget *block.BlockAccount
+	if baTarget, err = block.GetBlockAccount(st, op.TargetAddress()); err != nil {
+		err = errors.BlockAccountDoesNotExists
+		return
+	}
+
+	if err = baTarget.Deposit(op.GetAmount()); err != nil {
+		return
+	}
+	if err = baTarget.Save(st); err != nil {
 		return
 	}
 

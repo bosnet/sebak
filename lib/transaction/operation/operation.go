@@ -19,6 +19,8 @@ const (
 	TypeCollectTxFee         OperationType = "collect-tx-fee"
 	TypeInflation            OperationType = "inflation"
 	TypeUnfreezingRequest    OperationType = "unfreezing-request"
+	TypeFreezing             OperationType = "freezing"
+	TypeUnfreezing           OperationType = "unfreezing"
 )
 
 func IsValidOperationType(oType string) bool {
@@ -30,6 +32,8 @@ func IsValidOperationType(oType string) bool {
 		string(TypeCollectTxFee),
 		string(TypeInflation),
 		string(TypeUnfreezingRequest),
+		string(TypeFreezing),
+		string(TypeUnfreezing),
 	}, oType)
 	return b
 }
@@ -40,6 +44,8 @@ var KindsNormalTransaction map[OperationType]struct{} = map[OperationType]struct
 	TypeCongressVoting:       struct{}{},
 	TypeCongressVotingResult: struct{}{},
 	TypeUnfreezingRequest:    struct{}{},
+	TypeFreezing:             struct{}{},
+	TypeUnfreezing:           struct{}{},
 }
 
 type Operation struct {
@@ -64,6 +70,10 @@ func NewOperation(opb Body) (op Operation, err error) {
 		t = TypeCongressVoting
 	case CongressVotingResult:
 		t = TypeCongressVotingResult
+	case Freezing:
+		t = TypeFreezing
+	case Unfreezing:
+		t = TypeUnfreezing
 	default:
 		err = errors.UnknownOperationType
 		return
@@ -195,6 +205,18 @@ func UnmarshalBodyJSON(t OperationType, b []byte) (body Body, err error) {
 		body = ob
 	case TypeUnfreezingRequest:
 		var ob UnfreezeRequest
+		if err = json.Unmarshal(b, &ob); err != nil {
+			return
+		}
+		body = ob
+	case TypeFreezing:
+		var ob Freezing
+		if err = json.Unmarshal(b, &ob); err != nil {
+			return
+		}
+		body = ob
+	case TypeUnfreezing:
+		var ob Unfreezing
 		if err = json.Unmarshal(b, &ob); err != nil {
 			return
 		}

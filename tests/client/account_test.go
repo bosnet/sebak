@@ -3,7 +3,6 @@
 package client
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 	"testing"
@@ -358,7 +357,7 @@ func TestFrozenAccount(t *testing.T) {
 		require.Nil(t, err)
 		senderBalance, err := strconv.ParseUint(senderAccount.Balance, 10, 64)
 
-		ob := operation.NewCreateAccount(frozenAccountAddr, common.Amount(generalAccountTofrozenAccount), generalAccountAddr)
+		ob := operation.NewFreezing(frozenAccountAddr, common.Amount(generalAccountTofrozenAccount), generalAccountAddr)
 		o, err := operation.NewOperation(ob)
 		require.Nil(t, err)
 
@@ -404,7 +403,7 @@ func TestFrozenAccount(t *testing.T) {
 
 		senderBalance2, err := strconv.ParseUint(senderAccount.Balance, 10, 64)
 		require.Nil(t, err)
-		require.Equal(t, senderBalance-generalAccountTofrozenAccount-fee, senderBalance2)
+		require.Equal(t, senderBalance-generalAccountTofrozenAccount, senderBalance2)
 
 	}
 
@@ -455,7 +454,7 @@ func TestFrozenAccount(t *testing.T) {
 
 		targetBalance, err := strconv.ParseUint(FrozenAccount2Account.Balance, 10, 64)
 		require.Nil(t, err)
-		require.Equal(t, uint64(generalAccountTofrozenAccount-fee), targetBalance)
+		require.Equal(t, uint64(generalAccountTofrozenAccount), targetBalance)
 
 		var FrozenAccountsPage client.FrozenAccountsPage
 		for second := time.Duration(0); second < time.Second*3; second = second + time.Millisecond*500 {
@@ -465,7 +464,7 @@ func TestFrozenAccount(t *testing.T) {
 			}
 			time.Sleep(time.Millisecond * 500)
 		}
-		fmt.Println(FrozenAccountsPage)
+
 		require.Nil(t, e)
 		require.Equal(t, FrozenAccountsPage.Embedded.Records[0].Address, frozenAccountAddr)
 		require.Equal(t, FrozenAccountsPage.Embedded.Records[0].Amount, common.Amount(generalAccountTofrozenAccount))

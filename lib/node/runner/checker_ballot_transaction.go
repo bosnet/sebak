@@ -273,8 +273,24 @@ func ValidateOp(st *storage.LevelDBBackend, source *block.BlockAccount, op opera
 		if casted, ok = op.B.(operation.CreateAccount); !ok {
 			return errors.TypeOperationBodyNotMatched
 		}
+		if casted.Linked != "" {
+			return errors.InvalidLinkedValue
+		}
 		var exists bool
 		if exists, err = block.ExistsBlockAccount(st, op.B.(operation.CreateAccount).Target); err == nil && exists {
+			return errors.BlockAccountAlreadyExists
+		}
+	case operation.TypeFreezing:
+		var ok bool
+		var casted operation.Freezing
+		if casted, ok = op.B.(operation.Freezing); !ok {
+			return errors.TypeOperationBodyNotMatched
+		}
+		if casted.Linked == "" {
+			return errors.FrozenAccountMustHaveLinkedAccount
+		}
+		var exists bool
+		if exists, err = block.ExistsBlockAccount(st, op.B.(operation.Freezing).Target); err == nil && exists {
 			return errors.BlockAccountAlreadyExists
 		}
 		if source.Linked != "" {
@@ -292,11 +308,14 @@ func ValidateOp(st *storage.LevelDBBackend, source *block.BlockAccount, op opera
 				return errors.UnfreezingNotReachedExpiration
 			}
 			// If it's a frozen account we check that only whole units are frozen
-			if casted.Linked != "" && (casted.Amount%common.Unit) != 0 {
+			if casted.Amount%common.Unit != 0 {
 				return errors.FrozenAccountCreationWholeUnit // FIXME
 			}
 		}
 	case operation.TypePayment:
+		if source.Linked != "" {
+			return errors.InvalidLinkedValue
+		}
 		var ok bool
 		var casted operation.Payment
 		if casted, ok = op.B.(operation.Payment); !ok {
@@ -306,31 +325,48 @@ func ValidateOp(st *storage.LevelDBBackend, source *block.BlockAccount, op opera
 		if taccount, err = block.GetBlockAccount(st, casted.Target); err != nil {
 			return errors.BlockAccountDoesNotExists
 		}
-		// If it's a frozen account, it cannot receive payment
+		// If the target is a frozen account, it cannot receive payment.
 		if taccount.Linked != "" {
 			return errors.FrozenAccountNoDeposit
 		}
-		if source.Linked != "" {
-			// If it's a frozen account, everything must be withdrawn
-			var expected common.Amount
-			expected, err = source.Balance.Sub(common.BaseFee)
-			if casted.Amount != expected {
-				return errors.FrozenAccountMustWithdrawEverything
-			}
-			// Unfreezing must be done after X period from unfreezing request
-			iterFunc, closeFunc := block.GetBlockOperationsBySource(st, source.Address, nil)
-			bo, _, _ := iterFunc()
-			closeFunc()
-			// Before unfreezing payment, unfreezing request shoud be saved
-			if bo.Type != operation.TypeUnfreezingRequest {
-				return errors.UnfreezingRequestNotRequested
-			}
-			lastblock := block.GetLatestBlock(st)
-			// unfreezing period is 241920.
-			if lastblock.Height-bo.Height < common.UnfreezingPeriod {
-				return errors.UnfreezingNotReachedExpiration
-			}
+	case operation.TypeUnfreezing:
+		if source.Linked == "" {
+			return errors.UnfreezingFromInvalidAccount
 		}
+		var ok bool
+		var casted operation.Unfreezing
+		if casted, ok = op.B.(operation.Unfreezing); !ok {
+			return errors.TypeOperationBodyNotMatched
+		}
+		var taccount *block.BlockAccount
+		if taccount, err = block.GetBlockAccount(st, casted.Target); err != nil {
+			return errors.BlockAccountDoesNotExists
+		}
+		// If the target is a frozen account, it cannot receive payment.
+		if taccount.Linked != "" {
+			return errors.FrozenAccountNoDeposit
+		}
+
+		// When unfreezing, everything must be withdrawn
+		var expected common.Amount
+		expected = source.Balance
+		if casted.Amount != expected {
+			return errors.FrozenAccountMustWithdrawEverything
+		}
+		// Unfreezing must be done after X period from unfreezing request
+		iterFunc, closeFunc := block.GetBlockOperationsBySource(st, source.Address, nil)
+		bo, _, _ := iterFunc()
+		closeFunc()
+		// Before unfreezing payment, unfreezing request shoud be saved
+		if bo.Type != operation.TypeUnfreezingRequest {
+			return errors.UnfreezingRequestNotRequested
+		}
+		lastblock := block.GetLatestBlock(st)
+		// unfreezing period is 241920.
+		if lastblock.Height-bo.Height < common.UnfreezingPeriod {
+			return errors.UnfreezingNotReachedExpiration
+		}
+
 	case operation.TypeUnfreezingRequest:
 		if _, ok := op.B.(operation.UnfreezeRequest); !ok {
 			return errors.TypeOperationBodyNotMatched

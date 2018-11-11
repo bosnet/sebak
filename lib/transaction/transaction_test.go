@@ -58,7 +58,7 @@ func (suite *TestSuite) TestIsWellFormedTransactionWithLowerFeeSuite() {
 		tx.B.Fee = tx.B.Fee.MustAdd(1)
 		tx.Sign(kp, suite.conf.NetworkID)
 		err = tx.IsWellFormed(suite.conf)
-		require.Nil(suite.T(), err)
+		require.Equal(suite.T(), errors.InvalidFee, err, "Transaction shouidn't pass Fee checks")
 	}
 
 	{ // fee is lower than len(Operations) * BaseFee
@@ -117,7 +117,7 @@ func (suite *TestSuite) TestIsWellFormedTransactionWithLowerFeeSuite() {
 		require.NoError(suite.T(), err)
 	}
 
-	{ // with UnfreezeRequest, it is not zero fee
+	{ // with UnfreezeRequest, it is zero fee
 		kp, tx := TestMakeTransaction(suite.conf.NetworkID, 3)
 
 		opb := operation.NewUnfreezeRequest()
@@ -126,9 +126,8 @@ func (suite *TestSuite) TestIsWellFormedTransactionWithLowerFeeSuite() {
 			B: opb,
 		}
 		tx.B.Operations = append(tx.B.Operations, op)
-		tx.B.Fee = common.BaseFee * 4
 		tx.Sign(kp, suite.conf.NetworkID)
-		require.Equal(suite.T(), tx.B.Fee, common.BaseFee*4)
+		require.Equal(suite.T(), tx.B.Fee, common.BaseFee*3)
 		require.Equal(suite.T(), len(tx.B.Operations), 4)
 
 		err = tx.IsWellFormed(suite.conf)

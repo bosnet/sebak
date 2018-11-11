@@ -8,26 +8,25 @@ import (
 	"boscoin.io/sebak/lib/errors"
 )
 
-type CreateAccount struct {
+type Freezing struct {
 	Target string        `json:"target"`
 	Amount common.Amount `json:"amount"`
-	Linked string        `json:"linked,omitempty"`
+	Linked string        `json:"linked"`
 }
 
-func NewCreateAccount(target string, amount common.Amount, linked string) CreateAccount {
-	return CreateAccount{
+func NewFreezing(target string, amount common.Amount, linked string) Freezing {
+	return Freezing{
 		Target: target,
 		Amount: amount,
 		Linked: linked,
 	}
 }
 
-func (o CreateAccount) Serialize() (encoded []byte, err error) {
+func (o Freezing) Serialize() (encoded []byte, err error) {
 	return json.Marshal(o)
 }
 
-// Implement transaction/operation : IsWellFormed
-func (o CreateAccount) IsWellFormed(common.Config) (err error) {
+func (o Freezing) IsWellFormed(common.Config) (err error) {
 	if _, err = keypair.Parse(o.Target); err != nil {
 		return
 	}
@@ -42,22 +41,20 @@ func (o CreateAccount) IsWellFormed(common.Config) (err error) {
 		return
 	}
 
-	if o.Linked != "" {
+	if o.Linked == "" {
 		err = errors.InvalidLinkedValue
-		return
 	}
-
 	return
 }
 
-func (o CreateAccount) TargetAddress() string {
+func (o Freezing) TargetAddress() string {
 	return o.Target
 }
 
-func (o CreateAccount) GetAmount() common.Amount {
+func (o Freezing) GetAmount() common.Amount {
 	return o.Amount
 }
 
-func (o CreateAccount) HasFee() bool {
-	return true
+func (o Freezing) HasFee() bool {
+	return false
 }

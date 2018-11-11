@@ -96,4 +96,6 @@ var (
 	FailedToSaveBlockOperaton                 = NewError(178, "failed to save BlockOperation")
 	NodeNotFound                              = NewError(179, "Node not found")
 	InvalidMessageVersion                     = NewError(180, "message version is invalid")
+	FrozenAccountMustHaveLinkedAccount        = NewError(181, "Frozen account must have linked general address")
+	InvalidLinkedValue                        = NewError(182, "Invalid linked value")
 )

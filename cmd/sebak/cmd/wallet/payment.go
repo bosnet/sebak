@@ -29,6 +29,7 @@ var (
 	flagDry           bool
 	flagFreeze        bool
 	flagVerbose       bool
+	flagUnfreeze      bool
 )
 
 func init() {
@@ -103,22 +104,28 @@ func init() {
 			// Check that account's balance is enough before sending the transaction
 			{
 				newBalance, err = senderAccount.GetBalance().Sub(amount)
-				if err == nil {
-					newBalance, err = newBalance.Sub(common.BaseFee)
-				}
-
 				if err != nil {
-					fmt.Printf("Attempting to draft %v GON (+ %v fees), but sender account only have %v GON\n",
-						amount, common.BaseFee, senderAccount.GetBalance())
+					fmt.Printf("Attempting to draft %v GON, but sender account only have %v GON\n",
+						amount, senderAccount.GetBalance())
 					os.Exit(1)
+				} else {
+					if !(flagFreeze || flagUnfreeze) {
+						newBalance, err = newBalance.Sub(common.BaseFee)
+						if err != nil {
+							fmt.Printf("Attempting to draft %v GON (+ %v fees), but sender account only have %v GON\n",
+								amount, common.BaseFee, senderAccount.GetBalance())
+							os.Exit(1)
+						}
+					}
 				}
 			}
-
 			// TODO: Validate that the account doesn't already exists
 			if flagFreeze {
-				tx = makeTransactionCreateAccount(sender, receiver, amount, senderAccount.SequenceID, sender.Address())
+				tx = makeTransactionFreezing(sender, receiver, amount, senderAccount.SequenceID, sender.Address())
 			} else if flagCreateAccount {
 				tx = makeTransactionCreateAccount(sender, receiver, amount, senderAccount.SequenceID, "")
+			} else if flagUnfreeze {
+				tx = makeTransactionUnfreezing(sender, receiver, amount, senderAccount.SequenceID)
 			} else {
 				tx = makeTransactionPayment(sender, receiver, amount, senderAccount.SequenceID)
 			}
@@ -150,6 +157,7 @@ func init() {
 	PaymentCmd.Flags().StringVar(&flagNetworkID, "network-id", flagNetworkID, "network id")
 	PaymentCmd.Flags().BoolVar(&flagCreateAccount, "create", flagCreateAccount, "Whether or not the account should be created")
 	PaymentCmd.Flags().BoolVar(&flagFreeze, "freeze", flagFreeze, "When present, the payment is a frozen account creation. Imply --create.")
+	PaymentCmd.Flags().BoolVar(&flagUnfreeze, "unfreeze", flagUnfreeze, "When present, the payment is a unfreezing. unfreezing should withdraw whole balance.")
 	PaymentCmd.Flags().BoolVar(&flagDry, "dry-run", flagDry, "Print the transaction instead of sending it")
 	PaymentCmd.Flags().BoolVar(&flagVerbose, "verbose", flagVerbose, "Print extra data (transaction sent, before/after balance...)")
 }
@@ -170,8 +178,8 @@ func init() {
 /// Returns:
 ///   `sebak.Transaction` = The generated `Transaction` creating the account
 ///
-func makeTransactionCreateAccount(kpSource keypair.KP, kpDest keypair.KP, amount common.Amount, seqid uint64, target string) transaction.Transaction {
-	opb := operation.NewCreateAccount(kpDest.Address(), amount, target)
+func makeTransactionCreateAccount(kpSource keypair.KP, kpDest keypair.KP, amount common.Amount, seqid uint64, linked string) transaction.Transaction {
+	opb := operation.NewCreateAccount(kpDest.Address(), amount, linked)
 
 	op := operation.Operation{
 		H: operation.Header{
@@ -183,6 +191,36 @@ func makeTransactionCreateAccount(kpSource keypair.KP, kpDest keypair.KP, amount
 	txBody := transaction.Body{
 		Source:     kpSource.Address(),
 		Fee:        common.BaseFee,
+		SequenceID: seqid,
+		Operations: []operation.Operation{op},
+	}
+
+	tx := transaction.Transaction{
+		H: transaction.Header{
+			Version: common.TransactionVersionV1,
+			Created: common.NowISO8601(),
+			Hash:    txBody.MakeHashString(),
+		},
+		B: txBody,
+	}
+
+	return tx
+}
+
+// makeTransactionFreezing creates frozen account.
+func makeTransactionFreezing(kpSource keypair.KP, kpDest keypair.KP, amount common.Amount, seqid uint64, linked string) transaction.Transaction {
+	opb := operation.NewFreezing(kpDest.Address(), amount, linked)
+
+	op := operation.Operation{
+		H: operation.Header{
+			Type: operation.TypeFreezing,
+		},
+		B: opb,
+	}
+
+	txBody := transaction.Body{
+		Source:     kpSource.Address(),
+		Fee:        common.Amount(0),
 		SequenceID: seqid,
 		Operations: []operation.Operation{op},
 	}
@@ -227,6 +265,35 @@ func makeTransactionPayment(kpSource keypair.KP, kpDest keypair.KP, amount commo
 	txBody := transaction.Body{
 		Source:     kpSource.Address(),
 		Fee:        common.Amount(common.BaseFee),
+		SequenceID: seqid,
+		Operations: []operation.Operation{op},
+	}
+
+	tx := transaction.Transaction{
+		H: transaction.Header{
+			Version: common.TransactionVersionV1,
+			Created: common.NowISO8601(),
+			Hash:    txBody.MakeHashString(),
+		},
+		B: txBody,
+	}
+
+	return tx
+}
+
+func makeTransactionUnfreezing(kpSource keypair.KP, kpDest keypair.KP, amount common.Amount, seqid uint64) transaction.Transaction {
+	opb := operation.NewUnfreezing(kpDest.Address(), amount)
+
+	op := operation.Operation{
+		H: operation.Header{
+			Type: operation.TypeUnfreezing,
+		},
+		B: opb,
+	}
+
+	txBody := transaction.Body{
+		Source:     kpSource.Address(),
+		Fee:        common.Amount(0),
 		SequenceID: seqid,
 		Operations: []operation.Operation{op},
 	}

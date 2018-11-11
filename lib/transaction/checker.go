@@ -42,7 +42,7 @@ func CheckOverOperationsLimit(c common.Checker, args ...interface{}) (err error)
 
 func CheckBaseFee(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*Checker)
-	if checker.Transaction.B.Fee < checker.Transaction.TotalBaseFee() {
+	if checker.Transaction.B.Fee != checker.Transaction.TotalBaseFee() {
 		err = errors.InvalidFee
 		return
 	}

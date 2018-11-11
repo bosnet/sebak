@@ -89,14 +89,14 @@ func (api NetworkHandlerAPI) GetFrozenAccountsByAccountHandler(w http.ResponseWr
 				break
 			}
 			var (
-				casted operation.CreateAccount
+				casted operation.Freezing
 				ok     bool
 				body   operation.Body
 			)
 			if body, err = operation.UnmarshalBodyJSON(bo.Type, bo.Body); err != nil {
 				break
 			}
-			if casted, ok = body.(operation.CreateAccount); !ok {
+			if casted, ok = body.(operation.Freezing); !ok {
 				break
 			}
 			createdBlockHeight = bo.Height
@@ -123,7 +123,7 @@ func (api NetworkHandlerAPI) GetFrozenAccountsByAccountHandler(w http.ResponseWr
 					}
 					unfreezingOpHash = bo.OpHash
 					unfreezingBlockHeight = bo.Height
-				case operation.TypePayment:
+				case operation.TypeUnfreezing:
 					state = resource.ReturnedState
 					paymentOpHash = bo.OpHash
 				}
@@ -209,14 +209,14 @@ func (api NetworkHandlerAPI) GetFrozenAccountsHandler(w http.ResponseWriter, r *
 				break
 			}
 			var (
-				casted operation.CreateAccount
+				casted operation.Freezing
 				ok     bool
 				body   operation.Body
 			)
 			if body, err = operation.UnmarshalBodyJSON(bo.Type, bo.Body); err != nil {
 				break
 			}
-			if casted, ok = body.(operation.CreateAccount); !ok {
+			if casted, ok = body.(operation.Freezing); !ok {
 				break
 			}
 			createdBlockHeight = bo.Height
@@ -233,7 +233,7 @@ func (api NetworkHandlerAPI) GetFrozenAccountsHandler(w http.ResponseWriter, r *
 			for {
 				bo, hasNext, _ := opIterFunc()
 				switch bo.Type {
-				case operation.TypePayment:
+				case operation.TypeUnfreezing:
 					state = resource.ReturnedState
 					paymentOpHash = bo.OpHash
 				case operation.TypeUnfreezingRequest:
@@ -241,7 +241,7 @@ func (api NetworkHandlerAPI) GetFrozenAccountsHandler(w http.ResponseWriter, r *
 					if lastblock.Height-bo.Height >= common.UnfreezingPeriod {
 						state = resource.UnfrozenState
 					} else {
-						unfreezingRemainingBlocks = bo.Height + uint64(241920) - lastblock.Height
+						unfreezingRemainingBlocks = bo.Height + common.UnfreezingPeriod - lastblock.Height
 						state = resource.MeltingState
 					}
 					unfreezingOpHash = bo.OpHash
