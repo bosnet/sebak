@@ -8,6 +8,7 @@ import (
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/common/observer"
+	"boscoin.io/sebak/lib/metrics"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/storage"
@@ -286,6 +287,7 @@ func (s *Syncer) work(height uint64, nodeAddrs []string) bool {
 			}
 		} else {
 			s.logger.Info("done sync work", "height", height, "hash", syncInfo.Block.Hash)
+			metrics.Sync.SetHeight(height)
 		}
 	}
 	return s.workPool.TryAdd(ctx, work)

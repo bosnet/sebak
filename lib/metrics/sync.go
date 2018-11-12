@@ -17,6 +17,17 @@ type SyncMetrics struct {
 
 var Sync = NopSyncMetrics()
 
+func (s *SyncMetrics) SetHeight(height uint64) {
+	s.Height.Set(float64(height))
+}
+
+func (s *SyncMetrics) AddFetchError() {
+	s.ErrorTotal.With("component", "fetcher").Add(1)
+}
+func (s *SyncMetrics) AddValidateError() {
+	s.ErrorTotal.With("component", "validator").Add(1)
+}
+
 func PromSyncMetrics() *SyncMetrics {
 	return &SyncMetrics{
 		Height: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{

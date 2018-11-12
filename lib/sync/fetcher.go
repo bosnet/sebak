@@ -17,6 +17,7 @@ import (
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/errors"
+	"boscoin.io/sebak/lib/metrics"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/node/runner"
@@ -86,6 +87,7 @@ func (f *BlockFetcher) Fetch(ctx context.Context, syncInfo *SyncInfo) (*SyncInfo
 					return false, ctx.Err()
 				}
 				f.logger.Error("fetch err", "err", err, "height", height)
+				metrics.Sync.AddFetchError()
 				c := time.After(f.retryInterval) //afterFunc?
 				select {
 				case <-ctx.Done():
