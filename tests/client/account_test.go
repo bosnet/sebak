@@ -13,7 +13,6 @@ import (
 	"boscoin.io/sebak/lib/client"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/node/runner/api/resource"
-	"boscoin.io/sebak/lib/transaction"
 	"boscoin.io/sebak/lib/transaction/operation"
 	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
@@ -50,7 +49,7 @@ func TestAccount(t *testing.T) {
 		o, err := operation.NewOperation(ob)
 		require.NoError(t, err)
 
-		tx, err := transaction.NewTransaction(genesisAddr, uint64(genesisAccount.SequenceID), o)
+		tx, err := c.NewTransaction(genesisAddr, uint64(genesisAccount.SequenceID), o)
 		require.NoError(t, err)
 
 		sender, err := keypair.Parse(genesisSecret)
@@ -109,7 +108,7 @@ func TestAccount(t *testing.T) {
 		o, err := operation.NewOperation(ob)
 		require.NoError(t, err)
 
-		tx, err := transaction.NewTransaction(account1Addr, uint64(senderAccount.SequenceID), o)
+		tx, err := c.NewTransaction(account1Addr, uint64(senderAccount.SequenceID), o)
 		require.NoError(t, err)
 
 		sender, err := keypair.Parse(account1Secret)
@@ -169,7 +168,7 @@ func TestAccount(t *testing.T) {
 		o, err := operation.NewOperation(ob)
 		require.NoError(t, err)
 
-		tx, err := transaction.NewTransaction(account1Addr, uint64(senderAccount.SequenceID), o)
+		tx, err := c.NewTransaction(account1Addr, uint64(senderAccount.SequenceID), o)
 		require.NoError(t, err)
 
 		sender, err := keypair.Parse(account1Secret)
@@ -229,7 +228,7 @@ func TestAccount(t *testing.T) {
 		o, err := operation.NewOperation(ob)
 		require.Nil(t, err)
 
-		tx, err := transaction.NewTransaction(account1Addr, uint64(senderAccount.SequenceID), o)
+		tx, err := c.NewTransaction(account1Addr, uint64(senderAccount.SequenceID), o)
 		require.Nil(t, err)
 
 		sender, err := keypair.Parse(account1Secret)
@@ -303,7 +302,7 @@ func TestFrozenAccount(t *testing.T) {
 		o, err := operation.NewOperation(ob)
 		require.Nil(t, err)
 
-		tx, err := transaction.NewTransaction(genesisAddr, uint64(genesisAccount.SequenceID), o)
+		tx, err := c.NewTransaction(genesisAddr, uint64(genesisAccount.SequenceID), o)
 		require.Nil(t, err)
 
 		sender, err := keypair.Parse(genesisSecret)
@@ -362,7 +361,7 @@ func TestFrozenAccount(t *testing.T) {
 		o, err := operation.NewOperation(ob)
 		require.Nil(t, err)
 
-		tx, err := transaction.NewTransaction(generalAccountAddr, uint64(senderAccount.SequenceID), o)
+		tx, err := c.NewTransaction(generalAccountAddr, uint64(senderAccount.SequenceID), o)
 		require.Nil(t, err)
 
 		sender, err := keypair.Parse(generalAccountSecret)
@@ -404,7 +403,7 @@ func TestFrozenAccount(t *testing.T) {
 
 		senderBalance2, err := strconv.ParseUint(senderAccount.Balance, 10, 64)
 		require.Nil(t, err)
-		require.Equal(t, senderBalance-generalAccountTofrozenAccount-fee, senderBalance2)
+		require.Equal(t, senderBalance-generalAccountTofrozenAccount, senderBalance2)
 
 	}
 
@@ -420,7 +419,7 @@ func TestFrozenAccount(t *testing.T) {
 		o, err := operation.NewOperation(ob)
 		require.Nil(t, err)
 
-		tx, err := transaction.NewTransaction(frozenAccountAddr, uint64(unfreezingAccount.SequenceID), o)
+		tx, err := c.NewTransaction(frozenAccountAddr, uint64(unfreezingAccount.SequenceID), o)
 		require.Nil(t, err)
 
 		sender, err := keypair.Parse(frozenAccountSecret)
@@ -455,7 +454,7 @@ func TestFrozenAccount(t *testing.T) {
 
 		targetBalance, err := strconv.ParseUint(FrozenAccount2Account.Balance, 10, 64)
 		require.Nil(t, err)
-		require.Equal(t, uint64(generalAccountTofrozenAccount-fee), targetBalance)
+		require.Equal(t, uint64(generalAccountTofrozenAccount), targetBalance)
 
 		var FrozenAccountsPage client.FrozenAccountsPage
 		for second := time.Duration(0); second < time.Second*3; second = second + time.Millisecond*500 {

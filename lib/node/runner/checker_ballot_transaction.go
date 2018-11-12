@@ -213,6 +213,11 @@ func ValidateTx(st *storage.LevelDBBackend, tx transaction.Transaction) (err err
 		return
 	}
 
+	// check, multiple operation from frozen account.
+	if ba.Linked != "" && len(tx.B.Operations) != 1 {
+		err = errors.FrozenAccountSendTooManyOperation
+	}
+
 	// check, version is correct
 	if !tx.IsValidVersion(common.TransactionVersionV1) {
 		err = errors.InvalidMessageVersion
@@ -240,16 +245,27 @@ func ValidateTx(st *storage.LevelDBBackend, tx transaction.Transaction) (err err
 		return
 	}
 
+	var opsHasFee int
+	var hasFee bool
 	for _, op := range tx.B.Operations {
-		if err = ValidateOp(st, ba, op); err != nil {
-
+		if hasFee, err = ValidateOp(st, ba, op); err != nil {
 			key := block.GetBlockTransactionHistoryKey(tx.H.Hash)
 			st.Remove(key)
-
 			return
+		}
+		if hasFee {
+			opsHasFee++
 		}
 	}
 
+	var totalfee common.Amount
+	totalfee, err = TotalBaseFee(st, tx)
+	if err != nil {
+		return
+	}
+	if totalfee != common.BaseFee.MustMult(opsHasFee) {
+		return errors.InvalidFee
+	}
 	return
 }
 
@@ -265,57 +281,64 @@ func ValidateTx(st *storage.LevelDBBackend, tx transaction.Transaction) (err err
 //   source = Account from where the transaction (and ops) come from
 //   tx = Transaction to check
 //
-func ValidateOp(st *storage.LevelDBBackend, source *block.BlockAccount, op operation.Operation) (err error) {
+func ValidateOp(st *storage.LevelDBBackend, source *block.BlockAccount, op operation.Operation) (hasFee bool, err error) {
 	switch op.H.Type {
 	case operation.TypeCreateAccount:
+		hasFee = op.HasFee()
 		var ok bool
 		var casted operation.CreateAccount
 		if casted, ok = op.B.(operation.CreateAccount); !ok {
-			return errors.TypeOperationBodyNotMatched
+			return hasFee, errors.TypeOperationBodyNotMatched
 		}
 		var exists bool
 		if exists, err = block.ExistsBlockAccount(st, op.B.(operation.CreateAccount).Target); err == nil && exists {
-			return errors.BlockAccountAlreadyExists
+			return hasFee, errors.BlockAccountAlreadyExists
 		}
 		if source.Linked != "" {
+			hasFee = false
 			// Unfreezing must be done after X period from unfreezing request
 			iterFunc, closeFunc := block.GetBlockOperationsBySource(st, source.Address, nil)
 			bo, _, _ := iterFunc()
 			closeFunc()
 			// Before unfreezing payment, unfreezing request shoud be saved
 			if bo.Type != operation.TypeUnfreezingRequest {
-				return errors.UnfreezingRequestNotRequested
+				return hasFee, errors.UnfreezingRequestNotRequested
 			}
 			lastblock := block.GetLatestBlock(st)
 			// unfreezing period is 241920.
 			if lastblock.Height-bo.Height < common.UnfreezingPeriod {
-				return errors.UnfreezingNotReachedExpiration
+				return hasFee, errors.UnfreezingNotReachedExpiration
 			}
-			// If it's a frozen account we check that only whole units are frozen
-			if casted.Linked != "" && (casted.Amount%common.Unit) != 0 {
-				return errors.FrozenAccountCreationWholeUnit // FIXME
+		}
+		// If it's a frozen account we check that only whole units are frozen
+		if casted.Linked != "" {
+			hasFee = false
+			if (casted.Amount % common.Unit) != 0 {
+				return hasFee, errors.FrozenAccountCreationWholeUnit // FIXME
 			}
 		}
 	case operation.TypePayment:
+		hasFee = op.HasFee()
 		var ok bool
 		var casted operation.Payment
 		if casted, ok = op.B.(operation.Payment); !ok {
-			return errors.TypeOperationBodyNotMatched
+			return hasFee, errors.TypeOperationBodyNotMatched
 		}
 		var taccount *block.BlockAccount
 		if taccount, err = block.GetBlockAccount(st, casted.Target); err != nil {
-			return errors.BlockAccountDoesNotExists
+			return hasFee, errors.BlockAccountDoesNotExists
 		}
 		// If it's a frozen account, it cannot receive payment
 		if taccount.Linked != "" {
-			return errors.FrozenAccountNoDeposit
+			return hasFee, errors.FrozenAccountNoDeposit
 		}
 		if source.Linked != "" {
+			hasFee = false
 			// If it's a frozen account, everything must be withdrawn
 			var expected common.Amount
 			expected, err = source.Balance.Sub(common.BaseFee)
 			if casted.Amount != expected {
-				return errors.FrozenAccountMustWithdrawEverything
+				return hasFee, errors.FrozenAccountMustWithdrawEverything
 			}
 			// Unfreezing must be done after X period from unfreezing request
 			iterFunc, closeFunc := block.GetBlockOperationsBySource(st, source.Address, nil)
@@ -323,35 +346,37 @@ func ValidateOp(st *storage.LevelDBBackend, source *block.BlockAccount, op opera
 			closeFunc()
 			// Before unfreezing payment, unfreezing request shoud be saved
 			if bo.Type != operation.TypeUnfreezingRequest {
-				return errors.UnfreezingRequestNotRequested
+				return hasFee, errors.UnfreezingRequestNotRequested
 			}
 			lastblock := block.GetLatestBlock(st)
 			// unfreezing period is 241920.
 			if lastblock.Height-bo.Height < common.UnfreezingPeriod {
-				return errors.UnfreezingNotReachedExpiration
+				return hasFee, errors.UnfreezingNotReachedExpiration
 			}
 		}
 	case operation.TypeUnfreezingRequest:
+		hasFee = op.HasFee()
 		if _, ok := op.B.(operation.UnfreezeRequest); !ok {
-			return errors.TypeOperationBodyNotMatched
+			return hasFee, errors.TypeOperationBodyNotMatched
 		}
 		// Unfreezing should be done from a frozen account
 		if source.Linked == "" {
-			return errors.UnfreezingFromInvalidAccount
+			return hasFee, errors.UnfreezingFromInvalidAccount
 		}
 		// Repeated unfreeze request shoud be blocked after unfreeze request saved
 		iterFunc, closeFunc := block.GetBlockOperationsBySource(st, source.Address, nil)
 		bo, _, _ := iterFunc()
 		closeFunc()
 		if bo.Type == operation.TypeUnfreezingRequest {
-			return errors.UnfreezingRequestAlreadyReceived
+			return hasFee, errors.UnfreezingRequestAlreadyReceived
 		}
 	case operation.TypeCongressVoting, operation.TypeCongressVotingResult:
+		hasFee = op.HasFee()
 		// Nothing to do
 		return
 
 	default:
-		return errors.UnknownOperationType
+		return hasFee, errors.UnknownOperationType
 	}
 	return
 }

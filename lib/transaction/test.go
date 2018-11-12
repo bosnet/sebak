@@ -89,7 +89,7 @@ func MakeTransactionCreateFrozenAccount(networkID []byte, kpSource *keypair.Full
 
 	txBody := Body{
 		Source:     kpSource.Address(),
-		Fee:        common.BaseFee,
+		Fee:        common.Amount(0),
 		Operations: []operation.Operation{op},
 	}
 
@@ -145,7 +145,7 @@ func MakeTransactionUnfreezingRequest(networkID []byte, kpSource *keypair.Full) 
 
 	txBody := Body{
 		Source:     kpSource.Address(),
-		Fee:        common.BaseFee,
+		Fee:        common.Amount(0),
 		Operations: []operation.Operation{op},
 	}
 
@@ -173,7 +173,7 @@ func MakeTransactionUnfreezing(networkID []byte, kpSource *keypair.Full, target 
 
 	txBody := Body{
 		Source:     kpSource.Address(),
-		Fee:        common.BaseFee,
+		Fee:        common.Amount(0),
 		Operations: []operation.Operation{op},
 	}
 

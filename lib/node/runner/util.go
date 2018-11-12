@@ -133,6 +133,40 @@ func NewNodeInfo(nr *NodeRunner) node.NodeInfo {
 	}
 }
 
+// TotalBaseFee returns the sum fee of transaction.
+func TotalBaseFee(st *storage.LevelDBBackend, tx transaction.Transaction) (amount common.Amount, err error) {
+	var ba *block.BlockAccount
+	ba, err = block.GetBlockAccount(st, tx.Source())
+	if err != nil {
+		return amount, err
+	}
+
+	if ba.Linked == "" {
+		var opsHaveFee int
+		for _, op := range tx.B.Operations {
+			if op.HasFee() {
+				if op.H.Type == operation.TypeCreateAccount {
+					var casted operation.CreateAccount
+					var ok bool
+					casted, ok = op.B.(operation.CreateAccount)
+					if !ok {
+						return amount, errors.TypeOperationBodyNotMatched
+					}
+					if casted.Linked != "" {
+						break
+					}
+				}
+				opsHaveFee++
+			}
+		}
+		if opsHaveFee < 1 {
+			return
+		}
+		return common.BaseFee.MustMult(opsHaveFee), err
+	}
+	return
+}
+
 type TransactionCache struct {
 	sync.RWMutex
 

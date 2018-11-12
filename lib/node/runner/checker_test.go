@@ -66,8 +66,19 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 		tx.Sign(rootKP, networkID)
 
 		runChecker(tx, nil)
-
 		require.True(t, nodeRunner.TransactionPool.Has(tx.GetHash()), "valid transaction must be in `Pool`")
+	}
+
+	{ // invalid transaction: invalid fee
+		targetAccount, targetKP := TestMakeBlockAccount(common.Amount(10000000000000))
+		targetAccount.MustSave(nodeRunner.Storage())
+
+		tx := transaction.TestMakeTransactionWithKeypair(networkID, 3, rootKP, targetKP)
+		tx.B.SequenceID = rootAccount.SequenceID
+		tx.B.Fee = tx.B.Fee.MustSub(1)
+		tx.Sign(rootKP, networkID)
+
+		runChecker(tx, errors.InvalidFee)
 	}
 
 	{ // invalid transaction: same source already in Pool

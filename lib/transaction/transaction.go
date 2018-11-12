@@ -61,6 +61,8 @@ func (t *Transaction) UnmarshalJSON(b []byte) (err error) {
 	return
 }
 
+// This function is not used for making a transaction related to freezing and unfreezing.
+// It can not calculate exact fee.
 func NewTransaction(source string, sequenceID uint64, ops ...operation.Operation) (tx Transaction, err error) {
 	if len(ops) < 1 {
 		err = errors.TransactionEmptyOperations
@@ -100,7 +102,6 @@ func NewTransaction(source string, sequenceID uint64, ops ...operation.Operation
 var TransactionWellFormedCheckerFuncs = []common.CheckerFunc{
 	CheckOverOperationsLimit,
 	CheckSource,
-	CheckBaseFee,
 	CheckOperationTypes,
 	CheckOperations,
 	CheckVerifySignature,
@@ -174,21 +175,6 @@ func (tx Transaction) TotalAmount(withFee bool) common.Amount {
 	}
 
 	return amount
-}
-
-// TotalBaseFee returns the minimum fee of transaction.
-func (tx Transaction) TotalBaseFee() common.Amount {
-	var opsHaveFee int
-	for _, op := range tx.B.Operations {
-		if op.HasFee() {
-			opsHaveFee++
-		}
-	}
-	if opsHaveFee < 1 {
-		return common.Amount(0)
-	}
-
-	return common.BaseFee.MustMult(opsHaveFee)
 }
 
 func (tx Transaction) Serialize() (encoded []byte, err error) {

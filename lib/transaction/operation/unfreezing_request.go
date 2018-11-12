@@ -22,5 +22,5 @@ func (o UnfreezeRequest) IsWellFormed(common.Config) (err error) {
 }
 
 func (o UnfreezeRequest) HasFee() bool {
-	return true
+	return false
 }

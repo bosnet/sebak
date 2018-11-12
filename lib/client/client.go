@@ -10,7 +10,10 @@ import (
 	"strings"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/storage"
+	"boscoin.io/sebak/lib/transaction"
+	"boscoin.io/sebak/lib/transaction/operation"
 )
 
 const (
@@ -229,6 +232,59 @@ func (c *Client) SubmitTransaction(tx []byte) (pTransaction TransactionPost, err
 		return
 	}
 	err = c.ToResponse(resp, &pTransaction)
+	return
+}
+
+func (c *Client) NewTransaction(source string, sequenceID uint64, ops ...operation.Operation) (tx transaction.Transaction, err error) {
+	var ba Account
+	ba, err = c.LoadAccount(source)
+	var fee = common.Amount(0)
+
+	if len(ops) < 1 {
+		err = errors.TransactionEmptyOperations
+		return
+	}
+
+	if ba.Linked == "" {
+		var opsHaveFee int
+		for _, op := range ops {
+			if op.HasFee() {
+				if op.H.Type == operation.TypeCreateAccount {
+					var casted operation.CreateAccount
+					var ok bool
+					casted, ok = op.B.(operation.CreateAccount)
+					if !ok {
+						err = errors.TypeOperationBodyNotMatched
+						return
+					}
+					if casted.Linked != "" {
+						break
+					}
+				}
+				opsHaveFee++
+			}
+		}
+		if opsHaveFee > 0 {
+			fee = common.BaseFee.MustMult(opsHaveFee)
+		}
+	}
+
+	txBody := transaction.Body{
+		Source:     source,
+		Fee:        fee,
+		SequenceID: sequenceID,
+		Operations: ops,
+	}
+
+	tx = transaction.Transaction{
+		H: transaction.Header{
+			Version: common.TransactionVersionV1,
+			Created: common.NowISO8601(),
+			Hash:    txBody.MakeHashString(),
+		},
+		B: txBody,
+	}
+
 	return
 }
 

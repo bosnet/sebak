@@ -52,7 +52,7 @@ func TestUnfreezingSimulation(t *testing.T) {
 	ba, _ = block.GetBlockAccount(st, kpFrozenAccount.Address())
 
 	require.Equal(t, b3.Height, uint64(4))
-	require.Equal(t, uint64(ba.Balance), uint64(99999990000))
+	require.Equal(t, uint64(ba.Balance), uint64(100000000000))
 
 	// Generate transaction for increasing blockheight
 	tx4, _, _ := GetCreateAccountTransaction(uint64(1), uint64(1000000))
@@ -67,7 +67,7 @@ func TestUnfreezingSimulation(t *testing.T) {
 	require.Equal(t, b5.Height, uint64(6))
 
 	// Generate unfreezing-transaction not yet reached unfreezing blockheight
-	tx6, _ := GetUnfreezingTransaction(kpFrozenAccount, kpNewAccount, uint64(1), uint64(99999980000))
+	tx6, _ := GetUnfreezingTransaction(kpFrozenAccount, kpNewAccount, uint64(1), uint64(100000000000))
 
 	err := ValidateTx(nr.Storage(), tx6)
 	require.Error(t, err)
@@ -77,7 +77,7 @@ func TestUnfreezingSimulation(t *testing.T) {
 	require.NoError(t, err)
 
 	ba, _ = block.GetBlockAccount(st, kpFrozenAccount.Address())
-	require.Equal(t, uint64(ba.Balance), uint64(99999990000))
+	require.Equal(t, uint64(ba.Balance), uint64(100000000000))
 
 	// Generate transaction for increasing blockheight
 	tx7, _, _ := GetCreateAccountTransaction(uint64(3), uint64(1000000))
@@ -96,12 +96,12 @@ func TestUnfreezingSimulation(t *testing.T) {
 	require.Equal(t, b9.Height, uint64(9))
 
 	// Generate unfreezing transaction
-	tx10, _ := GetUnfreezingTransaction(kpFrozenAccount, kpNewAccount, uint64(1), uint64(99999980000))
+	tx10, _ := GetUnfreezingTransaction(kpFrozenAccount, kpNewAccount, uint64(1), uint64(100000000000))
 
 	err = ValidateTx(nr.Storage(), tx10)
 	require.Error(t, err)
 
 	ba, _ = block.GetBlockAccount(st, kpFrozenAccount.Address())
 
-	require.Equal(t, uint64(ba.Balance), uint64(99999990000))
+	require.Equal(t, uint64(ba.Balance), uint64(100000000000))
 }
