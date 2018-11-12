@@ -112,7 +112,7 @@ func init() {
 						errors.New("--genesis expects '<genesis address>,<common account>[,balance]"))
 				}
 				if len(csv) == 3 {
-					balanceStr = csv[1]
+					balanceStr = csv[2]
 				}
 				flagName, err := makeGenesisBlock(csv[0], csv[1], flagNetworkID, balanceStr, flagStorageConfigString, log)
 				if len(flagName) != 0 || err != nil {
