@@ -144,16 +144,9 @@ func testFinishBallotWithBatch(withBatch bool, numberOfTransactions, numberOfOpe
 		blt.Sign(proposerNode.Keypair(), conf.NetworkID)
 	}
 
-	st := nr.Storage()
-	if withBatch {
-		st, _ = st.OpenBatch()
-	}
-
 	_, _, err := finishBallot(
-		st,
+		nr,
 		*blt,
-		nr.TransactionPool,
-		nr.Log(),
 		nr.Log(),
 	)
 

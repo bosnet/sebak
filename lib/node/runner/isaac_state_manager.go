@@ -20,6 +20,7 @@ type ISAACStateManager struct {
 	state                   consensus.ISAACState
 	stateTransit            chan consensus.ISAACState
 	stop                    chan struct{}
+	pause                   chan struct{}
 	blockTimeBuffer         time.Duration              // the time to wait to adjust the block creation time.
 	transitSignal           func(consensus.ISAACState) // the function is called when the ISAACState is changed.
 	firstConsensusBlockTime time.Time                  // the time at which the first consensus block was saved(height 2). It is used for calculating `blockTimeBuffer`.
@@ -37,6 +38,7 @@ func NewISAACStateManager(nr *NodeRunner, conf common.Config) *ISAACStateManager
 		},
 		stateTransit:    make(chan consensus.ISAACState),
 		stop:            make(chan struct{}),
+		pause:           make(chan struct{}),
 		blockTimeBuffer: 2 * time.Second,
 		transitSignal:   func(consensus.ISAACState) {},
 		Conf:            conf,
@@ -184,7 +186,7 @@ func (sm *ISAACStateManager) Start() {
 				switch sm.State().BallotState {
 				case ballot.StateINIT, ballot.StateSIGN:
 					go sm.broadcastExpiredBallot(sm.State())
-					sm.setBallotState(ballot.StateSIGN)
+					sm.setBallotState(sm.State().BallotState.Next())
 					sm.transitSignal(sm.State())
 					sm.resetTimer(timer, sm.State().BallotState)
 				case ballot.StateACCEPT:
@@ -213,6 +215,10 @@ func (sm *ISAACStateManager) Start() {
 					sm.transitSignal(state)
 					timer.Reset(sm.Conf.TimeoutALLCONFIRM)
 				}
+
+			case <-sm.pause:
+				sm.nr.Log().Debug("pause ISAACStateManager")
+				timer.Reset(time.Duration(1 * time.Hour))
 
 			case <-sm.stop:
 				return
@@ -307,6 +313,12 @@ func (sm *ISAACStateManager) setBallotState(ballotState ballot.State) {
 	sm.state.BallotState = ballotState
 
 	return
+}
+
+func (sm *ISAACStateManager) Pause() {
+	go func() {
+		sm.pause <- struct{}{}
+	}()
 }
 
 func (sm *ISAACStateManager) Stop() {
