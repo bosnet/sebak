@@ -76,6 +76,6 @@ func (o CollectTxFee) Serialize() (encoded []byte, err error) {
 	return json.Marshal(o)
 }
 
-func (o CollectTxFee) HasFee() bool {
+func (o CollectTxFee) HasFee(isSourceLinked bool) bool {
 	return false
 }

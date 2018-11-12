@@ -46,6 +46,10 @@ func (o Payment) GetAmount() common.Amount {
 	return o.Amount
 }
 
-func (o Payment) HasFee() bool {
+// If isSourceLinked is true, tx.Source is frozen account.
+func (o Payment) HasFee(isSourceLinked bool) bool {
+	if isSourceLinked {
+		return false
+	}
 	return true
 }

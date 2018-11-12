@@ -39,7 +39,6 @@ func init() {
 		Run: func(c *cobra.Command, args []string) {
 			var err error
 			var amount common.Amount
-			var newBalance common.Amount
 			var sender keypair.KP
 			var receiver keypair.KP
 			var endpoint *common.Endpoint
@@ -102,25 +101,34 @@ func init() {
 
 			// Check that account's balance is enough before sending the transaction
 			{
-				newBalance, err = senderAccount.GetBalance().Sub(amount)
-				if err == nil {
-					newBalance, err = newBalance.Sub(common.BaseFee)
-				}
-
-				if err != nil {
-					fmt.Printf("Attempting to draft %v GON (+ %v fees), but sender account only have %v GON\n",
-						amount, common.BaseFee, senderAccount.GetBalance())
-					os.Exit(1)
+				if senderAccount.Linked != "" || flagFreeze {
+					_, err = senderAccount.GetBalance().Sub(amount)
+					if err != nil {
+						fmt.Printf("Attempting to draft %v GON, but sender account only have %v GON\n",
+							amount, senderAccount.GetBalance())
+						os.Exit(1)
+					}
+				} else {
+					_, err = senderAccount.GetBalance().Sub(amount + common.BaseFee)
+					if err != nil {
+						fmt.Printf("Attempting to draft %v GON (+ %v fees), but sender account only have %v GON\n",
+							amount, common.BaseFee, senderAccount.GetBalance())
+						os.Exit(1)
+					}
 				}
 			}
 
 			// TODO: Validate that the account doesn't already exists
 			if flagFreeze {
-				tx = makeTransactionCreateAccount(sender, receiver, amount, senderAccount.SequenceID, sender.Address())
+				tx = makeTransactionCreateAccount(sender, receiver, amount, senderAccount.SequenceID, true)
 			} else if flagCreateAccount {
-				tx = makeTransactionCreateAccount(sender, receiver, amount, senderAccount.SequenceID, "")
+				tx = makeTransactionCreateAccount(sender, receiver, amount, senderAccount.SequenceID, false)
 			} else {
-				tx = makeTransactionPayment(sender, receiver, amount, senderAccount.SequenceID)
+				if senderAccount.Linked == "" {
+					tx = makeTransactionPayment(sender, receiver, amount, senderAccount.SequenceID, false)
+				} else {
+					tx = makeTransactionPayment(sender, receiver, amount, senderAccount.SequenceID, true)
+				}
 			}
 
 			tx.Sign(sender, []byte(flagNetworkID))
@@ -170,8 +178,13 @@ func init() {
 /// Returns:
 ///   `sebak.Transaction` = The generated `Transaction` creating the account
 ///
-func makeTransactionCreateAccount(kpSource keypair.KP, kpDest keypair.KP, amount common.Amount, seqid uint64, target string) transaction.Transaction {
-	opb := operation.NewCreateAccount(kpDest.Address(), amount, target)
+func makeTransactionCreateAccount(kpSource keypair.KP, kpDest keypair.KP, amount common.Amount, seqid uint64, isFrozen bool) transaction.Transaction {
+	var opb operation.CreateAccount
+	if isFrozen {
+		opb = operation.NewCreateAccount(kpDest.Address(), amount, kpSource.Address())
+	} else {
+		opb = operation.NewCreateAccount(kpDest.Address(), amount, "")
+	}
 
 	op := operation.Operation{
 		H: operation.Header{
@@ -180,9 +193,16 @@ func makeTransactionCreateAccount(kpSource keypair.KP, kpDest keypair.KP, amount
 		B: opb,
 	}
 
+	var fee common.Amount
+	if isFrozen {
+		fee = common.FrozenFee
+	} else {
+		fee = common.BaseFee
+	}
+
 	txBody := transaction.Body{
 		Source:     kpSource.Address(),
-		Fee:        common.BaseFee,
+		Fee:        fee,
 		SequenceID: seqid,
 		Operations: []operation.Operation{op},
 	}
@@ -214,8 +234,12 @@ func makeTransactionCreateAccount(kpSource keypair.KP, kpDest keypair.KP, amount
 /// Returns:
 ///  `sebak.Transaction` = The generated `Transaction` to do a payment
 ///
-func makeTransactionPayment(kpSource keypair.KP, kpDest keypair.KP, amount common.Amount, seqid uint64) transaction.Transaction {
+func makeTransactionPayment(kpSource keypair.KP, kpDest keypair.KP, amount common.Amount, seqid uint64, isFrozen bool) transaction.Transaction {
 	opb := operation.NewPayment(kpDest.Address(), amount)
+	fee := common.BaseFee
+	if isFrozen {
+		fee = common.FrozenFee
+	}
 
 	op := operation.Operation{
 		H: operation.Header{
@@ -226,7 +250,7 @@ func makeTransactionPayment(kpSource keypair.KP, kpDest keypair.KP, amount commo
 
 	txBody := transaction.Body{
 		Source:     kpSource.Address(),
-		Fee:        common.Amount(common.BaseFee),
+		Fee:        fee,
 		SequenceID: seqid,
 		Operations: []operation.Operation{op},
 	}

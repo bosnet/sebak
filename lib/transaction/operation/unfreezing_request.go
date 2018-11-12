@@ -21,6 +21,6 @@ func (o UnfreezeRequest) IsWellFormed(common.Config) (err error) {
 	return
 }
 
-func (o UnfreezeRequest) HasFee() bool {
-	return true
+func (o UnfreezeRequest) HasFee(isSourceLinked bool) bool {
+	return false
 }

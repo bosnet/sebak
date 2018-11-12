@@ -47,6 +47,42 @@ func TestMakeTransactionWithKeypair(networkID []byte, n int, srcKp *keypair.Full
 	return
 }
 
+func TestMakeTransactionWithFeeAndOperations(networkID []byte, isSourceLinked bool, fee common.Amount, ops []operation.Operation) (kp *keypair.Full, tx Transaction) {
+	kp = keypair.Random()
+
+	tx, _ = NewTransactionAdujustFeeWithFrozenAccount(kp.Address(), 0, isSourceLinked, ops...)
+	tx.B.Fee = fee
+	tx.Sign(kp, networkID)
+
+	return
+}
+
+func TestMakeTransactionUnfreezingRequest(networkID []byte) (kp *keypair.Full, tx Transaction) {
+	kp = keypair.Random()
+
+	var ops []operation.Operation
+	ops = append(ops, operation.MakeTestUnfreezeRequest())
+
+	tx, _ = NewTransactionAdujustFeeWithFrozenAccount(kp.Address(), 0, true, ops...)
+	tx.Sign(kp, networkID)
+
+	return
+}
+
+func TestMakeTransactionCreateFrozenAccount(networkID []byte) (kp *keypair.Full, tx Transaction) {
+	kp = keypair.Random()
+	target := keypair.Random().Address()
+	linked := keypair.Random().Address()
+
+	var ops []operation.Operation
+	ops = append(ops, operation.MakeTestCreateFrozenAccount(-1, target, linked))
+
+	tx, _ = NewTransactionAdujustFeeWithFrozenAccount(kp.Address(), 0, true, ops...)
+	tx.Sign(kp, networkID)
+
+	return
+}
+
 func MakeTransactionCreateAccount(networkID []byte, kpSource *keypair.Full, target string, amount common.Amount) (tx Transaction) {
 	opb := operation.NewCreateAccount(target, common.Amount(amount), "")
 
@@ -89,7 +125,7 @@ func MakeTransactionCreateFrozenAccount(networkID []byte, kpSource *keypair.Full
 
 	txBody := Body{
 		Source:     kpSource.Address(),
-		Fee:        common.BaseFee,
+		Fee:        common.FrozenFee,
 		Operations: []operation.Operation{op},
 	}
 
@@ -145,7 +181,7 @@ func MakeTransactionUnfreezingRequest(networkID []byte, kpSource *keypair.Full) 
 
 	txBody := Body{
 		Source:     kpSource.Address(),
-		Fee:        common.BaseFee,
+		Fee:        common.FrozenFee,
 		Operations: []operation.Operation{op},
 	}
 
@@ -173,7 +209,7 @@ func MakeTransactionUnfreezing(networkID []byte, kpSource *keypair.Full, target 
 
 	txBody := Body{
 		Source:     kpSource.Address(),
-		Fee:        common.BaseFee,
+		Fee:        common.FrozenFee,
 		Operations: []operation.Operation{op},
 	}
 

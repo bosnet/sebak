@@ -15,6 +15,9 @@ const (
 	// is `0.1` BOS.
 	BaseReserve Amount = 1000000
 
+	// FrozenFee is a special transaction fee about freezing, and unfreezing.
+	FrozenFee Amount = 0
+
 	// GenesisBlockHeight set the block height of genesis block
 	GenesisBlockHeight uint64 = 1
 

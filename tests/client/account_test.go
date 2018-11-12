@@ -404,7 +404,7 @@ func TestFrozenAccount(t *testing.T) {
 
 		senderBalance2, err := strconv.ParseUint(senderAccount.Balance, 10, 64)
 		require.Nil(t, err)
-		require.Equal(t, senderBalance-generalAccountTofrozenAccount-fee, senderBalance2)
+		require.Equal(t, senderBalance-generalAccountTofrozenAccount, senderBalance2)
 
 	}
 
@@ -420,7 +420,7 @@ func TestFrozenAccount(t *testing.T) {
 		o, err := operation.NewOperation(ob)
 		require.Nil(t, err)
 
-		tx, err := transaction.NewTransaction(frozenAccountAddr, uint64(unfreezingAccount.SequenceID), o)
+		tx, err := transaction.NewTransactionAdujustFeeWithFrozenAccount(frozenAccountAddr, uint64(unfreezingAccount.SequenceID), true, o)
 		require.Nil(t, err)
 
 		sender, err := keypair.Parse(frozenAccountSecret)
@@ -455,7 +455,7 @@ func TestFrozenAccount(t *testing.T) {
 
 		targetBalance, err := strconv.ParseUint(FrozenAccount2Account.Balance, 10, 64)
 		require.Nil(t, err)
-		require.Equal(t, uint64(generalAccountTofrozenAccount-fee), targetBalance)
+		require.Equal(t, uint64(generalAccountTofrozenAccount), targetBalance)
 
 		var FrozenAccountsPage client.FrozenAccountsPage
 		for second := time.Duration(0); second < time.Second*3; second = second + time.Millisecond*500 {

@@ -213,6 +213,11 @@ func ValidateTx(st *storage.LevelDBBackend, config common.Config, tx transaction
 		return errors.BlockAccountDoesNotExists
 	}
 
+	// check, multiple operation from frozen account.
+	if ba.Linked != "" && len(tx.B.Operations) != 1 {
+		err = errors.FrozenAccountHasMoreThanOneOperation
+	}
+
 	// check, version is correct
 	if !tx.IsValidVersion(common.TransactionVersionV1) {
 		err = errors.InvalidMessageVersion
@@ -238,6 +243,10 @@ func ValidateTx(st *storage.LevelDBBackend, config common.Config, tx transaction
 	if bac.Balance < totalAmount {
 		err = errors.TransactionExcessAbilityToPay
 		return
+	}
+
+	if tx.B.Fee != tx.TotalBaseFee(ba.Linked != "") {
+		return errors.InvalidFee
 	}
 
 	for _, op := range tx.B.Operations {
@@ -277,6 +286,7 @@ func ValidateOp(st *storage.LevelDBBackend, config common.Config, source *block.
 		if exists, err := block.ExistsBlockAccount(st, op.B.(operation.CreateAccount).Target); err == nil && exists {
 			return errors.BlockAccountAlreadyExists
 		}
+
 		if source.Linked != "" {
 			// Unfreezing must be done after X period from unfreezing request
 			iterFunc, closeFunc := block.GetBlockOperationsBySource(st, source.Address, nil)
@@ -292,6 +302,10 @@ func ValidateOp(st *storage.LevelDBBackend, config common.Config, source *block.
 				return errors.UnfreezingNotReachedExpiration
 			}
 			// If it's a frozen account we check that only whole units are frozen
+			if casted.Linked != "" && (casted.Amount%common.Unit) != 0 {
+				return errors.FrozenAccountCreationWholeUnit // FIXME
+			}
+		} else {
 			if casted.Linked != "" && (casted.Amount%common.Unit) != 0 {
 				return errors.FrozenAccountCreationWholeUnit // FIXME
 			}
@@ -313,9 +327,7 @@ func ValidateOp(st *storage.LevelDBBackend, config common.Config, source *block.
 		}
 		if source.Linked != "" {
 			// If it's a frozen account, everything must be withdrawn
-			var expected common.Amount
-			expected, err = source.Balance.Sub(common.BaseFee)
-			if err != nil || casted.Amount != expected {
+			if source.Balance != casted.Amount {
 				return errors.FrozenAccountMustWithdrawEverything
 			}
 			// Unfreezing must be done after X period from unfreezing request

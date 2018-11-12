@@ -100,7 +100,7 @@ type Body interface {
 	//
 	IsWellFormed(common.Config) error
 	Serialize() ([]byte, error)
-	HasFee() bool
+	HasFee(bool) bool
 }
 
 type Payable interface {
@@ -131,8 +131,8 @@ func (o Operation) String() string {
 	return string(encoded)
 }
 
-func (o Operation) HasFee() bool {
-	return o.B.HasFee()
+func (o Operation) HasFee(isSourceLinked bool) bool {
+	return o.B.HasFee(isSourceLinked)
 }
 
 type envelop struct {
