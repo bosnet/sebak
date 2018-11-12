@@ -219,6 +219,10 @@ func (sm *ISAACStateManager) Start() {
 				sm.nr.Log().Debug("pause ISAACStateManager")
 				timer.Reset(time.Duration(1 * time.Hour))
 
+			case <-sm.pause:
+				sm.nr.Log().Debug("pause ISAACStateManager")
+				timer.Reset(time.Duration(1 * time.Hour))
+
 			case <-sm.stop:
 				return
 			}
