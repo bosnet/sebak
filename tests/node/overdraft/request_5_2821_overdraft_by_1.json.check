@@ -4,7 +4,7 @@ set -xe
 export TEST_NAME=${BASH_SOURCE[0]}
 source $(dirname ${BASH_SOURCE[0]})/../utils.sh
 
-EXPECTED1="9999999999998979999"
+EXPECTED1="4999999998979999"
 EXPECTED2="1000001"
 
 for ((port=2821;port<=2823;port++)); do
