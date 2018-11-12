@@ -1,0 +1,17 @@
+#!/bin/bash
+
+set -xe
+export TEST_NAME=${BASH_SOURCE[0]}
+source $(dirname ${BASH_SOURCE[0]})/../utils.sh
+source $(dirname ${BASH_SOURCE[0]})/../accounts.sh
+
+INFLATION="500000000"
+TOTAL_FEE="520000"
+for ((port=2821;port<=2824;port++)); do
+    HEIGHT=$(getBlockHeight ${port})
+    EXPECTED="$(($(($HEIGHT - 1)) * $INFLATION + $TOTAL_FEE))"
+    ACTUAL=$(getAccountWithBalance $port ${SEBAK_COMMON} ${EXPECTED})
+    if [ $? -ne 0 ];then
+        die "Expected balance to be ${EXPECTED}, not ${ACTUAL}"
+    fi
+done

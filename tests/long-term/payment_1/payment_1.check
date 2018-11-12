@@ -1,0 +1,68 @@
+#!/bin/bash
+
+set -xe
+export TEST_NAME=${BASH_SOURCE[0]}
+source $(dirname ${BASH_SOURCE[0]})/../utils.sh
+source $(dirname ${BASH_SOURCE[0]})/../accounts.sh
+
+EXPECTED_GENESIS="4998999999900000"
+EXPECTED1="99999990000"
+EXPECTED2="99999980000"
+EXPECTED3="99999970000"
+
+for ((port=2821;port<=2824;port++)); do
+    checkedBalance=$(getAccountWithBalance $port ${SEBAK_GENESIS} ${EXPECTED_GENESIS})
+    if [ $? -ne 0 ];then
+        die "Expected balance to be ${EXPECTED_GENESIS}, not ${checkedBalance}"
+    fi
+
+    checkedBalance=$(getAccountWithBalance $port ${ACCOUNT10} ${EXPECTED2})
+    if [ $? -ne 0 ];then
+        die "Expected balance to be ${EXPECTED2}, not ${checkedBalance}"
+    fi
+
+    checkedBalance=$(getAccountWithBalance $port ${ACCOUNT9} ${EXPECTED1})
+    if [ $? -ne 0 ];then
+        die "Expected balance to be ${EXPECTED1}, not ${checkedBalance}"
+    fi
+
+    checkedBalance=$(getAccountWithBalance $port ${ACCOUNT8} ${EXPECTED2})
+    if [ $? -ne 0 ];then
+        die "Expected balance to be ${EXPECTED2}, not ${checkedBalance}"
+    fi
+
+    checkedBalance=$(getAccountWithBalance $port ${ACCOUNT7} ${EXPECTED2})
+    if [ $? -ne 0 ];then
+        die "Expected balance to be ${EXPECTED2}, not ${checkedBalance}"
+    fi
+
+    checkedBalance=$(getAccountWithBalance $port ${ACCOUNT6} ${EXPECTED2})
+    if [ $? -ne 0 ];then
+        die "Expected balance to be ${EXPECTED2}, not ${checkedBalance}"
+    fi
+
+    checkedBalance=$(getAccountWithBalance $port ${ACCOUNT5} ${EXPECTED3})
+    if [ $? -ne 0 ];then
+        die "Expected balance to be ${EXPECTED3}, not ${checkedBalance}"
+    fi
+
+    checkedBalance=$(getAccountWithBalance $port ${ACCOUNT4} ${EXPECTED2})
+    if [ $? -ne 0 ];then
+        die "Expected balance to be ${EXPECTED2}, not ${checkedBalance}"
+    fi
+
+    checkedBalance=$(getAccountWithBalance $port ${ACCOUNT3} ${EXPECTED3})
+    if [ $? -ne 0 ];then
+        die "Expected balance to be ${EXPECTED3}, not ${checkedBalance}"
+    fi
+
+    checkedBalance=$(getAccountWithBalance $port ${ACCOUNT2} ${EXPECTED2})
+    if [ $? -ne 0 ];then
+        die "Expected balance to be ${EXPECTED2}, not ${checkedBalance}"
+    fi
+
+    checkedBalance=$(getAccountWithBalance $port ${ACCOUNT1} ${EXPECTED2})
+    if [ $? -ne 0 ];then
+        die "Expected balance to be ${EXPECTED2}, not ${checkedBalance}"
+    fi
+done

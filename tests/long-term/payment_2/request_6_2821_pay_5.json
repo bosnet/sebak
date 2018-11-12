@@ -1,0 +1,41 @@
+{
+  "H": {
+    "version": "1",
+    "created": "2018-11-11T22:55:25.499238000+09:00",
+    "signature": "5QySBa36v1HQ9MTyxJan6YEQVfUSQuR9yUq4nJe8noz76puaNQKXCno2HKwRAeMNj9oa6vFbAmBpteChLCH9w9HL"
+  },
+  "B": {
+    "source": "GBI4VVNQQSBIHOQLOBNAPILF67RHWLIFGQ5A3ULYHDJMDB6V5EV6YL74",
+    "fee": "30000",
+    "sequence_id": 1,
+    "operations": [
+      {
+        "H": {
+          "type": "payment"
+        },
+        "B": {
+          "target": "GAYFUCQKTY66NTICCUZ4LAOH6G2SVXAU4H3BQP27EJTEG43EDAFWNMIL",
+          "amount": "10000000000"
+        }
+      },
+      {
+        "H": {
+          "type": "payment"
+        },
+        "B": {
+          "target": "GCPBZD64KL7VVVHUOKL5JFILGIJISONHTFE3ASWW5PR6DNADIJC6FOQ6",
+          "amount": "10000000000"
+        }
+      },
+      {
+        "H": {
+          "type": "payment"
+        },
+        "B": {
+          "target": "GCAXZGVPWQPN4KE76RFWAQLMTKVJUM5D75VEYQJ6AVSR5WLU4PRLXNYY",
+          "amount": "10000000000"
+        }
+      }
+    ]
+  }
+}
