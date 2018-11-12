@@ -45,7 +45,7 @@ func TestAccount(t *testing.T) {
 		genesisBalance, err := strconv.ParseUint(genesisAccount.Balance, 10, 64)
 		require.NoError(t, err)
 
-		ob := operation.NewCreateAccount(account1Addr, common.Amount(genesisToAccount1), "")
+		ob := operation.NewCreateAccount(account1Addr, common.Amount(genesisToAccount1))
 		o, err := operation.NewOperation(ob)
 		require.NoError(t, err)
 
@@ -104,7 +104,7 @@ func TestAccount(t *testing.T) {
 		require.NoError(t, err)
 		senderBalance, err := strconv.ParseUint(senderAccount.Balance, 10, 64)
 
-		ob := operation.NewCreateAccount(account2Addr, common.Amount(account1ToAccount2), "")
+		ob := operation.NewCreateAccount(account2Addr, common.Amount(account1ToAccount2))
 		o, err := operation.NewOperation(ob)
 		require.NoError(t, err)
 
@@ -298,7 +298,7 @@ func TestFrozenAccount(t *testing.T) {
 		genesisBalance1, err := strconv.ParseUint(genesisAccount.Balance, 10, 64)
 		require.Nil(t, err)
 
-		ob := operation.NewCreateAccount(generalAccountAddr, common.Amount(genesisToGeneralAccount), "")
+		ob := operation.NewCreateAccount(generalAccountAddr, common.Amount(genesisToGeneralAccount))
 		o, err := operation.NewOperation(ob)
 		require.Nil(t, err)
 

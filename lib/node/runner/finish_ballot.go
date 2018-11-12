@@ -189,10 +189,9 @@ func finishCreateAccount(st *storage.LevelDBBackend, source string, op operation
 		err = nil
 	}
 
-	baTarget = block.NewBlockAccountLinked(
+	baTarget = block.NewBlockAccount(
 		op.TargetAddress(),
 		op.GetAmount(),
-		op.Linked,
 	)
 	if err = baTarget.Save(st); err != nil {
 		return

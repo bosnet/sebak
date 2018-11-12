@@ -115,7 +115,7 @@ func testFinishBallotWithBatch(withBatch bool, numberOfTransactions, numberOfOpe
 			for j := 0; j < numberOfOperations-1; j++ {
 				kpC := keypair.Random()
 
-				opb := operation.NewCreateAccount(kpC.Address(), common.Amount(1), "")
+				opb := operation.NewCreateAccount(kpC.Address(), common.Amount(1))
 				op := operation.Operation{
 					H: operation.Header{
 						Type: operation.TypeCreateAccount,

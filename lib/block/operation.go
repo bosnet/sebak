@@ -102,13 +102,11 @@ func (bo *BlockOperation) Save(st *storage.LevelDBBackend) (err error) {
 		if casted, ok = body.(operation.Freezing); !ok {
 			return errors.TypeOperationBodyNotMatched
 		}
-		if casted.Linked != "" {
-			if err = st.New(GetBlockOperationCreateFrozenKey(casted.Target, bo.Height), bo.Hash); err != nil {
-				return err
-			}
-			if err = st.New(bo.NewBlockOperationFrozenLinkedKey(casted.Linked), bo.Hash); err != nil {
-				return err
-			}
+		if err = st.New(GetBlockOperationCreateFrozenKey(casted.Target, bo.Height), bo.Hash); err != nil {
+			return err
+		}
+		if err = st.New(bo.NewBlockOperationFrozenLinkedKey(casted.Linked), bo.Hash); err != nil {
+			return err
 		}
 	}
 

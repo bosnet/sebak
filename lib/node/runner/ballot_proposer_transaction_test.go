@@ -791,7 +791,7 @@ func TestProposedTransactionWithNormalOperations(t *testing.T) {
 		op := ptx.B.Operations[1]
 
 		kp := keypair.Random()
-		opb := operation.NewCreateAccount(kp.Address(), common.Amount(1), "")
+		opb := operation.NewCreateAccount(kp.Address(), common.Amount(1))
 		newOp, _ := operation.NewOperation(opb)
 		ptx.B.Operations = []operation.Operation{op, newOp}
 
@@ -817,7 +817,7 @@ func TestProposedTransactionWithWrongNumberOfOperations(t *testing.T) {
 		ptx := blt.ProposerTransaction()
 
 		kp := keypair.Random()
-		opb := operation.NewCreateAccount(kp.Address(), common.Amount(1), "")
+		opb := operation.NewCreateAccount(kp.Address(), common.Amount(1))
 		newOp, _ := operation.NewOperation(opb)
 		ptx.B.Operations = append(ptx.B.Operations, newOp)
 

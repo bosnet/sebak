@@ -269,12 +269,8 @@ func ValidateOp(st *storage.LevelDBBackend, source *block.BlockAccount, op opera
 	switch op.H.Type {
 	case operation.TypeCreateAccount:
 		var ok bool
-		var casted operation.CreateAccount
-		if casted, ok = op.B.(operation.CreateAccount); !ok {
+		if _, ok = op.B.(operation.CreateAccount); !ok {
 			return errors.TypeOperationBodyNotMatched
-		}
-		if casted.Linked != "" {
-			return errors.InvalidLinkedValue
 		}
 		var exists bool
 		if exists, err = block.ExistsBlockAccount(st, op.B.(operation.CreateAccount).Target); err == nil && exists {
@@ -290,7 +286,7 @@ func ValidateOp(st *storage.LevelDBBackend, source *block.BlockAccount, op opera
 			return errors.FrozenAccountMustHaveLinkedAccount
 		}
 		var exists bool
-		if exists, err = block.ExistsBlockAccount(st, op.B.(operation.Freezing).Target); err == nil && exists {
+		if exists, err = block.ExistsBlockAccount(st, casted.Target); err == nil && exists {
 			return errors.BlockAccountAlreadyExists
 		}
 		if source.Linked != "" {

@@ -62,7 +62,7 @@ func MakeGenesisBlock(st *storage.LevelDBBackend, genesisAccount BlockAccount, c
 	// create create-account transaction.
 	var ops []operation.Operation
 	{
-		opb := operation.NewCreateAccount(genesisAccount.Address, genesisAccount.Balance, "")
+		opb := operation.NewCreateAccount(genesisAccount.Address, genesisAccount.Balance)
 		op := operation.Operation{
 			H: operation.Header{
 				Type: operation.TypeCreateAccount,
@@ -73,7 +73,7 @@ func MakeGenesisBlock(st *storage.LevelDBBackend, genesisAccount BlockAccount, c
 	}
 
 	{
-		opb := operation.NewCreateAccount(commonAccount.Address, commonAccount.Balance, "")
+		opb := operation.NewCreateAccount(commonAccount.Address, commonAccount.Balance)
 		op := operation.Operation{
 			H: operation.Header{
 				Type: operation.TypeCreateAccount,

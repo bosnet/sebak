@@ -123,7 +123,7 @@ func init() {
 			if flagFreeze {
 				tx = makeTransactionFreezing(sender, receiver, amount, senderAccount.SequenceID, sender.Address())
 			} else if flagCreateAccount {
-				tx = makeTransactionCreateAccount(sender, receiver, amount, senderAccount.SequenceID, "")
+				tx = makeTransactionCreateAccount(sender, receiver, amount, senderAccount.SequenceID)
 			} else if flagUnfreeze {
 				tx = makeTransactionUnfreezing(sender, receiver, amount, senderAccount.SequenceID)
 			} else {
@@ -178,8 +178,8 @@ func init() {
 /// Returns:
 ///   `sebak.Transaction` = The generated `Transaction` creating the account
 ///
-func makeTransactionCreateAccount(kpSource keypair.KP, kpDest keypair.KP, amount common.Amount, seqid uint64, linked string) transaction.Transaction {
-	opb := operation.NewCreateAccount(kpDest.Address(), amount, linked)
+func makeTransactionCreateAccount(kpSource keypair.KP, kpDest keypair.KP, amount common.Amount, seqid uint64) transaction.Transaction {
+	opb := operation.NewCreateAccount(kpDest.Address(), amount)
 
 	op := operation.Operation{
 		H: operation.Header{

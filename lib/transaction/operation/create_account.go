@@ -11,14 +11,12 @@ import (
 type CreateAccount struct {
 	Target string        `json:"target"`
 	Amount common.Amount `json:"amount"`
-	Linked string        `json:"linked,omitempty"`
 }
 
-func NewCreateAccount(target string, amount common.Amount, linked string) CreateAccount {
+func NewCreateAccount(target string, amount common.Amount) CreateAccount {
 	return CreateAccount{
 		Target: target,
 		Amount: amount,
-		Linked: linked,
 	}
 }
 
@@ -39,11 +37,6 @@ func (o CreateAccount) IsWellFormed(common.Config) (err error) {
 
 	if o.Amount < common.BaseReserve {
 		err = errors.InsufficientAmountNewAccount
-		return
-	}
-
-	if o.Linked != "" {
-		err = errors.InvalidLinkedValue
 		return
 	}
 
