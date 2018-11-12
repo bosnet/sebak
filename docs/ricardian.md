@@ -141,9 +141,9 @@ Detailed description:
         - Membership reward will be distributed if Membership reward PF proposal is executed. 
         - Members who satisfies Membership requirements will receive Membership reward until they loose Membership.
         - The amount of Membership reward per member will be calculated every 17,280 blocks (approximately daily) as ; 
-          440,640 BOS X (Number_of_Frozen_BOScoin) ÷ (Number_of_Frozen_BOScoin_in_BOSNet_system). 
+          440,640 BOS X (Number_of_Frozen_BOScoin) ÷ (Number_of_Frozen_BOScoin_in_Mainnet). 
           Number_of_Frozen_BOScoin = The number of frozen BOS in Frozen accounts linked in a Membership account
-          Number_of_Frozen_BOScoin_in_BOSNet_system = The total number of frozen BOS in Frozen accounts linked in Membership accounts in BOSNet. 
+          Number_of_Frozen_BOScoin_in_Mainnet = The total number of frozen BOS in Frozen accounts linked in Membership accounts in Mainnet. 
         - To calculate the amount of Membership reward per member, 
           Number_of_Frozen_BOScoin will be counted every 17,280 blocks. 
 
