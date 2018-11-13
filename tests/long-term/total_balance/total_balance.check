@@ -1,0 +1,57 @@
+
+#!/bin/bash
+
+set -xe
+export TEST_NAME=${BASH_SOURCE[0]}
+source $(dirname ${BASH_SOURCE[0]})/../utils.sh
+source $(dirname ${BASH_SOURCE[0]})/../accounts.sh
+
+EXPECTED_TOTAL="5000000000000000"
+
+INFLATION="500000000"
+
+for ((port=2821;port<=2824;port++)); do
+    ACTUAL_TOTAL="0"
+
+    BALANCE=$(getBalance $port ${SEBAK_GENESIS})
+    ACTUAL_TOTAL=$(($ACTUAL_TOTAL + $BALANCE))
+
+    BALANCE=$(getBalance $port ${ACCOUNT1})
+    ACTUAL_TOTAL=$(($ACTUAL_TOTAL + $BALANCE))
+
+    BALANCE=$(getBalance $port ${ACCOUNT2})
+    ACTUAL_TOTAL=$(($ACTUAL_TOTAL + $BALANCE))
+
+    BALANCE=$(getBalance $port ${ACCOUNT3})
+    ACTUAL_TOTAL=$(($ACTUAL_TOTAL + $BALANCE))
+
+    BALANCE=$(getBalance $port ${ACCOUNT4})
+    ACTUAL_TOTAL=$(($ACTUAL_TOTAL + $BALANCE))
+
+    BALANCE=$(getBalance $port ${ACCOUNT5})
+    ACTUAL_TOTAL=$(($ACTUAL_TOTAL + $BALANCE))
+
+    BALANCE=$(getBalance $port ${ACCOUNT6})
+    ACTUAL_TOTAL=$(($ACTUAL_TOTAL + $BALANCE))
+
+    BALANCE=$(getBalance $port ${ACCOUNT7})
+    ACTUAL_TOTAL=$(($ACTUAL_TOTAL + $BALANCE))
+
+    BALANCE=$(getBalance $port ${ACCOUNT8})
+    ACTUAL_TOTAL=$(($ACTUAL_TOTAL + $BALANCE))
+
+    BALANCE=$(getBalance $port ${ACCOUNT9})
+    ACTUAL_TOTAL=$(($ACTUAL_TOTAL + $BALANCE))
+
+    BALANCE=$(getBalance $port ${ACCOUNT10})
+    ACTUAL_TOTAL=$(($ACTUAL_TOTAL + $BALANCE))
+
+    BALANCE=$(getBalance $port ${SEBAK_COMMON})
+    TOTAL_FEE=$(($BALANCE % $INFLATION))
+
+    ACTUAL_TOTAL=$(($ACTUAL_TOTAL + $TOTAL_FEE))
+
+    if [ $EXPECTED_TOTAL -ne $ACTUAL_TOTAL ];then
+        die "Expected total balance to be ${EXPECTED_TOTAL}, not ${ACTUAL_TOTAL}"
+    fi
+done
