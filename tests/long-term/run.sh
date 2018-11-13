@@ -39,13 +39,13 @@ fi
 # because the reports are written on program's exit, which also means container's shutdown
 # Also SUPER IMPORTANT: the `-test` args need to be before any other args, or they are simply ignored...
 export NODE1=$(docker run -d --network host --env-file=${ROOT_DIR}/docker/node1.env \
-                        ${NODE_IMAGE} node --genesis=${SEBAK_GENESIS},${SEBAK_COMMON})
+                        ${NODE_IMAGE} node --genesis=${SEBAK_GENESIS},${SEBAK_COMMON} --log-level=debug)
 export NODE2=$(docker run -d --network host --env-file=${ROOT_DIR}/docker/node2.env \
-                        ${NODE_IMAGE} node --genesis=${SEBAK_GENESIS},${SEBAK_COMMON})
+                        ${NODE_IMAGE} node --genesis=${SEBAK_GENESIS},${SEBAK_COMMON} --log-level=debug)
 export NODE3=$(docker run -d --network host --env-file=${ROOT_DIR}/docker/node3.env \
-                        ${NODE_IMAGE} node --genesis=${SEBAK_GENESIS},${SEBAK_COMMON})
+                        ${NODE_IMAGE} node --genesis=${SEBAK_GENESIS},${SEBAK_COMMON} --log-level=debug)
 export NODE4=$(docker run -d --network host --env-file=${ROOT_DIR}/docker/node4.env \
-                        ${NODE_IMAGE} node --genesis=${SEBAK_GENESIS},${SEBAK_COMMON})
+                        ${NODE_IMAGE} node --genesis=${SEBAK_GENESIS},${SEBAK_COMMON} --log-level=debug)
 
 CONTAINERS="${CONTAINERS} ${NODE1} ${NODE2} ${NODE3} ${NODE4}"
 
@@ -59,7 +59,7 @@ docker stop ${NODE4}
 docker rm -f ${NODE4}
 
 export NODE4_2=$(docker run -d --network host --env-file=${ROOT_DIR}/docker/node4.env \
-                        ${NODE_IMAGE} node --genesis=${SEBAK_GENESIS},${SEBAK_COMMON})
+                        ${NODE_IMAGE} node --genesis=${SEBAK_GENESIS},${SEBAK_COMMON} --log-level=debug)
 
 CONTAINERS="${CONTAINERS} ${NODE4_2}"
 
