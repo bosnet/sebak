@@ -191,6 +191,8 @@ func BallotCheckSYNC(c common.Checker, args ...interface{}) error {
 		return err
 	}
 
+	checker.NodeRunner.PauseIsaacStateManager()
+
 	defer func() {
 		if b.VotingBasis().Height == syncHeight {
 			is.LatestBallot = b
