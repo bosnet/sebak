@@ -17,7 +17,7 @@ import (
 //
 //  * get list by `SequenceID` and created order
 //  * get list by `Source` and created order
-//  * get list by `Confirmed` order
+//  * get list by `ProposedTime` order
 //  * get list by `Account` and created order
 //  * get list by `Block` and created order
 

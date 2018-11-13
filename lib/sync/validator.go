@@ -163,7 +163,7 @@ func (v *BlockValidator) validateBlock(ctx context.Context, si *SyncInfo, prevBl
 		TotalOps:  si.Block.TotalOps,
 	}
 
-	blk := block.NewBlock(si.Block.Proposer, r, si.Block.ProposerTransaction, txs, si.Block.Confirmed)
+	blk := block.NewBlock(si.Block.Proposer, r, si.Block.ProposerTransaction, txs, si.Block.ProposedTime)
 
 	if blk.Hash != si.Block.Hash {
 		err := errors.HashDoesNotMatch

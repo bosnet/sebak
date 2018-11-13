@@ -64,7 +64,7 @@ func (sm *ISAACStateManager) setTheFirstConsensusBlockTime() {
 	if err != nil {
 		return
 	}
-	sm.firstConsensusBlockTime = blk.Header.Timestamp
+	sm.firstConsensusBlockTime, _ = common.ParseISO8601(blk.ConfirmedTime)
 	sm.nr.Log().Debug("set first consnsus block time", "time", sm.firstConsensusBlockTime)
 }
 
@@ -77,7 +77,7 @@ func (sm *ISAACStateManager) setBlockTimeBuffer() {
 		return
 	}
 
-	ballotProposedTime := getBallotProposedTime(b.Confirmed)
+	ballotProposedTime := getBallotProposedTime(b.ProposedTime)
 	sm.blockTimeBuffer = calculateBlockTimeBuffer(
 		sm.Conf.BlockTime,
 		calculateAverageBlockTime(sm.firstConsensusBlockTime, b.Height),
@@ -90,7 +90,7 @@ func (sm *ISAACStateManager) setBlockTimeBuffer() {
 		"blockTime", sm.Conf.BlockTime,
 		"firstConsensusBlockTime", sm.firstConsensusBlockTime,
 		"height", b.Height,
-		"confirmed", b.Confirmed,
+		"confirmed", b.ProposedTime,
 		"now", time.Now(),
 	)
 

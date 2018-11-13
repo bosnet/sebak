@@ -31,7 +31,7 @@ func GetGenesis(st *storage.LevelDBBackend) Block {
 // This special block has different part from the other Block
 // * `Block.Proposer` is empty
 // * `Block.Transaction` is empty
-// * `Block.Confirmed` is `common.GenesisBlockConfirmedTime`
+// * `Block.ProposedTime` is `common.GenesisBlockConfirmedTime`
 // * has only one `Transaction`
 //
 // This Transaction is different from other normal Transaction;
@@ -117,7 +117,7 @@ func MakeGenesisBlock(st *storage.LevelDBBackend, genesisAccount BlockAccount, c
 		return
 	}
 
-	bt := NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.Confirmed, tx)
+	bt := NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.ProposedTime, tx)
 	if err = bt.Save(st); err != nil {
 		return
 	}

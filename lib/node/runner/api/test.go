@@ -89,7 +89,7 @@ func prepareTxs(storage *storage.LevelDBBackend, count int) (*keypair.Full, []bl
 	theBlock := block.TestMakeNewBlockWithPrevBlock(block.GetLatestBlock(storage), txHashes)
 	theBlock.MustSave(storage)
 	for _, tx := range txs {
-		bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, theBlock.Height, theBlock.Confirmed, tx)
+		bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, theBlock.Height, theBlock.ProposedTime, tx)
 		bt.MustSave(storage)
 		if err := bt.SaveBlockOperations(storage); err != nil {
 			return nil, nil
@@ -112,7 +112,7 @@ func prepareTxsWithoutSave(count int, st *storage.LevelDBBackend) (*keypair.Full
 
 	theBlock := block.TestMakeNewBlockWithPrevBlock(block.GetLatestBlock(st), txHashes)
 	for _, tx := range txs {
-		bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, theBlock.Height, theBlock.Confirmed, tx)
+		bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, theBlock.Height, theBlock.ProposedTime, tx)
 		btList = append(btList, bt)
 	}
 	return kp, btList
@@ -123,7 +123,7 @@ func prepareTxWithoutSave(st *storage.LevelDBBackend) (*keypair.Full, *transacti
 	tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, kp)
 
 	theBlock := block.TestMakeNewBlockWithPrevBlock(block.GetLatestBlock(st), []string{tx.GetHash()})
-	bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, theBlock.Height, theBlock.Confirmed, tx)
+	bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, theBlock.Height, theBlock.ProposedTime, tx)
 	return kp, &tx, &bt
 }
 
