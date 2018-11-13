@@ -180,6 +180,7 @@ func BallotCheckSYNC(c common.Checker, args ...interface{}) error {
 
 	if is.LatestBallot.H.Hash == "" {
 		is.LatestBallot = b
+		checker.NodeRunner.Log().Debug("init LatestBallot", "LatestBallot", is.LatestBallot)
 	}
 
 	is.SaveNodeHeight(b.Source(), b.VotingBasis().Height)
@@ -203,6 +204,7 @@ func BallotCheckSYNC(c common.Checker, args ...interface{}) error {
 	defer func() {
 		if b.VotingBasis().Height == syncHeight {
 			is.LatestBallot = b
+			log.Debug("update LatestBallot", "LatestBallot", is.LatestBallot)
 		}
 	}()
 
@@ -364,6 +366,7 @@ func insertMissingTransaction(nr *NodeRunner, ballot ballot.Ballot) (err error) 
 		}
 		unknown = append(unknown, hash)
 	}
+	nr.Log().Debug("get missing transactions", "transactions", unknown)
 
 	if len(unknown) < 1 {
 		return
@@ -636,16 +639,16 @@ func isValidRound(st *storage.LevelDBBackend, r voting.Basis, log logging.Logger
 	if latestBlock.Height != r.Height {
 		log.Error(
 			"ballot height is not equal to latestBlock",
-			"in ballot", r.Height,
-			"latest height", latestBlock.Height,
+			"in-ballot", r.Height,
+			"latest-height", latestBlock.Height,
 		)
 		return false, errors.New("ballot height is not equal to latestBlock")
 	}
 	if latestBlock.Hash != r.BlockHash {
 		log.Error(
 			"latest block hash in ballot is not equal to latestBlock",
-			"in ballot", r.BlockHash,
-			"latest block", latestBlock.Hash,
+			"in-ballot", r.BlockHash,
+			"latest-block", latestBlock.Hash,
 		)
 		return false, errors.New("latest block hash in ballot is not equal to latestBlock")
 	}
