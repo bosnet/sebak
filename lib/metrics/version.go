@@ -6,13 +6,10 @@ import (
 	"boscoin.io/sebak/lib/version"
 
 	"github.com/go-kit/kit/metrics"
-	"github.com/go-kit/kit/metrics/discard"
 
 	prometheus "github.com/go-kit/kit/metrics/prometheus"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 )
-
-var Version metrics.Gauge = discard.NewGauge()
 
 func PromVersion() metrics.Gauge {
 	return prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{

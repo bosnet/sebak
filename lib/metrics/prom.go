@@ -5,4 +5,5 @@ func InitPrometheusMetrics() {
 	Consensus = PromConsensusMetrics()
 	Sync = PromSyncMetrics()
 	TxPool = PromTxPoolMetrics()
+	API = PromAPIMetrics()
 }

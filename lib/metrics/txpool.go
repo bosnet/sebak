@@ -7,13 +7,9 @@ import (
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 )
 
-const TxPoolSubsystem = "txpool"
-
 type TxPoolMetrics struct {
 	Size metrics.Gauge
 }
-
-var TxPool = NopTxPoolMetrics()
 
 func PromTxPoolMetrics() *TxPoolMetrics {
 	return &TxPoolMetrics{

@@ -7,15 +7,11 @@ import (
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 )
 
-const SyncSubsystem = "sync"
-
 type SyncMetrics struct {
 	Height          metrics.Gauge
 	ErrorTotal      metrics.Counter
 	DurationSeconds metrics.Histogram
 }
-
-var Sync = NopSyncMetrics()
 
 func (s *SyncMetrics) SetHeight(height uint64) {
 	s.Height.Set(float64(height))

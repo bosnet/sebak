@@ -7,15 +7,11 @@ import (
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 )
 
-const ConsensusSubsystem = "consensus"
-
 type ConsensusMetrics struct {
 	Height metrics.Gauge
 	Rounds metrics.Gauge
 	NumTxs metrics.Gauge
 }
-
-var Consensus = NopConsensusMetrics()
 
 func PromConsensusMetrics() *ConsensusMetrics {
 	return &ConsensusMetrics{
