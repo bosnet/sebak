@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/errors"
 )
 
 /**
@@ -15,7 +16,14 @@ import (
  */
 func PrintFlagsError(cmd *cobra.Command, flagName string, err error) {
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: invalid '%s'; %v\n\n", flagName, err)
+		var errorString string
+		if sebakError, ok := err.(*errors.Error); ok {
+			errorString = sebakError.Message
+		} else {
+			errorString = err.Error()
+		}
+
+		fmt.Fprintf(os.Stderr, "error: invalid '%s'; %s\n\n", flagName, errorString)
 	}
 
 	cmd.Help()
@@ -25,7 +33,14 @@ func PrintFlagsError(cmd *cobra.Command, flagName string, err error) {
 
 func PrintError(cmd *cobra.Command, err error) {
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v\n\n", err)
+		var errorString string
+		if sebakError, ok := err.(*errors.Error); ok {
+			errorString = sebakError.Message
+		} else {
+			errorString = err.Error()
+		}
+
+		fmt.Fprintf(os.Stderr, "error: %s\n\n", errorString)
 	}
 
 	cmd.Help()

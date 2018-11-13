@@ -12,6 +12,8 @@ import (
 
 	cmdcommon "boscoin.io/sebak/cmd/sebak/common"
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common/keypair"
+	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/node"
 )
 
@@ -288,5 +290,63 @@ func TestParseFlagRateLimit(t *testing.T) {
 			require.Equal(t, int64(10), rule.Default.Limit)
 			require.Equal(t, 0, len(rule.ByIPAddress))
 		}
+	}
+}
+
+func TestParseGenesisOption(t *testing.T) {
+	expectedGenesisKP := keypair.Random()
+	expectedCommonKP := keypair.Random()
+
+	{ // empty
+		_, _, _, err := parseGenesisOptionFromCSV("")
+		require.Equal(t, errors.InvalidGenesisOption, err)
+	}
+
+	{ // empty ,
+		_, _, _, err := parseGenesisOptionFromCSV("  ,  ,  ,")
+		require.Equal(t, errors.InvalidGenesisOption, err)
+	}
+
+	{ // only genesis
+		_, _, _, err := parseGenesisOptionFromCSV(fmt.Sprintf("%s", expectedGenesisKP.Address()))
+		require.Equal(t, errors.InvalidGenesisOption, err)
+	}
+
+	{ // genesis,common
+		genesisKP, commonKP, balance, err := parseGenesisOptionFromCSV(
+			fmt.Sprintf("%s,%s", expectedGenesisKP.Address(), expectedCommonKP.Address()),
+		)
+		require.NoError(t, err)
+		require.Equal(t, expectedGenesisKP.Address(), genesisKP.Address())
+		require.Equal(t, expectedCommonKP.Address(), commonKP.Address())
+		require.Equal(t, common.MaximumBalance, balance)
+	}
+
+	{ // genesis,common,balance
+		expectedBalance := common.Amount(33333333)
+		genesisKP, commonKP, balance, err := parseGenesisOption(
+			expectedGenesisKP.Address(), expectedCommonKP.Address(), expectedBalance.String(),
+		)
+		require.NoError(t, err)
+		require.Equal(t, expectedGenesisKP.Address(), genesisKP.Address())
+		require.Equal(t, expectedCommonKP.Address(), commonKP.Address())
+		require.Equal(t, expectedBalance, balance)
+	}
+
+	{ // genesis,common,balance, but invalid balance
+		_, _, _, err := parseGenesisOption(
+			expectedGenesisKP.Address(), expectedCommonKP.Address(), "a33333333",
+		)
+		require.Error(t, err)
+	}
+
+	{ // genesis,common,balance, but invalid genesis key
+		_, _, _, err := parseGenesisOption(expectedGenesisKP.Address()[:3], expectedCommonKP.Address(), "10")
+		require.Equal(t, errors.NotPublicKey.Code, err.(*errors.Error).Code)
+	}
+
+	{ // genesis,common,balance, but invalid common key
+		_, _, _, err := parseGenesisOption(expectedGenesisKP.Address(), expectedCommonKP.Address()[:3], "10")
+		require.Equal(t, errors.NotPublicKey.Code, err.(*errors.Error).Code)
 	}
 }

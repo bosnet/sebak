@@ -104,17 +104,20 @@ func init() {
 		Run: func(c *cobra.Command, args []string) {
 			// If `--genesis` was provided, perfom `sebak genesis` before starting the node
 			// This allows one-step startup from scratch, quite useful for testing
-			if len(flagGenesis) != 0 {
-				var balanceStr string
-				csv := strings.Split(flagGenesis, ",")
-				if len(csv) < 2 || len(csv) > 3 {
-					cmdcommon.PrintFlagsError(nodeCmd, "--genesis",
-						errors.New("--genesis expects '<genesis address>,<common account>[,balance]"))
+			if len(flagGenesis) > 0 {
+				genesisKP, commonKP, balance, err := parseGenesisOptionFromCSV(flagGenesis)
+				if err != nil {
+					cmdcommon.PrintFlagsError(nodeCmd, "--genesis", err)
 				}
-				if len(csv) == 3 {
-					balanceStr = csv[1]
-				}
-				flagName, err := makeGenesisBlock(csv[0], csv[1], flagNetworkID, balanceStr, flagStorageConfigString, log)
+
+				flagName, err := makeGenesisBlock(
+					genesisKP,
+					commonKP,
+					flagNetworkID,
+					balance,
+					flagStorageConfigString,
+					log,
+				)
 				if len(flagName) != 0 || err != nil {
 					cmdcommon.PrintFlagsError(c, flagName, err)
 				}
@@ -581,4 +584,54 @@ func runNode() error {
 	}
 
 	return nil
+}
+
+func parseGenesisOptionFromCSV(s string) (genesisKP, commonKP keypair.KP, balance common.Amount, err error) {
+	csv := strings.Split(s, ",")
+	if len(csv) < 2 || len(csv) > 3 {
+		err = errors.InvalidGenesisOption
+		return
+	}
+
+	genesisAddress := strings.TrimSpace(csv[0])
+	commonAddress := strings.TrimSpace(csv[1])
+	if len(genesisAddress) < 1 || len(commonAddress) < 1 {
+		err = errors.InvalidGenesisOption
+		return
+	}
+
+	balanceString := common.MaximumBalance.String()
+	if len(csv) == 3 {
+		balanceString = strings.TrimSpace(csv[2])
+	}
+
+	return parseGenesisOption(genesisAddress, commonAddress, balanceString)
+}
+
+func parseGenesisOption(genesisAddress, commonAddress, balanceString string) (genesisKP, commonKP keypair.KP, balance common.Amount, err error) {
+	if balance, err = cmdcommon.ParseAmountFromString(balanceString); err != nil {
+		return
+	}
+
+	{
+		if genesisKP, err = keypair.Parse(genesisAddress); err != nil {
+			err = errors.NotPublicKey.Clone().SetData("error", err)
+			return
+		} else if _, ok := genesisKP.(*keypair.Full); ok {
+			err = errors.NotPublicKey
+			return
+		}
+	}
+
+	{
+		if commonKP, err = keypair.Parse(commonAddress); err != nil {
+			err = errors.NotPublicKey.Clone().SetData("error", err)
+			return
+		} else if _, ok := commonKP.(*keypair.Full); ok {
+			err = errors.NotPublicKey
+			return
+		}
+	}
+
+	return
 }

@@ -32,7 +32,14 @@ func init() {
 		Short: "initialize new network",
 		Args:  cobra.ExactArgs(2),
 		Run: func(c *cobra.Command, args []string) {
-			flagName, err := makeGenesisBlock(args[0], args[1], flagNetworkID, flagBalance, flagStorageConfigString, log)
+			genesisKP, commonKP, balance, err := parseGenesisOption(
+				args[0], args[1], flagBalance,
+			)
+			if err != nil {
+				cmdcommon.PrintError(c, err)
+			}
+
+			flagName, err := makeGenesisBlock(genesisKP, commonKP, flagNetworkID, balance, flagStorageConfigString, log)
 			if len(flagName) != 0 || err != nil {
 				cmdcommon.PrintFlagsError(c, flagName, err)
 			}
@@ -68,30 +75,15 @@ func init() {
 //   The string argument represent the name of the flag which errored,
 //   and error is the more detailed error.
 //   Note that only one needs be non-`nil` for it to be considered an error.
-func makeGenesisBlock(genesisAddress, commonAddress, networkID, balanceStr, storageUri string, log logging.Logger) (string, error) {
-	var balance common.Amount
+func makeGenesisBlock(genesisKP, commonKP keypair.KP, networkID string, balance common.Amount, storageUri string, log logging.Logger) (string, error) {
 	var err error
-	var genesisKP keypair.KP
-	var commonKP keypair.KP
-
-	if genesisKP, err = keypair.Parse(genesisAddress); err != nil {
-		return "<public key of genesis account>", err
-	}
-
-	if commonKP, err = keypair.Parse(commonAddress); err != nil {
-		return "<public key of common account>", err
-	}
 
 	if len(networkID) == 0 {
 		return "--network-id", errors.New("--network-id must be provided")
 	}
 
-	if len(balanceStr) == 0 {
-		balanceStr = initialBalance
-	}
-
-	if balance, err = cmdcommon.ParseAmountFromString(balanceStr); err != nil {
-		return "--balance", err
+	if balance == 0 {
+		balance = common.MaximumBalance
 	}
 
 	// Use the default value

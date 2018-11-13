@@ -96,4 +96,6 @@ var (
 	FailedToSaveBlockOperaton                 = NewError(178, "failed to save BlockOperation")
 	NodeNotFound                              = NewError(179, "Node not found")
 	InvalidMessageVersion                     = NewError(180, "message version is invalid")
+	InvalidGenesisOption                      = NewError(181, "--genesis expects '<genesis address>,<common account>[,balance]")
+	NotPublicKey                              = NewError(182, "not public key")
 )
