@@ -11,11 +11,22 @@ import (
 	"boscoin.io/sebak/lib/transaction/operation"
 )
 
-func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *transaction.Pool, log, infoLog logging.Logger) (*block.Block, []*transaction.Transaction, error) {
+func finishBallot(nr *NodeRunner, b ballot.Ballot, log logging.Logger) (*block.Block, []*transaction.Transaction, error) {
+	var err error
+	if err = insertMissingTransaction(nr, b); err != nil {
+		log.Debug("failed to get the missing transactions of ballot", "error", err)
+		return nil, nil, err
+	}
+
+	var bs *storage.LevelDBBackend
+	if bs, err = nr.Storage().OpenBatch(); err != nil {
+		return nil, nil, err
+	}
+
 	proposedTxs, err := getProposedTransactions(
-		st,
+		bs,
 		b.B.Proposed.Transactions,
-		transactionPool,
+		nr.TransactionPool,
 	)
 	if err != nil {
 		return nil, nil, err
@@ -23,12 +34,25 @@ func finishBallot(st *storage.LevelDBBackend, b ballot.Ballot, transactionPool *
 
 	var blk *block.Block
 	blk, err = finishBallotWithProposedTxs(
-		st,
+		bs,
 		b,
 		proposedTxs,
 		log,
-		infoLog,
+		nr.Log(),
 	)
+
+	if err != nil {
+		bs.Discard()
+		log.Error("failed to finish ballot", "error", err)
+		return nil, nil, err
+	}
+
+	if err = bs.Commit(); err != nil {
+		if err != errors.NotCommittable {
+			bs.Discard()
+			return nil, nil, err
+		}
+	}
 
 	return blk, proposedTxs, nil
 }
