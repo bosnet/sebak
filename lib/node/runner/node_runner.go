@@ -537,6 +537,10 @@ func (nr *NodeRunner) NextHeight() {
 	nr.isaacStateManager.NextHeight()
 }
 
+func (nr *NodeRunner) PauseIsaacStateManager() {
+	nr.isaacStateManager.Pause()
+}
+
 var NewBallotTransactionCheckerFuncs = []common.CheckerFunc{
 	IsNew,
 	BallotTransactionsSameSource,
