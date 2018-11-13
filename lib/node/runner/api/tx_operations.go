@@ -22,7 +22,7 @@ func (api NetworkHandlerAPI) GetOperationsByTxHashHandler(w http.ResponseWriter,
 		return
 	}
 
-	p, err := httputils.NewPageQuery(r)
+	p, err := NewPageQuery(r)
 	if err != nil {
 		httputils.WriteJSONError(w, err)
 		return

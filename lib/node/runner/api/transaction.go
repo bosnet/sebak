@@ -14,7 +14,7 @@ import (
 )
 
 func (api NetworkHandlerAPI) GetTransactionsHandler(w http.ResponseWriter, r *http.Request) {
-	p, err := httputils.NewPageQuery(r)
+	p, err := NewPageQuery(r)
 	if err != nil {
 		httputils.WriteJSONError(w, err)
 		return
@@ -97,7 +97,7 @@ func (api NetworkHandlerAPI) GetTransactionsByAccountHandler(w http.ResponseWrit
 	vars := mux.Vars(r)
 	address := vars["id"]
 
-	p, err := httputils.NewPageQuery(r)
+	p, err := NewPageQuery(r)
 	if err != nil {
 		httputils.WriteJSONError(w, err)
 		return

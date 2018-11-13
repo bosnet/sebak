@@ -18,7 +18,7 @@ func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter
 	vars := mux.Vars(r)
 	address := vars["id"]
 
-	p, err := httputils.NewPageQuery(r)
+	p, err := NewPageQuery(r)
 	if err != nil {
 		httputils.WriteJSONError(w, err)
 		return
