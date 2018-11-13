@@ -74,4 +74,5 @@ var (
 		HTTPCacheRedisAdapterName:  true,
 		"":                         true, // default value is nop cache
 	}
+	CongressAddr = "GAIJAH4FCEB3AWS2NVKRNDGVJ5QPD7VNOQNGZEPL2FAI6GPZQNKEXRWI"
 )

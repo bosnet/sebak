@@ -210,8 +210,7 @@ func ValidateTx(st *storage.LevelDBBackend, config common.Config, tx transaction
 	// check, source exists
 	var ba *block.BlockAccount
 	if ba, err = block.GetBlockAccount(st, tx.B.Source); err != nil {
-		err = errors.BlockAccountDoesNotExists
-		return
+		return errors.BlockAccountDoesNotExists
 	}
 
 	// check, version is correct
@@ -429,8 +428,11 @@ func ValidateOp(st *storage.LevelDBBackend, config common.Config, source *block.
 		}
 
 	case operation.TypeCongressVoting, operation.TypeCongressVotingResult:
-		// Nothing to do
-
+		//the CongressAddress is owned by blockchainOS. It is temporally check.
+		//TODO: When a node of BosNet is operated by anonymous then it will be removed.
+		if source.Address != common.CongressAddr {
+			return errors.CongressAddressMisMatched
+		}
 	default:
 		return errors.UnknownOperationType
 	}
