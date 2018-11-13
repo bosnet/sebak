@@ -548,9 +548,6 @@ func getTimeDuration(str string, defaultValue time.Duration, errMessage string) 
 
 func runNode() error {
 
-	// Set common variable
-	common.CongressAddr = flagCongressAddress
-
 	// create network
 	networkConfig, err := network.NewHTTP2NetworkConfigFromEndpoint(localNode.Alias(), bindEndpoint)
 	if err != nil {
@@ -573,20 +570,21 @@ func runNode() error {
 	)
 
 	conf := common.Config{
-		TimeoutINIT:         timeoutINIT,
-		TimeoutSIGN:         timeoutSIGN,
-		TimeoutACCEPT:       timeoutACCEPT,
-		TimeoutALLCONFIRM:   timeoutALLCONFIRM,
-		NetworkID:           []byte(flagNetworkID),
-		BlockTime:           blockTime,
-		BlockTimeDelta:      blockTimeDelta,
-		TxsLimit:            int(transactionsLimit),
-		OpsLimit:            int(operationsLimit),
-		RateLimitRuleAPI:    rateLimitRuleAPI,
-		RateLimitRuleNode:   rateLimitRuleNode,
-		HTTPCacheAdapter:    httpCacheAdapter,
-		HTTPCachePoolSize:   httpCachePoolSize,
-		HTTPCacheRedisAddrs: httpCacheRedisAddrs,
+		TimeoutINIT:            timeoutINIT,
+		TimeoutSIGN:            timeoutSIGN,
+		TimeoutACCEPT:          timeoutACCEPT,
+		TimeoutALLCONFIRM:      timeoutALLCONFIRM,
+		NetworkID:              []byte(flagNetworkID),
+		BlockTime:              blockTime,
+		BlockTimeDelta:         blockTimeDelta,
+		TxsLimit:               int(transactionsLimit),
+		OpsLimit:               int(operationsLimit),
+		RateLimitRuleAPI:       rateLimitRuleAPI,
+		RateLimitRuleNode:      rateLimitRuleNode,
+		HTTPCacheAdapter:       httpCacheAdapter,
+		HTTPCachePoolSize:      httpCachePoolSize,
+		HTTPCacheRedisAddrs:    httpCacheRedisAddrs,
+		CongressAccountAddress: flagCongressAddress,
 	}
 	st, err := storage.NewStorage(storageConfig)
 	if err != nil {

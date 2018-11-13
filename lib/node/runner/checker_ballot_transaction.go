@@ -430,7 +430,7 @@ func ValidateOp(st *storage.LevelDBBackend, config common.Config, source *block.
 	case operation.TypeCongressVoting, operation.TypeCongressVotingResult:
 		//the CongressAddress is owned by blockchainOS. It is temporally check.
 		//TODO: When a node of BosNet is operated by anonymous then it will be removed.
-		if source.Address != common.CongressAddr {
+		if source.Address != config.CongressAccountAddress {
 			return errors.CongressAddressMisMatched
 		}
 	default:
