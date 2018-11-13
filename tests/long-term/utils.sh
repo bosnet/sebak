@@ -70,3 +70,14 @@ function getAccountWithBalance () # u16 port, string addr and expected balance
 
     return 1
 }
+
+function getBalance () # u16 port, string addr
+{
+    if [ $# -ne 2 ]; then
+        die "2 arguments expected for getBalance, not $#"
+    fi
+
+    balance=$(getAccount $1 $2 | jq ".balance" | sed 's/"//g')
+    echo $balance
+    return 0
+}
