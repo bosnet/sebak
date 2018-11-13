@@ -22,7 +22,7 @@ type Handlers map[string]func(http.ResponseWriter, *http.Request)
 const (
 	RouterNameNode   = "node"
 	RouterNameAPI    = "api"
-	RouterNameMetric = "metric"
+	RouterNameMetric = "metrics"
 	RouterNameDebug  = "debug"
 )
 
