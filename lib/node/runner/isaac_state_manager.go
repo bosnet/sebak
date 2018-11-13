@@ -90,7 +90,7 @@ func (sm *ISAACStateManager) setBlockTimeBuffer() {
 		"blockTime", sm.Conf.BlockTime,
 		"firstConsensusBlockTime", sm.firstConsensusBlockTime,
 		"height", b.Height,
-		"confirmed", b.ProposedTime,
+		"proposedTime", b.ProposedTime,
 		"now", time.Now(),
 	)
 
