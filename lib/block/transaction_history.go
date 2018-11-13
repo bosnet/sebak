@@ -12,7 +12,7 @@ import (
 // BlockTransactionHistory is for keeping `Transaction` history. the storage should support,
 //  * find by `Hash`
 //  * find by `Source`
-//  * sort by `ProposedTime`
+//  * sort by `Confirmed`
 //  * sort by `Created`
 
 const (
