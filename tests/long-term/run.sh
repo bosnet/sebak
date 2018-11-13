@@ -54,6 +54,7 @@ sleep 1
 
 docker run --rm --network host ${CLIENT_IMAGE} "create_account"
 docker run --rm --network host ${CLIENT_IMAGE} "payment_1"
+docker run --rm --network host ${CLIENT_IMAGE} "total_balance"
 
 # Check block height after 60s
 docker run --rm --network host ${CLIENT_IMAGE} block-time.sh ${SECONDS}
@@ -106,11 +107,10 @@ CONTAINERS="${CONTAINERS} ${NODE1_2}"
 # Check that the block height of all 4 nodes are almost same
 docker run --rm --network host ${CLIENT_IMAGE} sync.sh
 
-# Check payment after sync
+# Check again after sync
 docker run --rm --network host ${CLIENT_IMAGE} "payment_2"
-
-# Check common account
 docker run --rm --network host ${CLIENT_IMAGE} "common_account"
+docker run --rm --network host ${CLIENT_IMAGE} "total_balance"
 
 # Shut down the containers - we need to do so for integration reports to be written
 docker stop ${NODE1_2} ${NODE2_2} ${NODE3_2} ${NODE4_2}
