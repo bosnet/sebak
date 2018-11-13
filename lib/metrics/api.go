@@ -25,12 +25,13 @@ func PromAPIMetrics() *APIMetrics {
 			Namespace: Namespace,
 			Subsystem: APISubsystem,
 			Name:      "request_errors_total",
-			Help:      "Total number of request errors",
+			Help:      "Total number of request errors.",
 		}, []string{"endpoint", "method", "status"}),
 		RequestDurationSeconds: prometheus.NewSummaryFrom(stdprometheus.SummaryOpts{
 			Namespace: Namespace,
 			Subsystem: APISubsystem,
 			Name:      "request_duration_seconds",
+			Help:      "Duration of request.",
 		}, []string{"endpoint", "method", "status"}),
 	}
 }

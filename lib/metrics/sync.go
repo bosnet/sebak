@@ -1,6 +1,8 @@
 package metrics
 
 import (
+	"time"
+
 	"github.com/go-kit/kit/metrics"
 	"github.com/go-kit/kit/metrics/discard"
 	prometheus "github.com/go-kit/kit/metrics/prometheus"
@@ -17,11 +19,18 @@ func (s *SyncMetrics) SetHeight(height uint64) {
 	s.Height.Set(float64(height))
 }
 
+func (s *SyncMetrics) ObserveDurationSeconds(begin time.Time, component string) {
+	if component == "" {
+		component = SyncAll
+	}
+	s.DurationSeconds.With(SyncComponent, component).Observe(time.Since(begin).Seconds())
+}
+
 func (s *SyncMetrics) AddFetchError() {
-	s.ErrorTotal.With("component", "fetcher").Add(1)
+	s.ErrorTotal.With(SyncComponent, SyncFetcher).Add(1)
 }
 func (s *SyncMetrics) AddValidateError() {
-	s.ErrorTotal.With("component", "validator").Add(1)
+	s.ErrorTotal.With(SyncComponent, SyncValidator).Add(1)
 }
 
 func PromSyncMetrics() *SyncMetrics {
@@ -37,13 +46,13 @@ func PromSyncMetrics() *SyncMetrics {
 			Subsystem: SyncSubsystem,
 			Name:      "error_total",
 			Help:      "Number of failed sync.",
-		}, []string{"component"}),
+		}, []string{SyncComponent}),
 		DurationSeconds: prometheus.NewSummaryFrom(stdprometheus.SummaryOpts{
 			Namespace: Namespace,
 			Subsystem: SyncSubsystem,
 			Name:      "duration_seconds",
 			Help:      "Time processing one block.",
-		}, []string{}),
+		}, []string{SyncComponent}),
 	}
 }
 

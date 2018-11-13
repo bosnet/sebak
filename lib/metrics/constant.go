@@ -7,3 +7,10 @@ const (
 	TxPoolSubsystem    = "txpool"
 	APISubsystem       = "api"
 )
+
+const (
+	SyncComponent = "component"
+	SyncFetcher   = "fetcher"
+	SyncValidator = "validator"
+	SyncAll       = "all"
+)
