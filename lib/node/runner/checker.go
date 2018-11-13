@@ -193,6 +193,13 @@ func BallotCheckSYNC(c common.Checker, args ...interface{}) error {
 
 	checker.NodeRunner.PauseIsaacStateManager()
 
+	log := checker.Log.New(logging.Ctx{
+		"latest-height": latestHeight,
+		"sync-height":   syncHeight,
+	})
+
+	log.Debug("sync situation")
+
 	defer func() {
 		if b.VotingBasis().Height == syncHeight {
 			is.LatestBallot = b
@@ -200,37 +207,45 @@ func BallotCheckSYNC(c common.Checker, args ...interface{}) error {
 	}()
 
 	if latestHeight < syncHeight-1 { // request sync until syncHeight
-		checker.NodeRunner.Log().Debug("latestHeight < syncHeight-1", "latestHeight", latestHeight, "syncHeight", syncHeight)
+		log.Debug("start sync; latestHeight < syncHeight-1")
 		is.StartSync(syncHeight, nodeAddrs)
 		return NewCheckerStopCloseConsensus(checker, "ballot makes node in sync")
-	} else {
-		if latestHeight == syncHeight-1 { // finish previous and current height ballot
-			_, _, err = finishBallot(
-				checker.NodeRunner.Storage(),
-				is.LatestBallot,
-				checker.NodeRunner.TransactionPool,
-				checker.Log,
-				checker.NodeRunner.Log(),
-			)
-			if err != nil {
-				return err
-			}
-		}
-
-		_, _, err = finishBallot(
-			checker.NodeRunner.Storage(),
-			checker.Ballot,
-			checker.NodeRunner.TransactionPool,
+	} else if latestHeight == syncHeight-1 {
+		log.Debug("start sync to consensus; latestHeight == syncHeight-1")
+		checker.NodeRunner.TransitISAACState(is.LatestBallot.VotingBasis(), ballot.StateALLCONFIRM)
+		log.Debug("finish ballot; latestHeight == syncHeight-1", "ballot", is.LatestBallot.GetHash())
+		var blk *block.Block
+		blk, _, err = finishBallot(
+			checker.NodeRunner,
+			is.LatestBallot,
 			checker.Log,
-			checker.NodeRunner.Log(),
 		)
 		if err != nil {
+			log.Debug("failed to finish ballot; latestHeight == syncHeight-1", "ballot", is.LatestBallot.GetHash(), "error", err)
 			return err
 		}
+		checker.NodeRunner.SavingBlockOperations().Save(*blk)
 
+		checker.NodeRunner.TransitISAACState(checker.Ballot.VotingBasis(), ballot.StateALLCONFIRM)
+		log.Debug("finish ballot", "ballot", checker.Ballot.GetHash())
+		blk, _, err = finishBallot(
+			checker.NodeRunner,
+			checker.Ballot,
+			checker.Log,
+		)
+		if err != nil {
+			log.Debug("failed to finish ballot; latestHeight == syncHeight-1", "ballot", is.LatestBallot.GetHash(), "error", err)
+			return err
+		}
+		checker.NodeRunner.SavingBlockOperations().Save(*blk)
+
+		checker.NodeRunner.Log().Debug("node state transits to consensus", "height", checker.Ballot.VotingBasis().Height)
 		checker.LocalNode.SetConsensus()
-		checker.NodeRunner.TransitISAACState(b.VotingBasis(), ballot.StateALLCONFIRM)
-		return NewCheckerStopCloseConsensus(checker, "ballot got consensus")
+		checker.NodeRunner.NextHeight()
+		return nil
+	} else {
+		// do nothing
+		return nil
 	}
 }
 
@@ -334,15 +349,15 @@ func BallotCheckResult(c common.Checker, args ...interface{}) (err error) {
 
 // insertMissingTransaction will get the missing tranactions, that is, not in
 // `TransactionPool` from proposer.
-func insertMissingTransaction(checker *BallotChecker) (err error) {
+func insertMissingTransaction(nr *NodeRunner, ballot ballot.Ballot) (err error) {
 	// get missing transactions
 	var unknown []string
 	var exists bool
-	for _, hash := range checker.Ballot.Transactions() {
-		if checker.NodeRunner.TransactionPool.Has(hash) {
+	for _, hash := range ballot.Transactions() {
+		if nr.TransactionPool.Has(hash) {
 			continue
 		}
-		if exists, err = block.ExistsTransactionPool(checker.NodeRunner.Storage(), hash); err != nil {
+		if exists, err = block.ExistsTransactionPool(nr.Storage(), hash); err != nil {
 			return
 		} else if exists {
 			continue
@@ -354,7 +369,7 @@ func insertMissingTransaction(checker *BallotChecker) (err error) {
 		return
 	}
 
-	client := checker.NodeRunner.ConnectionManager().GetConnection(checker.Ballot.Proposer())
+	client := nr.ConnectionManager().GetConnection(ballot.Proposer())
 	if client == nil {
 		err = errors.BallotFromUnknownValidator
 		return
@@ -392,11 +407,11 @@ func insertMissingTransaction(checker *BallotChecker) (err error) {
 			err = errors.TransactionNotFound
 			return
 		}
-		if err = tx.IsWellFormed(checker.NodeRunner.Conf); err != nil {
+		if err = tx.IsWellFormed(nr.Conf); err != nil {
 			return
 		}
 
-		if err = ValidateTx(checker.NodeRunner.Storage(), tx); err != nil {
+		if err = ValidateTx(nr.Storage(), tx); err != nil {
 			return
 		}
 
@@ -404,7 +419,7 @@ func insertMissingTransaction(checker *BallotChecker) (err error) {
 	}
 
 	var bs *storage.LevelDBBackend
-	bs, err = checker.NodeRunner.Storage().OpenBatch()
+	bs, err = nr.Storage().OpenBatch()
 	for _, tx := range receivedTransaction {
 		if _, err = block.SaveTransactionPool(bs, tx); err != nil {
 			return
@@ -425,7 +440,7 @@ func BallotGetMissingTransaction(c common.Checker, args ...interface{}) (err err
 		return
 	}
 
-	if err = insertMissingTransaction(checker); err != nil {
+	if err = insertMissingTransaction(checker.NodeRunner, checker.Ballot); err != nil {
 		checker.VotingHole = voting.NO
 		checker.Log.Debug("failed to get the missing transactions of ballot", "error", err)
 		err = nil
@@ -597,35 +612,13 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) error {
 }
 
 func saveBlock(checker *BallotChecker) error {
-	var err error
-	if err = insertMissingTransaction(checker); err != nil {
-		checker.Log.Debug("failed to get the missing transactions of ballot", "error", err)
-		return err
-	}
-	var bs *storage.LevelDBBackend
-	if bs, err = checker.NodeRunner.Storage().OpenBatch(); err != nil {
-		return err
-	}
-
 	theBlock, proposedTransactions, err := finishBallot(
-		bs,
+		checker.NodeRunner,
 		checker.Ballot,
-		checker.NodeRunner.TransactionPool,
 		checker.Log,
-		checker.NodeRunner.Log(),
 	)
-
 	if err != nil {
-		bs.Discard()
-		checker.Log.Error("failed to finish ballot", "error", err)
 		return err
-	}
-
-	if err = bs.Commit(); err != nil {
-		if err != errors.NotCommittable {
-			bs.Discard()
-			return err
-		}
 	}
 
 	checker.Log.Debug("ballot was stored", "block", *theBlock)
