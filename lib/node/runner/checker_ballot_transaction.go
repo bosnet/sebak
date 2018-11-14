@@ -215,7 +215,7 @@ func ValidateTx(st *storage.LevelDBBackend, tx transaction.Transaction) (err err
 
 	// check, multiple operation from frozen account.
 	if ba.Linked != "" && len(tx.B.Operations) != 1 {
-		err = errors.FrozenAccountSendTooManyOperation
+		err = errors.FrozenAccountHasMoreThanOneOperation
 	}
 
 	// check, version is correct
