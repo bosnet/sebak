@@ -1,6 +1,8 @@
 package metrics
 
 import (
+	"time"
+
 	"github.com/go-kit/kit/metrics"
 	"github.com/go-kit/kit/metrics/discard"
 	prometheus "github.com/go-kit/kit/metrics/prometheus"
@@ -11,11 +13,19 @@ type ConsensusMetrics struct {
 	Height metrics.Gauge
 	Rounds metrics.Gauge
 
+	BlockIntervalSeconds metrics.Histogram
+
 	TotalTxs metrics.Gauge
 	TotalOps metrics.Gauge
 
 	Validators        metrics.Gauge
 	MissingValidators metrics.Gauge
+}
+
+func (c *ConsensusMetrics) SetBlockIntervalSeconds(t time.Time) time.Time {
+	n := time.Now()
+	c.BlockIntervalSeconds.Observe(n.Sub(t).Seconds())
+	return n
 }
 
 func (c *ConsensusMetrics) SetHeight(height uint64) {
@@ -51,6 +61,12 @@ func PromConsensusMetrics() *ConsensusMetrics {
 			Name:      "rounds",
 			Help:      "Number of rounds.",
 		}, []string{}),
+		BlockIntervalSeconds: prometheus.NewSummaryFrom(stdprometheus.SummaryOpts{
+			Namespace: Namespace,
+			Subsystem: ConsensusSubsystem,
+			Name:      "block_interval_seconds",
+			Help:      "Time processing for one block.",
+		}, []string{}),
 		TotalTxs: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{
 			Namespace: Namespace,
 			Subsystem: ConsensusSubsystem,
@@ -82,6 +98,8 @@ func NopConsensusMetrics() *ConsensusMetrics {
 	return &ConsensusMetrics{
 		Height: discard.NewGauge(),
 		Rounds: discard.NewGauge(),
+
+		BlockIntervalSeconds: discard.NewHistogram(),
 
 		TotalTxs: discard.NewGauge(),
 		TotalOps: discard.NewGauge(),
