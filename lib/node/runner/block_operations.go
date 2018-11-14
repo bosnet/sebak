@@ -119,13 +119,13 @@ func (sb *SavingBlockOperations) CheckByBlock(st *storage.LevelDBBackend, blk bl
 		return
 	}
 
-	txs := make(chan string)
-	errChan := make(chan error)
+	txs := make(chan string, 100)
+	errChan := make(chan error, 100)
 	defer close(errChan)
 
 	numWorker := int(len(blk.Transactions) / 2)
-	if numWorker > 10 {
-		numWorker = 10
+	if numWorker > 100 {
+		numWorker = 100
 	} else if numWorker < 1 {
 		numWorker = 1
 	}
