@@ -160,7 +160,79 @@ func TestRateLimitMiddleWareByIPAddress(t *testing.T) {
 	router.HandleFunc(handlerURL, http.HandlerFunc(handler)).Methods("GET")
 	ts := httptest.NewServer(router)
 
+	{ // not from localhost
+		var wg sync.WaitGroup
+		wg.Add(10)
+		for i := 0; i < 10; i++ {
+			go func() {
+				testRequestForRateLimit(ts, handlerURL, "3.3.3.3")
+				wg.Done()
+			}()
+		}
+		wg.Wait()
+
+		resp, err := testRequestForRateLimit(ts, handlerURL, "3.3.3.3")
+		require.NoError(t, err)
+
+		require.Equal(t, http.StatusTooManyRequests, resp.StatusCode)
+	}
+
 	{ // from localhost
+		var wg sync.WaitGroup
+		wg.Add(10)
+		for i := 0; i < 10; i++ {
+			go func() {
+				req, _ := http.NewRequest("GET", ts.URL+handlerURL, nil)
+				req.Header.Set("X-Forwarded-For", allowedIP)
+				ts.Client().Do(req)
+				wg.Done()
+			}()
+		}
+		wg.Wait()
+
+		req, _ := http.NewRequest("GET", ts.URL+handlerURL, nil)
+		req.Header.Set("X-Forwarded-For", allowedIP)
+		resp, err := ts.Client().Do(req)
+		require.NoError(t, err)
+
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+
+		body, err := ioutil.ReadAll(resp.Body)
+		resp.Body.Close()
+
+		require.Equal(t, []byte("1"), body)
+	}
+	ts.Close()
+}
+
+func TestRateLimitMiddleWareByCIDR(t *testing.T) {
+	handlerURL := UrlPathPrefixAPI + "/test"
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("1"))
+		return
+	}
+
+	allowedIP := "1.1.1.1"
+	allowedCIDR := "1.1.1.1/24"
+	// by default, 1 requests per minute, but 1000 request per minute from `1.1.1.1`
+	rate := limiter.Rate{
+		Period: 1 * time.Minute,
+		Limit:  1,
+	}
+	rate1000 := limiter.Rate{
+		Period: 1 * time.Minute,
+		Limit:  1000,
+	}
+
+	rule := common.NewRateLimitRule(rate)
+	rule.ByIPAddress[allowedCIDR] = rate1000
+
+	router := mux.NewRouter()
+	router.Use(RateLimitMiddleware(nil, rule))
+	router.HandleFunc(handlerURL, http.HandlerFunc(handler)).Methods("GET")
+	ts := httptest.NewServer(router)
+
+	{ // not from localhost
 		var wg sync.WaitGroup
 		wg.Add(10)
 		for i := 0; i < 10; i++ {
