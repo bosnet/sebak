@@ -3,12 +3,10 @@ package api
 import (
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/gorilla/mux"
 
 	"boscoin.io/sebak/lib/block"
-	"boscoin.io/sebak/lib/client"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/errors"
@@ -60,13 +58,16 @@ func (api NetworkHandlerAPI) GetAccountHandler(w http.ResponseWriter, r *http.Re
 func (api NetworkHandlerAPI) GetFrozenAccountsByAccountHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	address := vars["id"]
-	options, err := client.NewDefaultListOptionsFromQuery(r.URL.Query())
+
+	p, err := NewPageQuery(r)
 	if err != nil {
-		http.Error(w, errors.InvalidQueryString.Error(), http.StatusBadRequest)
+		httputils.WriteJSONError(w, err)
 		return
 	}
 
+	var options = p.ListOptions()
 	var cursor []byte
+
 	readFunc := func() []resource.Resource {
 		var txs []resource.Resource
 		iterFunc, closeFunc := block.GetBlockOperationsByLinked(api.storage, address, options)
@@ -168,25 +169,21 @@ func (api NetworkHandlerAPI) GetFrozenAccountsByAccountHandler(w http.ResponseWr
 	}
 
 	txs := readFunc()
-	self := r.URL.String()
-	next := strings.Replace(resource.URLAccountFrozenAccounts, "{id}", address, -1) + "?" + options.SetCursor(cursor).SetReverse(false).Encode()
-	prev := strings.Replace(resource.URLAccountFrozenAccounts, "{id}", address, -1) + "?" + options.SetReverse(true).Encode()
-	list := resource.NewResourceList(txs, self, next, prev)
 
-	if err := httputils.WriteJSON(w, 200, list); err != nil {
-		httputils.WriteJSONError(w, err)
-		return
-	}
+	list := p.ResourceList(txs, cursor)
+	httputils.MustWriteJSON(w, 200, list)
 }
 
 func (api NetworkHandlerAPI) GetFrozenAccountsHandler(w http.ResponseWriter, r *http.Request) {
-	options, err := client.NewDefaultListOptionsFromQuery(r.URL.Query())
+	p, err := NewPageQuery(r)
 	if err != nil {
-		http.Error(w, errors.InvalidQueryString.Error(), http.StatusBadRequest)
+		httputils.WriteJSONError(w, err)
 		return
 	}
 
+	var options = p.ListOptions()
 	var cursor []byte
+
 	readFunc := func() []resource.Resource {
 		var txs []resource.Resource
 		iterFunc, closeFunc := block.GetBlockOperationsByFrozen(api.storage, options)
@@ -288,13 +285,6 @@ func (api NetworkHandlerAPI) GetFrozenAccountsHandler(w http.ResponseWriter, r *
 	}
 
 	txs := readFunc()
-	self := r.URL.String()
-	next := GetFrozenAccountHandlerPattern + "?" + options.SetCursor(cursor).SetReverse(false).Encode()
-	prev := GetFrozenAccountHandlerPattern + "?" + options.SetReverse(true).Encode()
-	list := resource.NewResourceList(txs, self, next, prev)
-
-	if err := httputils.WriteJSON(w, 200, list); err != nil {
-		httputils.WriteJSONError(w, err)
-		return
-	}
+	list := p.ResourceList(txs, cursor)
+	httputils.MustWriteJSON(w, 200, list)
 }

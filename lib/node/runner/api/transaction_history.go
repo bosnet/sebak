@@ -44,13 +44,9 @@ func (api NetworkHandlerAPI) GetTransactionHistoryHandler(w http.ResponseWriter,
 		return
 	}
 	payload, err := readFunc()
-	if err == nil {
-		if err := httputils.WriteJSON(w, 200, payload); err != nil {
-			http.Error(w, "Error reading request body", http.StatusInternalServerError)
-		}
-	} else {
-		if err := httputils.WriteJSON(w, httputils.StatusCode(err), err); err != nil {
-			http.Error(w, "Error reading request body", http.StatusInternalServerError)
-		}
+	if err != nil {
+		httputils.WriteJSONError(w, err)
+		return
 	}
+	httputils.MustWriteJSON(w, 200, payload)
 }

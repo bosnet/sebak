@@ -6,10 +6,7 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"strings"
-
 	"boscoin.io/sebak/lib/block"
-	"boscoin.io/sebak/lib/client"
 	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/network/httputils"
@@ -17,11 +14,13 @@ import (
 )
 
 func (api NetworkHandlerAPI) GetTransactionsHandler(w http.ResponseWriter, r *http.Request) {
-	options, err := client.NewDefaultListOptionsFromQuery(r.URL.Query())
+	p, err := NewPageQuery(r)
 	if err != nil {
-		http.Error(w, errors.InvalidQueryString.Error(), http.StatusBadRequest)
+		httputils.WriteJSONError(w, err)
 		return
 	}
+
+	var options = p.ListOptions()
 	var cursor []byte
 	readFunc := func() []resource.Resource {
 		var txs []resource.Resource
@@ -52,11 +51,7 @@ func (api NetworkHandlerAPI) GetTransactionsHandler(w http.ResponseWriter, r *ht
 
 	txs := readFunc()
 
-	self := r.URL.String()
-	next := GetTransactionsHandlerPattern + "?" + options.SetCursor(cursor).SetReverse(false).Encode()
-	prev := GetTransactionsHandlerPattern + "?" + options.SetReverse(true).Encode()
-	list := resource.NewResourceList(txs, self, next, prev)
-
+	list := p.ResourceList(txs, cursor)
 	httputils.MustWriteJSON(w, 200, list)
 }
 
@@ -101,11 +96,14 @@ func (api NetworkHandlerAPI) GetTransactionByHashHandler(w http.ResponseWriter, 
 func (api NetworkHandlerAPI) GetTransactionsByAccountHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	address := vars["id"]
-	options, err := client.NewDefaultListOptionsFromQuery(r.URL.Query())
+
+	p, err := NewPageQuery(r)
 	if err != nil {
-		http.Error(w, errors.InvalidQueryString.Error(), http.StatusBadRequest)
+		httputils.WriteJSONError(w, err)
 		return
 	}
+
+	var options = p.ListOptions()
 	var cursor []byte
 	readFunc := func() []resource.Resource {
 		var txs []resource.Resource
@@ -135,10 +133,6 @@ func (api NetworkHandlerAPI) GetTransactionsByAccountHandler(w http.ResponseWrit
 	}
 
 	txs := readFunc()
-	self := r.URL.String()
-	next := strings.Replace(resource.URLAccountTransactions, "{id}", address, -1) + "?" + options.SetCursor(cursor).SetReverse(false).Encode()
-	prev := strings.Replace(resource.URLAccountTransactions, "{id}", address, -1) + "?" + options.SetReverse(true).Encode()
-	list := resource.NewResourceList(txs, self, next, prev)
-
+	list := p.ResourceList(txs, cursor)
 	httputils.MustWriteJSON(w, 200, list)
 }
