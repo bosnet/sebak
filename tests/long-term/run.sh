@@ -37,13 +37,17 @@ fi
 # because the reports are written on program's exit, which also means container's shutdown
 # Also SUPER IMPORTANT: the `-test` args need to be before any other args, or they are simply ignored...
 export NODE1=$(docker run -d --network host --env-file=${ROOT_DIR}/docker/node1.env \
-                        ${NODE_IMAGE} node --genesis=${SEBAK_GENESIS},${SEBAK_COMMON},5000000000000000 --log-level=debug)
+                        ${NODE_IMAGE} node --log-level=debug --rate-limit-api=0-s --rate-limit-node=0-s \
+                        --genesis=${SEBAK_GENESIS},${SEBAK_COMMON},5000000000000000)
 export NODE2=$(docker run -d --network host --env-file=${ROOT_DIR}/docker/node2.env \
-                        ${NODE_IMAGE} node --genesis=${SEBAK_GENESIS},${SEBAK_COMMON},5000000000000000 --log-level=debug)
+                        ${NODE_IMAGE} node --log-level=debug --rate-limit-api=0-s --rate-limit-node=0-s \
+                        --genesis=${SEBAK_GENESIS},${SEBAK_COMMON},5000000000000000)
 export NODE3=$(docker run -d --network host --env-file=${ROOT_DIR}/docker/node3.env \
-                        ${NODE_IMAGE} node --genesis=${SEBAK_GENESIS},${SEBAK_COMMON},5000000000000000 --log-level=debug)
+                        ${NODE_IMAGE} node --log-level=debug --rate-limit-api=0-s --rate-limit-node=0-s \
+                        --genesis=${SEBAK_GENESIS},${SEBAK_COMMON},5000000000000000)
 export NODE4=$(docker run -d --network host --env-file=${ROOT_DIR}/docker/node4.env \
-                        ${NODE_IMAGE} node --genesis=${SEBAK_GENESIS},${SEBAK_COMMON},5000000000000000 --log-level=debug)
+                        ${NODE_IMAGE} node --log-level=debug --rate-limit-api=0-s --rate-limit-node=0-s \
+                        --genesis=${SEBAK_GENESIS},${SEBAK_COMMON},5000000000000000)
 
 CONTAINERS="${CONTAINERS} ${NODE1} ${NODE2} ${NODE3} ${NODE4}"
 
@@ -64,7 +68,9 @@ docker stop ${NODE4}
 docker rm -f ${NODE4}
 
 export NODE4_2=$(docker run -d --network host --env-file=${ROOT_DIR}/docker/node4.env \
-                        ${NODE_IMAGE} -test.coverprofile=coverage.txt node --genesis=${SEBAK_GENESIS},${SEBAK_COMMON},5000000000000000 --log-level=debug)
+                        ${NODE_IMAGE} -test.coverprofile=coverage.txt \
+                        node --log-level=debug --rate-limit-api=0-s --rate-limit-node=0-s \
+                        --genesis=${SEBAK_GENESIS},${SEBAK_COMMON},5000000000000000)
 
 CONTAINERS="${CONTAINERS} ${NODE4_2}"
 
@@ -76,7 +82,9 @@ docker stop ${NODE3}
 docker rm -f ${NODE3}
 
 export NODE3_2=$(docker run -d --network host --env-file=${ROOT_DIR}/docker/node3.env \
-                        ${NODE_IMAGE} -test.coverprofile=coverage.txt node --genesis=${SEBAK_GENESIS},${SEBAK_COMMON},5000000000000000 --log-level=debug)
+                        ${NODE_IMAGE} -test.coverprofile=coverage.txt \
+                        node --log-level=debug --rate-limit-api=0-s --rate-limit-node=0-s \
+                        --genesis=${SEBAK_GENESIS},${SEBAK_COMMON},5000000000000000)
 
 CONTAINERS="${CONTAINERS} ${NODE3_2}"
 
@@ -88,7 +96,9 @@ docker stop ${NODE2}
 docker rm -f ${NODE2}
 
 export NODE2_2=$(docker run -d --network host --env-file=${ROOT_DIR}/docker/node2.env \
-                        ${NODE_IMAGE} -test.coverprofile=coverage.txt node --genesis=${SEBAK_GENESIS},${SEBAK_COMMON},5000000000000000 --log-level=debug)
+                        ${NODE_IMAGE} -test.coverprofile=coverage.txt \
+                        node --log-level=debug --rate-limit-api=0-s --rate-limit-node=0-s \
+                        --genesis=${SEBAK_GENESIS},${SEBAK_COMMON},5000000000000000)
 
 CONTAINERS="${CONTAINERS} ${NODE2_2}"
 
@@ -100,7 +110,9 @@ docker stop ${NODE1}
 docker rm -f ${NODE1}
 
 export NODE1_2=$(docker run -d --network host --env-file=${ROOT_DIR}/docker/node1.env \
-                        ${NODE_IMAGE} -test.coverprofile=coverage.txt node --genesis=${SEBAK_GENESIS},${SEBAK_COMMON},5000000000000000 --log-level=debug)
+                        ${NODE_IMAGE} -test.coverprofile=coverage.txt \
+                        node --log-level=debug --rate-limit-api=0-s --rate-limit-node=0-s \
+                        --genesis=${SEBAK_GENESIS},${SEBAK_COMMON},5000000000000000)
 
 CONTAINERS="${CONTAINERS} ${NODE1_2}"
 
