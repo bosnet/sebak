@@ -11,6 +11,10 @@ type TxPoolMetrics struct {
 	Size metrics.Gauge
 }
 
+func (m *TxPoolMetrics) AddSize(delta int) {
+	m.Size.Add(float64(delta))
+}
+
 func PromTxPoolMetrics() *TxPoolMetrics {
 	return &TxPoolMetrics{
 		Size: prometheus.NewGaugeFrom(stdprometheus.GaugeOpts{

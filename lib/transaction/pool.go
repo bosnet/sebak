@@ -3,6 +3,8 @@ package transaction
 import (
 	"container/list"
 	"sync"
+
+	"boscoin.io/sebak/lib/metrics"
 )
 
 type Pool struct {
@@ -63,6 +65,8 @@ func (tp *Pool) Add(tx Transaction) bool {
 		return false
 	}
 
+	metrics.TxPool.AddSize(1)
+
 	tp.Lock()
 	defer tp.Unlock()
 
@@ -83,6 +87,7 @@ func (tp *Pool) Remove(hashes ...string) {
 	tp.Lock()
 	defer tp.Unlock()
 
+	var num int
 	for _, hash := range hashes {
 		if tx, found := tp.Pool[hash]; found {
 			delete(tp.sources, tx.Source())
@@ -91,8 +96,12 @@ func (tp *Pool) Remove(hashes ...string) {
 				tp.hashList.Remove(e)
 				delete(tp.hashMap, hash)
 			}
+			num++
 		}
 	}
+
+	metrics.TxPool.AddSize(-num)
+
 }
 
 func (tp *Pool) RemoveFromSources(sources ...string) {
@@ -103,6 +112,7 @@ func (tp *Pool) RemoveFromSources(sources ...string) {
 	tp.Lock()
 	defer tp.Unlock()
 
+	var num int
 	for _, source := range sources {
 		if hash, found := tp.sources[source]; found {
 			if _, found := tp.Pool[hash]; found {
@@ -112,9 +122,12 @@ func (tp *Pool) RemoveFromSources(sources ...string) {
 					tp.hashList.Remove(e)
 					delete(tp.hashMap, hash)
 				}
+				num++
 			}
 		}
 	}
+
+	metrics.TxPool.AddSize(-num)
 }
 
 func (tp *Pool) AvailableTransactions(transactionLimit int) []string {
