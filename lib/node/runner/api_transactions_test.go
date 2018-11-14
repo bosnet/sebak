@@ -79,7 +79,7 @@ func (p *HelperTestGetNodeTransactionsHandler) Prepare() {
 	}
 
 	for j := 0; j < 3; j++ {
-		_, tx := transaction.TestMakeTransaction(networkID, 2)
+		_, tx := transaction.TestMakeTransaction(networkID, 2, false)
 		p.TransactionPool.Add(tx)
 		block.SaveTransactionPool(p.st, tx)
 	}
@@ -96,7 +96,7 @@ func (p *HelperTestGetNodeTransactionsHandler) createBlock() block.Block {
 	var txs []transaction.Transaction
 	var txHashes []string
 	for j := 0; j < 2; j++ {
-		_, tx := transaction.TestMakeTransaction(networkID, 2)
+		_, tx := transaction.TestMakeTransaction(networkID, 2, false)
 		txHashes = append(txHashes, tx.GetHash())
 		txs = append(txs, tx)
 		p.transactionHashes = append(p.transactionHashes, tx.GetHash())

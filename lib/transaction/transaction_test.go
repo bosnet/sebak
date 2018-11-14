@@ -25,7 +25,7 @@ func (suite *TestSuite) SetupTest() {
 }
 
 func (suite *TestSuite) TestLoadTransactionSuite() {
-	_, tx := TestMakeTransaction(suite.conf.NetworkID, 1)
+	_, tx := TestMakeTransaction(suite.conf.NetworkID, 1, false)
 
 	b, err := tx.Serialize()
 	require.Nil(suite.T(), err)
@@ -37,7 +37,7 @@ func (suite *TestSuite) TestLoadTransactionSuite() {
 }
 
 func (suite *TestSuite) TestIsWellFormedTransactionSuite() {
-	_, tx := TestMakeTransaction(suite.conf.NetworkID, 1)
+	_, tx := TestMakeTransaction(suite.conf.NetworkID, 1, false)
 
 	err := tx.IsWellFormed(suite.conf)
 	require.Nil(suite.T(), err)
@@ -46,7 +46,7 @@ func (suite *TestSuite) TestIsWellFormedTransactionSuite() {
 func (suite *TestSuite) TestIsWellFormedTransactionWithInvalidSourceAddressSuite() {
 	var err error
 
-	_, tx := TestMakeTransaction(suite.conf.NetworkID, 1)
+	_, tx := TestMakeTransaction(suite.conf.NetworkID, 1, false)
 	tx.B.Source = "invalid-address"
 	err = tx.IsWellFormed(suite.conf)
 	require.NotNil(suite.T(), err)
@@ -55,7 +55,7 @@ func (suite *TestSuite) TestIsWellFormedTransactionWithInvalidSourceAddressSuite
 func (suite *TestSuite) TestIsWellFormedTransactionWithTargetAddressIsSameWithSourceAddressSuite() {
 	var err error
 
-	_, tx := TestMakeTransaction(suite.conf.NetworkID, 1)
+	_, tx := TestMakeTransaction(suite.conf.NetworkID, 1, false)
 	if pop, ok := tx.B.Operations[0].B.(operation.Payable); ok {
 		tx.B.Source = pop.TargetAddress()
 	} else {
@@ -68,7 +68,7 @@ func (suite *TestSuite) TestIsWellFormedTransactionWithTargetAddressIsSameWithSo
 func (suite *TestSuite) TestIsWellFormedTransactionWithInvalidSignatureSuite() {
 	var err error
 
-	_, tx := TestMakeTransaction(suite.conf.NetworkID, 1)
+	_, tx := TestMakeTransaction(suite.conf.NetworkID, 1, false)
 	err = tx.IsWellFormed(suite.conf)
 	require.Nil(suite.T(), err)
 
@@ -83,13 +83,13 @@ func (suite *TestSuite) TestIsWellFormedTransactionMaxOperationsInTransactionSui
 	var err error
 
 	{ // over operation.Limit
-		_, tx := TestMakeTransaction(suite.conf.NetworkID, suite.conf.OpsLimit+1)
+		_, tx := TestMakeTransaction(suite.conf.NetworkID, suite.conf.OpsLimit+1, false)
 		err = tx.IsWellFormed(suite.conf)
 		require.Equal(suite.T(), errors.TransactionHasOverMaxOperations, err)
 	}
 
 	{ // operation.Limit
-		_, tx := TestMakeTransaction(suite.conf.NetworkID, suite.conf.OpsLimit)
+		_, tx := TestMakeTransaction(suite.conf.NetworkID, suite.conf.OpsLimit, false)
 		err = tx.IsWellFormed(suite.conf)
 		require.Nil(suite.T(), err)
 	}

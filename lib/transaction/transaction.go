@@ -61,23 +61,36 @@ func (t *Transaction) UnmarshalJSON(b []byte) (err error) {
 	return
 }
 
-// This function is not used for making a transaction related to freezing and unfreezing.
-// It can not calculate exact fee.
-func NewTransaction(source string, sequenceID uint64, ops ...operation.Operation) (tx Transaction, err error) {
+// NewTransaction needs specially isSourceLinked boolean value.
+// If isSourceLinked is true, tx.Source is frozen account.
+func NewTransaction(source string, sequenceID uint64, isSourceLinked bool, ops ...operation.Operation) (tx Transaction, err error) {
 	if len(ops) < 1 {
 		err = errors.TransactionEmptyOperations
 		return
 	}
-
-	var opsHaveFee int
-	for _, op := range ops {
-		if op.HasFee() {
-			opsHaveFee++
-		}
-	}
 	fee := common.Amount(0)
-	if opsHaveFee > 0 {
-		fee = common.BaseFee.MustMult(opsHaveFee)
+	if !isSourceLinked {
+		var opsHaveFee int
+		for _, op := range ops {
+			if op.HasFee() {
+				if op.H.Type == operation.TypeCreateAccount {
+					var casted operation.CreateAccount
+					var ok bool
+					casted, ok = op.B.(operation.CreateAccount)
+					if !ok {
+						err = errors.TypeOperationBodyNotMatched
+						return
+					}
+					if casted.Linked != "" {
+						break
+					}
+				}
+				opsHaveFee++
+			}
+		}
+		if opsHaveFee > 0 {
+			fee = common.BaseFee.MustMult(opsHaveFee)
+		}
 	}
 
 	txBody := Body{
@@ -175,6 +188,36 @@ func (tx Transaction) TotalAmount(withFee bool) common.Amount {
 	}
 
 	return amount
+}
+
+// TotalBaseFee returns the sum fee of transaction.
+// If tx.Source is frozen account, isSourceLinked is true.
+func (tx Transaction) TotalBaseFee(isSourceLinked bool) (amount common.Amount) {
+	amount = common.Amount(0)
+	if !isSourceLinked {
+		var opsHaveFee int
+		for _, op := range tx.B.Operations {
+			if op.HasFee() {
+				if op.H.Type == operation.TypeCreateAccount {
+					var casted operation.CreateAccount
+					var ok bool
+					casted, ok = op.B.(operation.CreateAccount)
+					if !ok {
+						return
+					}
+					if casted.Linked != "" {
+						break
+					}
+				}
+				opsHaveFee++
+			}
+		}
+		if opsHaveFee < 1 {
+			return
+		}
+		return common.BaseFee.MustMult(opsHaveFee)
+	}
+	return
 }
 
 func (tx Transaction) Serialize() (encoded []byte, err error) {

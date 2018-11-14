@@ -13,7 +13,7 @@ import (
 
 func TestNewBlockOperationFromOperation(t *testing.T) {
 	conf := common.NewTestConfig()
-	_, tx := transaction.TestMakeTransaction(conf.NetworkID, 1)
+	_, tx := transaction.TestMakeTransaction(conf.NetworkID, 1, false)
 
 	op := tx.B.Operations[0]
 	bo, err := NewBlockOperationFromOperation(op, tx, 0)
@@ -102,7 +102,7 @@ func TestBlockOperationSaveByTransaction(t *testing.T) {
 	conf := common.NewTestConfig()
 	st := InitTestBlockchain()
 
-	_, tx := transaction.TestMakeTransaction(conf.NetworkID, 10)
+	_, tx := transaction.TestMakeTransaction(conf.NetworkID, 10, false)
 	block := TestMakeNewBlockWithPrevBlock(GetLatestBlock(st), []string{tx.GetHash()})
 	bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, block.ProposedTime, tx)
 	err := bt.Save(st)

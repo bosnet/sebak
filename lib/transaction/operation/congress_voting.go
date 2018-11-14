@@ -45,5 +45,5 @@ func (o CongressVoting) IsWellFormed(common.Config) (err error) {
 }
 
 func (o CongressVoting) HasFee() bool {
-	return false
+	return true
 }

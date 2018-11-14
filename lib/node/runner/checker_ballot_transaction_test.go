@@ -178,6 +178,7 @@ func TestValidateTxOverBalance(t *testing.T) {
 	// Now the total amount of the ops + balance is equal to the balance
 	opbody.Amount = opbody.Amount.MustSub(common.BaseFee.MustMult(len(tx.B.Operations)))
 	tx.B.Operations[0].B = opbody
+	tx.B.Fee = common.BaseFee * 4
 	require.Nil(t, ValidateTx(st, tx))
 }
 

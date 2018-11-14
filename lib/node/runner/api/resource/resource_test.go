@@ -45,7 +45,7 @@ func TestResourceAccount(t *testing.T) {
 
 	// Transaction
 	{
-		_, tx := transaction.TestMakeTransaction([]byte{0x00}, 1)
+		_, tx := transaction.TestMakeTransaction([]byte{0x00}, 1, false)
 		bt := block.NewBlockTransactionFromTransaction("dummy", 0, common.NowISO8601(), tx)
 		bt.MustSave(storage)
 
@@ -71,7 +71,7 @@ func TestResourceAccount(t *testing.T) {
 
 	// Operation
 	{
-		_, tx := transaction.TestMakeTransaction([]byte{0x00}, 1)
+		_, tx := transaction.TestMakeTransaction([]byte{0x00}, 1, false)
 		bt := block.NewBlockTransactionFromTransaction(common.GetUniqueIDFromUUID(), 0, common.NowISO8601(), tx)
 		bt.MustSave(storage)
 		bo, _ := block.GetBlockOperation(storage, bt.Operations[0])
@@ -95,7 +95,7 @@ func TestResourceAccount(t *testing.T) {
 	// List
 	{
 		var err error
-		_, tx := transaction.TestMakeTransaction([]byte{0x00}, 3)
+		_, tx := transaction.TestMakeTransaction([]byte{0x00}, 3, false)
 		bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, common.NowISO8601(), tx)
 		bt.MustSave(storage)
 		err = bt.SaveBlockOperations(storage)

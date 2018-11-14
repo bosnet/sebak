@@ -32,7 +32,7 @@ func (p *TestSavingBlockOperationHelper) makeBlock(prevBlock block.Block, numTxs
 	var txs []transaction.Transaction
 	var txHashes []string
 	for i := 0; i < numTxs; i++ {
-		tx := transaction.TestMakeTransactionWithKeypair(networkID, 100, kp)
+		tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, kp, false)
 		block.SaveTransactionPool(p.st, tx)
 		txs = append(txs, tx)
 		txHashes = append(txHashes, tx.GetHash())

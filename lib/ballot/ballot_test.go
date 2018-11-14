@@ -27,7 +27,7 @@ func TestErrorBallotHasOverMaxTransactionsInBallot(t *testing.T) {
 
 	conf := common.NewTestConfig()
 	conf.TxsLimit = 2
-	_, tx := transaction.TestMakeTransaction(conf.NetworkID, 1)
+	_, tx := transaction.TestMakeTransaction(conf.NetworkID, 1, false)
 
 	{
 		blt := NewBallot(node.Address(), node.Address(), basis, []string{tx.GetHash()})
@@ -45,7 +45,7 @@ func TestErrorBallotHasOverMaxTransactionsInBallot(t *testing.T) {
 		var txHashes []string
 		var txs []transaction.Transaction
 		for i := 0; i < conf.TxsLimit+1; i++ {
-			_, tx := transaction.TestMakeTransaction(conf.NetworkID, 1)
+			_, tx := transaction.TestMakeTransaction(conf.NetworkID, 1, false)
 			txs = append(txs, tx)
 			txHashes = append(txHashes, tx.GetHash())
 		}

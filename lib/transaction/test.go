@@ -8,7 +8,7 @@ import (
 	"boscoin.io/sebak/lib/transaction/operation"
 )
 
-func TestMakeTransaction(networkID []byte, n int) (kp *keypair.Full, tx Transaction) {
+func TestMakeTransaction(networkID []byte, n int, isSourceLinked bool) (kp *keypair.Full, tx Transaction) {
 	kp = keypair.Random()
 
 	var ops []operation.Operation
@@ -16,13 +16,13 @@ func TestMakeTransaction(networkID []byte, n int) (kp *keypair.Full, tx Transact
 		ops = append(ops, operation.MakeTestPayment(-1))
 	}
 
-	tx, _ = NewTransaction(kp.Address(), 0, ops...)
+	tx, _ = NewTransaction(kp.Address(), 0, isSourceLinked, ops...)
 	tx.Sign(kp, networkID)
 
 	return
 }
 
-func TestMakeTransactionWithKeypair(networkID []byte, n int, srcKp *keypair.Full, targetKps ...*keypair.Full) (tx Transaction) {
+func TestMakeTransactionWithKeypair(networkID []byte, n int, srcKp *keypair.Full, isSourceLinked bool, targetKps ...*keypair.Full) (tx Transaction) {
 	var ops []operation.Operation
 	var targetAddr string
 
@@ -40,9 +40,46 @@ func TestMakeTransactionWithKeypair(networkID []byte, n int, srcKp *keypair.Full
 	tx, _ = NewTransaction(
 		srcKp.Address(),
 		0,
+		isSourceLinked,
 		ops...,
 	)
 	tx.Sign(srcKp, networkID)
+
+	return
+}
+
+func TestMakeTransactionWithFeeAndOperations(networkID []byte, isSourceLinked bool, fee common.Amount, ops []operation.Operation) (kp *keypair.Full, tx Transaction) {
+	kp = keypair.Random()
+
+	tx, _ = NewTransaction(kp.Address(), 0, isSourceLinked, ops...)
+	tx.B.Fee = fee
+	tx.Sign(kp, networkID)
+
+	return
+}
+
+func TestMakeTransactionUnfreezingRequest(networkID []byte) (kp *keypair.Full, tx Transaction) {
+	kp = keypair.Random()
+
+	var ops []operation.Operation
+	ops = append(ops, operation.MakeTestUnfreezeRequest())
+
+	tx, _ = NewTransaction(kp.Address(), 0, true, ops...)
+	tx.Sign(kp, networkID)
+
+	return
+}
+
+func TestMakeTransactionCreateFrozenAccount(networkID []byte) (kp *keypair.Full, tx Transaction) {
+	kp = keypair.Random()
+	target := keypair.Random().Address()
+	linked := keypair.Random().Address()
+
+	var ops []operation.Operation
+	ops = append(ops, operation.MakeTestCreateFrozenAccount(-1, target, linked))
+
+	tx, _ = NewTransaction(kp.Address(), 0, true, ops...)
+	tx.Sign(kp, networkID)
 
 	return
 }
