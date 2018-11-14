@@ -66,50 +66,34 @@ func TestStateINITNotProposer(t *testing.T) {
 // 2. Not proposer itself.
 // 3. When `ISAACStateManager` starts, the node waits a ballot by proposer.
 // 4. But TimeoutINIT is a millisecond.
-// 5. After timeout, the node broadcasts B(`SIGN`, `EXP`)
+// 5. After timeout, ISAACState is changed to `SIGN`.
 func TestStateINITTimeoutNotProposer(t *testing.T) {
 	conf := common.NewTestConfig()
 	conf.TimeoutINIT = 200 * time.Millisecond
 	conf.TimeoutSIGN = time.Hour
 	conf.TimeoutACCEPT = time.Hour
 
-	recv := make(chan struct{})
-	nr, _, _ := createNodeRunnerForTesting(3, conf, recv)
+	nr, _, _ := createNodeRunnerForTesting(3, conf, nil)
 	nr.Consensus().SetProposerSelector(OtherSelector{nr.ConnectionManager()})
 
-	cm, ok := nr.Consensus().ConnectionManager().(*TestConnectionManager)
+	_, ok := nr.Consensus().ConnectionManager().(*TestConnectionManager)
 	require.True(t, ok)
 
 	proposer := nr.Consensus().SelectProposer(0, 0)
 
 	require.NotEqual(t, nr.localNode.Address(), proposer)
 
+	recv := make(chan consensus.ISAACState)
+	nr.ISAACStateManager().SetTransitSignal(func(state consensus.ISAACState) {
+		recv <- state
+	})
+
 	nr.startStateManager()
 	defer nr.StopStateManager()
-	require.Equal(t, ballot.StateINIT, nr.isaacStateManager.State().BallotState)
-
-	<-recv
-	require.Equal(t, ballot.StateSIGN, nr.isaacStateManager.State().BallotState)
-
-	require.Equal(t, 1, len(cm.Messages()))
-	init, sign, accept := 0, 0, 0
-	for _, message := range cm.Messages() {
-		b, ok := message.(ballot.Ballot)
-		require.True(t, ok)
-		require.Equal(t, 0, len(b.Transactions()))
-		switch b.State() {
-		case ballot.StateINIT:
-			init++
-		case ballot.StateSIGN:
-			sign++
-			require.Equal(t, voting.EXP, b.Vote())
-		case ballot.StateACCEPT:
-			accept++
-		}
-	}
-	require.Equal(t, 0, init)
-	require.Equal(t, 1, sign)
-	require.Equal(t, 0, accept)
+	state := <-recv
+	require.Equal(t, ballot.StateINIT, state.BallotState)
+	state = <-recv
+	require.Equal(t, ballot.StateSIGN, state.BallotState)
 }
 
 // 1. All 3 Nodes.
@@ -143,7 +127,7 @@ func TestStateSIGNTimeoutProposer(t *testing.T) {
 	nr.isaacStateManager.TransitISAACState(state.Height, state.Round, ballot.StateSIGN)
 
 	<-recv
-	require.Equal(t, ballot.StateSIGN, nr.isaacStateManager.State().BallotState)
+	require.Equal(t, ballot.StateACCEPT, nr.isaacStateManager.State().BallotState)
 	require.Equal(t, 2, len(cm.Messages()))
 
 	init, sign, accept := 0, 0, 0
@@ -172,10 +156,9 @@ func TestStateSIGNTimeoutProposer(t *testing.T) {
 // 2. Not proposer itself.
 // 3. When `ISAACStateManager` starts, the node waits a ballot by proposer.
 // 4. TimeoutINIT is a millisecond.
-// 5. After milliseconds, the node broadcasts B(`SIGN`, `EXP`).
-// 6. ISAACState is changed to `SIGN`.
-// 7. TimeoutSIGN is a millisecond.
-// 8. After timeout, the node broadcasts B(`ACCEPT`, `EXP`).
+// 5. ISAACState is changed to `SIGN`.
+// 6. TimeoutSIGN is a millisecond.
+// 7. After timeout, the node broadcasts B(`ACCEPT`, `EXP`).
 func TestStateSIGNTimeoutNotProposer(t *testing.T) {
 	conf := common.NewTestConfig()
 	conf.TimeoutINIT = 200 * time.Millisecond
@@ -196,11 +179,19 @@ func TestStateSIGNTimeoutNotProposer(t *testing.T) {
 	nr.startStateManager()
 	defer nr.StopStateManager()
 
-	<-recv
-	require.Equal(t, 1, len(cm.Messages()))
+	recvTransit := make(chan consensus.ISAACState)
+	nr.ISAACStateManager().SetTransitSignal(func(state consensus.ISAACState) {
+		recvTransit <- state
+	})
+
+	state := <-recvTransit
+	require.Equal(t, ballot.StateINIT, state.BallotState)
+
+	state = <-recvTransit
+	require.Equal(t, ballot.StateSIGN, state.BallotState)
 
 	<-recv
-	require.Equal(t, 2, len(cm.Messages()))
+	require.Equal(t, 1, len(cm.Messages()))
 
 	init, sign, accept := 0, 0, 0
 	for _, message := range cm.Messages() {
@@ -220,7 +211,7 @@ func TestStateSIGNTimeoutNotProposer(t *testing.T) {
 		}
 	}
 	require.Equal(t, 0, init)
-	require.Equal(t, 1, sign)
+	require.Equal(t, 0, sign)
 	require.Equal(t, 1, accept)
 }
 

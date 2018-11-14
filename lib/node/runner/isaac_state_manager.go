@@ -24,6 +24,7 @@ type ISAACStateManager struct {
 	blockTimeBuffer         time.Duration              // the time to wait to adjust the block creation time.
 	transitSignal           func(consensus.ISAACState) // the function is called when the ISAACState is changed.
 	firstConsensusBlockTime time.Time                  // the time at which the first consensus block was saved(height 2). It is used for calculating `blockTimeBuffer`.
+	expired                 bool
 
 	Conf common.Config
 }
@@ -183,12 +184,20 @@ func (sm *ISAACStateManager) Start() {
 			select {
 			case <-timer.C:
 				sm.nr.Log().Debug("timeout", "ISAACState", sm.State())
+				if sm.expired { // expired again -> need to sync
+					sm.Pause() // pause for sync process
+				}
+				sm.expired = true
 				switch sm.State().BallotState {
-				case ballot.StateINIT, ballot.StateSIGN:
-					go sm.broadcastExpiredBallot(sm.State())
+				case ballot.StateINIT:
 					sm.setBallotState(ballot.StateSIGN)
 					sm.transitSignal(sm.State())
-					sm.resetTimer(timer, sm.State().BallotState)
+					sm.resetTimer(timer, ballot.StateSIGN)
+				case ballot.StateSIGN:
+					go sm.broadcastExpiredBallot(sm.State())
+					sm.setBallotState(ballot.StateACCEPT)
+					sm.transitSignal(sm.State())
+					sm.resetTimer(timer, ballot.StateACCEPT)
 				case ballot.StateACCEPT:
 					sm.NextRound()
 				case ballot.StateALLCONFIRM:
@@ -197,24 +206,14 @@ func (sm *ISAACStateManager) Start() {
 				}
 
 			case state := <-sm.stateTransit:
-				switch state.BallotState {
-				case ballot.StateINIT:
+				sm.expired = false
+				if state.BallotState == ballot.StateINIT {
 					sm.proposeOrWait(timer, state)
-					sm.setState(state)
-					sm.transitSignal(state)
-				case ballot.StateSIGN:
-					sm.setState(state)
-					sm.transitSignal(state)
-					timer.Reset(sm.Conf.TimeoutSIGN)
-				case ballot.StateACCEPT:
-					sm.setState(state)
-					sm.transitSignal(state)
-					timer.Reset(sm.Conf.TimeoutACCEPT)
-				case ballot.StateALLCONFIRM:
-					sm.setState(state)
-					sm.transitSignal(state)
-					timer.Reset(sm.Conf.TimeoutALLCONFIRM)
+				} else {
+					sm.resetTimer(timer, state.BallotState)
 				}
+				sm.setState(state)
+				sm.transitSignal(state)
 
 			case <-sm.pause:
 				sm.nr.Log().Debug("pause ISAACStateManager")
