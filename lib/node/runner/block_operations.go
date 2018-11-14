@@ -119,13 +119,13 @@ func (sb *SavingBlockOperations) CheckByBlock(st *storage.LevelDBBackend, blk bl
 		return
 	}
 
-	txs := make(chan string, 100)
-	errChan := make(chan error, 100)
+	txs := make(chan string)
+	errChan := make(chan error)
 	defer close(errChan)
 
 	numWorker := int(len(blk.Transactions) / 2)
-	if numWorker > 100 {
-		numWorker = 100
+	if numWorker > 10 {
+		numWorker = 10
 	} else if numWorker < 1 {
 		numWorker = 1
 	}
@@ -134,10 +134,12 @@ func (sb *SavingBlockOperations) CheckByBlock(st *storage.LevelDBBackend, blk bl
 		go sb.savingBlockOperationsWorker(i, st, blk, txs, errChan)
 	}
 
-	for _, hash := range blk.Transactions {
-		txs <- hash
-	}
-	close(txs)
+	go func() {
+		for _, hash := range blk.Transactions {
+			txs <- hash
+		}
+		close(txs)
+	}()
 
 	var errs []error
 	var returned int
@@ -195,7 +197,9 @@ func (sb *SavingBlockOperations) CheckTransactionByBlock(st *storage.LevelDBBack
 		}
 
 		if !exists {
-			bt.SaveBlockOperations(st)
+			if err = bt.SaveBlockOperation(st, op); err != nil {
+				return err
+			}
 			sb.log.Debug("saved missing BlockOperation", "block", blk, "transaction", hash, "operation", op)
 		}
 	}
