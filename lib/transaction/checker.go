@@ -64,7 +64,7 @@ func CheckOperationTypes(c common.Checker, args ...interface{}) (err error) {
 			return
 		}
 	}
-	
+
 	return
 }
 

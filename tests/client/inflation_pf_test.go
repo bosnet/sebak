@@ -33,10 +33,12 @@ func TestInflationPF(t *testing.T) {
 	c := client.NewClient("https://127.0.0.1:2830")
 	headers := http.Header{}
 	headers.Set("Content-Type", "application/json")
+
+	// Prepare Voting Result Operation
 	{
 		_, err := c.LoadAccount(CongressAddr)
 		if err != nil {
-			//Create from genesis to Congress
+			//Create from genesis to Congress if not exists
 			{
 				const (
 					genesisToCongressAddr = 100000000
@@ -138,7 +140,7 @@ func TestInflationPF(t *testing.T) {
 		}
 	}
 
-	//Create from genesis to Account 1
+	// PF Inflation Operation.
 	{
 		const (
 			pfInflationAmount = 123456789
