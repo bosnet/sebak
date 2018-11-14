@@ -265,7 +265,7 @@ func ValidateTx(st *storage.LevelDBBackend, tx transaction.Transaction) (err err
 //   source = Account from where the transaction (and ops) come from
 //   tx = Transaction to check
 //
-func ValidateOp(st *storage.LevelDBBackend, source *block.BlockAccount, op operation.Operation) (err error) {
+func ValidateOp(st *storage.LevelDBBackend, source *block.BlockAccount, op operation.Operation) error {
 	switch op.H.Type {
 	case operation.TypeCreateAccount:
 		var ok bool
@@ -273,8 +273,7 @@ func ValidateOp(st *storage.LevelDBBackend, source *block.BlockAccount, op opera
 		if casted, ok = op.B.(operation.CreateAccount); !ok {
 			return errors.TypeOperationBodyNotMatched
 		}
-		var exists bool
-		if exists, err = block.ExistsBlockAccount(st, op.B.(operation.CreateAccount).Target); err == nil && exists {
+		if exists, err := block.ExistsBlockAccount(st, op.B.(operation.CreateAccount).Target); err == nil && exists {
 			return errors.BlockAccountAlreadyExists
 		}
 		if source.Linked != "" {
@@ -303,6 +302,7 @@ func ValidateOp(st *storage.LevelDBBackend, source *block.BlockAccount, op opera
 			return errors.TypeOperationBodyNotMatched
 		}
 		var taccount *block.BlockAccount
+		var err error
 		if taccount, err = block.GetBlockAccount(st, casted.Target); err != nil {
 			return errors.BlockAccountDoesNotExists
 		}
@@ -314,7 +314,7 @@ func ValidateOp(st *storage.LevelDBBackend, source *block.BlockAccount, op opera
 			// If it's a frozen account, everything must be withdrawn
 			var expected common.Amount
 			expected, err = source.Balance.Sub(common.BaseFee)
-			if casted.Amount != expected {
+			if err != nil || casted.Amount != expected {
 				return errors.FrozenAccountMustWithdrawEverything
 			}
 			// Unfreezing must be done after X period from unfreezing request
@@ -346,12 +346,30 @@ func ValidateOp(st *storage.LevelDBBackend, source *block.BlockAccount, op opera
 		if bo.Type == operation.TypeUnfreezingRequest {
 			return errors.UnfreezingRequestAlreadyReceived
 		}
+	case operation.TypeInflationPF:
+		var ok bool
+		var casted operation.InflationPF
+		if casted, ok = op.B.(operation.InflationPF); !ok {
+			return errors.TypeOperationBodyNotMatched
+		}
+		exists, err := block.ExistsBlockOperation(st, casted.VotingResult)
+		if err != nil || !exists {
+			return errors.InflationPFResultMissed
+		}
+		commonAccount, err := GetCommonAccount(st)
+		if err != nil {
+			return err
+		}
+
+		if commonAccount.Address != source.Address {
+			return errors.InvalidOperation
+		}
+
 	case operation.TypeCongressVoting, operation.TypeCongressVotingResult:
 		// Nothing to do
-		return
 
 	default:
 		return errors.UnknownOperationType
 	}
-	return
+	return nil
 }
