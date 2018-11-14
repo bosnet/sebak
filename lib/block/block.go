@@ -23,10 +23,10 @@ type Block struct {
 	ProposerTransaction string   `json:"proposer_transaction"` /* ProposerTransaction */
 	//PrevConsensusResult ConsensusResult
 
-	Hash          string `json:"hash"`
-	Proposer      string `json:"proposer"` /* Node.Address() */
-	Round         uint64 `json:"round"`
-	ConfirmedTime string `json:"confirmed-time" rlp:"-"`
+	Hash      string `json:"hash"`
+	Proposer  string `json:"proposer"` /* Node.Address() */
+	Round     uint64 `json:"round"`
+	Confirmed string `json:"confirmed" rlp:"-"`
 }
 
 func (bck Block) Serialize() (encoded []byte, err error) {
@@ -81,7 +81,7 @@ func (b Block) NewBlockKeyConfirmed() string {
 
 func (b *Block) Save(st *storage.LevelDBBackend) (err error) {
 	key := getBlockKey(b.Hash)
-	b.ConfirmedTime = common.NowISO8601()
+	b.Confirmed = common.NowISO8601()
 
 	var exists bool
 	exists, err = st.Has(key)

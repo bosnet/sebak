@@ -11,7 +11,7 @@ type Header struct {
 	Version          uint32 `json:"version"`
 	PrevBlockHash    string `json:"prev_block_hash"`   // TODO Uint256 type
 	TransactionsRoot string `json:"transactions_root"` // Merkle root of Txs // TODO Uint256 type
-	ProposedTime     string `json:"proposed-time"`
+	ProposedTime     string `json:"proposed_time"`
 	Height           uint64 `json:"height"`
 	TotalTxs         uint64 `json:"total-txs"`
 	TotalOps         uint64 `json:"total-ops"`
