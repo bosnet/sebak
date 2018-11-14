@@ -87,7 +87,6 @@ func (sm *ISAACStateManager) setBlockTimeBuffer() {
 	sm.nr.Log().Debug(
 		"calculated blockTimeBuffer",
 		"blockTimeBuffer", sm.blockTimeBuffer,
-		"blockTime", sm.Conf.BlockTime,
 		"firstConsensusBlockTime", sm.firstConsensusBlockTime,
 		"height", b.Height,
 		"confirmed", b.Confirmed,
