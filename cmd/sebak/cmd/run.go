@@ -37,6 +37,7 @@ const (
 var (
 	flagBindURL           string = common.GetENVValue("SEBAK_BIND", defaultBindURL)
 	flagBlockTime         string = common.GetENVValue("SEBAK_BLOCK_TIME", "5")
+	flagBlockTimeDelta    string = common.GetENVValue("SEBAK_BLOCK_TIME_DELTA", "1")
 	flagDebugPProf        bool   = common.GetENVValue("SEBAK_DEBUG_PPROF", "0") == "1"
 	flagKPSecretSeed      string = common.GetENVValue("SEBAK_SECRET_SEED", "")
 	flagLog               string = common.GetENVValue("SEBAK_LOG", "")
@@ -75,6 +76,7 @@ var (
 
 	bindEndpoint        *common.Endpoint
 	blockTime           time.Duration
+	blockTimeDelta      time.Duration
 	kp                  *keypair.Full
 	localNode           *node.LocalNode
 	operationsLimit     uint64
@@ -172,6 +174,7 @@ func init() {
 	nodeCmd.Flags().StringVar(&flagTimeoutACCEPT, "timeout-accept", flagTimeoutACCEPT, "timeout of the accept state")
 	nodeCmd.Flags().StringVar(&flagTimeoutALLCONFIRM, "timeout-allconfirm", flagTimeoutALLCONFIRM, "timeout of the allconfirm state")
 	nodeCmd.Flags().StringVar(&flagBlockTime, "block-time", flagBlockTime, "block creation time")
+	nodeCmd.Flags().StringVar(&flagBlockTimeDelta, "block-time-delta", flagBlockTimeDelta, "variation period of block time")
 	nodeCmd.Flags().StringVar(&flagTransactionsLimit, "transactions-limit", flagTransactionsLimit, "transactions limit in a ballot")
 	nodeCmd.Flags().StringVar(&flagUnfreezingPeriod, "unfreezing-period", flagUnfreezingPeriod, "how long freezing must last")
 	nodeCmd.Flags().StringVar(&flagOperationsLimit, "operations-limit", flagOperationsLimit, "operations limit in a transaction")
@@ -337,6 +340,7 @@ func parseFlagsNode() {
 	timeoutACCEPT = getTime(flagTimeoutACCEPT, 2*time.Second, "--timeout-accept")
 	timeoutALLCONFIRM = getTime(flagTimeoutALLCONFIRM, 30*time.Second, "--timeout-accept")
 	blockTime = getTime(flagBlockTime, 5*time.Second, "--block-time")
+	blockTimeDelta = getTime(flagBlockTimeDelta, 1*time.Second, "--block-time-delta")
 
 	if transactionsLimit, err = strconv.ParseUint(flagTransactionsLimit, 10, 64); err != nil {
 		cmdcommon.PrintFlagsError(nodeCmd, "--transactions-limit", err)
@@ -465,6 +469,7 @@ func parseFlagsNode() {
 	parsedFlags = append(parsedFlags, "\n\ttimeout-accept", flagTimeoutACCEPT)
 	parsedFlags = append(parsedFlags, "\n\ttimeout-allconfirm", flagTimeoutALLCONFIRM)
 	parsedFlags = append(parsedFlags, "\n\tblock-time", flagBlockTime)
+	parsedFlags = append(parsedFlags, "\n\tblock-time-delta", flagBlockTimeDelta)
 	parsedFlags = append(parsedFlags, "\n\ttransactions-limit", flagTransactionsLimit)
 	parsedFlags = append(parsedFlags, "\n\toperations-limit", flagOperationsLimit)
 	parsedFlags = append(parsedFlags, "\n\trate-limit-api", rateLimitRuleAPI)
@@ -567,6 +572,7 @@ func runNode() error {
 		TimeoutALLCONFIRM:   timeoutALLCONFIRM,
 		NetworkID:           []byte(flagNetworkID),
 		BlockTime:           blockTime,
+		BlockTimeDelta:      blockTimeDelta,
 		TxsLimit:            int(transactionsLimit),
 		OpsLimit:            int(operationsLimit),
 		RateLimitRuleAPI:    rateLimitRuleAPI,
