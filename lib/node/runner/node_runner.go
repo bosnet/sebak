@@ -22,6 +22,7 @@ import (
 	"boscoin.io/sebak/lib/consensus"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/network"
+	"boscoin.io/sebak/lib/network/httpcache"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/node/runner/api"
 	"boscoin.io/sebak/lib/storage"
@@ -194,6 +195,48 @@ func (nr *NodeRunner) Ready() {
 		}
 	}
 
+	// cache middleware
+	var (
+		cache     httpcache.Wrapper
+		listCache httpcache.Wrapper
+		baCache   httpcache.Wrapper
+	)
+
+	if nr.Conf.HTTPCacheAdapter == "" {
+		// no use cache middleware
+		cache = httpcache.NewNopClient()
+		listCache = httpcache.NewNopClient()
+		baCache = httpcache.NewNopClient()
+		nr.log.Info("http cache is disabled")
+	} else {
+		cacheAdater, err := httpcache.NewAdapter(nr.Conf)
+		if err != nil {
+			nr.log.Error("HTTP Cache adapter has an error", "err", err)
+			return
+		}
+		defaultCacheOptions := httpcache.WithOptions(
+			httpcache.WithAdapter(cacheAdater),
+			httpcache.WithStatusCode(404, 1*time.Second),
+			httpcache.WithLogger(nr.log),
+		)
+		cache, err = httpcache.NewClient(defaultCacheOptions, httpcache.WithExpire(1*time.Minute))
+		if err != nil {
+			nr.log.Error("Cache middleware has an error", "err", err)
+			return
+		}
+		listCache, err = httpcache.NewClient(defaultCacheOptions, httpcache.WithExpire(3*time.Second))
+		if err != nil {
+			nr.log.Error("List cache middleware has an error", "err", err)
+			return
+		}
+		baCache, err = httpcache.NewClient(defaultCacheOptions, httpcache.WithExpire(1*time.Second))
+		if err != nil {
+			nr.log.Error("BlockAccount cache middleware has an error", "err", err)
+			return
+		}
+		nr.log.Info("http cache is enabled")
+	}
+
 	// node handlers
 	nodeHandler := NewNetworkHandlerNode(
 		nr.localNode,
@@ -236,15 +279,15 @@ func (nr *NodeRunner) Ready() {
 
 	nr.network.AddHandler(
 		apiHandler.HandlerURLPattern(api.GetAccountHandlerPattern),
-		apiHandler.GetAccountHandler,
+		baCache.WrapHandlerFunc(apiHandler.GetAccountHandler),
 	).Methods("GET", "OPTIONS")
 	nr.network.AddHandler(
 		apiHandler.HandlerURLPattern(api.GetAccountTransactionsHandlerPattern),
-		apiHandler.GetTransactionsByAccountHandler,
+		listCache.WrapHandlerFunc(apiHandler.GetTransactionsByAccountHandler),
 	).Methods("GET", "OPTIONS")
 	nr.network.AddHandler(
 		apiHandler.HandlerURLPattern(api.GetAccountOperationsHandlerPattern),
-		apiHandler.GetOperationsByAccountHandler,
+		listCache.WrapHandlerFunc(apiHandler.GetOperationsByAccountHandler),
 	).Methods("GET", "OPTIONS")
 	nr.network.AddHandler(
 		apiHandler.HandlerURLPattern(api.GetFrozenAccountHandlerPattern),
@@ -256,15 +299,15 @@ func (nr *NodeRunner) Ready() {
 	).Methods("GET")
 	nr.network.AddHandler(
 		apiHandler.HandlerURLPattern(api.GetTransactionByHashHandlerPattern),
-		apiHandler.GetTransactionByHashHandler,
+		cache.WrapHandlerFunc(apiHandler.GetTransactionByHashHandler),
 	).Methods("GET", "OPTIONS")
 	nr.network.AddHandler(
 		apiHandler.HandlerURLPattern(api.GetTransactionOperationsHandlerPattern),
-		apiHandler.GetOperationsByTxHashHandler,
+		listCache.WrapHandlerFunc(apiHandler.GetOperationsByTxHashHandler),
 	).Methods("GET", "OPTIONS")
 	nr.network.AddHandler(
 		apiHandler.HandlerURLPattern(api.GetTransactionHistoryHandlerPattern),
-		apiHandler.GetTransactionHistoryHandler,
+		listCache.WrapHandlerFunc(apiHandler.GetTransactionHistoryHandler),
 	).Methods("GET", "OPTIONS")
 
 	TransactionsHandler := func(w http.ResponseWriter, r *http.Request) {
@@ -276,7 +319,7 @@ func (nr *NodeRunner) Ready() {
 			return
 		}
 
-		apiHandler.GetTransactionsHandler(w, r)
+		cache.WrapHandlerFunc(apiHandler.GetTransactionsHandler)(w, r)
 		return
 	}
 
@@ -294,7 +337,7 @@ func (nr *NodeRunner) Ready() {
 		nr.network.AddHandler(network.UrlPathPrefixDebug+"/pprof/*", pprof.Index)
 	}
 
-	nr.network.AddHandler(api.GetNodeInfoPattern, apiHandler.GetNodeInfoHandler).Methods("GET")
+	nr.network.AddHandler(api.GetNodeInfoPattern, cache.WrapHandlerFunc(apiHandler.GetNodeInfoHandler)).Methods("GET")
 
 	nr.network.Ready()
 }

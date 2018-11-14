@@ -24,6 +24,10 @@ type Config struct {
 	// Those fields are not consensus-related
 	RateLimitRuleAPI  RateLimitRule
 	RateLimitRuleNode RateLimitRule
+
+	HTTPCacheAdapter    string
+	HTTPCachePoolSize   int
+	HTTPCacheRedisAddrs map[string]string
 }
 
 func NewConfig(networkID []byte) Config {
@@ -41,6 +45,8 @@ func NewConfig(networkID []byte) Config {
 
 	p.RateLimitRuleAPI = NewRateLimitRule(RateLimitAPI)
 	p.RateLimitRuleNode = NewRateLimitRule(RateLimitNode)
+
+	p.HTTPCachePoolSize = HTTPCachePoolSize
 
 	return p
 }

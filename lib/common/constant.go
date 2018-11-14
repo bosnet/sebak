@@ -33,6 +33,10 @@ const (
 
 	// BlockHeightEndOfInflation sets the block height of inflation end.
 	BlockHeightEndOfInflation uint64 = 36000000
+
+	HTTPCacheMemoryAdapterName = "mem"
+	HTTPCacheRedisAdapterName  = "redis"
+	HTTPCachePoolSize          = 10000
 )
 
 var (
@@ -63,5 +67,11 @@ var (
 	RateLimitNode limiter.Rate = limiter.Rate{
 		Period: 1 * time.Second,
 		Limit:  100,
+	}
+
+	HTTPCacheAdapterNames = map[string]bool{
+		HTTPCacheMemoryAdapterName: true,
+		HTTPCacheRedisAdapterName:  true,
+		"":                         true, // default value is nop cache
 	}
 )
