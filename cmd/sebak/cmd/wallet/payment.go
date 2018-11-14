@@ -108,7 +108,7 @@ func init() {
 						amount, senderAccount.GetBalance())
 					os.Exit(1)
 				} else {
-					if !(flagFreeze || (senderAccount.Linked != "")) {
+					if !flagFreeze && (senderAccount.Linked == "") {
 						newBalance, err = newBalance.Sub(common.BaseFee)
 						if err != nil {
 							fmt.Printf("Attempting to draft %v GON (+ %v fees), but sender account only have %v GON\n",
