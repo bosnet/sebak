@@ -218,9 +218,11 @@ func parseFlagRateLimit(l cmdcommon.ListFlags, defaultRate limiter.Rate) (rule c
 		}
 
 		if len(ip) > 0 {
-			if net.ParseIP(ip) == nil {
-				err = fmt.Errorf("invalid ip address")
-				return
+			if _, _, err = net.ParseCIDR(ip); err != nil {
+				if net.ParseIP(ip) == nil {
+					err = fmt.Errorf("invalid ip or cirdr address")
+					return
+				}
 			}
 		}
 

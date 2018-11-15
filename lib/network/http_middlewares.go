@@ -2,6 +2,7 @@ package network
 
 import (
 	"fmt"
+	"net"
 	"net/http"
 	"runtime/debug"
 	"strconv"
@@ -9,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/hashicorp/golang-lru"
 	logging "github.com/inconshreveable/log15"
 	"github.com/ulule/limiter"
 	"github.com/ulule/limiter/drivers/middleware/stdlib"
@@ -75,7 +77,9 @@ func RateLimitMiddleware(logger logging.Logger, rule common.RateLimitRule) mux.M
 		)
 	}
 
-	middlewaresByIP := map[ /* ip address */ string]*stdlib.Middleware{}
+	middlewares := map[string]*stdlib.Middleware{}
+	middlewaresByIP := map[ /* ip address */ string]string{}
+	byCIDRs := map[ /* ip address */ string]*net.IPNet{}
 	for ip, rate := range rule.ByIPAddress {
 		var m *stdlib.Middleware
 		if rate.Limit > 0 {
@@ -86,8 +90,17 @@ func RateLimitMiddleware(logger logging.Logger, rule common.RateLimitRule) mux.M
 				stdlib.WithLimitReachedHandler(rateLimitReachedHandler),
 			)
 		}
-		middlewaresByIP[ip] = m
+
+		key := common.GetUniqueIDFromUUID()
+		middlewares[key] = m
+		middlewaresByIP[ip] = key
+
+		if _, ipnet, err := net.ParseCIDR(ip); err == nil {
+			byCIDRs[ip] = ipnet
+		}
 	}
+
+	middlewareCache, _ := lru.New(10000000)
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -105,13 +118,27 @@ func RateLimitMiddleware(logger logging.Logger, rule common.RateLimitRule) mux.M
 
 			var middleware *stdlib.Middleware
 
-			if len(middlewaresByIP) < 1 {
-				middleware = defaultMiddleware
-			} else { // find middleware by ip
-				var found bool
-				if middleware, found = middlewaresByIP[ip]; !found {
-					middleware = defaultMiddleware
+			if key, ok := middlewareCache.Get(ip); ok {
+				middleware = middlewares[key.(string)]
+			} else if len(middlewaresByIP) > 0 {
+				if key, found := middlewaresByIP[ip]; found {
+					middleware = middlewares[key]
+					middlewareCache.Add(ip, key)
+				} else if pip := net.ParseIP(ip); pip != nil {
+					for inip, ipnet := range byCIDRs {
+						if !ipnet.Contains(pip) {
+							continue
+						}
+						key := middlewaresByIP[inip]
+						middleware = middlewares[key]
+						middlewareCache.Add(ip, key)
+						break
+					}
 				}
+			}
+
+			if middleware == nil {
+				middleware = defaultMiddleware
 			}
 
 			if middleware == nil {
