@@ -70,6 +70,11 @@ func getBlockKeyPrefixHeight(height uint64) string {
 	return fmt.Sprintf("%s%020d", common.BlockPrefixHeight, height)
 }
 
+//GetBlockKeyPrefixHeight returns index key by height. It is used to make cursor as height.
+func GetBlockKeyPrefixHeight(height uint64) string {
+	return getBlockKeyPrefixHeight(height)
+}
+
 func (b Block) NewBlockKeyConfirmed() string {
 	return fmt.Sprintf(
 		"%s%s-%s%s",
