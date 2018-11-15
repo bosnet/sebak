@@ -13,7 +13,7 @@ for ((port=2821;port<=2823;port++)); do
         die "Expected balance to be ${EXPECTED1}, not ${checkedBalance}"
     fi
 
-    checkedBalance=$(getAccountWithBalance $port "GDTEPFWEITKFHSUO44NQABY2XHRBBH2UBVGJ2ZJPDREIOL2F6RAEBJE4" ${EXPECTED2})
+    checkedBalance=$(getAccountWithBalance $port "GATR5BQCWUKGWIAZNDUPDTMMXSRDA23BFJQ36A2IAAOZI5KOOANKA6L3" ${EXPECTED2})
     if [ $? -ne 0 ]; then
         die "Expected balance to be ${EXPECTED2}, not ${checkedBalance}"
     fi
