@@ -125,6 +125,7 @@ func RateLimitMiddleware(logger logging.Logger, rule common.RateLimitRule) mux.M
 					middleware = middlewares[key]
 					middlewareCache.Add(ip, key)
 				} else if pip := net.ParseIP(ip); pip != nil {
+					var found bool
 					for inip, ipnet := range byCIDRs {
 						if !ipnet.Contains(pip) {
 							continue
@@ -132,12 +133,15 @@ func RateLimitMiddleware(logger logging.Logger, rule common.RateLimitRule) mux.M
 						key := middlewaresByIP[inip]
 						middleware = middlewares[key]
 						middlewareCache.Add(ip, key)
+						found = true
 						break
 					}
-				}
-			}
 
-			if middleware == nil {
+					if !found {
+						middleware = defaultMiddleware
+					}
+				}
+			} else {
 				middleware = defaultMiddleware
 			}
 
