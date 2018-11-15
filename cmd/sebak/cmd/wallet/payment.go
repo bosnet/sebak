@@ -125,7 +125,7 @@ func init() {
 			} else if flagCreateAccount {
 				tx = makeTransactionCreateAccount(sender, receiver, amount, senderAccount.SequenceID, false)
 			} else {
-				if senderAccount.Linked =""{
+				if senderAccount.Linked == "" {
 					tx = makeTransactionPayment(sender, receiver, amount, senderAccount.SequenceID, false)
 				} else {
 					tx = makeTransactionPayment(sender, receiver, amount, senderAccount.SequenceID, true)
@@ -252,7 +252,7 @@ func makeTransactionPayment(kpSource keypair.KP, kpDest keypair.KP, amount commo
 	txBody := transaction.Body{
 		Source:     kpSource.Address(),
 		Fee:        fee,
-		SequenceID: sender.SequenceID,
+		SequenceID: seqid,
 		Operations: []operation.Operation{op},
 	}
 
