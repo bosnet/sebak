@@ -422,7 +422,7 @@ func insertMissingTransaction(nr *NodeRunner, ballot ballot.Ballot) (err error) 
 			return
 		}
 
-		if err = ValidateTx(nr.Storage(), tx); err != nil {
+		if err = ValidateTx(nr.Storage(), nr.Conf, tx); err != nil {
 			return
 		}
 

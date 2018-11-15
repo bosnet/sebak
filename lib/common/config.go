@@ -29,6 +29,8 @@ type Config struct {
 	HTTPCacheAdapter    string
 	HTTPCachePoolSize   int
 	HTTPCacheRedisAddrs map[string]string
+
+	CongressAddr string
 }
 
 func NewConfig(networkID []byte) Config {
@@ -49,6 +51,8 @@ func NewConfig(networkID []byte) Config {
 	p.RateLimitRuleNode = NewRateLimitRule(RateLimitNode)
 
 	p.HTTPCachePoolSize = HTTPCachePoolSize
+
+	p.CongressAddr = "GAIJAH4FCEB3AWS2NVKRNDGVJ5QPD7VNOQNGZEPL2FAI6GPZQNKEXRWI"
 
 	return p
 }

@@ -211,7 +211,7 @@ func (g *getMissingTransactionTesting) MakeBallot(numberOfTxs int) (blt *ballot.
 		txs = append(txs, tx)
 
 		// inject txs to `TransactionPool`
-		err := ValidateTx(g.proposerNR.Storage(), tx)
+		err := ValidateTx(g.proposerNR.Storage(), common.Config{}, tx)
 		if err != nil {
 			panic(err)
 		}

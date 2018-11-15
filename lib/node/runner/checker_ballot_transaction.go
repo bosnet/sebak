@@ -203,9 +203,10 @@ func BallotTransactionsAllValid(c common.Checker, args ...interface{}) (err erro
 // Params:
 //   st = Storage backend to use (e.g. to access the blocks)
 //        Only ever read from, never written to.
+//   config = consist of configuration of the network. common address, congress address, etc.
 //   tx = Transaction to check
 //
-func ValidateTx(st *storage.LevelDBBackend, tx transaction.Transaction) (err error) {
+func ValidateTx(st *storage.LevelDBBackend, config common.Config, tx transaction.Transaction) (err error) {
 	// check, source exists
 	var ba *block.BlockAccount
 	if ba, err = block.GetBlockAccount(st, tx.B.Source); err != nil {
@@ -241,7 +242,7 @@ func ValidateTx(st *storage.LevelDBBackend, tx transaction.Transaction) (err err
 	}
 
 	for _, op := range tx.B.Operations {
-		if err = ValidateOp(st, ba, op); err != nil {
+		if err = ValidateOp(st, config, ba, op); err != nil {
 
 			key := block.GetBlockTransactionHistoryKey(tx.H.Hash)
 			st.Remove(key)
@@ -262,10 +263,11 @@ func ValidateTx(st *storage.LevelDBBackend, tx transaction.Transaction) (err err
 // Params:
 //   st = Storage backend to use (e.g. to access the blocks)
 //        Only ever read from, never written to.
+//   config = consist of configuration of the network. common address, congress address, etc.
 //   source = Account from where the transaction (and ops) come from
 //   tx = Transaction to check
 //
-func ValidateOp(st *storage.LevelDBBackend, source *block.BlockAccount, op operation.Operation) error {
+func ValidateOp(st *storage.LevelDBBackend, config common.Config, source *block.BlockAccount, op operation.Operation) (err error) {
 	switch op.H.Type {
 	case operation.TypeCreateAccount:
 		var ok bool
