@@ -67,6 +67,10 @@ func (p *PageQuery) ListOptions() storage.ListOptions {
 	return storage.NewDefaultListOptions(p.Reverse(), p.Cursor(), p.Limit())
 }
 
+func (p *PageQuery) WalkOption() *storage.WalkOption {
+	return storage.NewWalkOption(string(p.Cursor()), p.Limit(), p.Reverse())
+}
+
 func (p *PageQuery) ResourceList(rs []resource.Resource, cursor []byte) *resource.ResourceList {
 	return resource.NewResourceList(rs, p.SelfLink(), p.NextLink(cursor), p.PrevLink(cursor))
 }

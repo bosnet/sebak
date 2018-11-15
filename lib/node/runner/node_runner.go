@@ -327,6 +327,15 @@ func (nr *NodeRunner) Ready() {
 		TransactionsHandler,
 	).Methods("GET", "POST", "OPTIONS").MatcherFunc(common.PostAndJSONMatcher)
 
+	nr.network.AddHandler(
+		apiHandler.HandlerURLPattern(api.GetBlocksHandlerPattern),
+		listCache.WrapHandlerFunc(apiHandler.GetBlocksHandler),
+	).Methods("GET", "OPTIONS")
+	nr.network.AddHandler(
+		apiHandler.HandlerURLPattern(api.GetBlockHandlerPattern),
+		cache.WrapHandlerFunc(apiHandler.GetBlockHandler),
+	).Methods("GET", "OPTIONS")
+
 	// pprof
 	if DebugPProf == true {
 		nr.network.AddHandler(network.UrlPathPrefixDebug+"/pprof/cmdline", pprof.Cmdline)

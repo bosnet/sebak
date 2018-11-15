@@ -246,3 +246,19 @@ func GetLatestBlock(st *storage.LevelDBBackend) Block {
 
 	return b
 }
+
+func WalkBlocks(st *storage.LevelDBBackend, option *storage.WalkOption, walkFunc func(*Block, []byte) (bool, error)) error {
+	err := st.Walk(common.BlockPrefixHeight, option, func(key, value []byte) (bool, error) {
+		var hash string
+		if err := json.Unmarshal(value, &hash); err != nil {
+			return false, err
+		}
+
+		b, err := GetBlock(st, hash)
+		if err != nil {
+			return false, err
+		}
+		return walkFunc(&b, key)
+	})
+	return err
+}

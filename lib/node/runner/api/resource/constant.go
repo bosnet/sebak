@@ -14,4 +14,5 @@ const (
 	URLTransactionOperations = APIPrefix + APIVersionV1 + "/transactions/{id}/operations"
 	URLTransactionHistory    = APIPrefix + APIVersionV1 + "/transactions/{id}/history"
 	URLOperations            = APIPrefix + APIVersionV1 + "/operations/{id}"
+	URLBlocks                = APIPrefix + APIVersionV1 + "/blocks/{id}"
 )
