@@ -82,12 +82,11 @@ func (sm *ISAACStateManager) setBlockTimeBuffer() {
 		sm.Conf.BlockTime,
 		calculateAverageBlockTime(sm.firstConsensusBlockTime, b.Height),
 		time.Now().Sub(ballotProposedTime),
-		1*time.Second,
+		sm.Conf.BlockTimeDelta,
 	)
 	sm.nr.Log().Debug(
 		"calculated blockTimeBuffer",
 		"blockTimeBuffer", sm.blockTimeBuffer,
-		"blockTime", sm.Conf.BlockTime,
 		"firstConsensusBlockTime", sm.firstConsensusBlockTime,
 		"height", b.Height,
 		"proposedTime", b.ProposedTime,

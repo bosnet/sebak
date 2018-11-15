@@ -15,6 +15,7 @@ type Config struct {
 	TimeoutACCEPT     time.Duration
 	TimeoutALLCONFIRM time.Duration
 	BlockTime         time.Duration
+	BlockTimeDelta    time.Duration
 
 	TxsLimit int
 	OpsLimit int
@@ -38,6 +39,7 @@ func NewConfig(networkID []byte) Config {
 	p.TimeoutACCEPT = 2 * time.Second
 	p.TimeoutALLCONFIRM = 30 * time.Second
 	p.BlockTime = 5 * time.Second
+	p.BlockTimeDelta = 1 * time.Second
 
 	p.TxsLimit = 1000
 	p.OpsLimit = 1000
