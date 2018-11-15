@@ -192,8 +192,6 @@ func BallotCheckSYNC(c common.Checker, args ...interface{}) error {
 		return err
 	}
 
-	checker.NodeRunner.PauseIsaacStateManager()
-
 	log := checker.Log.New(logging.Ctx{
 		"latest-height": latestHeight,
 		"sync-height":   syncHeight,
