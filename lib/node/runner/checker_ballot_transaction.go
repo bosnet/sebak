@@ -358,12 +358,8 @@ func ValidateOp(st *storage.LevelDBBackend, config common.Config, source *block.
 		if err != nil || !exists {
 			return errors.InflationPFResultMissed
 		}
-		commonAccount, err := GetCommonAccount(st)
-		if err != nil {
-			return err
-		}
 
-		if commonAccount.Address != source.Address {
+		if config.CommonAccountAddress != source.Address {
 			return errors.InvalidOperation
 		}
 
