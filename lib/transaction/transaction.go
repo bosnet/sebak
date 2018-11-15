@@ -61,7 +61,7 @@ func (t *Transaction) UnmarshalJSON(b []byte) (err error) {
 	return
 }
 
-func (tx Transaction) AdjustFeeWithFrozenAccount(isSourceLinked bool) (err error) {
+func (tx *Transaction) AdjustFeeWithFrozenAccount(isSourceLinked bool) (err error) {
 	fee := common.FrozenFee
 	if !isSourceLinked {
 		var opsHaveFee int
