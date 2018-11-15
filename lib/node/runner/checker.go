@@ -94,7 +94,7 @@ func BallotValidateOperationBodyCollectTxFee(c common.Checker, args ...interface
 	}
 
 	// check common account
-	if opb.Target != checker.NodeRunner.CommonAccountAddress {
+	if opb.Target != checker.NodeRunner.Conf.CommonAccountAddress {
 		err = errors.InvalidOperation
 		return
 	}
@@ -112,7 +112,7 @@ func BallotValidateOperationBodyInflation(c common.Checker, args ...interface{})
 	}
 
 	// check common account
-	if opb.Target != checker.NodeRunner.CommonAccountAddress {
+	if opb.Target != checker.NodeRunner.Conf.CommonAccountAddress {
 		err = errors.InvalidOperation
 		return
 	}

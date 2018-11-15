@@ -843,7 +843,7 @@ func TestCheckInflationBlockIncrease(t *testing.T) {
 	isaac := nr.Consensus()
 
 	getCommonAccountBalance := func() common.Amount {
-		commonAccount, _ := block.GetBlockAccount(nr.Storage(), nr.CommonAccountAddress)
+		commonAccount, _ := block.GetBlockAccount(nr.Storage(), nr.Conf.CommonAccountAddress)
 		return commonAccount.Balance
 	}
 

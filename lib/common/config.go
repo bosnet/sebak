@@ -30,7 +30,8 @@ type Config struct {
 	HTTPCachePoolSize   int
 	HTTPCacheRedisAddrs map[string]string
 
-	CongressAddr string
+	CongressAddr         string
+	CommonAccountAddress string
 }
 
 func NewConfig(networkID []byte) Config {

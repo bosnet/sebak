@@ -85,8 +85,7 @@ type NodeRunner struct {
 
 	log logging.Logger
 
-	CommonAccountAddress string
-	InitialBalance       common.Amount
+	InitialBalance common.Amount
 
 	Conf                  common.Config
 	nodeInfo              node.NodeInfo
@@ -140,8 +139,8 @@ func NewNodeRunner(
 		if commonAccount, err = GetCommonAccount(nr.storage); err != nil {
 			return
 		}
-		nr.CommonAccountAddress = commonAccount.Address
-		nr.log.Debug("common account found", "address", nr.CommonAccountAddress)
+		nr.Conf.CommonAccountAddress = commonAccount.Address
+		nr.log.Debug("common account found", "address", nr.Conf.CommonAccountAddress)
 
 		// get the initial balance of geness account
 		if nr.InitialBalance, err = GetGenesisBalance(nr.storage); err != nil {
@@ -631,12 +630,12 @@ func (nr *NodeRunner) proposeNewBallot(round uint64) (ballot.Ballot, error) {
 		}
 	}
 
-	opc, err := ballot.NewCollectTxFeeFromBallot(*theBallot, nr.CommonAccountAddress, validTransactions...)
+	opc, err := ballot.NewCollectTxFeeFromBallot(*theBallot, nr.Conf.CommonAccountAddress, validTransactions...)
 	if err != nil {
 		return ballot.Ballot{}, err
 	}
 
-	opi, err := ballot.NewInflationFromBallot(*theBallot, nr.CommonAccountAddress, nr.InitialBalance)
+	opi, err := ballot.NewInflationFromBallot(*theBallot, nr.Conf.CommonAccountAddress, nr.InitialBalance)
 	if err != nil {
 		return ballot.Ballot{}, err
 	}
