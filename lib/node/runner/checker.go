@@ -166,7 +166,13 @@ func BallotCheckSYNC(c common.Checker, args ...interface{}) error {
 	is := checker.NodeRunner.Consensus()
 	b := checker.Ballot
 	latestHeight := is.LatestBlock().Height
-	if latestHeight >= b.VotingBasis().Height { // in consensus, not sync
+	votingHeight := b.VotingBasis().Height
+	if latestHeight >= votingHeight { // in consensus, not sync
+		checker.NodeRunner.Log().Debug(
+			"return in BallotCheckSYNC; latestHeight >= votingHeight",
+			"latestHeight", latestHeight,
+			"votingHeight", votingHeight,
+		)
 		return nil
 	}
 
@@ -183,7 +189,7 @@ func BallotCheckSYNC(c common.Checker, args ...interface{}) error {
 		checker.NodeRunner.Log().Debug("init LatestBallot", "LatestBallot", is.LatestBallot)
 	}
 
-	is.SaveNodeHeight(b.Source(), b.VotingBasis().Height)
+	is.SaveNodeHeight(b.Source(), votingHeight)
 
 	var syncHeight uint64
 	var nodeAddrs []string
@@ -200,7 +206,7 @@ func BallotCheckSYNC(c common.Checker, args ...interface{}) error {
 	log.Debug("sync situation")
 
 	defer func() {
-		if b.VotingBasis().Height == syncHeight {
+		if votingHeight == syncHeight {
 			is.LatestBallot = b
 			log.Debug("update LatestBallot", "LatestBallot", is.LatestBallot)
 		}
@@ -257,16 +263,22 @@ func hasBallotValidProposer(is *consensus.ISAAC, b ballot.Ballot) bool {
 	return b.Proposer() == is.SelectProposer(b.VotingBasis().Height, b.VotingBasis().Round)
 }
 
-// BallotAlreadyFinished checks the incoming ballot in
+// BallotCheckBasis checks the incoming ballot in
 // valid round.
-func BallotAlreadyFinished(c common.Checker, args ...interface{}) (err error) {
+func BallotCheckBasis(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotChecker)
-	if !checker.NodeRunner.Consensus().IsAvailableRound(
+	blk := block.GetLatestBlock(checker.NodeRunner.Storage())
+	if !checker.NodeRunner.Consensus().IsValidVotingBasis(
 		checker.Ballot.VotingBasis(),
-		block.GetLatestBlock(checker.NodeRunner.Storage()),
+		blk,
 	) {
-		err = errors.BallotAlreadyFinished
-		checker.Log.Debug("ballot already finished")
+		err = errors.InvalidVotingBasis
+		checker.NodeRunner.Log().Debug(
+			"voting basis is invalid",
+			"voting-basis", checker.Ballot.VotingBasis(),
+			"latest-block", blk,
+			"latest-voting-basis", checker.NodeRunner.Consensus().LatestVotingBasis,
+		)
 		return
 	}
 
