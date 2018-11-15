@@ -99,4 +99,6 @@ var (
 	InvalidGenesisOption                      = NewError(181, "--genesis expects '<genesis address>,<common account>[,balance]")
 	NotPublicKey                              = NewError(182, "not public key")
 	InflationPFResultMissed                   = NewError(183, "voting result cannot be retrieved")
+	InflationPFAmountMissMatched              = NewError(184, "inflation pf amount missmatched")
+	InflationPFFundingAddressMissMatched      = NewError(185, "inflation pf funding address missmatched")
 )

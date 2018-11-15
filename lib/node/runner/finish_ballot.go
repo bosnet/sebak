@@ -242,6 +242,32 @@ func finishPayment(st *storage.LevelDBBackend, source string, op operation.Payme
 	return
 }
 
+func finishUnfreezeRequest(st *storage.LevelDBBackend, source string, opb operation.UnfreezeRequest, log logging.Logger) (err error) {
+	return
+}
+
+func finishInflationPF(st *storage.LevelDBBackend, source string, opb operation.InflationPF, log logging.Logger) (err error) {
+
+	if opb.Amount < 1 {
+		return
+	}
+
+	var commonAccount *block.BlockAccount
+	if commonAccount, err = block.GetBlockAccount(st, opb.FundingAddress); err != nil {
+		return
+	}
+
+	if err = commonAccount.Deposit(opb.GetAmount()); err != nil {
+		return
+	}
+
+	if err = commonAccount.Save(st); err != nil {
+		return
+	}
+
+	return
+}
+
 func FinishProposerTransaction(st *storage.LevelDBBackend, blk block.Block, ptx ballot.ProposerTransaction, log logging.Logger) (err error) {
 	{
 		var opb operation.CollectTxFee
@@ -302,31 +328,6 @@ func finishInflation(st *storage.LevelDBBackend, opb operation.Inflation, log lo
 
 	var commonAccount *block.BlockAccount
 	if commonAccount, err = block.GetBlockAccount(st, opb.TargetAddress()); err != nil {
-		return
-	}
-
-	if err = commonAccount.Deposit(opb.GetAmount()); err != nil {
-		return
-	}
-
-	if err = commonAccount.Save(st); err != nil {
-		return
-	}
-
-	return
-}
-
-func finishUnfreezeRequest(st *storage.LevelDBBackend, source string, opb operation.UnfreezeRequest, log logging.Logger) (err error) {
-	return
-}
-
-func finishInflationPF(st *storage.LevelDBBackend, source string, opb operation.InflationPF, log logging.Logger) (err error) {
-	if opb.Amount < 1 {
-		return
-	}
-
-	var commonAccount *block.BlockAccount
-	if commonAccount, err = block.GetBlockAccount(st, source); err != nil {
 		return
 	}
 

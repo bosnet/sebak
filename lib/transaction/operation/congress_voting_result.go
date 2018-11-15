@@ -23,12 +23,14 @@ type CongressVotingResult struct {
 		No    uint64 `json:"no"`
 		ABS   uint64 `json:"abs"`
 	} `json:"result"`
+	CongressVotingHash string `json:"congress_voting_hash"`
 }
 
 func NewCongressVotingResult(
 	ballotHash string, ballotUrls []string,
 	votersHash string, votersUrls []string,
-	resultCount, resultYes, resultNo, resultABS uint64) CongressVotingResult {
+	resultCount, resultYes, resultNo, resultABS uint64,
+	congressVotingHash string) CongressVotingResult {
 
 	return CongressVotingResult{
 		BallotStamps: struct {
@@ -45,6 +47,7 @@ func NewCongressVotingResult(
 			No    uint64 `json:"no"`
 			ABS   uint64 `json:"abs"`
 		}{resultCount, resultYes, resultNo, resultABS},
+		CongressVotingHash: congressVotingHash,
 	}
 }
 

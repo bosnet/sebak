@@ -138,6 +138,8 @@ type CongressVoting struct {
 		Start uint64 `json:"start"`
 		End   uint64 `json:"end"`
 	} `json:"voting"`
+	FundingAddress string        `json:"funding_address"`
+	Amount         common.Amount `json:"amount"`
 }
 
 type CongressVotingResult struct {
@@ -155,6 +157,7 @@ type CongressVotingResult struct {
 		No    uint64 `json:"no"`
 		ABS   uint64 `json:"abs"`
 	} `json:"result"`
+	CongressVotingHash string `json:"congress_voting_hash"`
 }
 
 type CreateAccount struct {

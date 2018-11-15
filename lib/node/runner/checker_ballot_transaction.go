@@ -350,17 +350,84 @@ func ValidateOp(st *storage.LevelDBBackend, config common.Config, source *block.
 		}
 	case operation.TypeInflationPF:
 		var ok bool
-		var casted operation.InflationPF
-		if casted, ok = op.B.(operation.InflationPF); !ok {
+		var inflationPF operation.InflationPF
+		if inflationPF, ok = op.B.(operation.InflationPF); !ok {
 			return errors.TypeOperationBodyNotMatched
 		}
-		exists, err := block.ExistsBlockOperation(st, casted.VotingResult)
-		if err != nil || !exists {
-			return errors.InflationPFResultMissed
+		var taccount *block.BlockAccount
+		if taccount, err = block.GetBlockAccount(st, inflationPF.FundingAddress); err != nil {
+			return errors.BlockAccountDoesNotExists
+		}
+		// If it's a frozen account, it cannot receive payment
+		if taccount.Linked != "" {
+			return errors.FrozenAccountNoDeposit
 		}
 
 		if config.CommonAccountAddress != source.Address {
 			return errors.InvalidOperation
+		}
+
+		exists, err := block.ExistsBlockOperation(st, inflationPF.VotingResult)
+		if err != nil || !exists {
+			return errors.InflationPFResultMissed
+		}
+
+		var congressVotingHash string
+		{
+			var bo block.BlockOperation
+			var err error
+			if bo, err = block.GetBlockOperation(st, inflationPF.VotingResult); err != nil {
+				return err
+			}
+
+			if bo.Type != operation.TypeCongressVotingResult {
+				return errors.InvalidOperation
+			}
+			var operationBody operation.Body
+			if operationBody, err = operation.UnmarshalBodyJSON(bo.Type, bo.Body); err != nil {
+				return err
+			}
+
+			var o operation.CongressVotingResult
+			var ok bool
+			if o, ok = operationBody.(operation.CongressVotingResult); !ok {
+				log.Error("1")
+				return errors.TypeOperationBodyNotMatched
+			}
+			congressVotingHash = o.CongressVotingHash
+		}
+
+		var congressVoting operation.CongressVoting
+		{
+			var bo block.BlockOperation
+			var err error
+			if bo, err = block.GetBlockOperation(st, congressVotingHash); err != nil {
+				return err
+			}
+
+			if bo.Type != operation.TypeCongressVoting {
+				return errors.InvalidOperation
+			}
+			var operationBody operation.Body
+			if operationBody, err = operation.UnmarshalBodyJSON(bo.Type, bo.Body); err != nil {
+				return err
+			}
+
+			var o operation.CongressVoting
+			var ok bool
+			if o, ok = operationBody.(operation.CongressVoting); !ok {
+				log.Error("2")
+				return errors.TypeOperationBodyNotMatched
+			}
+			congressVoting = o
+		}
+
+		if congressVoting.Amount != inflationPF.Amount {
+			return errors.InflationPFAmountMissMatched
+		}
+
+		if congressVoting.FundingAddress != inflationPF.FundingAddress {
+			return errors.InflationPFFundingAddressMissMatched
 		}
 
 	case operation.TypeCongressVoting, operation.TypeCongressVotingResult:
