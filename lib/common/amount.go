@@ -43,7 +43,7 @@ func (this Amount) Invariant() {
 	}
 }
 
-func (a Amount) EncodeRLP(w io.Writer) (err error){
+func (a Amount) EncodeRLP(w io.Writer) (err error) {
 	w.Write([]byte(a.String()))
 	return nil
 }
