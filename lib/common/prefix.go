@@ -4,6 +4,7 @@ const (
 	BlockPrefixHash                       = string(0x00)
 	BlockPrefixConfirmed                  = string(0x01)
 	BlockPrefixHeight                     = string(0x02)
+	BlockPrefixTime                       = string(0x03)
 	BlockTransactionPrefixHash            = string(0x10)
 	BlockTransactionPrefixSource          = string(0x11)
 	BlockTransactionPrefixConfirmed       = string(0x12)

@@ -91,7 +91,7 @@ func finishBallotWithProposedTxs(st *storage.LevelDBBackend, b ballot.Ballot, pr
 	infoLog.Info("NewBlock created",
 		"height", blk.Height,
 		"round", blk.Round,
-		"timestamp", blk.Timestamp,
+		"confirmed", blk.Confirmed,
 		"total-txs", blk.TotalTxs,
 		"total-ops", blk.TotalOps,
 		"proposer", blk.Proposer,
@@ -128,7 +128,7 @@ func getProposedTransactions(st *storage.LevelDBBackend, pTxHashes []string, tra
 
 func FinishTransactions(blk block.Block, transactions []*transaction.Transaction, st *storage.LevelDBBackend) (err error) {
 	for _, tx := range transactions {
-		bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.Confirmed, *tx)
+		bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.ProposedTime, *tx)
 		if err = bt.Save(st); err != nil {
 			return
 		}
@@ -256,7 +256,7 @@ func FinishProposerTransaction(st *storage.LevelDBBackend, blk block.Block, ptx 
 		}
 	}
 
-	bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.Confirmed, ptx.Transaction)
+	bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.ProposedTime, ptx.Transaction)
 	if err = bt.Save(st); err != nil {
 		return
 	}
