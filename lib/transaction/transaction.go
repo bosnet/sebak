@@ -61,34 +61,36 @@ func (t *Transaction) UnmarshalJSON(b []byte) (err error) {
 	return
 }
 
-func (tx *Transaction) AdjustFeeWithFrozenAccount(isSourceLinked bool) (err error) {
+func (t Transaction) AdjustFeeWithFrozenAccount(isSourceLinked bool) (Transaction, error) {
+	var err error
 	fee := common.FrozenFee
 	if !isSourceLinked {
 		var opsHaveFee int
-		for _, op := range tx.B.Operations {
+		for _, op := range t.B.Operations {
 			if op.HasFee(isSourceLinked) {
 				opsHaveFee++
 			}
 		}
 		if opsHaveFee < 1 {
-			return
+			return t, err
 		}
 		fee = common.BaseFee.MustMult(opsHaveFee)
 	}
-	tx.B.Fee = fee
-	tx.H.Hash = tx.B.MakeHashString()
-	return
+	t.B.Fee = fee
+	t.H.Hash = t.B.MakeHashString()
+	return t, err
 }
 
 func NewTransactionAdujustFeeWithFrozenAccount(source string, sequenceID uint64, isSourceLinked bool, ops ...operation.Operation) (tx Transaction, err error) {
-	if tx, err = NewTransaction(source, sequenceID, ops...); err != nil {
-		return
-	}
-	tx.AdjustFeeWithFrozenAccount(isSourceLinked)
+	var t Transaction
+	t, err = NewTransaction(source, sequenceID, ops...)
 	if err != nil {
 		return
 	}
-
+	tx, err = t.AdjustFeeWithFrozenAccount(isSourceLinked)
+	if err != nil {
+		return
+	}
 	return
 }
 
