@@ -3,7 +3,7 @@
   "H": {
     "version": "1",
     "created": "2018-09-19T04:27:28.824927300Z",
-    "signature": "3fzvKdo4EYAhZmZphFFK9wvqDyRyE1BLC5GJ8A3kCXnqz9YSfePUzQDriBUSzDfisrXYQKDcMojHm7NT45i6CBwu"
+    "signature": "YwBVQ5ySQmko37b5JTa7f2pLWEzwjMYdg5wEXw97bjkTyrDAwq59gFh5LwtKWN3L7YubS5yoXzCDvwbHTZXMEHE"
   },
   "B": {
     "source": "GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ",
@@ -15,7 +15,7 @@
           "type": "payment"
         },
         "B": {
-          "target": "GDTEPFWEITKFHSUO44NQABY2XHRBBH2UBVGJ2ZJPDREIOL2F6RAEBJE4",
+          "target": "GATR5BQCWUKGWIAZNDUPDTMMXSRDA23BFJQ36A2IAAOZI5KOOANKA6L3",
           "amount": "1"
         }
       }
