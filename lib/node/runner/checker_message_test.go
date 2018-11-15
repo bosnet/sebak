@@ -14,7 +14,7 @@ import (
 )
 
 func TestMessageChecker(t *testing.T) {
-	_, validTx := transaction.TestMakeTransaction(networkID, 1, false)
+	_, validTx := transaction.TestMakeTransaction(networkID, 1)
 	var b []byte
 	var err error
 
@@ -77,7 +77,7 @@ func TestMessageChecker(t *testing.T) {
 }
 
 func TestMessageCheckerWithInvalidHash(t *testing.T) {
-	_, invalidTx := transaction.TestMakeTransaction(networkID, 1, false)
+	_, invalidTx := transaction.TestMakeTransaction(networkID, 1)
 	invalidTx.H.Hash = "wrong hash"
 
 	var b []byte

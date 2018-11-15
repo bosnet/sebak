@@ -245,12 +245,7 @@ func ValidateTx(st *storage.LevelDBBackend, tx transaction.Transaction) (err err
 		return
 	}
 
-	var isSourceLinked bool
-	if ba.Linked != "" {
-		isSourceLinked = true
-	}
-
-	if tx.B.Fee != tx.TotalBaseFee(isSourceLinked) {
+	if tx.B.Fee != tx.TotalBaseFee(ba.Linked != "") {
 		return errors.InvalidFee
 	}
 
@@ -291,30 +286,29 @@ func ValidateOp(st *storage.LevelDBBackend, source *block.BlockAccount, op opera
 		if exists, err = block.ExistsBlockAccount(st, op.B.(operation.CreateAccount).Target); err == nil && exists {
 			return errors.BlockAccountAlreadyExists
 		}
-		if casted.Linked != "" {
-			if (casted.Amount % common.Unit) != 0 {
+
+		if source.Linked != "" {
+			// Unfreezing must be done after X period from unfreezing request
+			iterFunc, closeFunc := block.GetBlockOperationsBySource(st, source.Address, nil)
+			bo, _, _ := iterFunc()
+			closeFunc()
+			// Before unfreezing payment, unfreezing request shoud be saved
+			if bo.Type != operation.TypeUnfreezingRequest {
+				return errors.UnfreezingRequestNotRequested
+			}
+			lastblock := block.GetLatestBlock(st)
+			// unfreezing period is 241920.
+			if lastblock.Height-bo.Height < common.UnfreezingPeriod {
+				return errors.UnfreezingNotReachedExpiration
+			}
+			// If it's a frozen account we check that only whole units are frozen
+			if casted.Linked != "" && (casted.Amount%common.Unit) != 0 {
 				return errors.FrozenAccountCreationWholeUnit // FIXME
 			}
 		} else {
-			if source.Linked != "" {
-				// Unfreezing must be done after X period from unfreezing request
-				iterFunc, closeFunc := block.GetBlockOperationsBySource(st, source.Address, nil)
-				bo, _, _ := iterFunc()
-				closeFunc()
-				// Before unfreezing payment, unfreezing request shoud be saved
-				if bo.Type != operation.TypeUnfreezingRequest {
-					return errors.UnfreezingRequestNotRequested
-				}
-				lastblock := block.GetLatestBlock(st)
-				// unfreezing period is 241920.
-				if lastblock.Height-bo.Height < common.UnfreezingPeriod {
-					return errors.UnfreezingNotReachedExpiration
-				}
+			if casted.Linked != "" && (casted.Amount%common.Unit) != 0 {
+				return errors.FrozenAccountCreationWholeUnit // FIXME
 			}
-		}
-		// If it's a frozen account we check that only whole units are frozen
-		if casted.Linked != "" && (casted.Amount%common.Unit) != 0 {
-			return errors.FrozenAccountCreationWholeUnit // FIXME
 		}
 	case operation.TypePayment:
 		var ok bool
@@ -332,7 +326,7 @@ func ValidateOp(st *storage.LevelDBBackend, source *block.BlockAccount, op opera
 		}
 		if source.Linked != "" {
 			// If it's a frozen account, everything must be withdrawn
-			if casted.Amount != source.Balance {
+			if source.Balance != casted.Amount {
 				return errors.FrozenAccountMustWithdrawEverything
 			}
 			// Unfreezing must be done after X period from unfreezing request

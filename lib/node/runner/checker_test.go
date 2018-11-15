@@ -61,7 +61,7 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 		targetAccount, targetKP := TestMakeBlockAccount(common.Amount(10000000000000) /* 100,00000 BOS */)
 		targetAccount.MustSave(nodeRunner.Storage())
 
-		tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, rootKP, false, targetKP)
+		tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, rootKP, targetKP)
 		tx.B.SequenceID = rootAccount.SequenceID
 		tx.Sign(rootKP, networkID)
 
@@ -73,7 +73,7 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 		targetAccount, targetKP := TestMakeBlockAccount(common.Amount(10000000000000))
 		targetAccount.MustSave(nodeRunner.Storage())
 
-		tx := transaction.TestMakeTransactionWithKeypair(networkID, 3, rootKP, false, targetKP)
+		tx := transaction.TestMakeTransactionWithKeypair(networkID, 3, rootKP, targetKP)
 		tx.B.SequenceID = rootAccount.SequenceID
 		tx.B.Fee = tx.B.Fee.MustSub(1)
 		tx.Sign(rootKP, networkID)
@@ -85,7 +85,7 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 		targetAccount, targetKP := TestMakeBlockAccount(common.Amount(10000000000000))
 		targetAccount.MustSave(nodeRunner.Storage())
 
-		tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, rootKP, false, targetKP)
+		tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, rootKP, targetKP)
 		tx.B.SequenceID = rootAccount.SequenceID
 		tx.Sign(rootKP, networkID)
 
@@ -103,7 +103,7 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 		targetAccount, targetKP := TestMakeBlockAccount(common.Amount(10000000000000))
 		targetAccount.MustSave(nodeRunner.Storage())
 
-		tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, sourceKP, false, targetKP)
+		tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, sourceKP, targetKP)
 
 		runChecker(tx, errors.BlockAccountDoesNotExists)
 
@@ -119,7 +119,7 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 		_, targetKP := TestMakeBlockAccount(common.Amount(10000000000000))
 		sourceAccount.MustSave(nodeRunner.Storage())
 
-		tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, sourceKP, false, targetKP)
+		tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, sourceKP, targetKP)
 		tx.B.SequenceID = sourceAccount.SequenceID
 		tx.Sign(sourceKP, networkID)
 

@@ -72,7 +72,7 @@ func TestGetOperationsByTxHashHandlerStream(t *testing.T) {
 	defer ts.Close()
 
 	kp := keypair.Random()
-	tx := transaction.TestMakeTransactionWithKeypair(networkID, 10, kp, false)
+	tx := transaction.TestMakeTransactionWithKeypair(networkID, 10, kp)
 	bt := block.NewBlockTransactionFromTransaction("block-hash", 1, common.NowISO8601(), tx)
 
 	boMap := make(map[string]block.BlockOperation)

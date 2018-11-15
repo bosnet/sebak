@@ -20,7 +20,7 @@ type ProposerTransaction struct {
 
 func NewProposerTransaction(proposer string, ops ...operation.Operation) (ptx ProposerTransaction, err error) {
 	var tx transaction.Transaction
-	tx, err = transaction.NewTransaction(proposer, 0, false, ops...)
+	tx, err = transaction.NewTransaction(proposer, 0, ops...)
 	if err != nil {
 		return
 	}

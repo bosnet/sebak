@@ -61,36 +61,53 @@ func (t *Transaction) UnmarshalJSON(b []byte) (err error) {
 	return
 }
 
+func (tx Transaction) AdjustFeeWithFrozenAccount(isSourceLinked bool) (err error) {
+	fee := common.Amount(0)
+	if !isSourceLinked {
+		var opsHaveFee int
+		for _, op := range tx.B.Operations {
+			if op.HasFee(isSourceLinked) {
+				opsHaveFee++
+			}
+		}
+		if opsHaveFee < 1 {
+			return
+		}
+		fee = common.BaseFee.MustMult(opsHaveFee)
+	}
+	tx.B.Fee = fee
+	tx.H.Hash = tx.B.MakeHashString()
+	return
+}
+
+func NewTransactionAdujustFeeWithFrozenAccount(source string, sequenceID uint64, isSourceLinked bool, ops ...operation.Operation) (tx Transaction, err error) {
+	if tx, err = NewTransaction(source, sequenceID, ops...); err != nil {
+		return
+	}
+	tx.AdjustFeeWithFrozenAccount(isSourceLinked)
+	if err != nil {
+		return
+	}
+
+	return
+}
+
 // NewTransaction needs specially isSourceLinked boolean value.
 // If isSourceLinked is true, tx.Source is frozen account.
-func NewTransaction(source string, sequenceID uint64, isSourceLinked bool, ops ...operation.Operation) (tx Transaction, err error) {
+func NewTransaction(source string, sequenceID uint64, ops ...operation.Operation) (tx Transaction, err error) {
 	if len(ops) < 1 {
 		err = errors.TransactionEmptyOperations
 		return
 	}
+	var opsHaveFee int
+	for _, op := range ops {
+		if op.HasFee(false) {
+			opsHaveFee++
+		}
+	}
 	fee := common.Amount(0)
-	if !isSourceLinked {
-		var opsHaveFee int
-		for _, op := range ops {
-			if op.HasFee() {
-				if op.H.Type == operation.TypeCreateAccount {
-					var casted operation.CreateAccount
-					var ok bool
-					casted, ok = op.B.(operation.CreateAccount)
-					if !ok {
-						err = errors.TypeOperationBodyNotMatched
-						return
-					}
-					if casted.Linked != "" {
-						break
-					}
-				}
-				opsHaveFee++
-			}
-		}
-		if opsHaveFee > 0 {
-			fee = common.BaseFee.MustMult(opsHaveFee)
-		}
+	if opsHaveFee > 0 {
+		fee = common.BaseFee.MustMult(opsHaveFee)
 	}
 
 	txBody := Body{
@@ -192,23 +209,14 @@ func (tx Transaction) TotalAmount(withFee bool) common.Amount {
 
 // TotalBaseFee returns the sum fee of transaction.
 // If tx.Source is frozen account, isSourceLinked is true.
-func (tx Transaction) TotalBaseFee(isSourceLinked bool) (amount common.Amount) {
-	amount = common.Amount(0)
-	if !isSourceLinked {
+func (tx Transaction) TotalBaseFee(isSourceLinked bool) (fee common.Amount) {
+	fee = common.Amount(0)
+	if isSourceLinked {
+		return
+	} else {
 		var opsHaveFee int
 		for _, op := range tx.B.Operations {
-			if op.HasFee() {
-				if op.H.Type == operation.TypeCreateAccount {
-					var casted operation.CreateAccount
-					var ok bool
-					casted, ok = op.B.(operation.CreateAccount)
-					if !ok {
-						return
-					}
-					if casted.Linked != "" {
-						break
-					}
-				}
+			if op.HasFee(isSourceLinked) {
 				opsHaveFee++
 			}
 		}
@@ -217,7 +225,6 @@ func (tx Transaction) TotalBaseFee(isSourceLinked bool) (amount common.Amount) {
 		}
 		return common.BaseFee.MustMult(opsHaveFee)
 	}
-	return
 }
 
 func (tx Transaction) Serialize() (encoded []byte, err error) {

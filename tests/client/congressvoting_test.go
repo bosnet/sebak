@@ -35,7 +35,7 @@ func TestCongressVoting(t *testing.T) {
 		o, err := operation.NewOperation(ob)
 		require.NoError(t, err)
 
-		tx, err := transaction.NewTransaction(genesisAddr, uint64(genesisAccount.SequenceID), false, o)
+		tx, err := transaction.NewTransaction(genesisAddr, uint64(genesisAccount.SequenceID), o)
 		require.NoError(t, err)
 
 		sender, err := keypair.Parse(genesisSecret)
@@ -106,7 +106,7 @@ func TestCongressVotingResult(t *testing.T) {
 		o, err := operation.NewOperation(ob)
 		require.NoError(t, err)
 
-		tx, err := transaction.NewTransaction(genesisAddr, uint64(genesisAccount.SequenceID), false, o)
+		tx, err := transaction.NewTransaction(genesisAddr, uint64(genesisAccount.SequenceID), o)
 		require.NoError(t, err)
 
 		sender, err := keypair.Parse(genesisSecret)

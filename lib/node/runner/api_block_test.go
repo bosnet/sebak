@@ -48,7 +48,7 @@ func (p *HelperTestGetBlocksHandler) createBlock() block.Block {
 	var txs []transaction.Transaction
 	var txHashes []string
 	for j := 0; j < 4; j++ {
-		_, tx := transaction.TestMakeTransaction(networkID, 3, false)
+		_, tx := transaction.TestMakeTransaction(networkID, 3)
 		txHashes = append(txHashes, tx.GetHash())
 		txs = append(txs, tx)
 	}
