@@ -39,7 +39,6 @@ func init() {
 		Run: func(c *cobra.Command, args []string) {
 			var err error
 			var amount common.Amount
-			var newBalance common.Amount
 			var sender keypair.KP
 			var receiver keypair.KP
 			var endpoint *common.Endpoint
@@ -103,14 +102,14 @@ func init() {
 			// Check that account's balance is enough before sending the transaction
 			{
 				if senderAccount.Linked != "" || flagFreeze {
-					newBalance, err = senderAccount.GetBalance().Sub(amount)
+					_, err = senderAccount.GetBalance().Sub(amount)
 					if err != nil {
 						fmt.Printf("Attempting to draft %v GON, but sender account only have %v GON\n",
 							amount, senderAccount.GetBalance())
 						os.Exit(1)
 					}
 				} else {
-					newBalance, err = newBalance.Sub(common.BaseFee)
+					_, err = senderAccount.GetBalance().Sub(amount + common.BaseFee)
 					if err != nil {
 						fmt.Printf("Attempting to draft %v GON (+ %v fees), but sender account only have %v GON\n",
 							amount, common.BaseFee, senderAccount.GetBalance())
