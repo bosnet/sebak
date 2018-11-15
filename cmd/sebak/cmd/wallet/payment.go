@@ -196,7 +196,7 @@ func makeTransactionCreateAccount(kpSource keypair.KP, kpDest keypair.KP, amount
 
 	var fee common.Amount
 	if isFrozen {
-		fee = common.Amount(0)
+		fee = common.FrozenFee
 	} else {
 		fee = common.BaseFee
 	}
@@ -239,7 +239,7 @@ func makeTransactionPayment(kpSource keypair.KP, kpDest keypair.KP, amount commo
 	opb := operation.NewPayment(kpDest.Address(), amount)
 	fee := common.BaseFee
 	if isFrozen {
-		fee = common.Amount(0)
+		fee = common.FrozenFee
 	}
 
 	op := operation.Operation{
