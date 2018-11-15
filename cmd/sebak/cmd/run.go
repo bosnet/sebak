@@ -58,7 +58,7 @@ var (
 	flagTLSCertFile       string = common.GetENVValue("SEBAK_TLS_CERT", "sebak.crt")
 	flagTLSKeyFile        string = common.GetENVValue("SEBAK_TLS_KEY", "sebak.key")
 	flagTransactionsLimit string = common.GetENVValue("SEBAK_TRANSACTIONS_LIMIT", "1000")
-	flagUnfreezingPeriod  string = common.GetENVValue("SEBAK_UNFREEZING_PERIOD", "241920")
+	flagUnfreezingPeriod  string = common.GetENVValue("SEBAK_UNFREEZING_PERIOD", strconv.FormatUint(common.UnfreezingPeriod, 10))
 	flagValidators        string = common.GetENVValue("SEBAK_VALIDATORS", "")
 	flagVerbose           bool   = common.GetENVValue("SEBAK_VERBOSE", "0") == "1"
 

@@ -238,7 +238,7 @@ func (api NetworkHandlerAPI) GetFrozenAccountsHandler(w http.ResponseWriter, r *
 					if lastblock.Height-bo.Height >= common.UnfreezingPeriod {
 						state = resource.UnfrozenState
 					} else {
-						unfreezingRemainingBlocks = bo.Height + uint64(241920) - lastblock.Height
+						unfreezingRemainingBlocks = bo.Height + common.UnfreezingPeriod - lastblock.Height
 						state = resource.MeltingState
 					}
 					unfreezingOpHash = bo.OpHash
