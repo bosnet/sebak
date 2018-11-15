@@ -391,7 +391,6 @@ func ValidateOp(st *storage.LevelDBBackend, config common.Config, source *block.
 			var o operation.CongressVotingResult
 			var ok bool
 			if o, ok = operationBody.(operation.CongressVotingResult); !ok {
-				log.Error("1")
 				return errors.TypeOperationBodyNotMatched
 			}
 			congressVotingHash = o.CongressVotingHash
@@ -416,7 +415,6 @@ func ValidateOp(st *storage.LevelDBBackend, config common.Config, source *block.
 			var o operation.CongressVoting
 			var ok bool
 			if o, ok = operationBody.(operation.CongressVoting); !ok {
-				log.Error("2")
 				return errors.TypeOperationBodyNotMatched
 			}
 			congressVoting = o
