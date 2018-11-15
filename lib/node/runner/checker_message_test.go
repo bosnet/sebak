@@ -227,7 +227,7 @@ func TestMessageCheckerWithInvalidFeeSuite(t *testing.T) {
 		var ops []operation.Operation
 		tkp := keypair.Random()
 		ops = append(ops, operation.MakeTestCreateFrozenAccount(100000000000, tkp.Address(), "GC4EWF2E2DPCQ5OL6EEWVCFRF5INTRB64WH4LYZW4KS7WWL6ZL5UCZ3D"))
-		kp, tx := transaction.TestMakeTransactionWithFeeAndOperations(networkID, false, common.Amount(0), ops)
+		kp, tx := transaction.TestMakeTransactionWithFeeAndOperations(networkID, false, common.FrozenFee, ops)
 		ba := block.NewBlockAccount(kp.Address(), common.Amount(100000000000))
 		ba.Save(checker.Storage)
 		checker.Transaction = tx
@@ -243,7 +243,7 @@ func TestMessageCheckerWithInvalidFeeSuite(t *testing.T) {
 			B: opb,
 		}
 		ops = append(ops, op)
-		kp, tx := transaction.TestMakeTransactionWithFeeAndOperations(networkID, true, common.Amount(0), ops)
+		kp, tx := transaction.TestMakeTransactionWithFeeAndOperations(networkID, true, common.FrozenFee, ops)
 		ba := block.NewBlockAccount(kp.Address(), common.BaseReserve)
 		ba.Linked = "GC4EWF2E2DPCQ5OL6EEWVCFRF5INTRB64WH4LYZW4KS7WWL6ZL5UCZ3D"
 		ba.Save(checker.Storage)

@@ -62,7 +62,7 @@ func (t *Transaction) UnmarshalJSON(b []byte) (err error) {
 }
 
 func (tx Transaction) AdjustFeeWithFrozenAccount(isSourceLinked bool) (err error) {
-	fee := common.Amount(0)
+	fee := common.FrozenFee
 	if !isSourceLinked {
 		var opsHaveFee int
 		for _, op := range tx.B.Operations {
