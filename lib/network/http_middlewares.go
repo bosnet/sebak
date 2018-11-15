@@ -100,7 +100,7 @@ func RateLimitMiddleware(logger logging.Logger, rule common.RateLimitRule) mux.M
 		}
 	}
 
-	middlewareCache, _ := lru.New(40000)
+	middlewareCache, _ := lru.New(10000000)
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
