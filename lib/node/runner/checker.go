@@ -597,10 +597,10 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) error {
 	switch checker.FinishedVotingHole {
 	case voting.YES:
 		checker.NodeRunner.TransitISAACState(basis, ballot.StateALLCONFIRM)
-		defer checker.NodeRunner.NextHeight()
 		if err = saveBlock(checker); err != nil {
 			return err
 		}
+		defer checker.NodeRunner.NextHeight()
 		checker.NodeRunner.Consensus().SetLatestVotingBasis(basis)
 
 		checker.NodeRunner.TransactionPool.RemoveFromSources(checker.LatestBlockSources...)
