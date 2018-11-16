@@ -133,12 +133,12 @@ func PushIntoTransactionPool(c common.Checker, args ...interface{}) error {
 
 	tx := checker.Transaction
 	err := checker.TransactionPool.Add(tx)
-	if err == errors.ErrorTransactionPoolFull {
+	if err == errors.TransactionPoolFull {
 		return err
 	}
 
 	if _, err = block.SaveTransactionPool(checker.Storage, tx); err != nil {
-		return
+		return err
 	}
 
 	checker.Log.Debug("push transaction into TransactionPool", "transaction", tx)
