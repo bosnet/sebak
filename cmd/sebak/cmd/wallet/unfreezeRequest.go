@@ -66,7 +66,7 @@ func init() {
 				os.Exit(1)
 			}
 
-			if senderAccount.Linked == "" {
+			if !senderAccount.IsFrozen() {
 				fmt.Printf("Account is not frozen account")
 				os.Exit(1)
 			}
@@ -130,7 +130,7 @@ func makeTransactionUnfreezingRequest(kpSource keypair.KP, seqid uint64) transac
 
 	txBody := transaction.Body{
 		Source:     kpSource.Address(),
-		Fee:        common.FrozenFee,
+		Fee:        common.BaseFee,
 		SequenceID: seqid,
 		Operations: []operation.Operation{op},
 	}

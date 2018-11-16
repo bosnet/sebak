@@ -101,20 +101,15 @@ func init() {
 
 			// Check that account's balance is enough before sending the transaction
 			{
-				if senderAccount.Linked != "" || flagFreeze {
-					_, err = senderAccount.GetBalance().Sub(amount)
-					if err != nil {
-						fmt.Printf("Attempting to draft %v GON, but sender account only have %v GON\n",
-							amount, senderAccount.GetBalance())
-						os.Exit(1)
-					}
-				} else {
-					_, err = senderAccount.GetBalance().Sub(amount + common.BaseFee)
-					if err != nil {
-						fmt.Printf("Attempting to draft %v GON (+ %v fees), but sender account only have %v GON\n",
-							amount, common.BaseFee, senderAccount.GetBalance())
-						os.Exit(1)
-					}
+				fee := common.BaseFee
+				if flagFreeze {
+					fee = common.FrozenFee
+				}
+				_, err = senderAccount.GetBalance().Sub(amount + fee)
+				if err != nil {
+					fmt.Printf("Attempting to draft %v GON (+ %v fees), but sender account only have %v GON\n",
+						amount, fee, senderAccount.GetBalance())
+					os.Exit(1)
 				}
 			}
 
@@ -124,11 +119,7 @@ func init() {
 			} else if flagCreateAccount {
 				tx = makeTransactionCreateAccount(sender, receiver, amount, senderAccount.SequenceID, false)
 			} else {
-				if senderAccount.Linked == "" {
-					tx = makeTransactionPayment(sender, receiver, amount, senderAccount.SequenceID, false)
-				} else {
-					tx = makeTransactionPayment(sender, receiver, amount, senderAccount.SequenceID, true)
-				}
+				tx = makeTransactionPayment(sender, receiver, amount, senderAccount.SequenceID)
 			}
 
 			tx.Sign(sender, []byte(flagNetworkID))
@@ -180,10 +171,13 @@ func init() {
 ///
 func makeTransactionCreateAccount(kpSource keypair.KP, kpDest keypair.KP, amount common.Amount, seqid uint64, isFrozen bool) transaction.Transaction {
 	var opb operation.CreateAccount
+	var fee common.Amount
 	if isFrozen {
 		opb = operation.NewCreateAccount(kpDest.Address(), amount, kpSource.Address())
+		fee = common.FrozenFee
 	} else {
 		opb = operation.NewCreateAccount(kpDest.Address(), amount, "")
+		fee = common.BaseFee
 	}
 
 	op := operation.Operation{
@@ -191,13 +185,6 @@ func makeTransactionCreateAccount(kpSource keypair.KP, kpDest keypair.KP, amount
 			Type: operation.TypeCreateAccount,
 		},
 		B: opb,
-	}
-
-	var fee common.Amount
-	if isFrozen {
-		fee = common.FrozenFee
-	} else {
-		fee = common.BaseFee
 	}
 
 	txBody := transaction.Body{
@@ -234,12 +221,8 @@ func makeTransactionCreateAccount(kpSource keypair.KP, kpDest keypair.KP, amount
 /// Returns:
 ///  `sebak.Transaction` = The generated `Transaction` to do a payment
 ///
-func makeTransactionPayment(kpSource keypair.KP, kpDest keypair.KP, amount common.Amount, seqid uint64, isFrozen bool) transaction.Transaction {
+func makeTransactionPayment(kpSource keypair.KP, kpDest keypair.KP, amount common.Amount, seqid uint64) transaction.Transaction {
 	opb := operation.NewPayment(kpDest.Address(), amount)
-	fee := common.BaseFee
-	if isFrozen {
-		fee = common.FrozenFee
-	}
 
 	op := operation.Operation{
 		H: operation.Header{
@@ -250,7 +233,7 @@ func makeTransactionPayment(kpSource keypair.KP, kpDest keypair.KP, amount commo
 
 	txBody := transaction.Body{
 		Source:     kpSource.Address(),
-		Fee:        fee,
+		Fee:        common.BaseFee,
 		SequenceID: seqid,
 		Operations: []operation.Operation{op},
 	}

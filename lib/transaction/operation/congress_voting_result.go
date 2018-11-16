@@ -82,6 +82,6 @@ func (o CongressVotingResult) IsWellFormed(common.Config) (err error) {
 	return
 }
 
-func (o CongressVotingResult) HasFee(isSourceLinked bool) bool {
+func (o CongressVotingResult) HasFee() bool {
 	return true
 }

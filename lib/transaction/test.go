@@ -47,42 +47,6 @@ func TestMakeTransactionWithKeypair(networkID []byte, n int, srcKp *keypair.Full
 	return
 }
 
-func TestMakeTransactionWithFeeAndOperations(networkID []byte, isSourceLinked bool, fee common.Amount, ops []operation.Operation) (kp *keypair.Full, tx Transaction) {
-	kp = keypair.Random()
-
-	tx, _ = NewTransactionAdujustFeeWithFrozenAccount(kp.Address(), 0, isSourceLinked, ops...)
-	tx.B.Fee = fee
-	tx.Sign(kp, networkID)
-
-	return
-}
-
-func TestMakeTransactionUnfreezingRequest(networkID []byte) (kp *keypair.Full, tx Transaction) {
-	kp = keypair.Random()
-
-	var ops []operation.Operation
-	ops = append(ops, operation.MakeTestUnfreezeRequest())
-
-	tx, _ = NewTransactionAdujustFeeWithFrozenAccount(kp.Address(), 0, true, ops...)
-	tx.Sign(kp, networkID)
-
-	return
-}
-
-func TestMakeTransactionCreateFrozenAccount(networkID []byte) (kp *keypair.Full, tx Transaction) {
-	kp = keypair.Random()
-	target := keypair.Random().Address()
-	linked := keypair.Random().Address()
-
-	var ops []operation.Operation
-	ops = append(ops, operation.MakeTestCreateFrozenAccount(-1, target, linked))
-
-	tx, _ = NewTransactionAdujustFeeWithFrozenAccount(kp.Address(), 0, true, ops...)
-	tx.Sign(kp, networkID)
-
-	return
-}
-
 func MakeTransactionCreateAccount(networkID []byte, kpSource *keypair.Full, target string, amount common.Amount) (tx Transaction) {
 	opb := operation.NewCreateAccount(target, common.Amount(amount), "")
 
@@ -103,34 +67,6 @@ func MakeTransactionCreateAccount(networkID []byte, kpSource *keypair.Full, targ
 	tx = Transaction{
 		H: Header{
 			Version: common.TransactionVersionV1,
-			Created: common.NowISO8601(),
-			Hash:    txBody.MakeHashString(),
-		},
-		B: txBody,
-	}
-	tx.Sign(kpSource, networkID)
-
-	return
-}
-
-func MakeTransactionCreateFrozenAccount(networkID []byte, kpSource *keypair.Full, target string, amount common.Amount, linkedAccount string) (tx Transaction) {
-	opb := operation.NewCreateAccount(target, common.Amount(amount), linkedAccount)
-
-	op := operation.Operation{
-		H: operation.Header{
-			Type: operation.TypeCreateAccount,
-		},
-		B: opb,
-	}
-
-	txBody := Body{
-		Source:     kpSource.Address(),
-		Fee:        common.FrozenFee,
-		Operations: []operation.Operation{op},
-	}
-
-	tx = Transaction{
-		H: Header{
 			Created: common.NowISO8601(),
 			Hash:    txBody.MakeHashString(),
 		},
@@ -165,62 +101,6 @@ func MakeTransactionPayment(networkID []byte, kpSource *keypair.Full, target str
 		},
 		B: txBody,
 	}
-	tx.Sign(kpSource, networkID)
-
-	return
-}
-
-func MakeTransactionUnfreezingRequest(networkID []byte, kpSource *keypair.Full) (tx Transaction) {
-	opb := operation.NewUnfreezeRequest()
-	op := operation.Operation{
-		H: operation.Header{
-			Type: operation.TypeUnfreezingRequest,
-		},
-		B: opb,
-	}
-
-	txBody := Body{
-		Source:     kpSource.Address(),
-		Fee:        common.FrozenFee,
-		Operations: []operation.Operation{op},
-	}
-
-	tx = Transaction{
-		H: Header{
-			Created: common.NowISO8601(),
-			Hash:    txBody.MakeHashString(),
-		},
-		B: txBody,
-	}
-
-	tx.Sign(kpSource, networkID)
-
-	return
-}
-
-func MakeTransactionUnfreezing(networkID []byte, kpSource *keypair.Full, target string, amount common.Amount) (tx Transaction) {
-	opb := operation.NewPayment(target, common.Amount(amount))
-	op := operation.Operation{
-		H: operation.Header{
-			Type: operation.TypePayment,
-		},
-		B: opb,
-	}
-
-	txBody := Body{
-		Source:     kpSource.Address(),
-		Fee:        common.FrozenFee,
-		Operations: []operation.Operation{op},
-	}
-
-	tx = Transaction{
-		H: Header{
-			Created: common.NowISO8601(),
-			Hash:    txBody.MakeHashString(),
-		},
-		B: txBody,
-	}
-
 	tx.Sign(kpSource, networkID)
 
 	return

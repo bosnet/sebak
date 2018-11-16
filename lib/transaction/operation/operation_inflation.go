@@ -83,6 +83,6 @@ func (o Inflation) Serialize() (encoded []byte, err error) {
 	return json.Marshal(o)
 }
 
-func (o Inflation) HasFee(isSourceLinked bool) bool {
+func (o Inflation) HasFee() bool {
 	return false
 }
