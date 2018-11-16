@@ -163,9 +163,9 @@ func (sm *ISAACStateManager) TransitISAACState(height uint64, round uint64, ball
 			"current", current,
 			"target", target,
 		)
-		go func() {
-			sm.stateTransit <- target
-		}()
+		go func(t consensus.ISAACState) {
+			sm.stateTransit <- t
+		}(target)
 	}
 }
 
@@ -211,6 +211,11 @@ func (sm *ISAACStateManager) Start() {
 				}
 
 			case state := <-sm.stateTransit:
+				current := sm.State()
+				if !current.IsLater(state) {
+					sm.nr.Log().Debug("break; target is before than or equal to current", "current", current, "target", state)
+					break
+				}
 				if state.BallotState == ballot.StateINIT {
 					sm.proposeOrWait(timer, state)
 				} else {
