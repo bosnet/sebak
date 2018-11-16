@@ -29,7 +29,7 @@ func (api NetworkHandlerAPI) GetBlocksHandler(w http.ResponseWriter, r *http.Req
 		if err != nil {
 			height = 1 // default cursor is height 1
 		}
-		option = storage.NewWalkOption(block.GetBlockKeyPrefixHeight(height), p.Limit(), p.Reverse())
+		option = storage.NewWalkOption(block.GetBlockKeyPrefixHeight(height), p.Limit(), p.Reverse(), false)
 		if httputils.IsEventStream(r) {
 			option.Limit = 10
 		}
@@ -38,7 +38,15 @@ func (api NetworkHandlerAPI) GetBlocksHandler(w http.ResponseWriter, r *http.Req
 	{
 		err := block.WalkBlocks(api.storage, option, func(b *block.Block, key []byte) (next bool, err error) {
 			blocks = append(blocks, resource.NewBlock(b))
-			cursor = []byte(strconv.FormatUint(b.Height, 10))
+			height := b.Height
+			if height > 1 {
+				if option.Reverse {
+					height--
+				} else {
+					height++
+				}
+			}
+			cursor = []byte(strconv.FormatUint(height, 10))
 			return true, nil
 		})
 		if err != nil {

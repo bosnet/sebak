@@ -68,7 +68,7 @@ func (p *PageQuery) ListOptions() storage.ListOptions {
 }
 
 func (p *PageQuery) WalkOption() *storage.WalkOption {
-	return storage.NewWalkOption(string(p.Cursor()), p.Limit(), p.Reverse())
+	return storage.NewWalkOption(string(p.Cursor()), p.Limit(), p.Reverse(), true)
 }
 
 func (p *PageQuery) ResourceList(rs []resource.Resource, cursor []byte) *resource.ResourceList {
