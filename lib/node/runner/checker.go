@@ -245,8 +245,6 @@ func BallotCheckSYNC(c common.Checker, args ...interface{}) error {
 		}
 		checker.NodeRunner.SavingBlockOperations().Save(*blk)
 
-		checker.NodeRunner.Log().Debug("node state transits to consensus", "height", checker.Ballot.VotingBasis().Height)
-		checker.LocalNode.SetConsensus()
 		checker.NodeRunner.NextHeight()
 		return nil
 	} else {
@@ -635,6 +633,10 @@ func saveBlock(checker *BallotChecker) error {
 	}
 
 	checker.Log.Debug("ballot was stored", "block", *theBlock)
+	if checker.LocalNode.State() != node.StateCONSENSUS {
+		checker.NodeRunner.Log().Debug("node state transits sync to consensus", "height", checker.Ballot.VotingBasis().Height)
+		checker.LocalNode.SetConsensus()
+	}
 
 	for _, tx := range proposedTransactions {
 		checker.LatestBlockSources = append(checker.LatestBlockSources, tx.B.Source)
