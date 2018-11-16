@@ -101,4 +101,5 @@ var (
 	InflationPFResultMissed                   = NewError(183, "voting result cannot be retrieved")
 	InflationPFAmountMissMatched              = NewError(184, "inflation pf amount missmatched")
 	InflationPFFundingAddressMissMatched      = NewError(185, "inflation pf funding address missmatched")
+	CongressAddressMisMatched                 = NewError(186, "congress address mismatched")
 )

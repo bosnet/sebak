@@ -86,8 +86,10 @@ func (suite *TestSuite) TestIsWellFormedTransactionWithLowerFeeSuite() {
 			B: opb,
 		}
 		tx.B.Operations = append(tx.B.Operations, op)
+		tx.B.Fee, err = tx.B.Fee.Add(common.BaseFee)
+		require.NoError(suite.T(), err)
 		tx.Sign(kp, suite.conf.NetworkID)
-		require.Equal(suite.T(), tx.B.Fee, common.BaseFee*3)
+		require.Equal(suite.T(), tx.B.Fee, common.BaseFee*4)
 		require.Equal(suite.T(), len(tx.B.Operations), 4)
 
 		err = tx.IsWellFormed(suite.conf)
@@ -110,8 +112,10 @@ func (suite *TestSuite) TestIsWellFormedTransactionWithLowerFeeSuite() {
 			B: opb,
 		}
 		tx.B.Operations = append(tx.B.Operations, op)
+		tx.B.Fee, err = tx.B.Fee.Add(common.BaseFee)
+		require.NoError(suite.T(), err)
 		tx.Sign(kp, suite.conf.NetworkID)
-		require.Equal(suite.T(), tx.B.Fee, common.BaseFee*3)
+		require.Equal(suite.T(), tx.B.Fee, common.BaseFee*4)
 		require.Equal(suite.T(), len(tx.B.Operations), 4)
 
 		err = tx.IsWellFormed(suite.conf)

@@ -61,6 +61,7 @@ var (
 	flagUnfreezingPeriod  string = common.GetENVValue("SEBAK_UNFREEZING_PERIOD", strconv.FormatUint(common.UnfreezingPeriod, 10))
 	flagValidators        string = common.GetENVValue("SEBAK_VALIDATORS", "")
 	flagVerbose           bool   = common.GetENVValue("SEBAK_VERBOSE", "0") == "1"
+	flagCongressAddress   string = common.GetENVValue("SEBAK_CONGRESS_ADDR", "")
 
 	flagRateLimitAPI        cmdcommon.ListFlags // "SEBAK_RATE_LIMIT_API"
 	flagRateLimitNode       cmdcommon.ListFlags // "SEBAK_RATE_LIMIT_NODE"
@@ -196,6 +197,8 @@ func init() {
 	nodeCmd.Flags().StringVar(&flagHTTPCacheAdapter, "http-cache-adapter", flagHTTPCacheAdapter, "http cache adapter: ex) 'mem'")
 	nodeCmd.Flags().StringVar(&flagHTTPCachePoolSize, "http-cache-pool-size", flagHTTPCachePoolSize, "http cache pool size")
 	nodeCmd.Flags().StringVar(&flagHTTPCacheRedisAddrs, "http-cache-redis-addrs", flagHTTPCacheRedisAddrs, "http cache redis address")
+
+	nodeCmd.Flags().StringVar(&flagCongressAddress, "set-congress-address", flagCongressAddress, "set congress address")
 
 	rootCmd.AddCommand(nodeCmd)
 }
@@ -544,6 +547,7 @@ func getTimeDuration(str string, defaultValue time.Duration, errMessage string) 
 }
 
 func runNode() error {
+
 	// create network
 	networkConfig, err := network.NewHTTP2NetworkConfigFromEndpoint(localNode.Alias(), bindEndpoint)
 	if err != nil {
@@ -566,20 +570,21 @@ func runNode() error {
 	)
 
 	conf := common.Config{
-		TimeoutINIT:         timeoutINIT,
-		TimeoutSIGN:         timeoutSIGN,
-		TimeoutACCEPT:       timeoutACCEPT,
-		TimeoutALLCONFIRM:   timeoutALLCONFIRM,
-		NetworkID:           []byte(flagNetworkID),
-		BlockTime:           blockTime,
-		BlockTimeDelta:      blockTimeDelta,
-		TxsLimit:            int(transactionsLimit),
-		OpsLimit:            int(operationsLimit),
-		RateLimitRuleAPI:    rateLimitRuleAPI,
-		RateLimitRuleNode:   rateLimitRuleNode,
-		HTTPCacheAdapter:    httpCacheAdapter,
-		HTTPCachePoolSize:   httpCachePoolSize,
-		HTTPCacheRedisAddrs: httpCacheRedisAddrs,
+		TimeoutINIT:            timeoutINIT,
+		TimeoutSIGN:            timeoutSIGN,
+		TimeoutACCEPT:          timeoutACCEPT,
+		TimeoutALLCONFIRM:      timeoutALLCONFIRM,
+		NetworkID:              []byte(flagNetworkID),
+		BlockTime:              blockTime,
+		BlockTimeDelta:         blockTimeDelta,
+		TxsLimit:               int(transactionsLimit),
+		OpsLimit:               int(operationsLimit),
+		RateLimitRuleAPI:       rateLimitRuleAPI,
+		RateLimitRuleNode:      rateLimitRuleNode,
+		HTTPCacheAdapter:       httpCacheAdapter,
+		HTTPCachePoolSize:      httpCachePoolSize,
+		HTTPCacheRedisAddrs:    httpCacheRedisAddrs,
+		CongressAccountAddress: flagCongressAddress,
 	}
 	st, err := storage.NewStorage(storageConfig)
 	if err != nil {
