@@ -62,7 +62,7 @@ func TestOperationBodyCongressVoting(t *testing.T) {
 	}
 	hashed := op.MakeHashString()
 
-	expected := "4L3zBKw1bVULX2YAvKUahYzh3rFkkCkJWEXyEHJ5i24y"
+	expected := "EtVW5hG3p4YsSzL3mgwejHvtskzYuxW8dNaM6UEm42DX"
 	require.Equal(t, hashed, expected)
 
 	err := op.IsWellFormed(common.NewTestConfig())
