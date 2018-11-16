@@ -313,7 +313,7 @@ func (sm *ISAACStateManager) setState(state consensus.ISAACState) {
 func (sm *ISAACStateManager) setBallotState(ballotState ballot.State) {
 	sm.Lock()
 	defer sm.Unlock()
-	sm.nr.Log().Debug("begin ISAACStateManager.setBallotState()", "ballotState", ballotState)
+	sm.nr.Log().Debug("begin ISAACStateManager.setBallotState()", "state", sm.state)
 	sm.state.BallotState = ballotState
 
 	return
