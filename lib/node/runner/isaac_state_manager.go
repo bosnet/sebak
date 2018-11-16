@@ -8,6 +8,7 @@ import (
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/consensus"
+	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/voting"
 )
 
@@ -199,7 +200,9 @@ func (sm *ISAACStateManager) Start() {
 					sm.transitSignal(sm.State())
 					sm.resetTimer(timer, ballot.StateSIGN)
 				case ballot.StateSIGN:
-					go sm.broadcastExpiredBallot(sm.State())
+					if sm.nr.localNode.State() == node.StateCONSENSUS {
+						go sm.broadcastExpiredBallot(sm.State())
+					}
 					sm.setBallotState(ballot.StateACCEPT)
 					sm.transitSignal(sm.State())
 					sm.resetTimer(timer, ballot.StateACCEPT)
@@ -216,8 +219,11 @@ func (sm *ISAACStateManager) Start() {
 					sm.nr.Log().Debug("break; target is before than or equal to current", "current", current, "target", state)
 					break
 				}
+
 				if state.BallotState == ballot.StateINIT {
-					sm.proposeOrWait(timer, state)
+					if sm.nr.localNode.State() == node.StateCONSENSUS {
+						sm.proposeOrWait(timer, state)
+					}
 				} else {
 					sm.resetTimer(timer, state.BallotState)
 				}
