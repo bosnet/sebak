@@ -37,6 +37,7 @@ const (
 var (
 	flagBindURL           string = common.GetENVValue("SEBAK_BIND", defaultBindURL)
 	flagBlockTime         string = common.GetENVValue("SEBAK_BLOCK_TIME", "5")
+	flagBlockTimeDelta    string = common.GetENVValue("SEBAK_BLOCK_TIME_DELTA", "1")
 	flagDebugPProf        bool   = common.GetENVValue("SEBAK_DEBUG_PPROF", "0") == "1"
 	flagKPSecretSeed      string = common.GetENVValue("SEBAK_SECRET_SEED", "")
 	flagLog               string = common.GetENVValue("SEBAK_LOG", "")
@@ -57,38 +58,46 @@ var (
 	flagTLSCertFile       string = common.GetENVValue("SEBAK_TLS_CERT", "sebak.crt")
 	flagTLSKeyFile        string = common.GetENVValue("SEBAK_TLS_KEY", "sebak.key")
 	flagTransactionsLimit string = common.GetENVValue("SEBAK_TRANSACTIONS_LIMIT", "1000")
-	flagUnfreezingPeriod  string = common.GetENVValue("SEBAK_UNFREEZING_PERIOD", "241920")
+	flagUnfreezingPeriod  string = common.GetENVValue("SEBAK_UNFREEZING_PERIOD", strconv.FormatUint(common.UnfreezingPeriod, 10))
 	flagValidators        string = common.GetENVValue("SEBAK_VALIDATORS", "")
 	flagVerbose           bool   = common.GetENVValue("SEBAK_VERBOSE", "0") == "1"
 
 	flagRateLimitAPI        cmdcommon.ListFlags // "SEBAK_RATE_LIMIT_API"
 	flagRateLimitNode       cmdcommon.ListFlags // "SEBAK_RATE_LIMIT_NODE"
 	flagStorageConfigString string
+
+	flagHTTPCacheAdapter    string = common.GetENVValue("SEBAK_HTTP_CACHE_ADAPTER", "")
+	flagHTTPCachePoolSize   string = common.GetENVValue("SEBAK_HTTP_CACHE_POOL_SIZE", "10000")
+	flagHTTPCacheRedisAddrs string = common.GetENVValue("SEBAK_HTTP_CACHE_REDIS_ADDRS", "")
 )
 
 var (
 	nodeCmd *cobra.Command
 
-	bindEndpoint      *common.Endpoint
-	blockTime         time.Duration
-	kp                *keypair.Full
-	localNode         *node.LocalNode
-	operationsLimit   uint64
-	publishEndpoint   *common.Endpoint
-	rateLimitRuleAPI  common.RateLimitRule
-	rateLimitRuleNode common.RateLimitRule
-	storageConfig     *storage.Config
-	syncCheckInterval time.Duration
-	syncFetchTimeout  time.Duration
-	syncPoolSize      uint64
-	syncRetryInterval time.Duration
-	threshold         int
-	timeoutACCEPT     time.Duration
-	timeoutALLCONFIRM time.Duration
-	timeoutINIT       time.Duration
-	timeoutSIGN       time.Duration
-	transactionsLimit uint64
-	validators        []*node.Validator
+	bindEndpoint        *common.Endpoint
+	blockTime           time.Duration
+	blockTimeDelta      time.Duration
+	kp                  *keypair.Full
+	localNode           *node.LocalNode
+	operationsLimit     uint64
+	publishEndpoint     *common.Endpoint
+	rateLimitRuleAPI    common.RateLimitRule
+	rateLimitRuleNode   common.RateLimitRule
+	storageConfig       *storage.Config
+	syncCheckInterval   time.Duration
+	syncFetchTimeout    time.Duration
+	syncPoolSize        uint64
+	syncRetryInterval   time.Duration
+	threshold           int
+	timeoutACCEPT       time.Duration
+	timeoutALLCONFIRM   time.Duration
+	timeoutINIT         time.Duration
+	timeoutSIGN         time.Duration
+	transactionsLimit   uint64
+	validators          []*node.Validator
+	httpCacheAdapter    string
+	httpCachePoolSize   int
+	httpCacheRedisAddrs map[string]string
 
 	logLevel logging.Lvl
 	log      logging.Logger = logging.New("module", "main")
@@ -104,17 +113,20 @@ func init() {
 		Run: func(c *cobra.Command, args []string) {
 			// If `--genesis` was provided, perfom `sebak genesis` before starting the node
 			// This allows one-step startup from scratch, quite useful for testing
-			if len(flagGenesis) != 0 {
-				var balanceStr string
-				csv := strings.Split(flagGenesis, ",")
-				if len(csv) < 2 || len(csv) > 3 {
-					cmdcommon.PrintFlagsError(nodeCmd, "--genesis",
-						errors.New("--genesis expects '<genesis address>,<common account>[,balance]"))
+			if len(flagGenesis) > 0 {
+				genesisKP, commonKP, balance, err := parseGenesisOptionFromCSV(flagGenesis)
+				if err != nil {
+					cmdcommon.PrintFlagsError(nodeCmd, "--genesis", err)
 				}
-				if len(csv) == 3 {
-					balanceStr = csv[1]
-				}
-				flagName, err := makeGenesisBlock(csv[0], csv[1], flagNetworkID, balanceStr, flagStorageConfigString, log)
+
+				flagName, err := makeGenesisBlock(
+					genesisKP,
+					commonKP,
+					flagNetworkID,
+					balance,
+					flagStorageConfigString,
+					log,
+				)
 				if len(flagName) != 0 || err != nil {
 					cmdcommon.PrintFlagsError(c, flagName, err)
 				}
@@ -162,6 +174,7 @@ func init() {
 	nodeCmd.Flags().StringVar(&flagTimeoutACCEPT, "timeout-accept", flagTimeoutACCEPT, "timeout of the accept state")
 	nodeCmd.Flags().StringVar(&flagTimeoutALLCONFIRM, "timeout-allconfirm", flagTimeoutALLCONFIRM, "timeout of the allconfirm state")
 	nodeCmd.Flags().StringVar(&flagBlockTime, "block-time", flagBlockTime, "block creation time")
+	nodeCmd.Flags().StringVar(&flagBlockTimeDelta, "block-time-delta", flagBlockTimeDelta, "variation period of block time")
 	nodeCmd.Flags().StringVar(&flagTransactionsLimit, "transactions-limit", flagTransactionsLimit, "transactions limit in a ballot")
 	nodeCmd.Flags().StringVar(&flagUnfreezingPeriod, "unfreezing-period", flagUnfreezingPeriod, "how long freezing must last")
 	nodeCmd.Flags().StringVar(&flagOperationsLimit, "operations-limit", flagOperationsLimit, "operations limit in a transaction")
@@ -180,6 +193,9 @@ func init() {
 	nodeCmd.Flags().StringVar(&flagSyncFetchTimeout, "sync-fetch-timeout", flagSyncFetchTimeout, "sync fetch timeout")
 	nodeCmd.Flags().StringVar(&flagSyncRetryInterval, "sync-retry-interval", flagSyncRetryInterval, "sync retry interval")
 	nodeCmd.Flags().StringVar(&flagSyncCheckInterval, "sync-check-interval", flagSyncCheckInterval, "sync check interval")
+	nodeCmd.Flags().StringVar(&flagHTTPCacheAdapter, "http-cache-adapter", flagHTTPCacheAdapter, "http cache adapter: ex) 'mem'")
+	nodeCmd.Flags().StringVar(&flagHTTPCachePoolSize, "http-cache-pool-size", flagHTTPCachePoolSize, "http cache pool size")
+	nodeCmd.Flags().StringVar(&flagHTTPCacheRedisAddrs, "http-cache-redis-addrs", flagHTTPCacheRedisAddrs, "http cache redis address")
 
 	rootCmd.AddCommand(nodeCmd)
 }
@@ -205,9 +221,11 @@ func parseFlagRateLimit(l cmdcommon.ListFlags, defaultRate limiter.Rate) (rule c
 		}
 
 		if len(ip) > 0 {
-			if net.ParseIP(ip) == nil {
-				err = fmt.Errorf("invalid ip address")
-				return
+			if _, _, err = net.ParseCIDR(ip); err != nil {
+				if net.ParseIP(ip) == nil {
+					err = fmt.Errorf("invalid ip or cirdr address")
+					return
+				}
 			}
 		}
 
@@ -322,6 +340,7 @@ func parseFlagsNode() {
 	timeoutACCEPT = getTime(flagTimeoutACCEPT, 2*time.Second, "--timeout-accept")
 	timeoutALLCONFIRM = getTime(flagTimeoutALLCONFIRM, 30*time.Second, "--timeout-accept")
 	blockTime = getTime(flagBlockTime, 5*time.Second, "--block-time")
+	blockTimeDelta = getTime(flagBlockTimeDelta, 1*time.Second, "--block-time-delta")
 
 	if transactionsLimit, err = strconv.ParseUint(flagTransactionsLimit, 10, 64); err != nil {
 		cmdcommon.PrintFlagsError(nodeCmd, "--transactions-limit", err)
@@ -349,6 +368,30 @@ func parseFlagsNode() {
 	syncRetryInterval = getTimeDuration(flagSyncRetryInterval, sync.RetryInterval, "--sync-retry-interval")
 	syncFetchTimeout = getTimeDuration(flagSyncFetchTimeout, sync.FetchTimeout, "--sync-fetch-timeout")
 	syncCheckInterval = getTimeDuration(flagSyncCheckInterval, sync.CheckBlockHeightInterval, "--sync-check-interval")
+
+	{
+		if ok := common.HTTPCacheAdapterNames[flagHTTPCacheAdapter]; !ok {
+			cmdcommon.PrintFlagsError(nodeCmd, "--http-cache-adapter", err)
+		} else {
+			httpCacheAdapter = flagHTTPCacheAdapter
+		}
+		var tmpUint64 uint64
+		if tmpUint64, err = strconv.ParseUint(flagHTTPCachePoolSize, 10, 64); err != nil {
+			cmdcommon.PrintFlagsError(nodeCmd, "--http-cache-pool-size", err)
+		} else {
+			httpCachePoolSize = int(tmpUint64)
+		}
+		if httpCacheAdapter == common.HTTPCacheRedisAdapterName {
+			httpCacheRedisAddrs, err = parseHTTPCacheRedisAddrs(flagHTTPCacheRedisAddrs)
+			if err != nil {
+				cmdcommon.PrintFlagsError(nodeCmd, "--http-cache-redis-addrs", err)
+			}
+			if len(httpCacheRedisAddrs) <= 0 {
+				err := fmt.Errorf("redis addrs is empty")
+				cmdcommon.PrintFlagsError(nodeCmd, "--http-cache-redis-addrs", err)
+			}
+		}
+	}
 
 	if logLevel, err = logging.LvlFromString(flagLogLevel); err != nil {
 		cmdcommon.PrintFlagsError(nodeCmd, "--log-level", err)
@@ -426,10 +469,13 @@ func parseFlagsNode() {
 	parsedFlags = append(parsedFlags, "\n\ttimeout-accept", flagTimeoutACCEPT)
 	parsedFlags = append(parsedFlags, "\n\ttimeout-allconfirm", flagTimeoutALLCONFIRM)
 	parsedFlags = append(parsedFlags, "\n\tblock-time", flagBlockTime)
+	parsedFlags = append(parsedFlags, "\n\tblock-time-delta", flagBlockTimeDelta)
 	parsedFlags = append(parsedFlags, "\n\ttransactions-limit", flagTransactionsLimit)
 	parsedFlags = append(parsedFlags, "\n\toperations-limit", flagOperationsLimit)
 	parsedFlags = append(parsedFlags, "\n\trate-limit-api", rateLimitRuleAPI)
 	parsedFlags = append(parsedFlags, "\n\trate-limit-node", rateLimitRuleNode)
+	parsedFlags = append(parsedFlags, "\n\thttp-cache-adapter", httpCacheAdapter)
+	parsedFlags = append(parsedFlags, "\n\thttp-cache-pool-size", httpCachePoolSize)
 
 	// create current Node
 	localNode, err = node.NewLocalNode(kp, bindEndpoint, "")
@@ -458,6 +504,19 @@ func parseFlagsNode() {
 	if flagDebugPProf {
 		runner.DebugPProf = true
 	}
+}
+
+func parseHTTPCacheRedisAddrs(s string) (map[string]string, error) {
+	addrs := make(map[string]string)
+	splitted := strings.Fields(strings.TrimSpace(s))
+	for _, s := range splitted {
+		addr := strings.Split(s, "=")
+		if len(addr) != 2 {
+			return nil, fmt.Errorf("address has wrong format")
+		}
+		addrs[addr[0]] = addr[1]
+	}
+	return addrs, nil
 }
 
 func getTime(timeoutStr string, defaultValue time.Duration, errMessage string) time.Duration {
@@ -507,16 +566,20 @@ func runNode() error {
 	)
 
 	conf := common.Config{
-		TimeoutINIT:       timeoutINIT,
-		TimeoutSIGN:       timeoutSIGN,
-		TimeoutACCEPT:     timeoutACCEPT,
-		TimeoutALLCONFIRM: timeoutALLCONFIRM,
-		NetworkID:         []byte(flagNetworkID),
-		BlockTime:         blockTime,
-		TxsLimit:          int(transactionsLimit),
-		OpsLimit:          int(operationsLimit),
-		RateLimitRuleAPI:  rateLimitRuleAPI,
-		RateLimitRuleNode: rateLimitRuleNode,
+		TimeoutINIT:         timeoutINIT,
+		TimeoutSIGN:         timeoutSIGN,
+		TimeoutACCEPT:       timeoutACCEPT,
+		TimeoutALLCONFIRM:   timeoutALLCONFIRM,
+		NetworkID:           []byte(flagNetworkID),
+		BlockTime:           blockTime,
+		BlockTimeDelta:      blockTimeDelta,
+		TxsLimit:            int(transactionsLimit),
+		OpsLimit:            int(operationsLimit),
+		RateLimitRuleAPI:    rateLimitRuleAPI,
+		RateLimitRuleNode:   rateLimitRuleNode,
+		HTTPCacheAdapter:    httpCacheAdapter,
+		HTTPCachePoolSize:   httpCachePoolSize,
+		HTTPCacheRedisAddrs: httpCacheRedisAddrs,
 	}
 	st, err := storage.NewStorage(storageConfig)
 	if err != nil {
@@ -581,4 +644,54 @@ func runNode() error {
 	}
 
 	return nil
+}
+
+func parseGenesisOptionFromCSV(s string) (genesisKP, commonKP keypair.KP, balance common.Amount, err error) {
+	csv := strings.Split(s, ",")
+	if len(csv) < 2 || len(csv) > 3 {
+		err = errors.InvalidGenesisOption
+		return
+	}
+
+	genesisAddress := strings.TrimSpace(csv[0])
+	commonAddress := strings.TrimSpace(csv[1])
+	if len(genesisAddress) < 1 || len(commonAddress) < 1 {
+		err = errors.InvalidGenesisOption
+		return
+	}
+
+	balanceString := common.MaximumBalance.String()
+	if len(csv) == 3 {
+		balanceString = strings.TrimSpace(csv[2])
+	}
+
+	return parseGenesisOption(genesisAddress, commonAddress, balanceString)
+}
+
+func parseGenesisOption(genesisAddress, commonAddress, balanceString string) (genesisKP, commonKP keypair.KP, balance common.Amount, err error) {
+	if balance, err = cmdcommon.ParseAmountFromString(balanceString); err != nil {
+		return
+	}
+
+	{
+		if genesisKP, err = keypair.Parse(genesisAddress); err != nil {
+			err = errors.NotPublicKey.Clone().SetData("error", err)
+			return
+		} else if _, ok := genesisKP.(*keypair.Full); ok {
+			err = errors.NotPublicKey
+			return
+		}
+	}
+
+	{
+		if commonKP, err = keypair.Parse(commonAddress); err != nil {
+			err = errors.NotPublicKey.Clone().SetData("error", err)
+			return
+		} else if _, ok := commonKP.(*keypair.Full); ok {
+			err = errors.NotPublicKey
+			return
+		}
+	}
+
+	return
 }

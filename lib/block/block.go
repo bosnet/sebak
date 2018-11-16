@@ -24,9 +24,9 @@ type Block struct {
 	//PrevConsensusResult ConsensusResult
 
 	Hash      string `json:"hash"`
-	Confirmed string `json:"confirmed"`
 	Proposer  string `json:"proposer"` /* Node.Address() */
 	Round     uint64 `json:"round"`
+	Confirmed string `json:"confirmed" rlp:"-"`
 }
 
 func (bck Block) Serialize() (encoded []byte, err error) {
@@ -45,14 +45,13 @@ func (bck Block) IsEmpty() bool {
 
 // NewBlock creates new block; `ptx` represents the
 // `ProposerTransaction.GetHash()`.
-func NewBlock(proposer string, basis voting.Basis, ptx string, transactions []string, confirmed string) *Block {
+func NewBlock(proposer string, basis voting.Basis, ptx string, transactions []string, proposedTime string) *Block {
 	b := &Block{
-		Header:              *NewBlockHeader(basis, getTransactionRoot(transactions)),
+		Header:              *NewBlockHeader(basis, getTransactionRoot(append([]string{ptx}, transactions...)), proposedTime),
 		Transactions:        transactions,
 		ProposerTransaction: ptx,
 		Proposer:            proposer,
 		Round:               basis.Round,
-		Confirmed:           confirmed,
 	}
 
 	b.Hash = base58.Encode(common.MustMakeObjectHash(b))
@@ -74,7 +73,7 @@ func getBlockKeyPrefixHeight(height uint64) string {
 func (b Block) NewBlockKeyConfirmed() string {
 	return fmt.Sprintf(
 		"%s%s-%s%s",
-		common.BlockPrefixConfirmed, b.Confirmed,
+		common.BlockPrefixConfirmed, b.ProposedTime,
 		common.EncodeUint64ToByteSlice(b.Height),
 		common.GetUniqueIDFromUUID(),
 	)
@@ -82,6 +81,7 @@ func (b Block) NewBlockKeyConfirmed() string {
 
 func (b *Block) Save(st *storage.LevelDBBackend) (err error) {
 	key := getBlockKey(b.Hash)
+	b.Confirmed = common.NowISO8601()
 
 	var exists bool
 	exists, err = st.Has(key)

@@ -63,6 +63,10 @@ func (b *BlockAccount) Save(st *storage.LevelDBBackend) (err error) {
 		createdKey := GetBlockAccountCreatedKey(common.GetUniqueIDFromUUID())
 		err = st.New(createdKey, b.Address)
 	}
+	if err != nil {
+		return err
+	}
+
 	if err == nil {
 		event := "saved"
 		event += " " + fmt.Sprintf("address-%s", b.Address)
@@ -141,6 +145,35 @@ func GetBlockAccountsByCreated(st *storage.LevelDBBackend, options storage.ListO
 				return nil, false, cursor
 			}
 			return ba, hasNext, cursor
+		}), (func() {
+			closeFunc()
+		})
+}
+
+func LoadBlockAccountsInsideIterator(
+	st *storage.LevelDBBackend,
+	iterFunc func() (storage.IterItem, bool),
+	closeFunc func(),
+) (
+	func() (*BlockAccount, bool, []byte),
+	func(),
+) {
+
+	return (func() (*BlockAccount, bool, []byte) {
+			item, hasNext := iterFunc()
+			if !hasNext {
+				return &BlockAccount{}, false, item.Key
+			}
+
+			var hash string
+			json.Unmarshal(item.Value, &hash)
+
+			ba, err := GetBlockAccount(st, hash)
+			if err != nil {
+				return &BlockAccount{}, false, item.Key
+			}
+
+			return ba, hasNext, item.Key
 		}), (func() {
 			closeFunc()
 		})

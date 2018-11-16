@@ -673,10 +673,8 @@ func TestProposedTransactionStoreWithZeroAmount(t *testing.T) {
 
 	{
 		_, _, err := finishBallot(
-			p.nr.Storage(),
+			p.nr,
 			*blt,
-			p.nr.TransactionPool,
-			p.nr.Log(),
 			p.nr.Log(),
 		)
 		require.NoError(t, err)
@@ -760,10 +758,8 @@ func TestProposedTransactionStoreWithAmount(t *testing.T) {
 
 	{
 		_, _, err := finishBallot(
-			p.nr.Storage(),
+			p.nr,
 			*blt,
-			p.nr.TransactionPool,
-			p.nr.Log(),
 			p.nr.Log(),
 		)
 		require.NoError(t, err)

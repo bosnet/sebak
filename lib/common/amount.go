@@ -15,6 +15,8 @@ import (
 	"strconv"
 
 	"boscoin.io/sebak/lib/errors"
+	"github.com/ethereum/go-ethereum/rlp"
+	"io"
 )
 
 const (
@@ -40,6 +42,10 @@ func (this Amount) Invariant() {
 		// which would lead to an infinite recursion
 		panic(fmt.Errorf("Amount '%d' is higher than the total supply of coins (%d)", uint64(this), uint64(MaximumBalance)))
 	}
+}
+
+func (a Amount) EncodeRLP(w io.Writer) (err error) {
+	return rlp.Encode(w, a.String())
 }
 
 // Stringer interface implementation

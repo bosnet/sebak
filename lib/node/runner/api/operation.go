@@ -3,30 +3,32 @@ package api
 import (
 	"fmt"
 	"net/http"
-	"strings"
+
+	"github.com/gorilla/mux"
 
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/network/httputils"
 	"boscoin.io/sebak/lib/node/runner/api/resource"
-	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction/operation"
-	"github.com/gorilla/mux"
 )
 
 func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	address := vars["id"]
-	options, err := storage.NewDefaultListOptionsFromQuery(r.URL.Query())
+
+	p, err := NewPageQuery(r)
 	if err != nil {
-		http.Error(w, errors.InvalidQueryString.Error(), http.StatusBadRequest)
+		httputils.WriteJSONError(w, err)
 		return
 	}
 
+	options := p.ListOptions()
+
 	oTypeStr := r.URL.Query().Get("type")
 	if len(oTypeStr) > 0 && !operation.IsValidOperationType(oTypeStr) {
-		http.Error(w, errors.InvalidQueryString.Error(), http.StatusBadRequest)
+		httputils.WriteJSONError(w, errors.InvalidQueryString)
 		return
 	}
 
@@ -34,16 +36,21 @@ func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter
 	var cursor []byte
 	readFunc := func() []resource.Resource {
 		var txs []resource.Resource
-		iterFunc, closeFunc := block.GetBlockOperationsBySource(api.storage, address, options)
+
+		var iterFunc func() (block.BlockOperation, bool, []byte)
+		var closeFunc func()
+		if len(oType) > 0 {
+			iterFunc, closeFunc = block.GetBlockOperationsBySourceAndType(api.storage, address, oType, options)
+		} else {
+			iterFunc, closeFunc = block.GetBlockOperationsBySource(api.storage, address, options)
+		}
 		for {
 			t, hasNext, c := iterFunc()
 			cursor = c
 			if !hasNext {
 				break
 			}
-			if len(oType) == 0 || (len(oType) > 0 && t.Type == oType) {
-				txs = append(txs, resource.NewOperation(&t))
-			}
+			txs = append(txs, resource.NewOperation(&t))
 		}
 		closeFunc()
 		return txs
@@ -72,10 +79,6 @@ func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter
 	}
 
 	txs := readFunc()
-	self := r.URL.String()
-	next := strings.Replace(resource.URLAccountOperations, "{id}", address, -1) + "?" + options.SetCursor(cursor).SetReverse(false).Encode()
-	prev := strings.Replace(resource.URLAccountOperations, "{id}", address, -1) + "?" + options.SetReverse(true).Encode()
-	list := resource.NewResourceList(txs, self, next, prev)
-
+	list := p.ResourceList(txs, cursor)
 	httputils.MustWriteJSON(w, 200, list)
 }

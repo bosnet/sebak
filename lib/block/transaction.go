@@ -180,20 +180,46 @@ func (bt *BlockTransaction) SaveBlockOperations(st *storage.LevelDBBackend) (err
 		return errors.FailedToSaveBlockOperaton
 	}
 
+	if bt.blockHeight < 1 {
+		var blk Block
+		if blk, err = GetBlock(st, bt.Block); err != nil {
+			return
+		} else {
+			bt.blockHeight = blk.Height
+		}
+	}
+
 	for _, op := range bt.Transaction().B.Operations {
-		var bo BlockOperation
-		bo, err = NewBlockOperationFromOperation(op, bt.Transaction(), bt.blockHeight)
+		if err = bt.SaveBlockOperation(st, op); err != nil {
+			return
+		}
+	}
+
+	return nil
+}
+
+func (bt *BlockTransaction) SaveBlockOperation(st *storage.LevelDBBackend, op operation.Operation) (err error) {
+	if bt.blockHeight < 1 {
+		var blk Block
+		if blk, err = GetBlock(st, bt.Block); err != nil {
+			return
+		} else {
+			bt.blockHeight = blk.Height
+		}
+	}
+
+	var bo BlockOperation
+	bo, err = NewBlockOperationFromOperation(op, bt.Transaction(), bt.blockHeight)
+	if err != nil {
+		return
+	}
+	if err = bo.Save(st); err != nil {
+		return
+	}
+	if pop, ok := op.B.(operation.Payable); ok {
+		err = st.New(bt.NewBlockTransactionKeyByAccount(pop.TargetAddress()), bt.Hash)
 		if err != nil {
 			return
-		}
-		if err = bo.Save(st); err != nil {
-			return
-		}
-		if pop, ok := op.B.(operation.Payable); ok {
-			err = st.New(bt.NewBlockTransactionKeyByAccount(pop.TargetAddress()), bt.Hash)
-			if err != nil {
-				return
-			}
 		}
 	}
 

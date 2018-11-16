@@ -125,7 +125,7 @@ func TestMakeGenesisBlock(t *testing.T) {
 	require.Equal(t, uint64(0), bk.Round)
 	require.Equal(t, "", bk.PrevBlockHash)
 	require.Equal(t, "", bk.Proposer)
-	require.Equal(t, common.GenesisBlockConfirmedTime, bk.Confirmed)
+	require.Equal(t, common.GenesisBlockConfirmedTime, bk.ProposedTime)
 
 	// transaction
 	{

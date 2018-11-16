@@ -34,7 +34,9 @@ func NewBallot(fromAddr string, proposerAddr string, basis voting.Basis, transac
 	}
 
 	b = &Ballot{
-		H: BallotHeader{},
+		H: BallotHeader{
+			Version: common.BallotVersionV1,
+		},
 		B: body,
 	}
 
@@ -65,6 +67,14 @@ func (b Ballot) Serialize() (encoded []byte, err error) {
 func (b Ballot) String() string {
 	encoded, _ := json.MarshalIndent(b, "", "  ")
 	return string(encoded)
+}
+
+func (b Ballot) Version() string {
+	return b.H.Version
+}
+
+func (b Ballot) IsValidVersion(version string) bool {
+	return b.H.Version == version
 }
 
 func (b Ballot) IsWellFormed(conf common.Config) (err error) {
@@ -257,6 +267,7 @@ func (b *Ballot) SetProposerTransaction(ptx ProposerTransaction) {
 }
 
 type BallotHeader struct {
+	Version           string `json:"version"`            // version of `BallotBody`
 	Hash              string `json:"hash"`               // hash of `BallotBody`
 	Signature         string `json:"signature"`          // signed by source node of <networkID> + `Hash`
 	ProposerSignature string `json:"proposer_signature"` // signed by proposer of <networkID> + `Hash` of `BallotBodyProposed`

@@ -10,12 +10,13 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/node/runner/api/resource"
 	"boscoin.io/sebak/lib/transaction/operation"
-	"github.com/stretchr/testify/require"
 )
 
 func TestGetOperationsByAccountHandler(t *testing.T) {

@@ -32,7 +32,7 @@ func (p *TestSavingBlockOperationHelper) makeBlock(prevBlock block.Block, numTxs
 	var txs []transaction.Transaction
 	var txHashes []string
 	for i := 0; i < numTxs; i++ {
-		tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, kp)
+		tx := transaction.TestMakeTransactionWithKeypair(networkID, 100, kp)
 		block.SaveTransactionPool(p.st, tx)
 		txs = append(txs, tx)
 		txHashes = append(txHashes, tx.GetHash())
@@ -54,7 +54,7 @@ func (p *TestSavingBlockOperationHelper) makeBlock(prevBlock block.Block, numTxs
 	opi, _ := ballot.NewInflationFromBallot(*blt, block.CommonKP.Address(), common.BaseReserve)
 	opc, _ := ballot.NewCollectTxFeeFromBallot(*blt, block.CommonKP.Address(), txs...)
 	ptx, _ := ballot.NewProposerTransactionFromBallot(*blt, opc, opi)
-	bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.Confirmed, ptx.Transaction)
+	bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.ProposedTime, ptx.Transaction)
 	bt.MustSave(p.st)
 	block.SaveTransactionPool(p.st, ptx.Transaction)
 
@@ -63,7 +63,7 @@ func (p *TestSavingBlockOperationHelper) makeBlock(prevBlock block.Block, numTxs
 	blk.MustSave(p.st)
 
 	for _, tx := range txs {
-		bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.Confirmed, tx)
+		bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.ProposedTime, tx)
 		bt.MustSave(p.st)
 	}
 
@@ -100,6 +100,9 @@ func TestSavingBlockOperation(t *testing.T) {
 			exists, err := block.ExistsBlockOperation(p.st, opHash)
 			require.NoError(t, err)
 			require.True(t, exists)
+			bo, err := block.GetBlockOperation(p.st, opHash)
+			require.NoError(t, err)
+			require.Equal(t, blk.Height, bo.Height)
 		}
 	}
 }

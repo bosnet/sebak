@@ -85,7 +85,7 @@ func (is *ISAAC) SaveNodeHeight(senderAddr string, height uint64) {
 	is.nodesHeight[senderAddr] = height
 }
 
-func (is *ISAAC) IsAvailableRound(basis voting.Basis, latestBlock block.Block) bool {
+func (is *ISAAC) IsValidVotingBasis(basis voting.Basis, latestBlock block.Block) bool {
 	if basis.Height == latestBlock.Height {
 		if is.isInitRound(basis) {
 			return true

@@ -87,6 +87,7 @@ func NewTransaction(source string, sequenceID uint64, ops ...operation.Operation
 
 	tx = Transaction{
 		H: Header{
+			Version: common.TransactionVersionV1,
 			Created: common.NowISO8601(),
 			Hash:    txBody.MakeHashString(),
 		},
@@ -142,6 +143,10 @@ func (tx Transaction) GetHash() string {
 
 func (tx Transaction) Source() string {
 	return tx.B.Source
+}
+
+func (tx Transaction) Version() string {
+	return tx.H.Version
 }
 
 // TotalAmount returns the sum of Amount of operations.
@@ -208,4 +213,8 @@ func (tx *Transaction) Sign(kp keypair.KP, networkID []byte) {
 
 func (tx Transaction) IsEmpty() bool {
 	return len(tx.GetHash()) < 1
+}
+
+func (tx Transaction) IsValidVersion(version string) bool {
+	return tx.H.Version == version
 }

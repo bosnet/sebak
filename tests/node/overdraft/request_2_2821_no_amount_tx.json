@@ -1,9 +1,9 @@
 {
   "T": "transaction",
   "H": {
-    "version": "",
+    "version": "1",
     "created": "2018-09-19T04:26:41.304736300Z",
-    "signature": "4sFj9bYmVd3in8tVahrTfi3ZLhzWxZ1AV2KbJiJw5WtCMUQXVjVHzbQCRGARdzWzmM3Q54PYeSKvGs8EDomLjsw6"
+    "signature": "5nk8Sv5dLWboS9qFMuu6XjYRe5EHGwUmzES78AMxbvrmVJUbwTZuNDoov6Uk2Rmz7DkcmLVVjNiTGrjxuJDZV9NB"
   },
   "B": {
     "source": "GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ",
@@ -15,7 +15,7 @@
           "type": "payment"
         },
         "B": {
-          "target": "GDTEPFWEITKFHSUO44NQABY2XHRBBH2UBVGJ2ZJPDREIOL2F6RAEBJE4",
+          "target": "GATR5BQCWUKGWIAZNDUPDTMMXSRDA23BFJQ36A2IAAOZI5KOOANKA6L3",
           "amount": "0"
         }
       }

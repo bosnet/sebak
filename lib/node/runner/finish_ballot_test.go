@@ -6,7 +6,6 @@ import (
 	"os"
 	"testing"
 
-	logging "github.com/inconshreveable/log15"
 	"github.com/stretchr/testify/require"
 
 	"boscoin.io/sebak/lib/ballot"
@@ -76,7 +75,7 @@ func createNodeRunnerForTestingWithFileStorage(n int, conf common.Config, recv c
 	return nr, nodes, dir
 }
 
-func testFinishBallotWithBatch(withBatch bool, numberOfTransactions, numberOfOperations int) error {
+func testFinishBallot(withBatch bool, numberOfTransactions, numberOfOperations int) error {
 	conf := common.NewTestConfig()
 	nr, localNodes, dir := createNodeRunnerForTestingWithFileStorage(1, conf, nil)
 	defer func() {
@@ -144,175 +143,21 @@ func testFinishBallotWithBatch(withBatch bool, numberOfTransactions, numberOfOpe
 		blt.Sign(proposerNode.Keypair(), conf.NetworkID)
 	}
 
-	st := nr.Storage()
-	if withBatch {
-		st, _ = st.OpenBatch()
-	}
-
 	_, _, err := finishBallot(
-		st,
+		nr,
 		*blt,
-		nr.TransactionPool,
-		nr.Log(),
 		nr.Log(),
 	)
 
 	return err
 }
 
-func benchmarkFinishBallotWithBatch(withBatch bool, numberOfTransactions, numberOfOperations int, b *testing.B) {
-	SetLogging(logging.LvlError, common.DefaultLogHandler)
-	for i := 1; i < b.N+1; i++ {
-		testFinishBallotWithBatch(withBatch, numberOfTransactions, numberOfOperations)
-	}
-}
-
-func BenchmarkFinishBallotWithoutBatch_1_10(b *testing.B) {
-	benchmarkFinishBallotWithBatch(false, 1, 10, b)
-}
-
-func BenchmarkFinishBallotWithBatch_1_10(b *testing.B) {
-	benchmarkFinishBallotWithBatch(true, 1, 10, b)
-}
-
-func BenchmarkFinishBallotWithoutBatch_1_200(b *testing.B) {
-	benchmarkFinishBallotWithBatch(false, 1, 200, b)
-}
-
-func BenchmarkFinishBallotWithBatch_1_200(b *testing.B) {
-	benchmarkFinishBallotWithBatch(true, 1, 200, b)
-}
-
-func BenchmarkFinishBallotWithoutBatch_1_400(b *testing.B) {
-	benchmarkFinishBallotWithBatch(false, 1, 400, b)
-}
-
-func BenchmarkFinishBallotWithBatch_1_400(b *testing.B) {
-	benchmarkFinishBallotWithBatch(true, 1, 400, b)
-}
-
-func BenchmarkFinishBallotWithoutBatch_1_600(b *testing.B) {
-	benchmarkFinishBallotWithBatch(false, 1, 600, b)
-}
-
-func BenchmarkFinishBallotWithBatch_1_600(b *testing.B) {
-	benchmarkFinishBallotWithBatch(true, 1, 600, b)
-}
-
-func BenchmarkFinishBallotWithoutBatch_1_800(b *testing.B) {
-	benchmarkFinishBallotWithBatch(false, 1, 800, b)
-}
-
-func BenchmarkFinishBallotWithBatch_1_800(b *testing.B) {
-	benchmarkFinishBallotWithBatch(true, 1, 800, b)
-}
-
-func BenchmarkFinishBallotWithoutBatch_1_1000(b *testing.B) {
-	benchmarkFinishBallotWithBatch(false, 1, 1000, b)
-}
-
-func BenchmarkFinishBallotWithBatch_1_1000(b *testing.B) {
-	benchmarkFinishBallotWithBatch(true, 1, 1000, b)
-}
-
-func BenchmarkFinishBallotWithoutBatch_200_10(b *testing.B) {
-	benchmarkFinishBallotWithBatch(false, 200, 10, b)
-}
-
-func BenchmarkFinishBallotWithBatch_200_10(b *testing.B) {
-	benchmarkFinishBallotWithBatch(true, 200, 10, b)
-}
-
-func BenchmarkFinishBallotWithoutBatch_200_200(b *testing.B) {
-	benchmarkFinishBallotWithBatch(false, 200, 200, b)
-}
-
-func BenchmarkFinishBallotWithBatch_200_200(b *testing.B) {
-	benchmarkFinishBallotWithBatch(true, 200, 200, b)
-}
-
-func BenchmarkFinishBallotWithoutBatch_200_400(b *testing.B) {
-	benchmarkFinishBallotWithBatch(false, 200, 400, b)
-}
-
-func BenchmarkFinishBallotWithBatch_200_400(b *testing.B) {
-	benchmarkFinishBallotWithBatch(true, 200, 400, b)
-}
-
-func BenchmarkFinishBallotWithoutBatch_200_600(b *testing.B) {
-	benchmarkFinishBallotWithBatch(false, 200, 600, b)
-}
-
-func BenchmarkFinishBallotWithBatch_200_600(b *testing.B) {
-	benchmarkFinishBallotWithBatch(true, 200, 600, b)
-}
-
-func BenchmarkFinishBallotWithoutBatch_200_800(b *testing.B) {
-	benchmarkFinishBallotWithBatch(false, 200, 800, b)
-}
-
-func BenchmarkFinishBallotWithBatch_200_800(b *testing.B) {
-	benchmarkFinishBallotWithBatch(true, 200, 800, b)
-}
-
-func BenchmarkFinishBallotWithoutBatch_200_1000(b *testing.B) {
-	benchmarkFinishBallotWithBatch(false, 200, 1000, b)
-}
-
-func BenchmarkFinishBallotWithBatch_200_1000(b *testing.B) {
-	benchmarkFinishBallotWithBatch(true, 200, 1000, b)
-}
-
-func BenchmarkFinishBallotWithBatch_400_10(b *testing.B) {
-	benchmarkFinishBallotWithBatch(true, 400, 10, b)
-}
-
-func BenchmarkFinishBallotWithBatch_400_200(b *testing.B) {
-	benchmarkFinishBallotWithBatch(true, 400, 200, b)
-}
-
-func BenchmarkFinishBallotWithBatch_400_400(b *testing.B) {
-	benchmarkFinishBallotWithBatch(true, 400, 400, b)
-}
-
-func BenchmarkFinishBallotWithBatch_400_600(b *testing.B) {
-	benchmarkFinishBallotWithBatch(true, 400, 600, b)
-}
-
-func BenchmarkFinishBallotWithBatch_400_800(b *testing.B) {
-	benchmarkFinishBallotWithBatch(true, 400, 800, b)
-}
-
-func BenchmarkFinishBallotWithBatch_400_1000(b *testing.B) {
-	benchmarkFinishBallotWithBatch(true, 400, 1000, b)
-}
-
-func BenchmarkFinishBallotWithBatch_600_10(b *testing.B) {
-	benchmarkFinishBallotWithBatch(true, 600, 10, b)
-}
-
-func BenchmarkFinishBallotWithBatch_600_200(b *testing.B) {
-	benchmarkFinishBallotWithBatch(true, 600, 200, b)
-}
-
-func BenchmarkFinishBallotWithBatch_600_400(b *testing.B) {
-	benchmarkFinishBallotWithBatch(true, 600, 400, b)
-}
-
-func BenchmarkFinishBallotWithBatch_600_600(b *testing.B) {
-	benchmarkFinishBallotWithBatch(true, 600, 600, b)
-}
-
-func BenchmarkFinishBallotWithBatch_600_800(b *testing.B) {
-	benchmarkFinishBallotWithBatch(true, 600, 800, b)
-}
-
-func TestBenchmarkFinishBallot(t *testing.T) {
+func TestFinishBallot(t *testing.T) {
 	var err error
 
-	err = testFinishBallotWithBatch(false, 100, 100)
+	err = testFinishBallot(false, 100, 100)
 	require.NoError(t, err)
 
-	err = testFinishBallotWithBatch(true, 100, 100)
+	err = testFinishBallot(true, 100, 100)
 	require.NoError(t, err)
 }

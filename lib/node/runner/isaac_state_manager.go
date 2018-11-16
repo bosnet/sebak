@@ -23,6 +23,7 @@ type ISAACStateManager struct {
 	blockTimeBuffer         time.Duration              // the time to wait to adjust the block creation time.
 	transitSignal           func(consensus.ISAACState) // the function is called when the ISAACState is changed.
 	firstConsensusBlockTime time.Time                  // the time at which the first consensus block was saved(height 2). It is used for calculating `blockTimeBuffer`.
+	expired                 bool
 
 	Conf common.Config
 }
@@ -61,7 +62,7 @@ func (sm *ISAACStateManager) setTheFirstConsensusBlockTime() {
 	if err != nil {
 		return
 	}
-	sm.firstConsensusBlockTime = blk.Header.Timestamp
+	sm.firstConsensusBlockTime, _ = common.ParseISO8601(blk.Confirmed)
 	sm.nr.Log().Debug("set first consnsus block time", "time", sm.firstConsensusBlockTime)
 }
 
@@ -74,20 +75,19 @@ func (sm *ISAACStateManager) setBlockTimeBuffer() {
 		return
 	}
 
-	ballotProposedTime := getBallotProposedTime(b.Confirmed)
+	ballotProposedTime := getBallotProposedTime(b.ProposedTime)
 	sm.blockTimeBuffer = calculateBlockTimeBuffer(
 		sm.Conf.BlockTime,
 		calculateAverageBlockTime(sm.firstConsensusBlockTime, b.Height),
 		time.Now().Sub(ballotProposedTime),
-		1*time.Second,
+		sm.Conf.BlockTimeDelta,
 	)
 	sm.nr.Log().Debug(
 		"calculated blockTimeBuffer",
 		"blockTimeBuffer", sm.blockTimeBuffer,
-		"blockTime", sm.Conf.BlockTime,
 		"firstConsensusBlockTime", sm.firstConsensusBlockTime,
 		"height", b.Height,
-		"confirmed", b.Confirmed,
+		"proposedTime", b.ProposedTime,
 		"now", time.Now(),
 	)
 
@@ -143,6 +143,13 @@ func (sm *ISAACStateManager) TransitISAACState(height uint64, round uint64, ball
 	sm.RLock()
 	current := sm.state
 	sm.RUnlock()
+	sm.nr.Log().Debug(
+		"ISAACStateManager.TransitISAACState()",
+		"current", current,
+		"height", height,
+		"round", round,
+		"ballotState", ballotState,
+	)
 
 	target := consensus.ISAACState{
 		Height:      height,
@@ -151,6 +158,11 @@ func (sm *ISAACStateManager) TransitISAACState(height uint64, round uint64, ball
 	}
 
 	if current.IsLater(target) {
+		sm.nr.Log().Debug(
+			"target is later than current",
+			"current", current,
+			"target", target,
+		)
 		go func() {
 			sm.stateTransit <- target
 		}()
@@ -182,11 +194,15 @@ func (sm *ISAACStateManager) Start() {
 			case <-timer.C:
 				sm.nr.Log().Debug("timeout", "ISAACState", sm.State())
 				switch sm.State().BallotState {
-				case ballot.StateINIT, ballot.StateSIGN:
-					go sm.broadcastExpiredBallot(sm.State())
+				case ballot.StateINIT:
 					sm.setBallotState(ballot.StateSIGN)
 					sm.transitSignal(sm.State())
-					sm.resetTimer(timer, sm.State().BallotState)
+					sm.resetTimer(timer, ballot.StateSIGN)
+				case ballot.StateSIGN:
+					go sm.broadcastExpiredBallot(sm.State())
+					sm.setBallotState(ballot.StateACCEPT)
+					sm.transitSignal(sm.State())
+					sm.resetTimer(timer, ballot.StateACCEPT)
 				case ballot.StateACCEPT:
 					sm.NextRound()
 				case ballot.StateALLCONFIRM:
@@ -195,24 +211,13 @@ func (sm *ISAACStateManager) Start() {
 				}
 
 			case state := <-sm.stateTransit:
-				switch state.BallotState {
-				case ballot.StateINIT:
+				if state.BallotState == ballot.StateINIT {
 					sm.proposeOrWait(timer, state)
-					sm.setState(state)
-					sm.transitSignal(state)
-				case ballot.StateSIGN:
-					sm.setState(state)
-					sm.transitSignal(state)
-					timer.Reset(sm.Conf.TimeoutSIGN)
-				case ballot.StateACCEPT:
-					sm.setState(state)
-					sm.transitSignal(state)
-					timer.Reset(sm.Conf.TimeoutACCEPT)
-				case ballot.StateALLCONFIRM:
-					sm.setState(state)
-					sm.transitSignal(state)
-					timer.Reset(sm.Conf.TimeoutALLCONFIRM)
+				} else {
+					sm.resetTimer(timer, state.BallotState)
 				}
+				sm.setState(state)
+				sm.transitSignal(state)
 
 			case <-sm.stop:
 				return

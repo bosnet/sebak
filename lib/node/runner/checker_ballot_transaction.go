@@ -213,6 +213,12 @@ func ValidateTx(st *storage.LevelDBBackend, tx transaction.Transaction) (err err
 		return
 	}
 
+	// check, version is correct
+	if !tx.IsValidVersion(common.TransactionVersionV1) {
+		err = errors.InvalidMessageVersion
+		return
+	}
+
 	// check, sequenceID is based on latest sequenceID
 	if !tx.IsValidSequenceID(ba.SequenceID) {
 		err = errors.TransactionInvalidSequenceID

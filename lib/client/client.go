@@ -6,9 +6,11 @@ import (
 	"encoding/json"
 	"net/http"
 	neturl "net/url"
+	"strconv"
 	"strings"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/storage"
 )
 
 const (
@@ -17,6 +19,8 @@ const (
 	UrlAccountTransactions   = "/accounts/{id}/transactions"
 	UrlAccount               = "/accounts/{id}"
 	UrlAccountOperations     = "/accounts/{id}/operations"
+	UrlAccountFrozenAccounts = "/accounts/{id}/frozen-accounts"
+	UrlFrozenAccounts        = "/frozen-accounts"
 	UrlTransactions          = "/transactions"
 	UrlTransactionByHash     = "/transactions/{id}"
 	UrlTransactionHistory    = "/transactions/{id}/history"
@@ -31,7 +35,7 @@ func (qk QueryKey) String() string {
 
 const (
 	QueryLimit  QueryKey = "limit"
-	QueryOrder  QueryKey = "order"
+	QueryOrder  QueryKey = "reverse"
 	QueryCursor QueryKey = "cursor"
 	QueryType   QueryKey = "type"
 )
@@ -81,6 +85,34 @@ func NewClient(url string) *Client {
 	}
 }
 
+// NewDefaultListOptionsFromQuery makes ListOptions from url.Query.
+func NewDefaultListOptionsFromQuery(v neturl.Values) (options *storage.DefaultListOptions, err error) {
+	var reverse bool
+	var cursor []byte
+	var limit uint64 = storage.DefaultMaxLimitListOptions
+
+	r := v.Get(string(QueryOrder))
+	if len(r) > 0 {
+		if reverse, err = common.ParseBoolQueryString(r); err != nil {
+			return nil, err
+		}
+	}
+
+	r = v.Get(string(QueryCursor))
+	if len(r) > 0 {
+		cursor = []byte(r)
+	}
+
+	r = v.Get(string(QueryLimit))
+	if len(r) > 0 {
+		if limit, err = strconv.ParseUint(r, 10, 64); err != nil {
+			return nil, err
+		}
+	}
+
+	return storage.NewDefaultListOptions(reverse, cursor, limit), nil
+}
+
 func (c *Client) ToResponse(resp *http.Response, response interface{}) (err error) {
 	defer resp.Body.Close()
 	decoder := json.NewDecoder(resp.Body)
@@ -128,6 +160,20 @@ func (c *Client) LoadAccount(id string, queries ...Q) (account Account, err erro
 	url := strings.Replace(UrlAccount, "{id}", id, -1)
 	url += Queries(queries).toQueryString()
 	err = c.getResponse(url, http.Header{}, &account)
+	return
+}
+
+func (c *Client) LoadFrozenAccountsByLinked(id string, queries ...Q) (fPage FrozenAccountsPage, err error) {
+	url := strings.Replace(UrlAccountFrozenAccounts, "{id}", id, -1)
+	url += Queries(queries).toQueryString()
+	err = c.getResponse(url, http.Header{}, &fPage)
+	return
+}
+
+func (c *Client) LoadAFrozenAccounts(id string, queries ...Q) (fPage FrozenAccountsPage, err error) {
+	url := strings.Replace(UrlFrozenAccounts, "{id}", id, -1)
+	url += Queries(queries).toQueryString()
+	err = c.getResponse(url, http.Header{}, &fPage)
 	return
 }
 
@@ -226,6 +272,34 @@ func (c *Client) StreamAccount(ctx context.Context, id string, cursor *string, h
 	url := strings.Replace(UrlAccount, "{id}", id, -1)
 	handlerFunc := func(b []byte) (err error) {
 		var v Account
+		err = json.Unmarshal(b, &v)
+		if err != nil {
+			return err
+		}
+		handler(v)
+		return nil
+	}
+	return c.Stream(ctx, url, cursor, handlerFunc)
+}
+
+func (c *Client) StreamFrozenAccountsByLinked(ctx context.Context, id string, cursor *string, handler func(FrozenAccount)) (err error) {
+	url := strings.Replace(UrlAccountFrozenAccounts, "{id}", id, -1)
+	handlerFunc := func(b []byte) (err error) {
+		var v FrozenAccount
+		err = json.Unmarshal(b, &v)
+		if err != nil {
+			return
+		}
+		handler(v)
+		return nil
+	}
+	return c.Stream(ctx, url, cursor, handlerFunc)
+}
+
+func (c *Client) StreamFrozenAccounts(ctx context.Context, id string, cursor *string, handler func(FrozenAccount)) (err error) {
+	url := strings.Replace(UrlFrozenAccounts, "{id}", id, -1)
+	handlerFunc := func(b []byte) (err error) {
+		var v FrozenAccount
 		err = json.Unmarshal(b, &v)
 		if err != nil {
 			return err
