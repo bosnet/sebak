@@ -192,7 +192,7 @@ func (v *BlockValidator) validateTxs(ctx context.Context, si *SyncInfo) error {
 			return err
 		}
 
-		if err := runner.ValidateTx(v.storage, *tx); err != nil {
+		if err := runner.ValidateTx(v.storage, v.commonCfg, *tx); err != nil {
 			return err
 		}
 	}

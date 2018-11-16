@@ -203,9 +203,10 @@ func BallotTransactionsAllValid(c common.Checker, args ...interface{}) (err erro
 // Params:
 //   st = Storage backend to use (e.g. to access the blocks)
 //        Only ever read from, never written to.
+//   config = consist of configuration of the network. common address, congress address, etc.
 //   tx = Transaction to check
 //
-func ValidateTx(st *storage.LevelDBBackend, tx transaction.Transaction) (err error) {
+func ValidateTx(st *storage.LevelDBBackend, config common.Config, tx transaction.Transaction) (err error) {
 	// check, source exists
 	var ba *block.BlockAccount
 	if ba, err = block.GetBlockAccount(st, tx.B.Source); err != nil {
@@ -241,7 +242,7 @@ func ValidateTx(st *storage.LevelDBBackend, tx transaction.Transaction) (err err
 	}
 
 	for _, op := range tx.B.Operations {
-		if err = ValidateOp(st, ba, op); err != nil {
+		if err = ValidateOp(st, config, ba, op); err != nil {
 
 			key := block.GetBlockTransactionHistoryKey(tx.H.Hash)
 			st.Remove(key)
@@ -262,10 +263,11 @@ func ValidateTx(st *storage.LevelDBBackend, tx transaction.Transaction) (err err
 // Params:
 //   st = Storage backend to use (e.g. to access the blocks)
 //        Only ever read from, never written to.
+//   config = consist of configuration of the network. common address, congress address, etc.
 //   source = Account from where the transaction (and ops) come from
 //   tx = Transaction to check
 //
-func ValidateOp(st *storage.LevelDBBackend, source *block.BlockAccount, op operation.Operation) (err error) {
+func ValidateOp(st *storage.LevelDBBackend, config common.Config, source *block.BlockAccount, op operation.Operation) (err error) {
 	switch op.H.Type {
 	case operation.TypeCreateAccount:
 		var ok bool
@@ -273,8 +275,7 @@ func ValidateOp(st *storage.LevelDBBackend, source *block.BlockAccount, op opera
 		if casted, ok = op.B.(operation.CreateAccount); !ok {
 			return errors.TypeOperationBodyNotMatched
 		}
-		var exists bool
-		if exists, err = block.ExistsBlockAccount(st, op.B.(operation.CreateAccount).Target); err == nil && exists {
+		if exists, err := block.ExistsBlockAccount(st, op.B.(operation.CreateAccount).Target); err == nil && exists {
 			return errors.BlockAccountAlreadyExists
 		}
 		if source.Linked != "" {
@@ -303,6 +304,7 @@ func ValidateOp(st *storage.LevelDBBackend, source *block.BlockAccount, op opera
 			return errors.TypeOperationBodyNotMatched
 		}
 		var taccount *block.BlockAccount
+		var err error
 		if taccount, err = block.GetBlockAccount(st, casted.Target); err != nil {
 			return errors.BlockAccountDoesNotExists
 		}
@@ -314,7 +316,7 @@ func ValidateOp(st *storage.LevelDBBackend, source *block.BlockAccount, op opera
 			// If it's a frozen account, everything must be withdrawn
 			var expected common.Amount
 			expected, err = source.Balance.Sub(common.BaseFee)
-			if casted.Amount != expected {
+			if err != nil || casted.Amount != expected {
 				return errors.FrozenAccountMustWithdrawEverything
 			}
 			// Unfreezing must be done after X period from unfreezing request
@@ -346,12 +348,91 @@ func ValidateOp(st *storage.LevelDBBackend, source *block.BlockAccount, op opera
 		if bo.Type == operation.TypeUnfreezingRequest {
 			return errors.UnfreezingRequestAlreadyReceived
 		}
+	case operation.TypeInflationPF:
+		var ok bool
+		var inflationPF operation.InflationPF
+		if inflationPF, ok = op.B.(operation.InflationPF); !ok {
+			return errors.TypeOperationBodyNotMatched
+		}
+		var taccount *block.BlockAccount
+		if taccount, err = block.GetBlockAccount(st, inflationPF.FundingAddress); err != nil {
+			return errors.BlockAccountDoesNotExists
+		}
+		// If it's a frozen account, it cannot receive payment
+		if taccount.Linked != "" {
+			return errors.FrozenAccountNoDeposit
+		}
+
+		if config.CommonAccountAddress != source.Address {
+			return errors.InvalidOperation
+		}
+
+		exists, err := block.ExistsBlockOperation(st, inflationPF.VotingResult)
+		if err != nil || !exists {
+			return errors.InflationPFResultMissed
+		}
+
+		var congressVotingHash string
+		{
+			var bo block.BlockOperation
+			var err error
+			if bo, err = block.GetBlockOperation(st, inflationPF.VotingResult); err != nil {
+				return err
+			}
+
+			if bo.Type != operation.TypeCongressVotingResult {
+				return errors.InvalidOperation
+			}
+			var operationBody operation.Body
+			if operationBody, err = operation.UnmarshalBodyJSON(bo.Type, bo.Body); err != nil {
+				return err
+			}
+
+			var o operation.CongressVotingResult
+			var ok bool
+			if o, ok = operationBody.(operation.CongressVotingResult); !ok {
+				return errors.TypeOperationBodyNotMatched
+			}
+			congressVotingHash = o.CongressVotingHash
+		}
+
+		var congressVoting operation.CongressVoting
+		{
+			var bo block.BlockOperation
+			var err error
+			if bo, err = block.GetBlockOperation(st, congressVotingHash); err != nil {
+				return err
+			}
+
+			if bo.Type != operation.TypeCongressVoting {
+				return errors.InvalidOperation
+			}
+			var operationBody operation.Body
+			if operationBody, err = operation.UnmarshalBodyJSON(bo.Type, bo.Body); err != nil {
+				return err
+			}
+
+			var o operation.CongressVoting
+			var ok bool
+			if o, ok = operationBody.(operation.CongressVoting); !ok {
+				return errors.TypeOperationBodyNotMatched
+			}
+			congressVoting = o
+		}
+
+		if congressVoting.Amount != inflationPF.Amount {
+			return errors.InflationPFAmountMissMatched
+		}
+
+		if congressVoting.FundingAddress != inflationPF.FundingAddress {
+			return errors.InflationPFFundingAddressMissMatched
+		}
+
 	case operation.TypeCongressVoting, operation.TypeCongressVotingResult:
 		// Nothing to do
-		return
 
 	default:
 		return errors.UnknownOperationType
 	}
-	return
+	return nil
 }

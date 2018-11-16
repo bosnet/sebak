@@ -9,7 +9,7 @@ TEST_DIRS=$(find . -mindepth 1 -maxdepth 1 -type d -print)
 ROOT_DIR="../.."
 export SEBAK_NODE_ARGS=""
 export SEBAK_GENESIS=GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ
-export SEBAK_COMMON=GDYIHSHMDXJ4MXE35N4IMNC2X3Q3F665C5EX2JWHHCUW2PCFVXIFEE2C
+export SEBAK_COMMON=GCTVCU764UPXKRJW5DS5AWF5ETCCIYPZTWXN5U5CLUNAAJH6D5NGEIIH
 
 # We can only have one trap active at a time, so just save the IDs of containers we started.
 # Single quotes around  trap ensure that the variable is evaluated at exit time.

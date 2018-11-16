@@ -94,7 +94,7 @@ func BallotValidateOperationBodyCollectTxFee(c common.Checker, args ...interface
 	}
 
 	// check common account
-	if opb.Target != checker.NodeRunner.CommonAccountAddress {
+	if opb.Target != checker.NodeRunner.Conf.CommonAccountAddress {
 		err = errors.InvalidOperation
 		return
 	}
@@ -112,7 +112,7 @@ func BallotValidateOperationBodyInflation(c common.Checker, args ...interface{})
 	}
 
 	// check common account
-	if opb.Target != checker.NodeRunner.CommonAccountAddress {
+	if opb.Target != checker.NodeRunner.Conf.CommonAccountAddress {
 		err = errors.InvalidOperation
 		return
 	}
@@ -422,7 +422,7 @@ func insertMissingTransaction(nr *NodeRunner, ballot ballot.Ballot) (err error) 
 			return
 		}
 
-		if err = ValidateTx(nr.Storage(), tx); err != nil {
+		if err = ValidateTx(nr.Storage(), nr.Conf, tx); err != nil {
 			return
 		}
 

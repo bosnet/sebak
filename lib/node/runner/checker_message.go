@@ -119,7 +119,7 @@ func MessageHasSameSource(c common.Checker, args ...interface{}) (err error) {
 func MessageValidate(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*MessageChecker)
 
-	if err = ValidateTx(checker.Storage, checker.Transaction); err != nil {
+	if err = ValidateTx(checker.Storage, checker.Conf, checker.Transaction); err != nil {
 		return
 	}
 

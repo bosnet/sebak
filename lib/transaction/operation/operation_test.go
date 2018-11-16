@@ -55,14 +55,14 @@ func TestSerializeOperation(t *testing.T) {
 }
 
 func TestOperationBodyCongressVoting(t *testing.T) {
-	opb := NewCongressVoting([]byte("dummy contract"), 1, 100)
+	opb := NewCongressVoting([]byte("dummy contract"), 1, 100, common.Amount(1000000), "dummy account")
 	op := Operation{
 		H: Header{Type: TypeCongressVoting},
 		B: opb,
 	}
 	hashed := op.MakeHashString()
 
-	expected := "4CcZvkNYQUgvdmjGDuMx7tesCdRp3HU4CW3pbRxeqtEZ"
+	expected := "EtVW5hG3p4YsSzL3mgwejHvtskzYuxW8dNaM6UEm42DX"
 	require.Equal(t, hashed, expected)
 
 	err := op.IsWellFormed(common.NewTestConfig())
@@ -77,6 +77,7 @@ func TestOperationBodyCongressVotingResult(t *testing.T) {
 		string(common.MakeHash([]byte("dummydummy"))),
 		[]string{"http://www.boscoin.io/3", "http://www.boscoin.io/4"},
 		9, 2, 3, 4,
+		"dummy voting hash",
 	)
 	op := Operation{
 		H: Header{Type: TypeCongressVotingResult},
@@ -84,7 +85,7 @@ func TestOperationBodyCongressVotingResult(t *testing.T) {
 	}
 	hashed := op.MakeHashString()
 
-	expected := "8DgD3heMuNLYhnNBgPSBEquAdKXuogrSybdqt7WD87CV"
+	expected := "5ppD3tYbMveN9hxxEpQzYARB97vN587r8x1rrXbYFLwa"
 	require.Equal(t, hashed, expected)
 
 	err := op.IsWellFormed(common.NewTestConfig())

@@ -181,6 +181,13 @@ func finishOperation(st *storage.LevelDBBackend, source string, op operation.Ope
 			return errors.UnknownOperationType
 		}
 		return finishUnfreezeRequest(st, source, pop, log)
+	case operation.TypeInflationPF:
+		pop, ok := op.B.(operation.InflationPF)
+		if !ok {
+			return errors.UnknownOperationType
+		}
+		return finishInflationPF(st, source, pop, log)
+
 	default:
 		err = errors.UnknownOperationType
 		return
@@ -229,6 +236,32 @@ func finishPayment(st *storage.LevelDBBackend, source string, op operation.Payme
 		return
 	}
 	if err = baTarget.Save(st); err != nil {
+		return
+	}
+
+	return
+}
+
+func finishUnfreezeRequest(st *storage.LevelDBBackend, source string, opb operation.UnfreezeRequest, log logging.Logger) (err error) {
+	return
+}
+
+func finishInflationPF(st *storage.LevelDBBackend, source string, opb operation.InflationPF, log logging.Logger) (err error) {
+
+	if opb.Amount < 1 {
+		return
+	}
+
+	var commonAccount *block.BlockAccount
+	if commonAccount, err = block.GetBlockAccount(st, opb.FundingAddress); err != nil {
+		return
+	}
+
+	if err = commonAccount.Deposit(opb.GetAmount()); err != nil {
+		return
+	}
+
+	if err = commonAccount.Save(st); err != nil {
 		return
 	}
 
@@ -306,9 +339,5 @@ func finishInflation(st *storage.LevelDBBackend, opb operation.Inflation, log lo
 		return
 	}
 
-	return
-}
-
-func finishUnfreezeRequest(st *storage.LevelDBBackend, source string, opb operation.UnfreezeRequest, log logging.Logger) (err error) {
 	return
 }

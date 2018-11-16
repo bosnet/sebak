@@ -69,7 +69,7 @@ func TestUnfreezingSimulation(t *testing.T) {
 	// Generate unfreezing-transaction not yet reached unfreezing blockheight
 	tx6, _ := GetUnfreezingTransaction(kpFrozenAccount, kpNewAccount, uint64(1), uint64(99999980000))
 
-	err := ValidateTx(nr.Storage(), tx6)
+	err := ValidateTx(nr.Storage(), common.Config{}, tx6)
 	require.Error(t, err)
 
 	round := uint64(0)
@@ -98,7 +98,7 @@ func TestUnfreezingSimulation(t *testing.T) {
 	// Generate unfreezing transaction
 	tx10, _ := GetUnfreezingTransaction(kpFrozenAccount, kpNewAccount, uint64(1), uint64(99999980000))
 
-	err = ValidateTx(nr.Storage(), tx10)
+	err = ValidateTx(nr.Storage(), common.Config{}, tx10)
 	require.Error(t, err)
 
 	ba, _ = block.GetBlockAccount(st, kpFrozenAccount.Address())

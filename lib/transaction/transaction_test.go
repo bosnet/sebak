@@ -80,7 +80,7 @@ func (suite *TestSuite) TestIsWellFormedTransactionWithLowerFeeSuite() {
 	{ // with CongressVoting, it has zero fee
 		kp, tx := TestMakeTransaction(suite.conf.NetworkID, 3)
 
-		opb := operation.NewCongressVoting([]byte("dummy contract"), 1, 100)
+		opb := operation.NewCongressVoting([]byte("dummy contract"), 1, 100, common.Amount(1000000), "dummy account")
 		op := operation.Operation{
 			H: operation.Header{Type: operation.TypeCongressVoting},
 			B: opb,
@@ -103,6 +103,7 @@ func (suite *TestSuite) TestIsWellFormedTransactionWithLowerFeeSuite() {
 			string(common.MakeHash([]byte("dummydummy"))),
 			[]string{"http://www.boscoin.io/3", "http://www.boscoin.io/4"},
 			9, 2, 3, 4,
+			"dummy voting hash",
 		)
 		op := operation.Operation{
 			H: operation.Header{Type: operation.TypeCongressVotingResult},

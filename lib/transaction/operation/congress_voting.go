@@ -13,9 +13,11 @@ type CongressVoting struct {
 		Start uint64 `json:"start"`
 		End   uint64 `json:"end"`
 	} `json:"voting"`
+	FundingAddress string        `json:"funding_address"`
+	Amount         common.Amount `json:"amount"`
 }
 
-func NewCongressVoting(contract []byte, start, end uint64) CongressVoting {
+func NewCongressVoting(contract []byte, start, end uint64, amount common.Amount, fundingAddress string) CongressVoting {
 
 	return CongressVoting{
 		Contract: contract,
@@ -26,6 +28,8 @@ func NewCongressVoting(contract []byte, start, end uint64) CongressVoting {
 			Start: start,
 			End:   end,
 		},
+		Amount:         amount,
+		FundingAddress: fundingAddress,
 	}
 }
 
