@@ -1,6 +1,8 @@
 package common
 
 import (
+	"github.com/ethereum/go-ethereum/rlp"
+	"github.com/stretchr/testify/require"
 	"strconv"
 	"testing"
 )
@@ -72,5 +74,24 @@ func TestAmount_Uint64OutOfRange(t *testing.T) {
 		if err := amount.UnmarshalJSON(data); err != nil {
 			t.Errorf("unmarshal error: %v", err)
 		}
+	}
+}
+
+func TestRLPEncoding(t *testing.T) {
+	{
+		encodedAmount, _ := rlp.EncodeToBytes(Amount(10000))
+		require.Equal(t, encodedAmount, []byte{0x85, 0x31, 0x30, 0x30, 0x30, 0x30})
+	}
+	{
+		encodedAmount, _ := rlp.EncodeToBytes(Amount(MaximumBalance))
+		require.Equal(t, encodedAmount, []byte{0x94, 0x31, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30})
+	}
+	{
+		encodedAmount, _ := rlp.EncodeToBytes(Amount(123456789))
+		require.Equal(t, encodedAmount, []byte{0x89, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39})
+	}
+	{
+		encodedAmount, _ := rlp.EncodeToBytes(Amount(0))
+		require.Equal(t, encodedAmount, []byte{0x30})
 	}
 }

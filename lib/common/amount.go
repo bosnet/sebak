@@ -15,6 +15,7 @@ import (
 	"strconv"
 
 	"boscoin.io/sebak/lib/errors"
+	"github.com/ethereum/go-ethereum/rlp"
 	"io"
 )
 
@@ -44,8 +45,7 @@ func (this Amount) Invariant() {
 }
 
 func (a Amount) EncodeRLP(w io.Writer) (err error) {
-	w.Write([]byte(a.String()))
-	return nil
+	return rlp.Encode(w, a.String())
 }
 
 // Stringer interface implementation
