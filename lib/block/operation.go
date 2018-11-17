@@ -90,6 +90,9 @@ func (bo *BlockOperation) Save(st *storage.LevelDBBackend) (err error) {
 	if err = st.New(bo.NewBlockOperationSourceAndTypeKey(), bo.Hash); err != nil {
 		return
 	}
+	if err = st.New(bo.NewBlockOperationBlockHeightKey(), bo.Hash); err != nil {
+		return
+	}
 
 	var body operation.Body
 	var casted operation.CreateAccount
@@ -119,6 +122,7 @@ func (bo *BlockOperation) Save(st *storage.LevelDBBackend) (err error) {
 	event += " " + fmt.Sprintf("hash-%s", bo.Hash)
 	event += " " + fmt.Sprintf("txhash-%s", bo.TxHash)
 	event += " " + fmt.Sprintf("source-type-%s%s", bo.Source, bo.Type)
+	event += " " + fmt.Sprintf("blockheight-%d", bo.Height)
 	if casted.Linked != "" {
 		event += " frozen"
 		event += " " + fmt.Sprintf("linked-%s", casted.Linked)
@@ -166,6 +170,10 @@ func GetBlockOperationKeyPrefixSourceAndType(source string, ty operation.Operati
 	return fmt.Sprintf("%s%s%s-", common.BlockOperationPrefixSource, source, string(ty))
 }
 
+func GetBlockOperationKeyPrefixBlockHeight(height uint64) string {
+	return fmt.Sprintf("%s%d-", common.BlockOperationPrefixBlockHeight, height)
+}
+
 func (bo BlockOperation) NewBlockOperationTxHashKey() string {
 	return fmt.Sprintf(
 		"%s%s%s%s",
@@ -199,6 +207,15 @@ func (bo BlockOperation) NewBlockOperationSourceAndTypeKey() string {
 		"%s%s%s%s",
 		GetBlockOperationKeyPrefixSourceAndType(bo.Source, bo.Type),
 		common.EncodeUint64ToByteSlice(bo.Height),
+		common.EncodeUint64ToByteSlice(bo.transaction.B.SequenceID),
+		common.GetUniqueIDFromUUID(),
+	)
+}
+
+func (bo BlockOperation) NewBlockOperationBlockHeightKey() string {
+	return fmt.Sprintf(
+		"%s%s%s",
+		GetBlockOperationKeyPrefixBlockHeight(bo.Height),
 		common.EncodeUint64ToByteSlice(bo.transaction.B.SequenceID),
 		common.GetUniqueIDFromUUID(),
 	)
@@ -287,5 +304,13 @@ func GetBlockOperationsBySourceAndType(st *storage.LevelDBBackend, source string
 	func(),
 ) {
 	iterFunc, closeFunc := st.GetIterator(GetBlockOperationKeyPrefixSourceAndType(source, ty), options)
+	return LoadBlockOperationsInsideIterator(st, iterFunc, closeFunc)
+}
+
+func GetBlockOperationsByBlockHeight(st *storage.LevelDBBackend, height uint64, options storage.ListOptions) (
+	func() (BlockOperation, bool, []byte),
+	func(),
+) {
+	iterFunc, closeFunc := st.GetIterator(GetBlockOperationKeyPrefixBlockHeight(height), options)
 	return LoadBlockOperationsInsideIterator(st, iterFunc, closeFunc)
 }
