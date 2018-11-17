@@ -10,6 +10,7 @@ package runner
 import (
 	"net/http"
 	"net/http/pprof"
+	"sync"
 	"time"
 
 	ghandlers "github.com/gorilla/handlers"
@@ -67,6 +68,8 @@ var DefaultHandleACCEPTBallotCheckerFuncs = []common.CheckerFunc{
 }
 
 type NodeRunner struct {
+	sync.RWMutex
+
 	localNode         *node.LocalNode
 	policy            voting.ThresholdPolicy
 	network           network.Network
@@ -575,6 +578,9 @@ func (nr *NodeRunner) waitForConnectingEnoughNodes() {
 }
 
 func (nr *NodeRunner) startStateManager() {
+	nr.RLock()
+	defer nr.RUnlock()
+
 	// check whether current running rounds exist
 	if len(nr.consensus.RunningRounds) > 0 {
 		return
