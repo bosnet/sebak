@@ -372,7 +372,6 @@ func (nr *NodeRunner) Start() (err error) {
 func (nr *NodeRunner) Stop() {
 	nr.network.Stop()
 	nr.isaacStateManager.Stop()
-	close(nr.ballotBroadcastChannel)
 }
 
 func (nr *NodeRunner) Node() *node.LocalNode {
@@ -671,7 +670,6 @@ func (nr *NodeRunner) proposeNewBallot(round uint64) (ballot.Ballot, error) {
 
 	nr.log.Debug("new ballot created", "ballot", theBallot)
 
-	//nr.ConnectionManager().Broadcast(*theBallot)
 	nr.broadcastBallot(*theBallot)
 
 	return *theBallot, nil

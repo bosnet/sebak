@@ -382,7 +382,11 @@ func (p *irregularIncomingBallot) prepare() {
 	p.initialBalance, _ = GetGenesisBalance(p.nr.Storage())
 
 	p.nr.Consensus().SetProposerSelector(FixedSelector{p.nr.Node().Address()})
-	go p.nr.startBroadcastBallot()
+	go p.nr.Start()
+}
+
+func (p *irregularIncomingBallot) done() {
+	p.nr.Stop()
 }
 
 func (p *irregularIncomingBallot) runChecker(blt ballot.Ballot) (checker *BallotChecker, err error) {
@@ -470,6 +474,7 @@ func (p *irregularIncomingBallot) makeBallot(state ballot.State) (blt *ballot.Ba
 func TestRegularIncomingBallots(t *testing.T) {
 	p := &irregularIncomingBallot{}
 	p.prepare()
+	defer p.done()
 
 	cm := p.nr.ConnectionManager().(*TestConnectionManager)
 	require.Equal(t, 0, len(cm.Messages()))
@@ -497,6 +502,7 @@ func TestRegularIncomingBallots(t *testing.T) {
 func TestIrregularIncomingBallots(t *testing.T) {
 	p := &irregularIncomingBallot{}
 	p.prepare()
+	defer p.done()
 
 	cm := p.nr.ConnectionManager().(*TestConnectionManager)
 	require.Equal(t, 0, len(cm.Messages()))
