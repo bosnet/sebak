@@ -168,7 +168,9 @@ func NewNodeRunner(
 	}
 
 	nr.nodeInfo = NewNodeInfo(nr)
-	nr.jsonrpcServer = NewJSONRPCServer(conf.JSONRPCEndpoint, nr.storage)
+	if conf.JSONRPCEndpoint != nil {
+		nr.jsonrpcServer = NewJSONRPCServer(conf.JSONRPCEndpoint, nr.storage)
+	}
 
 	return
 }
@@ -384,13 +386,15 @@ func (nr *NodeRunner) Start() (err error) {
 	go nr.InitRound()
 	go nr.savingBlockOperations.Start()
 
-	go func() {
-		err = nr.jsonrpcServer.Start()
-		if err != nil {
-			log.Crit("failed to start jsonrpcServer", "error", err)
-			nr.Stop()
-		}
-	}()
+	if nr.jsonrpcServer != nil {
+		go func() {
+			err = nr.jsonrpcServer.Start()
+			if err != nil {
+				log.Crit("failed to start jsonrpcServer", "error", err)
+				nr.Stop()
+			}
+		}()
+	}
 
 	if err = nr.network.Start(); err != nil {
 		return

@@ -351,7 +351,7 @@ func parseFlagsNode() {
 		flagPublishURL = publishEndpoint.String()
 	}
 
-	{ // jsonrpc
+	if len(flagJSONRPCBindURL) > 0 { // jsonrpc
 		if p, err := common.ParseEndpoint(flagJSONRPCBindURL); err != nil {
 			cmdcommon.PrintFlagsError(nodeCmd, "--jsonrpc-bind", err)
 		} else {
