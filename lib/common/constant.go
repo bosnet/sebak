@@ -93,4 +93,5 @@ var (
 		HTTPCacheRedisAdapterName:  true,
 		"":                         true, // default value is nop cache
 	}
+	DefaultJSONRPCBindURL string = "http://127.0.0.1:54321/jsonrpc" // JSONRPC only can be accessed from localhost
 )

@@ -103,6 +103,7 @@ type NodeRunner struct {
 	Conf                  common.Config
 	nodeInfo              node.NodeInfo
 	savingBlockOperations *SavingBlockOperations
+	jsonrpcServer         *JSONRPCServer
 }
 
 func NewNodeRunner(
@@ -167,6 +168,7 @@ func NewNodeRunner(
 	}
 
 	nr.nodeInfo = NewNodeInfo(nr)
+	nr.jsonrpcServer = NewJSONRPCServer(conf.JSONRPCEndpoint, nr.storage)
 
 	return
 }
@@ -381,6 +383,14 @@ func (nr *NodeRunner) Start() (err error) {
 	go nr.ConnectValidators()
 	go nr.InitRound()
 	go nr.savingBlockOperations.Start()
+
+	go func() {
+		err = nr.jsonrpcServer.Start()
+		if err != nil {
+			log.Crit("failed to start jsonrpcServer", "error", err)
+			nr.Stop()
+		}
+	}()
 
 	if err = nr.network.Start(); err != nil {
 		return

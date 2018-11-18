@@ -35,6 +35,8 @@ type Config struct {
 
 	CongressAccountAddress string
 	CommonAccountAddress   string
+
+	JSONRPCEndpoint *Endpoint
 }
 
 func NewConfig(networkID []byte) Config {
@@ -60,6 +62,7 @@ func NewConfig(networkID []byte) Config {
 	p.RateLimitRuleNode = NewRateLimitRule(RateLimitNode)
 
 	p.HTTPCachePoolSize = HTTPCachePoolSize
+	p.JSONRPCEndpoint, _ = ParseEndpoint(DefaultJSONRPCBindURL)
 
 	return p
 }
