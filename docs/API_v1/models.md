@@ -146,6 +146,50 @@
         + self
             + href: `/api/v1/transactions/7nLuyg8radTExzBM2WhG37AwohBwEySBw4vj2xdtdjAs/operations`
 
+### Blocks
++ _embedded
+    + records (array)
+        + (object):
+            + _links
+                + self
+                    + href: `/api/v1/blocks/AcFpZMr6EhxBuCw3xADUzepa395wmh3c5fo2cyxYCi1q`
+        + confirmed: 2018-11-18T18:44:47.900933000+09:00
+        + hash: `AcFpZMr6EhxBuCw3xADUzepa395wmh3c5fo2cyxYCi1q`
+        + height: 1
+        + prev_block_hash: `J8TQCCtsiLcRZpYtVN3ozCFByd24fjXe2BgodLkeXN7S`,
+        + proposed_time: `2018-04-17T5:07:31.000000000Z`
+        + proposer: `GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ`
+        + proposer_transaction: `EQNSFnhzzz3bDpaZQekWPPNtr3kmRs5fUafBYAkHGXRP`
+        + round: 0,
+        + transactions (array)
+            + `BivUS2tYjm1ZYXZNvKqRDa1eyBRTcE3DeuEDJVtuwNcm`
+        + transactions_root: `BR2gsNw5WGjZ6HFPNr8fFAQPu42dqk1P7VVV7p5Efnru`
+        + version: 0
++ _links
+    + next
+        + href: `/api/v1/blocks?cursor=1&limit=100&reverse=false`
+    + prev
+        + href: `/api/v1/blocks?cursor=1&limit=100&reverse=true`
+    + self
+        + href: `/api/v1/blocks`
+
+### Block
++ _links
+    + self
+        + href: `/api/v1/blocks/AcFpZMr6EhxBuCw3xADUzepa395wmh3c5fo2cyxYCi1q`
++ confirmed: 2018-11-18T18:44:47.900933000+09:00
++ hash: `AcFpZMr6EhxBuCw3xADUzepa395wmh3c5fo2cyxYCi1q`
++ height: 3 
++ prev_block_hash: `J8TQCCtsiLcRZpYtVN3ozCFByd24fjXe2BgodLkeXN7S`,
++ proposed_time: `2018-04-17T5:07:31.000000000Z`
++ proposer: `GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ`
++ proposer_transaction: `EQNSFnhzzz3bDpaZQekWPPNtr3kmRs5fUafBYAkHGXRP`
++ round: 0
++ transactions (array)
+    + `BivUS2tYjm1ZYXZNvKqRDa1eyBRTcE3DeuEDJVtuwNcm`
++ transactions_root: `BR2gsNw5WGjZ6HFPNr8fFAQPu42dqk1P7VVV7p5Efnru`
++ version: 0
+
 ### Problem
 + status:  500 (number)
 + title: `problem error message`
