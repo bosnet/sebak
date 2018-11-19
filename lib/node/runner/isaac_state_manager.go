@@ -223,6 +223,8 @@ func (sm *ISAACStateManager) Start() {
 				}
 
 				if state.BallotState == ballot.StateINIT {
+					begin = metrics.Consensus.SetBlockIntervalSeconds(begin)
+
 					if sm.nr.localNode.State() == node.StateCONSENSUS {
 						sm.proposeOrWait(timer, state)
 					}
@@ -231,9 +233,6 @@ func (sm *ISAACStateManager) Start() {
 				}
 				sm.setState(state)
 				sm.transitSignal(state)
-				if state.BallotState == ballot.StateINIT {
-					begin = metrics.Consensus.SetBlockIntervalSeconds(begin)
-				}
 
 			case <-sm.stop:
 				return
