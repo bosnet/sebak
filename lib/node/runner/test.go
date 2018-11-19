@@ -208,7 +208,7 @@ func createNodeRunnerForTesting(n int, conf common.Config, recv chan struct{}) (
 }
 
 func MakeConsensusAndBlock(t *testing.T, tx transaction.Transaction, nr *NodeRunner, nodes []*node.LocalNode, proposer *node.LocalNode) (block.Block, error) {
-	nr.TransactionPool.Add(tx, 0)
+	nr.TransactionPool.AddFromNode(tx)
 
 	// Generate proposed ballot in nodeRunner
 	round := uint64(0)

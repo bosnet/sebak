@@ -129,7 +129,7 @@ func testFinishBallot(withBatch bool, numberOfTransactions, numberOfOperations i
 
 			txHashes = append(txHashes, tx.GetHash())
 			txs = append(txs, tx)
-			nr.TransactionPool.Add(tx, 0)
+			nr.TransactionPool.Add(tx)
 		}
 
 		blt = ballot.NewBallot(proposerNode.Address(), proposerNode.Address(), rd, txHashes)

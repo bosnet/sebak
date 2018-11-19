@@ -61,7 +61,7 @@ func (p *HelperTestGetNodeTransactionsHandler) Prepare() {
 		nil,
 	)
 	p.consensus = isaac
-	p.TransactionPool = transaction.NewPool()
+	p.TransactionPool = transaction.NewPool(common.NewTestConfig())
 
 	apiHandler := NetworkHandlerNode{storage: p.st, consensus: isaac, transactionPool: p.TransactionPool}
 
@@ -80,7 +80,7 @@ func (p *HelperTestGetNodeTransactionsHandler) Prepare() {
 
 	for j := 0; j < 3; j++ {
 		_, tx := transaction.TestMakeTransaction(networkID, 2)
-		p.TransactionPool.Add(tx, 0)
+		p.TransactionPool.Add(tx)
 		block.SaveTransactionPool(p.st, tx)
 	}
 

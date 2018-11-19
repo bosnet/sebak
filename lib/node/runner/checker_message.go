@@ -132,7 +132,7 @@ func PushIntoTransactionPool(c common.Checker, args ...interface{}) error {
 	checker := c.(*MessageChecker)
 
 	tx := checker.Transaction
-	err := checker.TransactionPool.Add(tx, 0) // 0 is unlimited
+	err := checker.TransactionPool.Add(tx)
 	if err == errors.TransactionPoolFull {
 		return err
 	}
@@ -151,7 +151,7 @@ func PushIntoTransactionPoolFromClient(c common.Checker, args ...interface{}) er
 	checker := c.(*MessageChecker)
 
 	tx := checker.Transaction
-	err := checker.TransactionPool.Add(tx, checker.Conf.TxPoolClientLimit)
+	err := checker.TransactionPool.AddFromClient(tx)
 	if err == errors.TransactionPoolFull {
 		return err
 	}
@@ -165,12 +165,12 @@ func PushIntoTransactionPoolFromClient(c common.Checker, args ...interface{}) er
 	return nil
 }
 
-// PushIntoTransactionPoolFromClient add the incoming tx from node
+// PushIntoTransactionPoolFromNode add the incoming tx from node
 func PushIntoTransactionPoolFromNode(c common.Checker, args ...interface{}) error {
 	checker := c.(*MessageChecker)
 
 	tx := checker.Transaction
-	err := checker.TransactionPool.Add(tx, checker.Conf.TxPoolNodeLimit)
+	err := checker.TransactionPool.AddFromNode(tx)
 	if err == errors.TransactionPoolFull {
 		return err
 	}

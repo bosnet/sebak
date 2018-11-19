@@ -75,7 +75,7 @@ func (p *ballotCheckerProposedTransaction) MakeBallot(numberOfTxs int) (blt *bal
 		p.txs = append(p.txs, tx)
 
 		// inject txs to `Pool`
-		p.nr.TransactionPool.Add(tx, 0)
+		p.nr.TransactionPool.Add(tx)
 	}
 
 	blt = ballot.NewBallot(p.proposerNode.Address(), p.proposerNode.Address(), rd, p.txHashes)
@@ -612,7 +612,7 @@ func TestProposedTransactionWithBiggerTransactionFeeThanCollected(t *testing.T) 
 		tx.B.Fee = tx.B.Fee.MustAdd(1)
 		kp := p.keys[tx.Source()]
 		tx.Sign(kp, networkID)
-		p.nr.TransactionPool.Add(tx, 0)
+		p.nr.TransactionPool.Add(tx)
 		txHashes = append(txHashes, tx.GetHash())
 	}
 	blt.B.Proposed.Transactions = txHashes

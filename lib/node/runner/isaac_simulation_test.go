@@ -32,7 +32,7 @@ func TestISAACSimulationProposer(t *testing.T) {
 	proposer := nr.localNode
 
 	var err error
-	nr.TransactionPool.Add(tx, 0)
+	nr.TransactionPool.Add(tx)
 
 	// Generate proposed ballot in nr
 	round := uint64(0)

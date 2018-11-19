@@ -58,7 +58,7 @@ func TestModifiedSourceValidate(t *testing.T) {
 	err := ValidateTx(nr.Storage(), common.Config{}, tx1)
 	require.NoError(t, err)
 
-	nr.TransactionPool.Add(tx1, 0)
+	nr.TransactionPool.Add(tx1)
 	require.Equal(t, 1, nr.TransactionPool.Len())
 
 	tx2, _ := GetPaymentTransaction(kpNewAccount2, kpNewAccount1.Address(), uint64(1), uint64(100000000000))
