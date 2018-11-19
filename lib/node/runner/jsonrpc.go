@@ -17,6 +17,9 @@ var MaxLimitListOptions uint64 = storage.DefaultMaxLimitListOptions * 10
 type EchoArgs string
 type EchoResult string
 
+type DBHasArgs string
+type DBHasResult bool
+
 type DBGetArgs string
 type DBGetResult storage.IterItem
 
@@ -46,6 +49,16 @@ func (j *JSONRPCMainApp) Echo(r *http.Request, args *EchoArgs, result *EchoResul
 
 type JSONRPCDBApp struct {
 	st *storage.LevelDBBackend
+}
+
+func (j *JSONRPCDBApp) Has(r *http.Request, args *DBHasArgs, result *DBHasResult) error {
+	o, err := j.st.Has(string(*args))
+	if err != nil {
+		return err
+	}
+
+	*result = DBHasResult(o)
+	return nil
 }
 
 func (j *JSONRPCDBApp) Get(r *http.Request, args *DBGetArgs, result *DBGetResult) error {

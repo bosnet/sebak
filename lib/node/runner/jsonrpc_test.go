@@ -80,6 +80,40 @@ func TestJSONRPCServerEcho(t *testing.T) {
 	require.Equal(t, token, string(result))
 }
 
+func TestJSONRPCServerDBHas(t *testing.T) {
+	jp := jsonrpcServerTestHelper{t: t}
+	jp.prepare()
+	defer jp.done()
+
+	// store data in storage
+	key := "showme"
+	jp.st.New(key, key)
+
+	{
+		args := DBGetArgs(key)
+		resp := jp.request("DB.Has", &args)
+		defer resp.Body.Close()
+
+		var result DBHasResult
+		err := rpcjson.DecodeClientResponse(resp.Body, &result)
+		require.NoError(t, err)
+
+		require.Equal(t, true, bool(result))
+	}
+
+	{
+		args := DBGetArgs(key + "hahaha")
+		resp := jp.request("DB.Has", &args)
+		defer resp.Body.Close()
+
+		var result DBHasResult
+		err := rpcjson.DecodeClientResponse(resp.Body, &result)
+		require.NoError(t, err)
+
+		require.Equal(t, false, bool(result))
+	}
+}
+
 func TestJSONRPCServerDBGet(t *testing.T) {
 	jp := jsonrpcServerTestHelper{t: t}
 	jp.prepare()
