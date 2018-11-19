@@ -101,7 +101,8 @@ var (
 	httpCacheAdapter    string
 	httpCachePoolSize   int
 	httpCacheRedisAddrs map[string]string
-	txPoolLimit         uint64
+	txPoolClientLimit   uint64
+	txPoolNodeLimit     uint64
 
 	logLevel logging.Lvl
 	log      logging.Logger = logging.New("module", "main")
@@ -182,7 +183,7 @@ func init() {
 	nodeCmd.Flags().StringVar(&flagTransactionsLimit, "transactions-limit", flagTransactionsLimit, "transactions limit in a ballot")
 	nodeCmd.Flags().StringVar(&flagUnfreezingPeriod, "unfreezing-period", flagUnfreezingPeriod, "how long freezing must last")
 	nodeCmd.Flags().StringVar(&flagOperationsLimit, "operations-limit", flagOperationsLimit, "operations limit in a transaction")
-	nodeCmd.Flags().StringVar(&flagTxPoolLimit, "txpool-limit", flagTxPoolLimit, "toperation pool limit")
+	nodeCmd.Flags().StringVar(&flagTxPoolLimit, "txpool-limit", flagTxPoolLimit, "transaction pool limit: <client-side>[,<node-side>]")
 	nodeCmd.Flags().Var(
 		&flagRateLimitAPI,
 		"rate-limit-api",
@@ -364,8 +365,24 @@ func parseFlagsNode() {
 		threshold = int(tmpUint64)
 	}
 
-	if txPoolLimit, err = strconv.ParseUint(flagTxPoolLimit, 10, 64); err != nil {
-		cmdcommon.PrintFlagsError(nodeCmd, "--txpool-limit", err)
+	// tx pool limits (client,node)
+	{
+		limits := strings.Split(flagTxPoolLimit, ",")
+	L:
+		for i, l := range limits {
+			switch i {
+			case 0:
+				if txPoolClientLimit, err = strconv.ParseUint(l, 10, 64); err != nil {
+					cmdcommon.PrintFlagsError(nodeCmd, "--txpool-limit", err)
+				}
+			case 1:
+				if txPoolNodeLimit, err = strconv.ParseUint(l, 10, 64); err != nil {
+					cmdcommon.PrintFlagsError(nodeCmd, "--txpool-limit", err)
+				}
+			default:
+				break L
+			}
+		}
 	}
 
 	if common.UnfreezingPeriod, err = strconv.ParseUint(flagUnfreezingPeriod, 10, 64); err != nil {
@@ -596,7 +613,8 @@ func runNode() error {
 		HTTPCachePoolSize:      httpCachePoolSize,
 		HTTPCacheRedisAddrs:    httpCacheRedisAddrs,
 		CongressAccountAddress: flagCongressAddress,
-		TxPoolLimit:            int(txPoolLimit),
+		TxPoolClientLimit:      int(txPoolClientLimit),
+		TxPoolNodeLimit:        int(txPoolNodeLimit),
 	}
 	st, err := storage.NewStorage(storageConfig)
 	if err != nil {

@@ -17,9 +17,10 @@ type Config struct {
 	BlockTime         time.Duration
 	BlockTimeDelta    time.Duration
 
-	TxsLimit    int
-	OpsLimit    int
-	TxPoolLimit int
+	TxsLimit          int
+	OpsLimit          int
+	TxPoolClientLimit int
+	TxPoolNodeLimit   int
 
 	NetworkID []byte
 
@@ -50,7 +51,8 @@ func NewConfig(networkID []byte) Config {
 
 	p.NetworkID = networkID
 
-	p.TxPoolLimit = 100000
+	p.TxPoolClientLimit = DefaultTxPoolLimit
+	p.TxPoolNodeLimit = 0 // unlimited
 
 	p.RateLimitRuleAPI = NewRateLimitRule(RateLimitAPI)
 	p.RateLimitRuleNode = NewRateLimitRule(RateLimitNode)

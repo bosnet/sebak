@@ -99,7 +99,7 @@ var HandleTransactionCheckerFuncs = []common.CheckerFunc{
 	SaveTransactionHistory,
 	MessageHasSameSource,
 	MessageValidate,
-	PushIntoTransactionPool,
+	PushIntoTransactionPoolFromClient,
 	BroadcastTransaction,
 }
 
@@ -109,7 +109,7 @@ var HandleTransactionCheckerFuncsWithoutBroadcast = []common.CheckerFunc{
 	SaveTransactionHistory,
 	MessageHasSameSource,
 	MessageValidate,
-	PushIntoTransactionPool,
+	PushIntoTransactionPoolFromNode,
 }
 
 func (api NetworkHandlerNode) ReceiveTransaction(body []byte, funcs []common.CheckerFunc) (transaction.Transaction, error) {

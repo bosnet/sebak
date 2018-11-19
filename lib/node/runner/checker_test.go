@@ -215,7 +215,7 @@ func (g *getMissingTransactionTesting) MakeBallot(numberOfTxs int) (blt *ballot.
 		if err != nil {
 			panic(err)
 		}
-		g.proposerNR.TransactionPool.Add(tx)
+		g.proposerNR.TransactionPool.Add(tx, 0)
 		_, err = block.SaveTransactionPool(g.proposerNR.Storage(), tx)
 		if err != nil {
 			panic(err)
@@ -450,7 +450,7 @@ func (p *irregularIncomingBallot) makeBallot(state ballot.State) (blt *ballot.Ba
 	tx.Sign(p.keyA, p.nr.Conf.NetworkID)
 
 	// inject txs to `TransactionPool`
-	p.nr.TransactionPool.Add(tx)
+	p.nr.TransactionPool.Add(tx, 0)
 
 	blt = ballot.NewBallot(p.nr.Node().Address(), p.nr.Node().Address(), rd, []string{tx.GetHash()})
 

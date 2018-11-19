@@ -4,7 +4,6 @@ import (
 	"container/list"
 	"sync"
 
-	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/metrics"
 )
@@ -17,20 +16,14 @@ type Pool struct {
 
 	hashList *list.List // Transaction.GetHash()
 	hashMap  map[ /* Transaction.GetHash() */ string]*list.Element
-
-	limit int
 }
 
-func NewPool(limit int) *Pool {
-	if limit <= 0 {
-		limit = common.DefaultTxPoolLimit
-	}
+func NewPool() *Pool {
 	return &Pool{
 		Pool:     map[string]Transaction{},
 		sources:  map[string]string{},
 		hashList: list.New(),
 		hashMap:  make(map[string]*list.Element),
-		limit:    limit,
 	}
 }
 
@@ -67,7 +60,7 @@ func (tp *Pool) GetFromSource(source string) (Transaction, bool) {
 	return tp.Get(hash)
 }
 
-func (tp *Pool) Add(tx Transaction) error {
+func (tp *Pool) Add(tx Transaction, limit int) error {
 	txHash := tx.GetHash()
 	if tp.Has(txHash) {
 		return errors.TransactionAlreadyExistsInPool
@@ -78,9 +71,12 @@ func (tp *Pool) Add(tx Transaction) error {
 	tp.Lock()
 	defer tp.Unlock()
 
-	if len(tp.Pool) >= tp.limit {
+	if limit > 0 && tp.Len() >= limit {
 		return errors.TransactionPoolFull
 	}
+
+	tp.Lock()
+	defer tp.Unlock()
 
 	tp.Pool[txHash] = tx
 	tp.sources[tx.Source()] = txHash
