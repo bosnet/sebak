@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/network/httputils"
 	"boscoin.io/sebak/lib/node/runner/api/resource"
 	"boscoin.io/sebak/lib/transaction"
@@ -43,6 +44,10 @@ func (api NetworkHandlerAPI) PostTransactionsHandler(
 
 	var tx transaction.Transaction
 	if tx, err = handler(body, funcs); err != nil {
+		if _, ok := err.(*errors.Error); !ok {
+			err = errors.HTTPProblem.Clone().SetData("error", err.Error())
+		}
+
 		httputils.WriteJSONError(w, err)
 		return
 	}
