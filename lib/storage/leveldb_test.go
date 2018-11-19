@@ -417,13 +417,15 @@ func TestLevelDBWalk(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if cnt != len(kv) {
-		t.Errorf("want: %v have: %v", len(kv), cnt)
+	if cnt != len(kv)-1 {
+		t.Errorf("want: %v have: %v", len(kv)-1, cnt)
 	}
 
 	var keys []string
 	for k, _ := range kv {
-		keys = append(keys, k)
+		if k != "test-1" {
+			keys = append(keys, k)
+		}
 	}
 	sort.Strings(keys)
 
