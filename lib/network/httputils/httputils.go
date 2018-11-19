@@ -3,8 +3,9 @@ package httputils
 import (
 	"net/http"
 
-	"boscoin.io/sebak/lib/errors"
 	"io"
+
+	"boscoin.io/sebak/lib/errors"
 )
 
 // IsEventStream checks request header accept is text/event-stream
@@ -22,6 +23,7 @@ var (
 		errors.TooManyRequests.Code:               http.StatusTooManyRequests,
 		errors.BlockTransactionDoesNotExists.Code: http.StatusNotFound,
 		errors.BlockAccountDoesNotExists.Code:     http.StatusNotFound,
+		errors.TransactionPoolFull.Code:           http.StatusLocked,
 	}
 )
 

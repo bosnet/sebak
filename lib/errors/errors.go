@@ -103,4 +103,6 @@ var (
 	InflationPFFundingAddressMissMatched      = NewError(185, "inflation pf funding address missmatched")
 	CongressAddressMisMatched                 = NewError(186, "congress address mismatched")
 	PageQueryLimitMaxExceed                   = NewError(187, "maximum value of limit query parameter exceed")
+	TransactionPoolFull                       = NewError(188, "transaction pool is full")
+	TransactionAlreadyExistsInPool            = NewError(189, "transaction already exists in pool")
 )

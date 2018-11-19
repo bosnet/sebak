@@ -71,11 +71,12 @@ var (
 	flagHTTPCacheAdapter    string = common.GetENVValue("SEBAK_HTTP_CACHE_ADAPTER", "")
 	flagHTTPCachePoolSize   string = common.GetENVValue("SEBAK_HTTP_CACHE_POOL_SIZE", "10000")
 	flagHTTPCacheRedisAddrs string = common.GetENVValue("SEBAK_HTTP_CACHE_REDIS_ADDRS", "")
+
+	flagTxPoolLimit string = common.GetENVValue("SEBAK_TX_POOL_LIMIT", fmt.Sprintf("%d", common.DefaultTxPoolLimit))
 )
 
 var (
-	nodeCmd *cobra.Command
-
+	nodeCmd             *cobra.Command
 	bindEndpoint        *common.Endpoint
 	blockTime           time.Duration
 	blockTimeDelta      time.Duration
@@ -100,6 +101,8 @@ var (
 	httpCacheAdapter    string
 	httpCachePoolSize   int
 	httpCacheRedisAddrs map[string]string
+	txPoolClientLimit   uint64
+	txPoolNodeLimit     uint64
 
 	logLevel logging.Lvl
 	log      logging.Logger = logging.New("module", "main")
@@ -180,6 +183,7 @@ func init() {
 	nodeCmd.Flags().StringVar(&flagTransactionsLimit, "transactions-limit", flagTransactionsLimit, "transactions limit in a ballot")
 	nodeCmd.Flags().StringVar(&flagUnfreezingPeriod, "unfreezing-period", flagUnfreezingPeriod, "how long freezing must last")
 	nodeCmd.Flags().StringVar(&flagOperationsLimit, "operations-limit", flagOperationsLimit, "operations limit in a transaction")
+	nodeCmd.Flags().StringVar(&flagTxPoolLimit, "txpool-limit", flagTxPoolLimit, "transaction pool limit: <client-side>[,<node-side>] (0= no limit)")
 	nodeCmd.Flags().Var(
 		&flagRateLimitAPI,
 		"rate-limit-api",
@@ -361,6 +365,29 @@ func parseFlagsNode() {
 		threshold = int(tmpUint64)
 	}
 
+	// tx pool limits (client,node)
+	{
+		limits := strings.Split(flagTxPoolLimit, ",")
+		if len(limits) > 2 {
+			cmdcommon.PrintFlagsError(nodeCmd, "--txpool-limit", fmt.Errorf("wrong format: format:<client-limit>[,<node-limit]"))
+		}
+	L:
+		for i, l := range limits {
+			switch i {
+			case 0:
+				if txPoolClientLimit, err = strconv.ParseUint(l, 10, 64); err != nil {
+					cmdcommon.PrintFlagsError(nodeCmd, "--txpool-limit", err)
+				}
+			case 1:
+				if txPoolNodeLimit, err = strconv.ParseUint(l, 10, 64); err != nil {
+					cmdcommon.PrintFlagsError(nodeCmd, "--txpool-limit", err)
+				}
+			default:
+				break L
+			}
+		}
+	}
+
 	if common.UnfreezingPeriod, err = strconv.ParseUint(flagUnfreezingPeriod, 10, 64); err != nil {
 		cmdcommon.PrintFlagsError(nodeCmd, "--unfreezing-period", err)
 	}
@@ -476,6 +503,7 @@ func parseFlagsNode() {
 	parsedFlags = append(parsedFlags, "\n\tblock-time-delta", flagBlockTimeDelta)
 	parsedFlags = append(parsedFlags, "\n\ttransactions-limit", flagTransactionsLimit)
 	parsedFlags = append(parsedFlags, "\n\toperations-limit", flagOperationsLimit)
+	parsedFlags = append(parsedFlags, "\n\ttxpool-limit", flagTxPoolLimit)
 	parsedFlags = append(parsedFlags, "\n\trate-limit-api", rateLimitRuleAPI)
 	parsedFlags = append(parsedFlags, "\n\trate-limit-node", rateLimitRuleNode)
 	parsedFlags = append(parsedFlags, "\n\thttp-cache-adapter", httpCacheAdapter)
@@ -588,6 +616,8 @@ func runNode() error {
 		HTTPCachePoolSize:      httpCachePoolSize,
 		HTTPCacheRedisAddrs:    httpCacheRedisAddrs,
 		CongressAccountAddress: flagCongressAddress,
+		TxPoolClientLimit:      int(txPoolClientLimit),
+		TxPoolNodeLimit:        int(txPoolNodeLimit),
 	}
 	st, err := storage.NewStorage(storageConfig)
 	if err != nil {

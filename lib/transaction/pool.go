@@ -4,6 +4,8 @@ import (
 	"container/list"
 	"sync"
 
+	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/metrics"
 )
 
@@ -15,14 +17,17 @@ type Pool struct {
 
 	hashList *list.List // Transaction.GetHash()
 	hashMap  map[ /* Transaction.GetHash() */ string]*list.Element
+
+	cfg common.Config
 }
 
-func NewPool() *Pool {
+func NewPool(cfg common.Config) *Pool {
 	return &Pool{
 		Pool:     map[string]Transaction{},
 		sources:  map[string]string{},
 		hashList: list.New(),
 		hashMap:  make(map[string]*list.Element),
+		cfg:      cfg,
 	}
 }
 
@@ -59,10 +64,14 @@ func (tp *Pool) GetFromSource(source string) (Transaction, bool) {
 	return tp.Get(hash)
 }
 
-func (tp *Pool) Add(tx Transaction) bool {
+func (tp *Pool) add(tx Transaction, limit int) error {
 	txHash := tx.GetHash()
 	if tp.Has(txHash) {
-		return false
+		return errors.TransactionAlreadyExistsInPool
+	}
+
+	if limit > 0 && tp.Len() >= limit {
+		return errors.TransactionPoolFull
 	}
 
 	metrics.TxPool.AddSize(1)
@@ -76,7 +85,19 @@ func (tp *Pool) Add(tx Transaction) bool {
 	e := tp.hashList.PushBack(txHash)
 	tp.hashMap[txHash] = e
 
-	return true
+	return nil
+}
+
+func (tp *Pool) AddFromClient(tx Transaction) error {
+	return tp.add(tx, tp.cfg.TxPoolClientLimit)
+}
+
+func (tp *Pool) AddFromNode(tx Transaction) error {
+	return tp.add(tx, tp.cfg.TxPoolNodeLimit)
+}
+
+func (tp *Pool) Add(tx Transaction) error {
+	return tp.add(tx, 0)
 }
 
 func (tp *Pool) Remove(hashes ...string) {
