@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"boscoin.io/sebak/lib/block"
+	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/network/httputils"
 	"boscoin.io/sebak/lib/node/runner/api/resource"
@@ -27,7 +28,7 @@ func (api NetworkHandlerAPI) GetBlocksHandler(w http.ResponseWriter, r *http.Req
 	{
 		height, err := strconv.ParseUint(string(p.Cursor()), 10, 64)
 		if err != nil {
-			height = 1 // default cursor is height 1
+			height = common.GenesisBlockHeight // default cursor is genesis block height
 		}
 		option = storage.NewWalkOption(block.GetBlockKeyPrefixHeight(height), p.Limit(), p.Reverse(), false)
 		if httputils.IsEventStream(r) {
