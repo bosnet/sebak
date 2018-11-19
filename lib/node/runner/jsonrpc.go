@@ -6,7 +6,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/rpc"
-	"github.com/gorilla/rpc/json"
+	jsonrpc "github.com/gorilla/rpc/json"
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/storage"
@@ -101,10 +101,29 @@ func NewJSONRPCServer(endpoint *common.Endpoint, st *storage.LevelDBBackend) *JS
 	}
 }
 
+type Server struct {
+	*rpc.Server
+}
+
+func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+	w.Header().Set(
+		"Access-Control-Allow-Headers",
+		"Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization",
+	)
+
+	if r.Method == "OPTIONS" {
+		return
+	}
+
+	s.Server.ServeHTTP(w, r)
+}
+
 func (j *JSONRPCServer) Ready() *mux.Router {
-	s := rpc.NewServer()
-	s.RegisterCodec(json.NewCodec(), "application/json")
-	s.RegisterCodec(json.NewCodec(), "application/json;charset=UTF-8")
+	s := &Server{Server: rpc.NewServer()}
+	s.RegisterCodec(jsonrpc.NewCodec(), "application/json")
+	s.RegisterCodec(jsonrpc.NewCodec(), "application/json;charset=UTF-8")
 
 	mainApp := &JSONRPCMainApp{}
 	s.RegisterService(mainApp, "Main")
