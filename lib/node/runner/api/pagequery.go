@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	DefaultLimit    uint64 = 100
-	DefaultMaxLimit uint64 = 1000
+	DefaultLimit    uint64 = 20
+	DefaultMaxLimit uint64 = 100
 )
 
 type PageQuery struct {
