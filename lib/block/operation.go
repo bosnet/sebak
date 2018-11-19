@@ -171,7 +171,7 @@ func GetBlockOperationKeyPrefixSourceAndType(source string, ty operation.Operati
 }
 
 func GetBlockOperationKeyPrefixBlockHeight(height uint64) string {
-	return fmt.Sprintf("%s%d-", common.BlockOperationPrefixBlockHeight, height)
+	return fmt.Sprintf("%s%s-", common.BlockOperationPrefixBlockHeight, common.EncodeUint64ToByteSlice(height))
 }
 
 func (bo BlockOperation) NewBlockOperationTxHashKey() string {
