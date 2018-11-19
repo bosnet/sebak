@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestBlockHAndler(t *testing.T) {
+func TestBlockHandler(t *testing.T) {
 	ts, st := prepareAPIServer()
 	defer st.Close()
 	defer ts.Close()
