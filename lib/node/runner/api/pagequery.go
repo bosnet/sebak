@@ -7,11 +7,15 @@ import (
 	"strconv"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/node/runner/api/resource"
 	"boscoin.io/sebak/lib/storage"
 )
 
-const DefaultMaxLimit uint64 = 100
+const (
+	DefaultLimit    uint64 = 100
+	DefaultMaxLimit uint64 = 1000
+)
 
 type PageQuery struct {
 	request *http.Request
@@ -23,7 +27,7 @@ type PageQuery struct {
 func NewPageQuery(r *http.Request) (*PageQuery, error) {
 	p := &PageQuery{
 		request: r,
-		limit:   DefaultMaxLimit,
+		limit:   DefaultLimit,
 	}
 	err := p.parseRequest()
 	return p, err
@@ -87,6 +91,10 @@ func (p *PageQuery) parseRequest() error {
 		limit, err := strconv.ParseUint(l, 10, 64)
 		if err != nil {
 			return err
+		}
+
+		if limit > DefaultMaxLimit {
+			return errors.MaxLimitExceed
 		}
 		p.limit = limit
 	}
