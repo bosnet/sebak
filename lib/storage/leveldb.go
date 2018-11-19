@@ -356,17 +356,19 @@ func (st *LevelDBBackend) GetIterator(prefix string, option ListOptions) (func()
 type (
 	WalkFunc   func(key, value []byte) (bool, error)
 	WalkOption struct {
-		Cursor  string
-		Limit   uint64
-		Reverse bool
+		Cursor     string
+		Limit      uint64
+		Reverse    bool
+		SkipCursor bool // skip cursor's item
 	}
 )
 
-func NewWalkOption(cursor string, limit uint64, reverse bool) *WalkOption {
+func NewWalkOption(cursor string, limit uint64, reverse bool, skipCursor bool) *WalkOption {
 	o := &WalkOption{
-		Cursor:  cursor,
-		Limit:   limit,
-		Reverse: reverse,
+		Cursor:     cursor,
+		Limit:      limit,
+		Reverse:    reverse,
+		SkipCursor: skipCursor,
 	}
 	return o
 }
@@ -374,9 +376,10 @@ func NewWalkOption(cursor string, limit uint64, reverse bool) *WalkOption {
 func (st *LevelDBBackend) Walk(prefix string, option *WalkOption, walkFunc WalkFunc) error {
 	if option == nil {
 		option = &WalkOption{
-			Cursor:  prefix,
-			Reverse: false,
-			Limit:   10,
+			Cursor:     prefix,
+			Reverse:    false,
+			Limit:      10,
+			SkipCursor: true,
 		}
 	}
 
@@ -402,7 +405,13 @@ func (st *LevelDBBackend) Walk(prefix string, option *WalkOption, walkFunc WalkF
 
 	var cnt uint64 = 0
 
-	for ok := iter.Seek(st.makeKey(cursor)); ok; ok = iterFunc() {
+	ok := iter.Seek(st.makeKey(cursor))
+	if option.SkipCursor == true {
+		ok = iterFunc()
+	}
+
+	for ; ok; ok = iterFunc() {
+
 		if cnt >= option.Limit {
 			return iter.Error()
 		}

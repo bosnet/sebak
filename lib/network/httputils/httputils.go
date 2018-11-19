@@ -24,6 +24,7 @@ var (
 		errors.BlockTransactionDoesNotExists.Code: http.StatusNotFound,
 		errors.BlockAccountDoesNotExists.Code:     http.StatusNotFound,
 		errors.TransactionPoolFull.Code:           http.StatusLocked,
+		errors.BadRequestParameter.Code:           http.StatusBadRequest,
 	}
 )
 

@@ -407,7 +407,7 @@ func TestLevelDBWalk(t *testing.T) {
 		cnt        int
 	)
 
-	walkOption := NewWalkOption("test-1", 10, false)
+	walkOption := NewWalkOption("test-1", 10, false, true)
 	err := st.Walk("test-", walkOption, func(k, v []byte) (bool, error) {
 		cnt++
 		walkedKeys = append(walkedKeys, string(k))
@@ -417,13 +417,15 @@ func TestLevelDBWalk(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if cnt != len(kv) {
-		t.Errorf("want: %v have: %v", len(kv), cnt)
+	if cnt != len(kv)-1 {
+		t.Errorf("want: %v have: %v", len(kv)-1, cnt)
 	}
 
 	var keys []string
 	for k, _ := range kv {
-		keys = append(keys, k)
+		if k != "test-1" {
+			keys = append(keys, k)
+		}
 	}
 	sort.Strings(keys)
 

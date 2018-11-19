@@ -105,4 +105,5 @@ var (
 	PageQueryLimitMaxExceed                   = NewError(187, "maximum value of limit query parameter exceed")
 	TransactionPoolFull                       = NewError(188, "transaction pool is full")
 	TransactionAlreadyExistsInPool            = NewError(189, "transaction already exists in pool")
+	BadRequestParameter                       = NewError(190, "request parameter is invalid")
 )
