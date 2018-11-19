@@ -37,6 +37,9 @@ const (
 	HTTPCacheMemoryAdapterName = "mem"
 	HTTPCacheRedisAdapterName  = "redis"
 	HTTPCachePoolSize          = 10000
+
+	// DefaultTxPoolLimit is the default tx pool limit.
+	DefaultTxPoolLimit int = 1000000
 )
 
 var (

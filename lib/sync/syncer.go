@@ -8,6 +8,7 @@ import (
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/common/observer"
+	"boscoin.io/sebak/lib/metrics"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/storage"
@@ -240,6 +241,7 @@ func (s *Syncer) sync(p *SyncProgress, nodeAddrs []string) {
 }
 
 func (s *Syncer) work(height uint64, nodeAddrs []string) bool {
+	defer func(begin time.Time) { metrics.Sync.ObserveDurationSeconds(begin, "") }(time.Now())
 	ctx := s.ctx
 	work := func() {
 		latestHeight := s.latestBlockHeight()
@@ -262,19 +264,24 @@ func (s *Syncer) work(height uint64, nodeAddrs []string) bool {
 			case <-ctx.Done():
 				break L
 			default:
+				begin := time.Now()
 				syncInfo, err = s.fetcher.Fetch(ctx, syncInfo)
 				if err != nil {
 					if err != context.Canceled {
 						s.logger.Error("fetch failure", "err", err, "height", height)
 					}
 				}
+				metrics.Sync.ObserveDurationSeconds(begin, metrics.SyncFetcher)
+				begin = time.Now()
 				err = s.validator.Validate(ctx, syncInfo)
 				if err != nil {
 					if err != context.Canceled {
 						s.logger.Error("validate failure", "err", err, "height", height)
+						metrics.Sync.AddValidateError()
 					}
 					continue
 				}
+				metrics.Sync.ObserveDurationSeconds(begin, metrics.SyncValidator)
 				break L
 			}
 		}
@@ -286,6 +293,7 @@ func (s *Syncer) work(height uint64, nodeAddrs []string) bool {
 			}
 		} else {
 			s.logger.Info("done sync work", "height", height, "hash", syncInfo.Block.Hash)
+			metrics.Sync.SetHeight(height)
 		}
 	}
 	return s.workPool.TryAdd(ctx, work)

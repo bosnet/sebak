@@ -8,6 +8,7 @@ import (
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/consensus"
+	"boscoin.io/sebak/lib/metrics"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/voting"
 )
@@ -190,6 +191,7 @@ func (sm *ISAACStateManager) Start() {
 	sm.nr.Log().Debug("begin ISAACStateManager.Start()", "ISAACState", sm.State())
 	go func() {
 		timer := time.NewTimer(time.Duration(1 * time.Hour))
+		begin := time.Now() // measure for block interval time
 		for {
 			select {
 			case <-timer.C:
@@ -221,6 +223,8 @@ func (sm *ISAACStateManager) Start() {
 				}
 
 				if state.BallotState == ballot.StateINIT {
+					begin = metrics.Consensus.SetBlockIntervalSeconds(begin)
+
 					if sm.nr.localNode.State() == node.StateCONSENSUS {
 						sm.proposeOrWait(timer, state)
 					}

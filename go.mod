@@ -9,6 +9,7 @@ require (
 	github.com/davecgh/go-spew v1.1.0 // indirect
 	github.com/ethereum/go-ethereum v1.8.13
 	github.com/fsnotify/fsnotify v1.4.7 // indirect
+	github.com/go-kit/kit v0.8.0
 	github.com/go-redis/cache v6.3.5+incompatible
 	github.com/go-redis/redis v6.14.2+incompatible
 	github.com/go-stack/stack v1.7.0 // indirect
