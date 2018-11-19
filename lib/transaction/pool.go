@@ -70,14 +70,11 @@ func (tp *Pool) add(tx Transaction, limit int) error {
 		return errors.TransactionAlreadyExistsInPool
 	}
 
-	metrics.TxPool.AddSize(1)
-
-	tp.Lock()
-	defer tp.Unlock()
-
 	if limit > 0 && tp.Len() >= limit {
 		return errors.TransactionPoolFull
 	}
+
+	metrics.TxPool.AddSize(1)
 
 	tp.Lock()
 	defer tp.Unlock()
