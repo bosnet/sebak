@@ -118,7 +118,7 @@ func TestInflationPF(t *testing.T) {
 		congressAccount, err := c.LoadAccount(CongressAddr)
 		require.NoError(t, err)
 
-		ob := operation.NewCongressVoting([]byte("dummy"), 10, 20, common.Amount(fundingAmount), account1Addr)
+		ob := operation.NewCongressVoting("dummy", 10, 20, common.Amount(fundingAmount), account1Addr)
 		o, err := operation.NewOperation(ob)
 		require.NoError(t, err)
 
