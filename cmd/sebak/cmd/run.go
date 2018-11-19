@@ -72,7 +72,7 @@ var (
 	flagHTTPCachePoolSize   string = common.GetENVValue("SEBAK_HTTP_CACHE_POOL_SIZE", "10000")
 	flagHTTPCacheRedisAddrs string = common.GetENVValue("SEBAK_HTTP_CACHE_REDIS_ADDRS", "")
 
-	flagTxPoolLimit string = common.GetENVValue("SEBAK_TX_POOL_LIMIT", "100000")
+	flagTxPoolLimit string = common.GetENVValue("SEBAK_TX_POOL_LIMIT", fmt.Sprintf("%d", common.DefaultTxPoolLimit))
 )
 
 var (
@@ -183,7 +183,7 @@ func init() {
 	nodeCmd.Flags().StringVar(&flagTransactionsLimit, "transactions-limit", flagTransactionsLimit, "transactions limit in a ballot")
 	nodeCmd.Flags().StringVar(&flagUnfreezingPeriod, "unfreezing-period", flagUnfreezingPeriod, "how long freezing must last")
 	nodeCmd.Flags().StringVar(&flagOperationsLimit, "operations-limit", flagOperationsLimit, "operations limit in a transaction")
-	nodeCmd.Flags().StringVar(&flagTxPoolLimit, "txpool-limit", flagTxPoolLimit, "transaction pool limit: <client-side>[,<node-side>]")
+	nodeCmd.Flags().StringVar(&flagTxPoolLimit, "txpool-limit", flagTxPoolLimit, "transaction pool limit: <client-side>[,<node-side>] (0= no limit)")
 	nodeCmd.Flags().Var(
 		&flagRateLimitAPI,
 		"rate-limit-api",
