@@ -368,6 +368,9 @@ func parseFlagsNode() {
 	// tx pool limits (client,node)
 	{
 		limits := strings.Split(flagTxPoolLimit, ",")
+		if len(limits) > 2 {
+			cmdcommon.PrintFlagsError(nodeCmd, "--txpool-limit", fmt.Errorf("wrong format: format:<client-limit>[,<node-limit]"))
+		}
 	L:
 		for i, l := range limits {
 			switch i {
