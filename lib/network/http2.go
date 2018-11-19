@@ -31,6 +31,12 @@ var (
 	UrlPathPrefixAPI    = fmt.Sprintf("/%s", RouterNameAPI)
 	UrlPathPrefixDebug  = fmt.Sprintf("/%s", RouterNameDebug)
 	UrlPathPrefixMetric = fmt.Sprintf("/%s", RouterNameMetric)
+	UrlPathPrefixes     = []string{
+		UrlPathPrefixNode,
+		UrlPathPrefixAPI,
+		UrlPathPrefixDebug,
+		UrlPathPrefixMetric,
+	}
 )
 
 type HTTP2MessageBroker struct {

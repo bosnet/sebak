@@ -6,6 +6,7 @@ import (
 	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/errors"
+	"boscoin.io/sebak/lib/metrics"
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
 	"boscoin.io/sebak/lib/transaction/operation"
@@ -96,6 +97,10 @@ func finishBallotWithProposedTxs(st *storage.LevelDBBackend, b ballot.Ballot, pr
 		"total-ops", blk.TotalOps,
 		"proposer", blk.Proposer,
 	)
+	metrics.Consensus.SetHeight(blk.Height)
+	metrics.Consensus.SetRounds(blk.Round)
+	metrics.Consensus.SetTotalTxs(blk.TotalTxs)
+	metrics.Consensus.SetTotalOps(blk.TotalOps)
 
 	if err = FinishTransactions(*blk, proposedTransactions, st); err != nil {
 		return nil, err

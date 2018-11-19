@@ -21,6 +21,7 @@ import (
 	"boscoin.io/sebak/lib/common/keypair"
 	"boscoin.io/sebak/lib/consensus"
 	"boscoin.io/sebak/lib/errors"
+	"boscoin.io/sebak/lib/metrics"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/node/runner"
@@ -547,6 +548,8 @@ func getTimeDuration(str string, defaultValue time.Duration, errMessage string) 
 }
 
 func runNode() error {
+	metrics.InitPrometheusMetrics()
+	metrics.SetVersion()
 
 	// create network
 	networkConfig, err := network.NewHTTP2NetworkConfigFromEndpoint(localNode.Alias(), bindEndpoint)

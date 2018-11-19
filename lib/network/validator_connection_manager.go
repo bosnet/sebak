@@ -10,6 +10,7 @@ import (
 	logging "github.com/inconshreveable/log15"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/metrics"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/voting"
 )
@@ -87,6 +88,7 @@ func (c *ValidatorConnectionManager) Start() {
 		}
 		go c.connectingValidator(v)
 	}
+	go c.watchForMetrics()
 }
 
 // setConnected returns `true` when the validator is newly connected or
@@ -234,4 +236,16 @@ func (c *ValidatorConnectionManager) GetNode(address string) node.Node {
 	}
 
 	return validator
+}
+
+func (c *ValidatorConnectionManager) watchForMetrics() {
+	numValidators := len(c.validators)
+	metrics.Consensus.SetValidators(numValidators)
+
+	ticker := time.NewTicker(time.Second * 60)
+	for _ = range ticker.C {
+		numConnected := c.CountConnected()
+		metrics.Consensus.SetMissingValidators(numValidators - numConnected)
+	}
+	//TODO: stop this goroutine.
 }

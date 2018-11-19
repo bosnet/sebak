@@ -2,10 +2,14 @@ package network
 
 import (
 	"net/http"
+	"strconv"
+	"strings"
+	"time"
 
 	logging "github.com/inconshreveable/log15"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/metrics"
 )
 
 type HTTP2ErrorLog15Writer struct {
@@ -39,6 +43,10 @@ func (l *HTTP2ResponseLog15Writer) WriteHeader(s int) {
 }
 
 func (l *HTTP2ResponseLog15Writer) Status() int {
+	if l.status == 0 {
+		return 200
+	}
+	// when it doesn't call WriteHeader, default status is 200.
 	return l.status
 }
 
@@ -69,6 +77,7 @@ var HeaderKeyFiltered []string = []string{
 // ServeHTTP will log in 2 phase, when request received and response sent. This
 // was derived from github.com/gorilla/handlers/handlers.go
 func (l HTTP2Log15Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	begin := time.Now()
 	uid := common.GenerateUUID()
 
 	uri := r.RequestURI
@@ -105,10 +114,32 @@ func (l HTTP2Log15Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	writer := &HTTP2ResponseLog15Writer{w: w}
 	l.handler.ServeHTTP(writer, r)
 
+	elapsed := time.Since(begin)
+
 	l.log.Debug(
 		"response",
 		"id", uid,
 		"status", writer.Status(),
 		"size", writer.Size(),
+		"elapsed", elapsed,
 	)
+
+	var prefix string = "unknown"
+	{
+		for _, p := range UrlPathPrefixes {
+			if strings.Index(uri, p) >= 0 {
+				prefix = p
+				break
+			}
+		}
+	}
+	{
+		labels := []string{"prefix", prefix, "method", r.Method, "status", strconv.Itoa(writer.Status())}
+		metrics.API.RequestDurationSeconds.With(labels...).Observe(elapsed.Seconds())
+		metrics.API.RequestsTotal.With(labels...).Add(1)
+		//TODO(anarcher): RequestErrorsTotal is necessary?
+		if writer.Status() >= 500 {
+			metrics.API.RequestErrorsTotal.With(labels...).Add(1)
+		}
+	}
 }
