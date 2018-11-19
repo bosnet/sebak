@@ -115,6 +115,13 @@ func TestFreezingAccount(t *testing.T) {
 			time.Sleep(time.Millisecond * 500)
 		}
 		require.Nil(t, e)
+
+		account2Account, err = c.LoadAccount(account2Addr)
+		require.NoError(t, err)
+		account2Amount, err := common.AmountFromString(account2Account.Balance)
+		require.NoError(t, err)
+
+		require.Equal(t, common.Unit, account2Amount)
 	}
 
 	// Refund
@@ -124,7 +131,7 @@ func TestFreezingAccount(t *testing.T) {
 		account2Account, err := c.LoadAccount(account2Addr)
 		require.NoError(t, err)
 
-		ob := operation.NewPayment(account1Addr, common.Unit.MustSub(common.Amount(fee)).MustSub(common.Amount(fee)))
+		ob := operation.NewPayment(account1Addr, common.Unit.MustSub(common.Amount(fee)))
 		o, err := operation.NewOperation(ob)
 		require.NoError(t, err)
 
@@ -157,7 +164,15 @@ func TestFreezingAccount(t *testing.T) {
 		account1Amount, err := common.AmountFromString(account1Account.Balance)
 		require.NoError(t, err)
 
-		require.Equal(t, common.Unit.MustSub(common.Amount(fee)).MustSub(common.Amount(fee)), account1Amount)
+		require.Equal(t, common.Unit.MustSub(common.Amount(fee)), account1Amount)
+
+		account2Account, err = c.LoadAccount(account2Addr)
+		require.NoError(t, err)
+		account2Amount, err := common.AmountFromString(account2Account.Balance)
+		require.NoError(t, err)
+
+		require.Equal(t, common.Amount(0), account2Amount)
+
 	}
 
 }
