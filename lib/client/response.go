@@ -133,7 +133,7 @@ type OperationsPage struct {
 }
 
 type CongressVoting struct {
-	Contract []byte `json:"contract"`
+	Contract string `json:"contract"`
 	Voting   struct {
 		Start uint64 `json:"start"`
 		End   uint64 `json:"end"`
