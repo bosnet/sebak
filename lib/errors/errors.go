@@ -102,4 +102,5 @@ var (
 	InflationPFAmountMissMatched              = NewError(184, "inflation pf amount missmatched")
 	InflationPFFundingAddressMissMatched      = NewError(185, "inflation pf funding address missmatched")
 	CongressAddressMisMatched                 = NewError(186, "congress address mismatched")
+	PageQueryLimitMaxExceed                   = NewError(187, "maximum value of limit query parameter exceed")
 )
