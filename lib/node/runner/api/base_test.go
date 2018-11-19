@@ -38,8 +38,8 @@ func prepareAPIServer() (*httptest.Server, *storage.LevelDBBackend) {
 	return ts, storage
 }
 
-func prepareOps(storage *storage.LevelDBBackend, count int) (*keypair.Full, []block.BlockOperation) {
-	kp, btList := prepareTxs(storage, count)
+func prepareOps(storage *storage.LevelDBBackend, count int) (*keypair.Full, *keypair.Full, []block.BlockOperation) {
+	kp, kpTarget, btList := prepareTxs(storage, count)
 	var boList []block.BlockOperation
 	for _, bt := range btList {
 		bo, err := block.GetBlockOperation(storage, bt.Operations[0])
@@ -49,7 +49,7 @@ func prepareOps(storage *storage.LevelDBBackend, count int) (*keypair.Full, []bl
 		boList = append(boList, bo)
 	}
 
-	return kp, boList
+	return kp, kpTarget, boList
 }
 func prepareOpsWithoutSave(count int, st *storage.LevelDBBackend) (*keypair.Full, block.Block, []block.BlockOperation) {
 	kp := keypair.Random()
@@ -93,13 +93,14 @@ func prepareBlkTxOpWithoutSave(st *storage.LevelDBBackend) (*keypair.Full, block
 	return kp, theBlock, bt, bo
 }
 
-func prepareTxs(storage *storage.LevelDBBackend, count int) (*keypair.Full, []block.BlockTransaction) {
+func prepareTxs(storage *storage.LevelDBBackend, count int) (*keypair.Full, *keypair.Full, []block.BlockTransaction) {
 	kp := keypair.Random()
+	kpTarget := keypair.Random()
 	var txs []transaction.Transaction
 	var txHashes []string
 	var btList []block.BlockTransaction
 	for i := 0; i < count; i++ {
-		tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, kp)
+		tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, kp, kpTarget)
 		txs = append(txs, tx)
 		txHashes = append(txHashes, tx.GetHash())
 	}
@@ -110,11 +111,11 @@ func prepareTxs(storage *storage.LevelDBBackend, count int) (*keypair.Full, []bl
 		bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, theBlock.Height, theBlock.ProposedTime, tx)
 		bt.MustSave(storage)
 		if err := bt.SaveBlockOperations(storage); err != nil {
-			return nil, nil
+			return nil, nil, nil
 		}
 		btList = append(btList, bt)
 	}
-	return kp, btList
+	return kp, kpTarget, btList
 }
 
 func prepareTxsWithoutSave(count int, st *storage.LevelDBBackend) (*keypair.Full, []block.BlockTransaction) {

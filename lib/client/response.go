@@ -112,6 +112,7 @@ type Operation struct {
 	} `json:"_links"`
 	Hash   string      `json:"hash"`
 	Source string      `json:"source"`
+	Target string      `json:"target"`
 	Type   string      `json:"type"`
 	Body   interface{} `json:"body"`
 }

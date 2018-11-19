@@ -32,6 +32,7 @@ func (o Operation) GetMap() hal.Entry {
 	entry := hal.Entry{
 		"hash":         o.bo.Hash,
 		"source":       o.bo.Source,
+		"target":       o.bo.Target,
 		"type":         o.bo.Type,
 		"tx_hash":      o.bo.TxHash,
 		"body":         body,
