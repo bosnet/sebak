@@ -55,7 +55,7 @@ func TestSerializeOperation(t *testing.T) {
 }
 
 func TestOperationBodyCongressVoting(t *testing.T) {
-	opb := NewCongressVoting([]byte("dummy contract"), 1, 100, common.Amount(1000000), "dummy account")
+	opb := NewCongressVoting("dummy contract", 1, 100, common.Amount(1000000), "dummy account")
 	op := Operation{
 		H: Header{Type: TypeCongressVoting},
 		B: opb,
