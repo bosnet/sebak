@@ -405,11 +405,13 @@ func (st *LevelDBBackend) Walk(prefix string, option *WalkOption, walkFunc WalkF
 
 	var cnt uint64 = 0
 
+	ok := iter.Seek(st.makeKey(cursor))
 	if option.SkipCursor == true {
-		iter.Seek(st.makeKey(cursor))
+		ok = iterFunc()
 	}
 
-	for ok := iter.Seek(st.makeKey(cursor)); ok; ok = iterFunc() {
+	for ; ok; ok = iterFunc() {
+
 		if cnt >= option.Limit {
 			return iter.Error()
 		}
