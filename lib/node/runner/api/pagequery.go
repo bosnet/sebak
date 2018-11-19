@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	DefaultLimit    uint64 = 20
-	DefaultMaxLimit uint64 = 100
+	DefaultLimit uint64 = 20
+	MaxLimit     uint64 = 100
 )
 
 type PageQuery struct {
@@ -93,8 +93,8 @@ func (p *PageQuery) parseRequest() error {
 			return err
 		}
 
-		if limit > DefaultMaxLimit {
-			return errors.MaxLimitExceed
+		if limit > MaxLimit {
+			return errors.PageQueryLimitMaxExceed
 		}
 		p.limit = limit
 	}
