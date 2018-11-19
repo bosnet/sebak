@@ -231,7 +231,7 @@ func (sm *ISAACStateManager) Start() {
 				}
 				sm.setState(state)
 				sm.transitSignal(state)
-				if state.BallotState == ballot.StateALLCONFIRM {
+				if state.BallotState == ballot.StateINIT {
 					begin = metrics.Consensus.SetBlockIntervalSeconds(begin)
 				}
 
