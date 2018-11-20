@@ -124,6 +124,7 @@ func NewNodeInfo(nr *NodeRunner) node.NodeInfo {
 		TransactionsLimit:         nr.Conf.TxsLimit,
 		GenesisBlockConfirmedTime: common.GenesisBlockConfirmedTime,
 		InflationRatio:            common.InflationRatioString,
+		UnfreezingPeriod:          common.UnfreezingPeriod,
 		BlockHeightEndOfInflation: common.BlockHeightEndOfInflation,
 	}
 

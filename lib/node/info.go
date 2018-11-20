@@ -32,6 +32,7 @@ type NodePolicy struct {
 	TransactionsLimit         int           `json:"transactions-limit"`            // transactions limit in a ballot
 	GenesisBlockConfirmedTime string        `json:"genesis-block-confirmed-time"`  // confirmed time of genesis block; see `common.GenesisBlockConfirmedTime`
 	InflationRatio            string        `json:"inflation-ratio"`               // inflation ratio; see `common.InflationRatio`
+	UnfreezingPeriod          uint64        `json:"unfreezing-period"`             // unfreezing period
 	BlockHeightEndOfInflation uint64        `json:"block-height-end-of-inflation"` // block height of inflation end; see `common.BlockHeightEndOfInflation`
 }
 

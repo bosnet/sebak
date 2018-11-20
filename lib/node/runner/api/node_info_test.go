@@ -52,6 +52,7 @@ func TestAPIGetNodeInfoHandler(t *testing.T) {
 		TransactionsLimit:         2000,
 		GenesisBlockConfirmedTime: common.GenesisBlockConfirmedTime,
 		InflationRatio:            common.InflationRatioString,
+		UnfreezingPeriod:          common.UnfreezingPeriod,
 		BlockHeightEndOfInflation: common.BlockHeightEndOfInflation,
 	}
 
