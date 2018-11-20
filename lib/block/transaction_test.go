@@ -26,8 +26,8 @@ func TestNewBlockTransaction(t *testing.T) {
 	require.Equal(t, bt.Created, tx.H.Created)
 
 	var opHashes []string
-	for _, op := range tx.B.Operations {
-		opHashes = append(opHashes, NewBlockOperationKey(op.MakeHashString(), tx.GetHash()))
+	for i, op := range tx.B.Operations {
+		opHashes = append(opHashes, NewBlockOperationKey(op.MakeHashString(), tx.GetHash(), uint64(i)))
 	}
 	for i, opHash := range bt.Operations {
 		require.Equal(t, opHash, opHashes[i])
@@ -113,7 +113,7 @@ func TestMultipleBlockTransactionSource(t *testing.T) {
 		txHashes = append(txHashes, tx.GetHash())
 	}
 
-	block = TestMakeNewBlock(txHashes)
+	block = TestMakeNewBlockWithPrevBlock(block, txHashes)
 	for i, tx := range txs {
 		bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, block.ProposedTime, tx, uint64(i))
 		err := bt.Save(st)
@@ -263,8 +263,8 @@ func TestMultipleBlockTransactionGetByAccount(t *testing.T) {
 		}
 
 		blk = TestMakeNewBlock(txHashes)
-		for _, tx := range txs {
-			bt := NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.ProposedTime, tx, 0)
+		for i, tx := range txs {
+			bt := NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.ProposedTime, tx, uint64(i))
 			bt.MustSave(st)
 			err := bt.SaveBlockOperations(st)
 			require.NoError(t, err)
@@ -282,7 +282,7 @@ func TestMultipleBlockTransactionGetByAccount(t *testing.T) {
 			txHashes = append(txHashes, tx.GetHash())
 		}
 
-		blk = TestMakeNewBlock(txHashes)
+		blk = TestMakeNewBlockWithPrevBlock(blk, txHashes)
 		for i, tx := range txs {
 			bt := NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.ProposedTime, tx, uint64(i))
 			bt.MustSave(st)
@@ -301,7 +301,7 @@ func TestMultipleBlockTransactionGetByAccount(t *testing.T) {
 			txHashes = append(txHashes, tx.GetHash())
 		}
 
-		blk = TestMakeNewBlock(txHashes)
+		blk = TestMakeNewBlockWithPrevBlock(blk, txHashes)
 		for i, tx := range txs {
 			bt := NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.ProposedTime, tx, uint64(i))
 			bt.MustSave(st)
@@ -363,7 +363,7 @@ func TestMultipleBlockTransactionGetByBlock(t *testing.T) {
 		txHashes1 = append(txHashes1, tx.GetHash())
 	}
 
-	block1 := TestMakeNewBlock(txHashes1)
+	block1 := TestMakeNewBlockWithPrevBlock(block0, txHashes1)
 	for i, tx := range txs1 {
 		bt := NewBlockTransactionFromTransaction(block1.Hash, block1.Height, block1.ProposedTime, tx, uint64(i))
 		bt.MustSave(st)
