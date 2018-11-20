@@ -203,13 +203,14 @@ func (sm *ISAACStateManager) Start() {
 					sm.resetTimer(timer, ballot.StateSIGN)
 				case ballot.StateSIGN:
 					if sm.nr.localNode.State() == node.StateCONSENSUS {
-						go sm.broadcastExpiredBallot(sm.State())
+						sm.nr.Consensus().RemoveRunningRoundsExceptExpired(sm.State())
+						go sm.broadcastExpiredBallot(sm.State().Round, ballot.StateSIGN)
 					}
-					sm.setBallotState(ballot.StateACCEPT)
-					sm.transitSignal(sm.State())
-					sm.resetTimer(timer, ballot.StateACCEPT)
 				case ballot.StateACCEPT:
-					sm.NextRound()
+					if sm.nr.localNode.State() == node.StateCONSENSUS {
+						sm.nr.Consensus().RemoveRunningRoundsExceptExpired(sm.State())
+						go sm.broadcastExpiredBallot(sm.State().Round, ballot.StateACCEPT)
+					}
 				case ballot.StateALLCONFIRM:
 					sm.nr.Log().Error("timeout", "ISAACState", sm.State())
 					sm.NextRound()
@@ -241,21 +242,21 @@ func (sm *ISAACStateManager) Start() {
 	}()
 }
 
-func (sm *ISAACStateManager) broadcastExpiredBallot(state consensus.ISAACState) {
-	sm.nr.Log().Debug("begin broadcastExpiredBallot", "ISAACState", state)
+func (sm *ISAACStateManager) broadcastExpiredBallot(round uint64, state ballot.State) {
+	sm.nr.Log().Debug("begin ISAACStateManager.broadcastExpiredBallot", "round", round, "ballotState", state)
 	b := sm.nr.consensus.LatestBlock()
 	basis := voting.Basis{
-		Round:     state.Round,
+		Round:     round,
 		Height:    b.Height,
 		BlockHash: b.Hash,
 		TotalTxs:  b.TotalTxs,
 		TotalOps:  b.TotalOps,
 	}
 
-	proposerAddr := sm.nr.consensus.SelectProposer(b.Height, state.Round)
+	proposerAddr := sm.nr.consensus.SelectProposer(b.Height, round)
 
 	newExpiredBallot := ballot.NewBallot(sm.nr.localNode.Address(), proposerAddr, basis, []string{})
-	newExpiredBallot.SetVote(state.BallotState.Next(), voting.EXP)
+	newExpiredBallot.SetVote(state, voting.EXP)
 
 	opc, _ := ballot.NewCollectTxFeeFromBallot(*newExpiredBallot, sm.nr.Conf.CommonAccountAddress)
 	opi, _ := ballot.NewInflationFromBallot(*newExpiredBallot, sm.nr.Conf.CommonAccountAddress, sm.nr.InitialBalance)

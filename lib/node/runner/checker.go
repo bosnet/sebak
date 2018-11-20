@@ -645,14 +645,14 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) error {
 		checker.NodeRunner.Consensus().SetLatestVotingBasis(basis)
 
 		checker.NodeRunner.TransactionPool.RemoveFromSources(checker.LatestBlockSources...)
-		checker.NodeRunner.Consensus().RemoveRunningRoundsWithSameHeight(basis.Height)
+		checker.NodeRunner.Consensus().RemoveRunningRoundsLowerOrEqualHeight(basis.Height)
 
 		err = NewCheckerStopCloseConsensus(checker, "ballot got consensus and will be stored")
 	case voting.NO, voting.EXP:
 		checker.NodeRunner.isaacStateManager.NextRound()
 		checker.NodeRunner.Consensus().SetLatestVotingBasis(basis)
 
-		checker.NodeRunner.Consensus().RemoveRunningRoundsWithSameHeight(basis.Height)
+		checker.NodeRunner.Consensus().RemoveRunningRoundsLowerOrEqualBasis(basis)
 
 		err = NewCheckerStopCloseConsensus(checker, "ballot got consensus")
 	case voting.NOTYET:

@@ -250,14 +250,71 @@ func (is *ISAAC) LatestBlock() block.Block {
 	return block.GetLatestBlock(is.storage)
 }
 
-func (is *ISAAC) RemoveRunningRoundsWithSameHeight(height uint64) {
+func (is *ISAAC) RemoveRunningRoundsLowerOrEqualHeight(height uint64) {
 	for hash, runningRound := range is.RunningRounds {
 		if runningRound.VotingBasis.Height > height {
 			continue
 		}
 
+		is.log.Debug("remove running rounds lower than or equal to height", "votingBasis", runningRound.VotingBasis)
+
 		delete(runningRound.Transactions, runningRound.Proposer)
 		delete(runningRound.Voted, runningRound.Proposer)
 		delete(is.RunningRounds, hash)
+	}
+}
+
+func (is *ISAAC) RemoveRunningRoundsLowerOrEqualBasis(basis voting.Basis) {
+	for hash, runningRound := range is.RunningRounds {
+		if runningRound.VotingBasis.Height > basis.Height {
+			continue
+		}
+
+		if runningRound.VotingBasis.Height == basis.Height &&
+			runningRound.VotingBasis.Round > basis.Round {
+			continue
+		}
+
+		is.log.Debug("remove running rounds lower than or equal to basis", "votingBasis", runningRound.VotingBasis)
+
+		delete(runningRound.Transactions, runningRound.Proposer)
+		delete(runningRound.Voted, runningRound.Proposer)
+		delete(is.RunningRounds, hash)
+	}
+}
+
+func (is *ISAAC) RemoveRunningRoundsExceptExpired(state ISAACState) {
+	is.log.Debug("remove running rounds except expired", "ISAACState", state)
+	if (state.BallotState != ballot.StateSIGN) &&
+		(state.BallotState != ballot.StateACCEPT) {
+		return
+	}
+	for _, runningRound := range is.RunningRounds {
+		if runningRound.VotingBasis.Height != state.Height ||
+			runningRound.VotingBasis.Round != state.Round {
+			continue
+		}
+
+		delete(runningRound.Transactions, runningRound.Proposer)
+		for _, roundVote := range runningRound.Voted {
+			var votingResults RoundVoteResult
+			if state.BallotState == ballot.StateSIGN {
+				votingResults = roundVote.SIGN
+			} else {
+				votingResults = roundVote.ACCEPT
+			}
+
+			removeTargets := []string{}
+			for source, vote := range votingResults {
+				if vote != voting.EXP {
+					removeTargets = append(removeTargets, source)
+				}
+			}
+
+			is.log.Debug("remove expired results(YES or NO)", "targets", removeTargets, "voting-results", votingResults)
+			for _, source := range removeTargets {
+				delete(votingResults, source)
+			}
+		}
 	}
 }

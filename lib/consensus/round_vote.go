@@ -25,10 +25,15 @@ func NewRoundVote(ballot ballot.Ballot) (rv *RoundVote) {
 	return rv
 }
 
-func (rv *RoundVote) IsVoted(ballot ballot.Ballot) bool {
-	result := rv.GetResult(ballot.State())
+func (rv *RoundVote) IsVoted(b ballot.Ballot) bool {
+	result := rv.GetResult(b.State())
 
-	_, found := result[ballot.Source()]
+	old, found := result[b.Source()]
+	if (old != voting.EXP) && (b.Vote() == voting.EXP) {
+		// receiving B(SIGN or ACCEPT, YES or NO) -> B(SIGN or ACCEPT, EXP) allows,
+		// since SIGN or ACCEPT_TIMEOUT can occur after sending a B(ACCEPT),
+		return false
+	}
 	return found
 }
 
