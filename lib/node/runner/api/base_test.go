@@ -80,9 +80,9 @@ func prepareOpsWithoutSave(count int, st *storage.LevelDBBackend) (*keypair.Full
 	}
 
 	theBlock := block.TestMakeNewBlockWithPrevBlock(block.GetLatestBlock(st), txHashes)
-	for _, tx := range txs {
-		for i, op := range tx.B.Operations {
-			bo, err := block.NewBlockOperationFromOperation(op, tx, theBlock.Height, i)
+	for i, tx := range txs {
+		for j, op := range tx.B.Operations {
+			bo, err := block.NewBlockOperationFromOperation(op, tx, theBlock.Height, uint64(i), uint64(j))
 			if err != nil {
 				panic(err)
 			}

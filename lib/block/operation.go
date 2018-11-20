@@ -29,13 +29,14 @@ type BlockOperation struct {
 	Target string                  `json:"target"`
 	Body   []byte                  `json:"body"`
 	Height uint64                  `json:"block_height"`
-	Index  uint64                  `json:"index"`
+	Index  int                     `json:"index"`
 
 	// bellows will be used only for `Save` time.
 	transaction transaction.Transaction
 	operation   operation.Operation
 	linked      string
 	isSaved     bool
+	txIndex     int
 	opIndex     int
 }
 
@@ -43,7 +44,7 @@ func NewBlockOperationKey(opHash, txHash string) string {
 	return fmt.Sprintf("%s-%s", opHash, txHash)
 }
 
-func NewBlockOperationFromOperation(op operation.Operation, tx transaction.Transaction, blockHeight uint64, opIndex int) (BlockOperation, error) {
+func NewBlockOperationFromOperation(op operation.Operation, tx transaction.Transaction, blockHeight uint64, txIndex, opIndex int) (BlockOperation, error) {
 	body, err := json.Marshal(op.B)
 	if err != nil {
 		return BlockOperation{}, err
@@ -75,12 +76,12 @@ func NewBlockOperationFromOperation(op operation.Operation, tx transaction.Trans
 		Target: target,
 		Body:   body,
 		Height: blockHeight,
-		Index:  index,
+		Index:  opIndex,
 
 		transaction: tx,
 		operation:   op,
 		linked:      linked,
-		opIndex:     opIndex,
+		txIndex:     txIndex,
 	}, nil
 }
 

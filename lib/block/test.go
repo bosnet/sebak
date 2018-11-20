@@ -133,7 +133,7 @@ func TestMakeNewBlockOperation(networkID []byte, n int) (bos []BlockOperation) {
 	_, tx := transaction.TestMakeTransaction(networkID, n)
 
 	for i, op := range tx.B.Operations {
-		bo, err := NewBlockOperationFromOperation(op, tx, 0, i)
+		bo, err := NewBlockOperationFromOperation(op, tx, 0, 1, i)
 		if err != nil {
 			panic(err)
 		}
