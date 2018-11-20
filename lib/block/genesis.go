@@ -117,7 +117,7 @@ func MakeGenesisBlock(st *storage.LevelDBBackend, genesisAccount BlockAccount, c
 		return
 	}
 
-	bt := NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.ProposedTime, tx)
+	bt := NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.ProposedTime, tx, 1) // first tx (not proposer tx)
 	if err = bt.Save(st); err != nil {
 		return
 	}

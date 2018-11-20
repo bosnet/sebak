@@ -16,7 +16,7 @@ func TestNewBlockTransaction(t *testing.T) {
 	conf := common.NewTestConfig()
 	_, tx := transaction.TestMakeTransaction(conf.NetworkID, 1)
 	block := TestMakeNewBlock([]string{tx.GetHash()})
-	bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, block.ProposedTime, tx)
+	bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, block.ProposedTime, tx, 0)
 
 	require.Equal(t, bt.Hash, tx.H.Hash)
 	require.Equal(t, bt.SequenceID, tx.B.SequenceID)
@@ -39,7 +39,7 @@ func TestBlockTransactionSaveAndGet(t *testing.T) {
 	conf := common.NewTestConfig()
 	st := storage.NewTestStorage()
 
-	bt := makeNewBlockTransaction(conf.NetworkID, 1)
+	bt := makeNewBlockTransaction(conf.NetworkID, 1, 0)
 	err := bt.Save(st)
 	require.NoError(t, err)
 
@@ -60,7 +60,7 @@ func TestBlockTransactionSaveExisting(t *testing.T) {
 	conf := common.NewTestConfig()
 	st := storage.NewTestStorage()
 
-	bt := makeNewBlockTransaction(conf.NetworkID, 1)
+	bt := makeNewBlockTransaction(conf.NetworkID, 1, 0)
 	err := bt.Save(st)
 	require.NoError(t, err)
 
@@ -93,8 +93,8 @@ func TestMultipleBlockTransactionSource(t *testing.T) {
 	}
 
 	block := TestMakeNewBlock(txHashes)
-	for _, tx := range txs {
-		bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, block.ProposedTime, tx)
+	for i, tx := range txs {
+		bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, block.ProposedTime, tx, uint64(i))
 		err := bt.Save(st)
 		require.NoError(t, err)
 	}
@@ -109,8 +109,8 @@ func TestMultipleBlockTransactionSource(t *testing.T) {
 	}
 
 	block = TestMakeNewBlock(txHashes)
-	for _, tx := range txs {
-		bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, block.ProposedTime, tx)
+	for i, tx := range txs {
+		bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, block.ProposedTime, tx, uint64(i))
 		err := bt.Save(st)
 		require.NoError(t, err)
 	}
@@ -175,8 +175,8 @@ func TestMultipleBlockTransactionConfirmed(t *testing.T) {
 	}
 
 	block := TestMakeNewBlock(txHashes)
-	for _, tx := range txs {
-		bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, block.ProposedTime, tx)
+	for i, tx := range txs {
+		bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, block.ProposedTime, tx, uint64(i))
 		err := bt.Save(st)
 		require.NoError(t, err)
 	}
@@ -225,7 +225,7 @@ func TestBlockTransactionMultipleSave(t *testing.T) {
 	conf := common.NewTestConfig()
 	st := storage.NewTestStorage()
 
-	bt := makeNewBlockTransaction(conf.NetworkID, 1)
+	bt := makeNewBlockTransaction(conf.NetworkID, 1, 0)
 	err := bt.Save(st)
 	require.NoError(t, err)
 
@@ -259,7 +259,7 @@ func TestMultipleBlockTransactionGetByAccount(t *testing.T) {
 
 		blk = TestMakeNewBlock(txHashes)
 		for _, tx := range txs {
-			bt := NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.ProposedTime, tx)
+			bt := NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.ProposedTime, tx, 0)
 			bt.MustSave(st)
 			err := bt.SaveBlockOperations(st)
 			require.NoError(t, err)
@@ -278,8 +278,8 @@ func TestMultipleBlockTransactionGetByAccount(t *testing.T) {
 		}
 
 		blk = TestMakeNewBlock(txHashes)
-		for _, tx := range txs {
-			bt := NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.ProposedTime, tx)
+		for i, tx := range txs {
+			bt := NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.ProposedTime, tx, uint64(i))
 			bt.MustSave(st)
 			err := bt.SaveBlockOperations(st)
 			require.NoError(t, err)
@@ -297,8 +297,8 @@ func TestMultipleBlockTransactionGetByAccount(t *testing.T) {
 		}
 
 		blk = TestMakeNewBlock(txHashes)
-		for _, tx := range txs {
-			bt := NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.ProposedTime, tx)
+		for i, tx := range txs {
+			bt := NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.ProposedTime, tx, uint64(i))
 			bt.MustSave(st)
 			err := bt.SaveBlockOperations(st)
 			require.NoError(t, err)
@@ -343,8 +343,8 @@ func TestMultipleBlockTransactionGetByBlock(t *testing.T) {
 	}
 
 	block0 := TestMakeNewBlock(txHashes0)
-	for _, tx := range txs0 {
-		bt := NewBlockTransactionFromTransaction(block0.Hash, block0.Height, block0.ProposedTime, tx)
+	for i, tx := range txs0 {
+		bt := NewBlockTransactionFromTransaction(block0.Hash, block0.Height, block0.ProposedTime, tx, uint64(i))
 		bt.MustSave(st)
 	}
 
@@ -359,8 +359,8 @@ func TestMultipleBlockTransactionGetByBlock(t *testing.T) {
 	}
 
 	block1 := TestMakeNewBlock(txHashes1)
-	for _, tx := range txs1 {
-		bt := NewBlockTransactionFromTransaction(block1.Hash, block1.Height, block1.ProposedTime, tx)
+	for i, tx := range txs1 {
+		bt := NewBlockTransactionFromTransaction(block1.Hash, block1.Height, block1.ProposedTime, tx, uint64(i))
 		bt.MustSave(st)
 	}
 
@@ -427,8 +427,8 @@ func TestMultipleBlockTransactionsOrderByBlockHeightAndCursor(t *testing.T) {
 
 		block := TestMakeNewBlock(txHashes)
 		block.Height++
-		for _, tx := range txs {
-			bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, block.ProposedTime, tx)
+		for i, tx := range txs {
+			bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, block.ProposedTime, tx, uint64(i))
 			bt.MustSave(st)
 		}
 		transactionOrder = append(transactionOrder, createdOrder...)
@@ -448,8 +448,8 @@ func TestMultipleBlockTransactionsOrderByBlockHeightAndCursor(t *testing.T) {
 		}
 
 		block := TestMakeNewBlock(txHashes)
-		for _, tx := range txs {
-			bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, block.ProposedTime, tx)
+		for i, tx := range txs {
+			bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, block.ProposedTime, tx, uint64(i))
 			bt.MustSave(st)
 		}
 
@@ -506,9 +506,9 @@ func TestMultipleBlockTransactionsOrderByBlockHeightAndCursor(t *testing.T) {
 	}
 }
 
-func makeNewBlockTransaction(networkID []byte, n int) BlockTransaction {
+func makeNewBlockTransaction(networkID []byte, n int, index uint64) BlockTransaction {
 	_, tx := transaction.TestMakeTransaction(networkID, n)
 
 	block := TestMakeNewBlock([]string{tx.GetHash()})
-	return NewBlockTransactionFromTransaction(block.Hash, block.Height, block.ProposedTime, tx)
+	return NewBlockTransactionFromTransaction(block.Hash, block.Height, block.ProposedTime, tx, index)
 }

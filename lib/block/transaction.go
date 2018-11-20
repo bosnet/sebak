@@ -37,12 +37,14 @@ type BlockTransaction struct {
 	Created   string `json:"created"`
 	Message   []byte `json:"message"`
 
+	Index uint64 `json:"index"`
+
 	transaction transaction.Transaction
 	isSaved     bool
 	blockHeight uint64
 }
 
-func NewBlockTransactionFromTransaction(blockHash string, blockHeight uint64, confirmed string, tx transaction.Transaction) BlockTransaction {
+func NewBlockTransactionFromTransaction(blockHash string, blockHeight uint64, confirmed string, tx transaction.Transaction, index uint64) BlockTransaction {
 	var opHashes []string
 	for _, op := range tx.B.Operations {
 		opHashes = append(opHashes, NewBlockOperationKey(op.MakeHashString(), tx.GetHash()))
@@ -59,6 +61,7 @@ func NewBlockTransactionFromTransaction(blockHash string, blockHeight uint64, co
 		Amount:     tx.TotalAmount(true),
 		Confirmed:  confirmed,
 		Created:    tx.H.Created,
+		Index:      index,
 
 		transaction: tx,
 		blockHeight: blockHeight,

@@ -29,6 +29,7 @@ type BlockOperation struct {
 	Target string                  `json:"target"`
 	Body   []byte                  `json:"body"`
 	Height uint64                  `json:"block_height"`
+	Index  uint64                  `json:"index"`
 
 	// bellows will be used only for `Save` time.
 	transaction transaction.Transaction
@@ -74,6 +75,7 @@ func NewBlockOperationFromOperation(op operation.Operation, tx transaction.Trans
 		Target: target,
 		Body:   body,
 		Height: blockHeight,
+		Index:  index,
 
 		transaction: tx,
 		operation:   op,

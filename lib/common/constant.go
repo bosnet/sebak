@@ -67,6 +67,9 @@ const (
 	// DiscoveryMessageCreatedAllowDuration limit the `DiscoveryMessage.Created`
 	// is allowed or not.
 	DiscoveryMessageCreatedAllowDuration time.Duration = time.Second * 10
+
+	// ProposerTransactionIndex
+	ProposerTransactionIndex uint64 = 0
 )
 
 var (

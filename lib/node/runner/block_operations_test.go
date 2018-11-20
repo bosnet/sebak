@@ -54,7 +54,7 @@ func (p *TestSavingBlockOperationHelper) makeBlock(prevBlock block.Block, numTxs
 	opi, _ := ballot.NewInflationFromBallot(*blt, block.CommonKP.Address(), common.BaseReserve)
 	opc, _ := ballot.NewCollectTxFeeFromBallot(*blt, block.CommonKP.Address(), txs...)
 	ptx, _ := ballot.NewProposerTransactionFromBallot(*blt, opc, opi)
-	bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.ProposedTime, ptx.Transaction)
+	bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.ProposedTime, ptx.Transaction, common.ProposerTransactionIndex)
 	bt.MustSave(p.st)
 	block.SaveTransactionPool(p.st, ptx.Transaction)
 
@@ -62,8 +62,8 @@ func (p *TestSavingBlockOperationHelper) makeBlock(prevBlock block.Block, numTxs
 
 	blk.MustSave(p.st)
 
-	for _, tx := range txs {
-		bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.ProposedTime, tx)
+	for i, tx := range txs {
+		bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.ProposedTime, tx, uint64(i+1))
 		bt.MustSave(p.st)
 	}
 
