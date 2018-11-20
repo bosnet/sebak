@@ -63,6 +63,7 @@ func TestGetOperationsByTxHashHandler(t *testing.T) {
 		require.NotNil(t, bo)
 		require.NotNil(t, item["confirmed"]) // `block.Block.Confirmed`
 		require.Equal(t, blk.Confirmed, item["confirmed"])
+		require.Equal(t, blk.Height, uint64(item["block_height"].(float64)))
 	}
 }
 
@@ -78,12 +79,11 @@ func TestGetOperationsByTxHashHandlerStream(t *testing.T) {
 	tx := transaction.TestMakeTransactionWithKeypair(networkID, 10, kp)
 
 	blk := block.TestMakeNewBlockWithPrevBlock(block.GetLatestBlock(storage), []string{tx.GetHash()})
-
 	bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.Confirmed, tx)
 
 	boMap := make(map[string]block.BlockOperation)
 	for _, op := range tx.B.Operations {
-		bo, err := block.NewBlockOperationFromOperation(op, tx, 0)
+		bo, err := block.NewBlockOperationFromOperation(op, tx, blk.Height)
 		require.NoError(t, err)
 		boMap[bo.Hash] = bo
 	}
@@ -134,6 +134,7 @@ func TestGetOperationsByTxHashHandlerStream(t *testing.T) {
 			require.Equal(t, txS, line)
 			require.NotNil(t, recv["confirmed"]) // `block.Block.Confirmed`
 			require.Equal(t, blk.Confirmed, recv["confirmed"])
+			require.Equal(t, blk.Height, uint64(recv["block_height"].(float64)))
 		}
 	}
 
