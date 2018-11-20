@@ -23,6 +23,7 @@ const (
 	UrlFrozenAccounts        = "/frozen-accounts"
 	UrlTransactions          = "/transactions"
 	UrlTransactionByHash     = "/transactions/{id}"
+	UrlTransactionStatus     = "/transactions/{id}/status"
 	UrlTransactionOperations = "/transactions/{id}/operations"
 )
 
@@ -180,6 +181,13 @@ func (c *Client) LoadTransaction(id string, queries ...Q) (transaction Transacti
 	url := strings.Replace(UrlTransactionByHash, "{id}", id, -1)
 	url += Queries(queries).toQueryString()
 	err = c.getResponse(url, http.Header{}, &transaction)
+	return
+}
+
+func (c *Client) LoadTransactionStatus(id string, queries ...Q) (transactionHistory TransactionStatus, err error) {
+	url := strings.Replace(UrlTransactionStatus, "{id}", id, -1)
+	url += Queries(queries).toQueryString()
+	err = c.getResponse(url, http.Header{}, &transactionHistory)
 	return
 }
 

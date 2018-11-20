@@ -77,11 +77,21 @@ type Transaction struct {
 
 type TransactionPost struct {
 	Links struct {
-		Self Link `json:"self"`
+		Self   Link `json:"self"`
+		Status Link `json:"status"`
 	} `json:"_links"`
 	Hash    string      `json:"hash"`
 	Status  string      `json:"status"`
 	Message interface{} `json:"message"`
+}
+
+type TransactionStatus struct {
+	Links struct {
+		Self        Link `json:"self"`
+		Transaction Link `json:"transaction"`
+	} `json:"_links"`
+	Hash   string `json:"hash"`
+	Status string `json:"status"`
 }
 
 type TransactionsPage struct {

@@ -99,6 +99,108 @@ func TestGetTransactionByHashHandlerStream(t *testing.T) {
 	wg.Wait()
 }
 
+func TestGetTransactionStatusByHashHandler(t *testing.T) {
+
+	ts, storage := prepareAPIServer()
+	defer storage.Close()
+	defer ts.Close()
+
+	_, _, bt := prepareTxWithoutSave(storage)
+	bt.MustSave(storage)
+
+	var reader *bufio.Reader
+	{ // unknown transaction
+		respBody := request(ts, strings.Replace(GetTransactionStatusHandlerPattern, "{id}", "findme", -1), false)
+		defer respBody.Close()
+		reader = bufio.NewReader(respBody)
+		readByte, err := ioutil.ReadAll(reader)
+		require.NoError(t, err)
+		var status resource.TransactionStatus
+		json.Unmarshal(readByte, &status)
+
+		require.Equal(t, status.Hash, "findme")
+		require.Equal(t, status.Status, "notfound")
+	}
+
+	// Do a Request
+	{
+		respBody := request(ts, strings.Replace(GetTransactionStatusHandlerPattern, "{id}", bt.Hash, -1), false)
+		defer respBody.Close()
+		reader = bufio.NewReader(respBody)
+	}
+	// Check the output
+	{
+		readByte, err := ioutil.ReadAll(reader)
+		require.NoError(t, err)
+		var status resource.TransactionStatus
+		json.Unmarshal(readByte, &status)
+
+		require.Equal(t, bt.Hash, status.Hash, "hash is not the same")
+		require.Equal(t, "confirmed", status.Status, "block is not the same")
+	}
+}
+
+func TestGetTransactionStatusByHashHandlerStream(t *testing.T) {
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	ts, storage := prepareAPIServer()
+	defer storage.Close()
+	defer ts.Close()
+
+	_, _, bt := prepareTxWithoutSave(storage)
+	tp, err := block.NewTransactionPool(bt.Transaction())
+	require.NoError(t, err)
+
+	// Wait until request registered to observer
+	{
+		go func() {
+			for {
+				observer.BlockTransactionObserver.RLock()
+				if len(observer.BlockTransactionObserver.Callbacks) > 0 {
+					observer.BlockTransactionObserver.RUnlock()
+					break
+				}
+				observer.BlockTransactionObserver.RUnlock()
+			}
+			tp.Save(storage)
+			bt.MustSave(storage)
+			wg.Done()
+		}()
+	}
+
+	// Do a Request
+	var reader *bufio.Reader
+	{
+		respBody := request(ts, strings.Replace(GetTransactionStatusHandlerPattern, "{id}", bt.Hash, -1), true)
+		defer respBody.Close()
+		reader = bufio.NewReader(respBody)
+	}
+
+	// Check the output
+	var status resource.TransactionStatus
+	{
+		line, err := reader.ReadBytes('\n')
+		require.NoError(t, err)
+		json.Unmarshal(line, &status)
+		require.Equal(t, bt.Hash, status.Hash)
+		require.Equal(t, "notfound", status.Status)
+
+		line, err = reader.ReadBytes('\n')
+		require.NoError(t, err)
+		json.Unmarshal(line, &status)
+		require.Equal(t, bt.Hash, status.Hash)
+		require.Equal(t, "submitted", status.Status)
+
+		line, err = reader.ReadBytes('\n')
+		require.NoError(t, err)
+		json.Unmarshal(line, &status)
+		require.Equal(t, bt.Hash, status.Hash)
+		require.Equal(t, "confirmed", status.Status)
+	}
+	wg.Wait()
+}
+
 func TestGetTransactionsHandler(t *testing.T) {
 	ts, storage := prepareAPIServer()
 	defer storage.Close()

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -135,4 +136,63 @@ func (api NetworkHandlerAPI) GetTransactionsByAccountHandler(w http.ResponseWrit
 	txs := readFunc()
 	list := p.ResourceList(txs, cursor)
 	httputils.MustWriteJSON(w, 200, list)
+}
+
+func (api NetworkHandlerAPI) GetTransactionStatusByHashHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	key := vars["id"]
+
+	readFunc := func() (payload interface{}, err error) {
+		status := "notfound"
+		if found, _ := block.ExistsTransactionPool(api.storage, key); found {
+			status = "submitted"
+		} else if found, _ = block.ExistsBlockTransaction(api.storage, key); found {
+			status = "confirmed"
+		}
+		payload = resource.NewTransactionStatus(key, status)
+		return payload, nil
+	}
+
+	if httputils.IsEventStream(r) {
+		event := fmt.Sprintf("hash-%s", key)
+		event += " " + fmt.Sprintf("pushed-%s", key)
+
+		txStatusRenderFunc := func(args ...interface{}) ([]byte, error) {
+			if len(args) <= 1 {
+				return nil, fmt.Errorf("render: value is empty")
+			}
+			i := args[1]
+
+			if i == nil {
+				return nil, nil
+			}
+
+			switch v := i.(type) {
+			case *block.TransactionPool:
+				r := resource.NewTransactionStatus(key, "submitted")
+				return json.Marshal(r.Resource())
+			case *block.BlockTransaction:
+				r := resource.NewTransactionStatus(key, "confirmed")
+				return json.Marshal(r.Resource())
+			case httputils.HALResource:
+				return json.Marshal(v.Resource())
+			}
+
+			return json.Marshal(i)
+		}
+
+		es := NewEventStream(w, r, txStatusRenderFunc, DefaultContentType)
+		payload, err := readFunc()
+		if err == nil {
+			es.Render(payload)
+		}
+		es.Run(observer.BlockTransactionObserver, event)
+		return
+	}
+	payload, err := readFunc()
+	if err == nil {
+		httputils.MustWriteJSON(w, 200, payload)
+	} else {
+		httputils.WriteJSONError(w, err)
+	}
 }

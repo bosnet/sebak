@@ -40,3 +40,33 @@ func (t Transaction) Resource() *hal.Resource {
 func (t Transaction) LinkSelf() string {
 	return strings.Replace(URLTransactions, "{id}", t.bt.Hash, -1)
 }
+
+type TransactionStatus struct {
+	Hash   string
+	Status string
+}
+
+func NewTransactionStatus(hash, status string) *TransactionStatus {
+	t := &TransactionStatus{
+		Hash:   hash,
+		Status: status,
+	}
+	return t
+}
+
+func (t TransactionStatus) GetMap() hal.Entry {
+	return hal.Entry{
+		"hash":   t.Hash,
+		"status": t.Status,
+	}
+}
+func (t TransactionStatus) Resource() *hal.Resource {
+
+	r := hal.NewResource(t, t.LinkSelf())
+	r.AddLink("transaction", hal.NewLink(strings.Replace(URLTransactionByHash, "{id}", t.Hash, -1)))
+	return r
+}
+
+func (t TransactionStatus) LinkSelf() string {
+	return strings.Replace(URLTransactionStatus, "{id}", t.Hash, -1)
+}
