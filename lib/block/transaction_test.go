@@ -16,7 +16,7 @@ func TestNewBlockTransaction(t *testing.T) {
 	conf := common.NewTestConfig()
 	_, tx := transaction.TestMakeTransaction(conf.NetworkID, 1)
 	block := TestMakeNewBlock([]string{tx.GetHash()})
-	bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, block.ProposedTime, tx, 0)
+	bt := NewBlockTransactionFromTransaction(block.Hash, block.Height, block.ProposedTime, tx, 1)
 
 	require.Equal(t, bt.Hash, tx.H.Hash)
 	require.Equal(t, bt.SequenceID, tx.B.SequenceID)
@@ -33,6 +33,11 @@ func TestNewBlockTransaction(t *testing.T) {
 		require.Equal(t, opHash, opHashes[i])
 	}
 	require.Equal(t, bt.Amount, tx.TotalAmount(true))
+
+	for i, txHash := range block.Transactions {
+		require.Equal(t, txHash, bt.Hash)
+		require.Equal(t, uint64(i+1), bt.Index)
+	}
 }
 
 func TestBlockTransactionSaveAndGet(t *testing.T) {
@@ -380,6 +385,7 @@ func TestMultipleBlockTransactionGetByBlock(t *testing.T) {
 		require.Equal(t, len(saved), len(createdOrder0), "fetched records insufficient")
 		for i, bt := range saved {
 			require.Equal(t, bt.Hash, createdOrder0[i], "order mismatch")
+			require.Equal(t, bt.Index, uint64(i))
 		}
 	}
 

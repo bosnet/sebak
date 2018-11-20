@@ -15,8 +15,11 @@ func TestNewBlockOperationFromOperation(t *testing.T) {
 	conf := common.NewTestConfig()
 	_, tx := transaction.TestMakeTransaction(conf.NetworkID, 1)
 
+	var index uint64 = 0
+	var txIndex uint64 = 1
+
 	op := tx.B.Operations[0]
-	bo, err := NewBlockOperationFromOperation(op, tx, 0, 1, 0)
+	bo, err := NewBlockOperationFromOperation(op, tx, 0, txIndex, index)
 	require.NoError(t, err)
 
 	require.Equal(t, bo.Type, op.H.Type)
@@ -24,6 +27,8 @@ func TestNewBlockOperationFromOperation(t *testing.T) {
 	require.Equal(t, bo.Source, tx.B.Source)
 	encoded := common.MustMarshalJSON(op.B)
 	require.Equal(t, bo.Body, encoded)
+	require.Equal(t, bo.Index, index)
+	require.Equal(t, bo.txIndex, txIndex)
 }
 
 func TestBlockOperationSaveAndGet(t *testing.T) {
@@ -41,6 +46,7 @@ func TestBlockOperationSaveAndGet(t *testing.T) {
 	require.Equal(t, bo.Hash, fetched.Hash)
 	require.Equal(t, bo.Source, fetched.Source)
 	require.Equal(t, bo.Body, fetched.Body)
+	require.Equal(t, bo.Index, uint64(0))
 }
 
 func TestBlockOperationSaveExisting(t *testing.T) {
@@ -93,6 +99,7 @@ func TestGetSortedBlockOperationsByTxHash(t *testing.T) {
 
 		for i, bo := range saved {
 			require.Equal(t, bo.Hash, createdOrder[bo.TxHash][i])
+			require.Equal(t, bo.Index, uint64(i))
 		}
 	}
 }
