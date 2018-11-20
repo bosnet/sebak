@@ -267,6 +267,24 @@ func ValidateTx(st *storage.LevelDBBackend, config common.Config, tx transaction
 //   tx = Transaction to check
 //
 func ValidateOp(st *storage.LevelDBBackend, config common.Config, source *block.BlockAccount, op operation.Operation) (err error) {
+
+	var funcIsFrozenPayable = func(source *block.BlockAccount) (err error) {
+		// Unfreezing must be done after X period from unfreezing request
+		iterFunc, closeFunc := block.GetBlockOperationsBySource(st, source.Address, nil)
+		bo, _, _ := iterFunc() //Get the first operation submitted by the source(frozen) account
+		closeFunc()
+		// Before unfreezing payment, unfreezing request shoud be saved
+		if bo.Type != operation.TypeUnfreezingRequest {
+			return errors.UnfreezingRequestNotRequested
+		}
+		lastblock := block.GetLatestBlock(st)
+		// unfreezing period is 241920.
+		if lastblock.Height-bo.Height < common.UnfreezingPeriod {
+			return errors.UnfreezingNotReachedExpiration
+		}
+		return nil
+	}
+
 	switch op.H.Type {
 	case operation.TypeCreateAccount:
 		var ok bool
@@ -274,28 +292,17 @@ func ValidateOp(st *storage.LevelDBBackend, config common.Config, source *block.
 		if casted, ok = op.B.(operation.CreateAccount); !ok {
 			return errors.TypeOperationBodyNotMatched
 		}
-		if exists, err := block.ExistsBlockAccount(st, op.B.(operation.CreateAccount).Target); err == nil && exists {
+
+		if exists, err := block.ExistsBlockAccount(st, casted.Target); err == nil && exists {
 			return errors.BlockAccountAlreadyExists
 		}
-		if source.Linked != "" {
-			// Unfreezing must be done after X period from unfreezing request
-			iterFunc, closeFunc := block.GetBlockOperationsBySource(st, source.Address, nil)
-			bo, _, _ := iterFunc()
-			closeFunc()
-			// Before unfreezing payment, unfreezing request shoud be saved
-			if bo.Type != operation.TypeUnfreezingRequest {
-				return errors.UnfreezingRequestNotRequested
-			}
-			lastblock := block.GetLatestBlock(st)
-			// unfreezing period is 241920.
-			if lastblock.Height-bo.Height < common.UnfreezingPeriod {
-				return errors.UnfreezingNotReachedExpiration
-			}
-			// If it's a frozen account we check that only whole units are frozen
-			if casted.Linked != "" && (casted.Amount%common.Unit) != 0 {
-				return errors.FrozenAccountCreationWholeUnit // FIXME
+
+		if source.IsFrozen() {
+			if err = funcIsFrozenPayable(source); err != nil {
+				return err
 			}
 		}
+
 	case operation.TypePayment:
 		var ok bool
 		var casted operation.Payment
@@ -307,29 +314,16 @@ func ValidateOp(st *storage.LevelDBBackend, config common.Config, source *block.
 		if taccount, err = block.GetBlockAccount(st, casted.Target); err != nil {
 			return errors.BlockAccountDoesNotExists
 		}
+
 		// If it's a frozen account, it cannot receive payment
-		if taccount.Linked != "" {
+		if taccount.IsFrozen() {
 			return errors.FrozenAccountNoDeposit
 		}
-		if source.Linked != "" {
-			// If it's a frozen account, everything must be withdrawn
-			var expected common.Amount
-			expected, err = source.Balance.Sub(common.BaseFee)
-			if err != nil || casted.Amount != expected {
-				return errors.FrozenAccountMustWithdrawEverything
-			}
-			// Unfreezing must be done after X period from unfreezing request
-			iterFunc, closeFunc := block.GetBlockOperationsBySource(st, source.Address, nil)
-			bo, _, _ := iterFunc()
-			closeFunc()
-			// Before unfreezing payment, unfreezing request shoud be saved
-			if bo.Type != operation.TypeUnfreezingRequest {
-				return errors.UnfreezingRequestNotRequested
-			}
-			lastblock := block.GetLatestBlock(st)
-			// unfreezing period is 241920.
-			if lastblock.Height-bo.Height < common.UnfreezingPeriod {
-				return errors.UnfreezingNotReachedExpiration
+
+		// The source account is frozen account
+		if source.IsFrozen() {
+			if err = funcIsFrozenPayable(source); err != nil {
+				return err
 			}
 		}
 	case operation.TypeUnfreezingRequest:
@@ -337,7 +331,7 @@ func ValidateOp(st *storage.LevelDBBackend, config common.Config, source *block.
 			return errors.TypeOperationBodyNotMatched
 		}
 		// Unfreezing should be done from a frozen account
-		if source.Linked == "" {
+		if !source.IsFrozen() {
 			return errors.UnfreezingFromInvalidAccount
 		}
 		// Repeated unfreeze request shoud be blocked after unfreeze request saved
@@ -358,7 +352,7 @@ func ValidateOp(st *storage.LevelDBBackend, config common.Config, source *block.
 			return errors.BlockAccountDoesNotExists
 		}
 		// If it's a frozen account, it cannot receive payment
-		if taccount.Linked != "" {
+		if taccount.IsFrozen() {
 			return errors.FrozenAccountNoDeposit
 		}
 

@@ -43,6 +43,10 @@ func NewBlockAccountLinked(address string, balance common.Amount, linked string)
 	}
 }
 
+func (b *BlockAccount) IsFrozen() bool {
+	return b.Linked != ""
+}
+
 func (b *BlockAccount) String() string {
 	return string(common.MustJSONMarshal(b))
 }

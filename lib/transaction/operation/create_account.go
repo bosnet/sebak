@@ -53,6 +53,13 @@ func (o CreateAccount) GetAmount() common.Amount {
 	return o.Amount
 }
 
+func (o CreateAccount) isCreateFrozenAccount() bool {
+	return o.Linked != ""
+}
+
 func (o CreateAccount) HasFee() bool {
+	if o.isCreateFrozenAccount() {
+		return false
+	}
 	return true
 }

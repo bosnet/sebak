@@ -51,7 +51,7 @@ if [ -z ${TEST_IMAGE} ]; then
 fi
 
 
-NODE=$(docker run -d --network host --env-file=${ROOT_DIR}/docker/self.env \
+NODE=$(docker run -d --network host --env-file=${ROOT_DIR}/tests/client/self.env \
       ${NODE_IMAGE} node \
       --genesis=${SEBAK_GENESIS},${SEBAK_COMMON} \
       --log-level=debug)

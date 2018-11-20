@@ -66,7 +66,6 @@ func TestOnlyValidTransactionInTransactionPool(t *testing.T) {
 		tx.Sign(rootKP, networkID)
 
 		runChecker(tx, nil)
-
 		require.True(t, nodeRunner.TransactionPool.Has(tx.GetHash()), "valid transaction must be in `Pool`")
 	}
 
