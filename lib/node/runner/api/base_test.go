@@ -52,7 +52,7 @@ func prepareOps(storage *storage.LevelDBBackend, count int) (*keypair.Full, []bl
 
 	return kp, boList
 }
-func prepareOpsWithoutSave(count int, st *storage.LevelDBBackend) (*keypair.Full, []block.BlockOperation) {
+func prepareOpsWithoutSave(count int, st *storage.LevelDBBackend) (*keypair.Full, block.Block, []block.BlockOperation) {
 	kp := keypair.Random()
 	var txs []transaction.Transaction
 	var txHashes []string
@@ -74,7 +74,7 @@ func prepareOpsWithoutSave(count int, st *storage.LevelDBBackend) (*keypair.Full
 		}
 	}
 
-	return kp, boList
+	return kp, theBlock, boList
 }
 
 func prepareTxs(storage *storage.LevelDBBackend, count int) (*keypair.Full, []block.BlockTransaction) {

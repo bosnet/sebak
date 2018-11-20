@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -32,6 +33,7 @@ func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter
 		return
 	}
 
+	blockCache := map[ /* block.Height */ uint64]*block.Block{}
 	oType := operation.OperationType(oTypeStr)
 	var cursor []byte
 	readFunc := func() []resource.Resource {
@@ -50,7 +52,21 @@ func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter
 			if !hasNext {
 				break
 			}
-			txs = append(txs, resource.NewOperation(&t))
+
+			var blk *block.Block
+			var ok bool
+			if blk, ok = blockCache[t.Height]; !ok {
+				if blk0, err := block.GetBlockByHeight(api.storage, t.Height); err != nil {
+					break
+				} else {
+					blockCache[t.Height] = &blk0
+					blk = &blk0
+				}
+			}
+
+			r := resource.NewOperation(&t)
+			r.Block = blk
+			txs = append(txs, r)
 		}
 		closeFunc()
 		return txs
@@ -61,7 +77,33 @@ func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter
 		if len(oType) > 0 {
 			event = fmt.Sprintf("source-type-%s%s", address, oType)
 		}
-		es := NewEventStream(w, r, renderEventStream, DefaultContentType)
+		es := NewEventStream(
+			w,
+			r,
+			func(args ...interface{}) ([]byte, error) {
+				if len(args) <= 1 {
+					return nil, fmt.Errorf("render: value is empty")
+				}
+				i := args[1]
+
+				if i == nil {
+					return nil, nil
+				}
+
+				bo := i.(*block.BlockOperation)
+				r := resource.NewOperation(bo)
+
+				if blk, err := block.GetBlockByHeight(api.storage, bo.Height); err != nil {
+					return nil, err
+				} else {
+					r.Block = &blk
+				}
+
+				return json.Marshal(r.Resource())
+			},
+			DefaultContentType,
+		)
+
 		txs := readFunc()
 		for _, tx := range txs {
 			es.Render(tx)

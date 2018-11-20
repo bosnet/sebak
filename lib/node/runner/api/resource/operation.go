@@ -22,6 +22,10 @@ func NewOperation(bo *block.BlockOperation) *Operation {
 	return o
 }
 
+func (o Operation) BlockOperation() *block.BlockOperation {
+	return o.bo
+}
+
 func (o Operation) GetMap() hal.Entry {
 	body, _ := operation.UnmarshalBodyJSON(o.bo.Type, o.bo.Body)
 
@@ -36,6 +40,7 @@ func (o Operation) GetMap() hal.Entry {
 
 	if o.Block != nil {
 		entry["confirmed"] = o.Block.Confirmed
+		entry["proposed_time"] = o.Block.ProposedTime
 	}
 
 	return entry

@@ -60,6 +60,10 @@ func TestGetOperationsByAccountHandler(t *testing.T) {
 			hash := bt["hash"].(string)
 
 			require.Equal(t, hash, boList[i].Hash, "hash is not same")
+
+			blk, _ := block.GetBlockByHeight(storage, uint64(bt["block_height"].(float64)))
+			require.Equal(t, blk.ProposedTime, bt["proposed_time"].(string))
+			require.Equal(t, blk.Confirmed, bt["confirmed"].(string))
 		}
 	}
 }
@@ -110,6 +114,10 @@ func TestGetOperationsByAccountHandlerWithType(t *testing.T) {
 			hash := bt["hash"].(string)
 
 			require.Equal(t, hash, boList[i].Hash, "hash is not same")
+
+			blk, _ := block.GetBlockByHeight(storage, uint64(bt["block_height"].(float64)))
+			require.Equal(t, blk.ProposedTime, bt["proposed_time"].(string))
+			require.Equal(t, blk.Confirmed, bt["confirmed"].(string))
 		}
 	}
 
@@ -120,11 +128,11 @@ func TestGetOperationsByAccountHandlerStream(t *testing.T) {
 	wg.Add(1)
 
 	ts, storage := prepareAPIServer()
-	defer storage.Close()
 	defer ts.Close()
 
 	boMap := make(map[string]block.BlockOperation)
-	kp, boList := prepareOpsWithoutSave(10, storage)
+	kp, blk, boList := prepareOpsWithoutSave(10, storage)
+
 	for _, bo := range boList {
 		boMap[bo.Hash] = bo
 	}
@@ -142,6 +150,8 @@ func TestGetOperationsByAccountHandlerStream(t *testing.T) {
 				}
 				observer.BlockOperationObserver.RUnlock()
 			}
+
+			blk.MustSave(storage)
 			for _, bo := range boMap {
 				bo.MustSave(storage)
 			}
@@ -167,13 +177,19 @@ func TestGetOperationsByAccountHandlerStream(t *testing.T) {
 			line = bytes.Trim(line, "\n\t ")
 			recv := make(map[string]interface{})
 			json.Unmarshal(line, &recv)
+
 			bo := boMap[recv["hash"].(string)]
 			r := resource.NewOperation(&bo)
+			r.Block = &blk
 			txS, err := json.Marshal(r.Resource())
 			require.NoError(t, err)
 			require.Equal(t, txS, line)
+
+			require.Equal(t, blk.ProposedTime, recv["proposed_time"].(string))
+			require.Equal(t, blk.Confirmed, recv["confirmed"].(string))
 		}
 	}
 
 	wg.Wait()
+	storage.Close()
 }
