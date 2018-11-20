@@ -173,8 +173,12 @@ func TestGetOperationsByAccountHandlerStream(t *testing.T) {
 		// Do stream Request to the Server
 		for n := 0; n < 10; n++ {
 			line, err := reader.ReadBytes('\n')
-			require.NoError(t, err)
-			line = bytes.Trim(line, "\n\t ")
+			line = bytes.Trim(line, "\n")
+			if len(line) == 0 {
+				line, err = reader.ReadBytes('\n')
+				require.NoError(t, err)
+				line = bytes.Trim(line, "\n")
+			}
 			recv := make(map[string]interface{})
 			json.Unmarshal(line, &recv)
 

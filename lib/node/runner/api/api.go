@@ -63,7 +63,7 @@ func renderEventStream(args ...interface{}) ([]byte, error) {
 	i := args[1]
 
 	if i == nil {
-		return nil, nil
+		return []byte{}, nil
 	}
 
 	switch v := i.(type) {

@@ -43,8 +43,12 @@ func (api NetworkHandlerAPI) GetTransactionsHandler(w http.ResponseWriter, r *ht
 		es := NewEventStream(w, r, renderEventStream, DefaultContentType)
 		options.SetLimit(10)
 		txs := readFunc()
-		for _, tx := range txs {
-			es.Render(tx)
+		if len(txs) > 0 {
+			for _, tx := range txs {
+				es.Render(tx)
+			}
+		} else {
+			es.Render(nil)
 		}
 		es.Run(observer.BlockTransactionObserver, event)
 		return
@@ -82,6 +86,8 @@ func (api NetworkHandlerAPI) GetTransactionByHashHandler(w http.ResponseWriter, 
 		payload, err := readFunc()
 		if err == nil {
 			es.Render(payload)
+		} else {
+			es.Render(nil)
 		}
 		es.Run(observer.BlockTransactionObserver, event)
 		return
@@ -126,8 +132,12 @@ func (api NetworkHandlerAPI) GetTransactionsByAccountHandler(w http.ResponseWrit
 		es := NewEventStream(w, r, renderEventStream, DefaultContentType)
 		options.SetLimit(10)
 		txs := readFunc()
-		for _, tx := range txs {
-			es.Render(tx)
+		if len(txs) > 0 {
+			for _, tx := range txs {
+				es.Render(tx)
+			}
+		} else {
+			es.Render(nil)
 		}
 		es.Run(observer.BlockTransactionObserver, event)
 		return
@@ -142,18 +152,16 @@ func (api NetworkHandlerAPI) GetTransactionStatusByHashHandler(w http.ResponseWr
 	vars := mux.Vars(r)
 	key := vars["id"]
 
-	readFunc := func() (payload interface{}, err error) {
-		status := "notfound"
-		if found, _ := block.ExistsTransactionPool(api.storage, key); found {
-			status = "submitted"
-		} else if found, _ = block.ExistsBlockTransaction(api.storage, key); found {
-			status = "confirmed"
-		}
-		payload = resource.NewTransactionStatus(key, status)
-		return payload, nil
+	status := "notfound"
+	if found, _ := block.ExistsTransactionPool(api.storage, key); found {
+		status = "submitted"
+	} else if found, _ = block.ExistsBlockTransaction(api.storage, key); found {
+		status = "confirmed"
 	}
 
-	if httputils.IsEventStream(r) {
+	payload := resource.NewTransactionStatus(key, status)
+
+	if httputils.IsEventStream(r) && status != "confirmed" {
 		event := fmt.Sprintf("hash-%s", key)
 		event += " " + fmt.Sprintf("pushed-%s", key)
 
@@ -182,17 +190,13 @@ func (api NetworkHandlerAPI) GetTransactionStatusByHashHandler(w http.ResponseWr
 		}
 
 		es := NewEventStream(w, r, txStatusRenderFunc, DefaultContentType)
-		payload, err := readFunc()
-		if err == nil {
-			es.Render(payload)
-		}
+		es.Render(payload)
 		es.Run(observer.BlockTransactionObserver, event)
 		return
 	}
-	payload, err := readFunc()
-	if err == nil {
-		httputils.MustWriteJSON(w, 200, payload)
+	if payload.Status == "notfound" {
+		httputils.MustWriteJSON(w, 404, payload)
 	} else {
-		httputils.WriteJSONError(w, err)
+		httputils.MustWriteJSON(w, 200, payload)
 	}
 }

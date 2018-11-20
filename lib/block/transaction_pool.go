@@ -1,10 +1,10 @@
 package block
 
 import (
-	"boscoin.io/sebak/lib/common/observer"
 	"fmt"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"

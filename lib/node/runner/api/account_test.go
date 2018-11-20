@@ -2,6 +2,7 @@ package api
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -92,7 +93,12 @@ func TestGetAccountHandlerStream(t *testing.T) {
 	// Check the output
 	{
 		line, err := reader.ReadBytes('\n')
-		require.NoError(t, err)
+		line = bytes.Trim(line, "\n")
+		if len(line) == 0 {
+			line, err = reader.ReadBytes('\n')
+			require.NoError(t, err)
+			line = bytes.Trim(line, "\n")
+		}
 		recv := make(map[string]interface{})
 		json.Unmarshal(line, &recv)
 		require.Equal(t, key, recv["address"], "address is not same")

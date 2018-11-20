@@ -2,6 +2,7 @@ package api
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"io/ioutil"
 	"sync"
@@ -107,7 +108,12 @@ func TestBlocksHandlerStream(t *testing.T) {
 	// Check the output
 	{
 		line, err := reader.ReadBytes('\n')
-		require.NoError(t, err)
+		line = bytes.Trim(line, "\n")
+		if len(line) == 0 {
+			line, err = reader.ReadBytes('\n')
+			require.NoError(t, err)
+			line = bytes.Trim(line, "\n")
+		}
 		recv := make(map[string]interface{})
 		json.Unmarshal(line, &recv)
 		require.Equal(t, b.Hash, recv["hash"], "hash is not the same")

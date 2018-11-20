@@ -63,8 +63,12 @@ func (api NetworkHandlerAPI) GetOperationsByTxHashHandler(w http.ResponseWriter,
 		var err error
 		if blk, err = api.getBlockByTxHash(hash); err == nil {
 			ops, _ := api.getOperationsByTxHash(hash, blk, options)
-			for _, op := range ops {
-				es.Render(op)
+			if len(ops) > 0 {
+				for _, op := range ops {
+					es.Render(op)
+				}
+			} else {
+				es.Render(nil)
 			}
 		}
 		es.Run(observer.BlockOperationObserver, fmt.Sprintf("txhash-%s", hash))

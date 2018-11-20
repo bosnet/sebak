@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/client"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/transaction"
@@ -27,10 +26,6 @@ func TestFreezingAccount(t *testing.T) {
 
 		account2Addr   = "GDELVSEXHKACSDMKTWIUM5D2XC55XRKQQGIIWYXNOCMMDX226UA6YRRO"
 		account2Secret = "SC6X7ZH3OD77ZXLYZ32MJLGVIOPUCMMACI35HJMHX2PPCZXGLRVTMUPA"
-
-		payAmount = 100000000
-
-		fundingAmount = 123456789
 	)
 
 	c := client.NewClient("https://127.0.0.1:2830")
@@ -61,19 +56,8 @@ func TestFreezingAccount(t *testing.T) {
 		body, err := tx.Serialize()
 		require.NoError(t, err)
 
-		pt, err := c.SubmitTransaction(body)
+		_, err = c.SubmitTransactionAndWait(tx.H.Hash, body)
 		require.NoError(t, err)
-		require.Equal(t, pt.Status, block.TransactionHistoryStatusSubmitted)
-
-		var e error
-		for second := time.Duration(0); second < time.Second*10; second = second + time.Millisecond*500 {
-			_, e = c.LoadTransaction(tx.H.Hash)
-			if e == nil {
-				break
-			}
-			time.Sleep(time.Millisecond * 500)
-		}
-		require.Nil(t, e)
 
 		account2Account, err := c.LoadAccount(account2Addr)
 		require.NoError(t, err)
@@ -102,19 +86,8 @@ func TestFreezingAccount(t *testing.T) {
 		body, err := tx.Serialize()
 		require.NoError(t, err)
 
-		pt, err := c.SubmitTransaction(body)
+		_, err = c.SubmitTransactionAndWait(tx.H.Hash, body)
 		require.NoError(t, err)
-		require.Equal(t, pt.Status, block.TransactionHistoryStatusSubmitted)
-
-		var e error
-		for second := time.Duration(0); second < time.Second*10; second = second + time.Millisecond*500 {
-			_, e = c.LoadTransaction(tx.H.Hash)
-			if e == nil {
-				break
-			}
-			time.Sleep(time.Millisecond * 500)
-		}
-		require.Nil(t, e)
 
 		account2Account, err = c.LoadAccount(account2Addr)
 		require.NoError(t, err)
@@ -145,19 +118,8 @@ func TestFreezingAccount(t *testing.T) {
 		body, err := tx.Serialize()
 		require.NoError(t, err)
 
-		pt, err := c.SubmitTransaction(body)
+		_, err = c.SubmitTransactionAndWait(tx.H.Hash, body)
 		require.NoError(t, err)
-		require.Equal(t, pt.Status, block.TransactionHistoryStatusSubmitted)
-
-		var e error
-		for second := time.Duration(0); second < time.Second*10; second = second + time.Millisecond*500 {
-			_, e = c.LoadTransaction(tx.H.Hash)
-			if e == nil {
-				break
-			}
-			time.Sleep(time.Millisecond * 500)
-		}
-		require.Nil(t, e)
 
 		account1Account, err := c.LoadAccount(account1Addr)
 		require.NoError(t, err)

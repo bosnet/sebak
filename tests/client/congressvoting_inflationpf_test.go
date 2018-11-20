@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/client"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/transaction"
@@ -72,9 +71,8 @@ func TestInflationPF(t *testing.T) {
 		body, err := tx.Serialize()
 		require.NoError(t, err)
 
-		pt, err := c.SubmitTransaction(body)
+		_, err = c.SubmitTransaction(body)
 		require.NoError(t, err)
-		require.Equal(t, pt.Status, block.TransactionHistoryStatusSubmitted)
 
 		var e error
 		for second := time.Duration(0); second < time.Second*10; second = second + time.Millisecond*500 {
