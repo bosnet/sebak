@@ -13,7 +13,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"boscoin.io/sebak/lib/block"
-	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/common/keypair"
 	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/node/runner/api/resource"
@@ -53,6 +52,8 @@ func TestGetOperationsByTxHashHandler(t *testing.T) {
 
 	records := recv["_embedded"].(map[string]interface{})["records"].([]interface{})
 
+	blk, _ := block.GetBlock(storage, bt.Block)
+
 	for _, r := range records {
 		item := r.(map[string]interface{})
 		hash := item["hash"].(string)
@@ -60,6 +61,8 @@ func TestGetOperationsByTxHashHandler(t *testing.T) {
 		bo, err := block.GetBlockOperation(storage, hash)
 		require.NoError(t, err)
 		require.NotNil(t, bo)
+		require.NotNil(t, item["confirmed"]) // `block.Block.Confirmed`
+		require.Equal(t, blk.Confirmed, item["confirmed"])
 	}
 }
 
@@ -73,7 +76,10 @@ func TestGetOperationsByTxHashHandlerStream(t *testing.T) {
 
 	kp := keypair.Random()
 	tx := transaction.TestMakeTransactionWithKeypair(networkID, 10, kp)
-	bt := block.NewBlockTransactionFromTransaction("block-hash", 1, common.NowISO8601(), tx)
+
+	blk := block.TestMakeNewBlockWithPrevBlock(block.GetLatestBlock(storage), []string{tx.GetHash()})
+
+	bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.Confirmed, tx)
 
 	boMap := make(map[string]block.BlockOperation)
 	for _, op := range tx.B.Operations {
@@ -83,22 +89,24 @@ func TestGetOperationsByTxHashHandlerStream(t *testing.T) {
 	}
 
 	// Wait until request registered to observer
-	{
-		go func() {
-			for {
-				observer.BlockOperationObserver.RLock()
-				if len(observer.BlockOperationObserver.Callbacks) > 0 {
-					observer.BlockOperationObserver.RUnlock()
-					break
-				}
+	go func() {
+		for {
+			observer.BlockOperationObserver.RLock()
+			if len(observer.BlockOperationObserver.Callbacks) > 0 {
 				observer.BlockOperationObserver.RUnlock()
+				break
 			}
-			for _, bo := range boMap {
-				bo.MustSave(storage)
-			}
-			wg.Done()
-		}()
-	}
+			observer.BlockOperationObserver.RUnlock()
+		}
+
+		blk.MustSave(storage)
+		bt.MustSave(storage)
+
+		for _, bo := range boMap {
+			bo.MustSave(storage)
+		}
+		wg.Done()
+	}()
 
 	// Do a Request
 	var reader *bufio.Reader
@@ -120,9 +128,12 @@ func TestGetOperationsByTxHashHandlerStream(t *testing.T) {
 			json.Unmarshal(line, &recv)
 			bo := boMap[recv["hash"].(string)]
 			r := resource.NewOperation(&bo)
+			r.Block = &blk
 			txS, err := json.Marshal(r.Resource())
 			require.NoError(t, err)
 			require.Equal(t, txS, line)
+			require.NotNil(t, recv["confirmed"]) // `block.Block.Confirmed`
+			require.Equal(t, blk.Confirmed, recv["confirmed"])
 		}
 	}
 

@@ -6,9 +6,10 @@ import (
 	"net/http"
 	"strings"
 
+	observable "github.com/GianlucaGuarini/go-observable"
+
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/network/httputils"
-	observable "github.com/GianlucaGuarini/go-observable"
 )
 
 // DefaultContentType is "application/json"
