@@ -160,6 +160,11 @@ func EncodeUint64ToByteSlice(i uint64) [MaxUintEncodeByte]byte {
 	return b
 }
 
+func EncodeUint64ToString(i uint64) string {
+	bs := EncodeUint64ToByteSlice(i)
+	return string(bs[:])
+}
+
 type KV struct {
 	Key   string
 	Value uint64

@@ -43,7 +43,7 @@ func NewBlockOperationKey(opHash, txHash string, index uint64) string {
 	return fmt.Sprintf("%s-%s-%d", opHash, txHash, index)
 }
 
-func NewBlockOperationFromOperation(op operation.Operation, tx transaction.Transaction, blockHeight uint64, txIndex, opIndex int) (BlockOperation, error) {
+func NewBlockOperationFromOperation(op operation.Operation, tx transaction.Transaction, blockHeight uint64, txIndex uint64, opIndex int) (BlockOperation, error) {
 	body, err := json.Marshal(op.B)
 	if err != nil {
 		return BlockOperation{}, err
