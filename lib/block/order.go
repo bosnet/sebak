@@ -49,5 +49,8 @@ func (o *BlockOrder) formatText(xs []uint64) string {
 }
 
 func (o *BlockOrder) String() string {
+	if o == nil || o.parts == nil {
+		return ""
+	}
 	return o.formatText(o.parts)
 }

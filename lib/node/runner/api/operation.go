@@ -76,9 +76,9 @@ func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter
 	blockCache := map[ /* block.Height */ uint64]*block.Block{}
 	oType := operation.OperationType(oTypeStr)
 
-	prefix := block.GetBlockOperationKeyPrefixSourceAndType(address, oType)
+	prefix := block.GetBlockOperationKeyPrefixSource(address)
 	if len(oType) > 0 {
-		prefix = block.GetBlockOperationKeyPrefixSource(address)
+		prefix = block.GetBlockOperationKeyPrefixSourceAndType(address, oType)
 	}
 
 	options, err := p.PageCursorListOptions(prefix)
