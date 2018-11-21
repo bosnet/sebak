@@ -382,6 +382,11 @@ func (p *irregularIncomingBallot) prepare() {
 	p.initialBalance, _ = GetGenesisBalance(p.nr.Storage())
 
 	p.nr.Consensus().SetProposerSelector(FixedSelector{p.nr.Node().Address()})
+	go p.nr.Start()
+}
+
+func (p *irregularIncomingBallot) done() {
+	p.nr.Stop()
 }
 
 func (p *irregularIncomingBallot) runChecker(blt ballot.Ballot) (checker *BallotChecker, err error) {
@@ -469,6 +474,7 @@ func (p *irregularIncomingBallot) makeBallot(state ballot.State) (blt *ballot.Ba
 func TestRegularIncomingBallots(t *testing.T) {
 	p := &irregularIncomingBallot{}
 	p.prepare()
+	defer p.done()
 
 	cm := p.nr.ConnectionManager().(*TestConnectionManager)
 	require.Equal(t, 0, len(cm.Messages()))
@@ -477,13 +483,16 @@ func TestRegularIncomingBallots(t *testing.T) {
 	blt := p.makeBallot(ballot.StateINIT)
 	_, err := p.runChecker(*blt)
 	require.NoError(t, err)
+
+	<-time.After(time.Millisecond * 100)
+
 	require.Equal(t, 1, len(cm.Messages())) // this check node broadcast the new SIGN ballot
 
 	received := cm.Messages()[0].(ballot.Ballot)
 	require.Equal(t, blt.H.ProposerSignature, received.H.ProposerSignature)
 
 	_, err = p.runChecker(received)
-	require.NoError(t, err)
+	<-time.After(time.Millisecond * 100)
 	require.Equal(t, 1, len(cm.Messages())) // this check node does not broadcast
 }
 
@@ -493,6 +502,7 @@ func TestRegularIncomingBallots(t *testing.T) {
 func TestIrregularIncomingBallots(t *testing.T) {
 	p := &irregularIncomingBallot{}
 	p.prepare()
+	defer p.done()
 
 	cm := p.nr.ConnectionManager().(*TestConnectionManager)
 	require.Equal(t, 0, len(cm.Messages()))
@@ -507,11 +517,13 @@ func TestIrregularIncomingBallots(t *testing.T) {
 
 	_, err := p.runChecker(*signBallot)
 	require.NoError(t, err)
+	<-time.After(time.Millisecond * 100)
 	require.Equal(t, 0, len(cm.Messages()))
 
 	_, err = p.runChecker(*initBallot)
 	require.NoError(t, err)
-	require.Equal(t, 1, len(cm.Messages()))
+	<-time.After(time.Millisecond * 100)
+	require.True(t, len(cm.Messages()) > 0)
 
 	// check the broadcasted ballot is valid `SIGN` ballot
 	received := cm.Messages()[0].(ballot.Ballot)

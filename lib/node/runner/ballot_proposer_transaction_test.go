@@ -42,6 +42,7 @@ func (p *ballotCheckerProposedTransaction) Prepare() {
 
 	p.proposerNode = localNodes[1]
 	nr.Consensus().SetProposerSelector(FixedSelector{p.proposerNode.Address()})
+	go p.nr.startBroadcastBallot()
 
 	p.keys = map[string]*keypair.Full{}
 }
