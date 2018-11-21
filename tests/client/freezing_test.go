@@ -3,7 +3,9 @@
 package client
 
 import (
+	"context"
 	"net/http"
+	"sync"
 	"testing"
 	"time"
 
@@ -56,10 +58,27 @@ func TestFreezingAccount(t *testing.T) {
 		body, err := tx.Serialize()
 		require.NoError(t, err)
 
+		var wg sync.WaitGroup
+		wg.Add(1)
+
+		var account2Account client.Account
+		go func() {
+			ctx, cancel := context.WithCancel(context.Background())
+			err = c.StreamAccount(ctx, account2Addr, nil, func(account client.Account) {
+				if account.Address != "" {
+					account2Account = account
+					cancel()
+				}
+			})
+			require.NoError(t, err)
+			wg.Done()
+		}()
+
 		_, err = c.SubmitTransactionAndWait(tx.H.Hash, body)
 		require.NoError(t, err)
 
-		account2Account, err := c.LoadAccount(account2Addr)
+		wg.Wait()
+
 		require.NoError(t, err)
 		account2Amount, err := common.AmountFromString(account2Account.Balance)
 		require.NoError(t, err)
@@ -118,18 +137,46 @@ func TestFreezingAccount(t *testing.T) {
 		body, err := tx.Serialize()
 		require.NoError(t, err)
 
+		account1Account, err := c.LoadAccount(account1Addr)
+		require.NoError(t, err)
+
+		var wg sync.WaitGroup
+		wg.Add(2)
+
+		go func() {
+			ctx, cancel := context.WithCancel(context.Background())
+			err = c.StreamAccount(ctx, account1Addr, nil, func(account client.Account) {
+				if account1Account.Balance != account.Balance {
+					account1Account = account
+					cancel()
+				}
+			})
+			require.NoError(t, err)
+			wg.Done()
+		}()
+
+		go func() {
+			ctx, cancel := context.WithCancel(context.Background())
+			err = c.StreamAccount(ctx, account2Addr, nil, func(account client.Account) {
+				if account2Account.Balance != account.Balance {
+					account2Account = account
+					cancel()
+				}
+			})
+			require.NoError(t, err)
+			wg.Done()
+		}()
+
 		_, err = c.SubmitTransactionAndWait(tx.H.Hash, body)
 		require.NoError(t, err)
 
-		account1Account, err := c.LoadAccount(account1Addr)
-		require.NoError(t, err)
+		wg.Wait()
+
 		account1Amount, err := common.AmountFromString(account1Account.Balance)
 		require.NoError(t, err)
 
 		require.Equal(t, common.Unit.MustSub(common.Amount(fee)), account1Amount)
 
-		account2Account, err = c.LoadAccount(account2Addr)
-		require.NoError(t, err)
 		account2Amount, err := common.AmountFromString(account2Account.Balance)
 		require.NoError(t, err)
 
