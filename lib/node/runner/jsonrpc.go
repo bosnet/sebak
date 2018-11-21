@@ -12,7 +12,7 @@ import (
 	"boscoin.io/sebak/lib/storage"
 )
 
-var MaxLimitListOptions uint64 = storage.DefaultMaxLimitListOptions * 10
+const MaxLimitListOptions uint64 = 10000
 
 type EchoArgs string
 type EchoResult string
@@ -39,19 +39,19 @@ type DBGetIteratorResult struct {
 	Items []storage.IterItem
 }
 
-type JSONRPCMainApp struct {
+type jsonrpcMainApp struct {
 }
 
-func (j *JSONRPCMainApp) Echo(r *http.Request, args *EchoArgs, result *EchoResult) error {
+func (j *jsonrpcMainApp) Echo(r *http.Request, args *EchoArgs, result *EchoResult) error {
 	*result = EchoResult(string(*args))
 	return nil
 }
 
-type JSONRPCDBApp struct {
+type jsonrpcDBApp struct {
 	st *storage.LevelDBBackend
 }
 
-func (j *JSONRPCDBApp) Has(r *http.Request, args *DBHasArgs, result *DBHasResult) error {
+func (j *jsonrpcDBApp) Has(r *http.Request, args *DBHasArgs, result *DBHasResult) error {
 	o, err := j.st.Has(string(*args))
 	if err != nil {
 		return err
@@ -61,7 +61,7 @@ func (j *JSONRPCDBApp) Has(r *http.Request, args *DBHasArgs, result *DBHasResult
 	return nil
 }
 
-func (j *JSONRPCDBApp) Get(r *http.Request, args *DBGetArgs, result *DBGetResult) error {
+func (j *jsonrpcDBApp) Get(r *http.Request, args *DBGetArgs, result *DBGetResult) error {
 	o, err := j.st.GetRaw(string(*args))
 	if err != nil {
 		return err
@@ -71,7 +71,7 @@ func (j *JSONRPCDBApp) Get(r *http.Request, args *DBGetArgs, result *DBGetResult
 	return nil
 }
 
-func (j *JSONRPCDBApp) GetIterator(r *http.Request, args *DBGetIteratorArgs, result *DBGetIteratorResult) error {
+func (j *jsonrpcDBApp) GetIterator(r *http.Request, args *DBGetIteratorArgs, result *DBGetIteratorResult) error {
 	limit := args.Options.Limit
 	if limit > MaxLimitListOptions {
 		limit = MaxLimitListOptions
@@ -102,23 +102,23 @@ func (j *JSONRPCDBApp) GetIterator(r *http.Request, args *DBGetIteratorArgs, res
 	return nil
 }
 
-type JSONRPCServer struct {
+type jsonrpcServer struct {
 	endpoint *common.Endpoint
 	st       *storage.LevelDBBackend
 }
 
-func NewJSONRPCServer(endpoint *common.Endpoint, st *storage.LevelDBBackend) *JSONRPCServer {
-	return &JSONRPCServer{
+func newJSONRPCServer(endpoint *common.Endpoint, st *storage.LevelDBBackend) *jsonrpcServer {
+	return &jsonrpcServer{
 		endpoint: endpoint,
 		st:       st,
 	}
 }
 
-type Server struct {
+type jsonrpcInternalServer struct {
 	*rpc.Server
 }
 
-func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (s *jsonrpcInternalServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
 	w.Header().Set(
@@ -133,15 +133,15 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.Server.ServeHTTP(w, r)
 }
 
-func (j *JSONRPCServer) Ready() *mux.Router {
-	s := &Server{Server: rpc.NewServer()}
+func (j *jsonrpcServer) Ready() *mux.Router {
+	s := &jsonrpcInternalServer{Server: rpc.NewServer()}
 	s.RegisterCodec(jsonrpc.NewCodec(), "application/json")
 	s.RegisterCodec(jsonrpc.NewCodec(), "application/json;charset=UTF-8")
 
-	mainApp := &JSONRPCMainApp{}
+	mainApp := &jsonrpcMainApp{}
 	s.RegisterService(mainApp, "Main")
 
-	dbApp := &JSONRPCDBApp{st: j.st}
+	dbApp := &jsonrpcDBApp{st: j.st}
 	s.RegisterService(dbApp, "DB")
 
 	router := mux.NewRouter()
@@ -155,7 +155,7 @@ func (j *JSONRPCServer) Ready() *mux.Router {
 	return router
 }
 
-func (j *JSONRPCServer) Start() error {
+func (j *jsonrpcServer) Start() error {
 	router := j.Ready()
 
 	err := func() error {

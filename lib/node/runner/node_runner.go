@@ -169,7 +169,7 @@ func NewNodeRunner(
 
 	nr.nodeInfo = NewNodeInfo(nr)
 	if conf.JSONRPCEndpoint != nil {
-		nr.jsonrpcServer = NewJSONRPCServer(conf.JSONRPCEndpoint, nr.storage)
+		nr.jsonrpcServer = newJSONRPCServer(conf.JSONRPCEndpoint, nr.storage)
 	}
 
 	return

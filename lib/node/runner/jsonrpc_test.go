@@ -9,7 +9,7 @@ import (
 	"net/url"
 	"testing"
 
-	rpcjson "github.com/gorilla/rpc/json"
+	jsonrpc "github.com/gorilla/rpc/json"
 	"github.com/stretchr/testify/require"
 
 	"boscoin.io/sebak/lib/common"
@@ -20,7 +20,7 @@ type jsonrpcServerTestHelper struct {
 	server   *httptest.Server
 	endpoint *common.Endpoint
 	st       *storage.LevelDBBackend
-	js       *JSONRPCServer
+	js       *jsonrpcServer
 	t        *testing.T
 }
 
@@ -29,7 +29,7 @@ func (jp *jsonrpcServerTestHelper) prepare() {
 	endpoint, _ := common.NewEndpointFromString("http://localhost/jsonrpc")
 	jp.st = storage.NewTestStorage()
 
-	jp.js = NewJSONRPCServer(endpoint, jp.st)
+	jp.js = newJSONRPCServer(endpoint, jp.st)
 	jp.server.Config = &http.Server{Handler: jp.js.Ready()}
 	jp.server.Start()
 
@@ -47,7 +47,7 @@ func (jp *jsonrpcServerTestHelper) done() {
 }
 
 func (jp *jsonrpcServerTestHelper) request(method string, args interface{}) *http.Response {
-	message, err := rpcjson.EncodeClientRequest(method, &args)
+	message, err := jsonrpc.EncodeClientRequest(method, &args)
 	require.NoError(jp.t, err)
 
 	req, err := http.NewRequest("POST", jp.endpoint.String(), bytes.NewBuffer(message))
@@ -74,7 +74,7 @@ func TestJSONRPCServerEcho(t *testing.T) {
 	defer resp.Body.Close()
 
 	var result EchoResult
-	err := rpcjson.DecodeClientResponse(resp.Body, &result)
+	err := jsonrpc.DecodeClientResponse(resp.Body, &result)
 	require.NoError(t, err)
 
 	require.Equal(t, token, string(result))
@@ -95,7 +95,7 @@ func TestJSONRPCServerDBHas(t *testing.T) {
 		defer resp.Body.Close()
 
 		var result DBHasResult
-		err := rpcjson.DecodeClientResponse(resp.Body, &result)
+		err := jsonrpc.DecodeClientResponse(resp.Body, &result)
 		require.NoError(t, err)
 
 		require.Equal(t, true, bool(result))
@@ -107,7 +107,7 @@ func TestJSONRPCServerDBHas(t *testing.T) {
 		defer resp.Body.Close()
 
 		var result DBHasResult
-		err := rpcjson.DecodeClientResponse(resp.Body, &result)
+		err := jsonrpc.DecodeClientResponse(resp.Body, &result)
 		require.NoError(t, err)
 
 		require.Equal(t, false, bool(result))
@@ -136,7 +136,7 @@ func TestJSONRPCServerDBGet(t *testing.T) {
 		defer resp.Body.Close()
 
 		var result DBGetResult
-		err := rpcjson.DecodeClientResponse(resp.Body, &result)
+		err := jsonrpc.DecodeClientResponse(resp.Body, &result)
 		require.NoError(t, err)
 		require.Equal(t, exp, string(result.Key))
 
@@ -184,7 +184,7 @@ func TestJSONRPCServerDBGetIterator(t *testing.T) {
 		defer resp.Body.Close()
 
 		var result DBGetIteratorResult
-		err := rpcjson.DecodeClientResponse(resp.Body, &result)
+		err := jsonrpc.DecodeClientResponse(resp.Body, &result)
 		require.NoError(t, err)
 
 		require.Equal(t, len(expected), len(result.Items))
@@ -205,7 +205,7 @@ func TestJSONRPCServerDBGetIterator(t *testing.T) {
 		defer resp.Body.Close()
 
 		var result DBGetIteratorResult
-		err := rpcjson.DecodeClientResponse(resp.Body, &result)
+		err := jsonrpc.DecodeClientResponse(resp.Body, &result)
 		require.NoError(t, err)
 
 		require.Equal(t, len(expected), len(result.Items))
@@ -254,7 +254,7 @@ func TestJSONRPCServerDBGetIteratorWithLimit(t *testing.T) {
 	defer resp.Body.Close()
 
 	var result DBGetIteratorResult
-	err := rpcjson.DecodeClientResponse(resp.Body, &result)
+	err := jsonrpc.DecodeClientResponse(resp.Body, &result)
 	require.NoError(t, err)
 
 	require.Equal(t, limit, len(result.Items))
