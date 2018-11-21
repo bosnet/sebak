@@ -88,6 +88,15 @@ func (p *PageQuery) ListOptions() storage.ListOptions {
 	return storage.NewDefaultListOptions(p.Reverse(), p.Cursor(), p.Limit())
 }
 
+func (p *PageQuery) PageCursorListOptions(prefix string) (storage.ListOptions, error) {
+	c := NewPageCursor(p.Cursor(), prefix)
+	indexCursor, err := c.IndexKey()
+	if err != nil {
+		return nil, err
+	}
+	return storage.NewDefaultListOptions(p.Reverse(), indexCursor, p.Limit()), nil
+}
+
 func (p *PageQuery) WalkOption() *storage.WalkOption {
 	return storage.NewWalkOption(string(p.Cursor()), p.Limit(), p.Reverse())
 }

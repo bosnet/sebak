@@ -37,6 +37,7 @@ type BlockOperation struct {
 	operation   operation.Operation
 	linked      string
 	isSaved     bool
+	order       *BlockOrder
 }
 
 func NewBlockOperationKey(opHash, txHash string, index uint64) string {
@@ -63,6 +64,7 @@ func NewBlockOperationFromOperation(op operation.Operation, tx transaction.Trans
 			linked = createAccount.Linked
 		}
 	}
+	order := NewBlockOpOrder(blockHeight, txIndex, index)
 
 	return BlockOperation{
 		Hash: NewBlockOperationKey(opHash, txHash, uint64(opIndex)),
@@ -81,6 +83,7 @@ func NewBlockOperationFromOperation(op operation.Operation, tx transaction.Trans
 		transaction: tx,
 		operation:   op,
 		linked:      linked,
+		order:       order,
 	}, nil
 }
 
@@ -164,96 +167,104 @@ func (bo *BlockOperation) Save(st *storage.LevelDBBackend) (err error) {
 	return nil
 }
 
-func key(hash string) string {
-	return fmt.Sprintf("%s%s", common.BlockOperationPrefixHash, hash)
+func GetBlockOperationKey(hash string) string {
+	idx := storage.NewIndex()
+	idx.WritePrefix(common.BlockOperationPrefixHash, hash)
+	return idx.String()
 }
 
 func GetBlockOperationCreateFrozenKey(hash string, height uint64) string {
-	return fmt.Sprintf(
-		"%s%s%s",
-		common.BlockOperationPrefixCreateFrozen,
-		common.EncodeUint64ToByteSlice(height),
-		hash,
-	)
+	idx := storage.NewIndex()
+	idx.WritePrefix(common.BlockOperationPrefixCreateFrozen)
+	idx.WritePrefix(common.EncodeUint64ToString(height))
+	idx.WritePrefix(hash)
+	return idx.String()
 }
 
-func keyPrefixFrozenLinked(hash string) string {
-	return fmt.Sprintf(
-		"%s%s",
-		common.BlockOperationPrefixFrozenLinked,
-		hash,
-	)
+func GetBlockOperationKeyPrefixFrozenLinked(hash string) string {
+	idx := storage.NewIndex()
+	return idx.WritePrefix(common.BlockOperationPrefixFrozenLinked, hash).String()
 }
 
-func keyPrefixTxHash(txHash string) string {
-	return fmt.Sprintf("%s%s-", common.BlockOperationPrefixTxHash, txHash)
+func GetBlockOperationKeyPrefixTxHash(txHash string) string {
+	idx := storage.NewIndex()
+	idx.WritePrefix(common.BlockOperationPrefixTxHash, txHash)
+	return idx.String()
 }
 
-func keyPrefixSource(source string) string {
-	return fmt.Sprintf("%s%s-", common.BlockOperationPrefixSource, source)
+func GetBlockOperationKeyPrefixSource(source string) string {
+	idx := storage.NewIndex()
+	idx.WritePrefix(common.BlockOperationPrefixSource, source)
+	return idx.String()
 }
 
-func keyPrefixSourceAndType(source string, ty operation.OperationType) string {
-	return fmt.Sprintf("%s%s%s-", common.BlockOperationPrefixTypeSource, string(ty), source)
+func GetBlockOperationKeyPrefixSourceAndType(source string, ty operation.OperationType) string {
+	idx := storage.NewIndex()
+	idx.WritePrefix(common.BlockOperationPrefixSource, string(ty), source)
+	return idx.String()
 }
 
-func keyPrefixBlockHeight(height uint64) string {
-	return fmt.Sprintf("%s%s-", common.BlockOperationPrefixBlockHeight, common.EncodeUint64ToByteSlice(height))
+func GetBlockOperationKeyPrefixBlockHeight(height uint64) string {
+	idx := storage.NewIndex()
+	idx.WritePrefix(common.BlockOperationPrefixBlockHeight)
+	idx.WritePrefix(common.EncodeUint64ToString(height))
+	return idx.String()
 }
 
-func keyPrefixTarget(target string) string {
-	return fmt.Sprintf("%s%s-", common.BlockOperationPrefixTarget, target)
+func GetBlockOperationKeyPrefixTarget(target string) string {
+	idx := storage.NewIndex()
+	idx.WritePrefix(common.BlockOperationPrefixTarget, target)
+	return idx.String()
 }
 
-func keyPrefixTargetAndType(target string, ty operation.OperationType) string {
-	return fmt.Sprintf("%s%s%s-", common.BlockOperationPrefixTypeTarget, string(ty), target)
+func GetBlockOperationKeyPrefixTargetAndType(target string, ty operation.OperationType) string {
+	idx := storage.NewIndex()
+	idx.WritePrefix(common.BlockOperationPrefixTypeTarget)
+	idx.WritePrefix(string(ty), target)
+	return idx.String()
 }
 
-func keyPrefixPeers(addr string) string {
-	return fmt.Sprintf("%s%s-", common.BlockOperationPrefixPeers, addr)
+func GetBlockOperationKeyPrefixPeers(addr string) string {
+	idx := storage.NewIndex()
+	idx.WritePrefix(common.BlockOperationPrefixPeers, addr)
+	return idx.String()
 }
 
-func keyPrefixPeersAndType(addr string, ty operation.OperationType) string {
-	return fmt.Sprintf("%s%s%s-", common.BlockOperationPrefixTypePeers, string(ty), addr)
+func GetBlockOperationKeyPrefixPeersAndType(addr string, ty operation.OperationType) string {
+	idx := storage.NewIndex()
+	idx.WritePrefix(common.BlockOperationPrefixTypePeers)
+	idx.WritePrefix(string(ty), addr)
+	return idx.String()
 }
 
 func (bo BlockOperation) NewBlockOperationTxHashKey() string {
-	return fmt.Sprintf(
-		"%s%s%s%s",
-		keyPrefixTxHash(bo.TxHash),
-		common.EncodeUint64ToByteSlice(bo.Height),
-		common.EncodeUint64ToByteSlice(bo.TxIndex),
-		common.EncodeUint64ToByteSlice(bo.Index),
-	)
+	idx := storage.NewIndex()
+	idx.WritePrefix(GetBlockOperationKeyPrefixTxHash(bo.TxHash))
+	bo.order.Index(idx)
+	return idx.String()
 }
 
 func (bo BlockOperation) NewBlockOperationSourceKey() string {
-	return fmt.Sprintf(
-		"%s%s%s%s",
-		keyPrefixSource(bo.Source),
-		common.EncodeUint64ToByteSlice(bo.Height),
-		common.EncodeUint64ToByteSlice(bo.TxIndex),
-		common.EncodeUint64ToByteSlice(bo.Index),
-	)
+	idx := storage.NewIndex()
+	idx.WritePrefix(GetBlockOperationKeyPrefixSource(bo.Source))
+	bo.order.Index(idx)
+	return idx.String()
 }
 
 func (bo BlockOperation) NewBlockOperationFrozenLinkedKey(hash string) string {
-	return fmt.Sprintf(
-		"%s%s",
-		keyPrefixFrozenLinked(hash),
-		common.EncodeUint64ToByteSlice(bo.Height),
-	)
+	idx := storage.NewIndex()
+	idx.WritePrefix(GetBlockOperationKeyPrefixFrozenLinked(hash))
+	bo.order.Index(idx)
+	return idx.String()
 }
 
 func (bo BlockOperation) NewBlockOperationSourceAndTypeKey() string {
-	return fmt.Sprintf(
-		"%s%s%s%s",
-		keyPrefixSourceAndType(bo.Source, bo.Type),
-		common.EncodeUint64ToByteSlice(bo.Height),
-		common.EncodeUint64ToByteSlice(bo.TxIndex),
-		common.EncodeUint64ToByteSlice(bo.Index),
-	)
+	idx := storage.NewIndex()
+	idx.WritePrefix(GetBlockOperationKeyPrefixSourceAndType(bo.Source, bo.Type))
+	bo.order.Index(idx)
+	return idx.String()
 }
+
 func (bo BlockOperation) NewBlockOperationTargetKey(target string) string {
 	return fmt.Sprintf(
 		"%s%s%s%s",
@@ -312,6 +323,7 @@ func GetBlockOperation(st *storage.LevelDBBackend, hash string) (bo BlockOperati
 	}
 
 	bo.isSaved = true
+	bo.order = NewBlockOpOrder(bo.Height, bo.TxIndex, bo.Index)
 	return
 }
 

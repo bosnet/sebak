@@ -278,6 +278,10 @@ func (bt *BlockTransaction) GetOperationIndex(opHash string) (opIndex int, err e
 	return
 }
 
+func (bt BlockTransaction) BlockOrder() *BlockOrder {
+	return bt.order
+}
+
 func GetBlockTransactionKeyPrefixSource(source string) string {
 	idx := storage.NewIndex()
 	return idx.WritePrefix(common.BlockTransactionPrefixSource, source).String()

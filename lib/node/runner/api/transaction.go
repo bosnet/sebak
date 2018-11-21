@@ -9,6 +9,7 @@ import (
 
 	"boscoin.io/sebak/lib/block"
 	o "boscoin.io/sebak/lib/common/observer"
+	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/network/httputils"
 	"boscoin.io/sebak/lib/node/runner/api/resource"
@@ -21,9 +22,18 @@ func (api NetworkHandlerAPI) GetTransactionsHandler(w http.ResponseWriter, r *ht
 		return
 	}
 
-	var options = p.ListOptions()
-	var firstCursor []byte
-	var cursor []byte
+	options, err := p.PageCursorListOptions(common.BlockTransactionPrefixHeight)
+	if err != nil {
+		//TODO: more correct err for it
+		httputils.WriteJSONError(w, err)
+		return
+	}
+
+	var (
+		prevCursor string
+		nextCursor
+	)
+
 	readFunc := func() []resource.Resource {
 		var txs []resource.Resource
 		iterFunc, closeFunc := block.GetBlockTransactions(api.storage, options)
@@ -33,9 +43,10 @@ func (api NetworkHandlerAPI) GetTransactionsHandler(w http.ResponseWriter, r *ht
 				break
 			}
 			cursor = append([]byte{}, c...)
-			if len(firstCursor) == 0 {
-				firstCursor = append(firstCursor, c...)
+			if prevCursor == "" {
+				prevCursor = t.BlockOrder().String()
 			}
+			cursor = t.BlockOrder().String()
 			txs = append(txs, resource.NewTransaction(&t))
 		}
 		closeFunc()
@@ -44,7 +55,7 @@ func (api NetworkHandlerAPI) GetTransactionsHandler(w http.ResponseWriter, r *ht
 
 	txs := readFunc()
 
-	list := p.ResourceList(txs, firstCursor, cursor)
+	list := p.ResourceList(txs, prevCursor, nextCursor)
 	httputils.MustWriteJSON(w, 200, list)
 }
 
