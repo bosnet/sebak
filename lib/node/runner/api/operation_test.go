@@ -7,14 +7,12 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
-	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/node/runner/api/resource"
 	"boscoin.io/sebak/lib/transaction/operation"
 )
@@ -124,8 +122,6 @@ func TestGetOperationsByAccountHandlerWithType(t *testing.T) {
 }
 
 func TestGetOperationsByAccountHandlerStream(t *testing.T) {
-	var wg sync.WaitGroup
-	wg.Add(1)
 
 	ts, storage := prepareAPIServer()
 	defer ts.Close()
@@ -139,26 +135,6 @@ func TestGetOperationsByAccountHandlerStream(t *testing.T) {
 	ba := block.NewBlockAccount(kp.Address(), common.Amount(common.BaseReserve))
 	ba.MustSave(storage)
 
-	// Wait until request registered to observer
-	{
-		go func() {
-			for {
-				observer.BlockOperationObserver.RLock()
-				if len(observer.BlockOperationObserver.Callbacks) > 0 {
-					observer.BlockOperationObserver.RUnlock()
-					break
-				}
-				observer.BlockOperationObserver.RUnlock()
-			}
-
-			blk.MustSave(storage)
-			for _, bo := range boMap {
-				bo.MustSave(storage)
-			}
-			wg.Done()
-		}()
-	}
-
 	// Do a Request
 	var reader *bufio.Reader
 	{
@@ -168,13 +144,25 @@ func TestGetOperationsByAccountHandlerStream(t *testing.T) {
 		reader = bufio.NewReader(respBody)
 	}
 
+	// Save
+	{
+		blk.MustSave(storage)
+		for _, bo := range boMap {
+			bo.MustSave(storage)
+		}
+	}
+
 	// Check the output
 	{
 		// Do stream Request to the Server
 		for n := 0; n < 10; n++ {
 			line, err := reader.ReadBytes('\n')
-			require.NoError(t, err)
-			line = bytes.Trim(line, "\n\t ")
+			line = bytes.Trim(line, "\n")
+			if len(line) == 0 {
+				line, err = reader.ReadBytes('\n')
+				require.NoError(t, err)
+				line = bytes.Trim(line, "\n")
+			}
 			recv := make(map[string]interface{})
 			json.Unmarshal(line, &recv)
 
@@ -190,6 +178,5 @@ func TestGetOperationsByAccountHandlerStream(t *testing.T) {
 		}
 	}
 
-	wg.Wait()
 	storage.Close()
 }

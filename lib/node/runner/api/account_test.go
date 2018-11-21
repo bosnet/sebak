@@ -2,16 +2,15 @@ package api
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"strings"
-	"sync"
 	"testing"
 
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common/keypair"
-	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/network/httputils"
 
@@ -53,8 +52,6 @@ func TestGetAccountHandler(t *testing.T) {
 }
 
 func TestGetAccountHandlerStream(t *testing.T) {
-	var wg sync.WaitGroup
-	wg.Add(1)
 
 	ts, storage := prepareAPIServer()
 	defer storage.Close()
@@ -63,22 +60,6 @@ func TestGetAccountHandlerStream(t *testing.T) {
 	ba.MustSave(storage)
 
 	key := ba.Address
-
-	// Wait until request registered to observer
-	{
-		go func() {
-			for {
-				observer.BlockAccountObserver.RLock()
-				if len(observer.BlockAccountObserver.Callbacks) > 0 {
-					observer.BlockAccountObserver.RUnlock()
-					break
-				}
-				observer.BlockAccountObserver.RUnlock()
-			}
-			ba.MustSave(storage)
-			wg.Done()
-		}()
-	}
 
 	// Do a Request
 	var reader *bufio.Reader
@@ -89,15 +70,24 @@ func TestGetAccountHandlerStream(t *testing.T) {
 		reader = bufio.NewReader(respBody)
 	}
 
+	// Save
+	{
+		ba.MustSave(storage)
+	}
+
 	// Check the output
 	{
 		line, err := reader.ReadBytes('\n')
-		require.NoError(t, err)
+		line = bytes.Trim(line, "\n")
+		if len(line) == 0 {
+			line, err = reader.ReadBytes('\n')
+			require.NoError(t, err)
+			line = bytes.Trim(line, "\n")
+		}
 		recv := make(map[string]interface{})
 		json.Unmarshal(line, &recv)
 		require.Equal(t, key, recv["address"], "address is not same")
 	}
-	wg.Wait()
 }
 
 // Test that getting an inexisting account returns an error

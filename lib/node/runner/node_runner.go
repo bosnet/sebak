@@ -310,8 +310,8 @@ func (nr *NodeRunner) Ready() {
 		listCache.WrapHandlerFunc(apiHandler.GetOperationsByTxHashHandler),
 	).Methods("GET", "OPTIONS")
 	nr.network.AddHandler(
-		apiHandler.HandlerURLPattern(api.GetTransactionHistoryHandlerPattern),
-		listCache.WrapHandlerFunc(apiHandler.GetTransactionHistoryHandler),
+		apiHandler.HandlerURLPattern(api.GetTransactionStatusHandlerPattern),
+		listCache.WrapHandlerFunc(apiHandler.GetTransactionStatusByHashHandler),
 	).Methods("GET", "OPTIONS")
 
 	TransactionsHandler := func(w http.ResponseWriter, r *http.Request) {

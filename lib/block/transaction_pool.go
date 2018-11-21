@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
@@ -51,6 +52,9 @@ func (tp TransactionPool) Save(st *storage.LevelDBBackend) (err error) {
 	if err = st.New(key, tp); err != nil {
 		return
 	}
+
+	event := fmt.Sprintf("pushed-%s", tp.Hash)
+	observer.BlockTransactionObserver.Trigger(event, &tp)
 
 	return nil
 }

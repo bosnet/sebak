@@ -24,8 +24,8 @@ const (
 	GetTransactionsHandlerPattern          = "/transactions"
 	GetTransactionByHashHandlerPattern     = "/transactions/{id}"
 	GetTransactionOperationsHandlerPattern = "/transactions/{id}/operations"
+	GetTransactionStatusHandlerPattern     = "/transactions/{id}/status"
 	PostTransactionPattern                 = "/transactions"
-	GetTransactionHistoryHandlerPattern    = "/transactions/{id}/history"
 	GetBlocksHandlerPattern                = "/blocks"
 	GetBlockHandlerPattern                 = "/blocks/{hashOrHeight}"
 	GetNodeInfoPattern                     = "/"
@@ -63,7 +63,7 @@ func renderEventStream(args ...interface{}) ([]byte, error) {
 	i := args[1]
 
 	if i == nil {
-		return nil, nil
+		return []byte{}, nil
 	}
 
 	switch v := i.(type) {

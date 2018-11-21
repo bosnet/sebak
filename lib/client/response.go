@@ -77,26 +77,21 @@ type Transaction struct {
 
 type TransactionPost struct {
 	Links struct {
-		Self    Link `json:"self"`
-		History Link `json:"history"`
+		Self   Link `json:"self"`
+		Status Link `json:"status"`
 	} `json:"_links"`
 	Hash    string      `json:"hash"`
 	Status  string      `json:"status"`
 	Message interface{} `json:"message"`
 }
 
-type TransactionHistory struct {
+type TransactionStatus struct {
 	Links struct {
 		Self        Link `json:"self"`
-		Account     Link `json:"account"`
 		Transaction Link `json:"transaction"`
 	} `json:"_links"`
-	Hash    string `json:"hash"`
-	Source  string `json:"source"`
-	Time    string `json:"time"`
-	Message string `json:"message"`
-	Created string `json:"created"`
-	Status  string `json:"status"`
+	Hash   string `json:"hash"`
+	Status string `json:"status"`
 }
 
 type TransactionsPage struct {

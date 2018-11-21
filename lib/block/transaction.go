@@ -141,10 +141,6 @@ func (bt *BlockTransaction) Save(st *storage.LevelDBBackend) (err error) {
 	observer.BlockTransactionObserver.Trigger(event, bt)
 	bt.isSaved = true
 
-	if err = SaveTransactionHistory(st, bt.transaction, TransactionHistoryStatusConfirmed); err != nil {
-		return
-	}
-
 	return nil
 }
 

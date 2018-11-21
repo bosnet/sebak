@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/client"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/transaction"
@@ -213,7 +212,7 @@ func TestAccount(t *testing.T) {
 
 	}
 
-	//Payment from Account 1 to Account 2 with TransactionHistory
+	//Payment from Account 1 to Account 2 with TransactionStatus
 	{
 		const (
 			account1ToAccount2 = 1000000
@@ -241,11 +240,11 @@ func TestAccount(t *testing.T) {
 		require.Nil(t, err)
 
 		for second := time.Duration(0); second < time.Second*10; second = second + time.Millisecond*500 {
-			th, err := c.LoadTransactionHistory(pt.Hash)
+			th, err := c.LoadTransactionStatus(pt.Hash)
 			if err != nil {
 				t.Log(err)
 			}
-			if th.Status == block.TransactionHistoryStatusConfirmed {
+			if th.Status == "confimed" {
 				break
 			}
 			time.Sleep(time.Millisecond * 500)

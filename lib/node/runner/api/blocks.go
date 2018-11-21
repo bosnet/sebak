@@ -59,8 +59,12 @@ func (api NetworkHandlerAPI) GetBlocksHandler(w http.ResponseWriter, r *http.Req
 
 	if httputils.IsEventStream(r) {
 		es := NewEventStream(w, r, renderEventStream, DefaultContentType)
-		for _, b := range blocks {
-			es.Render(b)
+		if len(blocks) > 0 {
+			for _, b := range blocks {
+				es.Render(b)
+			}
+		} else {
+			es.Render(nil)
 		}
 		es.Run(observer.BlockObserver, block.EventBlockPrefix)
 		return

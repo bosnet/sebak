@@ -3,17 +3,17 @@
 package client
 
 import (
-	"net/http"
-	"strconv"
-	"testing"
-	"time"
-
 	"boscoin.io/sebak/lib/client"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/transaction"
 	"boscoin.io/sebak/lib/transaction/operation"
+	"context"
 	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
+	"net/http"
+	"strconv"
+	"sync"
+	"testing"
 )
 
 func createAccount(t *testing.T, fromAddr, fromSecret, toAddr string, balance uint64) {
@@ -41,35 +41,51 @@ func createAccount(t *testing.T, fromAddr, fromSecret, toAddr string, balance ui
 	body, err := tx.Serialize()
 	require.NoError(t, err)
 
+	var wg sync.WaitGroup
+	wg.Add(3)
+
+	go func() {
+		ctx, cancel := context.WithCancel(context.Background())
+		err = c.StreamTransactionStatus(ctx, tx.H.Hash, nil, func(status client.TransactionStatus) {
+			if status.Status == "confirmed" {
+				cancel()
+			}
+		})
+		require.NoError(t, err)
+		wg.Done()
+	}()
+
+	var toAccount client.Account
+	go func() {
+		ctx, cancel := context.WithCancel(context.Background())
+		err = c.StreamAccount(ctx, toAddr, nil, func(account client.Account) {
+			toAccount = account
+			cancel()
+		})
+		require.NoError(t, err)
+		wg.Done()
+	}()
+
+	go func() {
+		ctx, cancel := context.WithCancel(context.Background())
+		err = c.StreamAccount(ctx, fromAddr, nil, func(account client.Account) {
+			if account.SequenceID != fromAccount.SequenceID {
+				fromAccount = account
+				cancel()
+			}
+		})
+		require.NoError(t, err)
+		wg.Done()
+	}()
+
 	_, err = c.SubmitTransaction(body)
 	require.NoError(t, err)
 
-	var e error
-	for second := time.Duration(0); second < time.Second*10; second = second + time.Millisecond*500 {
-		_, e = c.LoadTransaction(tx.H.Hash)
-		if e == nil {
-			break
-		}
-		time.Sleep(time.Millisecond * 500)
-	}
-	require.Nil(t, e)
-
-	var toAccount client.Account
-	for second := time.Duration(0); second < time.Second*3; second = second + time.Millisecond*500 {
-		toAccount, e = c.LoadAccount(toAddr)
-		if e == nil {
-			break
-		}
-		time.Sleep(time.Millisecond * 500)
-	}
-	require.Nil(t, e)
+	wg.Wait()
 
 	targetBalance, err := strconv.ParseUint(toAccount.Balance, 10, 64)
 	require.NoError(t, err)
 	require.Equal(t, uint64(balance), targetBalance)
-
-	fromAccount, err = c.LoadAccount(fromAddr)
-	require.NoError(t, err)
 
 	genesisBalance2, err := strconv.ParseUint(fromAccount.Balance, 10, 64)
 	require.NoError(t, err)

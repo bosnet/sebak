@@ -105,8 +105,12 @@ func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter
 		)
 
 		txs := readFunc()
-		for _, tx := range txs {
-			es.Render(tx)
+		if len(txs) > 0 {
+			for _, tx := range txs {
+				es.Render(tx)
+			}
+		} else {
+			es.Render(nil)
 		}
 		es.Run(observer.BlockOperationObserver, event)
 		return
