@@ -54,6 +54,9 @@ func (api NetworkHandlerAPI) getOperationsByTxHash(txHash string, blk *block.Blo
 	iterFunc, closeFunc := block.GetBlockOperationsByTxHash(api.storage, txHash, options)
 	for {
 		o, hasNext, _ := iterFunc()
+		if o.BlockOrder() != nil {
+			order = o.BlockOrder()
+		}
 		if !hasNext {
 			break
 		}
@@ -66,8 +69,6 @@ func (api NetworkHandlerAPI) getOperationsByTxHash(txHash string, blk *block.Blo
 		rs := resource.NewOperation(&o, idx)
 		rs.Block = blk
 		txs = append(txs, rs)
-		order = o.BlockOrder()
-		txs = append(txs, resource.NewOperation(&o))
 	}
 	closeFunc()
 	return

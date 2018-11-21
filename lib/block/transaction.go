@@ -348,7 +348,7 @@ func LoadBlockTransactionsInsideIterator(
 
 	return (func() (BlockTransaction, bool, []byte) {
 			item, hasNext := iterFunc()
-			if !hasNext {
+			if !hasNext && (item.Key == nil || item.Value == nil) {
 				return BlockTransaction{}, false, item.Key
 			}
 

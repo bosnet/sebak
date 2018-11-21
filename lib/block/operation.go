@@ -406,7 +406,7 @@ func LoadBlockOperationsInsideIterator(
 
 	return (func() (BlockOperation, bool, []byte) {
 			item, hasNext := iterFunc()
-			if !hasNext {
+			if !hasNext && (item.Key == nil || item.Value == nil) {
 				return BlockOperation{}, false, item.Key
 			}
 

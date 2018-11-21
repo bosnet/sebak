@@ -109,6 +109,9 @@ func (api NetworkHandlerAPI) GetTransactionsByAccountHandler(w http.ResponseWrit
 		iterFunc, closeFunc := block.GetBlockTransactionsByAccount(api.storage, address, options)
 		for {
 			t, hasNext, _ := iterFunc()
+			if t.BlockOrder() != nil {
+				order = t.BlockOrder()
+			}
 			if !hasNext {
 				break
 			}
