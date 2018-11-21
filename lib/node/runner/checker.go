@@ -200,34 +200,56 @@ func BallotCheckSYNC(c common.Checker, args ...interface{}) error {
 		return nil
 	}
 
-	if !isBallotAcceptYes(b) {
+	if !isBallotAcceptYesOrExp(b) {
 		return nil
+	}
+
+	if is.IsVoted(b) {
+		checker.NodeRunner.Log().Debug(
+			"return in BallotCheckSYNC; is.IsVoted(ballot)",
+			"ballot", b,
+		)
+		return errors.BallotAlreadyVoted
+	}
+
+	if _, err := is.Vote(b); err != nil {
+		return err
 	}
 
 	if !hasBallotValidProposer(is, b) {
 		return nil
 	}
 
+	result, votingHole, finished := is.CanGetVotingResult(b)
+
+	if !finished || (votingHole != voting.YES) {
+		checker.NodeRunner.Log().Debug(
+			"return in BallotCheckSYNC; !finished || (votingHole != voting.YES)",
+			"finished", finished,
+			"votingHole", votingHole,
+			"result", result,
+		)
+		return nil
+	}
+
+	nodeAddrs := []string{}
+	for source := range result {
+		nodeAddrs = append(nodeAddrs, source)
+	}
+
+	checker.NodeRunner.Log().Debug("sync situation")
+
+	syncHeight := votingHeight
+
 	if is.LatestBallot.H.Hash == "" {
 		is.LatestBallot = b
 		checker.NodeRunner.Log().Debug("init LatestBallot", "LatestBallot", is.LatestBallot)
 	}
 
-	is.SaveNodeHeight(b.Source(), votingHeight)
-
-	var syncHeight uint64
-	var nodeAddrs []string
-	syncHeight, nodeAddrs, err = checker.NodeRunner.Consensus().GetSyncInfo()
-	if err != nil {
-		return err
-	}
-
-	log := checker.Log.New(logging.Ctx{
+	log := checker.NodeRunner.Log().New(logging.Ctx{
 		"latest-height": latestHeight,
 		"sync-height":   syncHeight,
 	})
-
-	log.Debug("sync situation")
 
 	defer func() {
 		if votingHeight == syncHeight {
@@ -277,8 +299,8 @@ func BallotCheckSYNC(c common.Checker, args ...interface{}) error {
 	}
 }
 
-func isBallotAcceptYes(b ballot.Ballot) bool {
-	return b.State() == ballot.StateACCEPT && b.Vote() == voting.YES
+func isBallotAcceptYesOrExp(b ballot.Ballot) bool {
+	return b.State() == ballot.StateACCEPT && (b.Vote() == voting.YES || b.Vote() == voting.EXP)
 }
 
 func hasBallotValidProposer(is *consensus.ISAAC, b ballot.Ballot) bool {

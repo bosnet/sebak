@@ -2,7 +2,6 @@ package consensus
 
 import (
 	"context"
-	"fmt"
 	"sync"
 
 	logging "github.com/inconshreveable/log15"
@@ -30,7 +29,6 @@ type ISAAC struct {
 	proposerSelector    ProposerSelector
 	log                 logging.Logger
 	policy              voting.ThresholdPolicy
-	nodesHeight         map[ /* Node.Address() */ string]uint64
 	syncer              SyncController
 	latestReqSyncHeight uint64
 
@@ -57,7 +55,6 @@ func NewISAAC(node *node.LocalNode, p voting.ThresholdPolicy,
 		proposerSelector:  SequentialSelector{cm},
 		Conf:              conf,
 		log:               log.New(logging.Ctx{"node": node.Alias()}),
-		nodesHeight:       make(map[string]uint64),
 		syncer:            syncer,
 		LatestBallot:      ballot.Ballot{},
 	}
@@ -82,13 +79,6 @@ func (is *ISAAC) ConnectionManager() network.ConnectionManager {
 
 func (is *ISAAC) SelectProposer(blockHeight uint64, round uint64) string {
 	return is.proposerSelector.Select(blockHeight, round)
-}
-
-func (is *ISAAC) SaveNodeHeight(senderAddr string, height uint64) {
-	is.Lock()
-	defer is.Unlock()
-
-	is.nodesHeight[senderAddr] = height
 }
 
 func (is *ISAAC) IsValidVotingBasis(basis voting.Basis, latestBlock block.Block) bool {
@@ -134,34 +124,6 @@ func (is *ISAAC) StartSync(height uint64, nodeAddrs []string) {
 	}
 
 	return
-}
-
-// GetSyncInfo gets the height it needs to sync.
-// It returns height, node list and error.
-// The height is the smallest height above the threshold.
-// The node list is the nodes that sent the ballot when the threshold is exceeded.
-func (is *ISAAC) GetSyncInfo() (uint64, []string, error) {
-	is.log.Debug("begin ISAAC.GetSyncInfo", "is.nodesHeight", is.nodesHeight)
-	threshold := is.policy.Threshold()
-	if len(is.nodesHeight) < threshold {
-		return 1, []string{}, errors.New(fmt.Sprintf("could not find enough nodes (threshold=%d) above", threshold))
-	}
-
-	var nodesHeight []common.KV
-	for k, v := range is.nodesHeight {
-		nodesHeight = append(nodesHeight, common.KV{Key: k, Value: v})
-	}
-
-	common.SortDecByValue(nodesHeight)
-
-	height := nodesHeight[threshold-1].Value
-
-	nodeAddrs := []string{}
-	for _, kv := range nodesHeight[:threshold] {
-		nodeAddrs = append(nodeAddrs, kv.Key)
-	}
-
-	return height, nodeAddrs, nil
 }
 
 func (is *ISAAC) IsVoted(b ballot.Ballot) bool {
