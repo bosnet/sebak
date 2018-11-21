@@ -8,12 +8,15 @@ const (
 )
 
 type Index struct {
-	prefix string
-	order  string
+	prefix []string
+	order  []string
 }
 
 func NewIndex() *Index {
-	idx := &Index{}
+	idx := &Index{
+		prefix: make([]string, 0, 0),
+		order:  make([]string, 0, 0),
+	}
 	return idx
 }
 
@@ -22,16 +25,22 @@ func (idx Index) Bytes() []byte {
 }
 
 func (idx Index) String() string {
-	index := strings.Join([]string{idx.prefix, idx.order}, IndexPrefixOrderDelimiter)
+	prefix := strings.Join(idx.prefix, IndexElementDelimiter)
+	order := strings.Join(idx.order, IndexElementDelimiter)
+	index := strings.Join([]string{prefix, order}, IndexPrefixOrderDelimiter)
 	return index
 }
 
 func (idx *Index) WritePrefix(ss ...string) *Index {
-	idx.prefix = strings.Join(ss, IndexElementDelimiter)
+	for _, s := range ss {
+		idx.prefix = append(idx.prefix, s)
+	}
 	return idx
 }
 
 func (idx *Index) WriteOrder(ss ...string) *Index {
-	idx.order = strings.Join(ss, IndexElementDelimiter)
+	for _, s := range ss {
+		idx.order = append(idx.order, s)
+	}
 	return idx
 }

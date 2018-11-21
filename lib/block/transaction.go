@@ -41,6 +41,7 @@ type BlockTransaction struct {
 
 	transaction transaction.Transaction
 	isSaved     bool
+	order       *BlockOrder
 }
 
 func NewBlockTransactionFromTransaction(blockHash string, blockHeight uint64, confirmed string, tx transaction.Transaction, index uint64) BlockTransaction {
@@ -48,6 +49,8 @@ func NewBlockTransactionFromTransaction(blockHash string, blockHeight uint64, co
 	for i, op := range tx.B.Operations {
 		opHashes = append(opHashes, NewBlockOperationKey(op.MakeHashString(), tx.GetHash(), uint64(i)))
 	}
+
+	order := NewBlockTxOrder(blockHeight, index)
 
 	return BlockTransaction{
 		Hash:        tx.H.Hash,
@@ -64,17 +67,14 @@ func NewBlockTransactionFromTransaction(blockHash string, blockHeight uint64, co
 		BlockHeight: blockHeight,
 
 		transaction: tx,
+		order:       order,
 	}
 }
 
 func (bt BlockTransaction) NewBlockTransactionKeySource() string {
 	idx := storage.NewIndex()
 	idx.WritePrefix(GetBlockTransactionKeyPrefixSource(bt.Source))
-	idx.WriteOrder(
-		common.EncodeUint64ToString(bt.BlockHeight),
-		common.EncodeUint64ToString(bt.Index),
-		common.EncodeUint64ToString(bt.SequenceID),
-	)
+	bt.order.Index(idx)
 	return idx.String()
 
 	/*
@@ -91,10 +91,7 @@ func (bt BlockTransaction) NewBlockTransactionKeySource() string {
 func (bt BlockTransaction) NewBlockTransactionKeyConfirmed() string {
 	idx := storage.NewIndex()
 	idx.WritePrefix(GetBlockTransactionKeyPrefixConfirmed(bt.Confirmed))
-	idx.WriteOrder(
-		common.EncodeUint64ToString(bt.BlockHeight),
-		common.EncodeUint64ToString(bt.Index),
-	)
+	bt.order.Index(idx)
 	return idx.String()
 	/*
 		return fmt.Sprintf(
@@ -108,10 +105,8 @@ func (bt BlockTransaction) NewBlockTransactionKeyConfirmed() string {
 
 func (bt BlockTransaction) NewBlockTransactionKeyHeight() string {
 	idx := storage.NewIndex()
-	idx.WritePrefix(GetBlockTransactionKeyPrefixHeight(bt.BlockHeight))
-	idx.WriteOrder(
-		common.EncodeUint64ToString(bt.Index),
-	)
+	idx.WritePrefix(common.BlockTransactionPrefixHeight)
+	bt.order.Index(idx)
 	return idx.String()
 	/*
 		return fmt.Sprintf(
@@ -125,11 +120,8 @@ func (bt BlockTransaction) NewBlockTransactionKeyHeight() string {
 func (bt BlockTransaction) NewBlockTransactionKeyByAccount(accountAddress string) string {
 	idx := storage.NewIndex()
 	idx.WritePrefix(GetBlockTransactionKeyPrefixAccount(accountAddress))
-	idx.WriteOrder(
-		common.EncodeUint64ToString(bt.BlockHeight),
-		common.EncodeUint64ToString(bt.Index),
-		common.GetUniqueIDFromUUID(),
-	)
+	bt.order.Index(idx)
+	idx.WriteOrder(common.GetUniqueIDFromUUID())
 	return idx.String()
 	/*
 		return fmt.Sprintf(
@@ -145,10 +137,7 @@ func (bt BlockTransaction) NewBlockTransactionKeyByAccount(accountAddress string
 func (bt BlockTransaction) NewBlockTransactionKeyByBlock(hash string) string {
 	idx := storage.NewIndex()
 	idx.WritePrefix(GetBlockTransactionKeyPrefixBlock(hash))
-	idx.WriteOrder(
-		common.EncodeUint64ToString(bt.BlockHeight),
-		common.EncodeUint64ToString(bt.Index),
-	)
+	bt.order.Index(idx)
 	return idx.String()
 	/*
 		return fmt.Sprintf(
@@ -321,10 +310,10 @@ func GetBlockTransactionKey(hash string) string {
 
 func GetBlockTransactionKeyPrefixHeight(height uint64) string {
 	idx := storage.NewIndex()
-	return idx.WritePrefix(
+	idx.WritePrefix(
 		common.BlockTransactionPrefixHeight,
-		common.EncodeUint64ToString(height),
-	).String()
+	)
+	return idx.WriteOrder(common.EncodeUint64ToString(height)).String()
 	//return fmt.Sprintf("%s%s-", common.BlockTransactionPrefixHeight, common.EncodeUint64ToByteSlice(height))
 }
 
@@ -334,6 +323,7 @@ func GetBlockTransaction(st *storage.LevelDBBackend, hash string) (bt BlockTrans
 	}
 
 	bt.isSaved = true
+	bt.order = NewBlockTxOrder(bt.BlockHeight, bt.Index)
 	return
 }
 
