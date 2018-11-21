@@ -91,7 +91,7 @@ var (
 	syncFetchTimeout    time.Duration
 	syncPoolSize        uint64
 	syncRetryInterval   time.Duration
-	threshold           int
+	threshold           uint64
 	timeoutACCEPT       time.Duration
 	timeoutALLCONFIRM   time.Duration
 	timeoutINIT         time.Duration
@@ -358,11 +358,8 @@ func parseFlagsNode() {
 		cmdcommon.PrintFlagsError(nodeCmd, "--operations-limit", err)
 	}
 
-	var tmpUint64 uint64
-	if tmpUint64, err = strconv.ParseUint(flagThreshold, 10, 64); err != nil {
+	if threshold, err = strconv.ParseUint(flagThreshold, 10, 64); err != nil {
 		cmdcommon.PrintFlagsError(nodeCmd, "--threshold", err)
-	} else {
-		threshold = int(tmpUint64)
 	}
 
 	// tx pool limits (client,node)
@@ -588,7 +585,7 @@ func runNode() error {
 
 	nt := network.NewHTTP2Network(networkConfig)
 
-	policy, err := consensus.NewDefaultVotingThresholdPolicy(threshold)
+	policy, err := consensus.NewDefaultVotingThresholdPolicy(int(threshold))
 	if err != nil {
 		log.Crit("failed to create VotingThresholdPolicy", "error", err)
 		return err
