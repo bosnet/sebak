@@ -5,6 +5,8 @@ import (
 	"net/http"
 
 	"github.com/nvellon/hal"
+
+	"boscoin.io/sebak/lib/errors"
 )
 
 type HALResource interface {
@@ -21,6 +23,12 @@ func MustWriteJSON(w http.ResponseWriter, code int, v interface{}) {
 // WriteJSONError writes the error to the http response as json encoding
 func WriteJSONError(w http.ResponseWriter, err error) {
 	code := StatusCode(err) //TODO(anarcher): ErrorStateCode is more suitable?
+	if sebakError, ok := err.(*errors.Error); ok {
+		if status := sebakError.GetData("status"); status != nil {
+			code = status.(int)
+		}
+
+	}
 
 	if err := WriteJSON(w, code, err); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

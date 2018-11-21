@@ -30,6 +30,15 @@ func (o *Error) SetData(k string, v interface{}) *Error {
 	return o
 }
 
+func (o *Error) GetData(k string) interface{} {
+	v, found := o.Data[k]
+	if !found {
+		return nil
+	}
+
+	return v
+}
+
 func (o *Error) Clone() *Error {
 	var new Error
 	new = *o
