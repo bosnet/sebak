@@ -95,22 +95,27 @@ func (api NetworkHandlerAPI) GetTransactionsByAccountHandler(w http.ResponseWrit
 		return
 	}
 
-	var options = p.ListOptions()
-	var firstCursor []byte
-	var cursor []byte
+	options, err := p.PageCursorListOptions(block.GetBlockTransactionKeyPrefixAccount(address))
+	if err != nil {
+		httputils.WriteJSONError(w, err)
+		return
+	}
+	var (
+		pOrder *block.BlockOrder
+		nOrder
+	)
 	readFunc := func() []resource.Resource {
 		var txs []resource.Resource
 		iterFunc, closeFunc := block.GetBlockTransactionsByAccount(api.storage, address, options)
 		for {
-			t, hasNext, c := iterFunc()
+			t, hasNext, _ := iterFunc()
 			if !hasNext {
 				break
 			}
-			cursor = append([]byte{}, c...)
-			if len(firstCursor) == 0 {
-				firstCursor = append(firstCursor, c...)
-			}
-
+			if pOrder == nil {
+				pOrder = t.BlockOrder()
+			} 
+			nOrder = t.BlockOrder()
 			txs = append(txs, resource.NewTransaction(&t))
 		}
 		closeFunc()
@@ -118,7 +123,7 @@ func (api NetworkHandlerAPI) GetTransactionsByAccountHandler(w http.ResponseWrit
 	}
 
 	txs := readFunc()
-	list := p.ResourceList(txs, firstCursor, cursor)
+	list := p.ResourceListWithOrder(txs, pOrder,nOrder)
 	httputils.MustWriteJSON(w, 200, list)
 }
 

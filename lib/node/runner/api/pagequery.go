@@ -111,12 +111,7 @@ func (p *PageQuery) ResourceList(rs []resource.Resource, firstCursor, lastCursor
 }
 
 func (p *PageQuery) ResourceListWithOrder(rs []resource.Resource, order *block.BlockOrder) *resource.ResourceList {
-	var cursor []byte
-	if p.reverse == false {
-		cursor = []byte(order.NextString())
-	} else {
-		cursor = []byte(order.PrevString())
-	}
+	cursor := []byte(order.String())
 	return p.ResourceList(rs, cursor)
 }
 
