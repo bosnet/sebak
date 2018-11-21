@@ -496,9 +496,10 @@ func (nr *NodeRunner) handleBallotMessage(msg interface{}) (err error) {
 	}
 
 	if message, ok := msg.(common.NetworkMessage); ok {
-		nr.log.Debug("got ballot")
+		nr.log.Debug("got ballot(NetworkMessage)")
 		baseChecker.Message = message
 	} else if ball, ok := msg.(ballot.Ballot); ok {
+		nr.log.Debug("got ballot(Ballot)")
 		baseChecker.Ballot = ball
 	} else {
 		nr.log.Debug("weird message found", "message", msg)
