@@ -40,10 +40,53 @@ func (o *BlockOrder) Index(idx *storage.Index) string {
 	return idx.String()
 }
 
-func (o *BlockOrder) String() string {
+func (o *BlockOrder) formatText(xs []uint64) string {
 	var ss []string
-	for _, p := range o.parts {
+	for _, p := range xs {
 		ss = append(ss, strconv.FormatUint(p, 10))
 	}
 	return strings.Join(ss, "-")
+}
+
+func (o *BlockOrder) String() string {
+	return o.formatText(o.parts)
+}
+
+func (o *BlockOrder) NextString() string {
+	return o.formatText(o.NextOrder())
+}
+
+func (o *BlockOrder) PrevString() string {
+	return o.formatText(o.PrevOrder())
+}
+
+func (o *BlockOrder) NextOrder() (xs []uint64) {
+	if o == nil || len(o.parts) <= 0 {
+		return
+	}
+	for i, x := range o.parts {
+		if i == len(xs)-1 {
+			x++
+		}
+		xs = append(xs, x)
+	}
+	return
+}
+
+func (o *BlockOrder) PrevOrder() []uint64 {
+	if o == nil || len(o.parts) <= 0 {
+		return []uint64{}
+	}
+	return blockOrderPrevOrder(o.parts, len(o.parts)-1)
+}
+
+func blockOrderPrevOrder(xs []uint64, pos int) []uint64 {
+	if pos == 0 || len(xs)-1 < pos {
+		return xs
+	}
+	if xs[pos] > 0 {
+		xs[pos]--
+		return xs
+	}
+	return blockOrderPrevOrder(xs, pos-1)
 }

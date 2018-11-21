@@ -1,6 +1,8 @@
 package storage
 
-import "strings"
+import (
+	"strings"
+)
 
 const (
 	IndexPrefixOrderDelimiter = "/"

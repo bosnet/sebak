@@ -8,8 +8,8 @@ import (
 	"github.com/gorilla/mux"
 
 	"boscoin.io/sebak/lib/block"
-	o "boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/common"
+	o "boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/network/httputils"
 	"boscoin.io/sebak/lib/node/runner/api/resource"
@@ -22,7 +22,7 @@ func (api NetworkHandlerAPI) GetTransactionsHandler(w http.ResponseWriter, r *ht
 		return
 	}
 
-	options, err := p.PageCursorListOptions(common.BlockTransactionPrefixHeight)
+	options, err := p.PageCursorListOptions(common.BlockTransactionPrefixAll)
 	if err != nil {
 		//TODO: more correct err for it
 		httputils.WriteJSONError(w, err)
@@ -30,8 +30,8 @@ func (api NetworkHandlerAPI) GetTransactionsHandler(w http.ResponseWriter, r *ht
 	}
 
 	var (
-		prevCursor string
-		nextCursor
+		prevOrder *block.BlockOrder
+		nextOrder *block.BlockOrder
 	)
 
 	readFunc := func() []resource.Resource {
@@ -42,11 +42,10 @@ func (api NetworkHandlerAPI) GetTransactionsHandler(w http.ResponseWriter, r *ht
 			if !hasNext {
 				break
 			}
-			cursor = append([]byte{}, c...)
-			if prevCursor == "" {
-				prevCursor = t.BlockOrder().String()
+			if prevOrder == nil {
+				prevOrder = t.BlockOrder()
 			}
-			cursor = t.BlockOrder().String()
+			nextOrder = t.BlockOrder()
 			txs = append(txs, resource.NewTransaction(&t))
 		}
 		closeFunc()
@@ -54,8 +53,7 @@ func (api NetworkHandlerAPI) GetTransactionsHandler(w http.ResponseWriter, r *ht
 	}
 
 	txs := readFunc()
-
-	list := p.ResourceList(txs, prevCursor, nextCursor)
+	list := p.ResourceListWithOrder(txs, prevOrder, nextOrder)
 	httputils.MustWriteJSON(w, 200, list)
 }
 

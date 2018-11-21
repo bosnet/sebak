@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"strconv"
 
+	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/node/runner/api/resource"
@@ -107,6 +108,16 @@ func (p *PageQuery) ResourceList(rs []resource.Resource, firstCursor, lastCursor
 	} else {
 		return resource.NewResourceList(rs, p.SelfLink(), p.NextLink(lastCursor), p.PrevLink(firstCursor))
 	}
+}
+
+func (p *PageQuery) ResourceListWithOrder(rs []resource.Resource, order *block.BlockOrder) *resource.ResourceList {
+	var cursor []byte
+	if p.reverse == false {
+		cursor = []byte(order.NextString())
+	} else {
+		cursor = []byte(order.PrevString())
+	}
+	return p.ResourceList(rs, cursor)
 }
 
 func (p *PageQuery) parseRequest() error {
