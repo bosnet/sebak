@@ -21,6 +21,7 @@ import (
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
 	"boscoin.io/sebak/lib/transaction/operation"
+	"boscoin.io/sebak/lib/voting"
 
 	"github.com/stretchr/testify/require"
 )
@@ -225,4 +226,89 @@ func TestValidateOpCreateExistsAccount(t *testing.T) {
 	defer st1.Close()
 	bas.MustSave(st1)
 	require.Nil(t, ValidateTx(st1, common.Config{}, tx))
+}
+
+func TestOpsInBalotLimit(t *testing.T) {
+	var checkerFuncs = []common.CheckerFunc{
+		IsNew,
+		CheckMissingTransaction,
+		BallotTransactionsOperationLimit,
+	}
+
+	{ // with empty transactions; no error :)
+		var txs []string
+		config := common.NewConfig(networkID)
+		nr := createTestNodeRunner(1, config)[0]
+
+		checker := &BallotTransactionChecker{
+			DefaultChecker:   common.DefaultChecker{Funcs: checkerFuncs},
+			NodeRunner:       nr,
+			LocalNode:        nr.Node(),
+			Transactions:     txs,
+			VotingHole:       voting.NOTYET,
+			transactionCache: NewTransactionCache(nr.Storage(), nr.TransactionPool),
+		}
+
+		err := common.RunChecker(checker, common.DefaultDeferFunc)
+		require.NoError(t, err)
+	}
+
+	{ // with safe number of operations; no error :)
+		limit := 100
+
+		config := common.NewConfig(networkID)
+		config.OpsInBallotLimit = limit
+		nr := createTestNodeRunner(1, config)[0]
+
+		var txs []string
+		_, tx := transaction.TestMakeTransaction(networkID, limit/2)
+		nr.TransactionPool.Add(tx)
+		txs = append(txs, tx.GetHash())
+		_, tx = transaction.TestMakeTransaction(networkID, limit-len(tx.B.Operations))
+		nr.TransactionPool.Add(tx)
+		txs = append(txs, tx.GetHash())
+
+		checker := &BallotTransactionChecker{
+			DefaultChecker:   common.DefaultChecker{Funcs: checkerFuncs},
+			NodeRunner:       nr,
+			LocalNode:        nr.Node(),
+			Transactions:     txs,
+			VotingHole:       voting.NOTYET,
+			transactionCache: NewTransactionCache(nr.Storage(), nr.TransactionPool),
+		}
+
+		err := common.RunChecker(checker, common.DefaultDeferFunc)
+		require.NoError(t, err)
+	}
+
+	{ // with over number of operations; no error :)
+		limit := 100
+
+		config := common.NewConfig(networkID)
+		config.OpsInBallotLimit = limit
+		nr := createTestNodeRunner(1, config)[0]
+
+		var txs []string
+		_, tx := transaction.TestMakeTransaction(networkID, limit/2)
+		nr.TransactionPool.Add(tx)
+		txs = append(txs, tx.GetHash())
+		_, tx = transaction.TestMakeTransaction(networkID, limit-len(tx.B.Operations))
+		nr.TransactionPool.Add(tx)
+		txs = append(txs, tx.GetHash())
+		_, tx = transaction.TestMakeTransaction(networkID, 1)
+		nr.TransactionPool.Add(tx)
+		txs = append(txs, tx.GetHash())
+
+		checker := &BallotTransactionChecker{
+			DefaultChecker:   common.DefaultChecker{Funcs: checkerFuncs},
+			NodeRunner:       nr,
+			LocalNode:        nr.Node(),
+			Transactions:     txs,
+			VotingHole:       voting.NOTYET,
+			transactionCache: NewTransactionCache(nr.Storage(), nr.TransactionPool),
+		}
+
+		err := common.RunChecker(checker, common.DefaultDeferFunc)
+		require.Equal(t, errors.BallotHasOverMaxOperationssInBallot, err)
+	}
 }

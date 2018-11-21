@@ -525,6 +525,7 @@ func BallotGetMissingTransaction(c common.Checker, args ...interface{}) (err err
 var INITBallotTransactionCheckerFuncs = []common.CheckerFunc{
 	IsNew,
 	CheckMissingTransaction,
+	BallotTransactionsOperationLimit,
 	BallotTransactionsSameSource,
 	BallotTransactionsOperationBodyCollectTxFee,
 	BallotTransactionsAllValid,

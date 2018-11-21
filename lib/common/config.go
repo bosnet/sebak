@@ -19,6 +19,7 @@ type Config struct {
 
 	TxsLimit          int
 	OpsLimit          int
+	OpsInBallotLimit  int
 	TxPoolClientLimit int
 	TxPoolNodeLimit   int
 
@@ -46,8 +47,9 @@ func NewConfig(networkID []byte) Config {
 	p.BlockTime = 5 * time.Second
 	p.BlockTimeDelta = 1 * time.Second
 
-	p.TxsLimit = 1000
-	p.OpsLimit = 1000
+	p.TxsLimit = DefaultTransactionsInBallotLimit
+	p.OpsLimit = DefaultOperationsInTransactionLimit
+	p.OpsInBallotLimit = DefaultOperationsInBallotLimit
 
 	p.NetworkID = networkID
 

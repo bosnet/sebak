@@ -106,4 +106,5 @@ var (
 	TransactionPoolFull                       = NewError(188, "transaction pool is full")
 	TransactionAlreadyExistsInPool            = NewError(189, "transaction already exists in pool")
 	BadRequestParameter                       = NewError(190, "request parameter is invalid")
+	BallotHasOverMaxOperationssInBallot       = NewError(191, "too many operations in ballot")
 )

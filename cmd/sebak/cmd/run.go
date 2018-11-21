@@ -37,37 +37,33 @@ const (
 )
 
 var (
-	flagBindURL         string = common.GetENVValue("SEBAK_BIND", defaultBindURL)
-	flagBlockTime       string = common.GetENVValue("SEBAK_BLOCK_TIME", "5")
-	flagBlockTimeDelta  string = common.GetENVValue("SEBAK_BLOCK_TIME_DELTA", "1")
-	flagDebugPProf      bool   = common.GetENVValue("SEBAK_DEBUG_PPROF", "0") == "1"
-	flagKPSecretSeed    string = common.GetENVValue("SEBAK_SECRET_SEED", "")
-	flagLog             string = common.GetENVValue("SEBAK_LOG", "")
-	flagHTTPLog         string = common.GetENVValue("SEBAK_HTTP_LOG", "")
-	flagLogLevel        string = common.GetENVValue("SEBAK_LOG_LEVEL", defaultLogLevel.String())
-	flagLogFormat       string = common.GetENVValue("SEBAK_LOG_FORMAT", defaultLogFormat)
-	flagNetworkID       string = common.GetENVValue("SEBAK_NETWORK_ID", "")
-	flagOperationsLimit string = common.GetENVValue("SEBAK_OPERATIONS_LIMIT", "1000")
-	flagPublishURL      string = common.GetENVValue("SEBAK_PUBLISH", "")
-
+	flagBindURL                    string = common.GetENVValue("SEBAK_BIND", defaultBindURL)
+	flagBlockTime                  string = common.GetENVValue("SEBAK_BLOCK_TIME", "5")
+	flagBlockTimeDelta             string = common.GetENVValue("SEBAK_BLOCK_TIME_DELTA", "1")
+	flagDebugPProf                 bool   = common.GetENVValue("SEBAK_DEBUG_PPROF", "0") == "1"
+	flagKPSecretSeed               string = common.GetENVValue("SEBAK_SECRET_SEED", "")
+	flagLog                        string = common.GetENVValue("SEBAK_LOG", "")
+	flagHTTPLog                    string = common.GetENVValue("SEBAK_HTTP_LOG", "")
+	flagLogLevel                   string = common.GetENVValue("SEBAK_LOG_LEVEL", defaultLogLevel.String())
+	flagLogFormat                  string = common.GetENVValue("SEBAK_LOG_FORMAT", defaultLogFormat)
+	flagNetworkID                  string = common.GetENVValue("SEBAK_NETWORK_ID", "")
+	flagPublishURL                 string = common.GetENVValue("SEBAK_PUBLISH", "")
 	flagSyncCheckInterval          string = common.GetENVValue("SEBAK_SYNC_CHECK_INTERVAL", "30s")
 	flagSyncFetchTimeout           string = common.GetENVValue("SEBAK_SYNC_FETCH_TIMEOUT", "1m")
 	flagSyncPoolSize               string = common.GetENVValue("SEBAK_SYNC_POOL_SIZE", "300")
 	flagSyncRetryInterval          string = common.GetENVValue("SEBAK_SYNC_RETRY_INTERVAL", "10s")
 	flagSyncCheckPrevBlockInterval string = common.GetENVValue("SEBAK_SYNC_CHECK_PREVBLOCK", "30s")
-
-	flagThreshold         string = common.GetENVValue("SEBAK_THRESHOLD", "67")
-	flagTimeoutACCEPT     string = common.GetENVValue("SEBAK_TIMEOUT_ACCEPT", "2")
-	flagTimeoutALLCONFIRM string = common.GetENVValue("SEBAK_TIMEOUT_ALLCONFIRM", "30")
-	flagTimeoutINIT       string = common.GetENVValue("SEBAK_TIMEOUT_INIT", "2")
-	flagTimeoutSIGN       string = common.GetENVValue("SEBAK_TIMEOUT_SIGN", "2")
-	flagTLSCertFile       string = common.GetENVValue("SEBAK_TLS_CERT", "sebak.crt")
-	flagTLSKeyFile        string = common.GetENVValue("SEBAK_TLS_KEY", "sebak.key")
-	flagTransactionsLimit string = common.GetENVValue("SEBAK_TRANSACTIONS_LIMIT", "1000")
-	flagUnfreezingPeriod  string = common.GetENVValue("SEBAK_UNFREEZING_PERIOD", strconv.FormatUint(common.UnfreezingPeriod, 10))
-	flagValidators        string = common.GetENVValue("SEBAK_VALIDATORS", "")
-	flagVerbose           bool   = common.GetENVValue("SEBAK_VERBOSE", "0") == "1"
-	flagCongressAddress   string = common.GetENVValue("SEBAK_CONGRESS_ADDR", "")
+	flagThreshold                  string = common.GetENVValue("SEBAK_THRESHOLD", "67")
+	flagTimeoutACCEPT              string = common.GetENVValue("SEBAK_TIMEOUT_ACCEPT", "2")
+	flagTimeoutALLCONFIRM          string = common.GetENVValue("SEBAK_TIMEOUT_ALLCONFIRM", "30")
+	flagTimeoutINIT                string = common.GetENVValue("SEBAK_TIMEOUT_INIT", "2")
+	flagTimeoutSIGN                string = common.GetENVValue("SEBAK_TIMEOUT_SIGN", "2")
+	flagTLSCertFile                string = common.GetENVValue("SEBAK_TLS_CERT", "sebak.crt")
+	flagTLSKeyFile                 string = common.GetENVValue("SEBAK_TLS_KEY", "sebak.key")
+	flagUnfreezingPeriod           string = common.GetENVValue("SEBAK_UNFREEZING_PERIOD", strconv.FormatUint(common.UnfreezingPeriod, 10))
+	flagValidators                 string = common.GetENVValue("SEBAK_VALIDATORS", "")
+	flagVerbose                    bool   = common.GetENVValue("SEBAK_VERBOSE", "0") == "1"
+	flagCongressAddress            string = common.GetENVValue("SEBAK_CONGRESS_ADDR", "")
 
 	flagRateLimitAPI        cmdcommon.ListFlags // "SEBAK_RATE_LIMIT_API"
 	flagRateLimitNode       cmdcommon.ListFlags // "SEBAK_RATE_LIMIT_NODE"
@@ -77,38 +73,42 @@ var (
 	flagHTTPCachePoolSize   string = common.GetENVValue("SEBAK_HTTP_CACHE_POOL_SIZE", "10000")
 	flagHTTPCacheRedisAddrs string = common.GetENVValue("SEBAK_HTTP_CACHE_REDIS_ADDRS", "")
 
-	flagTxPoolLimit string = common.GetENVValue("SEBAK_TX_POOL_LIMIT", fmt.Sprintf("%d", common.DefaultTxPoolLimit))
+	flagOperationsLimit         string = common.GetENVValue("SEBAK_OPERATIONS_LIMIT", strconv.Itoa(common.DefaultOperationsInTransactionLimit))
+	flagTransactionsLimit       string = common.GetENVValue("SEBAK_TRANSACTIONS_LIMIT", strconv.Itoa(common.DefaultTransactionsInBallotLimit))
+	flagOperationsInBallotLimit string = common.GetENVValue("SEBAK_OPERATIONS_IN_BALLOT_LIMIT", strconv.Itoa(common.DefaultOperationsInBallotLimit))
+	flagTxPoolLimit             string = common.GetENVValue("SEBAK_TX_POOL_LIMIT", strconv.Itoa(common.DefaultTxPoolLimit))
 )
 
 var (
-	nodeCmd             *cobra.Command
-	bindEndpoint        *common.Endpoint
-	blockTime           time.Duration
-	blockTimeDelta      time.Duration
-	kp                  *keypair.Full
-	localNode           *node.LocalNode
-	operationsLimit     uint64
-	publishEndpoint     *common.Endpoint
-	rateLimitRuleAPI    common.RateLimitRule
-	rateLimitRuleNode   common.RateLimitRule
-	storageConfig       *storage.Config
-	syncCheckInterval   time.Duration
-	syncFetchTimeout    time.Duration
-	syncPoolSize        uint64
-	syncRetryInterval   time.Duration
-	syncCheckPrevBlock  time.Duration
-	threshold           uint64
-	timeoutACCEPT       time.Duration
-	timeoutALLCONFIRM   time.Duration
-	timeoutINIT         time.Duration
-	timeoutSIGN         time.Duration
-	transactionsLimit   uint64
-	validators          []*node.Validator
-	httpCacheAdapter    string
-	httpCachePoolSize   int
-	httpCacheRedisAddrs map[string]string
-	txPoolClientLimit   uint64
-	txPoolNodeLimit     uint64
+	nodeCmd                 *cobra.Command
+	bindEndpoint            *common.Endpoint
+	blockTime               time.Duration
+	blockTimeDelta          time.Duration
+	kp                      *keypair.Full
+	localNode               *node.LocalNode
+	publishEndpoint         *common.Endpoint
+	rateLimitRuleAPI        common.RateLimitRule
+	rateLimitRuleNode       common.RateLimitRule
+	storageConfig           *storage.Config
+	syncCheckInterval       time.Duration
+	syncFetchTimeout        time.Duration
+	syncPoolSize            uint64
+	syncRetryInterval       time.Duration
+	threshold               int
+	timeoutACCEPT           time.Duration
+	timeoutALLCONFIRM       time.Duration
+	timeoutINIT             time.Duration
+	timeoutSIGN             time.Duration
+	validators              []*node.Validator
+	httpCacheAdapter        string
+	httpCachePoolSize       int
+	httpCacheRedisAddrs     map[string]string
+	operationsLimit         uint64
+	transactionsLimit       uint64
+	operationsInBallotLimit uint64
+	txPoolClientLimit       uint64
+	txPoolNodeLimit         uint64
+	syncCheckPrevBlock      time.Duration
 
 	logLevel logging.Lvl
 	log      logging.Logger = logging.New("module", "main")
@@ -187,9 +187,10 @@ func init() {
 	nodeCmd.Flags().StringVar(&flagTimeoutALLCONFIRM, "timeout-allconfirm", flagTimeoutALLCONFIRM, "timeout of the allconfirm state")
 	nodeCmd.Flags().StringVar(&flagBlockTime, "block-time", flagBlockTime, "block creation time")
 	nodeCmd.Flags().StringVar(&flagBlockTimeDelta, "block-time-delta", flagBlockTimeDelta, "variation period of block time")
-	nodeCmd.Flags().StringVar(&flagTransactionsLimit, "transactions-limit", flagTransactionsLimit, "transactions limit in a ballot")
 	nodeCmd.Flags().StringVar(&flagUnfreezingPeriod, "unfreezing-period", flagUnfreezingPeriod, "how long freezing must last")
 	nodeCmd.Flags().StringVar(&flagOperationsLimit, "operations-limit", flagOperationsLimit, "operations limit in a transaction")
+	nodeCmd.Flags().StringVar(&flagTransactionsLimit, "transactions-limit", flagTransactionsLimit, "transactions limit in a ballot")
+	nodeCmd.Flags().StringVar(&flagOperationsInBallotLimit, "operations-in-ballot-limit", flagOperationsInBallotLimit, "operations limit in a ballot")
 	nodeCmd.Flags().StringVar(&flagTxPoolLimit, "txpool-limit", flagTxPoolLimit, "transaction pool limit: <client-side>[,<node-side>] (0= no limit)")
 	nodeCmd.Flags().Var(
 		&flagRateLimitAPI,
@@ -369,7 +370,12 @@ func parseFlagsNode() {
 		cmdcommon.PrintFlagsError(nodeCmd, "--operations-limit", err)
 	}
 
-	if threshold, err = strconv.ParseUint(flagThreshold, 10, 64); err != nil {
+	if operationsInBallotLimit, err = strconv.ParseUint(flagOperationsInBallotLimit, 10, 64); err != nil {
+		cmdcommon.PrintFlagsError(nodeCmd, "--operations-in-ballot-limit", err)
+	}
+
+	var tmpUint64 uint64
+	if tmpUint64, err = strconv.ParseUint(flagThreshold, 10, 64); err != nil {
 		cmdcommon.PrintFlagsError(nodeCmd, "--threshold", err)
 	}
 
@@ -526,6 +532,7 @@ func parseFlagsNode() {
 	parsedFlags = append(parsedFlags, "\n\tblock-time-delta", flagBlockTimeDelta)
 	parsedFlags = append(parsedFlags, "\n\ttransactions-limit", flagTransactionsLimit)
 	parsedFlags = append(parsedFlags, "\n\toperations-limit", flagOperationsLimit)
+	parsedFlags = append(parsedFlags, "\n\toperations-in-ballot-limit", flagOperationsInBallotLimit)
 	parsedFlags = append(parsedFlags, "\n\ttxpool-limit", flagTxPoolLimit)
 	parsedFlags = append(parsedFlags, "\n\trate-limit-api", rateLimitRuleAPI)
 	parsedFlags = append(parsedFlags, "\n\trate-limit-node", rateLimitRuleNode)
@@ -633,6 +640,7 @@ func runNode() error {
 		BlockTimeDelta:         blockTimeDelta,
 		TxsLimit:               int(transactionsLimit),
 		OpsLimit:               int(operationsLimit),
+		OpsInBallotLimit:       int(operationsInBallotLimit),
 		RateLimitRuleAPI:       rateLimitRuleAPI,
 		RateLimitRuleNode:      rateLimitRuleNode,
 		HTTPCacheAdapter:       httpCacheAdapter,

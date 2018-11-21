@@ -43,6 +43,19 @@ const (
 
 	// DefaultTxPoolLimit is the default tx pool limit.
 	DefaultTxPoolLimit int = 1000000
+
+	// DefaultOperationsInTransactionLimit is the default maximum number of
+	// operations in one transaction.
+	DefaultOperationsInTransactionLimit int = 1000
+
+	// DefaultTransactionsInBallotLimit is the default maximum number of
+	// transactions in one ballot.
+	DefaultTransactionsInBallotLimit int = 1000
+
+	// DefaultOperationsInBallotLimit is the default maximum number of
+	// operations in one ballot. This does not count the operations of
+	// `ProposerTransaction`.
+	DefaultOperationsInBallotLimit int = 10000
 )
 
 var (

@@ -633,18 +633,35 @@ func (nr *NodeRunner) proposeNewBallot(round uint64) (ballot.Ballot, error) {
 	// remove invalid transactions
 	nr.TransactionPool.Remove(transactionsChecker.InvalidTransactions()...)
 
-	proposerAddr := nr.consensus.SelectProposer(b.Height, round)
-	theBallot := ballot.NewBallot(nr.localNode.Address(), proposerAddr, basis, transactionsChecker.ValidTransactions)
-	theBallot.SetVote(ballot.StateINIT, voting.YES)
-
 	var validTransactions []transaction.Transaction
+	var validTransactionHashes []string
+	var ops int
 	for _, hash := range transactionsChecker.ValidTransactions {
-		if tx, found := nr.TransactionPool.Get(hash); !found {
+		var tx transaction.Transaction
+		var found bool
+		var err error
+		if tx, found, err = transactionsChecker.transactionCache.Get(hash); err != nil {
+			return ballot.Ballot{}, err
+		} else if !found {
 			return ballot.Ballot{}, errors.TransactionNotFound
-		} else {
-			validTransactions = append(validTransactions, tx)
+		}
+
+		if ops+len(tx.B.Operations) > nr.Conf.OpsInBallotLimit {
+			continue
+		}
+
+		validTransactionHashes = append(validTransactionHashes, hash)
+		validTransactions = append(validTransactions, tx)
+
+		ops += len(tx.B.Operations)
+		if ops == nr.Conf.OpsInBallotLimit {
+			break
 		}
 	}
+
+	proposerAddr := nr.consensus.SelectProposer(b.Height, round)
+	theBallot := ballot.NewBallot(nr.localNode.Address(), proposerAddr, basis, validTransactionHashes)
+	theBallot.SetVote(ballot.StateINIT, voting.YES)
 
 	opc, err := ballot.NewCollectTxFeeFromBallot(*theBallot, nr.Conf.CommonAccountAddress, validTransactions...)
 	if err != nil {

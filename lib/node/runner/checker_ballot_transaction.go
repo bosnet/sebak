@@ -100,6 +100,28 @@ func CheckMissingTransaction(c common.Checker, args ...interface{}) (err error) 
 	return
 }
 
+// BallotTransactionsOperationLimit checks the total number of operations is
+// over `OpsInBallotLimit`.
+func BallotTransactionsOperationLimit(c common.Checker, args ...interface{}) error {
+	checker := c.(*BallotTransactionChecker)
+
+	var ops int
+	for _, hash := range checker.ValidTransactions {
+		if tx, found, err := checker.transactionCache.Get(hash); err != nil {
+			return err
+		} else if !found {
+			return errors.TransactionNotFound
+		} else {
+			ops += len(tx.B.Operations)
+			if ops > checker.NodeRunner.Conf.OpsInBallotLimit {
+				return errors.BallotHasOverMaxOperationssInBallot
+			}
+		}
+	}
+
+	return nil
+}
+
 // BallotTransactionsSameSource checks there are transactions which has same
 // source in the `Transactions`.
 func BallotTransactionsSameSource(c common.Checker, args ...interface{}) (err error) {
