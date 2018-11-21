@@ -1,6 +1,3 @@
-// +build !race
-// FIXME: When test with -race option `TestGetTransactionByHashHandlerStream` is stucked.
-
 package api
 
 import (
@@ -10,11 +7,9 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
-	"sync"
 	"testing"
 
 	"boscoin.io/sebak/lib/block"
-	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/node/runner/api/resource"
 	"github.com/stretchr/testify/require"
 )
@@ -57,37 +52,23 @@ func TestGetTransactionByHashHandler(t *testing.T) {
 }
 
 func TestGetTransactionByHashHandlerStream(t *testing.T) {
-	var wg sync.WaitGroup
-	wg.Add(1)
 
 	ts, storage := prepareAPIServer()
 	defer storage.Close()
 	defer ts.Close()
 
 	_, _, bt := prepareTxWithoutSave(storage)
-
-	// Wait until request registered to observer
-	{
-		go func() {
-			for {
-				observer.BlockTransactionObserver.RLock()
-				if len(observer.BlockTransactionObserver.Callbacks) > 0 {
-					observer.BlockTransactionObserver.RUnlock()
-					break
-				}
-				observer.BlockTransactionObserver.RUnlock()
-			}
-			bt.MustSave(storage)
-			wg.Done()
-		}()
-	}
-
 	// Do a Request
 	var reader *bufio.Reader
 	{
 		respBody := request(ts, GetTransactionsHandlerPattern+"/"+bt.Hash, true)
 		defer respBody.Close()
 		reader = bufio.NewReader(respBody)
+	}
+
+	// Wait until request registered to observer
+	{
+		bt.MustSave(storage)
 	}
 
 	// Check the output
@@ -104,7 +85,6 @@ func TestGetTransactionByHashHandlerStream(t *testing.T) {
 		require.Equal(t, bt.Hash, recv["hash"], "hash is not the same")
 		require.Equal(t, bt.Block, recv["block"], "block is not the same")
 	}
-	wg.Wait()
 }
 
 func TestGetTransactionStatusByHashHandler(t *testing.T) {
@@ -149,8 +129,6 @@ func TestGetTransactionStatusByHashHandler(t *testing.T) {
 }
 
 func TestGetTransactionStatusByHashHandlerStream(t *testing.T) {
-	var wg sync.WaitGroup
-	wg.Add(1)
 
 	ts, storage := prepareAPIServer()
 	defer storage.Close()
@@ -160,29 +138,17 @@ func TestGetTransactionStatusByHashHandlerStream(t *testing.T) {
 	tp, err := block.NewTransactionPool(bt.Transaction())
 	require.NoError(t, err)
 
-	// Wait until request registered to observer
-	{
-		go func() {
-			for {
-				observer.BlockTransactionObserver.RLock()
-				if len(observer.BlockTransactionObserver.Callbacks) > 0 {
-					observer.BlockTransactionObserver.RUnlock()
-					break
-				}
-				observer.BlockTransactionObserver.RUnlock()
-			}
-			tp.Save(storage)
-			bt.MustSave(storage)
-			wg.Done()
-		}()
-	}
-
 	// Do a Request
 	var reader *bufio.Reader
 	{
 		respBody := request(ts, strings.Replace(GetTransactionStatusHandlerPattern, "{id}", bt.Hash, -1), true)
 		defer respBody.Close()
 		reader = bufio.NewReader(respBody)
+	}
+	// Save
+	{
+		tp.Save(storage)
+		bt.MustSave(storage)
 	}
 
 	// Check the output
@@ -211,7 +177,6 @@ func TestGetTransactionStatusByHashHandlerStream(t *testing.T) {
 		require.Equal(t, bt.Hash, status.Hash)
 		require.Equal(t, "confirmed", status.Status)
 	}
-	wg.Wait()
 }
 
 func TestGetTransactionsHandler(t *testing.T) {
@@ -252,8 +217,6 @@ func TestGetTransactionsHandler(t *testing.T) {
 }
 
 func TestGetTransactionsHandlerStream(t *testing.T) {
-	var wg sync.WaitGroup
-	wg.Add(1)
 
 	ts, storage := prepareAPIServer()
 	defer storage.Close()
@@ -265,30 +228,19 @@ func TestGetTransactionsHandlerStream(t *testing.T) {
 		btMap[bt.Hash] = bt
 	}
 
-	// Wait until request registered to observer
-	{
-		go func() {
-			for {
-				observer.BlockTransactionObserver.RLock()
-				if len(observer.BlockTransactionObserver.Callbacks) > 0 {
-					observer.BlockTransactionObserver.RUnlock()
-					break
-				}
-				observer.BlockTransactionObserver.RUnlock()
-			}
-			for _, bt := range btMap {
-				bt.MustSave(storage)
-			}
-			wg.Done()
-		}()
-	}
-
 	// Do a Request
 	var reader *bufio.Reader
 	{
 		respBody := request(ts, GetTransactionsHandlerPattern, true)
 		defer respBody.Close()
 		reader = bufio.NewReader(respBody)
+	}
+
+	// Save
+	{
+		for _, bt := range btMap {
+			bt.MustSave(storage)
+		}
 	}
 
 	// Check the output
@@ -319,7 +271,6 @@ func TestGetTransactionsHandlerStream(t *testing.T) {
 			require.Equal(t, txS, line)
 		}
 	}
-	wg.Wait()
 }
 
 func TestGetTransactionsByAccountHandler(t *testing.T) {
@@ -361,8 +312,6 @@ func TestGetTransactionsByAccountHandler(t *testing.T) {
 }
 
 func TestGetTransactionsByAccountHandlerStream(t *testing.T) {
-	var wg sync.WaitGroup
-	wg.Add(1)
 
 	ts, storage := prepareAPIServer()
 	defer storage.Close()
@@ -374,24 +323,6 @@ func TestGetTransactionsByAccountHandlerStream(t *testing.T) {
 		btMap[bt.Hash] = bt
 	}
 
-	// Wait until request registered to observer
-	{
-		go func() {
-			for {
-				observer.BlockTransactionObserver.RLock()
-				if len(observer.BlockTransactionObserver.Callbacks) > 0 {
-					observer.BlockTransactionObserver.RUnlock()
-					break
-				}
-				observer.BlockTransactionObserver.RUnlock()
-			}
-			for _, bt := range btMap {
-				bt.MustSave(storage)
-			}
-			wg.Done()
-		}()
-	}
-
 	// Do a Request
 	var reader *bufio.Reader
 	{
@@ -399,6 +330,13 @@ func TestGetTransactionsByAccountHandlerStream(t *testing.T) {
 		respBody := request(ts, url, true)
 		defer respBody.Close()
 		reader = bufio.NewReader(respBody)
+	}
+
+	// Save
+	{
+		for _, bt := range btMap {
+			bt.MustSave(storage)
+		}
 	}
 
 	// Check the output
@@ -420,7 +358,6 @@ func TestGetTransactionsByAccountHandlerStream(t *testing.T) {
 			require.Equal(t, txS, line)
 		}
 	}
-	wg.Wait()
 }
 
 func TestGetTransactionsHandlerPage(t *testing.T) {

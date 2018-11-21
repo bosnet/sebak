@@ -7,14 +7,12 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
-	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common/keypair"
-	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/node/runner/api/resource"
 	"boscoin.io/sebak/lib/transaction"
 )
@@ -69,8 +67,6 @@ func TestGetOperationsByTxHashHandler(t *testing.T) {
 }
 
 func TestGetOperationsByTxHashHandlerStream(t *testing.T) {
-	var wg sync.WaitGroup
-	wg.Add(1)
 
 	ts, storage := prepareAPIServer()
 	defer ts.Close()
@@ -88,26 +84,6 @@ func TestGetOperationsByTxHashHandlerStream(t *testing.T) {
 		boMap[bo.Hash] = bo
 	}
 
-	// Wait until request registered to observer
-	go func() {
-		for {
-			observer.BlockOperationObserver.RLock()
-			if len(observer.BlockOperationObserver.Callbacks) > 0 {
-				observer.BlockOperationObserver.RUnlock()
-				break
-			}
-			observer.BlockOperationObserver.RUnlock()
-		}
-
-		blk.MustSave(storage)
-		bt.MustSave(storage)
-
-		for _, bo := range boMap {
-			bo.MustSave(storage)
-		}
-		wg.Done()
-	}()
-
 	// Do a Request
 	var reader *bufio.Reader
 	{
@@ -115,6 +91,16 @@ func TestGetOperationsByTxHashHandlerStream(t *testing.T) {
 		respBody := request(ts, url, true)
 		defer respBody.Close()
 		reader = bufio.NewReader(respBody)
+	}
+
+	// Save
+	{
+		blk.MustSave(storage)
+		bt.MustSave(storage)
+
+		for _, bo := range boMap {
+			bo.MustSave(storage)
+		}
 	}
 
 	// Check the output
@@ -143,6 +129,5 @@ func TestGetOperationsByTxHashHandlerStream(t *testing.T) {
 		}
 	}
 
-	wg.Wait()
 	storage.Close()
 }
