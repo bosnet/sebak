@@ -2,7 +2,6 @@ package block
 
 import (
 	"fmt"
-	"math/rand"
 	"sync"
 	"testing"
 
@@ -97,41 +96,6 @@ func TestGetSortedBlockAccounts(t *testing.T) {
 	}
 }
 
-func TestBlockAccountSaveBlockAccountSequenceIDs(t *testing.T) {
-	st := storage.NewTestStorage()
-
-	b := TestMakeBlockAccount()
-	b.MustSave(st)
-
-	expectedSavedLength := 10
-	var saved []BlockAccount
-	saved = append(saved, *b)
-	for i := 0; i < expectedSavedLength-len(saved); i++ {
-		b.SequenceID = rand.Uint64()
-		b.MustSave(st)
-
-		saved = append(saved, *b)
-	}
-
-	var fetched []BlockAccountSequenceID
-	options := storage.NewDefaultListOptions(false, nil, uint64(expectedSavedLength))
-	iterFunc, closeFunc := GetBlockAccountSequenceIDByAddress(st, b.Address, options)
-	for {
-		bac, hasNext, _ := iterFunc()
-		if !hasNext {
-			break
-		}
-		fetched = append(fetched, bac)
-	}
-	closeFunc()
-
-	require.Equal(t, len(saved), len(fetched))
-	for i, b := range saved {
-		require.Equal(t, b.Address, fetched[i].Address)
-		require.Equal(t, b.GetBalance(), fetched[i].Balance)
-		require.Equal(t, b.SequenceID, fetched[i].SequenceID)
-	}
-}
 func TestBlockAccountObserver(t *testing.T) {
 	var wg sync.WaitGroup
 	wg.Add(1)

@@ -216,13 +216,6 @@ func (so *stateObject) Save() (err error) {
 		observer.BlockAccountObserver.Trigger(event, &so.data)
 	}
 
-	bac := block.BlockAccountSequenceID{
-		SequenceID: so.data.SequenceID,
-		Address:    so.Address(),
-		Balance:    so.data.Balance,
-	}
-	err = bac.Save(st)
-
 	return
 }
 

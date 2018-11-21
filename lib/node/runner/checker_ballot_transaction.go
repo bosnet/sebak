@@ -225,17 +225,10 @@ func ValidateTx(st *storage.LevelDBBackend, config common.Config, tx transaction
 		return
 	}
 
-	// get the balance at sequenceID
-	var bac block.BlockAccountSequenceID
-	bac, err = block.GetBlockAccountSequenceID(st, tx.B.Source, tx.B.SequenceID)
-	if err != nil {
-		return
-	}
-
 	totalAmount := tx.TotalAmount(true)
 
 	// check, have enough balance at sequenceID
-	if bac.Balance < totalAmount {
+	if ba.Balance < totalAmount {
 		err = errors.TransactionExcessAbilityToPay
 		return
 	}

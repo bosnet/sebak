@@ -77,13 +77,6 @@ func (b *BlockAccount) Save(st *storage.LevelDBBackend) (err error) {
 		observer.BlockAccountObserver.Trigger(event, b)
 	}
 
-	bac := BlockAccountSequenceID{
-		SequenceID: b.SequenceID,
-		Address:    b.Address,
-		Balance:    b.GetBalance(),
-	}
-	err = bac.Save(st)
-
 	return
 }
 
@@ -211,91 +204,4 @@ func (b *BlockAccount) Withdraw(fund common.Amount) error {
 		b.SequenceID += 1
 	}
 	return nil
-}
-
-// BlockAccountSequenceID is the one-and-one model of account and sequenceID in
-// block. the storage should support,
-//  * find by `Address`:
-// 	- key: "`Address`-`SequenceID`": value: `ID` of BlockAccountSequenceID
-//  * get list by created order:
-//
-// models
-//  * 'address' and 'sequenceID'
-// 	- 'bac-<BlockAccountSequenceID.Address>-<BlockAccountSequenceID.SequenceID>': `BlockAccountSequenceID`
-type BlockAccountSequenceID struct {
-	SequenceID uint64
-	Address    string
-	Balance    common.Amount
-}
-
-func GetBlockAccountSequenceIDKey(address string, sequenceID uint64) string {
-	return fmt.Sprintf("%s%s-%v", common.BlockAccountSequenceIDPrefix, address, sequenceID)
-}
-
-func GetBlockAccountSequenceIDByAddressKey(address string) string {
-	return fmt.Sprintf("%s%s-%s", common.BlockAccountSequenceIDByAddressPrefix, address, common.GetUniqueIDFromUUID())
-}
-
-func GetBlockAccountSequenceIDByAddressKeyPrefix(address string) string {
-	return fmt.Sprintf("%s%s-", common.BlockAccountSequenceIDByAddressPrefix, address)
-}
-
-func (b *BlockAccountSequenceID) String() string {
-	return string(common.MustJSONMarshal(b))
-}
-
-func (b *BlockAccountSequenceID) Save(st *storage.LevelDBBackend) (err error) {
-	key := GetBlockAccountSequenceIDKey(b.Address, b.SequenceID)
-
-	var exists bool
-	exists, err = st.Has(key)
-	if err != nil {
-		return
-	}
-
-	if exists {
-		err = st.Set(key, b)
-	} else {
-		// TODO consider to use, [`Transaction`](https://godoc.org/github.com/syndtr/goleveldb/leveldb#DB.OpenTransaction)
-		err = st.New(key, b)
-	}
-
-	if !exists {
-		keyByAddress := GetBlockAccountSequenceIDByAddressKey(b.Address)
-		err = st.New(keyByAddress, key)
-	}
-
-	return
-}
-
-func GetBlockAccountSequenceID(st *storage.LevelDBBackend, address string, sequenceID uint64) (b BlockAccountSequenceID, err error) {
-	if err = st.Get(GetBlockAccountSequenceIDKey(address, sequenceID), &b); err != nil {
-		return
-	}
-
-	return
-}
-
-func GetBlockAccountSequenceIDByAddress(st *storage.LevelDBBackend, address string, options storage.ListOptions) (func() (BlockAccountSequenceID, bool, []byte), func()) {
-	prefix := GetBlockAccountSequenceIDByAddressKeyPrefix(address)
-	iterFunc, closeFunc := st.GetIterator(prefix, options)
-
-	return (func() (BlockAccountSequenceID, bool, []byte) {
-			item, hasNext := iterFunc()
-			if !hasNext {
-				return BlockAccountSequenceID{}, false, item.Key
-			}
-
-			var key string
-			json.Unmarshal(item.Value, &key)
-
-			var bac BlockAccountSequenceID
-			if err := st.Get(key, &bac); err != nil {
-				return BlockAccountSequenceID{}, false, item.Key
-			}
-			return bac, hasNext, item.Key
-
-		}), (func() {
-			closeFunc()
-		})
 }
