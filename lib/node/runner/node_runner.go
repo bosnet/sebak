@@ -540,6 +540,7 @@ func (nr *NodeRunner) handleBallotMessage(msg interface{}) (err error) {
 		if stopped, ok := err.(common.CheckerStop); ok {
 			nr.log.Debug(
 				"stopped to handle ballot",
+				"voting-basis", baseChecker.Ballot.VotingBasis(),
 				"state", baseChecker.Ballot.State(),
 				"reason", stopped.Error(),
 			)
