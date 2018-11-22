@@ -196,10 +196,6 @@ func (c *ValidatorConnectionManager) Broadcast(message common.Message) {
 	c.RLock()
 	defer c.RUnlock()
 	for addr, connected := range c.connected {
-		if c.validators[addr].Address() == c.localNode.Address() {
-			continue
-		}
-
 		if connected {
 			go func(v *node.Validator) {
 				client := c.GetConnection(v.Address())

@@ -51,10 +51,6 @@ func NewBallotFromJSON(data []byte) (b Ballot, err error) {
 	return
 }
 
-func (b Ballot) IsEmpty() bool {
-	return len(b.H.Hash) < 1
-}
-
 func (b Ballot) GetType() common.MessageType {
 	return common.BallotMessage
 }
