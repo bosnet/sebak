@@ -242,7 +242,7 @@ func BallotCheckSYNC(c common.Checker, args ...interface{}) error {
 	} else if latestHeight == syncHeight-1 {
 		log.Debug("start sync to consensus; latestHeight == syncHeight-1")
 		checker.NodeRunner.TransitISAACState(is.LatestBallot.VotingBasis(), ballot.StateALLCONFIRM)
-		log.Debug("finish ballot; latestHeight == syncHeight-1", "ballot", is.LatestBallot.GetHash())
+		log.Debug("finish latest ballot; latestHeight == syncHeight-1", "latest-ballot", is.LatestBallot.GetHash())
 		var blk *block.Block
 		blk, _, err = finishBallot(
 			checker.NodeRunner,
@@ -250,20 +250,20 @@ func BallotCheckSYNC(c common.Checker, args ...interface{}) error {
 			checker.Log,
 		)
 		if err != nil {
-			log.Debug("failed to finish ballot; latestHeight == syncHeight-1", "ballot", is.LatestBallot.GetHash(), "error", err)
+			log.Debug("failed to finish latest ballot; latestHeight == syncHeight-1", "latest-ballot", is.LatestBallot, "error", err)
 			return err
 		}
 		checker.NodeRunner.SavingBlockOperations().Save(*blk)
 
-		checker.NodeRunner.TransitISAACState(checker.Ballot.VotingBasis(), ballot.StateALLCONFIRM)
-		log.Debug("finish ballot", "ballot", checker.Ballot.GetHash())
+		checker.NodeRunner.TransitISAACState(b.VotingBasis(), ballot.StateALLCONFIRM)
+		log.Debug("finish current ballot; latestHeight == syncHeight-1", "ballot", b.GetHash())
 		blk, _, err = finishBallot(
 			checker.NodeRunner,
-			checker.Ballot,
+			b,
 			checker.Log,
 		)
 		if err != nil {
-			log.Debug("failed to finish ballot; latestHeight == syncHeight-1", "ballot", is.LatestBallot.GetHash(), "error", err)
+			log.Debug("failed to finish current ballot; latestHeight == syncHeight-1", "current-ballot", b, "error", err)
 			return err
 		}
 		checker.NodeRunner.SavingBlockOperations().Save(*blk)
