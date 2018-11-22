@@ -205,32 +205,62 @@ func TestLevelDBIteratorSeek(t *testing.T) {
 
 	total := 300
 
-	expected := []string{}
+	expected1 := []string{}
 	for i := 0; i < total; i++ {
 		key := fmt.Sprintf("%03d", i)
 		st.New(key, 0)
+		expected1 = append(expected1, key)
+	}
+	expected2 := make([]string, len(expected1))
+	copy(expected2, expected1)
+	sort.Sort(sort.Reverse(sort.StringSlice(expected2)))
 
-		expected = append(expected, key)
+	type test struct {
+		name     string
+		cursor   int
+		reverse  bool
+		expected []string
 	}
 
-	expected = expected[100:]
-
-	var collected []string
-	it, closeFunc := st.GetIterator("", &DefaultListOptions{reverse: false, cursor: []byte(fmt.Sprintf("%03d", 100))})
-	for {
-		v, hasNext := it()
-		if !hasNext {
-			break
-		}
-
-		collected = append(collected, string(v.Key))
+	tests := []test{
+		{
+			name:     "reverse=false",
+			cursor:   100,
+			reverse:  false,
+			expected: expected1[100:],
+		},
+		{
+			name:     "reverse=true",
+			cursor:   100,
+			reverse:  true,
+			expected: expected2[300-100-1:],
+		},
 	}
-	closeFunc()
 
-	if !reflect.DeepEqual(expected, collected) {
-		t.Log(expected)
-		t.Log(collected)
-		t.Error("failed to fetch the exact sequence of items")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			expected := tt.expected
+			var collected []string
+			it, closeFunc := st.GetIterator("", &DefaultListOptions{
+				reverse: tt.reverse,
+				cursor:  []byte(fmt.Sprintf("%03d", tt.cursor))})
+			for {
+				v, hasNext := it()
+				if !hasNext {
+					break
+				}
+
+				collected = append(collected, string(v.Key))
+			}
+			closeFunc()
+
+			if !reflect.DeepEqual(expected, collected) {
+				t.Log("expected", expected)
+				t.Log("collected", collected)
+				t.Error("failed to fetch the exact sequence of items")
+			}
+
+		})
 	}
 
 	return

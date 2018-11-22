@@ -312,7 +312,7 @@ func (st *LevelDBBackend) GetIterator(prefix string, option ListOptions) (func()
 	var funcNext func() bool
 	var hasUnsent bool
 	if reverse {
-		if !iter.Last() {
+		if cursor == nil && !iter.Last() {
 			iter.Release()
 			return func() (IterItem, bool) { return IterItem{}, false }, func() {}
 		}
