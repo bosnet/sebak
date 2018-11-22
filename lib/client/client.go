@@ -261,10 +261,15 @@ func (c *Client) SubmitTransactionAndWait(hash string, tx []byte) (pTransaction 
 	return
 }
 
-func (c *Client) Stream(ctx context.Context, body []byte, handler func(data []byte) error) (err error) {
+func (c *Client) Stream(ctx context.Context, url string, body []byte, handler func(data []byte) error) (err error) {
 	var headers = http.Header{}
 	headers.Set("Accept", "text/event-stream")
-	resp, err := c.Post(UrlSubscribe, body, headers)
+	var resp *http.Response
+	if body != nil {
+		resp, err = c.Post(url, body, headers)
+	} else {
+		resp, err = c.Get(url, headers)
+	}
 	if err != nil {
 		return err
 	}
@@ -320,7 +325,7 @@ func (c *Client) StreamAccount(ctx context.Context, id string, handler func(Acco
 		handler(v)
 		return nil
 	}
-	return c.Stream(ctx, b, handlerFunc)
+	return c.Stream(ctx, UrlSubscribe, b, handlerFunc)
 }
 
 func (c *Client) StreamTransactions(ctx context.Context, handler func(Transaction)) (err error) {
@@ -335,7 +340,7 @@ func (c *Client) StreamTransactions(ctx context.Context, handler func(Transactio
 		handler(v)
 		return nil
 	}
-	return c.Stream(ctx, b, handlerFunc)
+	return c.Stream(ctx, UrlSubscribe, b, handlerFunc)
 }
 
 func (c *Client) StreamTransactionsByAccount(ctx context.Context, id string, handler func(Transaction)) (err error) {
@@ -350,10 +355,11 @@ func (c *Client) StreamTransactionsByAccount(ctx context.Context, id string, han
 		handler(v)
 		return nil
 	}
-	return c.Stream(ctx, b, handlerFunc)
+	return c.Stream(ctx, UrlSubscribe, b, handlerFunc)
 }
 
 func (c *Client) StreamTransactionStatus(ctx context.Context, id string, body []byte, handler func(TransactionStatus)) (err error) {
+	url := strings.Replace(UrlTransactionStatus, "{id}", id, -1)
 	handlerFunc := func(b []byte) (err error) {
 		var v TransactionStatus
 		err = json.Unmarshal(b, &v)
@@ -363,7 +369,7 @@ func (c *Client) StreamTransactionStatus(ctx context.Context, id string, body []
 		handler(v)
 		return nil
 	}
-	return c.Stream(ctx, body, handlerFunc)
+	return c.Stream(ctx, url, nil, handlerFunc)
 }
 
 func (c *Client) StreamTransactionsByHash(ctx context.Context, id string, handler func(Transaction)) (err error) {
@@ -378,7 +384,7 @@ func (c *Client) StreamTransactionsByHash(ctx context.Context, id string, handle
 		handler(v)
 		return nil
 	}
-	return c.Stream(ctx, b, handlerFunc)
+	return c.Stream(ctx, UrlSubscribe, b, handlerFunc)
 }
 
 func (c *Client) StreamOperationsByAccount(ctx context.Context, id string, body []byte, handler func(Operation)) (err error) {
@@ -393,7 +399,7 @@ func (c *Client) StreamOperationsByAccount(ctx context.Context, id string, body 
 		handler(v)
 		return nil
 	}
-	return c.Stream(ctx, b, handlerFunc)
+	return c.Stream(ctx, UrlSubscribe, b, handlerFunc)
 }
 
 func (c *Client) StreamOperationsByTransaction(ctx context.Context, id string, body []byte, handler func(Operation)) (err error) {
@@ -408,5 +414,5 @@ func (c *Client) StreamOperationsByTransaction(ctx context.Context, id string, b
 		handler(v)
 		return nil
 	}
-	return c.Stream(ctx, b, handlerFunc)
+	return c.Stream(ctx, UrlSubscribe, b, handlerFunc)
 }

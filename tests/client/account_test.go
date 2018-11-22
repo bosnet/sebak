@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"strconv"
 	"testing"
-	"time"
 
 	"boscoin.io/sebak/lib/client"
 	"boscoin.io/sebak/lib/common"
@@ -57,28 +56,11 @@ func TestAccount(t *testing.T) {
 		body, err := tx.Serialize()
 		require.NoError(t, err)
 
-		_, err = c.SubmitTransaction(body)
+		_, err = c.SubmitTransactionAndWait(tx.H.Hash, body)
 		require.NoError(t, err)
 
-		var e error
-		for second := time.Duration(0); second < time.Second*10; second = second + time.Millisecond*500 {
-			_, e = c.LoadTransaction(tx.H.Hash)
-			if e == nil {
-				break
-			}
-			time.Sleep(time.Millisecond * 500)
-		}
-		require.Nil(t, e)
-
-		var targetAccount client.Account
-		for second := time.Duration(0); second < time.Second*3; second = second + time.Millisecond*500 {
-			targetAccount, e = c.LoadAccount(account1Addr)
-			if e == nil {
-				break
-			}
-			time.Sleep(time.Millisecond * 500)
-		}
-		require.Nil(t, e)
+		targetAccount, err := c.LoadAccount(account1Addr)
+		require.NoError(t, err)
 
 		targetBalance, err := strconv.ParseUint(targetAccount.Balance, 10, 64)
 		require.NoError(t, err)
@@ -116,28 +98,11 @@ func TestAccount(t *testing.T) {
 		body, err := tx.Serialize()
 		require.NoError(t, err)
 
-		_, err = c.SubmitTransaction(body)
+		_, err = c.SubmitTransactionAndWait(tx.H.Hash, body)
 		require.NoError(t, err)
 
-		var e error
-		for second := time.Duration(0); second < time.Second*10; second = second + time.Millisecond*500 {
-			_, e = c.LoadTransaction(tx.H.Hash)
-			if e == nil {
-				break
-			}
-			time.Sleep(time.Millisecond * 500)
-		}
-		require.Nil(t, e)
-
-		var account2Account client.Account
-		for second := time.Duration(0); second < time.Second*3; second = second + time.Millisecond*500 {
-			account2Account, e = c.LoadAccount(account2Addr)
-			if e == nil {
-				break
-			}
-			time.Sleep(time.Millisecond * 500)
-		}
-		require.Nil(t, e)
+		account2Account, err := c.LoadAccount(account2Addr)
+		require.NoError(t, err)
 
 		targetBalance, err := strconv.ParseUint(account2Account.Balance, 10, 64)
 		require.NoError(t, err)
@@ -176,28 +141,11 @@ func TestAccount(t *testing.T) {
 		body, err := tx.Serialize()
 		require.NoError(t, err)
 
-		_, err = c.SubmitTransaction(body)
+		_, err = c.SubmitTransactionAndWait(tx.H.Hash, body)
 		require.NoError(t, err)
 
-		var e error
-		for second := time.Duration(0); second < time.Second*10; second = second + time.Millisecond*500 {
-			_, e = c.LoadTransaction(tx.H.Hash)
-			if e == nil {
-				break
-			}
-			time.Sleep(time.Millisecond * 500)
-		}
-		require.Nil(t, e)
-
-		var account2Account client.Account
-		for second := time.Duration(0); second < time.Second*3; second = second + time.Millisecond*500 {
-			account2Account, e = c.LoadAccount(account2Addr)
-			if e == nil {
-				break
-			}
-			time.Sleep(time.Millisecond * 500)
-		}
-		require.Nil(t, e)
+		account2Account, err := c.LoadAccount(account2Addr)
+		require.NoError(t, err)
 
 		targetBalance, err := strconv.ParseUint(account2Account.Balance, 10, 64)
 		require.NoError(t, err)
@@ -236,19 +184,8 @@ func TestAccount(t *testing.T) {
 		body, err := tx.Serialize()
 		require.Nil(t, err)
 
-		pt, err := c.SubmitTransaction(body)
+		_, err = c.SubmitTransactionAndWait(tx.H.Hash, body)
 		require.Nil(t, err)
-
-		for second := time.Duration(0); second < time.Second*10; second = second + time.Millisecond*500 {
-			th, err := c.LoadTransactionStatus(pt.Hash)
-			if err != nil {
-				t.Log(err)
-			}
-			if th.Status == "confimed" {
-				break
-			}
-			time.Sleep(time.Millisecond * 500)
-		}
 
 		account2Account, err := c.LoadAccount(account2Addr)
 		require.Nil(t, err)

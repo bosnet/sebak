@@ -57,6 +57,7 @@ type EventStream struct {
 	flusher     http.Flusher
 	err         error
 	rendered    bool
+	stop        chan struct{}
 }
 
 type RenderFunc func(args ...interface{}) ([]byte, error)
@@ -164,7 +165,7 @@ func (s *EventStream) Start(ob *observable.Observable, events ...string) func() 
 
 	event := strings.Join(events, " ")
 	msg := make(chan []byte)
-	stop := make(chan struct{})
+	s.stop = make(chan struct{})
 
 	onFunc := func(args ...interface{}) {
 		var (
@@ -186,7 +187,7 @@ func (s *EventStream) Start(ob *observable.Observable, events ...string) func() 
 		}
 		select {
 		case msg <- payload:
-		case <-stop:
+		case <-s.stop:
 			return
 		}
 	}
@@ -201,11 +202,14 @@ func (s *EventStream) Start(ob *observable.Observable, events ...string) func() 
 				fmt.Fprintf(s.writer, "%s\n", payload)
 				s.flusher.Flush()
 			case <-s.request.Context().Done():
-				close(stop)
+				close(s.stop)
 				return
 			}
 		}
 	}
+}
+func (s *EventStream) Stop() {
+	close(s.stop)
 }
 
 func (s *EventStream) errMessage(err error) []byte {

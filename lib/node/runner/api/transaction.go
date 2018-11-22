@@ -111,15 +111,14 @@ func (api NetworkHandlerAPI) GetTransactionStatusByHashHandler(w http.ResponseWr
 	status := "notfound"
 	if found, _ := block.ExistsTransactionPool(api.storage, key); found {
 		status = "submitted"
-	} else if found, _ = block.ExistsBlockTransaction(api.storage, key); found {
+	}
+	if found, _ := block.ExistsBlockTransaction(api.storage, key); found {
 		status = "confirmed"
 	}
 
 	payload := resource.NewTransactionStatus(key, status)
 
 	if httputils.IsEventStream(r) && status != "confirmed" {
-		event := fmt.Sprintf("hash-%s", key)
-		event += " " + fmt.Sprintf("pushed-%s", key)
 
 		txStatusRenderFunc := func(args ...interface{}) ([]byte, error) {
 			if len(args) <= 1 {
@@ -145,9 +144,13 @@ func (api NetworkHandlerAPI) GetTransactionStatusByHashHandler(w http.ResponseWr
 			return json.Marshal(i)
 		}
 
+		var events []string
+		events = append(events, observer.NewSubscribe(observer.NewEvent(observer.ResourceTransaction, observer.ConditionTxHash, key)).String())
+		events = append(events, observer.NewSubscribe(observer.NewEvent(observer.ResourceTransactionPool, observer.ConditionTxHash, key)).String())
+
 		es := NewEventStream(w, r, txStatusRenderFunc, DefaultContentType)
 		es.Render(payload)
-		es.Run(observer.BlockTransactionObserver, event)
+		es.Run(observer.ResourceObserver, events...)
 		return
 	}
 	if payload.Status == "notfound" {

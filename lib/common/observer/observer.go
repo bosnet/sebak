@@ -13,16 +13,17 @@ var SyncBlockWaitObserver = observable.New()
 var ResourceObserver = observable.New()
 
 const (
-	ResourceTransaction = "tx"
-	ResourceOperation   = "op"
-	ResourceAccount     = "ac"
-	ConditionAll        = "*"
-	ConditionSource     = "source"
-	ConditionTarget     = "target"
-	ConditionType       = "type"
-	ConditionOpHash     = "ophash"
-	ConditionTxHash     = "txhash"
-	ConditionAddress    = "address"
+	ResourceTransaction     = "tx"
+	ResourceTransactionPool = "txpool"
+	ResourceOperation       = "op"
+	ResourceAccount         = "ac"
+	ConditionAll            = "*"
+	ConditionSource         = "source"
+	ConditionTarget         = "target"
+	ConditionType           = "type"
+	ConditionOpHash         = "ophash"
+	ConditionTxHash         = "txhash"
+	ConditionAddress        = "address"
 )
 
 type Event struct {

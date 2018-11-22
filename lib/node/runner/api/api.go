@@ -101,6 +101,7 @@ func TriggerEvent(st *storage.LevelDBBackend, transactions []*transaction.Transa
 		accountBlock, _ := block.GetBlockAccount(st, account)
 		go observer.ResourceObserver.Trigger(accEvent, accountBlock)
 	}
+
 }
 
 func renderEventStream(args ...interface{}) ([]byte, error) {
