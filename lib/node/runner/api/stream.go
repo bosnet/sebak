@@ -1,12 +1,15 @@
 package api
 
 import (
+	"boscoin.io/sebak/lib/common/observer"
+	"boscoin.io/sebak/lib/errors"
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/mux"
 	"net/http"
 	"strings"
 
-	observable "github.com/GianlucaGuarini/go-observable"
+	"github.com/GianlucaGuarini/go-observable"
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/network/httputils"
@@ -14,6 +17,17 @@ import (
 
 // DefaultContentType is "application/json"
 const DefaultContentType = "application/json"
+
+func (api NetworkHandlerAPI) GetSubscribeHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	event := vars["resource"]
+	if !httputils.IsEventStream(r) {
+		httputils.WriteJSONError(w, errors.BadRequestParameter)
+	}
+
+	es := NewEventStream(w, r, renderEventStream, DefaultContentType)
+	es.Run(observer.XXXObserver, event)
+}
 
 // EventStream handles chunked responses of a observable trigger
 //
