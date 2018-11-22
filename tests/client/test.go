@@ -58,7 +58,7 @@ func createAccount(t *testing.T, fromAddr, fromSecret, toAddr string, balance ui
 	var toAccount client.Account
 	go func() {
 		ctx, cancel := context.WithCancel(context.Background())
-		err = c.StreamAccount(ctx, toAddr, nil, func(account client.Account) {
+		err = c.StreamAccount(ctx, toAddr, func(account client.Account) {
 			toAccount = account
 			cancel()
 		})
@@ -68,7 +68,7 @@ func createAccount(t *testing.T, fromAddr, fromSecret, toAddr string, balance ui
 
 	go func() {
 		ctx, cancel := context.WithCancel(context.Background())
-		err = c.StreamAccount(ctx, fromAddr, nil, func(account client.Account) {
+		err = c.StreamAccount(ctx, fromAddr, func(account client.Account) {
 			if account.SequenceID != fromAccount.SequenceID {
 				fromAccount = account
 				cancel()

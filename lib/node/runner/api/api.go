@@ -67,13 +67,15 @@ func TriggerEvent(st *storage.LevelDBBackend, transactions []*transaction.Transa
 		accountMap[source] = struct{}{}
 		txHash := tx.H.Hash
 
-		txEvent := observer.NewSubscribe(observer.NewEvent(observer.ResourceTransaction, observer.ConditionSource, source)).String()
+		txEvent := observer.NewSubscribe(observer.NewEvent(observer.ResourceTransaction, observer.ConditionAll, "")).String()
+		txEvent += " " + observer.NewSubscribe(observer.NewEvent(observer.ResourceTransaction, observer.ConditionSource, source)).String()
 		txEvent += " " + observer.NewSubscribe(observer.NewEvent(observer.ResourceTransaction, observer.ConditionTxHash, txHash)).String()
 
 		for _, op := range tx.B.Operations {
 			opHash := fmt.Sprintf("%s-%s", op.MakeHashString(), txHash)
 
-			opEvent := observer.NewSubscribe(observer.NewEvent(observer.ResourceOperation, observer.ConditionTxHash, txHash)).String()
+			opEvent := observer.NewSubscribe(observer.NewEvent(observer.ResourceOperation, observer.ConditionAll, "")).String()
+			opEvent += " " + observer.NewSubscribe(observer.NewEvent(observer.ResourceOperation, observer.ConditionTxHash, txHash)).String()
 			opEvent += " " + observer.NewSubscribe(observer.NewEvent(observer.ResourceOperation, observer.ConditionOpHash, opHash)).String()
 
 			opEvent += " " + observer.NewSubscribe(observer.NewEvent(observer.ResourceOperation, observer.ConditionSource, source)).String()
@@ -94,7 +96,8 @@ func TriggerEvent(st *storage.LevelDBBackend, transactions []*transaction.Transa
 
 	}
 	for account, _ := range accountMap {
-		accEvent := observer.NewSubscribe(observer.NewEvent(observer.ResourceAccount, observer.ConditionAddress, account)).String()
+		accEvent := observer.NewSubscribe(observer.NewEvent(observer.ResourceAccount, observer.ConditionAll, "")).String()
+		accEvent += " " + observer.NewSubscribe(observer.NewEvent(observer.ResourceAccount, observer.ConditionAddress, account)).String()
 		accountBlock, _ := block.GetBlockAccount(st, account)
 		go observer.ResourceObserver.Trigger(accEvent, accountBlock)
 	}

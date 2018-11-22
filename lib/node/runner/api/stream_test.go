@@ -10,11 +10,10 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
 	"boscoin.io/sebak/lib/block"
-	observable "github.com/GianlucaGuarini/go-observable"
+	"github.com/GianlucaGuarini/go-observable"
 
 	"github.com/stretchr/testify/require"
 )
@@ -107,53 +106,6 @@ func TestAccountStream(t *testing.T) {
 		require.Equal(t, bo.Hash, recv["hash"], "hash is not same")
 	}
 
-}
-
-func TestTransactionStream(t *testing.T) {
-
-}
-
-func TestOperationStream(t *testing.T) {
-
-}
-
-func TestGetAccountHandlerStream(t *testing.T) {
-
-	ts, storage := prepareAPIServer()
-	defer storage.Close()
-	defer ts.Close()
-	ba := block.TestMakeBlockAccount()
-	ba.MustSave(storage)
-
-	key := ba.Address
-
-	// Do a Request
-	var reader *bufio.Reader
-	{
-		url := strings.Replace(GetAccountHandlerPattern, "{id}", key, -1)
-		respBody := request(ts, url, true)
-		defer respBody.Close()
-		reader = bufio.NewReader(respBody)
-	}
-
-	// Save
-	{
-		ba.MustSave(storage)
-	}
-
-	// Check the output
-	{
-		line, err := reader.ReadBytes('\n')
-		line = bytes.Trim(line, "\n")
-		if len(line) == 0 {
-			line, err = reader.ReadBytes('\n')
-			require.NoError(t, err)
-			line = bytes.Trim(line, "\n")
-		}
-		recv := make(map[string]interface{})
-		json.Unmarshal(line, &recv)
-		require.Equal(t, key, recv["address"], "address is not same")
-	}
 }
 
 func TestAPIStreamRun(t *testing.T) {

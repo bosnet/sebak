@@ -72,7 +72,7 @@ func TestTransactionStatus(t *testing.T) {
 		var targetAccount client.Account
 		go func() {
 			ctx, cancel := context.WithCancel(context.Background())
-			err = c.StreamAccount(ctx, account1Addr, nil, func(account client.Account) {
+			err = c.StreamAccount(ctx, account1Addr, func(account client.Account) {
 				targetAccount = account
 				cancel()
 			})
@@ -82,7 +82,7 @@ func TestTransactionStatus(t *testing.T) {
 
 		go func() {
 			ctx, cancel := context.WithCancel(context.Background())
-			err = c.StreamAccount(ctx, genesisAddr, nil, func(account client.Account) {
+			err = c.StreamAccount(ctx, genesisAddr, func(account client.Account) {
 				if account.SequenceID != genesisAccount.SequenceID {
 					genesisAccount = account
 					cancel()

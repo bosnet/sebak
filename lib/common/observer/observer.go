@@ -16,6 +16,7 @@ const (
 	ResourceTransaction = "tx"
 	ResourceOperation   = "op"
 	ResourceAccount     = "ac"
+	ConditionAll        = "*"
 	ConditionSource     = "source"
 	ConditionTarget     = "target"
 	ConditionType       = "type"
@@ -39,8 +40,12 @@ func NewEvent(resource, condition, id string) Event {
 }
 func (e Event) String() string {
 	toStr := e.Resource + "-"
-	toStr += e.Condition + "="
-	toStr += e.Id
+	if e.Condition == ConditionAll {
+		toStr += e.Condition
+	} else {
+		toStr += e.Condition + "="
+		toStr += e.Id
+	}
 	return toStr
 }
 

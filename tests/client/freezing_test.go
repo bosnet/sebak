@@ -64,7 +64,7 @@ func TestFreezingAccount(t *testing.T) {
 		var account2Account client.Account
 		go func() {
 			ctx, cancel := context.WithCancel(context.Background())
-			err = c.StreamAccount(ctx, account2Addr, nil, func(account client.Account) {
+			err = c.StreamAccount(ctx, account2Addr, func(account client.Account) {
 				if account.Address != "" {
 					account2Account = account
 					cancel()
@@ -145,7 +145,7 @@ func TestFreezingAccount(t *testing.T) {
 
 		go func() {
 			ctx, cancel := context.WithCancel(context.Background())
-			err = c.StreamAccount(ctx, account1Addr, nil, func(account client.Account) {
+			err = c.StreamAccount(ctx, account1Addr, func(account client.Account) {
 				if account1Account.Balance != account.Balance {
 					account1Account = account
 					cancel()
@@ -157,7 +157,7 @@ func TestFreezingAccount(t *testing.T) {
 
 		go func() {
 			ctx, cancel := context.WithCancel(context.Background())
-			err = c.StreamAccount(ctx, account2Addr, nil, func(account client.Account) {
+			err = c.StreamAccount(ctx, account2Addr, func(account client.Account) {
 				if account2Account.Balance != account.Balance {
 					account2Account = account
 					cancel()
