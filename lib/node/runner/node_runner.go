@@ -580,21 +580,12 @@ func (nr *NodeRunner) waitForConnectingEnoughNodes() {
 }
 
 func (nr *NodeRunner) startStateManager() {
-	nr.RLock()
-	defer nr.RUnlock()
-
-	// check whether current running rounds exist
-	if len(nr.consensus.RunningRounds) > 0 {
-		return
-	}
-
 	nr.isaacStateManager.Start()
 	nr.isaacStateManager.NextHeight()
 	return
 }
 
 func (nr *NodeRunner) StopStateManager() {
-	// check whether current running rounds exist
 	nr.isaacStateManager.Stop()
 	return
 }
