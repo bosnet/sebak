@@ -154,6 +154,8 @@ func FinishTransactions(blk block.Block, transactions []*transaction.Transaction
 			return
 		}
 
+		baSource.IncreaseSequenceID()
+
 		if err = baSource.Save(st); err != nil {
 			return
 		}

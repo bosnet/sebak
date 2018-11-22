@@ -47,6 +47,10 @@ func (b *BlockAccount) IsFrozen() bool {
 	return b.Linked != ""
 }
 
+func (b *BlockAccount) IncreaseSequenceID() {
+	b.SequenceID += 1
+}
+
 func (b *BlockAccount) String() string {
 	return string(common.MustJSONMarshal(b))
 }
@@ -208,7 +212,6 @@ func (b *BlockAccount) Withdraw(fund common.Amount) error {
 		return err
 	} else {
 		b.Balance = val
-		b.SequenceID += 1
 	}
 	return nil
 }
