@@ -6,7 +6,7 @@ import (
 	"boscoin.io/sebak/lib/common"
 )
 
-var log logging.Logger = logging.New()
+var log logging.Logger = logging.New("module", "sync")
 
 func init() {
 	SetLogging(common.DefaultLogLevel, common.DefaultLogHandler)

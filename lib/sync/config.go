@@ -60,7 +60,7 @@ func (c *Config) NewSyncer() *Syncer {
 	s := NewSyncer(f, v, c.storage, func(s *Syncer) {
 		s.poolSize = c.SyncPoolSize
 		s.checkInterval = c.CheckBlockHeightInterval
-		s.logger = c.logger.New("module", "sync/syncer")
+		s.logger = c.logger.New("submodule", "syncer")
 	})
 
 	c.LoggingConfig()
@@ -75,7 +75,7 @@ func (c *Config) NewFetcher() Fetcher {
 		c.localNode,
 		func(f *BlockFetcher) {
 			f.fetchTimeout = c.FetchTimeout
-			f.logger = c.logger.New("module", "sync/fetcher")
+			f.logger = c.logger.New("submodule", "fetcher")
 		},
 	)
 	return f
@@ -88,7 +88,7 @@ func (c *Config) NewValidator() Validator {
 		c.commonCfg,
 		func(v *BlockValidator) {
 			v.prevBlockWaitTimeout = c.CheckPrevBlockInterval
-			v.logger = c.logger.New("module", "sync/validator")
+			v.logger = c.logger.New("submodule", "validator")
 		})
 	return v
 }
