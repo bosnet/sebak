@@ -36,21 +36,24 @@ const (
 )
 
 var (
-	flagBindURL           string = common.GetENVValue("SEBAK_BIND", defaultBindURL)
-	flagBlockTime         string = common.GetENVValue("SEBAK_BLOCK_TIME", "5")
-	flagBlockTimeDelta    string = common.GetENVValue("SEBAK_BLOCK_TIME_DELTA", "1")
-	flagDebugPProf        bool   = common.GetENVValue("SEBAK_DEBUG_PPROF", "0") == "1"
-	flagKPSecretSeed      string = common.GetENVValue("SEBAK_SECRET_SEED", "")
-	flagLog               string = common.GetENVValue("SEBAK_LOG", "")
-	flagLogLevel          string = common.GetENVValue("SEBAK_LOG_LEVEL", defaultLogLevel.String())
-	flagLogFormat         string = common.GetENVValue("SEBAK_LOG_FORMAT", defaultLogFormat)
-	flagNetworkID         string = common.GetENVValue("SEBAK_NETWORK_ID", "")
-	flagOperationsLimit   string = common.GetENVValue("SEBAK_OPERATIONS_LIMIT", "1000")
-	flagPublishURL        string = common.GetENVValue("SEBAK_PUBLISH", "")
-	flagSyncCheckInterval string = common.GetENVValue("SEBAK_SYNC_CHECK_INTERVAL", "30s")
-	flagSyncFetchTimeout  string = common.GetENVValue("SEBAK_SYNC_FETCH_TIMEOUT", "1m")
-	flagSyncPoolSize      string = common.GetENVValue("SEBAK_SYNC_POOL_SIZE", "300")
-	flagSyncRetryInterval string = common.GetENVValue("SEBAK_SYNC_RETRY_INTERVAL", "10s")
+	flagBindURL         string = common.GetENVValue("SEBAK_BIND", defaultBindURL)
+	flagBlockTime       string = common.GetENVValue("SEBAK_BLOCK_TIME", "5")
+	flagBlockTimeDelta  string = common.GetENVValue("SEBAK_BLOCK_TIME_DELTA", "1")
+	flagDebugPProf      bool   = common.GetENVValue("SEBAK_DEBUG_PPROF", "0") == "1"
+	flagKPSecretSeed    string = common.GetENVValue("SEBAK_SECRET_SEED", "")
+	flagLog             string = common.GetENVValue("SEBAK_LOG", "")
+	flagLogLevel        string = common.GetENVValue("SEBAK_LOG_LEVEL", defaultLogLevel.String())
+	flagLogFormat       string = common.GetENVValue("SEBAK_LOG_FORMAT", defaultLogFormat)
+	flagNetworkID       string = common.GetENVValue("SEBAK_NETWORK_ID", "")
+	flagOperationsLimit string = common.GetENVValue("SEBAK_OPERATIONS_LIMIT", "1000")
+	flagPublishURL      string = common.GetENVValue("SEBAK_PUBLISH", "")
+
+	flagSyncCheckInterval          string = common.GetENVValue("SEBAK_SYNC_CHECK_INTERVAL", "30s")
+	flagSyncFetchTimeout           string = common.GetENVValue("SEBAK_SYNC_FETCH_TIMEOUT", "1m")
+	flagSyncPoolSize               string = common.GetENVValue("SEBAK_SYNC_POOL_SIZE", "300")
+	flagSyncRetryInterval          string = common.GetENVValue("SEBAK_SYNC_RETRY_INTERVAL", "10s")
+	flagSyncCheckPrevBlockInterval string = common.GetENVValue("SEBAK_SYNC_CHECK_PREVBLOCK", "10m")
+
 	flagThreshold         string = common.GetENVValue("SEBAK_THRESHOLD", "67")
 	flagTimeoutACCEPT     string = common.GetENVValue("SEBAK_TIMEOUT_ACCEPT", "2")
 	flagTimeoutALLCONFIRM string = common.GetENVValue("SEBAK_TIMEOUT_ALLCONFIRM", "30")
@@ -91,6 +94,7 @@ var (
 	syncFetchTimeout    time.Duration
 	syncPoolSize        uint64
 	syncRetryInterval   time.Duration
+	syncCheckPrevBlock  time.Duration
 	threshold           uint64
 	timeoutACCEPT       time.Duration
 	timeoutALLCONFIRM   time.Duration
@@ -194,11 +198,15 @@ func init() {
 		"rate-limit-node",
 		fmt.Sprintf("rate limit for %s: [<ip>=]<limit>-<period>, ex) '10-S' '3.3.3.3=1000-M'", network.UrlPathPrefixNode),
 	)
+
 	nodeCmd.Flags().BoolVar(&flagDebugPProf, "debug-pprof", flagDebugPProf, "set debug pprof")
+
 	nodeCmd.Flags().StringVar(&flagSyncPoolSize, "sync-pool-size", flagSyncPoolSize, "sync pool size")
 	nodeCmd.Flags().StringVar(&flagSyncFetchTimeout, "sync-fetch-timeout", flagSyncFetchTimeout, "sync fetch timeout")
 	nodeCmd.Flags().StringVar(&flagSyncRetryInterval, "sync-retry-interval", flagSyncRetryInterval, "sync retry interval")
 	nodeCmd.Flags().StringVar(&flagSyncCheckInterval, "sync-check-interval", flagSyncCheckInterval, "sync check interval")
+	nodeCmd.Flags().StringVar(&flagSyncCheckPrevBlockInterval, "sync-check-prevblock", flagSyncCheckPrevBlockInterval, "sync check interval for previous block")
+
 	nodeCmd.Flags().StringVar(&flagHTTPCacheAdapter, "http-cache-adapter", flagHTTPCacheAdapter, "http cache adapter: ex) 'mem'")
 	nodeCmd.Flags().StringVar(&flagHTTPCachePoolSize, "http-cache-pool-size", flagHTTPCachePoolSize, "http cache pool size")
 	nodeCmd.Flags().StringVar(&flagHTTPCacheRedisAddrs, "http-cache-redis-addrs", flagHTTPCacheRedisAddrs, "http cache redis address")
@@ -396,6 +404,7 @@ func parseFlagsNode() {
 	syncRetryInterval = getTimeDuration(flagSyncRetryInterval, sync.RetryInterval, "--sync-retry-interval")
 	syncFetchTimeout = getTimeDuration(flagSyncFetchTimeout, sync.FetchTimeout, "--sync-fetch-timeout")
 	syncCheckInterval = getTimeDuration(flagSyncCheckInterval, sync.CheckBlockHeightInterval, "--sync-check-interval")
+	syncCheckPrevBlock = getTimeDuration(flagSyncCheckPrevBlockInterval, sync.CheckPrevBlockInterval, "--sync-check-prevblock")
 
 	{
 		if ok := common.HTTPCacheAdapterNames[flagHTTPCacheAdapter]; !ok {
@@ -628,6 +637,7 @@ func runNode() error {
 	c.FetchTimeout = syncFetchTimeout
 	c.RetryInterval = syncRetryInterval
 	c.CheckBlockHeightInterval = syncCheckInterval
+	c.CheckPrevBlockInterval = syncCheckPrevBlock
 
 	syncer := c.NewSyncer()
 

@@ -15,6 +15,7 @@ const (
 	FetchTimeout                    = 1 * time.Minute
 	RetryInterval                   = 10 * time.Second
 	CheckBlockHeightInterval        = 30 * time.Second
+	CheckPrevBlockInterval          = 10 * time.Minute
 )
 
 type Config struct {
@@ -29,6 +30,7 @@ type Config struct {
 	FetchTimeout             time.Duration
 	RetryInterval            time.Duration
 	CheckBlockHeightInterval time.Duration
+	CheckPrevBlockInterval   time.Duration
 }
 
 func NewConfig(localNode *node.LocalNode,
@@ -53,23 +55,51 @@ func NewConfig(localNode *node.LocalNode,
 }
 
 func (c *Config) NewSyncer() *Syncer {
-	s := NewSyncer(c.storage, c.network, c.connectionManager, c.localNode, c.commonCfg, func(s *Syncer) {
+	f := c.NewFetcher()
+	v := c.NewValidator()
+	s := NewSyncer(f, v, c.storage, func(s *Syncer) {
 		s.poolSize = c.SyncPoolSize
-		s.fetchTimeout = c.FetchTimeout
-		s.retryInterval = c.RetryInterval
 		s.checkInterval = c.CheckBlockHeightInterval
-		s.logger = c.logger
+		s.logger = c.logger.New("module", "sync/syncer")
 	})
 
 	c.LoggingConfig()
 	return s
 }
 
+func (c *Config) NewFetcher() Fetcher {
+	f := NewBlockFetcher(
+		c.network,
+		c.connectionManager,
+		c.storage,
+		c.localNode,
+		func(f *BlockFetcher) {
+			f.fetchTimeout = c.FetchTimeout
+			f.logger = c.logger.New("module", "sync/fetcher")
+		},
+	)
+	return f
+}
+
+func (c *Config) NewValidator() Validator {
+	v := NewBlockValidator(
+		c.network,
+		c.storage,
+		c.commonCfg,
+		func(v *BlockValidator) {
+			v.prevBlockWaitTimeout = c.CheckPrevBlockInterval
+			v.logger = c.logger.New("module", "sync/validator")
+		})
+	return v
+}
+
 func (c *Config) LoggingConfig() {
 	c.logger.Info("syncer config",
+		"module", "sync/config",
 		"poolSize", c.SyncPoolSize,
 		"fetchTimeout", c.FetchTimeout,
 		"retryInterval", c.RetryInterval,
 		"checkInterval", c.CheckBlockHeightInterval,
+		"checkPrevBlockInterval", c.CheckPrevBlockInterval,
 	)
 }

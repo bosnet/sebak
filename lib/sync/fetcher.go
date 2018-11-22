@@ -108,7 +108,7 @@ func (f *BlockFetcher) fetch(ctx context.Context, si *SyncInfo) error {
 		height    = si.Height
 		nodeAddrs = si.NodeAddrs
 	)
-	f.logger.Debug("fetch start", "height", height)
+	f.logger.Debug("start fetch", "height", height)
 
 	n := f.pickRandomNode(nodeAddrs)
 	if n == nil {
@@ -202,6 +202,8 @@ func (f *BlockFetcher) fetch(ctx context.Context, si *SyncInfo) error {
 			return errors.Wrapf(errors.TransactionNotFound, "proposer transaction block hash: %v", blk.ProposerTransaction)
 		}
 	}
+
+	f.logger.Debug("end fetch", "height", height)
 
 	return nil
 }
