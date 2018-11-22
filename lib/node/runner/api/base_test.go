@@ -1,11 +1,11 @@
 package api
 
 import (
+	"bytes"
+	"github.com/gorilla/mux"
 	"io"
 	"net/http"
 	"net/http/httptest"
-
-	"github.com/gorilla/mux"
 
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common/keypair"
@@ -33,6 +33,7 @@ func prepareAPIServer() (*httptest.Server, *storage.LevelDBBackend) {
 	router.HandleFunc(GetTransactionOperationsHandlerPattern, apiHandler.GetOperationsByTxHashHandler).Methods("GET")
 	router.HandleFunc(GetBlocksHandlerPattern, apiHandler.GetBlocksHandler).Methods("GET")
 	router.HandleFunc(GetBlockHandlerPattern, apiHandler.GetBlockHandler).Methods("GET")
+	router.HandleFunc(PostSubscribePattern, apiHandler.PostSubscribeHandler).Methods("POST")
 	ts := httptest.NewServer(router)
 	return ts, storage
 }
@@ -73,6 +74,23 @@ func prepareOpsWithoutSave(count int, st *storage.LevelDBBackend) (*keypair.Full
 	}
 
 	return kp, theBlock, boList
+}
+
+func prepareBlkTxOpWithoutSave(st *storage.LevelDBBackend) (*keypair.Full, block.Block, block.BlockTransaction, block.BlockOperation) {
+	kp := keypair.Random()
+	var txHashes []string
+	tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, kp)
+	txHashes = append(txHashes, tx.GetHash())
+	theBlock := block.TestMakeNewBlockWithPrevBlock(block.GetLatestBlock(st), txHashes)
+	bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, theBlock.Height, theBlock.ProposedTime, tx)
+
+	op := tx.B.Operations[0]
+	bo, err := block.NewBlockOperationFromOperation(op, tx, theBlock.Height)
+	if err != nil {
+		panic(err)
+	}
+
+	return kp, theBlock, bt, bo
 }
 
 func prepareTxs(storage *storage.LevelDBBackend, count int) (*keypair.Full, []block.BlockTransaction) {
@@ -127,12 +145,22 @@ func prepareTxWithoutSave(st *storage.LevelDBBackend) (*keypair.Full, *transacti
 	return kp, &tx, &bt
 }
 
-func request(ts *httptest.Server, url string, streaming bool) io.ReadCloser {
+func request(ts *httptest.Server, url string, streaming bool, bodys ...[]byte) io.ReadCloser {
 	// Do a Request
 	url = ts.URL + url
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		panic(err)
+	var req *http.Request
+	if len(bodys) == 0 {
+		var err error
+		req, err = http.NewRequest("GET", url, nil)
+		if err != nil {
+			panic(err)
+		}
+	} else {
+		var err error
+		req, err = http.NewRequest("POST", url, bytes.NewReader(bodys[0]))
+		if err != nil {
+			panic(err)
+		}
 	}
 	if streaming {
 		req.Header.Set("Accept", "text/event-stream")

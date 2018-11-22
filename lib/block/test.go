@@ -8,8 +8,13 @@ import (
 	"boscoin.io/sebak/lib/voting"
 )
 
-func TestMakeBlockAccount() *BlockAccount {
-	address := keypair.Random().Address()
+func TestMakeBlockAccount(kps ...*keypair.Full) *BlockAccount {
+	var address string
+	if len(kps) == 0 {
+		address = keypair.Random().Address()
+	} else {
+		address = kps[0].Address()
+	}
 	balance := common.Amount(common.BaseReserve)
 
 	return NewBlockAccount(address, balance)

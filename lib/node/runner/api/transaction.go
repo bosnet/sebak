@@ -64,18 +64,6 @@ func (api NetworkHandlerAPI) GetTransactionByHashHandler(w http.ResponseWriter, 
 		return payload, nil
 	}
 
-	if httputils.IsEventStream(r) {
-		event := fmt.Sprintf("hash-%s", key)
-		es := NewEventStream(w, r, renderEventStream, DefaultContentType)
-		payload, err := readFunc()
-		if err == nil {
-			es.Render(payload)
-		} else {
-			es.Render(nil)
-		}
-		es.Run(observer.BlockTransactionObserver, event)
-		return
-	}
 	payload, err := readFunc()
 	if err == nil {
 		httputils.MustWriteJSON(w, 200, payload)
@@ -109,22 +97,6 @@ func (api NetworkHandlerAPI) GetTransactionsByAccountHandler(w http.ResponseWrit
 		}
 		closeFunc()
 		return txs
-	}
-
-	if httputils.IsEventStream(r) {
-		event := fmt.Sprintf("source-%s", address)
-		es := NewEventStream(w, r, renderEventStream, DefaultContentType)
-		options.SetLimit(10)
-		txs := readFunc()
-		if len(txs) > 0 {
-			for _, tx := range txs {
-				es.Render(tx)
-			}
-		} else {
-			es.Render(nil)
-		}
-		es.Run(observer.BlockTransactionObserver, event)
-		return
 	}
 
 	txs := readFunc()

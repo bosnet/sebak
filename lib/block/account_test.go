@@ -1,13 +1,10 @@
 package block
 
 import (
-	"fmt"
 	"math/rand"
-	"sync"
 	"testing"
 
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/storage"
 
 	"github.com/stretchr/testify/require"
@@ -131,28 +128,4 @@ func TestBlockAccountSaveBlockAccountSequenceIDs(t *testing.T) {
 		require.Equal(t, b.GetBalance(), fetched[i].Balance)
 		require.Equal(t, b.SequenceID, fetched[i].SequenceID)
 	}
-}
-func TestBlockAccountObserver(t *testing.T) {
-	var wg sync.WaitGroup
-	wg.Add(1)
-
-	b := TestMakeBlockAccount()
-
-	var triggered *BlockAccount
-	ObserverFunc := func(args ...interface{}) {
-		triggered = args[0].(*BlockAccount)
-		wg.Done()
-	}
-	observer.BlockAccountObserver.On(fmt.Sprintf("address-%s", b.Address), ObserverFunc)
-	defer observer.BlockAccountObserver.Off(fmt.Sprintf("address-%s", b.Address), ObserverFunc)
-
-	st := storage.NewTestStorage()
-
-	b.MustSave(st)
-
-	wg.Wait()
-
-	require.Equal(t, b.Address, triggered.Address)
-	require.Equal(t, b.GetBalance(), triggered.GetBalance())
-	require.Equal(t, b.SequenceID, triggered.SequenceID)
 }

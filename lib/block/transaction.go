@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
@@ -135,10 +134,6 @@ func (bt *BlockTransaction) Save(st *storage.LevelDBBackend) (err error) {
 		return
 	}
 
-	event := "saved"
-	event += " " + fmt.Sprintf("source-%s", bt.Source)
-	event += " " + fmt.Sprintf("hash-%s", bt.Hash)
-	observer.BlockTransactionObserver.Trigger(event, bt)
 	bt.isSaved = true
 
 	return nil

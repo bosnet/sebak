@@ -313,6 +313,10 @@ func (nr *NodeRunner) Ready() {
 		apiHandler.HandlerURLPattern(api.GetTransactionStatusHandlerPattern),
 		listCache.WrapHandlerFunc(apiHandler.GetTransactionStatusByHashHandler),
 	).Methods("GET", "OPTIONS")
+	nr.network.AddHandler(
+		apiHandler.HandlerURLPattern(api.PostSubscribePattern),
+		listCache.WrapHandlerFunc(apiHandler.PostSubscribeHandler),
+	).Methods("POST", "OPTIONS")
 
 	TransactionsHandler := func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "POST" {
@@ -548,6 +552,8 @@ func (nr *NodeRunner) handleBallotMessage(msg interface{}) (err error) {
 			nr.log.Debug("failed to handle ballot", "error", err, "state", baseChecker.Ballot.State())
 			return
 		}
+
+		api.TriggerEvent(nr.storage, checker.StoredProposedTransactions)
 	}
 
 	return

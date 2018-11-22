@@ -1,12 +1,16 @@
 package api
 
 import (
+	"boscoin.io/sebak/lib/common/observer"
+	"boscoin.io/sebak/lib/transaction"
 	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"boscoin.io/sebak/lib/block"
@@ -14,6 +18,143 @@ import (
 
 	"github.com/stretchr/testify/require"
 )
+
+func TestAccountStream(t *testing.T) {
+	ts, storage := prepareAPIServer()
+	defer storage.Close()
+	defer ts.Close()
+	kp, _, bt, bo := prepareBlkTxOpWithoutSave(storage)
+	ba := block.TestMakeBlockAccount(kp)
+
+	// Save
+	{
+		ba.MustSave(storage)
+		bt.MustSave(storage)
+		bo.MustSave(storage)
+	}
+
+	// Do a Request
+	var acReader *bufio.Reader
+	var txReader *bufio.Reader
+	var opReader *bufio.Reader
+	{
+		s := []observer.Subscribe{observer.NewSubscribe(observer.NewEvent(observer.ResourceAccount, observer.ConditionAddress, ba.Address))}
+		b, err := json.Marshal(s)
+		require.NoError(t, err)
+		respBody := request(ts, PostSubscribePattern, true, b)
+		defer respBody.Close()
+		acReader = bufio.NewReader(respBody)
+	}
+	{
+		s := []observer.Subscribe{observer.NewSubscribe(observer.NewEvent(observer.ResourceTransaction, observer.ConditionTxHash, bt.Hash))}
+		b, err := json.Marshal(s)
+		require.NoError(t, err)
+		respBody := request(ts, PostSubscribePattern, true, b)
+		defer respBody.Close()
+		txReader = bufio.NewReader(respBody)
+	}
+	{
+		s := []observer.Subscribe{observer.NewSubscribe(observer.NewEvent(observer.ResourceOperation, observer.ConditionOpHash, bo.Hash))}
+		b, err := json.Marshal(s)
+		require.NoError(t, err)
+		respBody := request(ts, PostSubscribePattern, true, b)
+		defer respBody.Close()
+		opReader = bufio.NewReader(respBody)
+	}
+	tx := bt.Transaction()
+	txs := []*transaction.Transaction{&tx}
+	TriggerEvent(storage, txs)
+
+	// Check the output
+	{
+		line, err := acReader.ReadBytes('\n')
+		require.NoError(t, err)
+		line = bytes.Trim(line, "\n")
+		if len(line) == 0 {
+			line, err = acReader.ReadBytes('\n')
+			require.NoError(t, err)
+			line = bytes.Trim(line, "\n")
+		}
+		recv := make(map[string]interface{})
+		json.Unmarshal(line, &recv)
+		require.Equal(t, ba.Address, recv["address"], "address is not same")
+	}
+	{
+		line, err := txReader.ReadBytes('\n')
+		require.NoError(t, err)
+		line = bytes.Trim(line, "\n")
+		if len(line) == 0 {
+			line, err = txReader.ReadBytes('\n')
+			require.NoError(t, err)
+			line = bytes.Trim(line, "\n")
+		}
+		recv := make(map[string]interface{})
+		json.Unmarshal(line, &recv)
+		require.Equal(t, bt.Hash, recv["hash"], "hash is not the same")
+		require.Equal(t, bt.Block, recv["block"], "block is not the same")
+	}
+	{
+		line, err := opReader.ReadBytes('\n')
+		require.NoError(t, err)
+		line = bytes.Trim(line, "\n")
+		if len(line) == 0 {
+			line, err = opReader.ReadBytes('\n')
+			require.NoError(t, err)
+			line = bytes.Trim(line, "\n")
+		}
+		recv := make(map[string]interface{})
+		json.Unmarshal(line, &recv)
+		require.Equal(t, bo.Hash, recv["hash"], "hash is not same")
+	}
+
+}
+
+func TestTransactionStream(t *testing.T) {
+
+}
+
+func TestOperationStream(t *testing.T) {
+
+}
+
+func TestGetAccountHandlerStream(t *testing.T) {
+
+	ts, storage := prepareAPIServer()
+	defer storage.Close()
+	defer ts.Close()
+	ba := block.TestMakeBlockAccount()
+	ba.MustSave(storage)
+
+	key := ba.Address
+
+	// Do a Request
+	var reader *bufio.Reader
+	{
+		url := strings.Replace(GetAccountHandlerPattern, "{id}", key, -1)
+		respBody := request(ts, url, true)
+		defer respBody.Close()
+		reader = bufio.NewReader(respBody)
+	}
+
+	// Save
+	{
+		ba.MustSave(storage)
+	}
+
+	// Check the output
+	{
+		line, err := reader.ReadBytes('\n')
+		line = bytes.Trim(line, "\n")
+		if len(line) == 0 {
+			line, err = reader.ReadBytes('\n')
+			require.NoError(t, err)
+			line = bytes.Trim(line, "\n")
+		}
+		recv := make(map[string]interface{})
+		json.Unmarshal(line, &recv)
+		require.Equal(t, key, recv["address"], "address is not same")
+	}
+}
 
 func TestAPIStreamRun(t *testing.T) {
 	tests := []struct {

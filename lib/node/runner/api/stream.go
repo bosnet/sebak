@@ -5,7 +5,7 @@ import (
 	"boscoin.io/sebak/lib/errors"
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/mux"
+	"io/ioutil"
 	"net/http"
 	"strings"
 
@@ -18,15 +18,32 @@ import (
 // DefaultContentType is "application/json"
 const DefaultContentType = "application/json"
 
-func (api NetworkHandlerAPI) GetSubscribeHandler(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	event := vars["resource"]
+func (api NetworkHandlerAPI) PostSubscribeHandler(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+
 	if !httputils.IsEventStream(r) {
 		httputils.WriteJSONError(w, errors.BadRequestParameter)
 	}
 
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		httputils.WriteJSONError(w, errors.BadRequestParameter)
+		return
+	}
+	var requestParams []observer.Subscribe
+	if err := json.Unmarshal(body, &requestParams); err != nil {
+		httputils.WriteJSONError(w, errors.BadRequestParameter)
+		return
+	}
+
+	var events []string
+	for _, subscribe := range requestParams {
+		events = append(events, subscribe.String())
+	}
+
 	es := NewEventStream(w, r, renderEventStream, DefaultContentType)
-	es.Run(observer.XXXObserver, event)
+	es.Render(nil)
+	es.Run(observer.ResourceObserver, events...)
 }
 
 // EventStream handles chunked responses of a observable trigger
