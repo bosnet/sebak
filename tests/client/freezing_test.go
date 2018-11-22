@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"net/http"
 	"testing"
+	"time"
 )
 
 func TestFreezingAccount(t *testing.T) {
@@ -97,7 +98,7 @@ func TestFreezingAccount(t *testing.T) {
 
 	// Refund
 	{
-
+		time.Sleep(time.Second * 10 ) //wait for block period
 		account2Account, err := c.LoadAccount(account2Addr)
 		require.NoError(t, err)
 
