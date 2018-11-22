@@ -8,13 +8,15 @@ import (
 	"testing"
 	"time"
 
+	"encoding/json"
+
+	"github.com/stellar/go/keypair"
+	"github.com/stretchr/testify/require"
+
 	"boscoin.io/sebak/lib/client"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/transaction"
 	"boscoin.io/sebak/lib/transaction/operation"
-	"encoding/json"
-	"github.com/stellar/go/keypair"
-	"github.com/stretchr/testify/require"
 )
 
 func TestInflationPF(t *testing.T) {
@@ -112,9 +114,11 @@ func TestInflationPF(t *testing.T) {
 
 		ob := operation.NewCongressVotingResult(
 			"dummy1",
-			[]string{"a", "b"},
+			[]string{"http://1.1.1.1/a", "http://1.1.1.1/b"},
 			"dummy2",
-			[]string{"c", "d"},
+			[]string{"http://1.1.1.1/c", "http://1.1.1.1/d"},
+			"dummy3",
+			[]string{"http://1.1.1.1/e", "http://1.1.1.1/f"},
 			100,
 			70,
 			20,

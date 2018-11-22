@@ -104,6 +104,8 @@ func (suite *TestSuite) TestIsWellFormedTransactionWithLowerFeeSuite() {
 			[]string{"http://www.boscoin.io/1", "http://www.boscoin.io/2"},
 			string(common.MakeHash([]byte("dummydummy"))),
 			[]string{"http://www.boscoin.io/3", "http://www.boscoin.io/4"},
+			string(common.MakeHash([]byte("dummydummy"))),
+			[]string{"http://www.boscoin.io/5", "http://www.boscoin.io/6"},
 			9, 2, 3, 4,
 			"dummy voting hash",
 		)
