@@ -95,7 +95,6 @@ func (c *Config) NewValidator() Validator {
 
 func (c *Config) LoggingConfig() {
 	c.logger.Info("syncer config",
-		"module", "sync/config",
 		"poolSize", c.SyncPoolSize,
 		"fetchTimeout", c.FetchTimeout,
 		"retryInterval", c.RetryInterval,
