@@ -6,7 +6,6 @@ import (
 
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/network/httputils"
 	"boscoin.io/sebak/lib/node/runner/api/resource"
 	"boscoin.io/sebak/lib/storage"
@@ -31,9 +30,6 @@ func (api NetworkHandlerAPI) GetBlocksHandler(w http.ResponseWriter, r *http.Req
 			height = common.GenesisBlockHeight // default cursor is genesis block height
 		}
 		option = storage.NewWalkOption(block.GetBlockKeyPrefixHeight(height), p.Limit(), p.Reverse(), false)
-		if httputils.IsEventStream(r) {
-			option.Limit = 10
-		}
 	}
 
 	{
@@ -55,19 +51,6 @@ func (api NetworkHandlerAPI) GetBlocksHandler(w http.ResponseWriter, r *http.Req
 			return
 
 		}
-	}
-
-	if httputils.IsEventStream(r) {
-		es := NewEventStream(w, r, renderEventStream, DefaultContentType)
-		if len(blocks) > 0 {
-			for _, b := range blocks {
-				es.Render(b)
-			}
-		} else {
-			es.Render(nil)
-		}
-		es.Run(observer.BlockObserver, block.EventBlockPrefix)
-		return
 	}
 
 	list := p.ResourceList(blocks, cursor)

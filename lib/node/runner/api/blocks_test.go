@@ -2,7 +2,6 @@ package api
 
 import (
 	"bufio"
-	"bytes"
 	"encoding/json"
 	"io/ioutil"
 	"testing"
@@ -64,44 +63,5 @@ func TestBlocksHandler(t *testing.T) {
 			b := records[9-i].(map[string]interface{})
 			require.Equal(t, a.Hash, b["hash"])
 		}
-	}
-}
-
-func TestBlocksHandlerStream(t *testing.T) {
-
-	ts, st := prepareAPIServer()
-	defer st.Close()
-	defer ts.Close()
-
-	genesis := block.GetLatestBlock(st)
-	b := block.TestMakeNewBlockWithPrevBlock(genesis, []string{})
-
-	// Do a Request
-	var reader *bufio.Reader
-	{
-		url := GetBlocksHandlerPattern + "?cursor=2"
-		respBody := request(ts, url, true)
-		defer respBody.Close()
-		reader = bufio.NewReader(respBody)
-	}
-
-	// Save
-	{
-		b.MustSave(st)
-	}
-
-	// Check the output
-	{
-		line, err := reader.ReadBytes('\n')
-		line = bytes.Trim(line, "\n")
-		if len(line) == 0 {
-			line, err = reader.ReadBytes('\n')
-			require.NoError(t, err)
-			line = bytes.Trim(line, "\n")
-		}
-		recv := make(map[string]interface{})
-		json.Unmarshal(line, &recv)
-		require.Equal(t, b.Hash, recv["hash"], "hash is not the same")
-		require.Equal(t, b.Height, uint64(recv["height"].(float64)), "height is not the same")
 	}
 }

@@ -7,3 +7,5 @@ var BlockTransactionObserver = observable.New()
 var BlockObserver = observable.New()
 var BlockOperationObserver = observable.New()
 var SyncBlockWaitObserver = observable.New()
+
+var XXXObserver = observable.New()

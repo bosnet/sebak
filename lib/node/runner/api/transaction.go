@@ -38,22 +38,6 @@ func (api NetworkHandlerAPI) GetTransactionsHandler(w http.ResponseWriter, r *ht
 		return txs
 	}
 
-	if httputils.IsEventStream(r) {
-		event := "saved"
-		es := NewEventStream(w, r, renderEventStream, DefaultContentType)
-		options.SetLimit(10)
-		txs := readFunc()
-		if len(txs) > 0 {
-			for _, tx := range txs {
-				es.Render(tx)
-			}
-		} else {
-			es.Render(nil)
-		}
-		es.Run(observer.BlockTransactionObserver, event)
-		return
-	}
-
 	txs := readFunc()
 
 	list := p.ResourceList(txs, cursor)

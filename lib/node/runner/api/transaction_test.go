@@ -2,14 +2,12 @@ package api
 
 import (
 	"bufio"
-	"bytes"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"testing"
 
-	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/node/runner/api/resource"
 	"github.com/stretchr/testify/require"
 )
@@ -46,42 +44,6 @@ func TestGetTransactionByHashHandler(t *testing.T) {
 		recv := make(map[string]interface{})
 		json.Unmarshal(readByte, &recv)
 
-		require.Equal(t, bt.Hash, recv["hash"], "hash is not the same")
-		require.Equal(t, bt.Block, recv["block"], "block is not the same")
-	}
-}
-
-func TestGetTransactionByHashHandlerStream(t *testing.T) {
-
-	ts, storage := prepareAPIServer()
-	defer storage.Close()
-	defer ts.Close()
-
-	_, _, bt := prepareTxWithoutSave(storage)
-	// Do a Request
-	var reader *bufio.Reader
-	{
-		respBody := request(ts, GetTransactionsHandlerPattern+"/"+bt.Hash, true)
-		defer respBody.Close()
-		reader = bufio.NewReader(respBody)
-	}
-
-	// Wait until request registered to observer
-	{
-		bt.MustSave(storage)
-	}
-
-	// Check the output
-	{
-		line, err := reader.ReadBytes('\n')
-		line = bytes.Trim(line, "\n")
-		if len(line) == 0 {
-			line, err = reader.ReadBytes('\n')
-			require.NoError(t, err)
-			line = bytes.Trim(line, "\n")
-		}
-		recv := make(map[string]interface{})
-		json.Unmarshal(line, &recv)
 		require.Equal(t, bt.Hash, recv["hash"], "hash is not the same")
 		require.Equal(t, bt.Block, recv["block"], "block is not the same")
 	}
@@ -128,57 +90,6 @@ func TestGetTransactionStatusByHashHandler(t *testing.T) {
 	}
 }
 
-func TestGetTransactionStatusByHashHandlerStream(t *testing.T) {
-
-	ts, storage := prepareAPIServer()
-	defer storage.Close()
-	defer ts.Close()
-
-	_, _, bt := prepareTxWithoutSave(storage)
-	tp, err := block.NewTransactionPool(bt.Transaction())
-	require.NoError(t, err)
-
-	// Do a Request
-	var reader *bufio.Reader
-	{
-		respBody := request(ts, strings.Replace(GetTransactionStatusHandlerPattern, "{id}", bt.Hash, -1), true)
-		defer respBody.Close()
-		reader = bufio.NewReader(respBody)
-	}
-	// Save
-	{
-		tp.Save(storage)
-		bt.MustSave(storage)
-	}
-
-	// Check the output
-	var status resource.TransactionStatus
-	{
-		line, err := reader.ReadBytes('\n')
-		line = bytes.Trim(line, "\n")
-		if len(line) == 0 {
-			line, err = reader.ReadBytes('\n')
-			require.NoError(t, err)
-			line = bytes.Trim(line, "\n")
-		}
-		json.Unmarshal(line, &status)
-		require.Equal(t, bt.Hash, status.Hash)
-		require.Equal(t, "notfound", status.Status)
-
-		line, err = reader.ReadBytes('\n')
-		require.NoError(t, err)
-		json.Unmarshal(line, &status)
-		require.Equal(t, bt.Hash, status.Hash)
-		require.Equal(t, "submitted", status.Status)
-
-		line, err = reader.ReadBytes('\n')
-		require.NoError(t, err)
-		json.Unmarshal(line, &status)
-		require.Equal(t, bt.Hash, status.Hash)
-		require.Equal(t, "confirmed", status.Status)
-	}
-}
-
 func TestGetTransactionsHandler(t *testing.T) {
 	ts, storage := prepareAPIServer()
 	defer storage.Close()
@@ -212,63 +123,6 @@ func TestGetTransactionsHandler(t *testing.T) {
 
 			require.Equal(t, hash, btList[i].Hash, "hash is not the same")
 			require.Equal(t, block, btList[i].Block, "block is not the same")
-		}
-	}
-}
-
-func TestGetTransactionsHandlerStream(t *testing.T) {
-
-	ts, storage := prepareAPIServer()
-	defer storage.Close()
-	defer ts.Close()
-
-	_, btList := prepareTxsWithoutSave(9, storage)
-	btMap := make(map[string]block.BlockTransaction)
-	for _, bt := range btList {
-		btMap[bt.Hash] = bt
-	}
-
-	// Do a Request
-	var reader *bufio.Reader
-	{
-		respBody := request(ts, GetTransactionsHandlerPattern, true)
-		defer respBody.Close()
-		reader = bufio.NewReader(respBody)
-	}
-
-	// Save
-	{
-		for _, bt := range btMap {
-			bt.MustSave(storage)
-		}
-	}
-
-	// Check the output
-	{
-		// Discard the first entry (genesis)
-		line, err := reader.ReadBytes('\n')
-		line = bytes.Trim(line, "\n")
-		if len(line) == 0 {
-			line, err = reader.ReadBytes('\n')
-			require.NoError(t, err)
-			line = bytes.Trim(line, "\n")
-		}
-		for n := 0; n < 5; n++ {
-			line, err := reader.ReadBytes('\n')
-			line = bytes.Trim(line, "\n")
-			if len(line) == 0 {
-				line, err = reader.ReadBytes('\n')
-				require.NoError(t, err)
-				line = bytes.Trim(line, "\n")
-			}
-			line = bytes.Trim(line, "\n\t ")
-			recv := make(map[string]interface{})
-			json.Unmarshal(line, &recv)
-			bt := btMap[recv["hash"].(string)]
-			r := resource.NewTransaction(&bt)
-			txS, err := json.Marshal(r.Resource())
-			require.NoError(t, err)
-			require.Equal(t, txS, line)
 		}
 	}
 }
@@ -307,55 +161,6 @@ func TestGetTransactionsByAccountHandler(t *testing.T) {
 
 			require.Equal(t, hash, btList[i].Hash, "hash is not the same")
 			require.Equal(t, block, btList[i].Block, "block is not the same")
-		}
-	}
-}
-
-func TestGetTransactionsByAccountHandlerStream(t *testing.T) {
-
-	ts, storage := prepareAPIServer()
-	defer storage.Close()
-	defer ts.Close()
-
-	btMap := make(map[string]block.BlockTransaction)
-	kp, btList := prepareTxsWithoutSave(10, storage)
-	for _, bt := range btList {
-		btMap[bt.Hash] = bt
-	}
-
-	// Do a Request
-	var reader *bufio.Reader
-	{
-		url := strings.Replace(GetAccountTransactionsHandlerPattern, "{id}", kp.Address(), -1)
-		respBody := request(ts, url, true)
-		defer respBody.Close()
-		reader = bufio.NewReader(respBody)
-	}
-
-	// Save
-	{
-		for _, bt := range btMap {
-			bt.MustSave(storage)
-		}
-	}
-
-	// Check the output
-	{
-		for n := 0; n < 10; n++ {
-			line, err := reader.ReadBytes('\n')
-			line = bytes.Trim(line, "\n")
-			if len(line) == 0 {
-				line, err = reader.ReadBytes('\n')
-				require.NoError(t, err)
-				line = bytes.Trim(line, "\n")
-			}
-			recv := make(map[string]interface{})
-			json.Unmarshal(line, &recv)
-			bt := btMap[recv["hash"].(string)]
-			r := resource.NewTransaction(&bt)
-			txS, err := json.Marshal(r.Resource())
-			require.NoError(t, err)
-			require.Equal(t, txS, line)
 		}
 	}
 }

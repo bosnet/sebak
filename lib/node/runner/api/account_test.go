@@ -2,7 +2,6 @@ package api
 
 import (
 	"bufio"
-	"bytes"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -48,45 +47,6 @@ func TestGetAccountHandler(t *testing.T) {
 		defer resp.Body.Close()
 
 		require.Equal(t, http.StatusNotFound, resp.StatusCode)
-	}
-}
-
-func TestGetAccountHandlerStream(t *testing.T) {
-
-	ts, storage := prepareAPIServer()
-	defer storage.Close()
-	defer ts.Close()
-	ba := block.TestMakeBlockAccount()
-	ba.MustSave(storage)
-
-	key := ba.Address
-
-	// Do a Request
-	var reader *bufio.Reader
-	{
-		url := strings.Replace(GetAccountHandlerPattern, "{id}", key, -1)
-		respBody := request(ts, url, true)
-		defer respBody.Close()
-		reader = bufio.NewReader(respBody)
-	}
-
-	// Save
-	{
-		ba.MustSave(storage)
-	}
-
-	// Check the output
-	{
-		line, err := reader.ReadBytes('\n')
-		line = bytes.Trim(line, "\n")
-		if len(line) == 0 {
-			line, err = reader.ReadBytes('\n')
-			require.NoError(t, err)
-			line = bytes.Trim(line, "\n")
-		}
-		recv := make(map[string]interface{})
-		json.Unmarshal(line, &recv)
-		require.Equal(t, key, recv["address"], "address is not same")
 	}
 }
 
