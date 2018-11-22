@@ -46,7 +46,6 @@ type BallotChecker struct {
 	LocalNode          *node.LocalNode
 	Message            common.NetworkMessage
 	IsNew              bool
-	IsMine             bool
 	Ballot             ballot.Ballot
 	VotingHole         voting.Hole
 	Result             consensus.RoundVoteResult
@@ -60,22 +59,17 @@ type BallotChecker struct {
 // BallotUnmarshal makes `Ballot` from common.NetworkMessage.
 func BallotUnmarshal(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotChecker)
-	if checker.Ballot.IsEmpty() {
-		var b ballot.Ballot
-		if b, err = ballot.NewBallotFromJSON(checker.Message.Data); err != nil {
-			return
-		}
 
-		if err = b.IsWellFormed(checker.NodeRunner.Conf); err != nil {
-			return
-		}
-
-		checker.Log.Debug("message is verified")
-		checker.Ballot = b
+	var b ballot.Ballot
+	if b, err = ballot.NewBallotFromJSON(checker.Message.Data); err != nil {
+		return
 	}
 
-	checker.IsMine = checker.Ballot.Source() == checker.LocalNode.Address()
+	if err = b.IsWellFormed(checker.NodeRunner.Conf); err != nil {
+		return
+	}
 
+	checker.Ballot = b
 	checker.Log = checker.Log.New(logging.Ctx{
 		"ballot":      checker.Ballot.GetHash(),
 		"state":       checker.Ballot.State(),
@@ -83,8 +77,8 @@ func BallotUnmarshal(c common.Checker, args ...interface{}) (err error) {
 		"votingBasis": checker.Ballot.VotingBasis(),
 		"from":        checker.Ballot.Source(),
 		"vote":        checker.Ballot.Vote(),
-		"isMine":      checker.IsMine,
 	})
+	checker.Log.Debug("message is verified")
 
 	return
 }
@@ -93,10 +87,6 @@ func BallotUnmarshal(c common.Checker, args ...interface{}) (err error) {
 // `CollectTxFee`.
 func BallotValidateOperationBodyCollectTxFee(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotChecker)
-
-	if checker.IsMine {
-		return
-	}
 
 	var opb operation.CollectTxFee
 	if opb, err = checker.Ballot.ProposerTransaction().CollectTxFee(); err != nil {
@@ -115,10 +105,6 @@ func BallotValidateOperationBodyCollectTxFee(c common.Checker, args ...interface
 // BallotValidateOperationBodyInflation validates `Inflation`
 func BallotValidateOperationBodyInflation(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotChecker)
-
-	if checker.IsMine {
-		return
-	}
 
 	var opb operation.Inflation
 	if opb, err = checker.Ballot.ProposerTransaction().Inflation(); err != nil {
@@ -160,10 +146,6 @@ func BallotValidateOperationBodyInflation(c common.Checker, args ...interface{})
 // is from the known validators.
 func BallotNotFromKnownValidators(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotChecker)
-	if checker.IsMine {
-		return
-	}
-
 	if checker.LocalNode.HasValidators(checker.Ballot.Source()) {
 		return
 	}
@@ -179,11 +161,6 @@ func BallotNotFromKnownValidators(c common.Checker, args ...interface{}) (err er
 // update the latestblock by referring to the database.
 func BallotCheckSYNC(c common.Checker, args ...interface{}) error {
 	checker := c.(*BallotChecker)
-
-	if checker.IsMine {
-		return nil
-	}
-
 	var err error
 
 	is := checker.NodeRunner.Consensus()
@@ -288,11 +265,6 @@ func hasBallotValidProposer(is *consensus.ISAAC, b ballot.Ballot) bool {
 // valid round.
 func BallotCheckBasis(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotChecker)
-
-	if checker.IsMine {
-		return
-	}
-
 	blk := block.GetLatestBlock(checker.NodeRunner.Storage())
 	if !checker.NodeRunner.Consensus().IsValidVotingBasis(
 		checker.Ballot.VotingBasis(),
@@ -337,10 +309,6 @@ func BallotVote(c common.Checker, args ...interface{}) (err error) {
 // same proposer with the current `RunningRound`.
 func BallotIsSameProposer(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotChecker)
-
-	if checker.IsMine {
-		return
-	}
 
 	if checker.VotingHole != voting.NOTYET {
 		return
@@ -479,10 +447,6 @@ func insertMissingTransaction(nr *NodeRunner, ballot ballot.Ballot) (err error) 
 func BallotGetMissingTransaction(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotChecker)
 
-	if checker.IsMine {
-		return
-	}
-
 	if checker.VotingHole != voting.NOTYET {
 		return
 	}
@@ -508,11 +472,6 @@ var INITBallotTransactionCheckerFuncs = []common.CheckerFunc{
 // transactions of newly added ballot.
 func INITBallotValidateTransactions(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotChecker)
-
-	if checker.IsMine {
-		checker.VotingHole = voting.YES
-		return
-	}
 
 	if checker.VotingFinished {
 		return
@@ -575,7 +534,7 @@ func SIGNBallotBroadcast(c common.Checker, args ...interface{}) (err error) {
 		return
 
 	}
-	checker.NodeRunner.BroadcastBallot(newBallot)
+	checker.NodeRunner.ConnectionManager().Broadcast(newBallot)
 	checker.Log.Debug("ballot will be broadcasted", "newBallot", newBallot)
 
 	return
@@ -607,7 +566,7 @@ func ACCEPTBallotBroadcast(c common.Checker, args ...interface{}) (err error) {
 		return
 
 	}
-	checker.NodeRunner.BroadcastBallot(newBallot)
+	checker.NodeRunner.ConnectionManager().Broadcast(newBallot)
 	checker.Log.Debug("ballot will be broadcasted", "newBallot", newBallot)
 
 	return

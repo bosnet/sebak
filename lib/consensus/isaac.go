@@ -66,9 +66,6 @@ func NewISAAC(node *node.LocalNode, p voting.ThresholdPolicy,
 }
 
 func (is *ISAAC) SetLatestVotingBasis(basis voting.Basis) {
-	is.Lock()
-	defer is.Unlock()
-
 	is.LatestVotingBasis = basis
 }
 
@@ -85,16 +82,10 @@ func (is *ISAAC) SelectProposer(blockHeight uint64, round uint64) string {
 }
 
 func (is *ISAAC) SaveNodeHeight(senderAddr string, height uint64) {
-	is.Lock()
-	defer is.Unlock()
-
 	is.nodesHeight[senderAddr] = height
 }
 
 func (is *ISAAC) IsValidVotingBasis(basis voting.Basis, latestBlock block.Block) bool {
-	is.RLock()
-	defer is.RUnlock()
-
 	if basis.Height == latestBlock.Height {
 		if is.isInitRound(basis) {
 			return true
@@ -178,8 +169,8 @@ func (is *ISAAC) IsVoted(b ballot.Ballot) bool {
 }
 
 func (is *ISAAC) Vote(b ballot.Ballot) (isNew bool, err error) {
-	is.Lock()
-	defer is.Unlock()
+	is.RLock()
+	defer is.RUnlock()
 	basisIndex := b.VotingBasis().Index()
 
 	var found bool
