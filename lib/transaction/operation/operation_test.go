@@ -88,14 +88,16 @@ func TestOperationBodyCongressVotingResult(t *testing.T) {
 	}
 	hashed := op.MakeHashString()
 
-	expected := "5ppD3tYbMveN9hxxEpQzYARB97vN587r8x1rrXbYFLwa"
-	require.Equal(t, hashed, expected)
+	expected := "3HYgpY1Rt24jMVGLzFKoogAWNzrcKf5BVbULnBRwLWya"
+	require.Equal(t, expected, hashed)
 
 	err := op.IsWellFormed(common.NewTestConfig())
 	require.NoError(t, err)
 }
 
 func TestOperationBodyCongressVotingResultInvalidMembership(t *testing.T) {
+	networkID := []byte("showme")
+
 	{ // missing Hash
 		opb := NewCongressVotingResult(
 			string(common.MakeHash([]byte("dummydummy"))),
@@ -103,15 +105,16 @@ func TestOperationBodyCongressVotingResultInvalidMembership(t *testing.T) {
 			string(common.MakeHash([]byte("dummydummy"))),
 			[]string{"http://www.boscoin.io/3", "http://www.boscoin.io/4"},
 			"",
-			[]string{"http://www.boscoin.io/3", "http://www.boscoin.io/4"},
+			[]string{"http://www.boscoin.io/5", "http://www.boscoin.io/6"},
 			9, 2, 3, 4,
+			"dummy voting hash",
 		)
 		op := Operation{
 			H: Header{Type: TypeCongressVotingResult},
 			B: opb,
 		}
 
-		err := op.IsWellFormed(common.NewConfig())
+		err := op.IsWellFormed(common.NewConfig(networkID))
 		require.Error(t, err, errors.InvalidOperation)
 	}
 
@@ -124,13 +127,14 @@ func TestOperationBodyCongressVotingResultInvalidMembership(t *testing.T) {
 			string(common.MakeHash([]byte("dummydummy"))),
 			[]string{"3", "4"},
 			9, 2, 3, 4,
+			"dummy voting hash",
 		)
 		op := Operation{
 			H: Header{Type: TypeCongressVotingResult},
 			B: opb,
 		}
 
-		err := op.IsWellFormed(common.NewConfig())
+		err := op.IsWellFormed(common.NewConfig(networkID))
 		require.Error(t, err, errors.InvalidOperation)
 	}
 
@@ -143,13 +147,14 @@ func TestOperationBodyCongressVotingResultInvalidMembership(t *testing.T) {
 			string(common.MakeHash([]byte("dummydummy"))),
 			[]string{"http://www.boscoin.io/3", "http://www.boscoin.io/4"},
 			9, 2, 3, 4,
+			"dummy voting hash",
 		)
 		op := Operation{
 			H: Header{Type: TypeCongressVotingResult},
 			B: opb,
 		}
 
-		err := op.IsWellFormed(common.NewConfig())
+		err := op.IsWellFormed(common.NewConfig(networkID))
 		require.NoError(t, err)
 	}
 }
