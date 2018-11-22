@@ -15,7 +15,7 @@ const (
 	FetchTimeout                    = 1 * time.Minute
 	RetryInterval                   = 10 * time.Second
 	CheckBlockHeightInterval        = 30 * time.Second
-	CheckPrevBlockInterval          = 10 * time.Minute
+	CheckPrevBlockInterval          = 30 * time.Second
 )
 
 type Config struct {

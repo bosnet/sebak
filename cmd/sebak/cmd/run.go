@@ -52,7 +52,7 @@ var (
 	flagSyncFetchTimeout           string = common.GetENVValue("SEBAK_SYNC_FETCH_TIMEOUT", "1m")
 	flagSyncPoolSize               string = common.GetENVValue("SEBAK_SYNC_POOL_SIZE", "300")
 	flagSyncRetryInterval          string = common.GetENVValue("SEBAK_SYNC_RETRY_INTERVAL", "10s")
-	flagSyncCheckPrevBlockInterval string = common.GetENVValue("SEBAK_SYNC_CHECK_PREVBLOCK", "10m")
+	flagSyncCheckPrevBlockInterval string = common.GetENVValue("SEBAK_SYNC_CHECK_PREVBLOCK", "30s")
 
 	flagThreshold         string = common.GetENVValue("SEBAK_THRESHOLD", "67")
 	flagTimeoutACCEPT     string = common.GetENVValue("SEBAK_TIMEOUT_ACCEPT", "2")
