@@ -62,18 +62,18 @@ func (jp *jsonrpcServerTestHelper) request(method string, args interface{}) *htt
 	return resp
 }
 
-func TestJSONRPCServerEcho(t *testing.T) {
+func TestJSONRPCServerDBEcho(t *testing.T) {
 	jp := jsonrpcServerTestHelper{t: t}
 	jp.prepare()
 	defer jp.done()
 
 	token := common.NowISO8601()
 
-	args := EchoArgs(token)
-	resp := jp.request("Main.Echo", &args)
+	args := DBEchoArgs(token)
+	resp := jp.request("DB.Echo", &args)
 	defer resp.Body.Close()
 
-	var result EchoResult
+	var result DBEchoResult
 	err := jsonrpc.DecodeClientResponse(resp.Body, &result)
 	require.NoError(t, err)
 

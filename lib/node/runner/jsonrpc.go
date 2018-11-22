@@ -14,8 +14,8 @@ import (
 
 const MaxLimitListOptions uint64 = 10000
 
-type EchoArgs string
-type EchoResult string
+type DBEchoArgs string
+type DBEchoResult string
 
 type DBHasArgs string
 type DBHasResult bool
@@ -39,16 +39,13 @@ type DBGetIteratorResult struct {
 	Items []storage.IterItem
 }
 
-type jsonrpcMainApp struct {
-}
-
-func (j *jsonrpcMainApp) Echo(r *http.Request, args *EchoArgs, result *EchoResult) error {
-	*result = EchoResult(string(*args))
-	return nil
-}
-
 type jsonrpcDBApp struct {
 	st *storage.LevelDBBackend
+}
+
+func (j *jsonrpcDBApp) Echo(r *http.Request, args *DBEchoArgs, result *DBEchoResult) error {
+	*result = DBEchoResult(string(*args))
+	return nil
 }
 
 func (j *jsonrpcDBApp) Has(r *http.Request, args *DBHasArgs, result *DBHasResult) error {
@@ -137,9 +134,6 @@ func (j *jsonrpcServer) Ready() *mux.Router {
 	s := &jsonrpcInternalServer{Server: rpc.NewServer()}
 	s.RegisterCodec(jsonrpc.NewCodec(), "application/json")
 	s.RegisterCodec(jsonrpc.NewCodec(), "application/json;charset=UTF-8")
-
-	mainApp := &jsonrpcMainApp{}
-	s.RegisterService(mainApp, "Main")
 
 	dbApp := &jsonrpcDBApp{st: j.st}
 	s.RegisterService(dbApp, "DB")
