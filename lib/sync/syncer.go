@@ -24,6 +24,8 @@ type Syncer struct {
 	fetcher   Fetcher
 	validator Validator
 
+	nodelist *NodeList
+
 	poolSize      uint64
 	checkInterval time.Duration
 
@@ -157,6 +159,7 @@ func (s *Syncer) loop() {
 			if height > syncProgress.CurrentBlock {
 				syncProgress.HighestBlock = height
 				s.sync(syncProgress, nodeAddrs)
+				s.nodelist.SetLatestNodes(nodeAddrs)
 			}
 		case c := <-s.getSyncProgress:
 			c <- syncProgress

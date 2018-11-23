@@ -33,6 +33,7 @@ type BlockFetcher struct {
 	apiClient         Doer
 	storage           *storage.LevelDBBackend
 	localNode         *node.LocalNode
+	nodelist          *NodeList
 
 	fetchTimeout  time.Duration
 	retryInterval time.Duration
@@ -93,6 +94,7 @@ func (f *BlockFetcher) Fetch(ctx context.Context, syncInfo *SyncInfo) (*SyncInfo
 				case <-ctx.Done():
 					return false, ctx.Err()
 				case <-c:
+					syncInfo.NodeAddrs = f.nodelist.LatestNodes()
 					return true, err
 				}
 			}

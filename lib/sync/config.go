@@ -25,6 +25,7 @@ type Config struct {
 	connectionManager network.ConnectionManager
 	tp                *transaction.Pool
 	localNode         *node.LocalNode
+	nodelist          *NodeList
 	logger            log15.Logger
 	commonCfg         common.Config
 
@@ -49,6 +50,7 @@ func NewConfig(localNode *node.LocalNode,
 		logger:            log.New(log15.Ctx{"node": localNode.Alias()}),
 		commonCfg:         cfg,
 		localNode:         localNode,
+		nodelist:          &NodeList{},
 
 		SyncPoolSize:             SyncPoolSize,
 		FetchTimeout:             FetchTimeout,
@@ -62,6 +64,7 @@ func (c *Config) NewSyncer() *Syncer {
 	f := c.NewFetcher()
 	v := c.NewValidator()
 	s := NewSyncer(f, v, c.storage, func(s *Syncer) {
+		s.nodelist = c.nodelist
 		s.poolSize = c.SyncPoolSize
 		s.checkInterval = c.CheckBlockHeightInterval
 		s.logger = c.logger.New("submodule", "syncer")
@@ -78,6 +81,7 @@ func (c *Config) NewFetcher() Fetcher {
 		c.storage,
 		c.localNode,
 		func(f *BlockFetcher) {
+			f.nodelist = c.nodelist
 			f.fetchTimeout = c.FetchTimeout
 			f.logger = c.logger.New("submodule", "fetcher")
 		},
