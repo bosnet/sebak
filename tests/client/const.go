@@ -1,5 +1,3 @@
-// +build client_integration_tests
-
 package client
 
 const (

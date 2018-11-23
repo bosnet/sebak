@@ -18,7 +18,7 @@ func TestGetOperationsByTxHashHandler(t *testing.T) {
 	defer storage.Close()
 	defer ts.Close()
 
-	_, btList := prepareTxs(storage, 1)
+	_, _, btList := prepareTxs(storage, 1)
 	bt := btList[0]
 
 	{ // unknown transaction

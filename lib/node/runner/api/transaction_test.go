@@ -95,7 +95,7 @@ func TestGetTransactionsHandler(t *testing.T) {
 	defer storage.Close()
 	defer ts.Close()
 
-	_, btList := prepareTxs(storage, 10)
+	_, _, btList := prepareTxs(storage, 10)
 
 	var reader *bufio.Reader
 	{
@@ -132,7 +132,7 @@ func TestGetTransactionsByAccountHandler(t *testing.T) {
 	defer storage.Close()
 	defer ts.Close()
 
-	kp, btList := prepareTxs(storage, 10)
+	kp, _, btList := prepareTxs(storage, 10)
 
 	// Do a Request
 	var reader *bufio.Reader
@@ -170,7 +170,7 @@ func TestGetTransactionsHandlerPage(t *testing.T) {
 	defer storage.Close()
 	defer ts.Close()
 
-	_, btList := prepareTxs(storage, 10)
+	_, _, btList := prepareTxs(storage, 10)
 
 	requestFunction := func(url string) ([]interface{}, map[string]interface{}) {
 		respBody := request(ts, url, false)

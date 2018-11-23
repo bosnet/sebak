@@ -109,7 +109,7 @@ type Payable interface {
 	GetAmount() common.Amount
 }
 
-type Tagetable interface {
+type Targetable interface {
 	TargetAddress() string
 }
 

@@ -39,9 +39,9 @@ func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter
 		var iterFunc func() (block.BlockOperation, bool, []byte)
 		var closeFunc func()
 		if len(oType) > 0 {
-			iterFunc, closeFunc = block.GetBlockOperationsBySourceAndType(api.storage, address, oType, options)
+			iterFunc, closeFunc = block.GetBlockOperationsByPeersAndType(api.storage, address, oType, options)
 		} else {
-			iterFunc, closeFunc = block.GetBlockOperationsBySource(api.storage, address, options)
+			iterFunc, closeFunc = block.GetBlockOperationsByPeers(api.storage, address, options)
 		}
 		for {
 			t, hasNext, c := iterFunc()
