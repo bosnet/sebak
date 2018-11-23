@@ -42,6 +42,7 @@ func (p *ballotCheckerProposedTransaction) Prepare() {
 
 	p.proposerNode = localNodes[1]
 	nr.Consensus().SetProposerSelector(FixedSelector{p.proposerNode.Address()})
+	go p.nr.startBroadcastBallot()
 
 	p.keys = map[string]*keypair.Full{}
 }
@@ -269,11 +270,11 @@ func TestProposedTransactionWithWrongOperationBodyCollectTxFeeBlockData(t *testi
 	p := &ballotCheckerProposedTransaction{}
 	p.Prepare()
 
-	{
-		// with wrong `CollectTxFee.Height`
+	// This nested function is reused by all the tests
+	testFunc := func(modifier func(*operation.CollectTxFee, *ballot.Ballot)) {
 		blt := p.MakeBallot(4)
 		opb, _ := blt.ProposerTransaction().CollectTxFee()
-		opb.Height = blt.B.Proposed.VotingBasis.Height + 1
+		modifier(&opb, blt)
 		ptx := blt.ProposerTransaction()
 		ptx.B.Operations[0].B = opb
 		blt.SetProposerTransaction(ptx)
@@ -289,110 +290,55 @@ func TestProposedTransactionWithWrongOperationBodyCollectTxFeeBlockData(t *testi
 		}
 	}
 
-	{
-		// with wrong `CollectTxFee.BlockHash`
-		blt := p.MakeBallot(4)
-		opb, _ := blt.ProposerTransaction().CollectTxFee()
+	// with wrong `CollectTxFee.Height`
+	testFunc(func(opb *operation.CollectTxFee, blt *ballot.Ballot) {
+		opb.Height = blt.B.Proposed.VotingBasis.Height + 1
+	})
+	// with wrong `CollectTxFee.BlockHash`
+	testFunc(func(opb *operation.CollectTxFee, blt *ballot.Ballot) {
 		opb.BlockHash = blt.B.Proposed.VotingBasis.BlockHash + "showme"
-		ptx := blt.ProposerTransaction()
-		ptx.B.Operations[0].B = opb
-		blt.SetProposerTransaction(ptx)
-		blt.Sign(p.proposerNode.Keypair(), p.config.NetworkID)
-
-		{
-			err := blt.ProposerTransaction().IsWellFormed(p.config)
-			require.NoError(t, err)
-		}
-		{
-			err := blt.ProposerTransaction().IsWellFormedWithBallot(*blt, p.config)
-			require.Equal(t, errors.InvalidOperation, err)
-		}
-	}
-
-	{
-		// with wrong `CollectTxFee.TotalTxs`
-		blt := p.MakeBallot(4)
-		opb, _ := blt.ProposerTransaction().CollectTxFee()
+	})
+	// with wrong `CollectTxFee.TotalTxs`
+	testFunc(func(opb *operation.CollectTxFee, blt *ballot.Ballot) {
 		opb.TotalTxs = blt.B.Proposed.VotingBasis.TotalTxs + 2
-		ptx := blt.ProposerTransaction()
-		ptx.B.Operations[0].B = opb
-		blt.SetProposerTransaction(ptx)
-		blt.Sign(p.proposerNode.Keypair(), p.config.NetworkID)
-
-		{
-			err := blt.ProposerTransaction().IsWellFormed(p.config)
-			require.NoError(t, err)
-		}
-		{
-			err := blt.ProposerTransaction().IsWellFormedWithBallot(*blt, p.config)
-			require.Equal(t, errors.InvalidOperation, err)
-		}
-	}
+	})
 }
 
 func TestProposedTransactionWithWrongOperationBodyInflationFeeBlockData(t *testing.T) {
 	p := &ballotCheckerProposedTransaction{}
 	p.Prepare()
 
-	{
-		// with wrong `Inflation.Height`
+	testFunc := func(modifier func(*operation.Inflation, *ballot.Ballot)) {
 		blt := p.MakeBallot(4)
 		opb, _ := blt.ProposerTransaction().Inflation()
+		modifier(&opb, blt)
+		ptx := blt.ProposerTransaction()
+		ptx.B.Operations[1].B = opb
+		blt.SetProposerTransaction(ptx)
+		blt.Sign(p.proposerNode.Keypair(), p.config.NetworkID)
+
+		{
+			err := blt.ProposerTransaction().IsWellFormed(p.config)
+			require.NoError(t, err)
+		}
+		{
+			err := blt.ProposerTransaction().IsWellFormedWithBallot(*blt, p.config)
+			require.Equal(t, errors.InvalidOperation, err)
+		}
+	}
+
+	// with wrong `Inflation.Height`
+	testFunc(func(opb *operation.Inflation, blt *ballot.Ballot) {
 		opb.Height = blt.B.Proposed.VotingBasis.Height + 1
-		ptx := blt.ProposerTransaction()
-		ptx.B.Operations[1].B = opb
-		blt.SetProposerTransaction(ptx)
-		blt.Sign(p.proposerNode.Keypair(), p.config.NetworkID)
-
-		{
-			err := blt.ProposerTransaction().IsWellFormed(p.config)
-			require.NoError(t, err)
-		}
-		{
-			err := blt.ProposerTransaction().IsWellFormedWithBallot(*blt, p.config)
-			require.Equal(t, errors.InvalidOperation, err)
-		}
-	}
-
-	{
-		// with wrong `Inflation.BlockHash`
-		blt := p.MakeBallot(4)
-		opb, _ := blt.ProposerTransaction().Inflation()
+	})
+	// with wrong `Inflation.BlockHash`
+	testFunc(func(opb *operation.Inflation, blt *ballot.Ballot) {
 		opb.BlockHash = blt.B.Proposed.VotingBasis.BlockHash + "showme"
-		ptx := blt.ProposerTransaction()
-		ptx.B.Operations[1].B = opb
-		blt.SetProposerTransaction(ptx)
-		blt.Sign(p.proposerNode.Keypair(), p.config.NetworkID)
-
-		{
-			err := blt.ProposerTransaction().IsWellFormed(p.config)
-			require.NoError(t, err)
-		}
-		{
-			err := blt.ProposerTransaction().IsWellFormedWithBallot(*blt, p.config)
-			require.Equal(t, errors.InvalidOperation, err)
-		}
-	}
-
-	{
-		// with wrong `Inflation.TotalTxs`
-		blt := p.MakeBallot(4)
-		opb, _ := blt.ProposerTransaction().Inflation()
+	})
+	// with wrong `Inflation.TotalTxs`
+	testFunc(func(opb *operation.Inflation, blt *ballot.Ballot) {
 		opb.TotalTxs = blt.B.Proposed.VotingBasis.TotalTxs + 2
-		ptx := blt.ProposerTransaction()
-		ptx.B.Operations[1].B = opb
-		blt.SetProposerTransaction(ptx)
-		blt.Sign(p.proposerNode.Keypair(), p.config.NetworkID)
-
-		{
-			err := blt.ProposerTransaction().IsWellFormed(p.config)
-			require.NoError(t, err)
-		}
-		{
-			err := blt.ProposerTransaction().IsWellFormedWithBallot(*blt, p.config)
-			require.Equal(t, errors.InvalidOperation, err)
-		}
-	}
+	})
 }
 
 func TestProposedTransactionWithCollectTxFeeWrongAmount(t *testing.T) {

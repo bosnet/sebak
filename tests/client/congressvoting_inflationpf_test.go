@@ -8,14 +8,15 @@ import (
 	"testing"
 	"time"
 
-	"boscoin.io/sebak/lib/block"
+	"encoding/json"
+
+	"github.com/stellar/go/keypair"
+	"github.com/stretchr/testify/require"
+
 	"boscoin.io/sebak/lib/client"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/transaction"
 	"boscoin.io/sebak/lib/transaction/operation"
-	"encoding/json"
-	"github.com/stellar/go/keypair"
-	"github.com/stretchr/testify/require"
 )
 
 func TestInflationPF(t *testing.T) {
@@ -72,9 +73,8 @@ func TestInflationPF(t *testing.T) {
 		body, err := tx.Serialize()
 		require.NoError(t, err)
 
-		pt, err := c.SubmitTransaction(body)
+		_, err = c.SubmitTransaction(body)
 		require.NoError(t, err)
-		require.Equal(t, pt.Status, block.TransactionHistoryStatusSubmitted)
 
 		var e error
 		for second := time.Duration(0); second < time.Second*10; second = second + time.Millisecond*500 {
@@ -114,9 +114,11 @@ func TestInflationPF(t *testing.T) {
 
 		ob := operation.NewCongressVotingResult(
 			"dummy1",
-			[]string{"a", "b"},
+			[]string{"http://1.1.1.1/a", "http://1.1.1.1/b"},
 			"dummy2",
-			[]string{"c", "d"},
+			[]string{"http://1.1.1.1/c", "http://1.1.1.1/d"},
+			"dummy3",
+			[]string{"http://1.1.1.1/e", "http://1.1.1.1/f"},
 			100,
 			70,
 			20,

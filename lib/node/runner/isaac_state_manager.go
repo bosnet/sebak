@@ -226,7 +226,7 @@ func (sm *ISAACStateManager) Start() {
 					begin = metrics.Consensus.SetBlockIntervalSeconds(begin)
 
 					if sm.nr.localNode.State() == node.StateCONSENSUS {
-						sm.proposeOrWait(timer, state)
+						sm.proposeOrWait(timer, state.Round)
 					}
 				} else {
 					sm.resetTimer(timer, state.BallotState)
@@ -266,7 +266,7 @@ func (sm *ISAACStateManager) broadcastExpiredBallot(state consensus.ISAACState) 
 	newExpiredBallot.Sign(sm.nr.localNode.Keypair(), sm.nr.Conf.NetworkID)
 
 	sm.nr.Log().Debug("broadcast", "ballot", *newExpiredBallot)
-	sm.nr.ConnectionManager().Broadcast(*newExpiredBallot)
+	sm.nr.broadcastBallot(*newExpiredBallot)
 }
 
 func (sm *ISAACStateManager) resetTimer(timer *time.Timer, state ballot.State) {
@@ -285,19 +285,19 @@ func (sm *ISAACStateManager) resetTimer(timer *time.Timer, state ballot.State) {
 // In proposeOrWait,
 // if nr.localNode is proposer, it proposes new ballot,
 // but if not, it waits for receiving ballot from the other proposer.
-func (sm *ISAACStateManager) proposeOrWait(timer *time.Timer, state consensus.ISAACState) {
+func (sm *ISAACStateManager) proposeOrWait(timer *time.Timer, round uint64) {
 	timer.Reset(time.Duration(1 * time.Hour))
 	sm.setBlockTimeBuffer()
-	state.Height = sm.nr.consensus.LatestBlock().Height
-	proposer := sm.nr.Consensus().SelectProposer(state.Height, state.Round)
+	height := sm.nr.consensus.LatestBlock().Height
+	proposer := sm.nr.Consensus().SelectProposer(height, round)
 	log.Debug("selected proposer", "proposer", proposer)
 
 	if proposer == sm.nr.localNode.Address() {
 		time.Sleep(sm.blockTimeBuffer)
-		if _, err := sm.nr.proposeNewBallot(state.Round); err == nil {
-			log.Debug("propose new ballot", "proposer", proposer, "round", state.Round, "ballotState", ballot.StateSIGN)
+		if _, err := sm.nr.proposeNewBallot(round); err == nil {
+			log.Debug("propose new ballot", "proposer", proposer, "round", round, "ballotState", ballot.StateSIGN)
 		} else {
-			log.Error("failed to proposeNewBallot", "height", sm.state.Height, "error", err)
+			log.Error("failed to proposeNewBallot", "height", height, "error", err)
 		}
 		timer.Reset(sm.Conf.TimeoutINIT)
 	} else {

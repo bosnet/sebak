@@ -2,7 +2,6 @@ package operation
 
 import (
 	"encoding/json"
-	"net/url"
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/errors"
@@ -24,14 +23,19 @@ type CongressVotingResult struct {
 		ABS   uint64 `json:"abs"`
 	} `json:"result"`
 	CongressVotingHash string `json:"congress_voting_hash"`
+	Membership         struct {
+		Hash string   `json:"hash"`
+		Urls []string `json:"urls"`
+	} `json:"membership"`
 }
 
 func NewCongressVotingResult(
 	ballotHash string, ballotUrls []string,
 	votersHash string, votersUrls []string,
+	membershipHash string, membershipUrls []string,
 	resultCount, resultYes, resultNo, resultABS uint64,
-	congressVotingHash string) CongressVotingResult {
-
+	congressVotingHash string,
+) CongressVotingResult {
 	return CongressVotingResult{
 		BallotStamps: struct {
 			Hash string   `json:"hash"`
@@ -41,6 +45,10 @@ func NewCongressVotingResult(
 			Hash string   `json:"hash"`
 			Urls []string `json:"urls"`
 		}{votersHash, votersUrls},
+		Membership: struct {
+			Hash string   `json:"hash"`
+			Urls []string `json:"urls"`
+		}{membershipHash, membershipUrls},
 		Result: struct {
 			Count uint64 `json:"count"`
 			Yes   uint64 `json:"yes"`
@@ -60,8 +68,8 @@ func (o CongressVotingResult) IsWellFormed(common.Config) (err error) {
 	}
 
 	for _, u := range o.BallotStamps.Urls {
-		if _, err := url.Parse(u); err != nil {
-			return errors.InvalidOperation
+		if _, err := common.StrictURLParse(u); err != nil {
+			return errors.InvalidOperation.Clone().SetData("error", err)
 		}
 	}
 
@@ -70,8 +78,18 @@ func (o CongressVotingResult) IsWellFormed(common.Config) (err error) {
 	}
 
 	for _, u := range o.Voters.Urls {
-		if _, err := url.Parse(u); err != nil {
-			return errors.InvalidOperation
+		if _, err := common.StrictURLParse(u); err != nil {
+			return errors.InvalidOperation.Clone().SetData("error", err)
+		}
+	}
+
+	if len(o.Membership.Hash) == 0 {
+		return errors.OperationBodyInsufficient
+	}
+
+	for _, u := range o.Membership.Urls {
+		if _, err := common.StrictURLParse(u); err != nil {
+			return errors.InvalidOperation.Clone().SetData("error", err)
 		}
 	}
 

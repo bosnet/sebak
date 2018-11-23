@@ -81,27 +81,6 @@ func HasTransaction(c common.Checker, args ...interface{}) (err error) {
 	return nil
 }
 
-// SaveTransactionHistory checks transaction is in
-// `BlockTransactionHistory`, which has the received transaction recently.
-func SaveTransactionHistory(c common.Checker, args ...interface{}) (err error) {
-	checker := c.(*MessageChecker)
-
-	var found bool
-	if found, err = block.ExistsBlockTransactionHistory(checker.Storage, checker.Transaction.GetHash()); found && err == nil {
-		checker.Log.Debug("found in history")
-		err = errors.NewButKnownMessage
-		return
-	}
-
-	if err = block.SaveTransactionHistory(checker.Storage, checker.Transaction, block.TransactionHistoryStatusSubmitted); err != nil {
-		return
-	}
-
-	checker.Log.Debug("saved in history")
-
-	return
-}
-
 // SameSource checks there are transactions which has same source in the
 // `Pool`.
 func MessageHasSameSource(c common.Checker, args ...interface{}) (err error) {

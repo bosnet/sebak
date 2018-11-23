@@ -29,9 +29,7 @@ func prepareAPIServer() (*httptest.Server, *storage.LevelDBBackend) {
 	router.HandleFunc(GetAccountOperationsHandlerPattern, apiHandler.GetOperationsByAccountHandler).Methods("GET")
 	router.HandleFunc(GetTransactionsHandlerPattern, apiHandler.GetTransactionsHandler).Methods("GET")
 	router.HandleFunc(GetTransactionByHashHandlerPattern, apiHandler.GetTransactionByHashHandler).Methods("GET")
-	router.HandleFunc(GetAccountHandlerPattern, apiHandler.GetAccountHandler).Methods("GET")
-	router.HandleFunc(GetAccountHandlerPattern, apiHandler.GetAccountHandler).Methods("GET")
-	router.HandleFunc(GetAccountHandlerPattern, apiHandler.GetAccountHandler).Methods("GET")
+	router.HandleFunc(GetTransactionStatusHandlerPattern, apiHandler.GetTransactionStatusByHashHandler).Methods("GET")
 	router.HandleFunc(GetTransactionOperationsHandlerPattern, apiHandler.GetOperationsByTxHashHandler).Methods("GET")
 	router.HandleFunc(GetBlocksHandlerPattern, apiHandler.GetBlocksHandler).Methods("GET")
 	router.HandleFunc(GetBlockHandlerPattern, apiHandler.GetBlockHandler).Methods("GET")
@@ -52,7 +50,7 @@ func prepareOps(storage *storage.LevelDBBackend, count int) (*keypair.Full, []bl
 
 	return kp, boList
 }
-func prepareOpsWithoutSave(count int, st *storage.LevelDBBackend) (*keypair.Full, []block.BlockOperation) {
+func prepareOpsWithoutSave(count int, st *storage.LevelDBBackend) (*keypair.Full, block.Block, []block.BlockOperation) {
 	kp := keypair.Random()
 	var txs []transaction.Transaction
 	var txHashes []string
@@ -74,7 +72,7 @@ func prepareOpsWithoutSave(count int, st *storage.LevelDBBackend) (*keypair.Full
 		}
 	}
 
-	return kp, boList
+	return kp, theBlock, boList
 }
 
 func prepareTxs(storage *storage.LevelDBBackend, count int) (*keypair.Full, []block.BlockTransaction) {

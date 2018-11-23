@@ -235,10 +235,6 @@ func ValidateTx(st *storage.LevelDBBackend, config common.Config, tx transaction
 
 	for _, op := range tx.B.Operations {
 		if err = ValidateOp(st, config, ba, op); err != nil {
-
-			key := block.GetBlockTransactionHistoryKey(tx.H.Hash)
-			st.Remove(key)
-
 			return
 		}
 	}

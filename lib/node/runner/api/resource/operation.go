@@ -5,12 +5,14 @@ import (
 
 	"boscoin.io/sebak/lib/block"
 
-	"boscoin.io/sebak/lib/transaction/operation"
 	"github.com/nvellon/hal"
+
+	"boscoin.io/sebak/lib/transaction/operation"
 )
 
 type Operation struct {
-	bo *block.BlockOperation
+	Block *block.Block
+	bo    *block.BlockOperation
 }
 
 func NewOperation(bo *block.BlockOperation) *Operation {
@@ -20,16 +22,28 @@ func NewOperation(bo *block.BlockOperation) *Operation {
 	return o
 }
 
+func (o Operation) BlockOperation() *block.BlockOperation {
+	return o.bo
+}
+
 func (o Operation) GetMap() hal.Entry {
 	body, _ := operation.UnmarshalBodyJSON(o.bo.Type, o.bo.Body)
 
-	return hal.Entry{
-		"hash":    o.bo.Hash,
-		"source":  o.bo.Source,
-		"type":    o.bo.Type,
-		"tx_hash": o.bo.TxHash,
-		"body":    body,
+	entry := hal.Entry{
+		"hash":         o.bo.Hash,
+		"source":       o.bo.Source,
+		"type":         o.bo.Type,
+		"tx_hash":      o.bo.TxHash,
+		"body":         body,
+		"block_height": o.bo.Height,
 	}
+
+	if o.Block != nil {
+		entry["confirmed"] = o.Block.Confirmed
+		entry["proposed_time"] = o.Block.ProposedTime
+	}
+
+	return entry
 }
 
 func (o Operation) Resource() *hal.Resource {

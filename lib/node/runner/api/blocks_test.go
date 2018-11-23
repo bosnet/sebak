@@ -2,13 +2,12 @@ package api
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"io/ioutil"
-	"sync"
 	"testing"
 
 	"boscoin.io/sebak/lib/block"
-	"boscoin.io/sebak/lib/common/observer"
 	"github.com/stretchr/testify/require"
 )
 
@@ -69,8 +68,6 @@ func TestBlocksHandler(t *testing.T) {
 }
 
 func TestBlocksHandlerStream(t *testing.T) {
-	var wg sync.WaitGroup
-	wg.Add(1)
 
 	ts, st := prepareAPIServer()
 	defer st.Close()
@@ -78,22 +75,6 @@ func TestBlocksHandlerStream(t *testing.T) {
 
 	genesis := block.GetLatestBlock(st)
 	b := block.TestMakeNewBlockWithPrevBlock(genesis, []string{})
-
-	//Wait until request registerted to observer
-	{
-		go func() {
-			for {
-				observer.BlockObserver.RLock()
-				if len(observer.BlockObserver.Callbacks) > 0 {
-					observer.BlockObserver.RUnlock()
-					break
-				}
-				observer.BlockObserver.RUnlock()
-			}
-			b.MustSave(st)
-			wg.Done()
-		}()
-	}
 
 	// Do a Request
 	var reader *bufio.Reader
@@ -104,14 +85,23 @@ func TestBlocksHandlerStream(t *testing.T) {
 		reader = bufio.NewReader(respBody)
 	}
 
+	// Save
+	{
+		b.MustSave(st)
+	}
+
 	// Check the output
 	{
 		line, err := reader.ReadBytes('\n')
-		require.NoError(t, err)
+		line = bytes.Trim(line, "\n")
+		if len(line) == 0 {
+			line, err = reader.ReadBytes('\n')
+			require.NoError(t, err)
+			line = bytes.Trim(line, "\n")
+		}
 		recv := make(map[string]interface{})
 		json.Unmarshal(line, &recv)
 		require.Equal(t, b.Hash, recv["hash"], "hash is not the same")
 		require.Equal(t, b.Height, uint64(recv["height"].(float64)), "height is not the same")
 	}
-	wg.Wait()
 }

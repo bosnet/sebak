@@ -7,14 +7,12 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
-	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/node/runner/api/resource"
 	"boscoin.io/sebak/lib/transaction/operation"
 )
@@ -60,6 +58,10 @@ func TestGetOperationsByAccountHandler(t *testing.T) {
 			hash := bt["hash"].(string)
 
 			require.Equal(t, hash, boList[i].Hash, "hash is not same")
+
+			blk, _ := block.GetBlockByHeight(storage, uint64(bt["block_height"].(float64)))
+			require.Equal(t, blk.ProposedTime, bt["proposed_time"].(string))
+			require.Equal(t, blk.Confirmed, bt["confirmed"].(string))
 		}
 	}
 }
@@ -110,44 +112,28 @@ func TestGetOperationsByAccountHandlerWithType(t *testing.T) {
 			hash := bt["hash"].(string)
 
 			require.Equal(t, hash, boList[i].Hash, "hash is not same")
+
+			blk, _ := block.GetBlockByHeight(storage, uint64(bt["block_height"].(float64)))
+			require.Equal(t, blk.ProposedTime, bt["proposed_time"].(string))
+			require.Equal(t, blk.Confirmed, bt["confirmed"].(string))
 		}
 	}
 
 }
 
 func TestGetOperationsByAccountHandlerStream(t *testing.T) {
-	var wg sync.WaitGroup
-	wg.Add(1)
 
 	ts, storage := prepareAPIServer()
-	defer storage.Close()
 	defer ts.Close()
 
 	boMap := make(map[string]block.BlockOperation)
-	kp, boList := prepareOpsWithoutSave(10, storage)
+	kp, blk, boList := prepareOpsWithoutSave(10, storage)
+
 	for _, bo := range boList {
 		boMap[bo.Hash] = bo
 	}
 	ba := block.NewBlockAccount(kp.Address(), common.Amount(common.BaseReserve))
 	ba.MustSave(storage)
-
-	// Wait until request registered to observer
-	{
-		go func() {
-			for {
-				observer.BlockOperationObserver.RLock()
-				if len(observer.BlockOperationObserver.Callbacks) > 0 {
-					observer.BlockOperationObserver.RUnlock()
-					break
-				}
-				observer.BlockOperationObserver.RUnlock()
-			}
-			for _, bo := range boMap {
-				bo.MustSave(storage)
-			}
-			wg.Done()
-		}()
-	}
 
 	// Do a Request
 	var reader *bufio.Reader
@@ -158,22 +144,39 @@ func TestGetOperationsByAccountHandlerStream(t *testing.T) {
 		reader = bufio.NewReader(respBody)
 	}
 
+	// Save
+	{
+		blk.MustSave(storage)
+		for _, bo := range boMap {
+			bo.MustSave(storage)
+		}
+	}
+
 	// Check the output
 	{
 		// Do stream Request to the Server
 		for n := 0; n < 10; n++ {
 			line, err := reader.ReadBytes('\n')
-			require.NoError(t, err)
-			line = bytes.Trim(line, "\n\t ")
+			line = bytes.Trim(line, "\n")
+			if len(line) == 0 {
+				line, err = reader.ReadBytes('\n')
+				require.NoError(t, err)
+				line = bytes.Trim(line, "\n")
+			}
 			recv := make(map[string]interface{})
 			json.Unmarshal(line, &recv)
+
 			bo := boMap[recv["hash"].(string)]
 			r := resource.NewOperation(&bo)
+			r.Block = &blk
 			txS, err := json.Marshal(r.Resource())
 			require.NoError(t, err)
 			require.Equal(t, txS, line)
+
+			require.Equal(t, blk.ProposedTime, recv["proposed_time"].(string))
+			require.Equal(t, blk.Confirmed, recv["confirmed"].(string))
 		}
 	}
 
-	wg.Wait()
+	storage.Close()
 }

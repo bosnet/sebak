@@ -17,6 +17,7 @@ const (
 	BlockOperationPrefixPeers             = string(0x24)
 	BlockOperationPrefixCreateFrozen      = string(0x25)
 	BlockOperationPrefixFrozenLinked      = string(0x26)
+	BlockOperationPrefixBlockHeight       = string(0x27)
 	BlockAccountPrefixAddress             = string(0x30)
 	BlockAccountPrefixCreated             = string(0x31)
 	BlockAccountSequenceIDPrefix          = string(0x32)

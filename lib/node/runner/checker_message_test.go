@@ -5,7 +5,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/transaction"
@@ -40,12 +39,6 @@ func TestMessageChecker(t *testing.T) {
 	err = HasTransaction(checker)
 	require.NoError(t, err)
 
-	err = SaveTransactionHistory(checker)
-	require.NoError(t, err)
-	var found bool
-	found, err = block.ExistsBlockTransactionHistory(checker.Storage, checker.Transaction.GetHash())
-	require.True(t, found)
-
 	err = PushIntoTransactionPool(checker)
 	require.NoError(t, err)
 	require.True(t, checker.TransactionPool.Has(validTx.GetHash()))
@@ -55,16 +48,12 @@ func TestMessageChecker(t *testing.T) {
 	err = HasTransaction(checker)
 	require.Equal(t, err, errors.NewButKnownMessage)
 
-	err = SaveTransactionHistory(checker)
-	require.Equal(t, err, errors.NewButKnownMessage)
-
 	err = PushIntoTransactionPool(checker)
 	require.NoError(t, err)
 
 	var CheckerFuncs = []common.CheckerFunc{
 		TransactionUnmarshal,
 		HasTransaction,
-		SaveTransactionHistory,
 		PushIntoTransactionPool,
 	}
 

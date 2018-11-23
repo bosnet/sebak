@@ -8,6 +8,7 @@ import (
 	neturl "net/url"
 	"strconv"
 	"strings"
+	"sync"
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/storage"
@@ -23,7 +24,7 @@ const (
 	UrlFrozenAccounts        = "/frozen-accounts"
 	UrlTransactions          = "/transactions"
 	UrlTransactionByHash     = "/transactions/{id}"
-	UrlTransactionHistory    = "/transactions/{id}/history"
+	UrlTransactionStatus     = "/transactions/{id}/status"
 	UrlTransactionOperations = "/transactions/{id}/operations"
 )
 
@@ -184,8 +185,8 @@ func (c *Client) LoadTransaction(id string, queries ...Q) (transaction Transacti
 	return
 }
 
-func (c *Client) LoadTransactionHistory(id string, queries ...Q) (transactionHistory TransactionHistory, err error) {
-	url := strings.Replace(UrlTransactionHistory, "{id}", id, -1)
+func (c *Client) LoadTransactionStatus(id string, queries ...Q) (transactionHistory TransactionStatus, err error) {
+	url := strings.Replace(UrlTransactionStatus, "{id}", id, -1)
 	url += Queries(queries).toQueryString()
 	err = c.getResponse(url, http.Header{}, &transactionHistory)
 	return
@@ -232,6 +233,32 @@ func (c *Client) SubmitTransaction(tx []byte) (pTransaction TransactionPost, err
 	return
 }
 
+func (c *Client) SubmitTransactionAndWait(hash string, tx []byte) (pTransaction TransactionPost, err error) {
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	go func() {
+		err = c.StreamTransactionStatus(ctx, hash, nil, func(status TransactionStatus) {
+			if status.Status == "confirmed" {
+				cancel()
+			}
+		})
+		wg.Done()
+	}()
+
+	pTransaction, err = c.SubmitTransaction(tx)
+	if err != nil {
+		cancel()
+		return pTransaction, err
+	}
+
+	wg.Wait()
+
+	return
+}
+
 func (c *Client) Stream(ctx context.Context, theUrl string, cursor *string, handler func(data []byte) error) (err error) {
 	query := neturl.Values{}
 	if cursor != nil {
@@ -247,21 +274,37 @@ func (c *Client) Stream(ctx context.Context, theUrl string, cursor *string, hand
 	defer resp.Body.Close()
 
 	reader := bufio.NewReader(resp.Body)
-	for true {
-		line, err := reader.ReadBytes('\n')
-		if err != nil {
-			return err
-		}
 
-		if len(line) == 0 {
-			continue
-		}
-		handler(line)
+	readChan := make(chan []byte)
+	errChan := make(chan error)
 
+	go func() {
+		for {
+			line, err := reader.ReadBytes('\n')
+			if err != nil {
+				errChan <- err
+				break
+			}
+			readChan <- line
+		}
+	}()
+
+	for {
+		breakFor := false
 		select {
 		case <-ctx.Done():
-			return nil
-		default:
+			resp.Body.Close()
+			breakFor = true
+		case err = <-errChan:
+			breakFor = true
+		case line := <-readChan:
+			if len(line) == 0 {
+				continue
+			}
+			handler(line)
+		}
+		if breakFor {
+			break
 		}
 	}
 
@@ -328,6 +371,20 @@ func (c *Client) StreamTransactionsByAccount(ctx context.Context, id string, cur
 	url := strings.Replace(UrlAccountTransactions, "{id}", id, -1)
 	handlerFunc := func(b []byte) (err error) {
 		var v Transaction
+		err = json.Unmarshal(b, &v)
+		if err != nil {
+			return err
+		}
+		handler(v)
+		return nil
+	}
+	return c.Stream(ctx, url, cursor, handlerFunc)
+}
+
+func (c *Client) StreamTransactionStatus(ctx context.Context, id string, cursor *string, handler func(TransactionStatus)) (err error) {
+	url := strings.Replace(UrlTransactionStatus, "{id}", id, -1)
+	handlerFunc := func(b []byte) (err error) {
+		var v TransactionStatus
 		err = json.Unmarshal(b, &v)
 		if err != nil {
 			return err

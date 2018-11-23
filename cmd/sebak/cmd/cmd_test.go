@@ -134,31 +134,25 @@ func TestAddingSelfWithoutValidators(t *testing.T) {
 }
 
 func TestParseFlagRateLimit(t *testing.T) {
-	{ // weired value
+	testFunc := func(cmdline string) (common.RateLimitRule, error) {
 		testCmd := pflag.NewFlagSet(os.Args[0], pflag.ExitOnError)
 
 		var fr cmdcommon.ListFlags
 		testCmd.Var(&fr, "rate-limit-api", "")
 
-		cmdline := "--rate-limit-api=showme"
 		err := testCmd.Parse(strings.Fields(cmdline))
 		require.NoError(t, err)
 
-		_, err = parseFlagRateLimit(fr, common.RateLimitAPI)
+		return parseFlagRateLimit(fr, common.RateLimitAPI)
+	}
+
+	{ // weird value
+		_, err := testFunc("--rate-limit-api=showme")
 		require.Error(t, err)
 	}
 
 	{ // valid value
-		testCmd := pflag.NewFlagSet(os.Args[0], pflag.ExitOnError)
-
-		var fr cmdcommon.ListFlags
-		testCmd.Var(&fr, "rate-limit-api", "")
-
-		cmdline := "--rate-limit-api=10-S"
-		err := testCmd.Parse(strings.Fields(cmdline))
-		require.NoError(t, err)
-
-		rule, err := parseFlagRateLimit(fr, common.RateLimitAPI)
+		rule, err := testFunc("--rate-limit-api=10-S")
 		require.NoError(t, err)
 		require.Equal(t, time.Second, rule.Default.Period)
 		require.Equal(t, int64(10), rule.Default.Limit)
@@ -166,16 +160,7 @@ func TestParseFlagRateLimit(t *testing.T) {
 	}
 
 	{ // multiple value, last will be choose.
-		testCmd := pflag.NewFlagSet(os.Args[0], pflag.ExitOnError)
-
-		var fr cmdcommon.ListFlags
-		testCmd.Var(&fr, "rate-limit-api", "")
-
-		cmdline := "--rate-limit-api=10-S --rate-limit-api=9-M"
-		err := testCmd.Parse(strings.Fields(cmdline))
-		require.NoError(t, err)
-
-		rule, err := parseFlagRateLimit(fr, common.RateLimitAPI)
+		rule, err := testFunc("--rate-limit-api=10-S --rate-limit-api=9-M")
 		require.NoError(t, err)
 		require.Equal(t, time.Minute, rule.Default.Period)
 		require.Equal(t, int64(9), rule.Default.Limit)
@@ -183,17 +168,8 @@ func TestParseFlagRateLimit(t *testing.T) {
 	}
 
 	{ // with ip address, but `common.RateLimitAPI` will be default
-		testCmd := pflag.NewFlagSet(os.Args[0], pflag.ExitOnError)
-
-		var fr cmdcommon.ListFlags
-		testCmd.Var(&fr, "rate-limit-api", "")
-
-		allowedIP := "1.2.3.4"
-		cmdline := fmt.Sprintf("--rate-limit-api=%s=8-S", allowedIP)
-		err := testCmd.Parse(strings.Fields(cmdline))
-		require.NoError(t, err)
-
-		rule, err := parseFlagRateLimit(fr, common.RateLimitAPI)
+		const allowedIP = "1.2.3.4"
+		rule, err := testFunc("--rate-limit-api=" + allowedIP + "=8-S")
 		require.NoError(t, err)
 		require.Equal(t, common.RateLimitAPI.Period, rule.Default.Period)
 		require.Equal(t, common.RateLimitAPI.Limit, rule.Default.Limit)
@@ -204,17 +180,8 @@ func TestParseFlagRateLimit(t *testing.T) {
 	}
 
 	{ // with ip address and with default
-		testCmd := pflag.NewFlagSet(os.Args[0], pflag.ExitOnError)
-
-		var fr cmdcommon.ListFlags
-		testCmd.Var(&fr, "rate-limit-api", "")
-
-		allowedIP := "1.2.3.4"
-		cmdline := fmt.Sprintf("--rate-limit-api=11-H --rate-limit-api=%s=8-S", allowedIP)
-		err := testCmd.Parse(strings.Fields(cmdline))
-		require.NoError(t, err)
-
-		rule, err := parseFlagRateLimit(fr, common.RateLimitAPI)
+		const allowedIP = "1.2.3.4"
+		rule, err := testFunc("--rate-limit-api=11-H --rate-limit-api=" + allowedIP + "=8-S")
 		require.NoError(t, err)
 		require.Equal(t, time.Hour, rule.Default.Period)
 		require.Equal(t, int64(11), rule.Default.Limit)
@@ -225,16 +192,7 @@ func TestParseFlagRateLimit(t *testing.T) {
 	}
 
 	{ // unlimit
-		testCmd := pflag.NewFlagSet(os.Args[0], pflag.ExitOnError)
-
-		var fr cmdcommon.ListFlags
-		testCmd.Var(&fr, "rate-limit-api", "")
-
-		cmdline := "--rate-limit-api=0-S"
-		err := testCmd.Parse(strings.Fields(cmdline))
-		require.NoError(t, err)
-
-		rule, err := parseFlagRateLimit(fr, common.RateLimitAPI)
+		rule, err := testFunc("--rate-limit-api=0-S")
 		require.NoError(t, err)
 		require.Equal(t, time.Second, rule.Default.Period)
 		require.Equal(t, int64(0), rule.Default.Limit)
@@ -243,48 +201,21 @@ func TestParseFlagRateLimit(t *testing.T) {
 
 	{ // lowercase
 		{ // second
-			testCmd := pflag.NewFlagSet(os.Args[0], pflag.ExitOnError)
-
-			var fr cmdcommon.ListFlags
-			testCmd.Var(&fr, "rate-limit-api", "")
-
-			cmdline := "--rate-limit-api=10-s"
-			err := testCmd.Parse(strings.Fields(cmdline))
-			require.NoError(t, err)
-
-			rule, err := parseFlagRateLimit(fr, common.RateLimitAPI)
+			rule, err := testFunc("--rate-limit-api=10-s")
 			require.NoError(t, err)
 			require.Equal(t, time.Second, rule.Default.Period)
 			require.Equal(t, int64(10), rule.Default.Limit)
 			require.Equal(t, 0, len(rule.ByIPAddress))
 		}
 		{ // minute
-			testCmd := pflag.NewFlagSet(os.Args[0], pflag.ExitOnError)
-
-			var fr cmdcommon.ListFlags
-			testCmd.Var(&fr, "rate-limit-api", "")
-
-			cmdline := "--rate-limit-api=10-m"
-			err := testCmd.Parse(strings.Fields(cmdline))
-			require.NoError(t, err)
-
-			rule, err := parseFlagRateLimit(fr, common.RateLimitAPI)
+			rule, err := testFunc("--rate-limit-api=10-m")
 			require.NoError(t, err)
 			require.Equal(t, time.Minute, rule.Default.Period)
 			require.Equal(t, int64(10), rule.Default.Limit)
 			require.Equal(t, 0, len(rule.ByIPAddress))
 		}
 		{ // hour
-			testCmd := pflag.NewFlagSet(os.Args[0], pflag.ExitOnError)
-
-			var fr cmdcommon.ListFlags
-			testCmd.Var(&fr, "rate-limit-api", "")
-
-			cmdline := "--rate-limit-api=10-h"
-			err := testCmd.Parse(strings.Fields(cmdline))
-			require.NoError(t, err)
-
-			rule, err := parseFlagRateLimit(fr, common.RateLimitAPI)
+			rule, err := testFunc("--rate-limit-api=10-h")
 			require.NoError(t, err)
 			require.Equal(t, time.Hour, rule.Default.Period)
 			require.Equal(t, int64(10), rule.Default.Limit)

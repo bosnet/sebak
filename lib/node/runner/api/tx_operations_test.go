@@ -7,15 +7,12 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
-	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
 	"boscoin.io/sebak/lib/block"
-	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/common/keypair"
-	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/node/runner/api/resource"
 	"boscoin.io/sebak/lib/transaction"
 )
@@ -53,6 +50,8 @@ func TestGetOperationsByTxHashHandler(t *testing.T) {
 
 	records := recv["_embedded"].(map[string]interface{})["records"].([]interface{})
 
+	blk, _ := block.GetBlock(storage, bt.Block)
+
 	for _, r := range records {
 		item := r.(map[string]interface{})
 		hash := item["hash"].(string)
@@ -60,44 +59,29 @@ func TestGetOperationsByTxHashHandler(t *testing.T) {
 		bo, err := block.GetBlockOperation(storage, hash)
 		require.NoError(t, err)
 		require.NotNil(t, bo)
+		require.NotNil(t, item["proposed_time"]) // `block.Block.ProposedTime`
+		require.Equal(t, blk.ProposedTime, item["proposed_time"].(string))
+		require.Equal(t, blk.Confirmed, item["confirmed"].(string))
+		require.Equal(t, blk.Height, uint64(item["block_height"].(float64)))
 	}
 }
 
 func TestGetOperationsByTxHashHandlerStream(t *testing.T) {
-	var wg sync.WaitGroup
-	wg.Add(1)
 
 	ts, storage := prepareAPIServer()
-	defer storage.Close()
 	defer ts.Close()
 
 	kp := keypair.Random()
 	tx := transaction.TestMakeTransactionWithKeypair(networkID, 10, kp)
-	bt := block.NewBlockTransactionFromTransaction("block-hash", 1, common.NowISO8601(), tx)
+
+	blk := block.TestMakeNewBlockWithPrevBlock(block.GetLatestBlock(storage), []string{tx.GetHash()})
+	bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.ProposedTime, tx)
 
 	boMap := make(map[string]block.BlockOperation)
 	for _, op := range tx.B.Operations {
-		bo, err := block.NewBlockOperationFromOperation(op, tx, 0)
+		bo, err := block.NewBlockOperationFromOperation(op, tx, blk.Height)
 		require.NoError(t, err)
 		boMap[bo.Hash] = bo
-	}
-
-	// Wait until request registered to observer
-	{
-		go func() {
-			for {
-				observer.BlockOperationObserver.RLock()
-				if len(observer.BlockOperationObserver.Callbacks) > 0 {
-					observer.BlockOperationObserver.RUnlock()
-					break
-				}
-				observer.BlockOperationObserver.RUnlock()
-			}
-			for _, bo := range boMap {
-				bo.MustSave(storage)
-			}
-			wg.Done()
-		}()
 	}
 
 	// Do a Request
@@ -109,22 +93,41 @@ func TestGetOperationsByTxHashHandlerStream(t *testing.T) {
 		reader = bufio.NewReader(respBody)
 	}
 
+	// Save
+	{
+		blk.MustSave(storage)
+		bt.MustSave(storage)
+
+		for _, bo := range boMap {
+			bo.MustSave(storage)
+		}
+	}
+
 	// Check the output
 	{
 		// Do stream Request to the Server
 		for n := 0; n < 10; n++ {
 			line, err := reader.ReadBytes('\n')
-			require.NoError(t, err)
-			line = bytes.Trim(line, "\n\t ")
+			line = bytes.Trim(line, "\n")
+			if len(line) == 0 {
+				line, err = reader.ReadBytes('\n')
+				require.NoError(t, err)
+				line = bytes.Trim(line, "\n")
+			}
 			recv := make(map[string]interface{})
 			json.Unmarshal(line, &recv)
 			bo := boMap[recv["hash"].(string)]
 			r := resource.NewOperation(&bo)
+			r.Block = &blk
 			txS, err := json.Marshal(r.Resource())
 			require.NoError(t, err)
 			require.Equal(t, txS, line)
+			require.NotNil(t, recv["confirmed"]) // `block.Block.ProposedTime`
+			require.Equal(t, blk.ProposedTime, recv["proposed_time"].(string))
+			require.Equal(t, blk.Confirmed, recv["confirmed"].(string))
+			require.Equal(t, blk.Height, uint64(recv["block_height"].(float64)))
 		}
 	}
 
-	wg.Wait()
+	storage.Close()
 }

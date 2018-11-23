@@ -39,7 +39,9 @@ func (api NetworkHandlerAPI) GetAccountHandler(w http.ResponseWriter, r *http.Re
 		event := fmt.Sprintf("address-%s", address)
 		es := NewEventStream(w, r, renderEventStream, DefaultContentType)
 		payload, err := readFunc()
-		if err == nil {
+		if err != nil {
+			es.Render(nil)
+		} else {
 			es.Render(payload)
 		}
 		es.Run(observer.BlockAccountObserver, event)
@@ -161,8 +163,12 @@ func (api NetworkHandlerAPI) GetFrozenAccountsByAccountHandler(w http.ResponseWr
 		event := fmt.Sprintf("linked-%s", address)
 		es := NewEventStream(w, r, renderEventStream, DefaultContentType)
 		txs := readFunc()
-		for _, tx := range txs {
-			es.Render(tx)
+		if len(txs) > 0 {
+			for _, tx := range txs {
+				es.Render(tx)
+			}
+		} else {
+			es.Render(nil)
 		}
 		es.Run(observer.BlockOperationObserver, event)
 		return
@@ -277,8 +283,12 @@ func (api NetworkHandlerAPI) GetFrozenAccountsHandler(w http.ResponseWriter, r *
 		event := "frozen"
 		es := NewEventStream(w, r, renderEventStream, DefaultContentType)
 		txs := readFunc()
-		for _, tx := range txs {
-			es.Render(tx)
+		if len(txs) > 0 {
+			for _, tx := range txs {
+				es.Render(tx)
+			}
+		} else {
+			es.Render(nil)
 		}
 		es.Run(observer.BlockOperationObserver, event)
 		return
