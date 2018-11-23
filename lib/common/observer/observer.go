@@ -5,10 +5,6 @@ import (
 	"strings"
 )
 
-var BlockAccountObserver = observable.New()
-var BlockTransactionObserver = observable.New()
-var BlockObserver = observable.New()
-var BlockOperationObserver = observable.New()
 var SyncBlockWaitObserver = observable.New()
 
 var ResourceObserver = observable.New()
