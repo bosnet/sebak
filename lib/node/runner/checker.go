@@ -43,18 +43,17 @@ func (c CheckerStopCloseConsensus) Checker() common.Checker {
 type BallotChecker struct {
 	common.DefaultChecker
 
-	NodeRunner                 *NodeRunner
-	LocalNode                  *node.LocalNode
-	Message                    common.NetworkMessage
-	IsNew                      bool
-	IsMine                     bool
-	Ballot                     ballot.Ballot
-	VotingHole                 voting.Hole
-	Result                     consensus.RoundVoteResult
-	VotingFinished             bool
-	FinishedVotingHole         voting.Hole
-	LatestBlockSources         []string
-	StoredProposedTransactions []*transaction.Transaction
+	NodeRunner         *NodeRunner
+	LocalNode          *node.LocalNode
+	Message            common.NetworkMessage
+	IsNew              bool
+	IsMine             bool
+	Ballot             ballot.Ballot
+	VotingHole         voting.Hole
+	Result             consensus.RoundVoteResult
+	VotingFinished     bool
+	FinishedVotingHole voting.Hole
+	LatestBlockSources []string
 
 	Log logging.Logger
 }
@@ -662,8 +661,6 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) error {
 	}
 	delete(checker.NodeRunner.Consensus().RunningRounds, basis.Index())
 
-	go api.TriggerEvent(checker.NodeRunner.Storage(), checker.StoredProposedTransactions)
-
 	return err
 }
 
@@ -688,7 +685,7 @@ func saveBlock(checker *BallotChecker) error {
 	}
 	checker.NodeRunner.SavingBlockOperations().Save(*theBlock)
 
-	checker.StoredProposedTransactions = proposedTransactions
+	go api.TriggerEvent(checker.NodeRunner.Storage(), proposedTransactions)
 
 	return nil
 }
