@@ -2,8 +2,6 @@ package consensus
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"sync"
 
 	logging "github.com/inconshreveable/log15"
@@ -11,6 +9,7 @@ import (
 	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/storage"
@@ -30,7 +29,6 @@ type ISAAC struct {
 	proposerSelector    ProposerSelector
 	log                 logging.Logger
 	policy              voting.ThresholdPolicy
-	nodesHeight         map[ /* Node.Address() */ string]uint64
 	syncer              SyncController
 	latestReqSyncHeight uint64
 
@@ -57,7 +55,6 @@ func NewISAAC(node *node.LocalNode, p voting.ThresholdPolicy,
 		proposerSelector:  SequentialSelector{cm},
 		Conf:              conf,
 		log:               log.New(logging.Ctx{"node": node.Alias()}),
-		nodesHeight:       make(map[string]uint64),
 		syncer:            syncer,
 		LatestBallot:      ballot.Ballot{},
 	}
@@ -82,13 +79,6 @@ func (is *ISAAC) ConnectionManager() network.ConnectionManager {
 
 func (is *ISAAC) SelectProposer(blockHeight uint64, round uint64) string {
 	return is.proposerSelector.Select(blockHeight, round)
-}
-
-func (is *ISAAC) SaveNodeHeight(senderAddr string, height uint64) {
-	is.Lock()
-	defer is.Unlock()
-
-	is.nodesHeight[senderAddr] = height
 }
 
 func (is *ISAAC) IsValidVotingBasis(basis voting.Basis, latestBlock block.Block) bool {
@@ -134,34 +124,6 @@ func (is *ISAAC) StartSync(height uint64, nodeAddrs []string) {
 	}
 
 	return
-}
-
-// GetSyncInfo gets the height it needs to sync.
-// It returns height, node list and error.
-// The height is the smallest height above the threshold.
-// The node list is the nodes that sent the ballot when the threshold is exceeded.
-func (is *ISAAC) GetSyncInfo() (uint64, []string, error) {
-	is.log.Debug("begin ISAAC.GetSyncInfo", "is.nodesHeight", is.nodesHeight)
-	threshold := is.policy.Threshold()
-	if len(is.nodesHeight) < threshold {
-		return 1, []string{}, errors.New(fmt.Sprintf("could not find enough nodes (threshold=%d) above", threshold))
-	}
-
-	var nodesHeight []common.KV
-	for k, v := range is.nodesHeight {
-		nodesHeight = append(nodesHeight, common.KV{Key: k, Value: v})
-	}
-
-	common.SortDecByValue(nodesHeight)
-
-	height := nodesHeight[threshold-1].Value
-
-	nodeAddrs := []string{}
-	for _, kv := range nodesHeight[:threshold] {
-		nodeAddrs = append(nodeAddrs, kv.Key)
-	}
-
-	return height, nodeAddrs, nil
 }
 
 func (is *ISAAC) IsVoted(b ballot.Ballot) bool {
@@ -210,7 +172,14 @@ func (is *ISAAC) Vote(b ballot.Ballot) (isNew bool, err error) {
 func (is *ISAAC) CanGetVotingResult(b ballot.Ballot) (RoundVoteResult, voting.Hole, bool) {
 	is.RLock()
 	defer is.RUnlock()
-	runningRound, _ := is.RunningRounds[b.VotingBasis().Index()]
+
+	is.log.Debug("CanGetVotingResult", "ballot", b)
+	runningRound, found := is.RunningRounds[b.VotingBasis().Index()]
+	if !found {
+		// if RunningRound is not found, this ballot will be stopped.
+		return nil, voting.NOTYET, true
+	}
+
 	if roundVote, err := runningRound.RoundVote(b.Proposer()); err == nil {
 		return roundVote.CanGetVotingResult(is.policy, b.State(), is.log)
 	} else {
@@ -221,7 +190,12 @@ func (is *ISAAC) CanGetVotingResult(b ballot.Ballot) (RoundVoteResult, voting.Ho
 func (is *ISAAC) IsVotedByNode(b ballot.Ballot, node string) (bool, error) {
 	is.RLock()
 	defer is.RUnlock()
-	runningRound, _ := is.RunningRounds[b.VotingBasis().Index()]
+
+	runningRound, found := is.RunningRounds[b.VotingBasis().Index()]
+	if !found {
+		return false, errors.RoundVoteNotFound
+	}
+
 	if roundVote, err := runningRound.RoundVote(b.Proposer()); err == nil {
 		return roundVote.IsVotedByNode(b.State(), node), nil
 	} else {
