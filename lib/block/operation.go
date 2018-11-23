@@ -186,10 +186,6 @@ func GetBlockOperationKeyPrefixFrozenLinked(hash string) string {
 	)
 }
 
-func GetBlockOperationKeyPrefixBlockHeight(height uint64) string {
-	return fmt.Sprintf("%s%s-", common.BlockOperationPrefixBlockHeight, common.EncodeUint64ToByteSlice(height))
-}
-
 func GetBlockOperationKeyPrefixTxHash(txHash string) string {
 	return fmt.Sprintf("%s%s-", common.BlockOperationPrefixTxHash, txHash)
 }
@@ -200,6 +196,10 @@ func GetBlockOperationKeyPrefixSource(source string) string {
 
 func GetBlockOperationKeyPrefixSourceAndType(source string, ty operation.OperationType) string {
 	return fmt.Sprintf("%s%s%s-", common.BlockOperationPrefixTypeSource, string(ty), source)
+}
+
+func GetBlockOperationKeyPrefixBlockHeight(height uint64) string {
+	return fmt.Sprintf("%s%s-", common.BlockOperationPrefixBlockHeight, common.EncodeUint64ToByteSlice(height))
 }
 
 func GetBlockOperationKeyPrefixTarget(target string) string {
@@ -228,14 +228,6 @@ func (bo BlockOperation) NewBlockOperationTxHashKey() string {
 	)
 }
 
-func (bo BlockOperation) NewBlockOperationFrozenLinkedKey(hash string) string {
-	return fmt.Sprintf(
-		"%s%s",
-		GetBlockOperationKeyPrefixFrozenLinked(hash),
-		common.EncodeUint64ToByteSlice(bo.Height),
-	)
-}
-
 func (bo BlockOperation) NewBlockOperationSourceKey(source string) string {
 	return fmt.Sprintf(
 		"%s%s%s%s",
@@ -243,6 +235,14 @@ func (bo BlockOperation) NewBlockOperationSourceKey(source string) string {
 		common.EncodeUint64ToByteSlice(bo.Height),
 		common.EncodeUint64ToByteSlice(bo.transaction.B.SequenceID),
 		common.GetUniqueIDFromUUID(),
+	)
+}
+
+func (bo BlockOperation) NewBlockOperationFrozenLinkedKey(hash string) string {
+	return fmt.Sprintf(
+		"%s%s",
+		GetBlockOperationKeyPrefixFrozenLinked(hash),
+		common.EncodeUint64ToByteSlice(bo.Height),
 	)
 }
 
@@ -354,6 +354,15 @@ func GetBlockOperationsByTxHash(st *storage.LevelDBBackend, txHash string, optio
 	return LoadBlockOperationsInsideIterator(st, iterFunc, closeFunc)
 }
 
+func GetBlockOperationsBySource(st *storage.LevelDBBackend, source string, options storage.ListOptions) (
+	func() (BlockOperation, bool, []byte),
+	func(),
+) {
+	iterFunc, closeFunc := st.GetIterator(GetBlockOperationKeyPrefixSource(source), options)
+
+	return LoadBlockOperationsInsideIterator(st, iterFunc, closeFunc)
+}
+
 // Find all operations which created frozen account.
 func GetBlockOperationsByFrozen(st *storage.LevelDBBackend, options storage.ListOptions) (
 	func() (BlockOperation, bool, []byte),
@@ -369,15 +378,6 @@ func GetBlockOperationsByLinked(st *storage.LevelDBBackend, hash string, options
 	func(),
 ) {
 	iterFunc, closeFunc := st.GetIterator(GetBlockOperationKeyPrefixFrozenLinked(hash), options)
-	return LoadBlockOperationsInsideIterator(st, iterFunc, closeFunc)
-}
-
-func GetBlockOperationsBySource(st *storage.LevelDBBackend, source string, options storage.ListOptions) (
-	func() (BlockOperation, bool, []byte),
-	func(),
-) {
-	iterFunc, closeFunc := st.GetIterator(GetBlockOperationKeyPrefixSource(source), options)
-
 	return LoadBlockOperationsInsideIterator(st, iterFunc, closeFunc)
 }
 
