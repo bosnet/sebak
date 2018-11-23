@@ -19,7 +19,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestAccountStream(t *testing.T) {
+func TestSubscribe(t *testing.T) {
 	ts, storage := prepareAPIServer()
 	defer storage.Close()
 	defer ts.Close()
@@ -38,21 +38,23 @@ func TestAccountStream(t *testing.T) {
 	var txReader *bufio.Reader
 	var opReader *bufio.Reader
 	{
-		s := []observer.Conditions{{observer.NewCondition(observer.ResourceAccount, observer.KeyAddress, ba.Address)}}
-		b := common.MustJSONMarshal(s)
+		s := []observer.Conditions{{observer.NewCondition(observer.Acc, observer.Address, ba.Address)}}
+		b, err := json.Marshal(s)
+		require.NoError(t, err)
 		respBody := request(ts, PostSubscribePattern, true, b)
 		defer respBody.Close()
 		acReader = bufio.NewReader(respBody)
 	}
 	{
-		s := []observer.Conditions{{observer.NewCondition(observer.ResourceTransaction, observer.KeyTxHash, bt.Hash)}}
-		b := common.MustJSONMarshal(s)
+		s := []observer.Conditions{{observer.NewCondition(observer.Tx, observer.TxHash, bt.Hash)}}
+		b, err := json.Marshal(s)
+		require.NoError(t, err)
 		respBody := request(ts, PostSubscribePattern, true, b)
 		defer respBody.Close()
 		txReader = bufio.NewReader(respBody)
 	}
 	{
-		s := []observer.Conditions{{observer.NewCondition(observer.ResourceOperation, observer.KeyOpHash, bo.Hash)}}
+		s := []observer.Conditions{{observer.NewCondition(observer.Op, observer.OpHash, bo.Hash)}}
 		b, err := json.Marshal(s)
 		require.NoError(t, err)
 		respBody := request(ts, PostSubscribePattern, true, b)

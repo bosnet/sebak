@@ -53,7 +53,7 @@ func (tp TransactionPool) Save(st *storage.LevelDBBackend) (err error) {
 		return
 	}
 
-	event := observer.NewCondition(observer.ResourceTransactionPool, observer.KeyTxHash, tp.Hash).Event()
+	event := observer.NewCondition(observer.TxPool, observer.TxHash, tp.Hash).Event()
 	go observer.ResourceObserver.Trigger(event, &tp)
 
 	return nil
