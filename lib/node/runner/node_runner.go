@@ -552,8 +552,6 @@ func (nr *NodeRunner) handleBallotMessage(msg interface{}) (err error) {
 			nr.log.Debug("failed to handle ballot", "error", err, "state", baseChecker.Ballot.State())
 			return
 		}
-
-		api.TriggerEvent(nr.storage, checker.StoredProposedTransactions)
 	}
 
 	return

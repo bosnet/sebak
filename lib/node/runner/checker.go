@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"boscoin.io/sebak/lib/node/runner/api"
 	"bufio"
 	"bytes"
 	"io"
@@ -660,6 +661,8 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) error {
 		return errors.New("invalid voting.Hole, `NOTYET`")
 	}
 	delete(checker.NodeRunner.Consensus().RunningRounds, basis.Index())
+
+	go api.TriggerEvent(checker.NodeRunner.Storage(), checker.StoredProposedTransactions)
 
 	return err
 }
