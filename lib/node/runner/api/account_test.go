@@ -2,13 +2,13 @@ package api
 
 import (
 	"bufio"
-	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"testing"
 
 	"boscoin.io/sebak/lib/block"
+	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/common/keypair"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/network/httputils"
@@ -33,7 +33,7 @@ func TestGetAccountHandler(t *testing.T) {
 		readByte, err := ioutil.ReadAll(reader)
 		require.NoError(t, err)
 		recv := make(map[string]interface{})
-		json.Unmarshal(readByte, &recv)
+		common.MustUnmarshalJSON(readByte, &recv)
 
 		require.Equal(t, ba.Address, recv["address"], "address is not same")
 	}
@@ -66,8 +66,7 @@ func TestGetNonExistentAccountHandler(t *testing.T) {
 		reader := bufio.NewReader(respBody)
 		readByte, err := ioutil.ReadAll(reader)
 		require.NoError(t, err)
-		pByte, err := json.Marshal(p)
-		require.NoError(t, err)
+		pByte := common.MustJSONMarshal(p)
 		require.Equal(t, pByte, readByte)
 	}
 }

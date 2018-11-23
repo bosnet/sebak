@@ -2,12 +2,13 @@ package api
 
 import (
 	"bufio"
-	"encoding/json"
 	"io/ioutil"
 	"testing"
 
-	"boscoin.io/sebak/lib/block"
 	"github.com/stretchr/testify/require"
+
+	"boscoin.io/sebak/lib/block"
+	"boscoin.io/sebak/lib/common"
 )
 
 func TestBlocksHandler(t *testing.T) {
@@ -34,7 +35,7 @@ func TestBlocksHandler(t *testing.T) {
 		require.NoError(t, err)
 
 		result := make(map[string]interface{})
-		json.Unmarshal(bs, &result)
+		common.MustUnmarshalJSON(bs, &result)
 		records := result["_embedded"].(map[string]interface{})["records"].([]interface{})
 		links := result["_links"].(map[string]interface{})
 		return records, links

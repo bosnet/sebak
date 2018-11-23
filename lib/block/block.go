@@ -158,7 +158,7 @@ func LoadBlocksInsideIterator(
 			}
 
 			var hash string
-			json.Unmarshal(item.Value, &hash)
+			common.MustUnmarshalJSON(item.Value, &hash)
 
 			b, err := GetBlock(st, hash)
 			if err != nil {
@@ -187,7 +187,7 @@ func LoadBlockHeadersInsideIterator(
 			}
 
 			var hash string
-			json.Unmarshal(item.Value, &hash)
+			common.MustUnmarshalJSON(item.Value, &hash)
 
 			b, err := GetBlockHeader(st, hash)
 			if err != nil {

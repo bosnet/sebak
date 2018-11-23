@@ -2,7 +2,6 @@ package api
 
 import (
 	"bufio"
-	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -50,7 +49,7 @@ func TestGetOperationsByAccountHandler(t *testing.T) {
 		require.NoError(t, err)
 
 		recv := make(map[string]interface{})
-		json.Unmarshal(readByte, &recv)
+		common.MustUnmarshalJSON(readByte, &recv)
 		records := recv["_embedded"].(map[string]interface{})["records"].([]interface{})
 
 		require.Equal(t, len(boList), len(records), "length is not same")
@@ -73,7 +72,7 @@ func TestGetOperationsByAccountHandler(t *testing.T) {
 		require.NoError(t, err)
 
 		recv := make(map[string]interface{})
-		json.Unmarshal(readByte, &recv)
+		common.MustUnmarshalJSON(readByte, &recv)
 		records := recv["_embedded"].(map[string]interface{})["records"].([]interface{})
 
 		require.Equal(t, len(boList), len(records), "length is not same")
@@ -118,7 +117,7 @@ func TestGetOperationsByAccountHandlerWithType(t *testing.T) {
 		require.NoError(t, err)
 
 		recv := make(map[string]interface{})
-		json.Unmarshal(readByte, &recv)
+		common.MustUnmarshalJSON(readByte, &recv)
 		records := recv["_embedded"].(map[string]interface{})["records"]
 		require.Nil(t, records)
 	}
@@ -133,7 +132,7 @@ func TestGetOperationsByAccountHandlerWithType(t *testing.T) {
 		require.NoError(t, err)
 
 		recv := make(map[string]interface{})
-		json.Unmarshal(readByte, &recv)
+		common.MustUnmarshalJSON(readByte, &recv)
 		records := recv["_embedded"].(map[string]interface{})["records"].([]interface{})
 
 		require.Equal(t, len(boList), len(records), "length is not same")
@@ -162,7 +161,7 @@ func TestGetOperationsByAccountHandlerWithType(t *testing.T) {
 		require.NoError(t, err)
 
 		recv := make(map[string]interface{})
-		json.Unmarshal(readByte, &recv)
+		common.MustUnmarshalJSON(readByte, &recv)
 		records := recv["_embedded"].(map[string]interface{})["records"]
 		require.Nil(t, records)
 	}
@@ -177,7 +176,7 @@ func TestGetOperationsByAccountHandlerWithType(t *testing.T) {
 		require.NoError(t, err)
 
 		recv := make(map[string]interface{})
-		json.Unmarshal(readByte, &recv)
+		common.MustUnmarshalJSON(readByte, &recv)
 		records := recv["_embedded"].(map[string]interface{})["records"].([]interface{})
 
 		require.Equal(t, len(boList), len(records), "length is not same")

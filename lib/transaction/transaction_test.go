@@ -1,7 +1,6 @@
 package transaction
 
 import (
-	"encoding/json"
 	"testing"
 
 	"boscoin.io/sebak/lib/common"
@@ -31,7 +30,7 @@ func (suite *TestSuite) TestLoadTransactionSuite() {
 	require.Nil(suite.T(), err)
 
 	var tx2 Transaction
-	json.Unmarshal(b, &tx2)
+	common.MustUnmarshalJSON(b, &tx2)
 	suite.T().Log(tx2)
 	require.Nil(suite.T(), err)
 }
