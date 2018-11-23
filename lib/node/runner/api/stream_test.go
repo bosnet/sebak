@@ -37,7 +37,7 @@ func TestAccountStream(t *testing.T) {
 	var txReader *bufio.Reader
 	var opReader *bufio.Reader
 	{
-		s := []observer.Subscribe{observer.NewSubscribe(observer.NewEvent(observer.ResourceAccount, observer.ConditionAddress, ba.Address))}
+		s := []observer.Conditions{{observer.NewCondition(observer.ResourceAccount, observer.KeyAddress, ba.Address)}}
 		b, err := json.Marshal(s)
 		require.NoError(t, err)
 		respBody := request(ts, PostSubscribePattern, true, b)
@@ -45,7 +45,7 @@ func TestAccountStream(t *testing.T) {
 		acReader = bufio.NewReader(respBody)
 	}
 	{
-		s := []observer.Subscribe{observer.NewSubscribe(observer.NewEvent(observer.ResourceTransaction, observer.ConditionTxHash, bt.Hash))}
+		s := []observer.Conditions{{observer.NewCondition(observer.ResourceTransaction, observer.KeyTxHash, bt.Hash)}}
 		b, err := json.Marshal(s)
 		require.NoError(t, err)
 		respBody := request(ts, PostSubscribePattern, true, b)
@@ -53,7 +53,7 @@ func TestAccountStream(t *testing.T) {
 		txReader = bufio.NewReader(respBody)
 	}
 	{
-		s := []observer.Subscribe{observer.NewSubscribe(observer.NewEvent(observer.ResourceOperation, observer.ConditionOpHash, bo.Hash))}
+		s := []observer.Conditions{{observer.NewCondition(observer.ResourceOperation, observer.KeyOpHash, bo.Hash)}}
 		b, err := json.Marshal(s)
 		require.NoError(t, err)
 		respBody := request(ts, PostSubscribePattern, true, b)

@@ -30,15 +30,15 @@ func (api NetworkHandlerAPI) PostSubscribeHandler(w http.ResponseWriter, r *http
 		httputils.WriteJSONError(w, errors.BadRequestParameter)
 		return
 	}
-	var requestParams []observer.Subscribe
+	var requestParams []observer.Conditions
 	if err := json.Unmarshal(body, &requestParams); err != nil {
 		httputils.WriteJSONError(w, errors.BadRequestParameter)
 		return
 	}
 
 	var events []string
-	for _, subscribe := range requestParams {
-		events = append(events, subscribe.String())
+	for _, conditions := range requestParams {
+		events = append(events, conditions.Event())
 	}
 
 	es := NewEventStream(w, r, renderEventStream, DefaultContentType)

@@ -67,25 +67,25 @@ func TriggerEvent(st *storage.LevelDBBackend, transactions []*transaction.Transa
 		accountMap[source] = struct{}{}
 		txHash := tx.H.Hash
 
-		txEvent := observer.NewSubscribe(observer.NewEvent(observer.ResourceTransaction, observer.ConditionAll, "")).String()
-		txEvent += " " + observer.NewSubscribe(observer.NewEvent(observer.ResourceTransaction, observer.ConditionSource, source)).String()
-		txEvent += " " + observer.NewSubscribe(observer.NewEvent(observer.ResourceTransaction, observer.ConditionTxHash, txHash)).String()
+		txEvent := observer.NewCondition(observer.ResourceTransaction, observer.KeyAll, "").Event()
+		txEvent += " " + observer.NewCondition(observer.ResourceTransaction, observer.KeySource, source).Event()
+		txEvent += " " + observer.NewCondition(observer.ResourceTransaction, observer.KeyTxHash, txHash).Event()
 
 		for _, op := range tx.B.Operations {
 			opHash := fmt.Sprintf("%s-%s", op.MakeHashString(), txHash)
 
-			opEvent := observer.NewSubscribe(observer.NewEvent(observer.ResourceOperation, observer.ConditionAll, "")).String()
-			opEvent += " " + observer.NewSubscribe(observer.NewEvent(observer.ResourceOperation, observer.ConditionTxHash, txHash)).String()
-			opEvent += " " + observer.NewSubscribe(observer.NewEvent(observer.ResourceOperation, observer.ConditionOpHash, opHash)).String()
+			opEvent := observer.NewCondition(observer.ResourceOperation, observer.KeyAll, "").Event()
+			opEvent += " " + observer.NewCondition(observer.ResourceOperation, observer.KeyTxHash, txHash).Event()
+			opEvent += " " + observer.NewCondition(observer.ResourceOperation, observer.KeyOpHash, opHash).Event()
 
-			opEvent += " " + observer.NewSubscribe(observer.NewEvent(observer.ResourceOperation, observer.ConditionSource, source)).String()
-			opEvent += " " + observer.NewSubscribe(observer.NewEvent(observer.ResourceOperation, observer.ConditionSource, source), observer.NewEvent(observer.ResourceOperation, observer.ConditionType, string(op.H.Type))).String()
+			opEvent += " " + observer.NewCondition(observer.ResourceOperation, observer.KeySource, source).Event()
+			opEvent += " " + observer.Conditions{observer.NewCondition(observer.ResourceOperation, observer.KeySource, source), observer.NewCondition(observer.ResourceOperation, observer.KeyType, string(op.H.Type))}.Event()
 			if pop, ok := op.B.(operation.Tagetable); ok {
 				target := pop.TargetAddress()
 				accountMap[target] = struct{}{}
-				txEvent += " " + observer.NewSubscribe(observer.NewEvent(observer.ResourceTransaction, observer.ConditionTarget, target)).String()
-				opEvent += " " + observer.NewSubscribe(observer.NewEvent(observer.ResourceOperation, observer.ConditionTarget, target)).String()
-				opEvent += " " + observer.NewSubscribe(observer.NewEvent(observer.ResourceOperation, observer.ConditionTarget, target), observer.NewEvent(observer.ResourceOperation, observer.ConditionType, string(op.H.Type))).String()
+				txEvent += " " + observer.NewCondition(observer.ResourceTransaction, observer.KeyTarget, target).Event()
+				opEvent += " " + observer.NewCondition(observer.ResourceOperation, observer.KeyTarget, target).Event()
+				opEvent += " " + observer.Conditions{observer.NewCondition(observer.ResourceOperation, observer.KeyTarget, target), observer.NewCondition(observer.ResourceOperation, observer.KeyType, string(op.H.Type))}.Event()
 			}
 			opBlock, _ := block.GetBlockOperation(st, opHash)
 			go observer.ResourceObserver.Trigger(opEvent, &opBlock)
@@ -96,8 +96,8 @@ func TriggerEvent(st *storage.LevelDBBackend, transactions []*transaction.Transa
 
 	}
 	for account, _ := range accountMap {
-		accEvent := observer.NewSubscribe(observer.NewEvent(observer.ResourceAccount, observer.ConditionAll, "")).String()
-		accEvent += " " + observer.NewSubscribe(observer.NewEvent(observer.ResourceAccount, observer.ConditionAddress, account)).String()
+		accEvent := observer.NewCondition(observer.ResourceAccount, observer.KeyAll, "").Event()
+		accEvent += " " + observer.NewCondition(observer.ResourceAccount, observer.KeyAddress, account).Event()
 		accountBlock, _ := block.GetBlockAccount(st, account)
 		go observer.ResourceObserver.Trigger(accEvent, accountBlock)
 	}

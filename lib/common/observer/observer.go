@@ -2,6 +2,7 @@ package observer
 
 import (
 	"github.com/GianlucaGuarini/go-observable"
+	"strings"
 )
 
 var BlockAccountObserver = observable.New()
@@ -17,58 +18,50 @@ const (
 	ResourceTransactionPool = "txpool"
 	ResourceOperation       = "op"
 	ResourceAccount         = "ac"
-	ConditionAll            = "*"
-	ConditionSource         = "source"
-	ConditionTarget         = "target"
-	ConditionType           = "type"
-	ConditionOpHash         = "ophash"
-	ConditionTxHash         = "txhash"
-	ConditionAddress        = "address"
+	KeyAll                  = "*"
+	KeySource               = "source"
+	KeyTarget               = "target"
+	KeyType                 = "type"
+	KeyOpHash               = "ophash"
+	KeyTxHash               = "txhash"
+	KeyAddress              = "address"
 )
 
-type Event struct {
-	Resource  string `json:"resource"`
-	Condition string `json:"condition"`
-	Id        string `json:"id"`
+type Event interface {
+	Event() string
 }
 
-func NewEvent(resource, condition, id string) Event {
-	return Event{
-		Resource:  resource,
-		Condition: condition,
-		Id:        id,
+type Condition struct {
+	Resource string `json:"resource"`
+	Key      string `json:"key"`
+	Value    string `json:"value"`
+}
+
+func NewCondition(resource, key, value string) Condition {
+	return Condition{
+		Resource: resource,
+		Key:      key,
+		Value:    value,
 	}
 }
-func (e Event) String() string {
-	toStr := e.Resource + "-"
-	if e.Condition == ConditionAll {
-		toStr += e.Condition
+
+func (c Condition) Event() string {
+	toStr := c.Resource + "-"
+	if c.Key == KeyAll {
+		toStr += c.Key
 	} else {
-		toStr += e.Condition + "="
-		toStr += e.Id
+		toStr += c.Key + "="
+		toStr += c.Value
 	}
 	return toStr
 }
 
-type Subscribe struct {
-	Events []Event `json:"resources"`
-}
+type Conditions []Condition
 
-func NewSubscribe(events ...Event) Subscribe {
-	s := Subscribe{}
-	for _, e := range events {
-		s.Events = append(s.Events, e)
+func (cs Conditions) Event() string {
+	var ss []string
+	for _, c := range cs {
+		ss = append(ss, c.Event())
 	}
-	return s
-}
-
-func (s Subscribe) String() string {
-	toStr := ""
-	for i, e := range s.Events {
-		toStr += e.String()
-		if i == len(s.Events)-1 && len(s.Events) != 1 {
-			toStr += "&"
-		}
-	}
-	return toStr
+	return strings.Join(ss, "&")
 }
