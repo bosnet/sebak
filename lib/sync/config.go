@@ -103,6 +103,18 @@ func (c *Config) NewValidator() Validator {
 	return v
 }
 
+func (c *Config) NewWatcher(s SyncController) *Watcher {
+	client := c.NewHTTP2Client()
+	w := NewWatcher(
+		s, client,
+		c.connectionManager,
+		c.storage,
+		c.localNode,
+	)
+	w.SetLogger(c.logger.New("submodule", "watcher"))
+	return w
+}
+
 func (c *Config) NewHTTP2Client() *common.HTTP2Client {
 	client, err := common.NewHTTP2Client(c.FetchTimeout, 0, true)
 	if err != nil {
