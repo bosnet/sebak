@@ -33,8 +33,8 @@ type BlockOperation struct {
 	// bellows will be used only for `Save` time.
 	transaction transaction.Transaction
 	operation   operation.Operation
-	isSaved     bool
 	linked      string
+	isSaved     bool
 }
 
 func NewBlockOperationKey(opHash, txHash string) string {
@@ -186,6 +186,38 @@ func GetBlockOperationKeyPrefixFrozenLinked(hash string) string {
 	)
 }
 
+func GetBlockOperationKeyPrefixBlockHeight(height uint64) string {
+	return fmt.Sprintf("%s%s-", common.BlockOperationPrefixBlockHeight, common.EncodeUint64ToByteSlice(height))
+}
+
+func GetBlockOperationKeyPrefixTxHash(txHash string) string {
+	return fmt.Sprintf("%s%s-", common.BlockOperationPrefixTxHash, txHash)
+}
+
+func GetBlockOperationKeyPrefixSource(source string) string {
+	return fmt.Sprintf("%s%s-", common.BlockOperationPrefixSource, source)
+}
+
+func GetBlockOperationKeyPrefixSourceAndType(source string, ty operation.OperationType) string {
+	return fmt.Sprintf("%s%s%s-", common.BlockOperationPrefixTypeSource, string(ty), source)
+}
+
+func GetBlockOperationKeyPrefixTarget(target string) string {
+	return fmt.Sprintf("%s%s-", common.BlockOperationPrefixTarget, target)
+}
+
+func GetBlockOperationKeyPrefixTargetAndType(target string, ty operation.OperationType) string {
+	return fmt.Sprintf("%s%s%s-", common.BlockOperationPrefixTypeTarget, string(ty), target)
+}
+
+func GetBlockOperationKeyPrefixPeers(addr string) string {
+	return fmt.Sprintf("%s%s-", common.BlockOperationPrefixPeers, addr)
+}
+
+func GetBlockOperationKeyPrefixPeersAndType(addr string, ty operation.OperationType) string {
+	return fmt.Sprintf("%s%s%s-", common.BlockOperationPrefixTypePeers, string(ty), addr)
+}
+
 func (bo BlockOperation) NewBlockOperationTxHashKey() string {
 	return fmt.Sprintf(
 		"%s%s%s%s",
@@ -269,38 +301,6 @@ func (bo BlockOperation) NewBlockOperationBlockHeightKey() string {
 		common.EncodeUint64ToByteSlice(bo.transaction.B.SequenceID),
 		common.GetUniqueIDFromUUID(),
 	)
-}
-
-func GetBlockOperationKeyPrefixBlockHeight(height uint64) string {
-	return fmt.Sprintf("%s%s-", common.BlockOperationPrefixBlockHeight, common.EncodeUint64ToByteSlice(height))
-}
-
-func GetBlockOperationKeyPrefixTxHash(txHash string) string {
-	return fmt.Sprintf("%s%s-", common.BlockOperationPrefixTxHash, txHash)
-}
-
-func GetBlockOperationKeyPrefixSource(source string) string {
-	return fmt.Sprintf("%s%s-", common.BlockOperationPrefixSource, source)
-}
-
-func GetBlockOperationKeyPrefixSourceAndType(source string, ty operation.OperationType) string {
-	return fmt.Sprintf("%s%s%s-", common.BlockOperationPrefixTypeSource, string(ty), source)
-}
-
-func GetBlockOperationKeyPrefixTarget(target string) string {
-	return fmt.Sprintf("%s%s-", common.BlockOperationPrefixTarget, target)
-}
-
-func GetBlockOperationKeyPrefixTargetAndType(target string, ty operation.OperationType) string {
-	return fmt.Sprintf("%s%s%s-", common.BlockOperationPrefixTypeTarget, string(ty), target)
-}
-
-func GetBlockOperationKeyPrefixPeers(addr string) string {
-	return fmt.Sprintf("%s%s-", common.BlockOperationPrefixPeers, addr)
-}
-
-func GetBlockOperationKeyPrefixPeersAndType(addr string, ty operation.OperationType) string {
-	return fmt.Sprintf("%s%s%s-", common.BlockOperationPrefixTypePeers, string(ty), addr)
 }
 
 func ExistsBlockOperation(st *storage.LevelDBBackend, hash string) (bool, error) {

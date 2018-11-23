@@ -80,6 +80,7 @@ func (b *BlockAccount) Save(st *storage.LevelDBBackend) (err error) {
 		Balance:    b.GetBalance(),
 	}
 	err = bac.Save(st)
+
 	return
 }
 
