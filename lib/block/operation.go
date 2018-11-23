@@ -155,6 +155,8 @@ func (bo *BlockOperation) Save(st *storage.LevelDBBackend) (err error) {
 		}
 	}
 
+	bo.isSaved = true
+
 	return nil
 }
 
@@ -259,6 +261,18 @@ func (bo BlockOperation) NewBlockOperationPeersAndTypeKey(addr string) string {
 		common.EncodeUint64ToByteSlice(bo.transaction.B.SequenceID),
 		common.GetUniqueIDFromUUID(),
 	)
+}
+func (bo BlockOperation) NewBlockOperationBlockHeightKey() string {
+	return fmt.Sprintf(
+		"%s%s%s",
+		GetBlockOperationKeyPrefixBlockHeight(bo.Height),
+		common.EncodeUint64ToByteSlice(bo.transaction.B.SequenceID),
+		common.GetUniqueIDFromUUID(),
+	)
+}
+
+func GetBlockOperationKeyPrefixBlockHeight(height uint64) string {
+	return fmt.Sprintf("%s%s-", common.BlockOperationPrefixBlockHeight, common.EncodeUint64ToByteSlice(height))
 }
 
 func GetBlockOperationKeyPrefixTxHash(txHash string) string {

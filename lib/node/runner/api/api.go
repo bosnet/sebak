@@ -80,7 +80,7 @@ func TriggerEvent(st *storage.LevelDBBackend, transactions []*transaction.Transa
 
 			opEvent += " " + observer.NewCondition(observer.ResourceOperation, observer.KeySource, source).Event()
 			opEvent += " " + observer.Conditions{observer.NewCondition(observer.ResourceOperation, observer.KeySource, source), observer.NewCondition(observer.ResourceOperation, observer.KeyType, string(op.H.Type))}.Event()
-			if pop, ok := op.B.(operation.Tagetable); ok {
+			if pop, ok := op.B.(operation.Targetable); ok {
 				target := pop.TargetAddress()
 				accountMap[target] = struct{}{}
 				txEvent += " " + observer.NewCondition(observer.ResourceTransaction, observer.KeyTarget, target).Event()

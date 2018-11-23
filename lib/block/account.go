@@ -1,7 +1,6 @@
 package block
 
 import (
-	"boscoin.io/sebak/lib/common/observer"
 	"encoding/json"
 	"fmt"
 
@@ -81,13 +80,6 @@ func (b *BlockAccount) Save(st *storage.LevelDBBackend) (err error) {
 		Balance:    b.GetBalance(),
 	}
 	err = bac.Save(st)
-
-	if err == nil {
-		event := "saved"
-		event += " " + fmt.Sprintf("address-%s", b.Address)
-		observer.BlockAccountObserver.Trigger(event, b)
-	}
-
 	return
 }
 
