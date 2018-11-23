@@ -15,7 +15,7 @@ func TestNewBlockOperationFromOperation(t *testing.T) {
 	conf := common.NewTestConfig()
 	_, tx := transaction.TestMakeTransaction(conf.NetworkID, 1)
 
-	var index uint64 = 0
+	var index int = 0
 	var txIndex uint64 = 1
 
 	op := tx.B.Operations[0]
@@ -35,7 +35,7 @@ func TestBlockOperationSaveAndGet(t *testing.T) {
 	conf := common.NewTestConfig()
 	st := storage.NewTestStorage()
 
-	bos := TestMakeNewBlockOperation(conf.NetworkID, 1)
+	bos := TestMakeNewBlockOperation(conf.NetworkID, 1, 0)
 	bo := bos[0]
 	bos[0].MustSave(st)
 
@@ -53,7 +53,7 @@ func TestBlockOperationSaveExisting(t *testing.T) {
 	conf := common.NewTestConfig()
 	st := storage.NewTestStorage()
 
-	bos := TestMakeNewBlockOperation(conf.NetworkID, 1)
+	bos := TestMakeNewBlockOperation(conf.NetworkID, 1, 0)
 	bo := bos[0]
 	bo.MustSave(st)
 
@@ -73,8 +73,8 @@ func TestGetSortedBlockOperationsByTxHash(t *testing.T) {
 	// create 30 `BlockOperation`
 	var txHashes []string
 	createdOrder := map[string][]string{}
-	for _ = range [3]int{0, 0, 0} {
-		bos := TestMakeNewBlockOperation(conf.NetworkID, 10)
+	for _, i := range [3]uint64{0, 1, 2} {
+		bos := TestMakeNewBlockOperation(conf.NetworkID, 10, i)
 		txHashes = append(txHashes, bos[0].TxHash)
 
 		for _, bo := range bos {
@@ -143,7 +143,7 @@ func TestBlockOperationsByBlockHeight(t *testing.T) {
 	heights := []uint64{1, 2, 3}
 	created := map[uint64][]string{}
 	for _, height := range heights {
-		bos := TestMakeNewBlockOperation(conf.NetworkID, 10)
+		bos := TestMakeNewBlockOperation(conf.NetworkID, 10, 1)
 
 		for _, bo := range bos {
 			bo.Height = height

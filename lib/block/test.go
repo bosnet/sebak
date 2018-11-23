@@ -129,11 +129,11 @@ func TestMakeNewBlockWithPrevBlock(prevBlock Block, txs []string) Block {
 	)
 }
 
-func TestMakeNewBlockOperation(networkID []byte, n int) (bos []BlockOperation) {
+func TestMakeNewBlockOperation(networkID []byte, n int, txindex uint64) (bos []BlockOperation) {
 	_, tx := transaction.TestMakeTransaction(networkID, n)
 
 	for i, op := range tx.B.Operations {
-		bo, err := NewBlockOperationFromOperation(op, tx, 0, 1, i)
+		bo, err := NewBlockOperationFromOperation(op, tx, 0, txindex, i)
 		if err != nil {
 			panic(err)
 		}
