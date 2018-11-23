@@ -32,7 +32,7 @@ func TestResourceAccount(t *testing.T) {
 
 		{
 			var f interface{}
-			json.Unmarshal(j, &f)
+			common.MustUnmarshalJSON(j, &f)
 			m := f.(map[string]interface{})
 			require.Equal(t, ba.Address, m["address"])
 			require.Equal(t, ba.SequenceID, uint64(m["sequence_id"].(float64)))
@@ -55,7 +55,7 @@ func TestResourceAccount(t *testing.T) {
 
 		{
 			var f interface{}
-			json.Unmarshal(j, &f)
+			common.MustUnmarshalJSON(j, &f)
 			m := f.(map[string]interface{})
 			require.Equal(t, bt.Hash, m["hash"])
 			require.Equal(t, bt.Source, m["source"])
@@ -82,7 +82,7 @@ func TestResourceAccount(t *testing.T) {
 
 		{
 			var f interface{}
-			json.Unmarshal(j, &f)
+			common.MustUnmarshalJSON(j, &f)
 			m := f.(map[string]interface{})
 			require.Equal(t, bo.Hash, m["hash"])
 			require.Equal(t, bo.Source, m["source"])
@@ -120,7 +120,7 @@ func TestResourceAccount(t *testing.T) {
 
 			var f interface{}
 
-			json.Unmarshal(j, &f)
+			common.MustUnmarshalJSON(j, &f)
 			m := f.(map[string]interface{})
 
 			l := m["_links"].(map[string]interface{})

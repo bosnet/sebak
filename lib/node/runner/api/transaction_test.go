@@ -2,14 +2,15 @@ package api
 
 import (
 	"bufio"
-	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"testing"
 
-	"boscoin.io/sebak/lib/node/runner/api/resource"
 	"github.com/stretchr/testify/require"
+
+	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/node/runner/api/resource"
 )
 
 func TestGetTransactionByHashHandler(t *testing.T) {
@@ -42,7 +43,7 @@ func TestGetTransactionByHashHandler(t *testing.T) {
 		readByte, err := ioutil.ReadAll(reader)
 		require.NoError(t, err)
 		recv := make(map[string]interface{})
-		json.Unmarshal(readByte, &recv)
+		common.MustUnmarshalJSON(readByte, &recv)
 
 		require.Equal(t, bt.Hash, recv["hash"], "hash is not the same")
 		require.Equal(t, bt.Block, recv["block"], "block is not the same")
@@ -66,7 +67,7 @@ func TestGetTransactionStatusByHashHandler(t *testing.T) {
 		readByte, err := ioutil.ReadAll(reader)
 		require.NoError(t, err)
 		var status resource.TransactionStatus
-		json.Unmarshal(readByte, &status)
+		common.MustUnmarshalJSON(readByte, &status)
 
 		require.Equal(t, status.Hash, "findme")
 		require.Equal(t, status.Status, "notfound")
@@ -83,7 +84,7 @@ func TestGetTransactionStatusByHashHandler(t *testing.T) {
 		readByte, err := ioutil.ReadAll(reader)
 		require.NoError(t, err)
 		var status resource.TransactionStatus
-		json.Unmarshal(readByte, &status)
+		common.MustUnmarshalJSON(readByte, &status)
 
 		require.Equal(t, bt.Hash, status.Hash, "hash is not the same")
 		require.Equal(t, "confirmed", status.Status, "block is not the same")
@@ -111,7 +112,7 @@ func TestGetTransactionsHandler(t *testing.T) {
 		require.NoError(t, err)
 
 		recv := make(map[string]interface{})
-		json.Unmarshal(readByte, &recv)
+		common.MustUnmarshalJSON(readByte, &recv)
 		records := recv["_embedded"].(map[string]interface{})["records"].([]interface{})
 
 		require.Equal(t, len(btList)+1, len(records), "length is not the same")
@@ -149,7 +150,7 @@ func TestGetTransactionsByAccountHandler(t *testing.T) {
 		require.NoError(t, err)
 
 		recv := make(map[string]interface{})
-		json.Unmarshal(readByte, &recv)
+		common.MustUnmarshalJSON(readByte, &recv)
 		records := recv["_embedded"].(map[string]interface{})["records"].([]interface{})
 
 		require.Equal(t, len(btList), len(records), "length is not the same")
@@ -181,7 +182,7 @@ func TestGetTransactionsHandlerPage(t *testing.T) {
 		require.NoError(t, err)
 
 		recv := make(map[string]interface{})
-		json.Unmarshal(readByte, &recv)
+		common.MustUnmarshalJSON(readByte, &recv)
 		records := recv["_embedded"].(map[string]interface{})["records"].([]interface{})
 		links := recv["_links"].(map[string]interface{})
 		return records, links

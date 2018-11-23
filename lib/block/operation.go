@@ -1,7 +1,6 @@
 package block
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"boscoin.io/sebak/lib/common"
@@ -332,7 +331,7 @@ func LoadBlockOperationsInsideIterator(
 			}
 
 			var hash string
-			json.Unmarshal(item.Value, &hash)
+			common.MustUnmarshalJSON(item.Value, &hash)
 
 			bo, err := GetBlockOperation(st, hash)
 			if err != nil {

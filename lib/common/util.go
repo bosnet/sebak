@@ -62,6 +62,18 @@ func InStringMap(a map[string]bool, s string) (found bool) {
 	return
 }
 
+//
+// Function to wrap calls to `json.Unmarshall` that cannot fail
+//
+// This function should only be used when doing calls that cannot fails,
+// e.g. reading the content of the on-disk storage which was serialized by sebak.
+// It ensures no silent corruption of data can happen
+func MustUnmarshalJSON(data []byte, v interface{}) {
+	if err := json.Unmarshal(data, v); err != nil {
+		panic(err)
+	}
+}
+
 func MustJSONMarshal(o interface{}) []byte {
 	b, _ := json.Marshal(o)
 	return b

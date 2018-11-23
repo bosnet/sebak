@@ -1,7 +1,6 @@
 package block
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"boscoin.io/sebak/lib/common"
@@ -122,7 +121,7 @@ func GetBlockAccountAddressesByCreated(st *storage.LevelDBBackend, options stora
 			}
 
 			var address string
-			json.Unmarshal(item.Value, &address)
+			common.MustUnmarshalJSON(item.Value, &address)
 			return address, hasNext, item.Key
 		}), (func() {
 			closeFunc()
@@ -167,7 +166,7 @@ func LoadBlockAccountsInsideIterator(
 			}
 
 			var hash string
-			json.Unmarshal(item.Value, &hash)
+			common.MustUnmarshalJSON(item.Value, &hash)
 
 			ba, err := GetBlockAccount(st, hash)
 			if err != nil {
@@ -283,7 +282,7 @@ func GetBlockAccountSequenceIDByAddress(st *storage.LevelDBBackend, address stri
 			}
 
 			var key string
-			json.Unmarshal(item.Value, &key)
+			common.MustUnmarshalJSON(item.Value, &key)
 
 			var bac BlockAccountSequenceID
 			if err := st.Get(key, &bac); err != nil {

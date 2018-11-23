@@ -1,16 +1,18 @@
 package httputils
 
 import (
-	"boscoin.io/sebak/lib/errors"
 	"bufio"
-	"encoding/json"
 	"fmt"
-	"github.com/gorilla/mux"
-	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/require"
+
+	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/errors"
 )
 
 func TestProblem(t *testing.T) {
@@ -51,7 +53,7 @@ func TestProblem(t *testing.T) {
 		require.NoError(t, err)
 		{
 			var f interface{}
-			json.Unmarshal(readByte, &f)
+			common.MustUnmarshalJSON(readByte, &f)
 			m := f.(map[string]interface{})
 			p := statusProblem
 			require.Equal(t, p.Type, m["type"])
@@ -73,7 +75,7 @@ func TestProblem(t *testing.T) {
 		require.NoError(t, err)
 		{
 			var f interface{}
-			json.Unmarshal(readByte, &f)
+			common.MustUnmarshalJSON(readByte, &f)
 			m := f.(map[string]interface{})
 			p := detailedStatusProblem
 			require.Equal(t, p.Type, m["type"])
@@ -95,7 +97,7 @@ func TestProblem(t *testing.T) {
 		require.NoError(t, err)
 		{
 			var f interface{}
-			json.Unmarshal(readByte, &f)
+			common.MustUnmarshalJSON(readByte, &f)
 			m := f.(map[string]interface{})
 			p := detailedStatusProblem.SetInstance("http://boscoin.io/httperror/details/1")
 			require.Equal(t, p.Type, m["type"])
@@ -117,7 +119,7 @@ func TestProblem(t *testing.T) {
 		require.NoError(t, err)
 		{
 			var f interface{}
-			json.Unmarshal(readByte, &f)
+			common.MustUnmarshalJSON(readByte, &f)
 			m := f.(map[string]interface{})
 			p := errorProblem
 			require.Equal(t, p.Type, m["type"])

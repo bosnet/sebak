@@ -1,8 +1,6 @@
 package api
 
 import (
-	"boscoin.io/sebak/lib/common/observer"
-	"boscoin.io/sebak/lib/transaction"
 	"bufio"
 	"bytes"
 	"context"
@@ -13,8 +11,11 @@ import (
 	"testing"
 
 	"boscoin.io/sebak/lib/block"
-	"github.com/GianlucaGuarini/go-observable"
+	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common/observer"
+	"boscoin.io/sebak/lib/transaction"
 
+	"github.com/GianlucaGuarini/go-observable"
 	"github.com/stretchr/testify/require"
 )
 
@@ -38,16 +39,14 @@ func TestAccountStream(t *testing.T) {
 	var opReader *bufio.Reader
 	{
 		s := []observer.Conditions{{observer.NewCondition(observer.ResourceAccount, observer.KeyAddress, ba.Address)}}
-		b, err := json.Marshal(s)
-		require.NoError(t, err)
+		b := common.MustJSONMarshal(s)
 		respBody := request(ts, PostSubscribePattern, true, b)
 		defer respBody.Close()
 		acReader = bufio.NewReader(respBody)
 	}
 	{
 		s := []observer.Conditions{{observer.NewCondition(observer.ResourceTransaction, observer.KeyTxHash, bt.Hash)}}
-		b, err := json.Marshal(s)
-		require.NoError(t, err)
+		b := common.MustJSONMarshal(s)
 		respBody := request(ts, PostSubscribePattern, true, b)
 		defer respBody.Close()
 		txReader = bufio.NewReader(respBody)
@@ -75,7 +74,7 @@ func TestAccountStream(t *testing.T) {
 			line = bytes.Trim(line, "\n")
 		}
 		recv := make(map[string]interface{})
-		json.Unmarshal(line, &recv)
+		common.MustUnmarshalJSON(line, &recv)
 		require.Equal(t, ba.Address, recv["address"], "address is not same")
 	}
 	{
@@ -88,7 +87,7 @@ func TestAccountStream(t *testing.T) {
 			line = bytes.Trim(line, "\n")
 		}
 		recv := make(map[string]interface{})
-		json.Unmarshal(line, &recv)
+		common.MustUnmarshalJSON(line, &recv)
 		require.Equal(t, bt.Hash, recv["hash"], "hash is not the same")
 		require.Equal(t, bt.Block, recv["block"], "block is not the same")
 	}
@@ -102,7 +101,7 @@ func TestAccountStream(t *testing.T) {
 			line = bytes.Trim(line, "\n")
 		}
 		recv := make(map[string]interface{})
-		json.Unmarshal(line, &recv)
+		common.MustUnmarshalJSON(line, &recv)
 		require.Equal(t, bo.Hash, recv["hash"], "hash is not same")
 	}
 
@@ -131,7 +130,7 @@ func TestAPIStreamRun(t *testing.T) {
 				s.Scan()
 
 				var ba block.BlockAccount
-				require.Nil(t, json.Unmarshal(s.Bytes(), &ba))
+				common.MustUnmarshalJSON(s.Bytes(), &ba)
 				require.Nil(t, s.Err())
 				require.Equal(t, ba, *block.NewBlockAccount("hello", 100))
 			},
@@ -162,7 +161,7 @@ func TestAPIStreamRun(t *testing.T) {
 				s.Scan()
 
 				var ba block.BlockAccount
-				require.Nil(t, json.Unmarshal(s.Bytes(), &ba))
+				common.MustUnmarshalJSON(s.Bytes(), &ba)
 				require.Nil(t, s.Err())
 				require.Equal(t, ba, *block.NewBlockAccount("hello", 100))
 			},
@@ -181,7 +180,7 @@ func TestAPIStreamRun(t *testing.T) {
 				s.Scan()
 
 				var ba block.BlockAccount
-				require.Nil(t, json.Unmarshal(s.Bytes(), &ba))
+				common.MustUnmarshalJSON(s.Bytes(), &ba)
 				require.Nil(t, s.Err())
 				require.Equal(t, ba, *block.NewBlockAccount("hello", 100))
 			},
