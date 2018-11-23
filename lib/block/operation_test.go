@@ -143,7 +143,7 @@ func TestBlockOperationsByBlockHeight(t *testing.T) {
 	heights := []uint64{1, 2, 3}
 	created := map[uint64][]string{}
 	for _, height := range heights {
-		bos := TestMakeNewBlockOperation(conf.NetworkID, 10, 1)
+		bos := TestMakeNewBlockOperation(conf.NetworkID, 10, 0)
 
 		for _, bo := range bos {
 			bo.Height = height

@@ -99,10 +99,10 @@ func prepareBlkTxOpWithoutSave(st *storage.LevelDBBackend) (*keypair.Full, block
 	tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, kp)
 	txHashes = append(txHashes, tx.GetHash())
 	theBlock := block.TestMakeNewBlockWithPrevBlock(block.GetLatestBlock(st), txHashes)
-	bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, theBlock.Height, theBlock.ProposedTime, tx)
+	bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, theBlock.Height, theBlock.ProposedTime, tx, 0)
 
 	op := tx.B.Operations[0]
-	bo, err := block.NewBlockOperationFromOperation(op, tx, theBlock.Height, 0)
+	bo, err := block.NewBlockOperationFromOperation(op, tx, theBlock.Height, 0, 0)
 	if err != nil {
 		panic(err)
 	}
