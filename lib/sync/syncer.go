@@ -9,8 +9,6 @@ import (
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/metrics"
-	"boscoin.io/sebak/lib/network"
-	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/storage"
 	"github.com/inconshreveable/log15"
 )
@@ -21,22 +19,15 @@ type requestHighestBlock struct {
 }
 
 type Syncer struct {
-	poolSize      uint64
-	fetchTimeout  time.Duration
-	retryInterval time.Duration
-	checkInterval time.Duration
-
-	afterFunc AfterFunc
-
-	storage           *storage.LevelDBBackend
-	network           network.Network
-	connectionManager network.ConnectionManager
-	commonCfg         common.Config
-	localNode         *node.LocalNode
+	storage *storage.LevelDBBackend
 
 	fetcher   Fetcher
 	validator Validator
 
+	poolSize      uint64
+	checkInterval time.Duration
+
+	afterFunc  AfterFunc
 	workPool   *Pool
 	stop       chan chan struct{}
 	ctx        context.Context
@@ -50,24 +41,19 @@ type Syncer struct {
 
 type SyncerOption func(s *Syncer)
 
-func NewSyncer(st *storage.LevelDBBackend,
-	nw network.Network,
-	cm network.ConnectionManager,
-	localNode *node.LocalNode,
-	cfg common.Config,
+func NewSyncer(
+	f Fetcher,
+	v Validator,
+	st *storage.LevelDBBackend,
 	opts ...SyncerOption) *Syncer {
 	ctx, cancelFunc := context.WithCancel(context.Background())
 
 	s := &Syncer{
-		storage:           st,
-		network:           nw,
-		connectionManager: cm,
-		commonCfg:         cfg,
-		localNode:         localNode,
+		fetcher:   f,
+		validator: v,
+		storage:   st,
 
 		poolSize:      SyncPoolSize,
-		fetchTimeout:  FetchTimeout,
-		retryInterval: RetryInterval,
 		checkInterval: CheckBlockHeightInterval,
 
 		afterFunc: time.After,
@@ -85,17 +71,6 @@ func NewSyncer(st *storage.LevelDBBackend,
 	for _, opt := range opts {
 		opt(s)
 	}
-
-	fetcher := NewBlockFetcher(nw, cm, st, localNode, func(f *BlockFetcher) {
-		f.fetchTimeout = s.fetchTimeout
-		f.logger = s.logger
-	})
-	s.fetcher = fetcher
-
-	validator := NewBlockValidator(nw, st, cfg, func(v *BlockValidator) {
-		v.logger = s.logger
-	})
-	s.validator = validator
 
 	return s
 }
@@ -244,6 +219,8 @@ func (s *Syncer) work(height uint64, nodeAddrs []string) bool {
 	defer func(begin time.Time) { metrics.Sync.ObserveDurationSeconds(begin, "") }(time.Now())
 	ctx := s.ctx
 	work := func() {
+		s.logger.Debug("start work", "height", height, "nodes", nodeAddrs)
+
 		latestHeight := s.latestBlockHeight()
 		if latestHeight > 0 && height <= latestHeight {
 			s.logger.Info("this height has already synced", "height", height)
@@ -267,18 +244,21 @@ func (s *Syncer) work(height uint64, nodeAddrs []string) bool {
 				begin := time.Now()
 				syncInfo, err = s.fetcher.Fetch(ctx, syncInfo)
 				if err != nil {
-					if err != context.Canceled {
-						s.logger.Error("fetch failure", "err", err, "height", height)
+					if err == context.Canceled {
+						break L
 					}
+					s.logger.Error("fetch failure", "err", err, "height", height)
+					continue
 				}
 				metrics.Sync.ObserveDurationSeconds(begin, metrics.SyncFetcher)
 				begin = time.Now()
 				err = s.validator.Validate(ctx, syncInfo)
 				if err != nil {
-					if err != context.Canceled {
-						s.logger.Error("validate failure", "err", err, "height", height)
-						metrics.Sync.AddValidateError()
+					if err == context.Canceled {
+						break L
 					}
+					s.logger.Error("validate failure", "err", err, "height", height)
+					metrics.Sync.AddValidateError()
 					continue
 				}
 				metrics.Sync.ObserveDurationSeconds(begin, metrics.SyncValidator)
@@ -295,6 +275,7 @@ func (s *Syncer) work(height uint64, nodeAddrs []string) bool {
 			s.logger.Info("done sync work", "height", height, "hash", syncInfo.Block.Hash)
 			metrics.Sync.SetHeight(height)
 		}
+		s.logger.Debug("end work", "height", height)
 	}
 	return s.workPool.TryAdd(ctx, work)
 }

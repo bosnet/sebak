@@ -6,8 +6,6 @@ import (
 	"time"
 
 	"boscoin.io/sebak/lib/block"
-	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -68,19 +66,13 @@ func TestSyncerSetSyncTarget(t *testing.T) {
 }
 
 func SyncerTest(t *testing.T, fn func(*SyncerTestContext)) {
-	conf := common.NewTestConfig()
 	st := block.InitTestBlockchain()
 	defer st.Close()
-	_, nw, localNode := network.CreateMemoryNetwork(nil)
-	cm := &mockConnectionManager{}
 
 	tickc := make(chan time.Time)
 	infoc := make(chan *SyncInfo)
 
-	syncer := NewSyncer(st, nw, cm, localNode, conf)
-	defer syncer.Stop()
-
-	syncer.fetcher = &mockFetcher{
+	fetcher := &mockFetcher{
 		fetchFunc: func(ctx context.Context, si *SyncInfo) (*SyncInfo, error) {
 			bk := block.TestMakeNewBlock([]string{})
 			bk.Height = si.Height
@@ -89,15 +81,19 @@ func SyncerTest(t *testing.T, fn func(*SyncerTestContext)) {
 			return si, nil
 		},
 	}
-	syncer.validator = &mockValidator{
+	validator := &mockValidator{
 		validateFunc: func(ctx context.Context, si *SyncInfo) error {
 			infoc <- si
 			return nil
 		},
 	}
-	syncer.afterFunc = func(d time.Duration) <-chan time.Time {
-		return tickc
-	}
+
+	syncer := NewSyncer(fetcher, validator, st, func(s *Syncer) {
+		s.afterFunc = func(d time.Duration) <-chan time.Time {
+			return tickc
+		}
+	})
+	defer syncer.Stop()
 
 	ctx := &SyncerTestContext{
 		t:         t,
