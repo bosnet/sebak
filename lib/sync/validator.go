@@ -2,7 +2,6 @@ package sync
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 	"time"
 
@@ -35,7 +34,7 @@ func NewBlockValidator(nw network.Network, ldb *storage.LevelDBBackend, cfg comm
 	v := &BlockValidator{
 		network:              nw,
 		storage:              ldb,
-		prevBlockWaitTimeout: 10 * time.Minute,
+		prevBlockWaitTimeout: CheckPrevBlockInterval,
 		commonCfg:            cfg,
 
 		logger: common.NopLogger(),
@@ -54,9 +53,10 @@ func (v *BlockValidator) Validate(ctx context.Context, syncInfo *SyncInfo) error
 		return err
 	}
 	if exists == true {
-		v.logger.Info("This block exists", "height", syncInfo.Height)
+		v.logger.Info("this block exists", "height", syncInfo.Height)
 		return nil
 	}
+	v.logger.Debug("start validate", "height", syncInfo.Height)
 
 	select {
 	case <-ctx.Done():
@@ -93,6 +93,8 @@ func (v *BlockValidator) validate(ctx context.Context, syncInfo *SyncInfo) error
 }
 
 func (v *BlockValidator) finishBlock(ctx context.Context, syncInfo *SyncInfo) error {
+	v.logger.Debug("start finish block", "height", syncInfo.Height)
+
 	bs, err := v.storage.OpenBatch()
 	if err != nil {
 		return err
@@ -131,7 +133,7 @@ func (v *BlockValidator) finishBlock(ctx context.Context, syncInfo *SyncInfo) er
 		return err
 	}
 
-	v.logger.Debug(fmt.Sprintf("finish to sync block height: %v", syncInfo.Height), "height", syncInfo.Height, "hash", blk.Hash)
+	v.logger.Debug("finish to sync block height", "height", syncInfo.Height, "hash", blk.Hash)
 
 	if err := bs.Commit(); err != nil {
 		bs.Discard()
@@ -146,10 +148,12 @@ func (v *BlockValidator) finishBlock(ctx context.Context, syncInfo *SyncInfo) er
 		observer.SyncBlockWaitObserver.Trigger(event)
 	}
 
+	v.logger.Debug("end finish block", "height", syncInfo.Height)
 	return nil
 }
 
 func (v *BlockValidator) validateBlock(ctx context.Context, si *SyncInfo, prevBlk *block.Block) error {
+	v.logger.Debug("start validate block", "height", si.Height)
 	var txs []string
 	for _, tx := range si.Txs {
 		txs = append(txs, tx.H.Hash)
@@ -170,10 +174,13 @@ func (v *BlockValidator) validateBlock(ctx context.Context, si *SyncInfo, prevBl
 		return err
 	}
 
+	v.logger.Debug("end validate block", "height", si.Height)
+
 	return nil
 }
 
 func (v *BlockValidator) validateTxs(ctx context.Context, si *SyncInfo) error {
+	v.logger.Debug("start validate txs", "height", si.Height)
 	// proposer transaction
 	if si.Ptx != nil {
 		if err := si.Ptx.IsWellFormed(v.commonCfg); err != nil {
@@ -197,6 +204,7 @@ func (v *BlockValidator) validateTxs(ctx context.Context, si *SyncInfo) error {
 		}
 	}
 
+	v.logger.Debug("end validate txs", "height", si.Height)
 	return nil
 }
 
@@ -215,6 +223,8 @@ func (v *BlockValidator) existsBlock(ctx context.Context, st *storage.LevelDBBac
 
 func (v *BlockValidator) getPrevBlock(pctx context.Context, height uint64) (*block.Block, error) {
 	ctx, cancelFunc := context.WithCancel(pctx)
+
+	v.logger.Debug("start waiting prev block", "height", height)
 
 	prevHeight := height - 1
 	waitC := make(chan struct{})
@@ -241,17 +251,17 @@ func (v *BlockValidator) getPrevBlock(pctx context.Context, height uint64) (*blo
 			case <-sleep:
 			}
 		}
-		v.logger.Debug("done: prev height db watcher", "height", height)
+		v.logger.Debug("end prev height db watcher", "height", height)
 	}()
 
 	event := strconv.FormatUint(prevHeight, 10)
 	observer.SyncBlockWaitObserver.One(event, func(args ...interface{}) {
 		select {
 		case waitC <- struct{}{}:
-			v.logger.Debug("SyncBlockWaitObserver", "prevHeight", prevHeight)
+			v.logger.Debug("try stop SyncBlockWaitObserver", "prevHeight", prevHeight)
 		case <-ctx.Done():
 		}
-		v.logger.Debug("done: SyncBlockWaitObserver", "height", height)
+		v.logger.Debug("end SyncBlockWaitObserver", "height", height)
 	})
 
 	select {
@@ -260,6 +270,8 @@ func (v *BlockValidator) getPrevBlock(pctx context.Context, height uint64) (*blo
 	}
 
 	cancelFunc() // done observer and db watcher
+
+	v.logger.Debug("end waiting prev block", "height", height)
 
 	prevBlock, err := block.GetBlockByHeight(v.storage, prevHeight)
 	if err != nil {

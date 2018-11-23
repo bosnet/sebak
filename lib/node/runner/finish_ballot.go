@@ -92,6 +92,7 @@ func finishBallotWithProposedTxs(st *storage.LevelDBBackend, b ballot.Ballot, pr
 	infoLog.Info("NewBlock created",
 		"height", blk.Height,
 		"round", blk.Round,
+		"hash", blk.Hash,
 		"confirmed", blk.Confirmed,
 		"total-txs", blk.TotalTxs,
 		"total-ops", blk.TotalOps,
