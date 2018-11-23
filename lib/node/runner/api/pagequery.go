@@ -90,10 +90,14 @@ func (p *PageQuery) ListOptions() storage.ListOptions {
 }
 
 func (p *PageQuery) PageCursorListOptions(prefix string) (storage.ListOptions, error) {
-	c := NewPageCursor(p.Cursor(), prefix)
-	indexCursor, err := c.IndexKey()
-	if err != nil {
-		return nil, err
+	var indexCursor []byte
+	var err error
+	if p.Cursor() != nil {
+		c := NewPageCursor(p.Cursor(), prefix)
+		indexCursor, err = c.IndexKey()
+		if err != nil {
+			return nil, err
+		}
 	}
 	return storage.NewDefaultListOptions(p.Reverse(), indexCursor, p.Limit()), nil
 }
