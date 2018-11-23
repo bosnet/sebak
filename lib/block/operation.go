@@ -115,10 +115,10 @@ func (bo *BlockOperation) Save(st *storage.LevelDBBackend) (err error) {
 		return
 	}
 
-	if err = st.New(bo.NewBlockOperationSourceKey(bo.Source), bo.Hash); err != nil {
+	if err = st.New(bo.NewBlockOperationSourceKey(), bo.Hash); err != nil {
 		return
 	}
-	if err = st.New(bo.NewBlockOperationSourceAndTypeKey(bo.Source), bo.Hash); err != nil {
+	if err = st.New(bo.NewBlockOperationSourceAndTypeKey(), bo.Hash); err != nil {
 		return
 	}
 	if err = st.New(bo.NewBlockOperationPeersKey(bo.Source), bo.Hash); err != nil {
@@ -228,10 +228,10 @@ func (bo BlockOperation) NewBlockOperationTxHashKey() string {
 	)
 }
 
-func (bo BlockOperation) NewBlockOperationSourceKey(source string) string {
+func (bo BlockOperation) NewBlockOperationSourceKey() string {
 	return fmt.Sprintf(
 		"%s%s%s%s",
-		GetBlockOperationKeyPrefixSource(source),
+		GetBlockOperationKeyPrefixSource(bo.Source),
 		common.EncodeUint64ToByteSlice(bo.Height),
 		common.EncodeUint64ToByteSlice(bo.transaction.B.SequenceID),
 		common.GetUniqueIDFromUUID(),
@@ -246,10 +246,10 @@ func (bo BlockOperation) NewBlockOperationFrozenLinkedKey(hash string) string {
 	)
 }
 
-func (bo BlockOperation) NewBlockOperationSourceAndTypeKey(source string) string {
+func (bo BlockOperation) NewBlockOperationSourceAndTypeKey() string {
 	return fmt.Sprintf(
 		"%s%s%s%s",
-		GetBlockOperationKeyPrefixSourceAndType(source, bo.Type),
+		GetBlockOperationKeyPrefixSourceAndType(bo.Source, bo.Type),
 		common.EncodeUint64ToByteSlice(bo.Height),
 		common.EncodeUint64ToByteSlice(bo.transaction.B.SequenceID),
 		common.GetUniqueIDFromUUID(),
