@@ -18,14 +18,13 @@ import (
 type ISAACStateManager struct {
 	sync.RWMutex
 
-	nr                      *NodeRunner
-	state                   consensus.ISAACState
-	stateTransit            chan consensus.ISAACState
-	stop                    chan struct{}
-	blockTimeBuffer         time.Duration              // the time to wait to adjust the block creation time.
-	transitSignal           func(consensus.ISAACState) // the function is called when the ISAACState is changed.
-	firstConsensusBlockTime time.Time                  // the time at which the first consensus block was saved(height 2). It is used for calculating `blockTimeBuffer`.
-	expired                 bool
+	nr                     *NodeRunner
+	state                  consensus.ISAACState
+	stateTransit           chan consensus.ISAACState
+	stop                   chan struct{}
+	blockTimeBuffer        time.Duration              // the time to wait to adjust the block creation time.
+	transitSignal          func(consensus.ISAACState) // the function is called when the ISAACState is changed.
+	firstProposedBlockTime time.Time                  // the time at which the first consensus block was saved(height 2). It is used for calculating `blockTimeBuffer`.
 
 	Conf common.Config
 }
@@ -45,13 +44,13 @@ func NewISAACStateManager(nr *NodeRunner, conf common.Config) *ISAACStateManager
 		Conf:            conf,
 	}
 
-	p.firstConsensusBlockTime = time.Time{}
+	p.setTheFirstProposedBlockTime()
 
 	return p
 }
 
-func (sm *ISAACStateManager) setTheFirstConsensusBlockTime() {
-	if !sm.firstConsensusBlockTime.IsZero() {
+func (sm *ISAACStateManager) setTheFirstProposedBlockTime() {
+	if !sm.firstProposedBlockTime.IsZero() {
 		return
 	}
 
@@ -60,17 +59,17 @@ func (sm *ISAACStateManager) setTheFirstConsensusBlockTime() {
 		return
 	}
 
-	blk, err := block.GetBlockByHeight(sm.nr.Storage(), common.FirstConsensusBlockHeight)
+	blk, err := block.GetBlockByHeight(sm.nr.Storage(), common.FirstProposedBlockHeight)
 	if err != nil {
 		return
 	}
-	sm.firstConsensusBlockTime, _ = common.ParseISO8601(blk.Confirmed)
-	sm.nr.Log().Debug("set first consnsus block time", "time", sm.firstConsensusBlockTime)
+	sm.firstProposedBlockTime, _ = common.ParseISO8601(blk.ProposedTime)
+	sm.nr.Log().Debug("set first proposed block time", "time", sm.firstProposedBlockTime)
 }
 
 func (sm *ISAACStateManager) setBlockTimeBuffer() {
 	sm.nr.Log().Debug("begin ISAACStateManager.setBlockTimeBuffer()", "ISAACState", sm.State())
-	sm.setTheFirstConsensusBlockTime()
+	sm.setTheFirstProposedBlockTime()
 	b := sm.nr.Consensus().LatestBlock()
 
 	if b.Height == common.GenesisBlockHeight {
@@ -80,14 +79,14 @@ func (sm *ISAACStateManager) setBlockTimeBuffer() {
 	ballotProposedTime := getBallotProposedTime(b.ProposedTime)
 	sm.blockTimeBuffer = calculateBlockTimeBuffer(
 		sm.Conf.BlockTime,
-		calculateAverageBlockTime(sm.firstConsensusBlockTime, b.Height),
+		calculateAverageBlockTime(sm.firstProposedBlockTime, b.Height),
 		time.Now().Sub(ballotProposedTime),
 		sm.Conf.BlockTimeDelta,
 	)
 	sm.nr.Log().Debug(
 		"calculated blockTimeBuffer",
 		"blockTimeBuffer", sm.blockTimeBuffer,
-		"firstConsensusBlockTime", sm.firstConsensusBlockTime,
+		"firstProposedBlockTime", sm.firstProposedBlockTime,
 		"height", b.Height,
 		"proposedTime", b.ProposedTime,
 		"now", time.Now(),
@@ -101,9 +100,9 @@ func getBallotProposedTime(timeStr string) time.Time {
 	return ballotProposedTime
 }
 
-func calculateAverageBlockTime(firstConsensusBlockTime time.Time, blockHeight uint64) time.Duration {
+func calculateAverageBlockTime(firstProposedBlockTime time.Time, blockHeight uint64) time.Duration {
 	height := blockHeight - (common.GenesisBlockHeight + 1)
-	sinceGenesis := time.Now().Sub(firstConsensusBlockTime)
+	sinceGenesis := time.Now().Sub(firstProposedBlockTime)
 
 	if height == 0 {
 		return sinceGenesis
