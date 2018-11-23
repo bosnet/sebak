@@ -130,3 +130,45 @@ func TestBlockOperationSaveByTransaction(t *testing.T) {
 		require.Equal(t, bo.Body, encoded)
 	}
 }
+
+func TestBlockOperationsByBlockHeight(t *testing.T) {
+	conf := common.NewTestConfig()
+	st := storage.NewTestStorage()
+
+	heights := []uint64{1, 2, 3}
+	created := map[uint64][]string{}
+	for _, height := range heights {
+		bos := TestMakeNewBlockOperation(conf.NetworkID, 10)
+
+		for _, bo := range bos {
+			bo.Height = height
+			bo.MustSave(st)
+			created[height] = append(created[height], bo.Hash)
+		}
+
+	}
+
+	var saved []BlockOperation
+	for _, height := range heights {
+		var saved []BlockOperation
+		iterFunc, closeFunc := GetBlockOperationsByBlockHeight(st, height, nil)
+		for {
+			bo, hasNext, _ := iterFunc()
+			if !hasNext {
+				break
+			}
+			saved = append(saved, bo)
+		}
+		closeFunc()
+
+		for i, bo := range saved {
+			require.Equal(t, bo.Hash, created[height][i])
+		}
+	}
+
+	for _, bo := range saved {
+		println(bo.Height, bo.Hash)
+
+	}
+
+}
