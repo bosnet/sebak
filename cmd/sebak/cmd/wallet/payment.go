@@ -115,11 +115,11 @@ func init() {
 
 			// TODO: Validate that the account doesn't already exists
 			if flagFreeze {
-				tx = makeTransactionCreateAccount(sender, receiver, amount, senderAccount.SequenceID, true)
+				tx = MakeTransactionCreateAccount(sender, receiver, amount, senderAccount.SequenceID, true)
 			} else if flagCreateAccount {
-				tx = makeTransactionCreateAccount(sender, receiver, amount, senderAccount.SequenceID, false)
+				tx = MakeTransactionCreateAccount(sender, receiver, amount, senderAccount.SequenceID, false)
 			} else {
-				tx = makeTransactionPayment(sender, receiver, amount, senderAccount.SequenceID)
+				tx = MakeTransactionPayment(sender, receiver, amount, senderAccount.SequenceID)
 			}
 
 			tx.Sign(sender, []byte(flagNetworkID))
@@ -169,7 +169,7 @@ func init() {
 /// Returns:
 ///   `sebak.Transaction` = The generated `Transaction` creating the account
 ///
-func makeTransactionCreateAccount(kpSource keypair.KP, kpDest keypair.KP, amount common.Amount, seqid uint64, isFrozen bool) transaction.Transaction {
+func MakeTransactionCreateAccount(kpSource keypair.KP, kpDest keypair.KP, amount common.Amount, seqid uint64, isFrozen bool) transaction.Transaction {
 	var opb operation.CreateAccount
 	var fee common.Amount
 	if isFrozen {
@@ -221,7 +221,7 @@ func makeTransactionCreateAccount(kpSource keypair.KP, kpDest keypair.KP, amount
 /// Returns:
 ///  `sebak.Transaction` = The generated `Transaction` to do a payment
 ///
-func makeTransactionPayment(kpSource keypair.KP, kpDest keypair.KP, amount common.Amount, seqid uint64) transaction.Transaction {
+func MakeTransactionPayment(kpSource keypair.KP, kpDest keypair.KP, amount common.Amount, seqid uint64) transaction.Transaction {
 	opb := operation.NewPayment(kpDest.Address(), amount)
 
 	op := operation.Operation{
