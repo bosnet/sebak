@@ -12,7 +12,11 @@ const (
 type ThresholdPolicy interface {
 	Threshold() int
 	Validators() int
-	SetValidators(int) error
+	// Set the number of validators required for consensus
+	// The parameter must be a strictly positive integer
+	SetValidators(int)
 	Connected() int
-	SetConnected(int) error
+	// Set the number of currently connected nodes
+	// The parameter must be a strictly positive integer
+	SetConnected(int)
 }

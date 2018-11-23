@@ -20,14 +20,11 @@ func (vt *ISAACVotingThresholdPolicy) Validators() int {
 	return vt.validators
 }
 
-func (vt *ISAACVotingThresholdPolicy) SetValidators(n int) error {
+func (vt *ISAACVotingThresholdPolicy) SetValidators(n int) {
 	if n < 1 {
-		return errors.VotingThresholdInvalidValidators
+		panic(errors.VotingThresholdInvalidValidators)
 	}
-
 	vt.validators = n
-
-	return nil
 }
 
 func (vt *ISAACVotingThresholdPolicy) Connected() int {
@@ -37,17 +34,15 @@ func (vt *ISAACVotingThresholdPolicy) Connected() int {
 	return vt.connected
 }
 
-func (vt *ISAACVotingThresholdPolicy) SetConnected(n int) error {
+func (vt *ISAACVotingThresholdPolicy) SetConnected(n int) {
 	if n < 1 {
-		return errors.VotingThresholdInvalidValidators
+		panic(errors.VotingThresholdInvalidValidators)
 	}
 
 	vt.Lock()
 	defer vt.Unlock()
 
 	vt.connected = n
-
-	return nil
 }
 
 func (vt *ISAACVotingThresholdPolicy) Threshold() int {
