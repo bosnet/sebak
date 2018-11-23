@@ -1,6 +1,7 @@
 package client
 
 import (
+	"boscoin.io/sebak/lib/common/observer"
 	"bufio"
 	"context"
 	"encoding/json"
@@ -26,6 +27,7 @@ const (
 	UrlTransactionByHash     = "/transactions/{id}"
 	UrlTransactionStatus     = "/transactions/{id}/status"
 	UrlTransactionOperations = "/transactions/{id}/operations"
+	UrlSubscribe             = "/subscribe"
 )
 
 type QueryKey string
@@ -259,15 +261,15 @@ func (c *Client) SubmitTransactionAndWait(hash string, tx []byte) (pTransaction 
 	return
 }
 
-func (c *Client) Stream(ctx context.Context, theUrl string, cursor *string, handler func(data []byte) error) (err error) {
-	query := neturl.Values{}
-	if cursor != nil {
-		query.Set("cursor", string(*cursor))
-	}
-	theUrl += "?" + query.Encode()
+func (c *Client) Stream(ctx context.Context, url string, body []byte, handler func(data []byte) error) (err error) {
 	var headers = http.Header{}
 	headers.Set("Accept", "text/event-stream")
-	resp, err := c.Get(theUrl, headers)
+	var resp *http.Response
+	if body != nil {
+		resp, err = c.Post(url, body, headers)
+	} else {
+		resp, err = c.Get(url, headers)
+	}
 	if err != nil {
 		return err
 	}
@@ -311,8 +313,9 @@ func (c *Client) Stream(ctx context.Context, theUrl string, cursor *string, hand
 	return
 }
 
-func (c *Client) StreamAccount(ctx context.Context, id string, cursor *string, handler func(Account)) (err error) {
-	url := strings.Replace(UrlAccount, "{id}", id, -1)
+func (c *Client) StreamAccount(ctx context.Context, id string, handler func(Account)) (err error) {
+	s := []observer.Conditions{{observer.NewCondition(observer.ResourceAccount, observer.KeyAll, "")}}
+	b, err := json.Marshal(s)
 	handlerFunc := func(b []byte) (err error) {
 		var v Account
 		err = json.Unmarshal(b, &v)
@@ -322,39 +325,12 @@ func (c *Client) StreamAccount(ctx context.Context, id string, cursor *string, h
 		handler(v)
 		return nil
 	}
-	return c.Stream(ctx, url, cursor, handlerFunc)
+	return c.Stream(ctx, UrlSubscribe, b, handlerFunc)
 }
 
-func (c *Client) StreamFrozenAccountsByLinked(ctx context.Context, id string, cursor *string, handler func(FrozenAccount)) (err error) {
-	url := strings.Replace(UrlAccountFrozenAccounts, "{id}", id, -1)
-	handlerFunc := func(b []byte) (err error) {
-		var v FrozenAccount
-		err = json.Unmarshal(b, &v)
-		if err != nil {
-			return
-		}
-		handler(v)
-		return nil
-	}
-	return c.Stream(ctx, url, cursor, handlerFunc)
-}
-
-func (c *Client) StreamFrozenAccounts(ctx context.Context, id string, cursor *string, handler func(FrozenAccount)) (err error) {
-	url := strings.Replace(UrlFrozenAccounts, "{id}", id, -1)
-	handlerFunc := func(b []byte) (err error) {
-		var v FrozenAccount
-		err = json.Unmarshal(b, &v)
-		if err != nil {
-			return err
-		}
-		handler(v)
-		return nil
-	}
-	return c.Stream(ctx, url, cursor, handlerFunc)
-}
-
-func (c *Client) StreamTransactions(ctx context.Context, cursor *string, handler func(Transaction)) (err error) {
-	url := UrlTransactions
+func (c *Client) StreamTransactions(ctx context.Context, handler func(Transaction)) (err error) {
+	s := []observer.Conditions{{observer.NewCondition(observer.ResourceTransaction, observer.KeyAll, "")}}
+	b, err := json.Marshal(s)
 	handlerFunc := func(b []byte) (err error) {
 		var v Transaction
 		err = json.Unmarshal(b, &v)
@@ -364,11 +340,12 @@ func (c *Client) StreamTransactions(ctx context.Context, cursor *string, handler
 		handler(v)
 		return nil
 	}
-	return c.Stream(ctx, url, cursor, handlerFunc)
+	return c.Stream(ctx, UrlSubscribe, b, handlerFunc)
 }
 
-func (c *Client) StreamTransactionsByAccount(ctx context.Context, id string, cursor *string, handler func(Transaction)) (err error) {
-	url := strings.Replace(UrlAccountTransactions, "{id}", id, -1)
+func (c *Client) StreamTransactionsByAccount(ctx context.Context, id string, handler func(Transaction)) (err error) {
+	s := []observer.Conditions{{observer.NewCondition(observer.ResourceTransaction, observer.KeySource, id), observer.NewCondition(observer.ResourceTransaction, observer.KeyTarget, id)}}
+	b, err := json.Marshal(s)
 	handlerFunc := func(b []byte) (err error) {
 		var v Transaction
 		err = json.Unmarshal(b, &v)
@@ -378,10 +355,10 @@ func (c *Client) StreamTransactionsByAccount(ctx context.Context, id string, cur
 		handler(v)
 		return nil
 	}
-	return c.Stream(ctx, url, cursor, handlerFunc)
+	return c.Stream(ctx, UrlSubscribe, b, handlerFunc)
 }
 
-func (c *Client) StreamTransactionStatus(ctx context.Context, id string, cursor *string, handler func(TransactionStatus)) (err error) {
+func (c *Client) StreamTransactionStatus(ctx context.Context, id string, body []byte, handler func(TransactionStatus)) (err error) {
 	url := strings.Replace(UrlTransactionStatus, "{id}", id, -1)
 	handlerFunc := func(b []byte) (err error) {
 		var v TransactionStatus
@@ -392,11 +369,12 @@ func (c *Client) StreamTransactionStatus(ctx context.Context, id string, cursor 
 		handler(v)
 		return nil
 	}
-	return c.Stream(ctx, url, cursor, handlerFunc)
+	return c.Stream(ctx, url, nil, handlerFunc)
 }
 
-func (c *Client) StreamTransactionsByHash(ctx context.Context, id string, cursor *string, handler func(Transaction)) (err error) {
-	url := strings.Replace(UrlTransactionByHash, "{id}", id, -1)
+func (c *Client) StreamTransactionsByHash(ctx context.Context, id string, handler func(Transaction)) (err error) {
+	s := []observer.Conditions{{observer.NewCondition(observer.ResourceTransaction, observer.KeyTxHash, id)}}
+	b, err := json.Marshal(s)
 	handlerFunc := func(b []byte) (err error) {
 		var v Transaction
 		err = json.Unmarshal(b, &v)
@@ -406,11 +384,12 @@ func (c *Client) StreamTransactionsByHash(ctx context.Context, id string, cursor
 		handler(v)
 		return nil
 	}
-	return c.Stream(ctx, url, cursor, handlerFunc)
+	return c.Stream(ctx, UrlSubscribe, b, handlerFunc)
 }
 
-func (c *Client) StreamOperationsByAccount(ctx context.Context, id string, cursor *string, handler func(Operation)) (err error) {
-	url := strings.Replace(UrlAccountOperations, "{id}", id, -1)
+func (c *Client) StreamOperationsByAccount(ctx context.Context, id string, body []byte, handler func(Operation)) (err error) {
+	s := []observer.Conditions{{observer.NewCondition(observer.ResourceOperation, observer.KeySource, id), observer.NewCondition(observer.ResourceOperation, observer.KeyTarget, id)}}
+	b, err := json.Marshal(s)
 	handlerFunc := func(b []byte) (err error) {
 		var v Operation
 		err = json.Unmarshal(b, &v)
@@ -420,11 +399,12 @@ func (c *Client) StreamOperationsByAccount(ctx context.Context, id string, curso
 		handler(v)
 		return nil
 	}
-	return c.Stream(ctx, url, cursor, handlerFunc)
+	return c.Stream(ctx, UrlSubscribe, b, handlerFunc)
 }
 
-func (c *Client) StreamOperationsByTransaction(ctx context.Context, id string, cursor *string, handler func(Operation)) (err error) {
-	url := strings.Replace(UrlTransactionOperations, "{id}", id, -1)
+func (c *Client) StreamOperationsByTransaction(ctx context.Context, id string, body []byte, handler func(Operation)) (err error) {
+	s := []observer.Conditions{{observer.NewCondition(observer.ResourceOperation, observer.KeyTxHash, id)}}
+	b, err := json.Marshal(s)
 	handlerFunc := func(b []byte) (err error) {
 		var v Operation
 		err = json.Unmarshal(b, &v)
@@ -434,5 +414,5 @@ func (c *Client) StreamOperationsByTransaction(ctx context.Context, id string, c
 		handler(v)
 		return nil
 	}
-	return c.Stream(ctx, url, cursor, handlerFunc)
+	return c.Stream(ctx, UrlSubscribe, b, handlerFunc)
 }

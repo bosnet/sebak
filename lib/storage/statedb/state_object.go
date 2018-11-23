@@ -3,10 +3,8 @@ package statedb
 import (
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/storage/statedb/trie"
 	"bytes"
-	"fmt"
 )
 
 type Storage map[common.Hash]common.Hash
@@ -209,11 +207,6 @@ func (so *stateObject) Save() (err error) {
 		err = st.New(key, so.data)
 		createdKey := block.GetBlockAccountCreatedKey(common.GetUniqueIDFromUUID())
 		err = st.New(createdKey, so.Address())
-	}
-	if err == nil {
-		event := "saved"
-		event += " " + fmt.Sprintf("address-%s", so.Address())
-		observer.BlockAccountObserver.Trigger(event, &so.data)
 	}
 
 	bac := block.BlockAccountSequenceID{

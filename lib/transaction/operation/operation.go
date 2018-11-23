@@ -109,6 +109,10 @@ type Payable interface {
 	GetAmount() common.Amount
 }
 
+type Tagetable interface {
+	TargetAddress() string
+}
+
 func (o Operation) MakeHash() []byte {
 	return common.MustMakeObjectHash(o)
 }

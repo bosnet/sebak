@@ -7,12 +7,10 @@ import (
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/transaction"
 	"boscoin.io/sebak/lib/transaction/operation"
-	"context"
 	"github.com/stellar/go/keypair"
 	"github.com/stretchr/testify/require"
 	"net/http"
 	"strconv"
-	"sync"
 	"testing"
 )
 
@@ -55,51 +53,18 @@ func TestTransactionStatus(t *testing.T) {
 		body, err := tx.Serialize()
 		require.NoError(t, err)
 
-		var wg sync.WaitGroup
-		wg.Add(3)
-
-		go func() {
-			ctx, cancel := context.WithCancel(context.Background())
-			err = c.StreamTransactionStatus(ctx, tx.H.Hash, nil, func(status client.TransactionStatus) {
-				if status.Status == "confirmed" {
-					cancel()
-				}
-			})
-			require.NoError(t, err)
-			wg.Done()
-		}()
-
-		var targetAccount client.Account
-		go func() {
-			ctx, cancel := context.WithCancel(context.Background())
-			err = c.StreamAccount(ctx, account1Addr, nil, func(account client.Account) {
-				targetAccount = account
-				cancel()
-			})
-			require.NoError(t, err)
-			wg.Done()
-		}()
-
-		go func() {
-			ctx, cancel := context.WithCancel(context.Background())
-			err = c.StreamAccount(ctx, genesisAddr, nil, func(account client.Account) {
-				if account.SequenceID != genesisAccount.SequenceID {
-					genesisAccount = account
-					cancel()
-				}
-			})
-			require.NoError(t, err)
-			wg.Done()
-		}()
-
-		_, err = c.SubmitTransaction(body)
+		_, err = c.SubmitTransactionAndWait(tx.H.Hash, body)
 		require.NoError(t, err)
 
-		wg.Wait()
+		targetAccount, err := c.LoadAccount(account1Addr)
+		require.NoError(t, err)
 
 		targetBalance, err := strconv.ParseUint(targetAccount.Balance, 10, 64)
 		require.NoError(t, err)
 		require.Equal(t, uint64(genesisToAccount1), targetBalance)
+
+		genesisAccount, err = c.LoadAccount(genesisAddr)
+		require.NoError(t, err)
 
 		genesisBalance2, err := strconv.ParseUint(genesisAccount.Balance, 10, 64)
 		require.NoError(t, err)

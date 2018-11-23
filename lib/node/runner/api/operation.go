@@ -1,14 +1,11 @@
 package api
 
 import (
-	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
 
 	"boscoin.io/sebak/lib/block"
-	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/network/httputils"
 	"boscoin.io/sebak/lib/node/runner/api/resource"
@@ -70,50 +67,6 @@ func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter
 		}
 		closeFunc()
 		return txs
-	}
-
-	if httputils.IsEventStream(r) {
-		event := fmt.Sprintf("source-%s", address)
-		if len(oType) > 0 {
-			event = fmt.Sprintf("source-type-%s%s", address, oType)
-		}
-		es := NewEventStream(
-			w,
-			r,
-			func(args ...interface{}) ([]byte, error) {
-				if len(args) <= 1 {
-					return nil, fmt.Errorf("render: value is empty")
-				}
-				i := args[1]
-
-				if i == nil {
-					return nil, nil
-				}
-
-				bo := i.(*block.BlockOperation)
-				r := resource.NewOperation(bo)
-
-				if blk, err := block.GetBlockByHeight(api.storage, bo.Height); err != nil {
-					return nil, err
-				} else {
-					r.Block = &blk
-				}
-
-				return json.Marshal(r.Resource())
-			},
-			DefaultContentType,
-		)
-
-		txs := readFunc()
-		if len(txs) > 0 {
-			for _, tx := range txs {
-				es.Render(tx)
-			}
-		} else {
-			es.Render(nil)
-		}
-		es.Run(observer.BlockOperationObserver, event)
-		return
 	}
 
 	if found, err := block.ExistsBlockAccount(api.storage, address); err != nil {

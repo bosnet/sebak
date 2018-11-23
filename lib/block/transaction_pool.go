@@ -53,8 +53,8 @@ func (tp TransactionPool) Save(st *storage.LevelDBBackend) (err error) {
 		return
 	}
 
-	event := fmt.Sprintf("pushed-%s", tp.Hash)
-	observer.BlockTransactionObserver.Trigger(event, &tp)
+	event := observer.NewCondition(observer.ResourceTransactionPool, observer.KeyTxHash, tp.Hash).Event()
+	go observer.ResourceObserver.Trigger(event, &tp)
 
 	return nil
 }

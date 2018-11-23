@@ -3,20 +3,16 @@
 package client
 
 import (
-	"net/http"
-	"strconv"
-	"testing"
-	"time"
-
-	"encoding/json"
-
-	"github.com/stellar/go/keypair"
-	"github.com/stretchr/testify/require"
-
 	"boscoin.io/sebak/lib/client"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/transaction"
 	"boscoin.io/sebak/lib/transaction/operation"
+	"encoding/json"
+	"github.com/stellar/go/keypair"
+	"github.com/stretchr/testify/require"
+	"net/http"
+	"strconv"
+	"testing"
 )
 
 func TestInflationPF(t *testing.T) {
@@ -73,18 +69,8 @@ func TestInflationPF(t *testing.T) {
 		body, err := tx.Serialize()
 		require.NoError(t, err)
 
-		_, err = c.SubmitTransaction(body)
+		_, err = c.SubmitTransactionAndWait(tx.H.Hash, body)
 		require.NoError(t, err)
-
-		var e error
-		for second := time.Duration(0); second < time.Second*10; second = second + time.Millisecond*500 {
-			_, e = c.LoadTransaction(tx.H.Hash)
-			if e == nil {
-				break
-			}
-			time.Sleep(time.Millisecond * 500)
-		}
-		require.Nil(t, e)
 
 		opage, err := c.LoadOperationsByAccount(CongressAddr, client.Q{Key: client.QueryType, Value: "congress-voting"})
 		require.NoError(t, err)
@@ -138,18 +124,8 @@ func TestInflationPF(t *testing.T) {
 		body, err := tx.Serialize()
 		require.NoError(t, err)
 
-		_, err = c.SubmitTransaction(body)
+		_, err = c.SubmitTransactionAndWait(tx.H.Hash, body)
 		require.NoError(t, err)
-
-		var e error
-		for second := time.Duration(0); second < time.Second*10; second = second + time.Millisecond*500 {
-			_, e = c.LoadTransaction(tx.H.Hash)
-			if e == nil {
-				break
-			}
-			time.Sleep(time.Millisecond * 500)
-		}
-		require.Nil(t, e)
 
 		opage, err := c.LoadOperationsByAccount(CongressAddr, client.Q{Key: client.QueryType, Value: "congress-voting-result"})
 		require.NoError(t, err)
@@ -203,18 +179,8 @@ func TestInflationPF(t *testing.T) {
 		body, err := tx.Serialize()
 		require.NoError(t, err)
 
-		_, err = c.SubmitTransaction(body)
+		_, err = c.SubmitTransactionAndWait(tx.H.Hash, body)
 		require.NoError(t, err)
-
-		var e error
-		for second := time.Duration(0); second < time.Second*10; second = second + time.Millisecond*500 {
-			_, e = c.LoadTransaction(tx.H.Hash)
-			if e == nil {
-				break
-			}
-			time.Sleep(time.Millisecond * 500)
-		}
-		require.Nil(t, e)
 
 		targetAccount, err = c.LoadAccount(account1Addr)
 		require.Nil(t, err)

@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"boscoin.io/sebak/lib/node/runner/api"
 	"bufio"
 	"bytes"
 	"io"
@@ -683,6 +684,8 @@ func saveBlock(checker *BallotChecker) error {
 		checker.LatestBlockSources = append(checker.LatestBlockSources, tx.B.Source)
 	}
 	checker.NodeRunner.SavingBlockOperations().Save(*theBlock)
+
+	go api.TriggerEvent(checker.NodeRunner.Storage(), proposedTransactions)
 
 	return nil
 }

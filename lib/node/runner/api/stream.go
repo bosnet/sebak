@@ -1,12 +1,15 @@
 package api
 
 import (
+	"boscoin.io/sebak/lib/common/observer"
+	"boscoin.io/sebak/lib/errors"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strings"
 
-	observable "github.com/GianlucaGuarini/go-observable"
+	"github.com/GianlucaGuarini/go-observable"
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/network/httputils"
@@ -14,6 +17,34 @@ import (
 
 // DefaultContentType is "application/json"
 const DefaultContentType = "application/json"
+
+func (api NetworkHandlerAPI) PostSubscribeHandler(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+
+	if !httputils.IsEventStream(r) {
+		httputils.WriteJSONError(w, errors.BadRequestParameter)
+	}
+
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		httputils.WriteJSONError(w, errors.BadRequestParameter)
+		return
+	}
+	var requestParams []observer.Conditions
+	if err := json.Unmarshal(body, &requestParams); err != nil {
+		httputils.WriteJSONError(w, errors.BadRequestParameter)
+		return
+	}
+
+	var events []string
+	for _, conditions := range requestParams {
+		events = append(events, conditions.Event())
+	}
+
+	es := NewEventStream(w, r, renderEventStream, DefaultContentType)
+	es.Render(nil)
+	es.Run(observer.ResourceObserver, events...)
+}
 
 // EventStream handles chunked responses of a observable trigger
 //
@@ -26,6 +57,7 @@ type EventStream struct {
 	flusher     http.Flusher
 	err         error
 	rendered    bool
+	stop        chan struct{}
 }
 
 type RenderFunc func(args ...interface{}) ([]byte, error)
@@ -133,7 +165,7 @@ func (s *EventStream) Start(ob *observable.Observable, events ...string) func() 
 
 	event := strings.Join(events, " ")
 	msg := make(chan []byte)
-	stop := make(chan struct{})
+	s.stop = make(chan struct{})
 
 	onFunc := func(args ...interface{}) {
 		var (
@@ -155,7 +187,7 @@ func (s *EventStream) Start(ob *observable.Observable, events ...string) func() 
 		}
 		select {
 		case msg <- payload:
-		case <-stop:
+		case <-s.stop:
 			return
 		}
 	}
@@ -170,11 +202,14 @@ func (s *EventStream) Start(ob *observable.Observable, events ...string) func() 
 				fmt.Fprintf(s.writer, "%s\n", payload)
 				s.flusher.Flush()
 			case <-s.request.Context().Done():
-				close(stop)
+				close(s.stop)
 				return
 			}
 		}
 	}
+}
+func (s *EventStream) Stop() {
+	close(s.stop)
 }
 
 func (s *EventStream) errMessage(err error) []byte {

@@ -1,6 +1,9 @@
 package api
 
 import (
+	"boscoin.io/sebak/lib/common/observer"
+	"boscoin.io/sebak/lib/transaction"
+	"boscoin.io/sebak/lib/transaction/operation"
 	"encoding/json"
 	"fmt"
 
@@ -29,6 +32,7 @@ const (
 	GetBlocksHandlerPattern                = "/blocks"
 	GetBlockHandlerPattern                 = "/blocks/{hashOrHeight}"
 	GetNodeInfoPattern                     = "/"
+	PostSubscribePattern                   = "/subscribe"
 )
 
 type NetworkHandlerAPI struct {
@@ -54,6 +58,50 @@ func NewNetworkHandlerAPI(localNode *node.LocalNode, network network.Network, st
 
 func (api NetworkHandlerAPI) HandlerURLPattern(pattern string) string {
 	return fmt.Sprintf("%s/%s%s", api.urlPrefix, api.version, pattern)
+}
+
+func TriggerEvent(st *storage.LevelDBBackend, transactions []*transaction.Transaction) {
+	accountMap := make(map[string]struct{})
+	for _, tx := range transactions {
+		source := tx.Source()
+		accountMap[source] = struct{}{}
+		txHash := tx.H.Hash
+
+		txEvent := observer.NewCondition(observer.ResourceTransaction, observer.KeyAll, "").Event()
+		txEvent += " " + observer.NewCondition(observer.ResourceTransaction, observer.KeySource, source).Event()
+		txEvent += " " + observer.NewCondition(observer.ResourceTransaction, observer.KeyTxHash, txHash).Event()
+
+		for _, op := range tx.B.Operations {
+			opHash := fmt.Sprintf("%s-%s", op.MakeHashString(), txHash)
+
+			opEvent := observer.NewCondition(observer.ResourceOperation, observer.KeyAll, "").Event()
+			opEvent += " " + observer.NewCondition(observer.ResourceOperation, observer.KeyTxHash, txHash).Event()
+			opEvent += " " + observer.NewCondition(observer.ResourceOperation, observer.KeyOpHash, opHash).Event()
+
+			opEvent += " " + observer.NewCondition(observer.ResourceOperation, observer.KeySource, source).Event()
+			opEvent += " " + observer.Conditions{observer.NewCondition(observer.ResourceOperation, observer.KeySource, source), observer.NewCondition(observer.ResourceOperation, observer.KeyType, string(op.H.Type))}.Event()
+			if pop, ok := op.B.(operation.Tagetable); ok {
+				target := pop.TargetAddress()
+				accountMap[target] = struct{}{}
+				txEvent += " " + observer.NewCondition(observer.ResourceTransaction, observer.KeyTarget, target).Event()
+				opEvent += " " + observer.NewCondition(observer.ResourceOperation, observer.KeyTarget, target).Event()
+				opEvent += " " + observer.Conditions{observer.NewCondition(observer.ResourceOperation, observer.KeyTarget, target), observer.NewCondition(observer.ResourceOperation, observer.KeyType, string(op.H.Type))}.Event()
+			}
+			opBlock, _ := block.GetBlockOperation(st, opHash)
+			go observer.ResourceObserver.Trigger(opEvent, &opBlock)
+		}
+
+		txBlock, _ := block.GetBlockTransaction(st, tx.H.Hash)
+		go observer.ResourceObserver.Trigger(txEvent, &txBlock)
+
+	}
+	for account, _ := range accountMap {
+		accEvent := observer.NewCondition(observer.ResourceAccount, observer.KeyAll, "").Event()
+		accEvent += " " + observer.NewCondition(observer.ResourceAccount, observer.KeyAddress, account).Event()
+		accountBlock, _ := block.GetBlockAccount(st, account)
+		go observer.ResourceObserver.Trigger(accEvent, accountBlock)
+	}
+
 }
 
 func renderEventStream(args ...interface{}) ([]byte, error) {

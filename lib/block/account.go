@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/storage"
 )
 
@@ -73,12 +72,6 @@ func (b *BlockAccount) Save(st *storage.LevelDBBackend) (err error) {
 	}
 	if err != nil {
 		return err
-	}
-
-	if err == nil {
-		event := "saved"
-		event += " " + fmt.Sprintf("address-%s", b.Address)
-		observer.BlockAccountObserver.Trigger(event, b)
 	}
 
 	bac := BlockAccountSequenceID{

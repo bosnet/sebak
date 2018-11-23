@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
@@ -116,18 +115,6 @@ func (bo *BlockOperation) Save(st *storage.LevelDBBackend) (err error) {
 	}
 
 	bo.isSaved = true
-
-	event := "saved"
-	event += " " + fmt.Sprintf("source-%s", bo.Source)
-	event += " " + fmt.Sprintf("hash-%s", bo.Hash)
-	event += " " + fmt.Sprintf("txhash-%s", bo.TxHash)
-	event += " " + fmt.Sprintf("source-type-%s%s", bo.Source, bo.Type)
-	event += " " + fmt.Sprintf("blockheight-%d", bo.Height)
-	if casted.Linked != "" {
-		event += " frozen"
-		event += " " + fmt.Sprintf("linked-%s", casted.Linked)
-	}
-	observer.BlockOperationObserver.Trigger(event, bo)
 
 	return nil
 }

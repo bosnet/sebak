@@ -1,14 +1,12 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
 
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/network/httputils"
 	"boscoin.io/sebak/lib/node/runner/api/resource"
@@ -33,19 +31,6 @@ func (api NetworkHandlerAPI) GetAccountHandler(w http.ResponseWriter, r *http.Re
 		}
 		payload = resource.NewAccount(ba)
 		return payload, nil
-	}
-
-	if httputils.IsEventStream(r) {
-		event := fmt.Sprintf("address-%s", address)
-		es := NewEventStream(w, r, renderEventStream, DefaultContentType)
-		payload, err := readFunc()
-		if err != nil {
-			es.Render(nil)
-		} else {
-			es.Render(payload)
-		}
-		es.Run(observer.BlockAccountObserver, event)
-		return
 	}
 
 	payload, err := readFunc()
@@ -159,21 +144,6 @@ func (api NetworkHandlerAPI) GetFrozenAccountsByAccountHandler(w http.ResponseWr
 		return txs
 	}
 
-	if httputils.IsEventStream(r) {
-		event := fmt.Sprintf("linked-%s", address)
-		es := NewEventStream(w, r, renderEventStream, DefaultContentType)
-		txs := readFunc()
-		if len(txs) > 0 {
-			for _, tx := range txs {
-				es.Render(tx)
-			}
-		} else {
-			es.Render(nil)
-		}
-		es.Run(observer.BlockOperationObserver, event)
-		return
-	}
-
 	txs := readFunc()
 
 	list := p.ResourceList(txs, cursor)
@@ -277,21 +247,6 @@ func (api NetworkHandlerAPI) GetFrozenAccountsHandler(w http.ResponseWriter, r *
 		}
 		closeFunc()
 		return txs
-	}
-
-	if httputils.IsEventStream(r) {
-		event := "frozen"
-		es := NewEventStream(w, r, renderEventStream, DefaultContentType)
-		txs := readFunc()
-		if len(txs) > 0 {
-			for _, tx := range txs {
-				es.Render(tx)
-			}
-		} else {
-			es.Render(nil)
-		}
-		es.Run(observer.BlockOperationObserver, event)
-		return
 	}
 
 	txs := readFunc()

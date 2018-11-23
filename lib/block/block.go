@@ -7,7 +7,6 @@ import (
 	"github.com/btcsuite/btcutil/base58"
 
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/voting"
@@ -106,8 +105,6 @@ func (b *Block) Save(st *storage.LevelDBBackend) (err error) {
 	if err = st.New(getBlockKeyPrefixHeight(b.Height), b.Hash); err != nil {
 		return
 	}
-
-	observer.BlockObserver.Trigger(EventBlockPrefix, b)
 
 	return
 }

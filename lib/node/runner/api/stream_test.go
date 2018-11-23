@@ -1,7 +1,10 @@
 package api
 
 import (
+	"boscoin.io/sebak/lib/common/observer"
+	"boscoin.io/sebak/lib/transaction"
 	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -10,10 +13,100 @@ import (
 	"testing"
 
 	"boscoin.io/sebak/lib/block"
-	observable "github.com/GianlucaGuarini/go-observable"
+	"github.com/GianlucaGuarini/go-observable"
 
 	"github.com/stretchr/testify/require"
 )
+
+func TestAccountStream(t *testing.T) {
+	ts, storage := prepareAPIServer()
+	defer storage.Close()
+	defer ts.Close()
+	kp, _, bt, bo := prepareBlkTxOpWithoutSave(storage)
+	ba := block.TestMakeBlockAccount(kp)
+
+	// Save
+	{
+		ba.MustSave(storage)
+		bt.MustSave(storage)
+		bo.MustSave(storage)
+	}
+
+	// Do a Request
+	var acReader *bufio.Reader
+	var txReader *bufio.Reader
+	var opReader *bufio.Reader
+	{
+		s := []observer.Conditions{{observer.NewCondition(observer.ResourceAccount, observer.KeyAddress, ba.Address)}}
+		b, err := json.Marshal(s)
+		require.NoError(t, err)
+		respBody := request(ts, PostSubscribePattern, true, b)
+		defer respBody.Close()
+		acReader = bufio.NewReader(respBody)
+	}
+	{
+		s := []observer.Conditions{{observer.NewCondition(observer.ResourceTransaction, observer.KeyTxHash, bt.Hash)}}
+		b, err := json.Marshal(s)
+		require.NoError(t, err)
+		respBody := request(ts, PostSubscribePattern, true, b)
+		defer respBody.Close()
+		txReader = bufio.NewReader(respBody)
+	}
+	{
+		s := []observer.Conditions{{observer.NewCondition(observer.ResourceOperation, observer.KeyOpHash, bo.Hash)}}
+		b, err := json.Marshal(s)
+		require.NoError(t, err)
+		respBody := request(ts, PostSubscribePattern, true, b)
+		defer respBody.Close()
+		opReader = bufio.NewReader(respBody)
+	}
+	tx := bt.Transaction()
+	txs := []*transaction.Transaction{&tx}
+	TriggerEvent(storage, txs)
+
+	// Check the output
+	{
+		line, err := acReader.ReadBytes('\n')
+		require.NoError(t, err)
+		line = bytes.Trim(line, "\n")
+		if len(line) == 0 {
+			line, err = acReader.ReadBytes('\n')
+			require.NoError(t, err)
+			line = bytes.Trim(line, "\n")
+		}
+		recv := make(map[string]interface{})
+		json.Unmarshal(line, &recv)
+		require.Equal(t, ba.Address, recv["address"], "address is not same")
+	}
+	{
+		line, err := txReader.ReadBytes('\n')
+		require.NoError(t, err)
+		line = bytes.Trim(line, "\n")
+		if len(line) == 0 {
+			line, err = txReader.ReadBytes('\n')
+			require.NoError(t, err)
+			line = bytes.Trim(line, "\n")
+		}
+		recv := make(map[string]interface{})
+		json.Unmarshal(line, &recv)
+		require.Equal(t, bt.Hash, recv["hash"], "hash is not the same")
+		require.Equal(t, bt.Block, recv["block"], "block is not the same")
+	}
+	{
+		line, err := opReader.ReadBytes('\n')
+		require.NoError(t, err)
+		line = bytes.Trim(line, "\n")
+		if len(line) == 0 {
+			line, err = opReader.ReadBytes('\n')
+			require.NoError(t, err)
+			line = bytes.Trim(line, "\n")
+		}
+		recv := make(map[string]interface{})
+		json.Unmarshal(line, &recv)
+		require.Equal(t, bo.Hash, recv["hash"], "hash is not same")
+	}
+
+}
 
 func TestAPIStreamRun(t *testing.T) {
 	tests := []struct {
