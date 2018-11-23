@@ -374,6 +374,10 @@ func BallotCheckResult(c common.Checker, args ...interface{}) (err error) {
 	}
 
 	result, votingHole, finished := checker.NodeRunner.Consensus().CanGetVotingResult(checker.Ballot)
+	if votingHole == voting.NOTYET && finished {
+		err = NewCheckerStopCloseConsensus(checker, "ballot already finished")
+		return
+	}
 
 	checker.Result = result
 	checker.VotingFinished = finished

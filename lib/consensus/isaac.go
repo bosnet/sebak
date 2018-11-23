@@ -2,7 +2,6 @@ package consensus
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"sync"
 
@@ -11,6 +10,7 @@ import (
 	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/storage"
@@ -210,7 +210,14 @@ func (is *ISAAC) Vote(b ballot.Ballot) (isNew bool, err error) {
 func (is *ISAAC) CanGetVotingResult(b ballot.Ballot) (RoundVoteResult, voting.Hole, bool) {
 	is.RLock()
 	defer is.RUnlock()
-	runningRound, _ := is.RunningRounds[b.VotingBasis().Index()]
+
+	is.log.Debug("CanGetVotingResult", "ballot", b)
+	runningRound, found := is.RunningRounds[b.VotingBasis().Index()]
+	if !found {
+		// if RunningRound is not found, this ballot will be stopped.
+		return nil, voting.NOTYET, true
+	}
+
 	if roundVote, err := runningRound.RoundVote(b.Proposer()); err == nil {
 		return roundVote.CanGetVotingResult(is.policy, b.State(), is.log)
 	} else {
@@ -221,7 +228,12 @@ func (is *ISAAC) CanGetVotingResult(b ballot.Ballot) (RoundVoteResult, voting.Ho
 func (is *ISAAC) IsVotedByNode(b ballot.Ballot, node string) (bool, error) {
 	is.RLock()
 	defer is.RUnlock()
-	runningRound, _ := is.RunningRounds[b.VotingBasis().Index()]
+
+	runningRound, found := is.RunningRounds[b.VotingBasis().Index()]
+	if !found {
+		return false, errors.RoundVoteNotFound
+	}
+
 	if roundVote, err := runningRound.RoundVote(b.Proposer()); err == nil {
 		return roundVote.IsVotedByNode(b.State(), node), nil
 	} else {
