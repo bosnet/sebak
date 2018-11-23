@@ -110,36 +110,46 @@ func (so *stateObject) SetState(key, value common.Hash) {
 
 }
 
-func (so *stateObject) AddBalance(amount common.Amount) (err error) {
+func (so *stateObject) AddBalance(amount common.Amount) error {
 	val, err := so.Balance().Add(amount)
+	if err != nil {
+		return err
+	}
 	so.data.Balance = val
 	if so.onDirty != nil {
 		so.onDirty(so.Address())
 		so.onDirty = nil
 	}
-	return
+	return nil
 }
 
-func (so *stateObject) AddBalanceWithSequenceID(amount common.Amount, sequenceID uint64) (err error) {
+func (so *stateObject) AddBalanceWithSequenceID(amount common.Amount, sequenceID uint64) error {
+	if err := so.AddBalance(amount); err != nil {
+		return err
+	}
 	so.data.SequenceID = sequenceID
-	so.AddBalance(amount)
-	return
+	return nil
 }
 
-func (so *stateObject) SubBalance(amount common.Amount) (err error) {
+func (so *stateObject) SubBalance(amount common.Amount) error {
 	val, err := so.Balance().Sub(amount)
+	if err != nil {
+		return err
+	}
 	so.data.Balance = val
 	if so.onDirty != nil {
 		so.onDirty(so.Address())
 		so.onDirty = nil
 	}
-	return
+	return nil
 }
 
 func (so *stateObject) SubBalanceWithSequenceID(amount common.Amount, sequenceID uint64) (err error) {
+	if err := so.SubBalance(amount); err != nil {
+		return err
+	}
 	so.data.SequenceID = sequenceID
-	so.SubBalance(amount)
-	return
+	return nil
 }
 
 func (so *stateObject) SetSequenceID(sequenceID uint64) {
