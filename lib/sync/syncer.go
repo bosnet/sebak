@@ -74,6 +74,10 @@ func NewSyncer(
 		opt(s)
 	}
 
+	if s.nodelist == nil {
+		s.nodelist = &NodeList{}
+	}
+
 	return s
 }
 
@@ -139,27 +143,26 @@ func (s *Syncer) loop() {
 			CurrentBlock:  height,
 			HighestBlock:  height,
 		}
-		nodeAddrs []string
 	)
 
 	for {
 		select {
 		case <-checkc:
 			s.logger.Debug("check interval", "checkInterval", s.checkInterval)
-			s.sync(syncProgress, nodeAddrs)
+			s.sync(syncProgress)
 			checkc = s.afterFunc(s.checkInterval)
 		case <-notifyc:
 			s.logger.Debug("got notification finished height")
 			onNotify = false // reset onNotify for singleflight
-			s.sync(syncProgress, nodeAddrs)
+			s.sync(syncProgress)
 		case req := <-s.requestHighestBlock:
 			height := req.height
-			nodeAddrs = req.nodeAddrs
-			s.logger.Info("updated highest height", "height", height, "nodes", len(nodeAddrs))
+			nodeAddrs := req.nodeAddrs
+			s.logger.Info("updated highest height", "height", height, "nodes", nodeAddrs)
+			s.nodelist.SetLatestNodeAddrs(nodeAddrs)
 			if height > syncProgress.CurrentBlock {
 				syncProgress.HighestBlock = height
-				s.sync(syncProgress, nodeAddrs)
-				s.nodelist.SetLatestNodes(nodeAddrs)
+				s.sync(syncProgress)
 			}
 		case c := <-s.getSyncProgress:
 			c <- syncProgress
@@ -182,7 +185,7 @@ func (s *Syncer) loop() {
 	}
 }
 
-func (s *Syncer) sync(p *SyncProgress, nodeAddrs []string) {
+func (s *Syncer) sync(p *SyncProgress) {
 	var (
 		startHeight       = p.CurrentBlock + 1
 		currentHeight     = p.CurrentBlock
@@ -206,7 +209,7 @@ func (s *Syncer) sync(p *SyncProgress, nodeAddrs []string) {
 	for height := startHeight; height <= highestHeight; height++ {
 		s.logger.Debug("work height", "height", height)
 		// TryAdd for unblocking when the pool is full. Just keep syncprogress for next sync
-		if s.work(height, nodeAddrs) == false {
+		if s.work(height) == false {
 			break
 		}
 		currentHeight = height
@@ -218,11 +221,11 @@ func (s *Syncer) sync(p *SyncProgress, nodeAddrs []string) {
 		"start", p.StartingBlock, "cur", p.CurrentBlock, "high", p.HighestBlock)
 }
 
-func (s *Syncer) work(height uint64, nodeAddrs []string) bool {
+func (s *Syncer) work(height uint64) bool {
 	defer func(begin time.Time) { metrics.Sync.ObserveDurationSeconds(begin, "") }(time.Now())
 	ctx := s.ctx
 	work := func() {
-		s.logger.Debug("start work", "height", height, "nodes", nodeAddrs)
+		s.logger.Debug("start work", "height", height, "nodes", s.nodelist.NodeAddrs())
 
 		latestHeight := s.latestBlockHeight()
 		if latestHeight > 0 && height <= latestHeight {
@@ -232,8 +235,8 @@ func (s *Syncer) work(height uint64, nodeAddrs []string) bool {
 
 		var (
 			syncInfo = &SyncInfo{
-				Height:    height,
-				NodeAddrs: nodeAddrs,
+				Height:   height,
+				NodeList: s.nodelist,
 			}
 			err error
 		)

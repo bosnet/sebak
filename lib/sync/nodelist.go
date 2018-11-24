@@ -7,7 +7,7 @@ type NodeList struct {
 	addrsMu sync.RWMutex
 }
 
-func (l *NodeList) SetLatestNodes(addrs []string) {
+func (l *NodeList) SetLatestNodeAddrs(addrs []string) {
 	if len(addrs) <= 0 {
 		return
 	}
@@ -15,7 +15,7 @@ func (l *NodeList) SetLatestNodes(addrs []string) {
 	l.addrs = addrs
 	l.addrsMu.Unlock()
 }
-func (l *NodeList) LatestNodes() []string {
+func (l *NodeList) NodeAddrs() []string {
 	l.addrsMu.RLock()
 	defer l.addrsMu.RUnlock()
 	return l.addrs

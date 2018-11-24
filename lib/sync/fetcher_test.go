@@ -36,7 +36,7 @@ func TestBlockFetcher(t *testing.T) {
 	defer st.Close()
 
 	kp := keypair.Random()
-	_, nw, localNode := network.CreateMemoryNetwork(nil)
+	_, _, localNode := network.CreateMemoryNetwork(nil)
 	cm := &mockConnectionManager{
 		allConnected: []string{kp.Address()},
 		getNodeFunc: func(addr string) node.Node {
@@ -67,14 +67,17 @@ func TestBlockFetcher(t *testing.T) {
 		return resp, nil
 	}
 
-	f := NewBlockFetcher(nw, cm, st, localNode)
-	f.apiClient = mockDoer{
+	cli := mockDoer{
 		handleFunc: apiHandlerFunc,
 	}
-	//f.logger = log
+
+	f := NewBlockFetcher(cm, cli, st, localNode)
+	f.logger = log
 
 	ctx := context.Background()
-	si, err := f.Fetch(ctx, &SyncInfo{Height: 1})
+	nodelist := &NodeList{}
+	nodelist.SetLatestNodeAddrs([]string{kp.Address()})
+	si, err := f.Fetch(ctx, &SyncInfo{Height: 1, NodeList: nodelist})
 	require.NoError(t, err)
 	require.Equal(t, bk.Hash, si.Block.Hash)
 	require.Equal(t, bk.TransactionsRoot, si.Block.TransactionsRoot)

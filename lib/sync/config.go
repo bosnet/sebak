@@ -75,13 +75,14 @@ func (c *Config) NewSyncer() *Syncer {
 }
 
 func (c *Config) NewFetcher() Fetcher {
+	client := c.NewHTTP2Client()
+
 	f := NewBlockFetcher(
-		c.network,
 		c.connectionManager,
+		client,
 		c.storage,
 		c.localNode,
 		func(f *BlockFetcher) {
-			f.nodelist = c.nodelist
 			f.fetchTimeout = c.FetchTimeout
 			f.logger = c.logger.New("submodule", "fetcher")
 		},
@@ -100,6 +101,15 @@ func (c *Config) NewValidator() Validator {
 			v.logger = c.logger.New("submodule", "validator")
 		})
 	return v
+}
+
+func (c *Config) NewHTTP2Client() *common.HTTP2Client {
+	client, err := common.NewHTTP2Client(c.FetchTimeout, 0, true)
+	if err != nil {
+		c.logger.Error("make http2 client error!", "err", err)
+		panic(err) // It's an unrecoverable error not to make client when starting syncer / node
+	}
+	return client
 }
 
 func (c *Config) LoggingConfig() {

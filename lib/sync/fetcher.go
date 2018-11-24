@@ -28,12 +28,10 @@ import (
 )
 
 type BlockFetcher struct {
-	network           network.Network
 	connectionManager network.ConnectionManager
 	apiClient         Doer
 	storage           *storage.LevelDBBackend
 	localNode         *node.LocalNode
-	nodelist          *NodeList
 
 	fetchTimeout  time.Duration
 	retryInterval time.Duration
@@ -43,15 +41,16 @@ type BlockFetcher struct {
 
 type BlockFetcherOption = func(f *BlockFetcher)
 
-func NewBlockFetcher(nw network.Network,
-	cManager network.ConnectionManager,
+func NewBlockFetcher(
+	cm network.ConnectionManager,
+	client Doer,
 	st *storage.LevelDBBackend,
 	localNode *node.LocalNode,
 	opts ...BlockFetcherOption) *BlockFetcher {
 
 	f := &BlockFetcher{
-		network:           nw,
-		connectionManager: cManager,
+		connectionManager: cm,
+		apiClient:         client,
 		storage:           st,
 		localNode:         localNode,
 		logger:            common.NopLogger(),
@@ -63,13 +62,6 @@ func NewBlockFetcher(nw network.Network,
 	for _, opt := range opts {
 		opt(f)
 	}
-
-	client, err := common.NewHTTP2Client(f.fetchTimeout, 0, true)
-	if err != nil {
-		f.logger.Error("make http2 client", "err", err)
-		panic(err) // It's an unrecoverable error not to make client when starting syncer / node
-	}
-	f.apiClient = client
 
 	return f
 }
@@ -94,7 +86,6 @@ func (f *BlockFetcher) Fetch(ctx context.Context, syncInfo *SyncInfo) (*SyncInfo
 				case <-ctx.Done():
 					return false, ctx.Err()
 				case <-c:
-					syncInfo.NodeAddrs = f.nodelist.LatestNodes()
 					return true, err
 				}
 			}
@@ -108,12 +99,18 @@ func (f *BlockFetcher) Fetch(ctx context.Context, syncInfo *SyncInfo) (*SyncInfo
 func (f *BlockFetcher) fetch(ctx context.Context, si *SyncInfo) error {
 	var (
 		height    = si.Height
-		nodeAddrs = si.NodeAddrs
+		nodeAddrs = si.NodeAddrs()
 	)
-	f.logger.Debug("start fetch", "height", height)
+	f.logger.Debug("start fetch", "height", height, "nodes", nodeAddrs)
+
+	if len(nodeAddrs) <= 0 {
+		f.logger.Error("Node addrs are nil!", "height", height, "nodes", nodeAddrs)
+		return errors.NodeNotFound
+	}
 
 	n := f.pickRandomNode(nodeAddrs)
 	if n == nil {
+		f.logger.Error("Alive Node addrs not exists", "height", height, "nodes", nodeAddrs)
 		return errors.NodeNotFound
 	}
 	f.logger.Debug("fetching items from node", "fetching_node", n, "height", height)

@@ -34,7 +34,7 @@ func TestSyncerSetSyncTarget(t *testing.T) {
 
 		syncer.validator = &mockValidator{
 			validateFunc: func(ctx context.Context, si *SyncInfo) error {
-				assert.Equal(t, len(si.NodeAddrs), 2)
+				assert.Equal(t, len(si.NodeAddrs()), 2)
 				infoc <- si
 				return nil
 			},

@@ -26,9 +26,13 @@ type SyncInfo struct {
 	Txs    []*transaction.Transaction
 	Ptx    *ballot.ProposerTransaction
 
-	// Fetching target node addresses, `NodeAddrs` is  the validators which
+	// Fetching target node addresses, NodeList is  the validators which
 	// participated and confirmed the consensus of latest ballot.
-	NodeAddrs []string
+	NodeList *NodeList
+}
+
+func (s *SyncInfo) NodeAddrs() []string {
+	return s.NodeList.NodeAddrs()
 }
 
 type Doer interface {
