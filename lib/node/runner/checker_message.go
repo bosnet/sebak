@@ -120,7 +120,7 @@ func PushIntoTransactionPool(c common.Checker, args ...interface{}) error {
 		return err
 	}
 
-	checker.Log.Debug("push transaction into TransactionPool", "transaction", tx)
+	checker.Log.Debug("push transaction into TransactionPool")
 
 	return nil
 }
@@ -139,7 +139,7 @@ func PushIntoTransactionPoolFromClient(c common.Checker, args ...interface{}) er
 		return err
 	}
 
-	checker.Log.Debug("push transaction into TransactionPool from client", "transaction", tx)
+	checker.Log.Debug("push transaction into TransactionPool from client")
 
 	return nil
 }
@@ -158,7 +158,7 @@ func PushIntoTransactionPoolFromNode(c common.Checker, args ...interface{}) erro
 		return err
 	}
 
-	checker.Log.Debug("push transaction into TransactionPool from node", "transaction", tx)
+	checker.Log.Debug("push transaction into TransactionPool from node")
 
 	return nil
 }
@@ -170,7 +170,6 @@ func BroadcastTransaction(c common.Checker, args ...interface{}) (err error) {
 
 	checker.Log.Debug("transaction from client will be broadcasted")
 
-	// TODO sender should be excluded
 	checker.Consensus.ConnectionManager().Broadcast(checker.Transaction)
 
 	return

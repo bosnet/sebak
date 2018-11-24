@@ -155,9 +155,9 @@ func (c *ValidatorConnectionManager) connectingValidator(v *node.Validator) {
 
 		if c.setConnected(v, err == nil) {
 			if err == nil {
-				c.log.Debug("validator is connected", "validator", v)
+				c.log.Debug("validator is connected", "validator", v.Address())
 			} else {
-				c.log.Debug("validator is disconnected", "validator", v, "error", err)
+				c.log.Debug("validator is disconnected", "validator", v.Address(), "error", err)
 			}
 		}
 	}
@@ -218,7 +218,7 @@ func (c *ValidatorConnectionManager) Broadcast(message common.Message) {
 					c.log.Error(
 						"failed to broadcast",
 						"error", err,
-						"validator", v,
+						"validator", v.Address(),
 						"type", message.GetType(),
 						"message", message.GetHash(),
 						"response", string(response),

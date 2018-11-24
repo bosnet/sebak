@@ -81,9 +81,7 @@ func TestISAACSimulationProposer(t *testing.T) {
 
 	ballotACCEPT3 := GenerateBallot(proposer, votingBasis, tx, ballot.StateACCEPT, nodes[3], conf)
 	err = ReceiveBallot(nr, ballotACCEPT3)
-
-	_, ok := err.(CheckerStopCloseConsensus)
-	require.True(t, ok)
+	require.NoError(t, err)
 
 	block := nr.Consensus().LatestBlock()
 	require.Equal(t, proposer.Address(), block.Proposer)
