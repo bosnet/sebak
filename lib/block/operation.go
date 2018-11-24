@@ -55,7 +55,7 @@ func NewBlockOperationFromOperation(op operation.Operation, tx transaction.Trans
 	}
 
 	linked := ""
-	if createAccount, ok := op.B.(*operation.CreateAccount); ok {
+	if createAccount, ok := op.B.(operation.CreateAccount); ok {
 		if createAccount.Linked != "" {
 			linked = createAccount.Linked
 		}
