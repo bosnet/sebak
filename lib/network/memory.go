@@ -1,12 +1,14 @@
 package network
 
 import (
+	"io"
 	"net"
 	"net/http"
 
-	"boscoin.io/sebak/lib/common"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
+
+	"boscoin.io/sebak/lib/common"
 )
 
 type MemoryNetwork struct {
@@ -121,6 +123,7 @@ func (prev *MemoryNetwork) NewMemoryNetwork() *MemoryNetwork {
 	}
 
 	n.peers[n.endpoint.String()] = n
+	n.messageBroker = &MemoryMessageBroker{network: n}
 
 	return n
 }
@@ -131,4 +134,18 @@ func (p *MemoryNetwork) AddHandler(string, http.HandlerFunc) *mux.Route {
 
 func (p *MemoryNetwork) AddMiddleware(string, ...mux.MiddlewareFunc) error {
 	return nil
+}
+
+type MemoryMessageBroker struct {
+	network  *MemoryNetwork
+	Messages []common.NetworkMessage
+}
+
+func (r *MemoryMessageBroker) Response(w io.Writer, o []byte) error {
+	_, err := w.Write(o)
+	return err
+}
+
+func (r *MemoryMessageBroker) Receive(m common.NetworkMessage) {
+	r.network.ReceiveChannel() <- m
 }

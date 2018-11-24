@@ -90,10 +90,9 @@ type NodeRunner struct {
 
 	InitialBalance common.Amount
 
-	Conf                   common.Config
-	nodeInfo               node.NodeInfo
-	savingBlockOperations  *SavingBlockOperations
-	ballotBroadcastChannel chan ballot.Ballot
+	Conf                  common.Config
+	nodeInfo              node.NodeInfo
+	savingBlockOperations *SavingBlockOperations
 }
 
 func NewNodeRunner(
@@ -105,15 +104,14 @@ func NewNodeRunner(
 	conf common.Config,
 ) (nr *NodeRunner, err error) {
 	nr = &NodeRunner{
-		localNode:              localNode,
-		policy:                 policy,
-		network:                n,
-		consensus:              c,
-		TransactionPool:        transaction.NewPool(conf),
-		storage:                storage,
-		log:                    log.New(logging.Ctx{"node": localNode.Alias()}),
-		Conf:                   conf,
-		ballotBroadcastChannel: make(chan ballot.Ballot, 1000),
+		localNode:       localNode,
+		policy:          policy,
+		network:         n,
+		consensus:       c,
+		TransactionPool: transaction.NewPool(conf),
+		storage:         storage,
+		log:             log.New(logging.Ctx{"node": localNode.Alias()}),
+		Conf:            conf,
 	}
 	nr.localNode.SetBooting()
 
@@ -367,7 +365,6 @@ func (nr *NodeRunner) Start() (err error) {
 	nr.log.Debug("NodeRunner started")
 	nr.Ready()
 
-	go nr.startBroadcastBallot()
 	go nr.handleMessages()
 	go nr.ConnectValidators()
 	go nr.InitRound()
@@ -493,7 +490,8 @@ func (nr *NodeRunner) handleMessage(message common.NetworkMessage) {
 	}
 }
 
-func (nr *NodeRunner) handleBallotMessage(msg interface{}) (err error) {
+func (nr *NodeRunner) handleBallotMessage(message common.NetworkMessage) (err error) {
+	nr.log.Debug("got ballot message")
 	baseChecker := &BallotChecker{
 		DefaultChecker:     common.DefaultChecker{Funcs: nr.handleBaseBallotCheckerFuncs},
 		NodeRunner:         nr,
@@ -501,17 +499,7 @@ func (nr *NodeRunner) handleBallotMessage(msg interface{}) (err error) {
 		Log:                nr.Log(),
 		VotingHole:         voting.NOTYET,
 		LatestBlockSources: []string{},
-	}
-
-	if message, ok := msg.(common.NetworkMessage); ok {
-		nr.log.Debug("got ballot(NetworkMessage)")
-		baseChecker.Message = message
-	} else if ball, ok := msg.(ballot.Ballot); ok {
-		nr.log.Debug("got ballot(Ballot)")
-		baseChecker.Ballot = ball
-	} else {
-		nr.log.Debug("weird message found", "message", msg)
-		return
+		Message:            message,
 	}
 
 	err = common.RunChecker(baseChecker, nr.handleBallotCheckerDeferFunc)
@@ -677,7 +665,7 @@ func (nr *NodeRunner) proposeNewBallot(round uint64) (ballot.Ballot, error) {
 
 	nr.log.Debug("new ballot created", "ballot", theBallot)
 
-	nr.broadcastBallot(*theBallot)
+	nr.BroadcastBallot(*theBallot)
 
 	return *theBallot, nil
 }
@@ -686,25 +674,11 @@ func (nr *NodeRunner) NodeInfo() node.NodeInfo {
 	return nr.nodeInfo
 }
 
-func (nr *NodeRunner) startBroadcastBallot() {
-	for {
-		select {
-		case b := <-nr.ballotBroadcastChannel:
-			nr.broadcastBallot(b)
-		}
-	}
-}
-
 func (nr *NodeRunner) BroadcastBallot(b ballot.Ballot) {
 	go func() {
-		nr.ballotBroadcastChannel <- b
-	}()
-}
-
-func (nr *NodeRunner) broadcastBallot(b ballot.Ballot) {
-	go func() {
-		nr.handleBallotMessage(b)
+		encoded, _ := b.Serialize()
+		nr.Network().MessageBroker().Receive(common.NewNetworkMessage(common.BallotMessage, encoded))
 	}()
 
-	nr.ConnectionManager().Broadcast(b)
+	go nr.ConnectionManager().Broadcast(b)
 }
