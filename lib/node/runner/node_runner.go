@@ -286,6 +286,10 @@ func (nr *NodeRunner) Ready() {
 		baCache.WrapHandlerFunc(apiHandler.GetAccountHandler),
 	).Methods("GET", "OPTIONS")
 	nr.network.AddHandler(
+		apiHandler.HandlerURLPattern(api.GetAccountsHandlerPattern),
+		baCache.WrapHandlerFunc(apiHandler.GetAccountsHandler),
+	).Methods("POST", "OPTIONS").MatcherFunc(common.PostAndJSONMatcher)
+	nr.network.AddHandler(
 		apiHandler.HandlerURLPattern(api.GetAccountTransactionsHandlerPattern),
 		listCache.WrapHandlerFunc(apiHandler.GetTransactionsByAccountHandler),
 	).Methods("GET", "OPTIONS")
