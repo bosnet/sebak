@@ -10,6 +10,7 @@ const (
 	StateBOOTING State = iota
 	StateCONSENSUS
 	StateSYNC
+	StateWATCH
 )
 
 func (s State) String() string {
@@ -20,6 +21,8 @@ func (s State) String() string {
 		return "CONSENSUS"
 	case 2:
 		return "SYNC"
+	case 3:
+		return "WATCH"
 	}
 
 	return ""
@@ -38,6 +41,8 @@ func (s *State) UnmarshalJSON(b []byte) (err error) {
 		c = 1
 	case "SYNC":
 		c = 2
+	case "WATCH":
+		c = 3
 	}
 
 	*s = State(c)

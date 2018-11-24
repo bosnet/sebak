@@ -37,6 +37,8 @@ type Config struct {
 	CommonAccountAddress   string
 
 	JSONRPCEndpoint *Endpoint
+
+	WatcherMode bool
 }
 
 func NewConfig(networkID []byte) Config {

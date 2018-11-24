@@ -61,6 +61,7 @@ func (w *Watcher) SetLogger(l log15.Logger) {
 }
 
 func (w *Watcher) Start() error {
+	w.localNode.SetWatch()
 	w.loop()
 	return nil
 }

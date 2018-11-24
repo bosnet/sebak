@@ -572,6 +572,9 @@ func (nr *NodeRunner) handleBallotMessage(message common.NetworkMessage) (err er
 }
 
 func (nr *NodeRunner) InitRound() {
+	if nr.Conf.WatcherMode == true {
+		return
+	}
 	// get latest blocks
 	nr.consensus.SetLatestVotingBasis(voting.Basis{})
 

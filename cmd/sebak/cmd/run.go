@@ -79,6 +79,8 @@ var (
 	flagTransactionsLimit       string = common.GetENVValue("SEBAK_TRANSACTIONS_LIMIT", strconv.Itoa(common.DefaultTransactionsInBallotLimit))
 	flagOperationsInBallotLimit string = common.GetENVValue("SEBAK_OPERATIONS_IN_BALLOT_LIMIT", strconv.Itoa(common.DefaultOperationsInBallotLimit))
 	flagTxPoolLimit             string = common.GetENVValue("SEBAK_TX_POOL_LIMIT", strconv.Itoa(common.DefaultTxPoolLimit))
+
+	flagWatcherMode bool = common.GetENVValue("SEBAK_WATCHER_MODE", "0") == "1"
 )
 
 var (
@@ -220,6 +222,7 @@ func init() {
 	nodeCmd.Flags().StringVar(&flagHTTPCacheRedisAddrs, "http-cache-redis-addrs", flagHTTPCacheRedisAddrs, "http cache redis address")
 
 	nodeCmd.Flags().StringVar(&flagCongressAddress, "set-congress-address", flagCongressAddress, "set congress address")
+	nodeCmd.Flags().BoolVar(&flagWatcherMode, "watcher-mode", flagWatcherMode, "watcher mode")
 
 	rootCmd.AddCommand(nodeCmd)
 }
@@ -681,6 +684,7 @@ func runNode() error {
 		TxPoolClientLimit:      int(txPoolClientLimit),
 		TxPoolNodeLimit:        int(txPoolNodeLimit),
 		JSONRPCEndpoint:        jsonrpcbindEndpoint,
+		WatcherMode:            flagWatcherMode,
 	}
 	st, err := storage.NewStorage(storageConfig)
 	if err != nil {
@@ -731,6 +735,16 @@ func runNode() error {
 		}, func(error) {
 			syncer.Stop()
 		})
+	}
+	{
+		if flagWatcherMode == true {
+			watcher := c.NewWatcher(syncer)
+			g.Add(func() error {
+				return watcher.Start()
+			}, func(error) {
+				watcher.Stop()
+			})
+		}
 	}
 	{
 		cancel := make(chan struct{})
