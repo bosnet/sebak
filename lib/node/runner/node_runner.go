@@ -697,7 +697,7 @@ func (nr *NodeRunner) proposeNewBallot(round uint64) (ballot.Ballot, error) {
 		"transactionpool", nr.TransactionPool.Len(),
 	)
 
-	nr.BroadcastBallot(*theBallot)
+	nr.BroadcastBallot(*blt)
 
 	return *blt, nil
 }
