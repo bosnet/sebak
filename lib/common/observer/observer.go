@@ -70,5 +70,5 @@ func (cs Conditions) Event() string {
 }
 
 func Event(conditions ...Condition) string {
-	return (Conditions)(conditions).Event()
+	return Conditions(conditions).Event()
 }
