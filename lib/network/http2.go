@@ -9,12 +9,13 @@ import (
 	"strings"
 	"time"
 
-	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/errors"
-	"boscoin.io/sebak/lib/node"
 	"github.com/gorilla/mux"
 	logging "github.com/inconshreveable/log15"
 	"golang.org/x/net/http2"
+
+	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/errors"
+	"boscoin.io/sebak/lib/node"
 )
 
 type Handlers map[string]func(http.ResponseWriter, *http.Request)
@@ -77,8 +78,8 @@ type HTTP2Network struct {
 type HandlerFunc func(w http.ResponseWriter, r *http.Request)
 
 func NewHTTP2Network(config *HTTP2NetworkConfig) (h2n *HTTP2Network) {
-	httpLog := log.New(logging.Ctx{"module": "http", "node": config.NodeName})
-	errorLog := goLog.New(HTTP2ErrorLog15Writer{httpLog}, "", 0)
+	hLog := httpLog.New(logging.Ctx{"node": config.NodeName})
+	errorLog := goLog.New(HTTP2ErrorLog15Writer{hLog}, "", 0)
 
 	server := &http.Server{
 		Addr:              config.Addr,
@@ -107,7 +108,7 @@ func NewHTTP2Network(config *HTTP2NetworkConfig) (h2n *HTTP2Network) {
 		tlsCertFile:    config.TLSCertFile,
 		tlsKeyFile:     config.TLSKeyFile,
 		receiveChannel: make(chan common.NetworkMessage),
-		log:            httpLog,
+		log:            hLog,
 	}
 	h2n.handlers = map[string]func(http.ResponseWriter, *http.Request){}
 	h2n.routers = map[string]*mux.Router{
