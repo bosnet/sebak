@@ -314,7 +314,7 @@ func (c *Client) Stream(ctx context.Context, url string, body []byte, handler fu
 }
 
 func (c *Client) StreamAccount(ctx context.Context, id string, handler func(Account)) (err error) {
-	s := []observer.Conditions{{observer.NewCondition(observer.ResourceAccount, observer.KeyAll, "")}}
+	s := []observer.Conditions{{observer.NewCondition(observer.Acc, observer.All)}}
 	b, err := json.Marshal(s)
 	handlerFunc := func(b []byte) (err error) {
 		var v Account
@@ -329,7 +329,7 @@ func (c *Client) StreamAccount(ctx context.Context, id string, handler func(Acco
 }
 
 func (c *Client) StreamTransactions(ctx context.Context, handler func(Transaction)) (err error) {
-	s := []observer.Conditions{{observer.NewCondition(observer.ResourceTransaction, observer.KeyAll, "")}}
+	s := []observer.Conditions{{observer.NewCondition(observer.Tx, observer.All)}}
 	b, err := json.Marshal(s)
 	handlerFunc := func(b []byte) (err error) {
 		var v Transaction
@@ -344,7 +344,7 @@ func (c *Client) StreamTransactions(ctx context.Context, handler func(Transactio
 }
 
 func (c *Client) StreamTransactionsByAccount(ctx context.Context, id string, handler func(Transaction)) (err error) {
-	s := []observer.Conditions{{observer.NewCondition(observer.ResourceTransaction, observer.KeySource, id), observer.NewCondition(observer.ResourceTransaction, observer.KeyTarget, id)}}
+	s := []observer.Conditions{{observer.NewCondition(observer.Tx, observer.Source, id), observer.NewCondition(observer.Tx, observer.Target, id)}}
 	b, err := json.Marshal(s)
 	handlerFunc := func(b []byte) (err error) {
 		var v Transaction
@@ -373,7 +373,7 @@ func (c *Client) StreamTransactionStatus(ctx context.Context, id string, body []
 }
 
 func (c *Client) StreamTransactionsByHash(ctx context.Context, id string, handler func(Transaction)) (err error) {
-	s := []observer.Conditions{{observer.NewCondition(observer.ResourceTransaction, observer.KeyTxHash, id)}}
+	s := []observer.Conditions{{observer.NewCondition(observer.Tx, observer.TxHash, id)}}
 	b, err := json.Marshal(s)
 	handlerFunc := func(b []byte) (err error) {
 		var v Transaction
@@ -388,7 +388,7 @@ func (c *Client) StreamTransactionsByHash(ctx context.Context, id string, handle
 }
 
 func (c *Client) StreamOperationsByAccount(ctx context.Context, id string, body []byte, handler func(Operation)) (err error) {
-	s := []observer.Conditions{{observer.NewCondition(observer.ResourceOperation, observer.KeySource, id), observer.NewCondition(observer.ResourceOperation, observer.KeyTarget, id)}}
+	s := []observer.Conditions{{observer.NewCondition(observer.Op, observer.Source, id), observer.NewCondition(observer.Op, observer.Target, id)}}
 	b, err := json.Marshal(s)
 	handlerFunc := func(b []byte) (err error) {
 		var v Operation
@@ -403,7 +403,7 @@ func (c *Client) StreamOperationsByAccount(ctx context.Context, id string, body 
 }
 
 func (c *Client) StreamOperationsByTransaction(ctx context.Context, id string, body []byte, handler func(Operation)) (err error) {
-	s := []observer.Conditions{{observer.NewCondition(observer.ResourceOperation, observer.KeyTxHash, id)}}
+	s := []observer.Conditions{{observer.NewCondition(observer.Op, observer.TxHash, id)}}
 	b, err := json.Marshal(s)
 	handlerFunc := func(b []byte) (err error) {
 		var v Operation

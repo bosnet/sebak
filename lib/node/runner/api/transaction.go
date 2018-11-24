@@ -8,7 +8,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"boscoin.io/sebak/lib/block"
-	"boscoin.io/sebak/lib/common/observer"
+	o "boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/network/httputils"
 	"boscoin.io/sebak/lib/node/runner/api/resource"
@@ -144,13 +144,12 @@ func (api NetworkHandlerAPI) GetTransactionStatusByHashHandler(w http.ResponseWr
 			return json.Marshal(i)
 		}
 
-		var events []string
-		events = append(events, observer.NewCondition(observer.ResourceTransaction, observer.KeyTxHash, key).Event())
-		events = append(events, observer.NewCondition(observer.ResourceTransactionPool, observer.KeyTxHash, key).Event())
-
 		es := NewEventStream(w, r, txStatusRenderFunc, DefaultContentType)
 		es.Render(payload)
-		es.Run(observer.ResourceObserver, events...)
+		es.Run(o.ResourceObserver,
+			o.Event(o.NewCondition(o.Tx, o.TxHash, key)),
+			o.Event(o.NewCondition(o.TxPool, o.TxHash, key)),
+		)
 		return
 	}
 	if payload.Status == "notfound" {
