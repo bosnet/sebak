@@ -680,5 +680,5 @@ func (nr *NodeRunner) BroadcastBallot(b ballot.Ballot) {
 		nr.Network().MessageBroker().Receive(common.NewNetworkMessage(common.BallotMessage, encoded))
 	}()
 
-	go nr.ConnectionManager().Broadcast(b)
+	nr.ConnectionManager().Broadcast(b)
 }
