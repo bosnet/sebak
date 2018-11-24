@@ -1,6 +1,7 @@
 package api
 
 import (
+	"io/ioutil"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -40,6 +41,49 @@ func (api NetworkHandlerAPI) GetAccountHandler(w http.ResponseWriter, r *http.Re
 	}
 
 	httputils.MustWriteJSON(w, 200, payload)
+}
+
+func (api NetworkHandlerAPI) GetAccountsHandler(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		httputils.WriteJSONError(w, err)
+		return
+	}
+
+	var addresses []string
+	if err := common.DecodeJSONValue(body, &addresses); err != nil {
+		httputils.WriteJSONError(w, errors.BadRequestParameter.Clone().SetData("error", err.Error()))
+		return
+	}
+	if uint64(len(addresses)) > DefaultLimit {
+		httputils.WriteJSONError(w, errors.PageQueryLimitMaxExceed)
+		return
+	} else if len(addresses) < 1 {
+		httputils.WriteJSONError(w, errors.BadRequestParameter)
+		return
+	}
+
+	var rs []resource.Resource
+	for _, address := range addresses {
+		found, err := block.ExistsBlockAccount(api.storage, address)
+		if err != nil {
+			httputils.WriteJSONError(w, err)
+			return
+		}
+		if !found {
+			continue
+		}
+		ba, err := block.GetBlockAccount(api.storage, address)
+		if err != nil {
+			httputils.WriteJSONError(w, err)
+			return
+		}
+		rs = append(rs, resource.NewAccount(ba))
+	}
+
+	httputils.MustWriteJSON(w, 200, resource.NewResourceList(rs, "", "", ""))
 }
 
 func (api NetworkHandlerAPI) GetFrozenAccountsByAccountHandler(w http.ResponseWriter, r *http.Request) {

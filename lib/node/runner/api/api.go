@@ -1,18 +1,18 @@
 package api
 
 import (
-	obs "boscoin.io/sebak/lib/common/observer"
-	"boscoin.io/sebak/lib/transaction"
-	"boscoin.io/sebak/lib/transaction/operation"
 	"encoding/json"
 	"fmt"
 
 	"boscoin.io/sebak/lib/block"
+	obs "boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/network/httputils"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/node/runner/api/resource"
 	"boscoin.io/sebak/lib/storage"
+	"boscoin.io/sebak/lib/transaction"
+	"boscoin.io/sebak/lib/transaction/operation"
 )
 
 const APIVersionV1 = "v1"
@@ -21,6 +21,7 @@ const APIVersionV1 = "v1"
 const (
 	GetAccountTransactionsHandlerPattern   = "/accounts/{id}/transactions"
 	GetAccountHandlerPattern               = "/accounts/{id}"
+	GetAccountsHandlerPattern              = "/accounts"
 	GetAccountOperationsHandlerPattern     = "/accounts/{id}/operations"
 	GetAccountFrozenAccountHandlerPattern  = "/accounts/{id}/frozen-accounts"
 	GetFrozenAccountHandlerPattern         = "/frozen-accounts"

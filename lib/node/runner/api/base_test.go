@@ -2,10 +2,11 @@ package api
 
 import (
 	"bytes"
-	"github.com/gorilla/mux"
 	"io"
 	"net/http"
 	"net/http/httptest"
+
+	"github.com/gorilla/mux"
 
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common/keypair"
@@ -25,6 +26,7 @@ func prepareAPIServer() (*httptest.Server, *storage.LevelDBBackend) {
 
 	router := mux.NewRouter()
 	router.HandleFunc(GetAccountHandlerPattern, apiHandler.GetAccountHandler).Methods("GET")
+	router.HandleFunc(GetAccountsHandlerPattern, apiHandler.GetAccountsHandler).Methods("POST")
 	router.HandleFunc(GetAccountTransactionsHandlerPattern, apiHandler.GetTransactionsByAccountHandler).Methods("GET")
 	router.HandleFunc(GetAccountOperationsHandlerPattern, apiHandler.GetOperationsByAccountHandler).Methods("GET")
 	router.HandleFunc(GetTransactionsHandlerPattern, apiHandler.GetTransactionsHandler).Methods("GET")
