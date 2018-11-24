@@ -266,7 +266,7 @@ func (sm *ISAACStateManager) broadcastExpiredBallot(state consensus.ISAACState) 
 	newExpiredBallot.Sign(sm.nr.localNode.Keypair(), sm.nr.Conf.NetworkID)
 
 	sm.nr.Log().Debug("broadcast", "ballot", *newExpiredBallot)
-	sm.nr.broadcastBallot(*newExpiredBallot)
+	sm.nr.BroadcastBallot(*newExpiredBallot)
 }
 
 func (sm *ISAACStateManager) resetTimer(timer *time.Timer, state ballot.State) {

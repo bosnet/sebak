@@ -1,10 +1,11 @@
 package runner
 
 import (
-	"boscoin.io/sebak/lib/node/runner/api"
 	"bufio"
 	"bytes"
 	"io"
+
+	"boscoin.io/sebak/lib/node/runner/api"
 
 	logging "github.com/inconshreveable/log15"
 
@@ -61,20 +62,17 @@ type BallotChecker struct {
 // BallotUnmarshal makes `Ballot` from common.NetworkMessage.
 func BallotUnmarshal(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotChecker)
-	if checker.Ballot.IsEmpty() {
-		var b ballot.Ballot
-		if b, err = ballot.NewBallotFromJSON(checker.Message.Data); err != nil {
-			return
-		}
 
-		if err = b.IsWellFormed(checker.NodeRunner.Conf); err != nil {
-			return
-		}
-
-		checker.Log.Debug("message is verified")
-		checker.Ballot = b
+	var b ballot.Ballot
+	if b, err = ballot.NewBallotFromJSON(checker.Message.Data); err != nil {
+		return
 	}
 
+	if err = b.IsWellFormed(checker.NodeRunner.Conf); err != nil {
+		return
+	}
+
+	checker.Ballot = b
 	checker.IsMine = checker.Ballot.Source() == checker.LocalNode.Address()
 
 	checker.Log = checker.Log.New(logging.Ctx{
@@ -87,6 +85,7 @@ func BallotUnmarshal(c common.Checker, args ...interface{}) (err error) {
 		"isMine":      checker.IsMine,
 	})
 
+	checker.Log.Debug("message is verified")
 	return
 }
 
