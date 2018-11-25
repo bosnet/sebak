@@ -573,6 +573,10 @@ func parseFlagsNode() {
 	parsedFlags = append(parsedFlags, "\n\thttp-cache-adapter", httpCacheAdapter)
 	parsedFlags = append(parsedFlags, "\n\thttp-cache-pool-size", httpCachePoolSize)
 
+	if flagWatcherMode {
+		parsedFlags = append(parsedFlags, "\n\twatcher-mode", flagWatcherMode)
+	}
+
 	// create current Node
 	localNode, err = node.NewLocalNode(kp, bindEndpoint, "")
 	if err != nil {
