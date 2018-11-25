@@ -224,11 +224,32 @@ func (is *ISAAC) LatestBlock() block.Block {
 	return block.GetLatestBlock(is.storage)
 }
 
-func (is *ISAAC) RemoveRunningRoundsWithSameHeight(height uint64) {
+func (is *ISAAC) RemoveRunningRoundsLowerOrEqualHeight(height uint64) {
 	for hash, runningRound := range is.RunningRounds {
 		if runningRound.VotingBasis.Height > height {
 			continue
 		}
+
+		is.log.Debug("remove running rounds lower than or equal to height", "votingBasis", runningRound.VotingBasis)
+
+		delete(runningRound.Transactions, runningRound.Proposer)
+		delete(runningRound.Voted, runningRound.Proposer)
+		delete(is.RunningRounds, hash)
+	}
+}
+
+func (is *ISAAC) RemoveRunningRoundsLowerOrEqualBasis(basis voting.Basis) {
+	for hash, runningRound := range is.RunningRounds {
+		if runningRound.VotingBasis.Height > basis.Height {
+			continue
+		}
+
+		if runningRound.VotingBasis.Height == basis.Height &&
+			runningRound.VotingBasis.Round > basis.Round {
+			continue
+		}
+
+		is.log.Debug("remove running rounds lower than or equal to basis", "votingBasis", runningRound.VotingBasis)
 
 		delete(runningRound.Transactions, runningRound.Proposer)
 		delete(runningRound.Voted, runningRound.Proposer)

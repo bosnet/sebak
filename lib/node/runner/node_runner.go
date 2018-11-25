@@ -55,6 +55,7 @@ var DefaultHandleSIGNBallotCheckerFuncs = []common.CheckerFunc{
 	BallotVote,
 	BallotIsSameProposer,
 	BallotCheckResult,
+	ExpiredInSIGN,
 	ACCEPTBallotBroadcast,
 	TransitStateToACCEPT,
 }
@@ -78,6 +79,7 @@ type NodeRunner struct {
 	connectionManager network.ConnectionManager
 	storage           *storage.LevelDBBackend
 	isaacStateManager *ISAACStateManager
+	ballotSendRecord  *consensus.BallotSendRecord
 
 	handleBaseBallotCheckerFuncs   []common.CheckerFunc
 	handleINITBallotCheckerFuncs   []common.CheckerFunc
@@ -114,6 +116,8 @@ func NewNodeRunner(
 		log:             log.New(logging.Ctx{"node": localNode.Alias()}),
 		Conf:            conf,
 	}
+	nr.ballotSendRecord = consensus.NewBallotSendRecord(localNode.Alias())
+
 	nr.localNode.SetBooting()
 
 	nr.isaacStateManager = NewISAACStateManager(nr, conf)
@@ -423,6 +427,10 @@ func (nr *NodeRunner) ISAACStateManager() *ISAACStateManager {
 	return nr.isaacStateManager
 }
 
+func (nr *NodeRunner) BallotSendRecord() *consensus.BallotSendRecord {
+	return nr.ballotSendRecord
+}
+
 func (nr *NodeRunner) ConnectValidators() {
 	ticker := time.NewTicker(time.Millisecond * 5)
 	for _ = range ticker.C {
@@ -595,6 +603,10 @@ func (nr *NodeRunner) NextHeight() {
 	nr.isaacStateManager.NextHeight()
 }
 
+func (nr *NodeRunner) RemoveSendRecordsLowerThanOrEqualHeight(height uint64) {
+	nr.ballotSendRecord.RemoveLowerThanOrEqualHeight(height)
+}
+
 var NewBallotTransactionCheckerFuncs = []common.CheckerFunc{
 	IsNew,
 	BallotTransactionsSameSource,
@@ -693,6 +705,27 @@ func (nr *NodeRunner) NodeInfo() node.NodeInfo {
 }
 
 func (nr *NodeRunner) BroadcastBallot(b ballot.Ballot) {
+	state := consensus.ISAACState{
+		Height:      b.VotingBasis().Height,
+		Round:       b.VotingBasis().Round,
+		BallotState: b.State(),
+	}
+
+	if nr.ballotSendRecord.Sent(state) {
+		nr.Log().Debug(
+			"return; already sent ballot in NodeRunner.BroadcastBallot",
+			"ballot", b,
+		)
+		return
+	}
+
+	nr.Log().Debug(
+		"broadcast ballot include itself",
+		"ballot", b,
+	)
+
+	nr.ballotSendRecord.SetSent(state)
+
 	go func() {
 		encoded, _ := b.Serialize()
 		nr.Network().MessageBroker().Receive(common.NewNetworkMessage(common.BallotMessage, encoded))

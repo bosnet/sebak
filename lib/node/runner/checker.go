@@ -3,6 +3,7 @@ package runner
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"io"
 
 	"boscoin.io/sebak/lib/node/runner/api"
@@ -415,6 +416,31 @@ func BallotCheckResult(c common.Checker, args ...interface{}) (err error) {
 	return
 }
 
+func ExpiredInSIGN(c common.Checker, args ...interface{}) (err error) {
+	checker := c.(*BallotChecker)
+	if !checker.VotingFinished || checker.FinishedVotingHole != voting.EXP {
+		return
+	}
+
+	checker.NodeRunner.Log().Debug("Expired in SIGN")
+
+	newBallot := checker.Ballot
+	newBallot.SetSource(checker.LocalNode.Address())
+	newBallot.SetVote(checker.Ballot.State(), voting.EXP)
+	newBallot.Sign(checker.LocalNode.Keypair(), checker.NodeRunner.Conf.NetworkID)
+
+	checker.NodeRunner.BroadcastBallot(newBallot)
+
+	checker.NodeRunner.isaacStateManager.NextRound()
+	basis := checker.Ballot.VotingBasis()
+	checker.NodeRunner.Consensus().SetLatestVotingBasis(basis)
+	checker.NodeRunner.Consensus().RemoveRunningRoundsLowerOrEqualBasis(basis)
+
+	err = NewCheckerStopCloseConsensus(checker, fmt.Sprintf("ballot expired in SIGN, basis:%s", basis.Index()))
+
+	return
+}
+
 // insertMissingTransaction will get the missing tranactions, that is, not in
 // `TransactionPool` from proposer.
 func insertMissingTransaction(nr *NodeRunner, ballot ballot.Ballot) (err error) {
@@ -632,8 +658,8 @@ func ACCEPTBallotBroadcast(c common.Checker, args ...interface{}) (err error) {
 	if !checker.NodeRunner.Consensus().HasRunningRound(checker.Ballot.VotingBasis().Index()) {
 		err = errors.New("RunningRound not found")
 		return
-
 	}
+
 	checker.NodeRunner.BroadcastBallot(newBallot)
 	checker.Log.Debug("ballot will be broadcasted", "newBallot", newBallot)
 
@@ -672,14 +698,15 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) error {
 		checker.NodeRunner.Consensus().SetLatestVotingBasis(basis)
 
 		checker.NodeRunner.TransactionPool.RemoveFromSources(checker.LatestBlockSources...)
-		checker.NodeRunner.Consensus().RemoveRunningRoundsWithSameHeight(basis.Height)
+		checker.NodeRunner.Consensus().RemoveRunningRoundsLowerOrEqualHeight(basis.Height)
+		checker.NodeRunner.RemoveSendRecordsLowerThanOrEqualHeight(basis.Height)
 
 		err = NewCheckerStopCloseConsensus(checker, "ballot got consensus and will be stored")
 	case voting.NO, voting.EXP:
 		checker.NodeRunner.isaacStateManager.NextRound()
 		checker.NodeRunner.Consensus().SetLatestVotingBasis(basis)
 
-		checker.NodeRunner.Consensus().RemoveRunningRoundsWithSameHeight(basis.Height)
+		checker.NodeRunner.Consensus().RemoveRunningRoundsLowerOrEqualBasis(basis)
 
 		err = NewCheckerStopCloseConsensus(checker, "ballot got consensus")
 	case voting.NOTYET:
