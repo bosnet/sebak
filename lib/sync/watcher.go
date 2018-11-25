@@ -98,7 +98,7 @@ L:
 				if err == context.Canceled {
 					break L
 				}
-				w.logger.Error("highestHeight err in loop", "err", err, "high", highestHeight, "nodes", nodes)
+				w.logger.Error("get highest height has err", "err", err, "high", highestHeight, "nodes", nodes)
 				checkc = w.after(w.interval)
 				continue
 			}
@@ -140,12 +140,12 @@ func (w *Watcher) highestHeightAndNodes(ctx context.Context) (uint64, []string, 
 		return 0, nil, err
 	}
 
-	w.logger.Info("done highest height and nodes", "height", height, "nodes", nodeAddrs)
+	w.logger.Info("done get highest height and nodes", "height", height, "nodes", nodeAddrs)
 
 	return height, nodeAddrs, nil
 }
 
-func (w *Watcher) fetchNodeInfos(ctx context.Context) ([]*NodeInfo, error) {
+func (w *Watcher) fetchNodeInfos(ctx context.Context) ([]*node.NodeInfo, error) {
 	var addrs = w.cm.AllConnected()
 
 	w.logger.Debug("start fetch node infos", "addrs", addrs)
@@ -160,7 +160,7 @@ func (w *Watcher) fetchNodeInfos(ctx context.Context) ([]*NodeInfo, error) {
 		return nil, fmt.Errorf("no fetch nodes:")
 	}
 
-	var nodes = make([]*NodeInfo, len(addrs))
+	var nodes = make([]*node.NodeInfo, len(addrs))
 	var g errgroup.Group
 
 	for i, addr := range addrs {
@@ -189,11 +189,11 @@ func (w *Watcher) fetchNodeInfos(ctx context.Context) ([]*NodeInfo, error) {
 	return nodes, nil
 }
 
-func (w *Watcher) bestHeightFromNodes(ctx context.Context, nodes []*NodeInfo) (uint64, error) {
+func (w *Watcher) bestHeightFromNodes(ctx context.Context, nodes []*node.NodeInfo) (uint64, error) {
 	var height uint64
 
 	for _, n := range nodes {
-		if n.Node.State != node.StateCONSENSUS.String() {
+		if n.Node.State != node.StateCONSENSUS {
 			w.logger.Info("node state is not CONSENSUS", "node", n.Node.Address)
 			continue
 		}
@@ -206,10 +206,10 @@ func (w *Watcher) bestHeightFromNodes(ctx context.Context, nodes []*NodeInfo) (u
 	return height, nil
 }
 
-func (w *Watcher) bestNodeAddrs(ctx context.Context, height uint64, nodes []*NodeInfo) ([]string, error) {
+func (w *Watcher) bestNodeAddrs(ctx context.Context, height uint64, nodes []*node.NodeInfo) ([]string, error) {
 	var addrs []string
 	for _, n := range nodes {
-		if n.Node.State != node.StateCONSENSUS.String() {
+		if n.Node.State != node.StateCONSENSUS {
 			continue
 		}
 		addrs = append(addrs, n.Node.Address)
@@ -222,8 +222,8 @@ func (w *Watcher) latestHeight() uint64 {
 	return b.Height
 }
 
-func (w *Watcher) reqNodeInfo(ctx context.Context, node node.Node) (*NodeInfo, error) {
-	infoURL := nodeInfoURL(node)
+func (w *Watcher) reqNodeInfo(ctx context.Context, n node.Node) (*node.NodeInfo, error) {
+	infoURL := nodeInfoURL(n)
 	req, err := http.NewRequest("GET", infoURL.String(), nil)
 	if err != nil {
 		return nil, err
@@ -253,7 +253,7 @@ func (w *Watcher) reqNodeInfo(ctx context.Context, node node.Node) (*NodeInfo, e
 		return nil, err
 	}
 
-	var nodeInfo NodeInfo
+	var nodeInfo node.NodeInfo
 	if err := json.Unmarshal(body, &nodeInfo); err != nil {
 		w.logger.Error("resp json error", "err", err, "req", infoURL.String(), "resp", string(body))
 		return nil, err
