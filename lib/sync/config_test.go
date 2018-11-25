@@ -9,6 +9,7 @@ import (
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/storage"
+	"boscoin.io/sebak/lib/transaction"
 
 	"github.com/stretchr/testify/require"
 )
@@ -18,13 +19,14 @@ func TestNewConfig(t *testing.T) {
 	st := storage.NewTestStorage()
 	_, nt, _ := network.CreateMemoryNetwork(nil)
 	cm := &mockConnectionManager{}
+	tp := transaction.NewPool(conf)
 
 	endpoint, err := common.NewEndpointFromString(fmt.Sprintf("https://localhost:5000?NodeName=n1"))
 	require.Equal(t, nil, err)
 
 	node, _ := node.NewLocalNode(keypair.Random(), endpoint, "")
 
-	cfg := NewConfig(node, st, nt, cm, conf)
+	cfg := NewConfig(node, st, nt, cm, tp, conf)
 	cfg.SyncPoolSize = 100
 	cfg.logger = common.NopLogger()
 

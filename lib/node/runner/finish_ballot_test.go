@@ -66,7 +66,9 @@ func createNodeRunnerForTestingWithFileStorage(n int, conf common.Config, recv c
 	is, _ := consensus.NewISAAC(localNode, policy, connectionManager, st, conf, nil)
 	is.SetProposerSelector(FixedSelector{localNode.Address()})
 
-	nr, err := NewNodeRunner(localNode, policy, ns[0], is, st, conf)
+	tp := transaction.NewPool(conf)
+
+	nr, err := NewNodeRunner(localNode, policy, ns[0], is, st, tp, conf)
 	if err != nil {
 		panic(err)
 	}

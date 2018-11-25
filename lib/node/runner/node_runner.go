@@ -101,6 +101,7 @@ func NewNodeRunner(
 	n network.Network,
 	c *consensus.ISAAC,
 	storage *storage.LevelDBBackend,
+	tp *transaction.Pool,
 	conf common.Config,
 ) (nr *NodeRunner, err error) {
 	nr = &NodeRunner{
@@ -108,7 +109,7 @@ func NewNodeRunner(
 		policy:          policy,
 		network:         n,
 		consensus:       c,
-		TransactionPool: transaction.NewPool(conf),
+		TransactionPool: tp,
 		storage:         storage,
 		log:             log.New(logging.Ctx{"node": localNode.Alias()}),
 		Conf:            conf,
