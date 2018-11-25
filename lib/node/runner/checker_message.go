@@ -174,3 +174,39 @@ func BroadcastTransaction(c common.Checker, args ...interface{}) (err error) {
 
 	return
 }
+
+// BroadcastTransactionFromWatcher is sending tx to one of validators.
+// If all validators returns error, it returns error.
+func BroadcastTransactionFromWatcher(c common.Checker, args ...interface{}) error {
+	checker := c.(*MessageChecker)
+	if checker.Conf.WatcherMode == false {
+		return nil
+	}
+	checker.Log.Debug("transaction from client will be sended")
+
+	cm := checker.Consensus.ConnectionManager()
+	var addrs []string
+
+	for _, a := range cm.AllConnected() {
+		if a != checker.LocalNode.Address() {
+			addrs = append(addrs, a)
+		}
+	}
+
+	if len(addrs) <= 0 {
+		return errors.AllValidatorsNotConnected
+	}
+
+	var err error
+	for _, a := range addrs {
+		client := cm.GetConnection(a)
+		_, err = client.SendTransaction(checker.Transaction)
+		if err == nil {
+			// Broaadcast from watcher is that send one of them using client api successfully.
+			checker.Log.Info("send tx to node", "node", a, "tx", checker.Transaction.GetHash())
+			break
+		}
+		checker.Log.Debug("failure to send tx to node", "node", a, "tx", checker.Transaction.GetHash())
+	}
+	return err
+}

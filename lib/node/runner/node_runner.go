@@ -338,9 +338,16 @@ func (nr *NodeRunner) Ready() {
 
 	TransactionsHandler := func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "POST" {
+
+			checkerFuncs := HandleTransactionCheckerFuncs
+
+			if nr.Conf.WatcherMode == true {
+				checkerFuncs = HandleTransactionCheckerForWatcherFuncs
+			}
+
 			apiHandler.PostTransactionsHandler(
 				w, r,
-				nodeHandler.ReceiveTransaction, HandleTransactionCheckerFuncs,
+				nodeHandler.ReceiveTransaction, checkerFuncs,
 			)
 			return
 		}

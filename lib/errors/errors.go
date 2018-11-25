@@ -107,4 +107,5 @@ var (
 	TransactionAlreadyExistsInPool            = NewError(189, "transaction already exists in pool")
 	BadRequestParameter                       = NewError(190, "request parameter is invalid")
 	BallotHasOverMaxOperationsInBallot        = NewError(191, "too many operations in ballot")
+	AllValidatorsNotConnected                 = NewError(192, "all validators are not connected")
 )
