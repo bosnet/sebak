@@ -13,6 +13,7 @@ import (
 
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/node/runner/api"
@@ -160,8 +161,8 @@ func (w *Watcher) fetchNodeInfos(ctx context.Context) ([]*NodeInfo, error) {
 	}
 
 	var nodes = make([]*NodeInfo, len(addrs))
+	var g errgroup.Group
 
-	g, ctx := errgroup.WithContext(ctx)
 	for i, addr := range addrs {
 		i, addr := i, addr
 		g.Go(func() error {
@@ -176,9 +177,12 @@ func (w *Watcher) fetchNodeInfos(ctx context.Context) ([]*NodeInfo, error) {
 			return nil
 		})
 	}
+	g.Wait()
 
-	if err := g.Wait(); err != nil {
-		w.logger.Error("fetch error", "err", err)
+	// it's ok when one of them is alive.
+	if len(nodes) <= 0 {
+		err := errors.AllValidatorsNotConnected
+		w.logger.Error("no one node to alive", "err", err)
 		return nil, err
 	}
 
