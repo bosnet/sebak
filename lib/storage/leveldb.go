@@ -178,13 +178,10 @@ func (st *LevelDBBackend) New(k string, v interface{}) (err error) {
 		encoded, err = common.EncodeJSONValue(v)
 	}
 	if err != nil {
-		err = setLevelDBCoreError(err)
-		return
+		return setLevelDBCoreError(err)
 	}
 
-	err = setLevelDBCoreError(st.Core.Put(st.makeKey(k), encoded, nil))
-
-	return
+	return setLevelDBCoreError(st.Core.Put(st.makeKey(k), encoded, nil))
 }
 
 func (st *LevelDBBackend) News(vs ...Item) (err error) {
