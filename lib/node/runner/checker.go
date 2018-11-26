@@ -280,11 +280,7 @@ func BallotCheckSYNC(c common.Checker, args ...interface{}) error {
 
 		checker.NodeRunner.TransitISAACState(b.VotingBasis(), ballot.StateALLCONFIRM)
 		log.Debug("finish current ballot; latestHeight == syncHeight-1", "ballot", b.GetHash())
-		blk, _, err = finishBallot(
-			checker.NodeRunner,
-			b,
-			checker.Log,
-		)
+		blk, _, err = finishBallot(checker.NodeRunner, b, checker.Log)
 		if err != nil {
 			log.Debug("failed to finish current ballot; latestHeight == syncHeight-1", "current-ballot", b, "error", err)
 			return err
@@ -324,9 +320,10 @@ func BallotCheckBasis(c common.Checker, args ...interface{}) (err error) {
 		err = errors.InvalidVotingBasis
 		checker.NodeRunner.Log().Debug(
 			"voting basis is invalid",
-			"voting-basis", checker.Ballot.VotingBasis(),
-			"latest-block", blk,
-			"latest-voting-basis", checker.NodeRunner.Consensus().LatestVotingBasis,
+			"ballot-basis", checker.Ballot.VotingBasis(),
+			"voting-basis", checker.NodeRunner.Consensus().LatestVotingBasis,
+			"latest-block-height", blk.Height,
+			"latest-block-hash", blk.Hash,
 		)
 		return
 	}
@@ -351,7 +348,7 @@ func BallotVote(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotChecker)
 
 	checker.IsNew, err = checker.NodeRunner.Consensus().Vote(checker.Ballot)
-	checker.Log.Debug("ballot voted", "ballot", checker.Ballot, "new", checker.IsNew)
+	checker.Log.Debug("ballot voted", "ballot", checker.Ballot.GetHash(), "new", checker.IsNew)
 
 	return
 }
@@ -629,7 +626,12 @@ func SIGNBallotBroadcast(c common.Checker, args ...interface{}) (err error) {
 
 	}
 	checker.NodeRunner.BroadcastBallot(newBallot)
-	checker.Log.Debug("ballot will be broadcasted", "newBallot", newBallot)
+	checker.Log.Debug(
+		"ballot will be broadcasted",
+		"new-ballot", newBallot.GetHash(),
+		"new-state", newBallot.State(),
+		"voting-hole", checker.VotingHole,
+	)
 
 	return
 }
@@ -661,7 +663,12 @@ func ACCEPTBallotBroadcast(c common.Checker, args ...interface{}) (err error) {
 	}
 
 	checker.NodeRunner.BroadcastBallot(newBallot)
-	checker.Log.Debug("ballot will be broadcasted", "newBallot", newBallot)
+	checker.Log.Debug(
+		"ballot will be broadcasted",
+		"new-ballot", newBallot.GetHash(),
+		"new-state", newBallot.State(),
+		"voting-hole", checker.VotingHole,
+	)
 
 	return
 }
@@ -718,7 +725,7 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) error {
 }
 
 func saveBlock(checker *BallotChecker) error {
-	theBlock, proposedTransactions, err := finishBallot(
+	blk, proposedTransactions, err := finishBallot(
 		checker.NodeRunner,
 		checker.Ballot,
 		checker.Log,
@@ -727,7 +734,7 @@ func saveBlock(checker *BallotChecker) error {
 		return err
 	}
 
-	checker.Log.Debug("ballot was stored", "block", *theBlock)
+	checker.Log.Debug("ballot was stored", "block", blk.Hash)
 	if checker.LocalNode.State() != node.StateCONSENSUS {
 		checker.NodeRunner.Log().Debug("node state transits sync to consensus", "height", checker.Ballot.VotingBasis().Height)
 		checker.LocalNode.SetConsensus()
@@ -736,7 +743,7 @@ func saveBlock(checker *BallotChecker) error {
 	for _, tx := range proposedTransactions {
 		checker.LatestBlockSources = append(checker.LatestBlockSources, tx.B.Source)
 	}
-	checker.NodeRunner.SavingBlockOperations().Save(*theBlock)
+	checker.NodeRunner.SavingBlockOperations().Save(*blk)
 
 	go api.TriggerEvent(checker.NodeRunner.Storage(), proposedTransactions)
 

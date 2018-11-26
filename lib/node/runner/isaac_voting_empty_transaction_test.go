@@ -88,7 +88,7 @@ func TestISAACBallotWithEmptyTransactionVoting(t *testing.T) {
 
 	ballotACCEPT4 := GenerateEmptyTxBallot(proposer, round, ballot.StateACCEPT, nodes[4], conf)
 	err = ReceiveBallot(nr, ballotACCEPT4)
-	require.EqualError(t, err, "ballot got consensus and will be stored")
+	require.NoError(t, err)
 
 	latestBlock = nr.Consensus().LatestBlock()
 	require.Equal(t, proposer.Address(), latestBlock.Proposer)

@@ -169,22 +169,38 @@ func (is *ISAAC) Vote(b ballot.Ballot) (isNew bool, err error) {
 	return
 }
 
-func (is *ISAAC) CanGetVotingResult(b ballot.Ballot) (RoundVoteResult, voting.Hole, bool) {
+func (is *ISAAC) CanGetVotingResult(b ballot.Ballot) (rv RoundVoteResult, vh voting.Hole, finished bool) {
 	is.RLock()
 	defer is.RUnlock()
 
-	is.log.Debug("CanGetVotingResult", "ballot", b)
+	defer func() {
+		is.log.Debug(
+			"CanGetVotingResult",
+			"ballot", b.GetHash(),
+			"round-vote-result", rv,
+			"voting-hole", vh,
+			"finished", finished,
+		)
+	}()
+
+	rv = nil
+	vh = voting.NOTYET
+	finished = false
+
 	runningRound, found := is.RunningRounds[b.VotingBasis().Index()]
 	if !found {
 		// if RunningRound is not found, this ballot will be stopped.
-		return nil, voting.NOTYET, true
+		finished = true
+		return
 	}
 
-	if roundVote, err := runningRound.RoundVote(b.Proposer()); err == nil {
-		return roundVote.CanGetVotingResult(is.policy, b.State(), is.log)
-	} else {
-		return nil, voting.NOTYET, false
+	roundVote, err := runningRound.RoundVote(b.Proposer())
+	if err == nil {
+		rv, vh, finished = roundVote.CanGetVotingResult(is.policy, b.State(), is.log)
+		return
 	}
+
+	return
 }
 
 func (is *ISAAC) IsVotedByNode(b ballot.Ballot, node string) (bool, error) {

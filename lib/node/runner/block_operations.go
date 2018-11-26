@@ -79,7 +79,7 @@ func (sb *SavingBlockOperations) check() (err error) {
 			break
 		}
 
-		sb.log.Debug("check block", "block", blk)
+		sb.log.Debug("check block", "block", blk.Hash)
 
 		var st *storage.LevelDBBackend
 		if st, err = sb.st.OpenBatch(); err != nil {
@@ -87,15 +87,16 @@ func (sb *SavingBlockOperations) check() (err error) {
 		}
 
 		if err = sb.CheckByBlock(st, blk); err != nil {
-			sb.log.Error("failed to check block", "block", blk, "height", blk.Height)
+			sb.log.Error("failed to check block", "block", blk.Hash, "height", blk.Height, "error", err)
 			st.Discard()
 			break
 		}
 		if err = st.Commit(); err != nil {
+			sb.log.Error("failed to commit", "block", blk.Hash, "height", blk.Height, "error", err)
 			st.Discard()
 			break
 		}
-		sb.log.Debug("checked block", "block", blk)
+		sb.log.Debug("checked block", "block", blk.Hash)
 		sb.checkedBlock = blk.Height
 		checked = true
 	}
@@ -168,30 +169,30 @@ errorCheck:
 func (sb *SavingBlockOperations) CheckTransactionByBlock(st *storage.LevelDBBackend, blk block.Block, hash string) (err error) {
 	var bt block.BlockTransaction
 	if bt, err = block.GetBlockTransaction(st, hash); err != nil {
-		sb.log.Error("failed to get BlockTransaction", "block", blk, "transaction", hash)
+		sb.log.Error("failed to get BlockTransaction", "block", blk.Hash, "transaction", hash, "error", err)
 		return
 	}
 
 	if bt.Transaction().IsEmpty() {
 		var tp block.TransactionPool
 		if tp, err = block.GetTransactionPool(st, hash); err != nil {
-			sb.log.Error("failed to get Transaction from TransactionPool", "transaction", hash)
+			sb.log.Error("failed to get Transaction from TransactionPool", "transaction", hash, "error", err)
 			return
 		}
 
 		bt.Message = tp.Message
 	}
 
-	for _, op := range bt.Transaction().B.Operations {
+	for i, op := range bt.Transaction().B.Operations {
 		opHash := block.NewBlockOperationKey(op.MakeHashString(), hash)
 
 		var exists bool
 		if exists, err = block.ExistsBlockOperation(st, opHash); err != nil {
 			sb.log.Error(
 				"failed to check ExistsBlockOperation",
-				"block", blk,
+				"block", blk.Hash,
 				"transaction", hash,
-				"operation", op,
+				"operation-index", i,
 			)
 			return
 		}
@@ -200,7 +201,6 @@ func (sb *SavingBlockOperations) CheckTransactionByBlock(st *storage.LevelDBBack
 			if err = bt.SaveBlockOperation(st, op); err != nil {
 				return err
 			}
-			sb.log.Debug("saved missing BlockOperation", "block", blk, "transaction", hash, "operation", op)
 		}
 	}
 
@@ -222,7 +222,7 @@ func (sb *SavingBlockOperations) startSaving() {
 		case blk := <-sb.saveBlock:
 			if err := sb.save(blk); err != nil {
 				// NOTE if failed, the `continuousCheck()` will fill the missings.
-				sb.log.Error("failed to save BlockOperation", "block", blk, "error", err)
+				sb.log.Error("failed to save BlockOperation", "block", blk.Hash, "error", err)
 			}
 		}
 	}
@@ -235,9 +235,9 @@ func (sb *SavingBlockOperations) Save(blk block.Block) {
 }
 
 func (sb *SavingBlockOperations) save(blk block.Block) (err error) {
-	sb.log.Debug("start to save BlockOperation", "block", blk)
+	sb.log.Debug("start to save BlockOperation", "block", blk.Hash)
 	defer func() {
-		sb.log.Debug("end to save BlockOperation", "block", blk, "error", err)
+		sb.log.Debug("end to save BlockOperation", "block", blk.Hash, "error", err)
 	}()
 
 	var st *storage.LevelDBBackend

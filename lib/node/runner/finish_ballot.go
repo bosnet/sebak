@@ -34,13 +34,7 @@ func finishBallot(nr *NodeRunner, b ballot.Ballot, log logging.Logger) (*block.B
 	}
 
 	var blk *block.Block
-	blk, err = finishBallotWithProposedTxs(
-		bs,
-		b,
-		proposedTxs,
-		log,
-		nr.Log(),
-	)
+	blk, err = finishBallotWithProposedTxs(bs, b, proposedTxs, log)
 
 	if err != nil {
 		bs.Discard()
@@ -58,10 +52,10 @@ func finishBallot(nr *NodeRunner, b ballot.Ballot, log logging.Logger) (*block.B
 	return blk, proposedTxs, nil
 }
 
-func finishBallotWithProposedTxs(st *storage.LevelDBBackend, b ballot.Ballot, proposedTransactions []*transaction.Transaction, log, infoLog logging.Logger) (*block.Block, error) {
+func finishBallotWithProposedTxs(st *storage.LevelDBBackend, b ballot.Ballot, proposedTransactions []*transaction.Transaction, log logging.Logger) (*block.Block, error) {
 	var err error
 	var isValid bool
-	if isValid, err = isValidRound(st, b.VotingBasis(), infoLog); err != nil || !isValid {
+	if isValid, err = isValidRound(st, b.VotingBasis(), log); err != nil || !isValid {
 		return nil, err
 	}
 
@@ -84,12 +78,11 @@ func finishBallotWithProposedTxs(st *storage.LevelDBBackend, b ballot.Ballot, pr
 	)
 
 	if err = blk.Save(st); err != nil {
-		log.Error("failed to create new block", "block", blk, "error", err)
+		log.Error("failed to create new block", "block", blk.Hash, "error", err)
 		return nil, err
 	}
 
-	log.Debug("NewBlock created", "block", blk)
-	infoLog.Info("NewBlock created",
+	log.Info("NewBlock created",
 		"height", blk.Height,
 		"round", blk.Round,
 		"hash", blk.Hash,
@@ -108,7 +101,7 @@ func finishBallotWithProposedTxs(st *storage.LevelDBBackend, b ballot.Ballot, pr
 	}
 
 	if err = FinishProposerTransaction(st, *blk, b.ProposerTransaction(), log); err != nil {
-		log.Error("failed to finish proposer transaction", "block", blk, "ptx", b.ProposerTransaction(), "error", err)
+		log.Error("failed to finish proposer transaction", "block", blk.Hash, "ptx", b.ProposerTransaction(), "error", err)
 		return nil, err
 	}
 
@@ -140,7 +133,7 @@ func FinishTransactions(blk block.Block, transactions []*transaction.Transaction
 		}
 		for _, op := range tx.B.Operations {
 			if err = finishOperation(st, tx.B.Source, op, log); err != nil {
-				log.Error("failed to finish operation", "block", blk, "bt", bt, "op", op, "error", err)
+				log.Error("failed to finish operation", "block", blk.Hash, "BlockTransaction", bt.Hash, "operation", op, "error", err)
 				return err
 			}
 		}

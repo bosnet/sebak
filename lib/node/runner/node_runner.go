@@ -195,9 +195,8 @@ func (nr *NodeRunner) Ready() {
 		allowedHeaders := ghandlers.AllowedHeaders([]string{"Content-Type", "X-Requested-With", "Cache-Control", "Access-Control"})
 
 		cors := ghandlers.CORS(allowedOrigins, allowedMethods, allowedHeaders)
-		err := nr.network.AddMiddleware(network.RouterNameAPI, cors)
-		if err != nil {
-			nr.log.Error("Middleware has an error", "err", err)
+		if err := nr.network.AddMiddleware(network.RouterNameAPI, cors); err != nil {
+			nr.log.Error("failed to add middleware", "err", err)
 			return
 		}
 	}
@@ -218,7 +217,7 @@ func (nr *NodeRunner) Ready() {
 	} else {
 		cacheAdater, err := httpcache.NewAdapter(nr.Conf)
 		if err != nil {
-			nr.log.Error("HTTP Cache adapter has an error", "err", err)
+			nr.log.Error("failed to create new HTTP Cache adapter", "err", err)
 			return
 		}
 		defaultCacheOptions := httpcache.WithOptions(
@@ -228,17 +227,17 @@ func (nr *NodeRunner) Ready() {
 		)
 		cache, err = httpcache.NewClient(defaultCacheOptions, httpcache.WithExpire(1*time.Minute))
 		if err != nil {
-			nr.log.Error("Cache middleware has an error", "err", err)
+			nr.log.Error("failed to create new middleware Cache", "err", err)
 			return
 		}
 		listCache, err = httpcache.NewClient(defaultCacheOptions, httpcache.WithExpire(3*time.Second))
 		if err != nil {
-			nr.log.Error("List cache middleware has an error", "err", err)
+			nr.log.Error("failed to create new List cache", "err", err)
 			return
 		}
 		baCache, err = httpcache.NewClient(defaultCacheOptions, httpcache.WithExpire(1*time.Second))
 		if err != nil {
-			nr.log.Error("BlockAccount cache middleware has an error", "err", err)
+			nr.log.Error("failed to create new BlockAccount cache", "err", err)
 			return
 		}
 		nr.log.Info("http cache is enabled")
@@ -443,8 +442,6 @@ func (nr *NodeRunner) ConnectValidators() {
 	}
 	nr.log.Debug("current node is ready")
 	nr.log.Debug("trying to connect to the validators", "validators", nr.localNode.GetValidators())
-
-	nr.log.Debug("initializing connectionManager for validators")
 	nr.connectionManager.Start()
 }
 
@@ -473,8 +470,6 @@ func (nr *NodeRunner) handleMessages() {
 
 // Handles a single message received from a client
 func (nr *NodeRunner) handleMessage(message common.NetworkMessage) {
-	var err error
-
 	if message.IsEmpty() {
 		nr.log.Error("got empty message")
 		return
@@ -482,20 +477,14 @@ func (nr *NodeRunner) handleMessage(message common.NetworkMessage) {
 	switch message.Type {
 	case common.ConnectMessage:
 		if _, err := node.NewValidatorFromString(message.Data); err != nil {
-			nr.log.Error("invalid validator data was received", "data", message.Data, "error", err)
+			nr.log.Error("invalid validator data was received", "error", err)
 			return
 		}
 	case common.BallotMessage:
-		err = nr.handleBallotMessage(message)
+		nr.handleBallotMessage(message)
 	default:
-		err = errors.New("got unknown message")
-	}
-
-	if err != nil {
-		if _, ok := err.(common.CheckerStop); ok {
-			return
-		}
-		nr.log.Debug("failed to handle message", "message", string(message.Data), "error", err)
+		nr.log.Error("got unknown message")
+		return
 	}
 }
 
@@ -511,8 +500,7 @@ func (nr *NodeRunner) handleBallotMessage(message common.NetworkMessage) (err er
 		Message:            message,
 	}
 
-	err = common.RunChecker(baseChecker, nr.handleBallotCheckerDeferFunc)
-	if err != nil {
+	if err = common.RunChecker(baseChecker, nr.handleBallotCheckerDeferFunc); err != nil {
 		if _, ok := err.(common.CheckerErrorStop); !ok {
 			nr.log.Debug("failed to handle ballot", "error", err)
 			return
@@ -540,8 +528,7 @@ func (nr *NodeRunner) handleBallotMessage(message common.NetworkMessage) (err er
 		Log:                baseChecker.Log,
 		LatestBlockSources: baseChecker.LatestBlockSources,
 	}
-	err = common.RunChecker(checker, nr.handleBallotCheckerDeferFunc)
-	if err != nil {
+	if err = common.RunChecker(checker, nr.handleBallotCheckerDeferFunc); err != nil {
 		if stopped, ok := err.(common.CheckerStop); ok {
 			nr.log.Debug(
 				"stopped to handle ballot",
@@ -549,6 +536,7 @@ func (nr *NodeRunner) handleBallotMessage(message common.NetworkMessage) (err er
 				"state", baseChecker.Ballot.State(),
 				"reason", stopped.Error(),
 			)
+			err = nil
 		} else {
 			nr.log.Debug("failed to handle ballot", "error", err, "state", baseChecker.Ballot.State())
 			return
@@ -624,7 +612,7 @@ func (nr *NodeRunner) proposeNewBallot(round uint64) (ballot.Ballot, error) {
 
 	// collect incoming transactions from `Pool`
 	availableTransactions := nr.TransactionPool.AvailableTransactions(nr.Conf.TxsLimit)
-	nr.log.Debug("new round proposed", "block-basis", basis, "transactions", availableTransactions)
+	nr.log.Debug("new round proposed", "block-basis", basis)
 
 	transactionsChecker := &BallotTransactionChecker{
 		DefaultChecker:        common.DefaultChecker{Funcs: NewBallotTransactionCheckerFuncs},
@@ -643,7 +631,15 @@ func (nr *NodeRunner) proposeNewBallot(round uint64) (ballot.Ballot, error) {
 	}
 
 	// remove invalid transactions
-	nr.TransactionPool.Remove(transactionsChecker.InvalidTransactions()...)
+	if len(transactionsChecker.InvalidTransactions()) > 0 {
+		nr.TransactionPool.Remove(transactionsChecker.InvalidTransactions()...)
+		nr.log.Debug(
+			"invalid transactions removed from pool",
+			"basis", basis,
+			"invalid-transactions", len(transactionsChecker.InvalidTransactions()),
+			"transactionpool", nr.TransactionPool.Len(),
+		)
+	}
 
 	var validTransactions []transaction.Transaction
 	var validTransactionHashes []string
@@ -672,32 +668,38 @@ func (nr *NodeRunner) proposeNewBallot(round uint64) (ballot.Ballot, error) {
 	}
 
 	proposerAddr := nr.consensus.SelectProposer(b.Height, round)
-	theBallot := ballot.NewBallot(nr.localNode.Address(), proposerAddr, basis, validTransactionHashes)
-	theBallot.SetVote(ballot.StateINIT, voting.YES)
+	blt := ballot.NewBallot(nr.localNode.Address(), proposerAddr, basis, validTransactionHashes)
+	blt.SetVote(ballot.StateINIT, voting.YES)
 
-	opc, err := ballot.NewCollectTxFeeFromBallot(*theBallot, nr.Conf.CommonAccountAddress, validTransactions...)
+	opc, err := ballot.NewCollectTxFeeFromBallot(*blt, nr.Conf.CommonAccountAddress, validTransactions...)
 	if err != nil {
 		return ballot.Ballot{}, err
 	}
 
-	opi, err := ballot.NewInflationFromBallot(*theBallot, nr.Conf.CommonAccountAddress, nr.InitialBalance)
+	opi, err := ballot.NewInflationFromBallot(*blt, nr.Conf.CommonAccountAddress, nr.InitialBalance)
 	if err != nil {
 		return ballot.Ballot{}, err
 	}
 
-	ptx, err := ballot.NewProposerTransactionFromBallot(*theBallot, opc, opi)
+	ptx, err := ballot.NewProposerTransactionFromBallot(*blt, opc, opi)
 	if err != nil {
 		return ballot.Ballot{}, err
 	}
 
-	theBallot.SetProposerTransaction(ptx)
-	theBallot.Sign(nr.localNode.Keypair(), nr.Conf.NetworkID)
+	blt.SetProposerTransaction(ptx)
+	blt.Sign(nr.localNode.Keypair(), nr.Conf.NetworkID)
 
-	nr.log.Debug("new ballot created", "ballot", theBallot)
+	nr.log.Debug(
+		"new ballot created",
+		"ballot", blt.GetHash(),
+		"basis", basis,
+		"valid-transactions", len(validTransactions),
+		"transactionpool", nr.TransactionPool.Len(),
+	)
 
-	nr.BroadcastBallot(*theBallot)
+	nr.BroadcastBallot(*blt)
 
-	return *theBallot, nil
+	return *blt, nil
 }
 
 func (nr *NodeRunner) NodeInfo() node.NodeInfo {
