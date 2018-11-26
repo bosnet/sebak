@@ -114,7 +114,7 @@ func BallotTransactionsOperationLimit(c common.Checker, args ...interface{}) err
 		} else {
 			ops += len(tx.B.Operations)
 			if ops > checker.NodeRunner.Conf.OpsInBallotLimit {
-				return errors.BallotHasOverMaxOperationssInBallot
+				return errors.BallotHasOverMaxOperationsInBallot
 			}
 		}
 	}

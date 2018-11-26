@@ -309,6 +309,6 @@ func TestOpsInBalotLimit(t *testing.T) {
 		}
 
 		err := common.RunChecker(checker, common.DefaultDeferFunc)
-		require.Equal(t, errors.BallotHasOverMaxOperationssInBallot, err)
+		require.Equal(t, errors.BallotHasOverMaxOperationsInBallot, err)
 	}
 }

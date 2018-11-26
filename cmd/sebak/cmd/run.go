@@ -374,8 +374,7 @@ func parseFlagsNode() {
 		cmdcommon.PrintFlagsError(nodeCmd, "--operations-in-ballot-limit", err)
 	}
 
-	var tmpUint64 uint64
-	if tmpUint64, err = strconv.ParseUint(flagThreshold, 10, 64); err != nil {
+	if _, err = strconv.ParseUint(flagThreshold, 10, 64); err != nil {
 		cmdcommon.PrintFlagsError(nodeCmd, "--threshold", err)
 	}
 
