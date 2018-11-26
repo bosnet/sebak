@@ -67,7 +67,7 @@ func TestGetNonExistentAccountHandler(t *testing.T) {
 		reader := bufio.NewReader(respBody)
 		readByte, err := ioutil.ReadAll(reader)
 		require.NoError(t, err)
-		pByte := common.MustJSONMarshal(p)
+		pByte := common.MustMarshalJSON(p)
 		require.Equal(t, pByte, readByte)
 	}
 }
@@ -98,7 +98,7 @@ func TestGetAccountsHandler(t *testing.T) {
 	}
 
 	{ // request with empty list
-		b := common.MustJSONMarshal([]string{})
+		b := common.MustMarshalJSON([]string{})
 		respBody := request(ts, GetAccountsHandlerPattern, false, b)
 		defer respBody.Close()
 		reader := bufio.NewReader(respBody)
@@ -126,7 +126,7 @@ func TestGetAccountsHandler(t *testing.T) {
 			}
 		}
 
-		b := common.MustJSONMarshal(expectedAddresses)
+		b := common.MustMarshalJSON(expectedAddresses)
 		respBody := request(ts, GetAccountsHandlerPattern, false, b)
 		defer respBody.Close()
 		reader := bufio.NewReader(respBody)
@@ -152,7 +152,7 @@ func TestGetAccountsHandler(t *testing.T) {
 			expectedAddresses = append(expectedAddresses, address)
 		}
 
-		b := common.MustJSONMarshal(expectedAddresses)
+		b := common.MustMarshalJSON(expectedAddresses)
 		respBody := request(ts, GetAccountsHandlerPattern, false, b)
 		defer respBody.Close()
 		reader := bufio.NewReader(respBody)
@@ -187,7 +187,7 @@ func TestGetAccountsHandler(t *testing.T) {
 		}
 		expectedAddresses = append(expectedAddresses, unknownAddresses...)
 
-		b := common.MustJSONMarshal(expectedAddresses)
+		b := common.MustMarshalJSON(expectedAddresses)
 		respBody := request(ts, GetAccountsHandlerPattern, false, b)
 		defer respBody.Close()
 		reader := bufio.NewReader(respBody)

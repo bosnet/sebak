@@ -51,7 +51,7 @@ func (b *BlockAccount) IncreaseSequenceID() {
 }
 
 func (b *BlockAccount) String() string {
-	return string(common.MustJSONMarshal(b))
+	return string(common.MustMarshalJSON(b))
 }
 
 func (b *BlockAccount) Save(st *storage.LevelDBBackend) (err error) {
@@ -236,7 +236,7 @@ func GetBlockAccountSequenceIDByAddressKeyPrefix(address string) string {
 }
 
 func (b *BlockAccountSequenceID) String() string {
-	return string(common.MustJSONMarshal(b))
+	return string(common.MustMarshalJSON(b))
 }
 
 func (b *BlockAccountSequenceID) Save(st *storage.LevelDBBackend) (err error) {

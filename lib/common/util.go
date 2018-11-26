@@ -74,7 +74,7 @@ func MustUnmarshalJSON(data []byte, v interface{}) {
 	}
 }
 
-func MustJSONMarshal(o interface{}) []byte {
+func MustMarshalJSON(o interface{}) []byte {
 	b, _ := json.Marshal(o)
 	return b
 }

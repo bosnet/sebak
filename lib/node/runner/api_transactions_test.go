@@ -287,7 +287,7 @@ func TestGetNodeTransactionsHandlerWithMultipleHashes(t *testing.T) {
 		var postData []string
 		postData = append(postData, txHashes...)
 
-		req, err := http.NewRequest("POST", u.String(), bytes.NewBuffer(common.MustJSONMarshal(postData)))
+		req, err := http.NewRequest("POST", u.String(), bytes.NewBuffer(common.MustMarshalJSON(postData)))
 		req.Header.Set("Content-Type", "application/json")
 		require.NoError(t, err)
 		resp, err := p.server.Client().Do(req)
