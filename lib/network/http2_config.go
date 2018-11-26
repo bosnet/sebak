@@ -82,5 +82,5 @@ func (config HTTP2NetworkConfig) IsHTTPS() bool {
 }
 
 func (config HTTP2NetworkConfig) String() string {
-	return string(common.MustJSONMarshal(config))
+	return string(common.MustMarshalJSON(config))
 }
