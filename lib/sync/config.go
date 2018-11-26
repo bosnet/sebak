@@ -25,6 +25,7 @@ type Config struct {
 	connectionManager network.ConnectionManager
 	tp                *transaction.Pool
 	localNode         *node.LocalNode
+	nodelist          *NodeList
 	logger            log15.Logger
 	commonCfg         common.Config
 
@@ -49,6 +50,7 @@ func NewConfig(localNode *node.LocalNode,
 		logger:            log.New(log15.Ctx{"node": localNode.Alias()}),
 		commonCfg:         cfg,
 		localNode:         localNode,
+		nodelist:          &NodeList{},
 
 		SyncPoolSize:             SyncPoolSize,
 		FetchTimeout:             FetchTimeout,
@@ -62,6 +64,7 @@ func (c *Config) NewSyncer() *Syncer {
 	f := c.NewFetcher()
 	v := c.NewValidator()
 	s := NewSyncer(f, v, c.storage, func(s *Syncer) {
+		s.nodelist = c.nodelist
 		s.poolSize = c.SyncPoolSize
 		s.checkInterval = c.CheckBlockHeightInterval
 		s.logger = c.logger.New("submodule", "syncer")
@@ -72,9 +75,11 @@ func (c *Config) NewSyncer() *Syncer {
 }
 
 func (c *Config) NewFetcher() Fetcher {
+	client := c.NewHTTP2Client()
+
 	f := NewBlockFetcher(
-		c.network,
 		c.connectionManager,
+		client,
 		c.storage,
 		c.localNode,
 		func(f *BlockFetcher) {
@@ -96,6 +101,15 @@ func (c *Config) NewValidator() Validator {
 			v.logger = c.logger.New("submodule", "validator")
 		})
 	return v
+}
+
+func (c *Config) NewHTTP2Client() *common.HTTP2Client {
+	client, err := common.NewHTTP2Client(c.FetchTimeout, 0, true)
+	if err != nil {
+		c.logger.Error("make http2 client error!", "err", err)
+		panic(err) // It's an unrecoverable error not to make client when starting syncer / node
+	}
+	return client
 }
 
 func (c *Config) LoggingConfig() {
