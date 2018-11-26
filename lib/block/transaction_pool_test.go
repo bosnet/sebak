@@ -32,7 +32,7 @@ func TestTransactionPool(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, rtp.Hash, tx.GetHash())
 
-		b, _ := common.EncodeJSONValue(tx)
+		b := common.MustJSONMarshal(tx)
 		require.Equal(t, rtp.Message, b)
 	}
 

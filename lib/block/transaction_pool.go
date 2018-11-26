@@ -1,6 +1,7 @@
 package block
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"boscoin.io/sebak/lib/common"
@@ -24,7 +25,7 @@ type TransactionPool struct {
 
 func NewTransactionPool(tx transaction.Transaction) (tp TransactionPool, err error) {
 	var b []byte
-	if b, err = common.EncodeJSONValue(tx); err != nil {
+	if b, err = json.Marshal(tx); err != nil {
 		return
 	}
 
@@ -60,18 +61,21 @@ func (tp TransactionPool) Save(st *storage.LevelDBBackend) (err error) {
 }
 
 func (tp TransactionPool) Serialize() ([]byte, error) {
-	return common.EncodeJSONValue(tp)
+	return json.Marshal(tp)
 }
 
 func (tp TransactionPool) String() string {
-	encoded, _ := common.EncodeJSONValue(tp)
-	return string(encoded)
+	if encoded, err := json.Marshal(tp); err != nil {
+		panic(err)
+	} else {
+		return string(encoded)
+	}
 }
 
 func (tp TransactionPool) Transaction() transaction.Transaction {
 	if tp.transaction.IsEmpty() {
 		var tx transaction.Transaction
-		if err := common.DecodeJSONValue(tp.Message, &tx); err != nil {
+		if err := json.Unmarshal(tp.Message, &tx); err != nil {
 			return tx
 		}
 
