@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strconv"
 	"testing"
 
 	"github.com/gorilla/mux"
@@ -123,6 +124,11 @@ func TestGetBlocksHandler(t *testing.T) {
 	rbs, err := unmarshalFromNodeItemResponseBody(resp.Body)
 	require.NoError(t, err)
 	require.Equal(t, len(p.blocks), len(rbs[NodeItemBlockHeader]))
+	require.Equal(
+		t,
+		resp.Header.Get("X-SEBAK-RESULT-COUNT"),
+		strconv.FormatInt(int64(len(rbs[NodeItemBlockHeader])), 10),
+	)
 
 	for i, b := range p.blocks {
 		rb := rbs[NodeItemBlockHeader][i].(block.Header)
