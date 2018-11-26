@@ -28,6 +28,7 @@ import (
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/sync"
 	"boscoin.io/sebak/lib/transaction"
+	"boscoin.io/sebak/lib/version"
 )
 
 const (
@@ -512,7 +513,7 @@ func parseFlagsNode() {
 		cmdcommon.PrintFlagsError(nodeCmd, "--rate-limit-node", err)
 	}
 
-	log.Info("Starting Sebak")
+	log.Info("Starting Sebak", "version", version.Version, "gitcommit", version.GitCommit)
 
 	// print flags
 	parsedFlags := []interface{}{}
