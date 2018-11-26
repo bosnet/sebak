@@ -100,7 +100,7 @@ func (bo *BlockOperation) Save(st *storage.LevelDBBackend) (err error) {
 		return errors.AlreadySaved
 	}
 
-	key := GetBlockOperationKey(bo.Hash)
+	key := key(bo.Hash)
 
 	var exists bool
 	if exists, err = st.Has(key); err != nil {
@@ -161,7 +161,7 @@ func (bo *BlockOperation) Save(st *storage.LevelDBBackend) (err error) {
 	return nil
 }
 
-func GetBlockOperationKey(hash string) string {
+func key(hash string) string {
 	return fmt.Sprintf("%s%s", common.BlockOperationPrefixHash, hash)
 }
 
@@ -174,7 +174,7 @@ func GetBlockOperationCreateFrozenKey(hash string, height uint64) string {
 	)
 }
 
-func GetBlockOperationKeyPrefixFrozenLinked(hash string) string {
+func keyPrefixFrozenLinked(hash string) string {
 	return fmt.Sprintf(
 		"%s%s",
 		common.BlockOperationPrefixFrozenLinked,
@@ -182,42 +182,42 @@ func GetBlockOperationKeyPrefixFrozenLinked(hash string) string {
 	)
 }
 
-func GetBlockOperationKeyPrefixTxHash(txHash string) string {
+func keyPrefixTxHash(txHash string) string {
 	return fmt.Sprintf("%s%s-", common.BlockOperationPrefixTxHash, txHash)
 }
 
-func GetBlockOperationKeyPrefixSource(source string) string {
+func keyPrefixSource(source string) string {
 	return fmt.Sprintf("%s%s-", common.BlockOperationPrefixSource, source)
 }
 
-func GetBlockOperationKeyPrefixSourceAndType(source string, ty operation.OperationType) string {
+func keyPrefixSourceAndType(source string, ty operation.OperationType) string {
 	return fmt.Sprintf("%s%s%s-", common.BlockOperationPrefixTypeSource, string(ty), source)
 }
 
-func GetBlockOperationKeyPrefixBlockHeight(height uint64) string {
+func keyPrefixBlockHeight(height uint64) string {
 	return fmt.Sprintf("%s%s-", common.BlockOperationPrefixBlockHeight, common.EncodeUint64ToByteSlice(height))
 }
 
-func GetBlockOperationKeyPrefixTarget(target string) string {
+func keyPrefixTarget(target string) string {
 	return fmt.Sprintf("%s%s-", common.BlockOperationPrefixTarget, target)
 }
 
-func GetBlockOperationKeyPrefixTargetAndType(target string, ty operation.OperationType) string {
+func keyPrefixTargetAndType(target string, ty operation.OperationType) string {
 	return fmt.Sprintf("%s%s%s-", common.BlockOperationPrefixTypeTarget, string(ty), target)
 }
 
-func GetBlockOperationKeyPrefixPeers(addr string) string {
+func keyPrefixPeers(addr string) string {
 	return fmt.Sprintf("%s%s-", common.BlockOperationPrefixPeers, addr)
 }
 
-func GetBlockOperationKeyPrefixPeersAndType(addr string, ty operation.OperationType) string {
+func keyPrefixPeersAndType(addr string, ty operation.OperationType) string {
 	return fmt.Sprintf("%s%s%s-", common.BlockOperationPrefixTypePeers, string(ty), addr)
 }
 
 func (bo BlockOperation) NewBlockOperationTxHashKey() string {
 	return fmt.Sprintf(
 		"%s%s%s%s",
-		GetBlockOperationKeyPrefixTxHash(bo.TxHash),
+		keyPrefixTxHash(bo.TxHash),
 		common.EncodeUint64ToByteSlice(bo.Height),
 		common.EncodeUint64ToByteSlice(bo.transaction.B.SequenceID),
 		common.GetUniqueIDFromUUID(),
@@ -227,7 +227,7 @@ func (bo BlockOperation) NewBlockOperationTxHashKey() string {
 func (bo BlockOperation) NewBlockOperationSourceKey() string {
 	return fmt.Sprintf(
 		"%s%s%s%s",
-		GetBlockOperationKeyPrefixSource(bo.Source),
+		keyPrefixSource(bo.Source),
 		common.EncodeUint64ToByteSlice(bo.Height),
 		common.EncodeUint64ToByteSlice(bo.transaction.B.SequenceID),
 		common.GetUniqueIDFromUUID(),
@@ -237,7 +237,7 @@ func (bo BlockOperation) NewBlockOperationSourceKey() string {
 func (bo BlockOperation) NewBlockOperationFrozenLinkedKey(hash string) string {
 	return fmt.Sprintf(
 		"%s%s",
-		GetBlockOperationKeyPrefixFrozenLinked(hash),
+		keyPrefixFrozenLinked(hash),
 		common.EncodeUint64ToByteSlice(bo.Height),
 	)
 }
@@ -245,7 +245,7 @@ func (bo BlockOperation) NewBlockOperationFrozenLinkedKey(hash string) string {
 func (bo BlockOperation) NewBlockOperationSourceAndTypeKey() string {
 	return fmt.Sprintf(
 		"%s%s%s%s",
-		GetBlockOperationKeyPrefixSourceAndType(bo.Source, bo.Type),
+		keyPrefixSourceAndType(bo.Source, bo.Type),
 		common.EncodeUint64ToByteSlice(bo.Height),
 		common.EncodeUint64ToByteSlice(bo.transaction.B.SequenceID),
 		common.GetUniqueIDFromUUID(),
@@ -254,7 +254,7 @@ func (bo BlockOperation) NewBlockOperationSourceAndTypeKey() string {
 func (bo BlockOperation) NewBlockOperationTargetKey(target string) string {
 	return fmt.Sprintf(
 		"%s%s%s%s",
-		GetBlockOperationKeyPrefixTarget(target),
+		keyPrefixTarget(target),
 		common.EncodeUint64ToByteSlice(bo.Height),
 		common.EncodeUint64ToByteSlice(bo.transaction.B.SequenceID),
 		common.GetUniqueIDFromUUID(),
@@ -264,7 +264,7 @@ func (bo BlockOperation) NewBlockOperationTargetKey(target string) string {
 func (bo BlockOperation) NewBlockOperationTargetAndTypeKey(target string) string {
 	return fmt.Sprintf(
 		"%s%s%s%s",
-		GetBlockOperationKeyPrefixTargetAndType(target, bo.Type),
+		keyPrefixTargetAndType(target, bo.Type),
 		common.EncodeUint64ToByteSlice(bo.Height),
 		common.EncodeUint64ToByteSlice(bo.transaction.B.SequenceID),
 		common.GetUniqueIDFromUUID(),
@@ -274,7 +274,7 @@ func (bo BlockOperation) NewBlockOperationTargetAndTypeKey(target string) string
 func (bo BlockOperation) NewBlockOperationPeersKey(addr string) string {
 	return fmt.Sprintf(
 		"%s%s%s%s",
-		GetBlockOperationKeyPrefixPeers(addr),
+		keyPrefixPeers(addr),
 		common.EncodeUint64ToByteSlice(bo.Height),
 		common.EncodeUint64ToByteSlice(bo.transaction.B.SequenceID),
 		common.GetUniqueIDFromUUID(),
@@ -284,7 +284,7 @@ func (bo BlockOperation) NewBlockOperationPeersKey(addr string) string {
 func (bo BlockOperation) NewBlockOperationPeersAndTypeKey(addr string) string {
 	return fmt.Sprintf(
 		"%s%s%s%s",
-		GetBlockOperationKeyPrefixPeersAndType(addr, bo.Type),
+		keyPrefixPeersAndType(addr, bo.Type),
 		common.EncodeUint64ToByteSlice(bo.Height),
 		common.EncodeUint64ToByteSlice(bo.transaction.B.SequenceID),
 		common.GetUniqueIDFromUUID(),
@@ -293,18 +293,18 @@ func (bo BlockOperation) NewBlockOperationPeersAndTypeKey(addr string) string {
 func (bo BlockOperation) NewBlockOperationBlockHeightKey() string {
 	return fmt.Sprintf(
 		"%s%s%s",
-		GetBlockOperationKeyPrefixBlockHeight(bo.Height),
+		keyPrefixBlockHeight(bo.Height),
 		common.EncodeUint64ToByteSlice(bo.transaction.B.SequenceID),
 		common.GetUniqueIDFromUUID(),
 	)
 }
 
 func ExistsBlockOperation(st *storage.LevelDBBackend, hash string) (bool, error) {
-	return st.Has(GetBlockOperationKey(hash))
+	return st.Has(key(hash))
 }
 
 func GetBlockOperation(st *storage.LevelDBBackend, hash string) (bo BlockOperation, err error) {
-	if err = st.Get(GetBlockOperationKey(hash), &bo); err != nil {
+	if err = st.Get(key(hash), &bo); err != nil {
 		return
 	}
 
@@ -367,7 +367,7 @@ func GetBlockOperationsByTxHash(st *storage.LevelDBBackend, txHash string, optio
 	func() (BlockOperation, bool, []byte),
 	func(),
 ) {
-	iterFunc, closeFunc := st.GetIterator(GetBlockOperationKeyPrefixTxHash(txHash), options)
+	iterFunc, closeFunc := st.GetIterator(keyPrefixTxHash(txHash), options)
 
 	return LoadBlockOperationsInsideIterator(st, iterFunc, closeFunc)
 }
@@ -376,7 +376,7 @@ func GetBlockOperationsBySource(st *storage.LevelDBBackend, source string, optio
 	func() (BlockOperation, bool, []byte),
 	func(),
 ) {
-	iterFunc, closeFunc := st.GetIterator(GetBlockOperationKeyPrefixSource(source), options)
+	iterFunc, closeFunc := st.GetIterator(keyPrefixSource(source), options)
 
 	return LoadBlockOperationsInsideIterator(st, iterFunc, closeFunc)
 }
@@ -395,7 +395,7 @@ func GetBlockOperationsByLinked(st *storage.LevelDBBackend, hash string, options
 	func() (BlockOperation, bool, []byte),
 	func(),
 ) {
-	iterFunc, closeFunc := st.GetIterator(GetBlockOperationKeyPrefixFrozenLinked(hash), options)
+	iterFunc, closeFunc := st.GetIterator(keyPrefixFrozenLinked(hash), options)
 	return LoadBlockOperationsInsideIterator(st, iterFunc, closeFunc)
 }
 
@@ -403,7 +403,7 @@ func GetBlockOperationsBySourceAndType(st *storage.LevelDBBackend, source string
 	func() (BlockOperation, bool, []byte),
 	func(),
 ) {
-	iterFunc, closeFunc := st.GetIterator(GetBlockOperationKeyPrefixSourceAndType(source, ty), options)
+	iterFunc, closeFunc := st.GetIterator(keyPrefixSourceAndType(source, ty), options)
 	return LoadBlockOperationsInsideIterator(st, iterFunc, closeFunc)
 }
 
@@ -411,7 +411,7 @@ func GetBlockOperationsByTarget(st *storage.LevelDBBackend, target string, optio
 	func() (BlockOperation, bool, []byte),
 	func(),
 ) {
-	iterFunc, closeFunc := st.GetIterator(GetBlockOperationKeyPrefixTarget(target), options)
+	iterFunc, closeFunc := st.GetIterator(keyPrefixTarget(target), options)
 
 	return LoadBlockOperationsInsideIterator(st, iterFunc, closeFunc)
 }
@@ -420,7 +420,7 @@ func GetBlockOperationsByTargetAndType(st *storage.LevelDBBackend, target string
 	func() (BlockOperation, bool, []byte),
 	func(),
 ) {
-	iterFunc, closeFunc := st.GetIterator(GetBlockOperationKeyPrefixTargetAndType(target, ty), options)
+	iterFunc, closeFunc := st.GetIterator(keyPrefixTargetAndType(target, ty), options)
 	return LoadBlockOperationsInsideIterator(st, iterFunc, closeFunc)
 }
 
@@ -428,7 +428,7 @@ func GetBlockOperationsByPeers(st *storage.LevelDBBackend, addr string, options 
 	func() (BlockOperation, bool, []byte),
 	func(),
 ) {
-	iterFunc, closeFunc := st.GetIterator(GetBlockOperationKeyPrefixPeers(addr), options)
+	iterFunc, closeFunc := st.GetIterator(keyPrefixPeers(addr), options)
 
 	return LoadBlockOperationsInsideIterator(st, iterFunc, closeFunc)
 }
@@ -437,7 +437,7 @@ func GetBlockOperationsByPeersAndType(st *storage.LevelDBBackend, addr string, t
 	func() (BlockOperation, bool, []byte),
 	func(),
 ) {
-	iterFunc, closeFunc := st.GetIterator(GetBlockOperationKeyPrefixPeersAndType(addr, ty), options)
+	iterFunc, closeFunc := st.GetIterator(keyPrefixPeersAndType(addr, ty), options)
 	return LoadBlockOperationsInsideIterator(st, iterFunc, closeFunc)
 }
 
@@ -445,6 +445,6 @@ func GetBlockOperationsByBlockHeight(st *storage.LevelDBBackend, height uint64, 
 	func() (BlockOperation, bool, []byte),
 	func(),
 ) {
-	iterFunc, closeFunc := st.GetIterator(GetBlockOperationKeyPrefixBlockHeight(height), options)
+	iterFunc, closeFunc := st.GetIterator(keyPrefixBlockHeight(height), options)
 	return LoadBlockOperationsInsideIterator(st, iterFunc, closeFunc)
 }
