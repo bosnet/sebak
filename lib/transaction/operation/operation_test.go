@@ -26,6 +26,7 @@ func TestMakeHashOfOperationBodyPayment(t *testing.T) {
 
 	expected := "GodiXQkWvAAbobhLBnWK8QS8aArb1ZoR2Ms8JswYUvL3"
 	require.Equal(t, expected, hashed)
+	common.CheckRoundTripRLP(t, op)
 }
 
 func TestIsWellFormedOperation(t *testing.T) {
@@ -64,6 +65,7 @@ func TestOperationBodyCongressVoting(t *testing.T) {
 
 	expected := "EtVW5hG3p4YsSzL3mgwejHvtskzYuxW8dNaM6UEm42DX"
 	require.Equal(t, expected, hashed)
+	common.CheckRoundTripRLP(t, op)
 
 	err := op.IsWellFormed(common.NewTestConfig())
 	require.NoError(t, err)
@@ -89,6 +91,7 @@ func TestOperationBodyCongressVotingResult(t *testing.T) {
 
 	expected := "8t6e3gZ9BUFXGUbf8qEwQfJ3Hn7yWDAatkELaiaxbcCg"
 	require.Equal(t, expected, hashed)
+	common.CheckRoundTripRLP(t, op)
 
 	err := op.IsWellFormed(common.NewTestConfig())
 	require.NoError(t, err)
