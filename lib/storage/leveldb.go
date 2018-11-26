@@ -261,19 +261,14 @@ func (st *LevelDBBackend) Sets(vs ...Item) (err error) {
 	return
 }
 
-func (st *LevelDBBackend) Remove(k string) (err error) {
-	var exists bool
-	if exists, err = st.Has(k); !exists || err != nil {
-		if !exists {
-			err = errors.StorageRecordDoesNotExist
-			return
-		}
-		return
+func (st *LevelDBBackend) Remove(k string) error {
+	if exists, err := st.Has(k); err != nil {
+		return err
+	} else if !exists {
+		return errors.StorageRecordDoesNotExist
+	} else {
+		return setLevelDBCoreError(st.Core.Delete(st.makeKey(k), nil))
 	}
-
-	err = setLevelDBCoreError(st.Core.Delete(st.makeKey(k), nil))
-
-	return
 }
 
 func (st *LevelDBBackend) GetIterator(prefix string, option ListOptions) (func() (IterItem, bool), func()) {
