@@ -110,11 +110,13 @@ type Operation struct {
 		Self        Link `json:"self"`
 		Transaction Link `json:"transaction"`
 	} `json:"_links"`
-	Hash   string      `json:"hash"`
-	Source string      `json:"source"`
-	Target string      `json:"target"`
-	Type   string      `json:"type"`
-	Body   interface{} `json:"body"`
+	Hash        string      `json:"hash"`
+	Source      string      `json:"source"`
+	Target      string      `json:"target"`
+	Type        string      `json:"type"`
+	TxHash      string      `json:"tx_hash"`
+	BlockHeight uint64      `json:"block_height"`
+	Body        interface{} `json:"body"`
 }
 
 type OperationsPage struct {

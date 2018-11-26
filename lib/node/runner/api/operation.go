@@ -33,41 +33,6 @@ func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter
 	blockCache := map[ /* block.Height */ uint64]*block.Block{}
 	oType := operation.OperationType(oTypeStr)
 	var cursor []byte
-	readFunc := func() []resource.Resource {
-		var txs []resource.Resource
-
-		var iterFunc func() (block.BlockOperation, bool, []byte)
-		var closeFunc func()
-		if len(oType) > 0 {
-			iterFunc, closeFunc = block.GetBlockOperationsByPeersAndType(api.storage, address, oType, options)
-		} else {
-			iterFunc, closeFunc = block.GetBlockOperationsByPeers(api.storage, address, options)
-		}
-		for {
-			t, hasNext, c := iterFunc()
-			cursor = c
-			if !hasNext {
-				break
-			}
-
-			var blk *block.Block
-			var ok bool
-			if blk, ok = blockCache[t.Height]; !ok {
-				if blk0, err := block.GetBlockByHeight(api.storage, t.Height); err != nil {
-					break
-				} else {
-					blockCache[t.Height] = &blk0
-					blk = &blk0
-				}
-			}
-
-			r := resource.NewOperation(&t)
-			r.Block = blk
-			txs = append(txs, r)
-		}
-		closeFunc()
-		return txs
-	}
 
 	if found, err := block.ExistsBlockAccount(api.storage, address); err != nil {
 		httputils.WriteJSONError(w, err)
@@ -77,7 +42,39 @@ func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter
 		return
 	}
 
-	txs := readFunc()
+	var txs []resource.Resource
+
+	var iterFunc func() (block.BlockOperation, bool, []byte)
+	var closeFunc func()
+	if len(oType) > 0 {
+		iterFunc, closeFunc = block.GetBlockOperationsByPeersAndType(api.storage, address, oType, options)
+	} else {
+		iterFunc, closeFunc = block.GetBlockOperationsByPeers(api.storage, address, options)
+	}
+	for {
+		t, hasNext, c := iterFunc()
+		cursor = c
+		if !hasNext {
+			break
+		}
+
+		var blk *block.Block
+		var ok bool
+		if blk, ok = blockCache[t.Height]; !ok {
+			if blk0, err := block.GetBlockByHeight(api.storage, t.Height); err != nil {
+				break
+			} else {
+				blockCache[t.Height] = &blk0
+				blk = &blk0
+			}
+		}
+
+		r := resource.NewOperation(&t)
+		r.Block = blk
+		txs = append(txs, r)
+	}
+	closeFunc()
+
 	list := p.ResourceList(txs, cursor)
 	httputils.MustWriteJSON(w, 200, list)
 }

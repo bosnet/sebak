@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"strconv"
 	"testing"
+	"time"
 )
 
 func TestInflationPF(t *testing.T) {
@@ -72,20 +73,29 @@ func TestInflationPF(t *testing.T) {
 		_, err = c.SubmitTransactionAndWait(tx.H.Hash, body)
 		require.NoError(t, err)
 
-		opage, err := c.LoadOperationsByAccount(CongressAddr, client.Q{Key: client.QueryType, Value: "congress-voting"})
+		_, err = c.LoadTransaction(tx.H.Hash)
 		require.NoError(t, err)
 
-		for _, obody := range opage.Embedded.Records {
-			b, err := json.Marshal(obody.Body)
+		var opage client.OperationsPage
+		for try := 0; try < 5; try++ {
+			opage, err = c.LoadOperationsByAccount(CongressAddr, client.Q{Key: client.QueryType, Value: string(operation.TypeCongressVoting)})
 			require.NoError(t, err)
-			var cv client.CongressVoting
-			json.Unmarshal(b, &cv)
-			require.Equal(t, ob.Contract, cv.Contract)
-			require.Equal(t, ob.Voting.Start, cv.Voting.Start)
-			require.Equal(t, ob.Voting.End, cv.Voting.End)
-			require.Equal(t, ob.FundingAddress, cv.FundingAddress)
-			require.Equal(t, ob.Amount, cv.Amount)
+			if len(opage.Embedded.Records) > 0 {
+				break
+			}
+			time.Sleep(time.Second)
 		}
+
+		obody := opage.Embedded.Records[0]
+		b, err := json.Marshal(obody.Body)
+		require.NoError(t, err)
+		var cv client.CongressVoting
+		json.Unmarshal(b, &cv)
+		require.Equal(t, ob.Contract, cv.Contract)
+		require.Equal(t, ob.Voting.Start, cv.Voting.Start)
+		require.Equal(t, ob.Voting.End, cv.Voting.End)
+		require.Equal(t, ob.FundingAddress, cv.FundingAddress)
+		require.Equal(t, ob.Amount, cv.Amount)
 	}
 
 	// Congress Voting Result
@@ -127,24 +137,30 @@ func TestInflationPF(t *testing.T) {
 		_, err = c.SubmitTransactionAndWait(tx.H.Hash, body)
 		require.NoError(t, err)
 
-		opage, err := c.LoadOperationsByAccount(CongressAddr, client.Q{Key: client.QueryType, Value: "congress-voting-result"})
-		require.NoError(t, err)
-
-		for _, obody := range opage.Embedded.Records {
-			b, err := json.Marshal(obody.Body)
+		var opage client.OperationsPage
+		for try := 0; try < 5; try++ {
+			opage, err = c.LoadOperationsByAccount(CongressAddr, client.Q{Key: client.QueryType, Value: string(operation.TypeCongressVotingResult)})
 			require.NoError(t, err)
-			var cvr client.CongressVotingResult
-			json.Unmarshal(b, &cvr)
-			require.Equal(t, ob.BallotStamps.Hash, cvr.BallotStamps.Hash)
-			require.Equal(t, ob.BallotStamps.Urls, cvr.BallotStamps.Urls)
-			require.Equal(t, ob.Voters.Hash, cvr.Voters.Hash)
-			require.Equal(t, ob.Voters.Urls, cvr.Voters.Urls)
-			require.Equal(t, ob.Result.Count, cvr.Result.Count)
-			require.Equal(t, ob.Result.Yes, cvr.Result.Yes)
-			require.Equal(t, ob.Result.No, cvr.Result.No)
-			require.Equal(t, ob.Result.ABS, cvr.Result.ABS)
-			require.Equal(t, ob.CongressVotingHash, cvr.CongressVotingHash)
+			if len(opage.Embedded.Records) > 0 {
+				break
+			}
+			time.Sleep(time.Second)
 		}
+
+		obody := opage.Embedded.Records[0]
+		b, err := json.Marshal(obody.Body)
+		require.NoError(t, err)
+		var cvr client.CongressVotingResult
+		json.Unmarshal(b, &cvr)
+		require.Equal(t, ob.BallotStamps.Hash, cvr.BallotStamps.Hash)
+		require.Equal(t, ob.BallotStamps.Urls, cvr.BallotStamps.Urls)
+		require.Equal(t, ob.Voters.Hash, cvr.Voters.Hash)
+		require.Equal(t, ob.Voters.Urls, cvr.Voters.Urls)
+		require.Equal(t, ob.Result.Count, cvr.Result.Count)
+		require.Equal(t, ob.Result.Yes, cvr.Result.Yes)
+		require.Equal(t, ob.Result.No, cvr.Result.No)
+		require.Equal(t, ob.Result.ABS, cvr.Result.ABS)
+		require.Equal(t, ob.CongressVotingHash, cvr.CongressVotingHash)
 	}
 
 	// PF Inflation Operation.

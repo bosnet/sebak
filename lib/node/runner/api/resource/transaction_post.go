@@ -29,7 +29,6 @@ func (t TransactionPost) GetMap() hal.Entry {
 }
 func (t TransactionPost) Resource() *hal.Resource {
 	r := hal.NewResource(t, t.LinkSelf())
-	r.AddLink("history", hal.NewLink(strings.Replace(URLTransactionStatus, "{id}", t.hash, -1)))
 	return r
 }
 

@@ -118,6 +118,7 @@ func NewDefaultListOptionsFromQuery(v neturl.Values) (options *storage.DefaultLi
 
 func (c *Client) ToResponse(resp *http.Response, response interface{}) (err error) {
 	defer resp.Body.Close()
+
 	decoder := json.NewDecoder(resp.Body)
 
 	if !(resp.StatusCode >= http.StatusOK && resp.StatusCode < http.StatusMultipleChoices) {
@@ -236,7 +237,6 @@ func (c *Client) SubmitTransaction(tx []byte) (pTransaction TransactionPost, err
 }
 
 func (c *Client) SubmitTransactionAndWait(hash string, tx []byte) (pTransaction TransactionPost, err error) {
-
 	var wg sync.WaitGroup
 	wg.Add(1)
 
@@ -244,6 +244,7 @@ func (c *Client) SubmitTransactionAndWait(hash string, tx []byte) (pTransaction 
 	go func() {
 		err = c.StreamTransactionStatus(ctx, hash, nil, func(status TransactionStatus) {
 			if status.Status == "confirmed" {
+				pTransaction.Status = status.Status
 				cancel()
 			}
 		})
