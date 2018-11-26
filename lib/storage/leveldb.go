@@ -9,7 +9,6 @@ import (
 	leveldbStorage "github.com/syndtr/goleveldb/leveldb/storage"
 	leveldbUtil "github.com/syndtr/goleveldb/leveldb/util"
 
-	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/errors"
 )
 
@@ -171,12 +170,7 @@ func (st *LevelDBBackend) New(k string, v interface{}) (err error) {
 	}
 
 	var encoded []byte
-	serializable, ok := v.(common.Serializable)
-	if ok {
-		encoded, err = serializable.Serialize()
-	} else {
-		encoded, err = json.Marshal(v)
-	}
+	encoded, err = json.Marshal(v)
 	if err != nil {
 		return setLevelDBCoreError(err)
 	}

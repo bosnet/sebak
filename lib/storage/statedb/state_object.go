@@ -1,10 +1,12 @@
 package statedb
 
 import (
+	"bytes"
+	"encoding/json"
+
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/storage/statedb/trie"
-	"bytes"
 )
 
 type Storage map[common.Hash]common.Hash
@@ -41,11 +43,11 @@ func newObject(addr string, data block.BlockAccount, db *trie.EthDatabase, onDir
 }
 
 func (so *stateObject) Serialize() ([]byte, error) {
-	return so.data.Serialize()
+	return json.Marshal(so.data)
 }
 
 func (so *stateObject) Deserialize(encoded []byte) error {
-	return so.data.Deserialize(encoded)
+	return json.Unmarshal(encoded, so.data)
 }
 
 /* GETTERS */

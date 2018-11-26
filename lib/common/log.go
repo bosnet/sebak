@@ -39,7 +39,7 @@ func formatJSONValue(value interface{}) (result interface{}) {
 	}()
 
 	switch v := value.(type) {
-	case json.Marshaler, Serializable, *errors.Error:
+	case json.Marshaler, *errors.Error:
 		return v
 	case time.Time:
 		return FormatISO8601(v)

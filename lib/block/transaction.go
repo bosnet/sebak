@@ -139,10 +139,6 @@ func (bt *BlockTransaction) Save(st *storage.LevelDBBackend) (err error) {
 	return nil
 }
 
-func (bt BlockTransaction) Serialize() (encoded []byte, err error) {
-	return json.Marshal(bt)
-}
-
 func (bt BlockTransaction) String() string {
 	if encoded, err := json.Marshal(bt); err != nil {
 		panic(err)
