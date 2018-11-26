@@ -61,10 +61,13 @@ func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter
 
 	options := p.ListOptions()
 
+	var oType operation.OperationType
 	oTypeStr := r.URL.Query().Get("type")
-	if len(oTypeStr) > 0 && !operation.IsValidOperationType(oTypeStr) {
-		httputils.WriteJSONError(w, errors.InvalidQueryString)
-		return
+	if len(oTypeStr) > 0 {
+		if err = oType.UnmarshalText([]byte(oTypeStr)); err != nil {
+			httputils.WriteJSONError(w, errors.InvalidQueryString)
+			return
+		}
 	}
 
 	if found, err := block.ExistsBlockAccount(api.storage, address); err != nil {
@@ -77,14 +80,13 @@ func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter
 
 	var txs []resource.Resource
 	blockCache := map[ /* block.Height */ uint64]*block.Block{}
-	oType := operation.OperationType(oTypeStr)
 	var firstCursor []byte
 	var lastCursor []byte
 	{
 
 		var iterFunc func() (block.BlockOperation, bool, []byte)
 		var closeFunc func()
-		if len(oType) > 0 {
+		if len(oTypeStr) > 0 {
 			iterFunc, closeFunc = block.GetBlockOperationsByPeersAndType(api.storage, address, oType, options)
 		} else {
 			iterFunc, closeFunc = block.GetBlockOperationsByPeers(api.storage, address, options)

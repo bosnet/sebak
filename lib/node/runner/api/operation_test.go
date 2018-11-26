@@ -129,7 +129,7 @@ func TestGetOperationsByAccountHandlerWithType(t *testing.T) {
 	// Do a Request for Source
 	url := strings.Replace(GetAccountOperationsHandlerPattern, "{id}", kp.Address(), -1)
 	{
-		url := url + "?type=" + string(operation.TypeCreateAccount)
+		url := url + "?type=" + operation.TypeCreateAccount.String()
 		respBody := request(ts, url, false)
 		defer respBody.Close()
 		reader := bufio.NewReader(respBody)
@@ -144,7 +144,7 @@ func TestGetOperationsByAccountHandlerWithType(t *testing.T) {
 	}
 
 	{
-		url := url + "?type=" + string(operation.TypePayment)
+		url := url + "?type=" + operation.TypePayment.String()
 		respBody := request(ts, url, false)
 		defer respBody.Close()
 		reader := bufio.NewReader(respBody)
@@ -173,7 +173,7 @@ func TestGetOperationsByAccountHandlerWithType(t *testing.T) {
 	// Do a Request for Target
 	url = strings.Replace(GetAccountOperationsHandlerPattern, "{id}", kpTarget.Address(), -1)
 	{
-		url := url + "?type=" + string(operation.TypeCreateAccount)
+		url := url + "?type=" + operation.TypeCreateAccount.String()
 		respBody := request(ts, url, false)
 		defer respBody.Close()
 		reader := bufio.NewReader(respBody)
@@ -188,7 +188,7 @@ func TestGetOperationsByAccountHandlerWithType(t *testing.T) {
 	}
 
 	{
-		url := url + "?type=" + string(operation.TypePayment)
+		url := url + "?type=" + operation.TypePayment.String()
 		respBody := request(ts, url, false)
 		defer respBody.Close()
 		reader := bufio.NewReader(respBody)

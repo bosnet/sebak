@@ -79,7 +79,7 @@ func TestInflationPF(t *testing.T) {
 
 		var opage client.OperationsPage
 		for try := 0; try < 5; try++ {
-			opage, err = c.LoadOperationsByAccount(CongressAddr, client.Q{Key: client.QueryType, Value: string(operation.TypeCongressVoting)})
+			opage, err = c.LoadOperationsByAccount(CongressAddr, client.Q{Key: client.QueryType, Value: operation.TypeCongressVoting.String()})
 			require.NoError(t, err)
 			if len(opage.Embedded.Records) > 0 {
 				break
@@ -104,7 +104,7 @@ func TestInflationPF(t *testing.T) {
 		congressAccount, err := c.LoadAccount(CongressAddr)
 		require.NoError(t, err)
 
-		oPage, err := c.LoadOperationsByAccount(CongressAddr, client.Q{Key: client.QueryType, Value: string(operation.TypeCongressVoting)})
+		oPage, err := c.LoadOperationsByAccount(CongressAddr, client.Q{Key: client.QueryType, Value: operation.TypeCongressVoting.String()})
 		require.NoError(t, err)
 
 		ob := operation.NewCongressVotingResult(
@@ -138,7 +138,7 @@ func TestInflationPF(t *testing.T) {
 
 		var opage client.OperationsPage
 		for try := 0; try < 5; try++ {
-			opage, err = c.LoadOperationsByAccount(CongressAddr, client.Q{Key: client.QueryType, Value: string(operation.TypeCongressVotingResult)})
+			opage, err = c.LoadOperationsByAccount(CongressAddr, client.Q{Key: client.QueryType, Value: operation.TypeCongressVotingResult.String()})
 			require.NoError(t, err)
 			if len(opage.Embedded.Records) > 0 {
 				break
@@ -175,7 +175,7 @@ func TestInflationPF(t *testing.T) {
 		beforeTargetAmount, err := strconv.ParseUint(targetAccount.Balance, 10, 64)
 		require.NoError(t, err)
 
-		oPage, err := c.LoadOperationsByAccount(CongressAddr, client.Q{Key: client.QueryType, Value: string(operation.TypeCongressVotingResult)})
+		oPage, err := c.LoadOperationsByAccount(CongressAddr, client.Q{Key: client.QueryType, Value: operation.TypeCongressVotingResult.String()})
 		require.NoError(t, err)
 
 		ob := operation.NewInflationPF(
@@ -205,6 +205,5 @@ func TestInflationPF(t *testing.T) {
 		targetBalance, err := strconv.ParseUint(targetAccount.Balance, 10, 64)
 		require.NoError(t, err)
 		require.Equal(t, uint64(fundingAmount), targetBalance-beforeTargetAmount)
-
 	}
 }

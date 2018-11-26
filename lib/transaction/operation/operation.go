@@ -9,31 +9,51 @@ import (
 	"boscoin.io/sebak/lib/errors"
 )
 
-type OperationType string
+type OperationType byte
 
 const (
-	TypeCreateAccount        OperationType = "create-account"
-	TypePayment              OperationType = "payment"
-	TypeCongressVoting       OperationType = "congress-voting"
-	TypeCongressVotingResult OperationType = "congress-voting-result"
-	TypeCollectTxFee         OperationType = "collect-tx-fee"
-	TypeInflation            OperationType = "inflation"
-	TypeUnfreezingRequest    OperationType = "unfreezing-request"
-	TypeInflationPF          OperationType = "inflation-pf"
+	TypeCreateAccount OperationType = iota
+	TypePayment
+	TypeCongressVoting
+	TypeCongressVotingResult
+	TypeCollectTxFee
+	TypeInflation
+	TypeUnfreezingRequest
+	TypeInflationPF
 )
 
-func IsValidOperationType(oType string) bool {
-	_, b := common.InStringArray([]string{
-		string(TypeCreateAccount),
-		string(TypePayment),
-		string(TypeCongressVoting),
-		string(TypeCongressVotingResult),
-		string(TypeCollectTxFee),
-		string(TypeInflation),
-		string(TypeUnfreezingRequest),
-		string(TypeInflationPF),
-	}, oType)
-	return b
+var (
+	typeName []string = []string{
+		"create-account",
+		"payment",
+		"congress-voting",
+		"congress-voting-result",
+		"collect-tx-fee",
+		"inflation",
+		"unfreezing-request",
+		"inflation-pf",
+	}
+)
+
+// Implement `fmt.Stringer`
+func (ot OperationType) String() string {
+	return typeName[ot]
+}
+
+// Implement encoding.TextMarshaler
+// Also used in the API to avoid breaking clients
+func (ot OperationType) MarshalText() (text []byte, err error) {
+	return []byte(ot.String()), nil
+}
+
+// Implement encoding.TextUnmarshaler
+func (ot *OperationType) UnmarshalText(text []byte) (err error) {
+	if idx, found := common.InStringArray(typeName, string(text)); !found {
+		return errors.InvalidOperation
+	} else {
+		*ot = OperationType(idx)
+		return nil
+	}
 }
 
 func IsNormalOperation(t OperationType) bool {
@@ -87,17 +107,17 @@ func NewOperation(opb Body) (op Operation, err error) {
 // Implement `common.Encoder`
 // The implementation MUST use value type, not pointer
 func (op Operation) EncodeRLP(w io.Writer) error {
-	if s1, r1, e1 := common.EncodeToReader(op.H); e1 != nil {
+	if s1, e1 := common.EncodeList(op.H.Type.String()); e1 != nil {
 		return e1
 	} else if s2, r2, e2 := common.EncodeToReader(op.B); e2 != nil {
 		return e2
 	} else {
 		// Write it as a list
-		totalLength := uint64(s1) + uint64(s2)
+		totalLength := uint64(len(s1)) + uint64(s2)
 		if err := common.PutListLength(w, totalLength); err != nil {
 			return err
 		}
-		if _, err := io.Copy(w, r1); err != nil {
+		if _, err := w.Write(s1); err != nil {
 			return err
 		}
 		if _, err := io.Copy(w, r2); err != nil {
@@ -105,6 +125,42 @@ func (op Operation) EncodeRLP(w io.Writer) error {
 		}
 		return nil
 	}
+}
+
+// Implement `common.Decoder`
+func (op *Operation) DecodeRLP(s *common.RLPStream) error {
+	// The value is encoded as a list
+	if _, err := s.List(); err != nil {
+		return err
+	}
+
+	// Read operation type [ "..." ]
+	if _, err := s.List(); err != nil {
+		return err
+	} else if typeBytes, err := s.Bytes(); err != nil {
+		return err
+	} else if err = op.H.Type.UnmarshalText(typeBytes); err != nil {
+		return err
+	} else if err = s.ListEnd(); err != nil {
+		return err
+	}
+
+	// Read operation body
+	// the struct is encoded as a list and handled by `Decode`
+	if ob, err := newBodyFromType(op.H.Type); err != nil {
+		return err
+	} else if err = s.Decode(ob); err != nil {
+		return err
+	} else {
+		op.B = reflect.ValueOf(ob).Elem().Interface().(Body)
+	}
+
+	// Close the list
+	if err := s.ListEnd(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 type Header struct {
