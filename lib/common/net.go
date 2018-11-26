@@ -184,7 +184,3 @@ func NewRateLimitRule(rate limiter.Rate) RateLimitRule {
 		ByIPAddress: map[string]limiter.Rate{},
 	}
 }
-
-func (r RateLimitRule) Serializable() ([]byte, error) {
-	return json.Marshal(r)
-}
