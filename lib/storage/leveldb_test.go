@@ -174,16 +174,13 @@ func TestLevelDBIterator(t *testing.T) {
 	}
 
 	var collected []string
-	it, closeFunc := st.GetIterator("", &DefaultListOptions{reverse: false})
+	it, closeFunc := st.GetIterator("", &DefaultListOptions{reverse: false, limit: uint64(filteredCount)})
 	for {
 		v, hasNext := it()
 		if !hasNext {
 			break
 		}
 
-		if v.N > uint64(filteredCount) {
-			break
-		}
 		collected = append(collected, string(v.Key))
 	}
 	closeFunc()
@@ -193,6 +190,8 @@ func TestLevelDBIterator(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(expected, collected) {
+		t.Log("expected", expected)
+		t.Log("collected", collected)
 		t.Error("failed to fetch the exact sequence of items")
 	}
 
@@ -227,13 +226,13 @@ func TestLevelDBIteratorSeek(t *testing.T) {
 			name:     "reverse=false",
 			cursor:   100,
 			reverse:  false,
-			expected: expected1[100:],
+			expected: expected1[100+1:],
 		},
 		{
 			name:     "reverse=true",
 			cursor:   100,
 			reverse:  true,
-			expected: expected2[300-100-1:],
+			expected: expected2[300-100:],
 		},
 	}
 

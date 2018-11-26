@@ -171,7 +171,7 @@ func TestGetTransactionsHandlerPage(t *testing.T) {
 	defer storage.Close()
 	defer ts.Close()
 
-	_, _, btList := prepareTxs(storage, 10)
+	_, _, btList := prepareTxs(storage, 11)
 
 	requestFunction := func(url string) ([]interface{}, map[string]interface{}) {
 		respBody := request(ts, url, false)
@@ -185,7 +185,7 @@ func TestGetTransactionsHandlerPage(t *testing.T) {
 		common.MustUnmarshalJSON(readByte, &recv)
 		records := recv["_embedded"].(map[string]interface{})["records"].([]interface{})
 		links := recv["_links"].(map[string]interface{})
-		return records, links
+		return records[:], links
 	}
 
 	testFunction := func(query string) ([]interface{}, map[string]interface{}) {
@@ -197,7 +197,7 @@ func TestGetTransactionsHandlerPage(t *testing.T) {
 		query = strings.Replace(query, "{limit}", "0", 1)
 		query = strings.Replace(query, "{reverse}", "false", 1)
 		records, _ := testFunction(query)
-		require.Equal(t, len(btList), len(records[1:]), "length is not the same")
+		require.Equal(t, len(btList), len(records[1:]), "length is not the same") // 1: remove genesis transaction
 
 		for i, r := range records[1:] {
 			bt := r.(map[string]interface{})
@@ -207,10 +207,10 @@ func TestGetTransactionsHandlerPage(t *testing.T) {
 	}
 	{
 		query := strings.Replace(QueryPattern, "{cursor}", "", 1)
-		query = strings.Replace(query, "{limit}", "6", 1)
+		query = strings.Replace(query, "{limit}", "5", 1)
 		query = strings.Replace(query, "{reverse}", "false", 1)
 		records, links := testFunction(query)
-		require.Equal(t, len(btList[:5]), len(records[1:]), "length is not the same")
+		require.Equal(t, len(btList[:4]), len(records[1:]), "length is not the same") // 1: remove genesis Transaction
 
 		for i, r := range records[1:] {
 			bt := r.(map[string]interface{})
@@ -222,12 +222,12 @@ func TestGetTransactionsHandlerPage(t *testing.T) {
 
 		{
 			records, _ := requestFunction(nextLink)
-			require.Equal(t, len(btList[5:]), len(records), "length is not the same")
+			require.Equal(t, len(btList[4:9]), len(records), "length is not the same")
 
 			for i, r := range records {
 				bt := r.(map[string]interface{})
-				require.Equal(t, bt["hash"], btList[5+i].Hash, "hash is not the same")
-				require.Equal(t, bt["block"], btList[5+i].Block, "block is not the same")
+				require.Equal(t, bt["hash"], btList[4+i].Hash, "hash is not the same")
+				require.Equal(t, bt["block"], btList[4+i].Block, "block is not the same")
 			}
 		}
 	}
@@ -236,7 +236,7 @@ func TestGetTransactionsHandlerPage(t *testing.T) {
 		query = strings.Replace(query, "{limit}", "0", 1)
 		query = strings.Replace(query, "{reverse}", "true", 1)
 		records, _ := testFunction(query)
-		require.Equal(t, len(btList), len(records[:len(records)-1]), "length is not the same")
+		require.Equal(t, 11, len(records[:len(records)-1]), "length is not the same") // 1: remove genesis Transaction
 
 		for i, r := range records[:len(records)-1] {
 			bt := r.(map[string]interface{})
@@ -249,7 +249,7 @@ func TestGetTransactionsHandlerPage(t *testing.T) {
 		query = strings.Replace(query, "{limit}", "5", 1)
 		query = strings.Replace(query, "{reverse}", "true", 1)
 		records, _ := testFunction(query)
-		require.Equal(t, len(btList[5:]), len(records), "length is not the same")
+		require.Equal(t, 5, len(records), "length is not the same")
 
 		for i, r := range records {
 			bt := r.(map[string]interface{})

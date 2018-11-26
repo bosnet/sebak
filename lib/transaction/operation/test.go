@@ -13,7 +13,7 @@ func MakeTestPayment(amount int) Operation {
 
 func MakeTestPaymentTo(amount int, address string) Operation {
 	for amount < 0 {
-		amount = rand.Intn(5000)
+		amount = rand.Intn(500000000)
 	}
 
 	return Operation{

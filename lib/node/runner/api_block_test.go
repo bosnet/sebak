@@ -225,7 +225,7 @@ func TestGetBlocksHandlerOptions(t *testing.T) {
 
 		options, err := NewGetBlocksOptionsFromRequest(nil)
 		require.NoError(t, err)
-		options.SetMode(GetBlocksOptionsModeBlock).SetCursor([]byte(p.blocks[cursorIndex].Hash))
+		options.SetMode(GetBlocksOptionsModeBlock).SetCursor([]byte(p.blocks[cursorIndex-1].Hash))
 		u := p.URL(options.URLValues())
 
 		req, _ := http.NewRequest("GET", u.String(), nil)
