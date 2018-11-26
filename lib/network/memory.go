@@ -9,10 +9,11 @@ import (
 	"github.com/gorilla/mux"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/node"
 )
 
 type MemoryNetwork struct {
-	localNode  common.Serializable
+	localNode  *node.LocalNode
 	endpoint   *common.Endpoint
 	connWriter chan common.NetworkMessage
 	close      chan bool
@@ -98,7 +99,7 @@ func (p *MemoryNetwork) receiveMessage() {
 	}
 }
 
-func (p *MemoryNetwork) SetLocalNode(localNode common.Serializable) {
+func (p *MemoryNetwork) SetLocalNode(localNode *node.LocalNode) {
 	p.localNode = localNode
 }
 
