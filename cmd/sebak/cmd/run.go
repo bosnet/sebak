@@ -374,8 +374,11 @@ func parseFlagsNode() {
 		cmdcommon.PrintFlagsError(nodeCmd, "--operations-in-ballot-limit", err)
 	}
 
-	if _, err = strconv.ParseUint(flagThreshold, 10, 64); err != nil {
+	var tmpThreshold uint64
+	if tmpThreshold, err = strconv.ParseUint(flagThreshold, 10, 64); err != nil {
 		cmdcommon.PrintFlagsError(nodeCmd, "--threshold", err)
+	} else {
+		threshold = int(tmpThreshold)
 	}
 
 	// tx pool limits (client,node)
