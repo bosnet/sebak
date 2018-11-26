@@ -22,8 +22,7 @@ func TestNewBlockOperationFromOperation(t *testing.T) {
 	require.Equal(t, bo.Type, op.H.Type)
 	require.Equal(t, bo.TxHash, tx.H.Hash)
 	require.Equal(t, bo.Source, tx.B.Source)
-	encoded, err := op.B.Serialize()
-	require.NoError(t, err)
+	encoded := common.MustMarshalJSON(op.B)
 	require.Equal(t, bo.Body, encoded)
 }
 
@@ -125,8 +124,7 @@ func TestBlockOperationSaveByTransaction(t *testing.T) {
 		require.Equal(t, bo.Type, op.H.Type)
 		require.Equal(t, bo.TxHash, tx.H.Hash)
 		require.Equal(t, bo.Source, tx.B.Source)
-		encoded, err := op.B.Serialize()
-		require.NoError(t, err)
+		encoded := common.MustMarshalJSON(op.B)
 		require.Equal(t, bo.Body, encoded)
 	}
 }

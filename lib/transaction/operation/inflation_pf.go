@@ -1,7 +1,6 @@
 package operation
 
 import (
-	"encoding/json"
 	"strconv"
 	"strings"
 
@@ -50,10 +49,6 @@ func (o InflationPF) IsWellFormed(common.Config) (err error) {
 
 func (o InflationPF) GetAmount() common.Amount {
 	return o.Amount
-}
-
-func (o InflationPF) Serialize() (encoded []byte, err error) {
-	return json.Marshal(o)
 }
 
 func (o InflationPF) HasFee() bool {

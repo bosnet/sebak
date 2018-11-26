@@ -46,12 +46,11 @@ func TestIsWellFormedOperationLowerAmount(t *testing.T) {
 
 func TestSerializeOperation(t *testing.T) {
 	op := MakeTestPayment(-1)
-	b, err := op.Serialize()
-	require.NoError(t, err)
+	b := common.MustMarshalJSON(op)
 	require.Equal(t, len(b) > 0, true)
 
 	var o Operation
-	err = json.Unmarshal(b, &o)
+	err := json.Unmarshal(b, &o)
 	require.NoError(t, err)
 }
 

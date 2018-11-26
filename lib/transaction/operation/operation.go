@@ -99,7 +99,6 @@ type Body interface {
 	//   An `error` if that transaction is invalid, `nil` otherwise
 	//
 	IsWellFormed(common.Config) error
-	Serialize() ([]byte, error)
 	HasFee() bool
 }
 
@@ -123,10 +122,6 @@ func (o Operation) MakeHashString() string {
 
 func (o Operation) IsWellFormed(conf common.Config) (err error) {
 	return o.B.IsWellFormed(conf)
-}
-
-func (o Operation) Serialize() (encoded []byte, err error) {
-	return json.Marshal(o)
 }
 
 func (o Operation) String() string {

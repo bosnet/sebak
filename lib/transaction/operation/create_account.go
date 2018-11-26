@@ -1,8 +1,6 @@
 package operation
 
 import (
-	"encoding/json"
-
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/common/keypair"
 	"boscoin.io/sebak/lib/errors"
@@ -20,10 +18,6 @@ func NewCreateAccount(target string, amount common.Amount, linked string) Create
 		Amount: amount,
 		Linked: linked,
 	}
-}
-
-func (o CreateAccount) Serialize() (encoded []byte, err error) {
-	return json.Marshal(o)
 }
 
 // Implement transaction/operation : IsWellFormed

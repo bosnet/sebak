@@ -1,6 +1,7 @@
 package block
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"boscoin.io/sebak/lib/common"
@@ -42,7 +43,7 @@ func NewBlockOperationKey(opHash, txHash string) string {
 }
 
 func NewBlockOperationFromOperation(op operation.Operation, tx transaction.Transaction, blockHeight uint64, opIndex int) (BlockOperation, error) {
-	body, err := op.B.Serialize()
+	body, err := json.Marshal(op.B)
 	if err != nil {
 		return BlockOperation{}, err
 	}

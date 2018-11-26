@@ -1,8 +1,6 @@
 package operation
 
 import (
-	"encoding/json"
-
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/common/keypair"
 	"boscoin.io/sebak/lib/errors"
@@ -70,10 +68,6 @@ func (o CollectTxFee) TargetAddress() string {
 
 func (o CollectTxFee) GetAmount() common.Amount {
 	return o.Amount
-}
-
-func (o CollectTxFee) Serialize() (encoded []byte, err error) {
-	return json.Marshal(o)
 }
 
 func (o CollectTxFee) HasFee() bool {
