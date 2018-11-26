@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"encoding"
 	"encoding/json"
 
 	"github.com/syndtr/goleveldb/leveldb"
@@ -153,29 +154,25 @@ func (st *LevelDBBackend) Get(k string, i interface{}) (err error) {
 		return
 	}
 
-	if err = json.Unmarshal(b, &i); err != nil {
-		err = setLevelDBCoreError(err)
-		return
+	if err = deserialize(b, i); err != nil {
+		return setLevelDBCoreError(err)
 	}
 
 	return
 }
 
-func (st *LevelDBBackend) New(k string, v interface{}) (err error) {
-	var exists bool
-	if exists, err = st.Has(k); err != nil {
-		return
+func (st *LevelDBBackend) New(k string, v interface{}) error {
+	if exists, err := st.Has(k); err != nil {
+		return err
 	} else if exists {
 		return errors.Newf(errors.StorageRecordAlreadyExists, "record {%v} already exists in storage", k)
 	}
 
-	var encoded []byte
-	encoded, err = json.Marshal(v)
-	if err != nil {
+	if encoded, err := serialize(v); err != nil {
 		return setLevelDBCoreError(err)
+	} else {
+		return setLevelDBCoreError(st.Core.Put(st.makeKey(k), encoded, nil))
 	}
-
-	return setLevelDBCoreError(st.Core.Put(st.makeKey(k), encoded, nil))
 }
 
 func (st *LevelDBBackend) News(vs ...Item) (err error) {
@@ -197,7 +194,7 @@ func (st *LevelDBBackend) News(vs ...Item) (err error) {
 	batch := new(leveldb.Batch)
 	for _, v := range vs {
 		var encoded []byte
-		if encoded, err = json.Marshal(v); err != nil {
+		if encoded, err = serialize(v); err != nil {
 			return setLevelDBCoreError(err)
 		}
 
@@ -211,7 +208,7 @@ func (st *LevelDBBackend) News(vs ...Item) (err error) {
 
 func (st *LevelDBBackend) Set(k string, v interface{}) (err error) {
 	var encoded []byte
-	if encoded, err = json.Marshal(v); err != nil {
+	if encoded, err = serialize(v); err != nil {
 		return setLevelDBCoreError(err)
 	}
 
@@ -249,7 +246,7 @@ func (st *LevelDBBackend) Sets(vs ...Item) (err error) {
 	batch := new(leveldb.Batch)
 	for _, v := range vs {
 		var encoded []byte
-		if encoded, err = json.Marshal(v); err != nil {
+		if encoded, err = serialize(v); err != nil {
 			return setLevelDBCoreError(err)
 		}
 
@@ -417,4 +414,20 @@ func (st *LevelDBBackend) Walk(prefix string, option *WalkOption, walkFunc WalkF
 	}
 
 	return iter.Error()
+}
+
+// Encapsulate serialization method for various functions
+func serialize(i interface{}) ([]byte, error) {
+	if bm, ok := i.(encoding.BinaryMarshaler); ok {
+		return bm.MarshalBinary()
+	}
+	return json.Marshal(&i)
+}
+
+// Encapsulate deserialization method for various functions
+func deserialize(data []byte, i interface{}) error {
+	if bm, ok := i.(encoding.BinaryUnmarshaler); ok {
+		return bm.UnmarshalBinary(data)
+	}
+	return json.Unmarshal(data, &i)
 }
