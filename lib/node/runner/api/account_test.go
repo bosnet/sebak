@@ -98,7 +98,7 @@ func TestGetAccountsHandler(t *testing.T) {
 	}
 
 	{ // request with empty list
-		b, _ := common.EncodeJSONValue([]string{})
+		b := common.MustJSONMarshal([]string{})
 		respBody := request(ts, GetAccountsHandlerPattern, false, b)
 		defer respBody.Close()
 		reader := bufio.NewReader(respBody)
@@ -126,7 +126,7 @@ func TestGetAccountsHandler(t *testing.T) {
 			}
 		}
 
-		b, _ := common.EncodeJSONValue(expectedAddresses)
+		b := common.MustJSONMarshal(expectedAddresses)
 		respBody := request(ts, GetAccountsHandlerPattern, false, b)
 		defer respBody.Close()
 		reader := bufio.NewReader(respBody)
@@ -152,7 +152,7 @@ func TestGetAccountsHandler(t *testing.T) {
 			expectedAddresses = append(expectedAddresses, address)
 		}
 
-		b, _ := common.EncodeJSONValue(expectedAddresses)
+		b := common.MustJSONMarshal(expectedAddresses)
 		respBody := request(ts, GetAccountsHandlerPattern, false, b)
 		defer respBody.Close()
 		reader := bufio.NewReader(respBody)
@@ -187,7 +187,7 @@ func TestGetAccountsHandler(t *testing.T) {
 		}
 		expectedAddresses = append(expectedAddresses, unknownAddresses...)
 
-		b, _ := common.EncodeJSONValue(expectedAddresses)
+		b := common.MustJSONMarshal(expectedAddresses)
 		respBody := request(ts, GetAccountsHandlerPattern, false, b)
 		defer respBody.Close()
 		reader := bufio.NewReader(respBody)

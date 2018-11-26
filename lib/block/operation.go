@@ -1,6 +1,7 @@
 package block
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"boscoin.io/sebak/lib/common"
@@ -162,8 +163,7 @@ func (bo *BlockOperation) Save(st *storage.LevelDBBackend) (err error) {
 }
 
 func (bo BlockOperation) Serialize() (encoded []byte, err error) {
-	encoded, err = common.EncodeJSONValue(bo)
-	return
+	return json.Marshal(bo)
 }
 
 func GetBlockOperationKey(hash string) string {

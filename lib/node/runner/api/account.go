@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"net/http"
 
@@ -53,7 +54,7 @@ func (api NetworkHandlerAPI) GetAccountsHandler(w http.ResponseWriter, r *http.R
 	}
 
 	var addresses []string
-	if err := common.DecodeJSONValue(body, &addresses); err != nil {
+	if err := json.Unmarshal(body, &addresses); err != nil {
 		httputils.WriteJSONError(w, errors.BadRequestParameter.Clone().SetData("error", err.Error()))
 		return
 	}

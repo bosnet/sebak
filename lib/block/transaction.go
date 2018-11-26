@@ -1,6 +1,7 @@
 package block
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"boscoin.io/sebak/lib/common"
@@ -139,13 +140,15 @@ func (bt *BlockTransaction) Save(st *storage.LevelDBBackend) (err error) {
 }
 
 func (bt BlockTransaction) Serialize() (encoded []byte, err error) {
-	encoded, err = common.EncodeJSONValue(bt)
-	return
+	return json.Marshal(bt)
 }
 
 func (bt BlockTransaction) String() string {
-	encoded, _ := common.EncodeJSONValue(bt)
-	return string(encoded)
+	if encoded, err := json.Marshal(bt); err != nil {
+		panic(err)
+	} else {
+		return string(encoded)
+	}
 }
 
 func (bt BlockTransaction) Transaction() transaction.Transaction {
@@ -155,7 +158,7 @@ func (bt BlockTransaction) Transaction() transaction.Transaction {
 			return tx
 		}
 
-		if err := common.DecodeJSONValue(bt.Message, &tx); err != nil {
+		if err := json.Unmarshal(bt.Message, &tx); err != nil {
 			return tx
 		}
 

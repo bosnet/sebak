@@ -175,7 +175,7 @@ func (st *LevelDBBackend) New(k string, v interface{}) (err error) {
 	if ok {
 		encoded, err = serializable.Serialize()
 	} else {
-		encoded, err = common.EncodeJSONValue(v)
+		encoded, err = json.Marshal(v)
 	}
 	if err != nil {
 		return setLevelDBCoreError(err)
@@ -203,9 +203,8 @@ func (st *LevelDBBackend) News(vs ...Item) (err error) {
 	batch := new(leveldb.Batch)
 	for _, v := range vs {
 		var encoded []byte
-		if encoded, err = common.EncodeJSONValue(v); err != nil {
-			err = setLevelDBCoreError(err)
-			return
+		if encoded, err = json.Marshal(v); err != nil {
+			return setLevelDBCoreError(err)
 		}
 
 		batch.Put(st.makeKey(v.Key), encoded)
@@ -218,9 +217,8 @@ func (st *LevelDBBackend) News(vs ...Item) (err error) {
 
 func (st *LevelDBBackend) Set(k string, v interface{}) (err error) {
 	var encoded []byte
-	if encoded, err = common.EncodeJSONValue(v); err != nil {
-		err = setLevelDBCoreError(err)
-		return
+	if encoded, err = json.Marshal(v); err != nil {
+		return setLevelDBCoreError(err)
 	}
 
 	var exists bool
@@ -257,9 +255,8 @@ func (st *LevelDBBackend) Sets(vs ...Item) (err error) {
 	batch := new(leveldb.Batch)
 	for _, v := range vs {
 		var encoded []byte
-		if encoded, err = common.EncodeJSONValue(v); err != nil {
-			err = setLevelDBCoreError(err)
-			return
+		if encoded, err = json.Marshal(v); err != nil {
+			return setLevelDBCoreError(err)
 		}
 
 		batch.Put(st.makeKey(v.Key), encoded)
