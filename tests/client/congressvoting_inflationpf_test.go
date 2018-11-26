@@ -73,7 +73,7 @@ func TestInflationPF(t *testing.T) {
 		_, err = c.SubmitTransactionAndWait(tx.H.Hash, body)
 		require.NoError(t, err)
 
-		tt, err := c.LoadTransaction(tx.H.Hash)
+		_, err = c.LoadTransaction(tx.H.Hash)
 		require.NoError(t, err)
 
 		var opage client.OperationsPage
