@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"net/http"
 	"testing"
+	"time"
 )
 
 func TestOperation(t *testing.T) {
@@ -38,6 +39,7 @@ func TestOperation(t *testing.T) {
 	{
 		var opage client.OperationsPage
 		for try := 0; try < 5; try++ {
+			var err error
 			opage, err = c.LoadOperationsByAccount(account1Addr)
 			require.NoError(t, err)
 			if len(opage.Embedded.Records) > 0 {
@@ -59,6 +61,7 @@ func TestOperation(t *testing.T) {
 	{
 		var opage client.OperationsPage
 		for try := 0; try < 5; try++ {
+			var err error
 			opage, err = c.LoadOperationsByAccount(account2Addr)
 			require.NoError(t, err)
 			if len(opage.Embedded.Records) > 0 {
