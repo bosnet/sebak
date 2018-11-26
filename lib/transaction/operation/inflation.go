@@ -1,7 +1,6 @@
 package operation
 
 import (
-	"encoding/json"
 	"strings"
 
 	"boscoin.io/sebak/lib/common"
@@ -77,10 +76,6 @@ func (o Inflation) TargetAddress() string {
 
 func (o Inflation) GetAmount() common.Amount {
 	return o.Amount
-}
-
-func (o Inflation) Serialize() (encoded []byte, err error) {
-	return json.Marshal(o)
 }
 
 func (o Inflation) HasFee() bool {

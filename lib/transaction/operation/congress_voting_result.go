@@ -1,7 +1,6 @@
 package operation
 
 import (
-	"encoding/json"
 	"strconv"
 	"strings"
 
@@ -61,9 +60,6 @@ func NewCongressVotingResult(
 	}
 }
 
-func (o CongressVotingResult) Serialize() (encoded []byte, err error) {
-	return json.Marshal(o)
-}
 func (o CongressVotingResult) IsWellFormed(common.Config) (err error) {
 	if len(o.BallotStamps.Hash) == 0 {
 		return errors.OperationBodyInsufficient

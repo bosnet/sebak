@@ -1,8 +1,6 @@
 package operation
 
 import (
-	"encoding/json"
-
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/common/keypair"
 	"boscoin.io/sebak/lib/errors"
@@ -18,10 +16,6 @@ func NewPayment(target string, amount common.Amount) Payment {
 		Target: target,
 		Amount: amount,
 	}
-}
-
-func (o Payment) Serialize() (encoded []byte, err error) {
-	return json.Marshal(o)
 }
 
 // Implement transaction/operation : IsWellFormed
