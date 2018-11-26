@@ -668,10 +668,10 @@ func (nr *NodeRunner) proposeNewBallot(round uint64) (ballot.Ballot, error) {
 	}
 
 	proposerAddr := nr.consensus.SelectProposer(b.Height, round)
-	theBallot := ballot.NewBallot(nr.localNode.Address(), proposerAddr, basis, validTransactionHashes)
-	theBallot.SetVote(ballot.StateINIT, voting.YES)
+	blt := ballot.NewBallot(nr.localNode.Address(), proposerAddr, basis, validTransactionHashes)
+	blt.SetVote(ballot.StateINIT, voting.YES)
 
-	opc, err := ballot.NewCollectTxFeeFromBallot(*theBallot, nr.Conf.CommonAccountAddress, validTransactions...)
+	opc, err := ballot.NewCollectTxFeeFromBallot(*blt, nr.Conf.CommonAccountAddress, validTransactions...)
 	if err != nil {
 		return ballot.Ballot{}, err
 	}
