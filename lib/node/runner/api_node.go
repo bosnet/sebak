@@ -113,7 +113,6 @@ var HandleTransactionCheckerForWatcherFuncs = []common.CheckerFunc{
 	HasTransaction,
 	MessageHasSameSource,
 	MessageValidate,
-	PushIntoTransactionPoolFromClient,
 	BroadcastTransactionFromWatcher,
 }
 
