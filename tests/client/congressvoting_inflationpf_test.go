@@ -1,4 +1,3 @@
-// +build client_integration_tests
 
 package client
 
@@ -72,7 +71,7 @@ func TestInflationPF(t *testing.T) {
 		_, err = c.SubmitTransactionAndWait(tx.H.Hash, body)
 		require.NoError(t, err)
 
-		opage, err := c.LoadOperationsByAccount(CongressAddr, client.Q{Key: client.QueryType, Value: "congress-voting"})
+		opage, err := c.LoadOperationsByAccount(CongressAddr, client.Q{Key: client.QueryType, Value: string(operation.TypeCongressVoting)})
 		require.NoError(t, err)
 
 		for _, obody := range opage.Embedded.Records {
@@ -127,7 +126,7 @@ func TestInflationPF(t *testing.T) {
 		_, err = c.SubmitTransactionAndWait(tx.H.Hash, body)
 		require.NoError(t, err)
 
-		opage, err := c.LoadOperationsByAccount(CongressAddr, client.Q{Key: client.QueryType, Value: "congress-voting-result"})
+		opage, err := c.LoadOperationsByAccount(CongressAddr, client.Q{Key: client.QueryType, Value: string(operation.TypeCongressVotingResult)})
 		require.NoError(t, err)
 
 		for _, obody := range opage.Embedded.Records {
