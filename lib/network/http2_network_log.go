@@ -109,6 +109,7 @@ func (l HTTP2Log15Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		"remote", r.RemoteAddr,
 		"uri", uri,
 		"user-agent", r.UserAgent(),
+		"x-forwarded-for", strings.Split(r.Header.Get("X-Forwarded-For"), ",")[0],
 	)
 
 	writer := &HTTP2ResponseLog15Writer{w: w}

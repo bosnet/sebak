@@ -43,6 +43,7 @@ var (
 	flagDebugPProf      bool   = common.GetENVValue("SEBAK_DEBUG_PPROF", "0") == "1"
 	flagKPSecretSeed    string = common.GetENVValue("SEBAK_SECRET_SEED", "")
 	flagLog             string = common.GetENVValue("SEBAK_LOG", "")
+	flagHTTPLog         string = common.GetENVValue("SEBAK_HTTP_LOG", "")
 	flagLogLevel        string = common.GetENVValue("SEBAK_LOG_LEVEL", defaultLogLevel.String())
 	flagLogFormat       string = common.GetENVValue("SEBAK_LOG_FORMAT", defaultLogFormat)
 	flagNetworkID       string = common.GetENVValue("SEBAK_NETWORK_ID", "")
@@ -171,6 +172,7 @@ func init() {
 	nodeCmd.Flags().StringVar(&flagLogLevel, "log-level", flagLogLevel, "log level, {crit, error, warn, info, debug}")
 	nodeCmd.Flags().StringVar(&flagLogFormat, "log-format", flagLogFormat, "log format, {terminal, json}")
 	nodeCmd.Flags().StringVar(&flagLog, "log", flagLog, "set log file")
+	nodeCmd.Flags().StringVar(&flagHTTPLog, "http-log", flagHTTPLog, "set log file for HTTP request")
 	nodeCmd.Flags().BoolVar(&flagVerbose, "verbose", flagVerbose, "verbose")
 	nodeCmd.Flags().StringVar(&flagBindURL, "bind", flagBindURL, "bind to listen on")
 	nodeCmd.Flags().StringVar(&flagPublishURL, "publish", flagPublishURL, "endpoint url for other nodes")
@@ -456,7 +458,9 @@ func parseFlagsNode() {
 		}
 	}
 
-	logHandler = logging.CallerFileHandler(logHandler)
+	if logLevel == logging.LvlDebug { // only debug produces `caller` data
+		logHandler = logging.CallerFileHandler(logHandler)
+	}
 	logHandler = logging.LvlFilterHandler(logLevel, logHandler)
 	log.SetHandler(logHandler)
 
@@ -464,6 +468,18 @@ func parseFlagsNode() {
 	consensus.SetLogging(logLevel, logHandler)
 	network.SetLogging(logLevel, logHandler)
 	sync.SetLogging(logLevel, logHandler)
+
+	// if without http-log, http log messages will be in `network.log`
+	if len(flagHTTPLog) < 1 {
+		network.SetHTTPLogging(logLevel, logHandler)
+	} else {
+		// In `http-log`, http log will be json format
+		httpLogHandler, err := logging.FileHandler(flagHTTPLog, common.JsonFormatEx(false, true))
+		if err != nil {
+			cmdcommon.PrintFlagsError(nodeCmd, "--http-log", err)
+		}
+		network.SetHTTPLogging(logging.LvlDebug, httpLogHandler) // httpLog only use `Debug`
+	}
 
 	if len(flagRateLimitAPI) < 1 {
 		re := strings.Fields(common.GetENVValue("SEBAK_RATE_LIMIT_API", ""))
