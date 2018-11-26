@@ -19,8 +19,9 @@ func (api NetworkHandlerAPI) GetBlocksHandler(w http.ResponseWriter, r *http.Req
 	}
 
 	var (
-		cursor []byte // cursor as height
-		blocks []resource.Resource
+		firstCursor []byte
+		cursor      []byte // cursor as height
+		blocks      []resource.Resource
 	)
 
 	var option *storage.WalkOption
@@ -44,6 +45,9 @@ func (api NetworkHandlerAPI) GetBlocksHandler(w http.ResponseWriter, r *http.Req
 				}
 			}
 			cursor = []byte(strconv.FormatUint(height, 10))
+			if len(firstCursor) == 0 {
+				firstCursor = append(firstCursor, cursor...)
+			}
 			return true, nil
 		})
 		if err != nil {
@@ -53,6 +57,6 @@ func (api NetworkHandlerAPI) GetBlocksHandler(w http.ResponseWriter, r *http.Req
 		}
 	}
 
-	list := p.ResourceList(blocks, cursor)
+	list := p.ResourceList(blocks, firstCursor, cursor)
 	httputils.MustWriteJSON(w, 200, list)
 }

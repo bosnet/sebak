@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/base64"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -71,8 +72,12 @@ func (p *PageQuery) WalkOption() *storage.WalkOption {
 	return storage.NewWalkOption(string(p.Cursor()), p.Limit(), p.Reverse(), true)
 }
 
-func (p *PageQuery) ResourceList(rs []resource.Resource, cursor []byte) *resource.ResourceList {
-	return resource.NewResourceList(rs, p.SelfLink(), p.NextLink(cursor), p.PrevLink(cursor))
+func (p *PageQuery) ResourceList(rs []resource.Resource, firstCursor, lastCursor []byte) *resource.ResourceList {
+	if p.reverse {
+		return resource.NewResourceList(rs, p.SelfLink(), p.NextLink(firstCursor), p.PrevLink(lastCursor))
+	} else {
+		return resource.NewResourceList(rs, p.SelfLink(), p.NextLink(lastCursor), p.PrevLink(firstCursor))
+	}
 }
 
 func (p *PageQuery) parseRequest() error {
@@ -87,7 +92,13 @@ func (p *PageQuery) parseRequest() error {
 	}
 	c := q.Get("cursor")
 	if c != "" {
-		p.cursor = []byte(c)
+		var cursorByte []byte
+		var err error
+		if cursorByte, err = base64.StdEncoding.DecodeString(c); err != nil {
+			p.cursor = []byte(c)
+		} else {
+			p.cursor = cursorByte
+		}
 	}
 
 	l := q.Get("limit")
@@ -111,7 +122,7 @@ func (p PageQuery) urlValues(cursor []byte, reverse bool, limit uint64) url.Valu
 	}
 
 	if len(cursor) > 0 {
-		v.Set("cursor", string(cursor))
+		v.Set("cursor", string(base64.StdEncoding.EncodeToString(cursor)))
 	}
 	if p.limit > 0 {
 		v.Set("limit", strconv.FormatUint(p.limit, 10))
