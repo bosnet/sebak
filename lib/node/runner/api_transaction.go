@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/errors"
@@ -46,7 +47,7 @@ func (nh NetworkHandlerNode) GetNodeTransactionsHandler(w http.ResponseWriter, r
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("X-SEBAK-RESULT-COUNT", string(len(hashes)))
+	w.Header().Set("X-SEBAK-RESULT-COUNT", strconv.FormatInt(int64(len(hashes)), 10))
 
 	// check in `block.TransactionPool`
 	for _, hash := range hashes {

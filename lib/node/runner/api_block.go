@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/errors"
@@ -106,7 +107,7 @@ func (nh NetworkHandlerNode) GetBlocksHandler(w http.ResponseWriter, r *http.Req
 
 	// set header; `X-SEBAK-xxx` indicates the basic explanation of the
 	// response.
-	w.Header().Set("X-SEBAK-RESULT-COUNT", string(len(bs)))
+	w.Header().Set("X-SEBAK-RESULT-COUNT", strconv.FormatInt(int64(len(bs)), 10))
 
 	for _, b := range bs {
 		var itemType NodeItemDataType
