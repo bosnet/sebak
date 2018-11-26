@@ -32,7 +32,7 @@ func (api NetworkHandlerAPI) GetTransactionsHandler(w http.ResponseWriter, r *ht
 			if !hasNext {
 				break
 			}
-			cursor = c
+			cursor = append([]byte{}, c...)
 			if len(firstCursor) == 0 {
 				firstCursor = append(firstCursor, c...)
 			}
@@ -97,7 +97,7 @@ func (api NetworkHandlerAPI) GetTransactionsByAccountHandler(w http.ResponseWrit
 			if !hasNext {
 				break
 			}
-			cursor = c
+			cursor = append([]byte{}, c...)
 			if len(firstCursor) == 0 {
 				firstCursor = append(firstCursor, c...)
 			}

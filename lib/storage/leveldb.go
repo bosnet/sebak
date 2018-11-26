@@ -305,48 +305,53 @@ func (st *LevelDBBackend) GetIterator(prefix string, option ListOptions) (func()
 
 	iter := st.Core.NewIterator(dbRange, nil)
 
-	if cursor != nil {
-		iter.Seek(cursor)
-	}
-
 	var funcNext func() bool
-	var hasUnsent bool
+	var seek func() bool
+
 	if reverse {
-		if cursor == nil && !iter.Last() {
-			iter.Release()
-			return func() (IterItem, bool) { return IterItem{}, false }, func() {}
-		}
 		funcNext = iter.Prev
-		hasUnsent = true
+		if cursor == nil {
+			seek = iter.Last
+		} else {
+			seek = func() bool {
+				iter.Seek(cursor)
+				return funcNext()
+			}
+		}
 	} else {
 		funcNext = iter.Next
-		if cursor != nil {
-			hasUnsent = true
+		if cursor == nil {
+			seek = iter.First
 		} else {
-			hasUnsent = false
+			seek = func() bool {
+				iter.Seek(cursor)
+				return funcNext()
+			}
 		}
 	}
 
-	var n uint64
+	var n uint64 = 0
 	return func() (IterItem, bool) {
-			if hasUnsent {
-				hasUnsent = false
-				n++
-				return IterItem{N: n, Key: iter.Key(), Value: iter.Value()}, true
+
+			exists := false
+			if n == 0 {
+				exists = seek()
+			} else {
+				exists = funcNext()
 			}
 
-			if !funcNext() {
-				iter.Release()
-				return IterItem{}, false
+			if exists {
+				n++
 			}
 
-			if limit != 0 && n >= limit {
-				defer iter.Release()
-				n++
-				return IterItem{N: n, Key: iter.Key(), Value: iter.Value()}, false
+			item := IterItem{N: n, Key: iter.Key(), Value: iter.Value()}
+
+			if limit != 0 && n > limit {
+				exists = false
 			}
-			n++
-			return IterItem{N: n, Key: iter.Key(), Value: iter.Value()}, true
+
+			return item, exists
+
 		},
 		func() {
 			iter.Release()

@@ -52,7 +52,7 @@ func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter
 			if len(firstCursor) == 0 {
 				firstCursor = append(firstCursor, c...)
 			}
-			lastCursor = c
+			lastCursor = append([]byte{}, c...)
 
 			var blk *block.Block
 			var ok bool

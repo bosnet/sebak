@@ -201,10 +201,6 @@ func TestGetOperationsByAccountHandlerPage(t *testing.T) {
 		ba.MustSave(storage)
 	}
 
-	for i, bo := range boList {
-		t.Log(i, bo.Hash)
-	}
-
 	// Do a Request for source account
 	prev := ""
 	next := ""
@@ -241,8 +237,6 @@ func TestGetOperationsByAccountHandlerPage(t *testing.T) {
 		records := recv["_embedded"].(map[string]interface{})["records"].([]interface{})
 		prev = recv["_links"].(map[string]interface{})["prev"].(map[string]interface{})["href"].(string)
 		next = recv["_links"].(map[string]interface{})["next"].(map[string]interface{})["href"].(string)
-		t.Log(prev)
-		t.Log(next)
 		for i, r := range records {
 			bt := r.(map[string]interface{})
 			require.Equal(t, boList[i+20].Hash, bt["hash"], "hash is not same")
@@ -263,15 +257,13 @@ func TestGetOperationsByAccountHandlerPage(t *testing.T) {
 		records := recv["_embedded"].(map[string]interface{})["records"].([]interface{})
 		prev = recv["_links"].(map[string]interface{})["prev"].(map[string]interface{})["href"].(string)
 		next = recv["_links"].(map[string]interface{})["next"].(map[string]interface{})["href"].(string)
-		t.Log(prev)
-		t.Log(next)
 		for i, r := range records {
 			bt := r.(map[string]interface{})
 			require.Equal(t, boList[i+40].Hash, bt["hash"], "hash is not same")
 		}
 	}
 
-	// 40 ~ 21
+	// 39 ~ 20
 	{
 		respBody := request(ts, prev, false)
 		defer respBody.Close()
@@ -284,15 +276,13 @@ func TestGetOperationsByAccountHandlerPage(t *testing.T) {
 		records := recv["_embedded"].(map[string]interface{})["records"].([]interface{})
 		prev = recv["_links"].(map[string]interface{})["prev"].(map[string]interface{})["href"].(string)
 		next = recv["_links"].(map[string]interface{})["next"].(map[string]interface{})["href"].(string)
-		t.Log(prev)
-		t.Log(next)
 		for i, r := range records {
 			bt := r.(map[string]interface{})
-			require.Equal(t, boList[40-i].Hash, bt["hash"], "hash is not same")
+			require.Equal(t, boList[40-1-i].Hash, bt["hash"], "hash is not same")
 		}
 	}
 
-	// 20 ~ 1
+	// 19 ~ 0
 	{
 		respBody := request(ts, prev, false)
 		defer respBody.Close()
@@ -305,11 +295,9 @@ func TestGetOperationsByAccountHandlerPage(t *testing.T) {
 		records := recv["_embedded"].(map[string]interface{})["records"].([]interface{})
 		prev = recv["_links"].(map[string]interface{})["prev"].(map[string]interface{})["href"].(string)
 		next = recv["_links"].(map[string]interface{})["next"].(map[string]interface{})["href"].(string)
-		t.Log(prev)
-		t.Log(next)
 		for i, r := range records {
 			bt := r.(map[string]interface{})
-			require.Equal(t, boList[20-i].Hash, bt["hash"], "hash is not same")
+			require.Equal(t, boList[20-1-i].Hash, bt["hash"], "hash is not same")
 		}
 	}
 }

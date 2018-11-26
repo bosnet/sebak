@@ -120,7 +120,7 @@ func (api NetworkHandlerAPI) GetFrozenAccountsByAccountHandler(w http.ResponseWr
 			if !hasNext {
 				break
 			}
-			cursor = c
+			cursor = append([]byte{}, c...)
 			if len(firstCursor) == 0 {
 				firstCursor = append(firstCursor, c...)
 			}
@@ -229,7 +229,7 @@ func (api NetworkHandlerAPI) GetFrozenAccountsHandler(w http.ResponseWriter, r *
 			if !hasNext {
 				break
 			}
-			cursor = c
+			cursor = append([]byte{}, c...)
 			if len(firstCursor) == 0 {
 				firstCursor = append(firstCursor, c...)
 			}

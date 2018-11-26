@@ -52,7 +52,7 @@ func (api NetworkHandlerAPI) getOperationsByTxHash(txHash string, blk *block.Blo
 		if !hasNext {
 			break
 		}
-		cursor = c
+		cursor = append([]byte{}, c...)
 		if len(firstCursor) == 0 {
 			firstCursor = append(firstCursor, c...)
 		}

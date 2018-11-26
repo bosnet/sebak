@@ -482,7 +482,7 @@ func TestMultipleBlockTransactionsOrderByBlockHeightAndCursor(t *testing.T) {
 		}
 
 		halfSaved = saved[len(saved)/2:]
-		theCursor = cursors[len(saved)/2]
+		theCursor = cursors[len(saved)/2-1]
 	}
 
 	// Check transactions filtered by cursor
