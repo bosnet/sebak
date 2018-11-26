@@ -315,3 +315,153 @@ func TestExpiredBallotCheckProposer(t *testing.T) {
 
 	require.Equal(t, voting.NO, checker.VotingHole)
 }
+
+// NodeRunner must propose new ballot by common.Config.OpsInBallotLimit.
+func TestProposedBallotByOpsInBallotLimit(t *testing.T) {
+	{ // limit=100 tx0=50, tx1=50; tx0 and tx1 will be in ballot
+		limit := 100
+
+		config := common.NewConfig(networkID)
+		config.OpsInBallotLimit = limit
+		nr, _, _ := createNodeRunnerForTesting(1, config, nil)
+
+		var txs []string
+
+		_, tx0 := transaction.TestMakeTransaction(networkID, 50)
+		txs = append(txs, tx0.GetHash())
+		nr.TransactionPool.Add(tx0)
+		_, tx1 := transaction.TestMakeTransaction(networkID, 50)
+		nr.TransactionPool.Add(tx1)
+		txs = append(txs, tx1.GetHash())
+
+		blt, err := nr.proposeNewBallot(0)
+		require.NoError(t, err)
+
+		var ops int
+		for _, hash := range blt.Transactions() {
+			tx, _ := nr.TransactionPool.Get(hash)
+			ops += len(tx.B.Operations)
+		}
+		require.Equal(t, limit, ops)
+
+		var found bool
+		_, found = common.InStringArray(blt.Transactions(), tx0.GetHash())
+		require.True(t, found)
+		_, found = common.InStringArray(blt.Transactions(), tx1.GetHash())
+		require.True(t, found)
+	}
+
+	{ // limit=100 tx0=50, tx1=51; tx1 will not be in ballot
+		limit := 100
+
+		config := common.NewConfig(networkID)
+		config.OpsInBallotLimit = limit
+		nr, _, _ := createNodeRunnerForTesting(1, config, nil)
+
+		var txs []string
+
+		_, tx0 := transaction.TestMakeTransaction(networkID, 50)
+		txs = append(txs, tx0.GetHash())
+		nr.TransactionPool.Add(tx0)
+		_, tx1 := transaction.TestMakeTransaction(networkID, 51)
+		nr.TransactionPool.Add(tx1)
+		txs = append(txs, tx1.GetHash())
+
+		blt, err := nr.proposeNewBallot(0)
+		require.NoError(t, err)
+
+		var ops int
+		for _, hash := range blt.Transactions() {
+			tx, _ := nr.TransactionPool.Get(hash)
+			ops += len(tx.B.Operations)
+		}
+		require.Equal(t, 50, ops)
+
+		var found bool
+		_, found = common.InStringArray(blt.Transactions(), tx0.GetHash())
+		require.True(t, found)
+		_, found = common.InStringArray(blt.Transactions(), tx1.GetHash())
+		require.False(t, found)
+	}
+
+	{ // limit=100 tx0=50, tx1=51 tx2=10; tx1 will not be in ballot
+		limit := 100
+
+		config := common.NewConfig(networkID)
+		config.OpsInBallotLimit = limit
+		nr, _, _ := createNodeRunnerForTesting(1, config, nil)
+
+		var txs []string
+
+		_, tx0 := transaction.TestMakeTransaction(networkID, 50)
+		txs = append(txs, tx0.GetHash())
+		nr.TransactionPool.Add(tx0)
+		_, tx1 := transaction.TestMakeTransaction(networkID, 51)
+		nr.TransactionPool.Add(tx1)
+		txs = append(txs, tx1.GetHash())
+		_, tx2 := transaction.TestMakeTransaction(networkID, 10)
+		nr.TransactionPool.Add(tx2)
+		txs = append(txs, tx2.GetHash())
+
+		blt, err := nr.proposeNewBallot(0)
+		require.NoError(t, err)
+
+		var ops int
+		for _, hash := range blt.Transactions() {
+			tx, _ := nr.TransactionPool.Get(hash)
+			ops += len(tx.B.Operations)
+		}
+		require.Equal(t, 60, ops)
+
+		var found bool
+		_, found = common.InStringArray(blt.Transactions(), tx0.GetHash())
+		require.True(t, found)
+		_, found = common.InStringArray(blt.Transactions(), tx1.GetHash())
+		require.False(t, found)
+		_, found = common.InStringArray(blt.Transactions(), tx2.GetHash())
+		require.True(t, found)
+	}
+
+	{ // limit=100 tx0=50, tx1=51 tx2=10 tx3=40; tx1 will not be in ballot
+		limit := 100
+
+		config := common.NewConfig(networkID)
+		config.OpsInBallotLimit = limit
+		nr, _, _ := createNodeRunnerForTesting(1, config, nil)
+
+		var txs []string
+
+		_, tx0 := transaction.TestMakeTransaction(networkID, 50)
+		txs = append(txs, tx0.GetHash())
+		nr.TransactionPool.Add(tx0)
+		_, tx1 := transaction.TestMakeTransaction(networkID, 51)
+		nr.TransactionPool.Add(tx1)
+		txs = append(txs, tx1.GetHash())
+		_, tx2 := transaction.TestMakeTransaction(networkID, 10)
+		nr.TransactionPool.Add(tx2)
+		txs = append(txs, tx2.GetHash())
+		_, tx3 := transaction.TestMakeTransaction(networkID, 40)
+		nr.TransactionPool.Add(tx3)
+		txs = append(txs, tx3.GetHash())
+
+		blt, err := nr.proposeNewBallot(0)
+		require.NoError(t, err)
+
+		var ops int
+		for _, hash := range blt.Transactions() {
+			tx, _ := nr.TransactionPool.Get(hash)
+			ops += len(tx.B.Operations)
+		}
+		require.Equal(t, 100, ops)
+
+		var found bool
+		_, found = common.InStringArray(blt.Transactions(), tx0.GetHash())
+		require.True(t, found)
+		_, found = common.InStringArray(blt.Transactions(), tx1.GetHash())
+		require.False(t, found)
+		_, found = common.InStringArray(blt.Transactions(), tx2.GetHash())
+		require.True(t, found)
+		_, found = common.InStringArray(blt.Transactions(), tx3.GetHash())
+		require.True(t, found)
+	}
+}
