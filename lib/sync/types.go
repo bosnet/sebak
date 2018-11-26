@@ -48,17 +48,3 @@ type Fetcher interface {
 type Validator interface {
 	Validate(context.Context, *SyncInfo) error
 }
-
-type NodeInfo struct {
-	Node struct {
-		State   string `json:"state"`
-		Address string `json:"address"`
-		Alias   string `json:"alias"`
-	} `json:"node"`
-	Block struct {
-		Height   int    `json:"height"`
-		Hash     string `json:"hash"`
-		TotalTxs int    `json:"total-txs"`
-		TotalOps int    `json:"total-ops"`
-	} `json:"block"`
-}
