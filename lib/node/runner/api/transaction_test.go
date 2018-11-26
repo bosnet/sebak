@@ -226,8 +226,8 @@ func TestGetTransactionsHandlerPage(t *testing.T) {
 
 			for i, r := range records {
 				bt := r.(map[string]interface{})
-				require.Equal(t, bt["hash"], btList[5+i].Hash, "hash is not the same")
-				require.Equal(t, bt["block"], btList[5+i].Block, "block is not the same")
+				require.Equal(t, bt["hash"], btList[4+i].Hash, "hash is not the same")
+				require.Equal(t, bt["block"], btList[4+i].Block, "block is not the same")
 			}
 		}
 	}
