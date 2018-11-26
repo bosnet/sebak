@@ -22,15 +22,19 @@ func (api NetworkHandlerAPI) GetTransactionsHandler(w http.ResponseWriter, r *ht
 	}
 
 	var options = p.ListOptions()
+	var firstCursor []byte
 	var cursor []byte
 	readFunc := func() []resource.Resource {
 		var txs []resource.Resource
 		iterFunc, closeFunc := block.GetBlockTransactions(api.storage, options)
 		for {
 			t, hasNext, c := iterFunc()
-			cursor = c
 			if !hasNext {
 				break
+			}
+			cursor = c
+			if len(firstCursor) == 0 {
+				firstCursor = append(firstCursor, c...)
 			}
 			txs = append(txs, resource.NewTransaction(&t))
 		}
@@ -40,7 +44,7 @@ func (api NetworkHandlerAPI) GetTransactionsHandler(w http.ResponseWriter, r *ht
 
 	txs := readFunc()
 
-	list := p.ResourceList(txs, cursor)
+	list := p.ResourceList(txs, firstCursor, cursor)
 	httputils.MustWriteJSON(w, 200, list)
 }
 
@@ -83,16 +87,21 @@ func (api NetworkHandlerAPI) GetTransactionsByAccountHandler(w http.ResponseWrit
 	}
 
 	var options = p.ListOptions()
+	var firstCursor []byte
 	var cursor []byte
 	readFunc := func() []resource.Resource {
 		var txs []resource.Resource
 		iterFunc, closeFunc := block.GetBlockTransactionsByAccount(api.storage, address, options)
 		for {
 			t, hasNext, c := iterFunc()
-			cursor = c
 			if !hasNext {
 				break
 			}
+			cursor = c
+			if len(firstCursor) == 0 {
+				firstCursor = append(firstCursor, c...)
+			}
+
 			txs = append(txs, resource.NewTransaction(&t))
 		}
 		closeFunc()
@@ -100,7 +109,7 @@ func (api NetworkHandlerAPI) GetTransactionsByAccountHandler(w http.ResponseWrit
 	}
 
 	txs := readFunc()
-	list := p.ResourceList(txs, cursor)
+	list := p.ResourceList(txs, firstCursor, cursor)
 	httputils.MustWriteJSON(w, 200, list)
 }
 

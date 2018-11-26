@@ -1,17 +1,14 @@
 package api
 
 import (
-	"bufio"
-	"io/ioutil"
-	"net/http"
-	"strings"
-	"testing"
-
-	"github.com/stretchr/testify/require"
-
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/transaction/operation"
+	"bufio"
+	"github.com/stretchr/testify/require"
+	"io/ioutil"
+	"strings"
+	"testing"
 )
 
 func TestGetOperationsByAccountHandler(t *testing.T) {
@@ -22,15 +19,6 @@ func TestGetOperationsByAccountHandler(t *testing.T) {
 	kp, kpTarget, boList := prepareOps(storage, 10)
 
 	url := strings.Replace(GetAccountOperationsHandlerPattern, "{id}", kp.Address(), -1)
-	{
-		// unknown address
-		req, _ := http.NewRequest("GET", ts.URL+url, nil)
-		resp, err := ts.Client().Do(req)
-		require.NoError(t, err)
-		defer resp.Body.Close()
-		require.Equal(t, http.StatusNotFound, resp.StatusCode)
-	}
-
 	{
 		ba := block.NewBlockAccount(kp.Address(), common.Amount(common.BaseReserve))
 		ba.MustSave(storage)
@@ -193,4 +181,135 @@ func TestGetOperationsByAccountHandlerWithType(t *testing.T) {
 		}
 	}
 
+}
+
+func TestGetOperationsByAccountHandlerPage(t *testing.T) {
+	ts, storage := prepareAPIServer()
+	defer storage.Close()
+	defer ts.Close()
+
+	kp, kpTarget, boList := prepareOps(storage, 50)
+
+	url := strings.Replace(GetAccountOperationsHandlerPattern, "{id}", kp.Address(), -1)
+	url += "?limit=20"
+	{
+		ba := block.NewBlockAccount(kp.Address(), common.Amount(common.BaseReserve))
+		ba.MustSave(storage)
+	}
+	{
+		ba := block.NewBlockAccount(kpTarget.Address(), common.Amount(common.BaseReserve))
+		ba.MustSave(storage)
+	}
+
+	for i, bo := range boList {
+		t.Log(i, bo.Hash)
+	}
+
+	// Do a Request for source account
+	prev := ""
+	next := ""
+
+	// 0 ~ 19
+	{
+		respBody := request(ts, url, false)
+		defer respBody.Close()
+		reader := bufio.NewReader(respBody)
+		readByte, err := ioutil.ReadAll(reader)
+		require.NoError(t, err)
+
+		recv := make(map[string]interface{})
+		common.MustUnmarshalJSON(readByte, &recv)
+		records := recv["_embedded"].(map[string]interface{})["records"].([]interface{})
+		prev = recv["_links"].(map[string]interface{})["prev"].(map[string]interface{})["href"].(string)
+		next = recv["_links"].(map[string]interface{})["next"].(map[string]interface{})["href"].(string)
+		for i, r := range records {
+			bt := r.(map[string]interface{})
+			require.Equal(t, boList[i].Hash, bt["hash"], "hash is not same")
+		}
+	}
+
+	// 20 ~ 39
+	{
+		respBody := request(ts, next, false)
+		defer respBody.Close()
+		reader := bufio.NewReader(respBody)
+		readByte, err := ioutil.ReadAll(reader)
+		require.NoError(t, err)
+
+		recv := make(map[string]interface{})
+		common.MustUnmarshalJSON(readByte, &recv)
+		records := recv["_embedded"].(map[string]interface{})["records"].([]interface{})
+		prev = recv["_links"].(map[string]interface{})["prev"].(map[string]interface{})["href"].(string)
+		next = recv["_links"].(map[string]interface{})["next"].(map[string]interface{})["href"].(string)
+		t.Log(prev)
+		t.Log(next)
+		for i, r := range records {
+			bt := r.(map[string]interface{})
+			require.Equal(t, boList[i+20].Hash, bt["hash"], "hash is not same")
+		}
+
+	}
+
+	// 40 ~ 49
+	{
+		respBody := request(ts, next, false)
+		defer respBody.Close()
+		reader := bufio.NewReader(respBody)
+		readByte, err := ioutil.ReadAll(reader)
+		require.NoError(t, err)
+
+		recv := make(map[string]interface{})
+		common.MustUnmarshalJSON(readByte, &recv)
+		records := recv["_embedded"].(map[string]interface{})["records"].([]interface{})
+		prev = recv["_links"].(map[string]interface{})["prev"].(map[string]interface{})["href"].(string)
+		next = recv["_links"].(map[string]interface{})["next"].(map[string]interface{})["href"].(string)
+		t.Log(prev)
+		t.Log(next)
+		for i, r := range records {
+			bt := r.(map[string]interface{})
+			require.Equal(t, boList[i+40].Hash, bt["hash"], "hash is not same")
+		}
+	}
+
+	// 40 ~ 21
+	{
+		respBody := request(ts, prev, false)
+		defer respBody.Close()
+		reader := bufio.NewReader(respBody)
+		readByte, err := ioutil.ReadAll(reader)
+		require.NoError(t, err)
+
+		recv := make(map[string]interface{})
+		common.MustUnmarshalJSON(readByte, &recv)
+		records := recv["_embedded"].(map[string]interface{})["records"].([]interface{})
+		prev = recv["_links"].(map[string]interface{})["prev"].(map[string]interface{})["href"].(string)
+		next = recv["_links"].(map[string]interface{})["next"].(map[string]interface{})["href"].(string)
+		t.Log(prev)
+		t.Log(next)
+		for i, r := range records {
+			bt := r.(map[string]interface{})
+			require.Equal(t, boList[40-i].Hash, bt["hash"], "hash is not same")
+		}
+	}
+
+	// 20 ~ 1
+	{
+		respBody := request(ts, prev, false)
+		defer respBody.Close()
+		reader := bufio.NewReader(respBody)
+		readByte, err := ioutil.ReadAll(reader)
+		require.NoError(t, err)
+
+		recv := make(map[string]interface{})
+		common.MustUnmarshalJSON(readByte, &recv)
+		records := recv["_embedded"].(map[string]interface{})["records"].([]interface{})
+		prev = recv["_links"].(map[string]interface{})["prev"].(map[string]interface{})["href"].(string)
+		next = recv["_links"].(map[string]interface{})["next"].(map[string]interface{})["href"].(string)
+		t.Log(prev)
+		t.Log(next)
+		for i, r := range records {
+			bt := r.(map[string]interface{})
+			require.Equal(t, boList[20-i].Hash, bt["hash"], "hash is not same")
+		}
+	}
 }

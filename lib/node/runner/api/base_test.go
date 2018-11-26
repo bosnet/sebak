@@ -94,15 +94,18 @@ func prepareBlkTxOpWithoutSave(st *storage.LevelDBBackend) (*keypair.Full, block
 
 	return kp, theBlock, bt, bo
 }
-
-func prepareTxs(storage *storage.LevelDBBackend, count int) (*keypair.Full, *keypair.Full, []block.BlockTransaction) {
-	kp := keypair.Random()
-	kpTarget := keypair.Random()
+func prepareTxsWithKeyPair(storage *storage.LevelDBBackend, source, target *keypair.Full, count int) (*keypair.Full, *keypair.Full, []block.BlockTransaction) {
+	if source == nil {
+		source = keypair.Random()
+	}
+	if target == nil {
+		target = keypair.Random()
+	}
 	var txs []transaction.Transaction
 	var txHashes []string
 	var btList []block.BlockTransaction
 	for i := 0; i < count; i++ {
-		tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, kp, kpTarget)
+		tx := transaction.TestMakeTransactionWithKeypair(networkID, 1, source, target)
 		txs = append(txs, tx)
 		txHashes = append(txHashes, tx.GetHash())
 	}
@@ -117,7 +120,12 @@ func prepareTxs(storage *storage.LevelDBBackend, count int) (*keypair.Full, *key
 		}
 		btList = append(btList, bt)
 	}
-	return kp, kpTarget, btList
+	return source, target, btList
+
+}
+
+func prepareTxs(storage *storage.LevelDBBackend, count int) (*keypair.Full, *keypair.Full, []block.BlockTransaction) {
+	return prepareTxsWithKeyPair(storage, nil, nil, count)
 }
 
 func prepareTxsWithoutSave(count int, st *storage.LevelDBBackend) (*keypair.Full, []block.BlockTransaction) {

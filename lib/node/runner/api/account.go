@@ -97,6 +97,7 @@ func (api NetworkHandlerAPI) GetFrozenAccountsByAccountHandler(w http.ResponseWr
 	}
 
 	var options = p.ListOptions()
+	var firstCursor []byte
 	var cursor []byte
 
 	readFunc := func() []resource.Resource {
@@ -116,9 +117,12 @@ func (api NetworkHandlerAPI) GetFrozenAccountsByAccountHandler(w http.ResponseWr
 			)
 
 			bo, hasNext, c := iterFunc()
-			cursor = c
 			if !hasNext {
 				break
+			}
+			cursor = c
+			if len(firstCursor) == 0 {
+				firstCursor = append(firstCursor, c...)
 			}
 			var (
 				casted operation.CreateAccount
@@ -190,7 +194,7 @@ func (api NetworkHandlerAPI) GetFrozenAccountsByAccountHandler(w http.ResponseWr
 
 	txs := readFunc()
 
-	list := p.ResourceList(txs, cursor)
+	list := p.ResourceList(txs, firstCursor, cursor)
 	httputils.MustWriteJSON(w, 200, list)
 }
 
@@ -202,6 +206,7 @@ func (api NetworkHandlerAPI) GetFrozenAccountsHandler(w http.ResponseWriter, r *
 	}
 
 	var options = p.ListOptions()
+	var firstCursor []byte
 	var cursor []byte
 
 	readFunc := func() []resource.Resource {
@@ -221,9 +226,12 @@ func (api NetworkHandlerAPI) GetFrozenAccountsHandler(w http.ResponseWriter, r *
 			)
 
 			bo, hasNext, c := iterFunc()
-			cursor = c
 			if !hasNext {
 				break
+			}
+			cursor = c
+			if len(firstCursor) == 0 {
+				firstCursor = append(firstCursor, c...)
 			}
 			var (
 				casted operation.CreateAccount
@@ -294,6 +302,6 @@ func (api NetworkHandlerAPI) GetFrozenAccountsHandler(w http.ResponseWriter, r *
 	}
 
 	txs := readFunc()
-	list := p.ResourceList(txs, cursor)
+	list := p.ResourceList(txs, firstCursor, cursor)
 	httputils.MustWriteJSON(w, 200, list)
 }

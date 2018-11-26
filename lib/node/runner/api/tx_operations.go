@@ -35,24 +35,28 @@ func (api NetworkHandlerAPI) GetOperationsByTxHashHandler(w http.ResponseWriter,
 		return
 	}
 
-	ops, cursor := api.getOperationsByTxHash(hash, blk, options)
+	ops, firstCursor, cursor := api.getOperationsByTxHash(hash, blk, options)
 	if len(ops) < 1 {
 		httputils.WriteJSONError(w, errors.BlockTransactionDoesNotExists)
 		return
 	}
 
-	list := p.ResourceList(ops, cursor)
+	list := p.ResourceList(ops, firstCursor, cursor)
 	httputils.MustWriteJSON(w, 200, list)
 }
 
-func (api NetworkHandlerAPI) getOperationsByTxHash(txHash string, blk *block.Block, options storage.ListOptions) (txs []resource.Resource, cursor []byte) {
+func (api NetworkHandlerAPI) getOperationsByTxHash(txHash string, blk *block.Block, options storage.ListOptions) (txs []resource.Resource, firstCursor, cursor []byte) {
 	iterFunc, closeFunc := block.GetBlockOperationsByTxHash(api.storage, txHash, options)
 	for {
 		o, hasNext, c := iterFunc()
-		cursor = c
 		if !hasNext {
 			break
 		}
+		cursor = c
+		if len(firstCursor) == 0 {
+			firstCursor = append(firstCursor, c...)
+		}
+
 		rs := resource.NewOperation(&o)
 		rs.Block = blk
 		txs = append(txs, rs)
