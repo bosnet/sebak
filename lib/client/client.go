@@ -3,11 +3,8 @@ package client
 import (
 	"boscoin.io/sebak/lib/common/observer"
 	"bufio"
-	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
-	"io/ioutil"
 	"net/http"
 	neturl "net/url"
 	"strconv"
@@ -122,13 +119,7 @@ func NewDefaultListOptionsFromQuery(v neturl.Values) (options *storage.DefaultLi
 func (c *Client) ToResponse(resp *http.Response, response interface{}) (err error) {
 	defer resp.Body.Close()
 
-	b, err := ioutil.ReadAll(resp.Body)
-
-	fmt.Println(string(b))
-
-	r := bytes.NewReader(b)
-
-	decoder := json.NewDecoder(r)
+	decoder := json.NewDecoder(resp.Body)
 
 	if !(resp.StatusCode >= http.StatusOK && resp.StatusCode < http.StatusMultipleChoices) {
 		var p Problem
@@ -246,7 +237,6 @@ func (c *Client) SubmitTransaction(tx []byte) (pTransaction TransactionPost, err
 }
 
 func (c *Client) SubmitTransactionAndWait(hash string, tx []byte) (pTransaction TransactionPost, err error) {
-	fmt.Println(string(hash))
 	var wg sync.WaitGroup
 	wg.Add(1)
 

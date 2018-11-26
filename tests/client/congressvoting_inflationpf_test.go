@@ -1,3 +1,4 @@
+// +build client_integration_tests
 
 package client
 
@@ -12,6 +13,7 @@ import (
 	"net/http"
 	"strconv"
 	"testing"
+	"time"
 )
 
 func TestInflationPF(t *testing.T) {
@@ -73,10 +75,16 @@ func TestInflationPF(t *testing.T) {
 
 		tt, err := c.LoadTransaction(tx.H.Hash)
 		require.NoError(t, err)
-		t.Log(tt)
 
-		opage, err := c.LoadOperationsByAccount(CongressAddr, client.Q{Key: client.QueryType, Value: string(operation.TypeCongressVoting)})
-		require.NoError(t, err)
+		var opage client.OperationsPage
+		for try := 0; try < 5; try++ {
+			opage, err = c.LoadOperationsByAccount(CongressAddr, client.Q{Key: client.QueryType, Value: string(operation.TypeCongressVoting)})
+			require.NoError(t, err)
+			if len(opage.Embedded.Records) > 0 {
+				break
+			}
+			time.Sleep(time.Second)
+		}
 
 		obody := opage.Embedded.Records[0]
 		b, err := json.Marshal(obody.Body)
@@ -129,8 +137,15 @@ func TestInflationPF(t *testing.T) {
 		_, err = c.SubmitTransactionAndWait(tx.H.Hash, body)
 		require.NoError(t, err)
 
-		opage, err := c.LoadOperationsByAccount(CongressAddr, client.Q{Key: client.QueryType, Value: string(operation.TypeCongressVotingResult)})
-		require.NoError(t, err)
+		var opage client.OperationsPage
+		for try := 0; try < 5; try++ {
+			opage, err = c.LoadOperationsByAccount(CongressAddr, client.Q{Key: client.QueryType, Value: string(operation.TypeCongressVotingResult)})
+			require.NoError(t, err)
+			if len(opage.Embedded.Records) > 0 {
+				break
+			}
+			time.Sleep(time.Second)
+		}
 
 		obody := opage.Embedded.Records[0]
 		b, err := json.Marshal(obody.Body)

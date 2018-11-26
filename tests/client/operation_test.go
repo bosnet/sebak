@@ -36,8 +36,16 @@ func TestOperation(t *testing.T) {
 	}
 
 	{
-		opage, err := c.LoadOperationsByAccount(account1Addr)
-		require.NoError(t, err)
+		var opage client.OperationsPage
+		for try := 0; try < 5; try++ {
+			opage, err = c.LoadOperationsByAccount(account1Addr)
+			require.NoError(t, err)
+			if len(opage.Embedded.Records) > 0 {
+				break
+			}
+			time.Sleep(time.Second)
+		}
+
 		for _, op := range opage.Embedded.Records {
 			if op.Source == account1Addr {
 				require.Equal(t, op.Target, account2Addr)
@@ -49,8 +57,15 @@ func TestOperation(t *testing.T) {
 	}
 
 	{
-		opage, err := c.LoadOperationsByAccount(account2Addr)
-		require.NoError(t, err)
+		var opage client.OperationsPage
+		for try := 0; try < 5; try++ {
+			opage, err = c.LoadOperationsByAccount(account2Addr)
+			require.NoError(t, err)
+			if len(opage.Embedded.Records) > 0 {
+				break
+			}
+			time.Sleep(time.Second)
+		}
 		for _, op := range opage.Embedded.Records {
 			if op.Target == account2Addr {
 				require.Equal(t, op.Source, account1Addr)
