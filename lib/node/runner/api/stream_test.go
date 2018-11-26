@@ -51,11 +51,7 @@ func TestAPIStreamRun(t *testing.T) {
 					if !ok {
 						return nil, fmt.Errorf("this is not serializable")
 					}
-					bs, err := s.Serialize()
-					if err != nil {
-						return nil, err
-					}
-					return bs, nil
+					return common.MustMarshalJSON(s), nil
 				}
 				es := NewEventStream(w, r, renderFunc, DefaultContentType)
 				return es

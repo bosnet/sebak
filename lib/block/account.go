@@ -1,7 +1,6 @@
 package block
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"boscoin.io/sebak/lib/common"
@@ -82,13 +81,6 @@ func (b *BlockAccount) Save(st *storage.LevelDBBackend) (err error) {
 	err = bac.Save(st)
 
 	return
-}
-
-func (b *BlockAccount) Serialize() (encoded []byte, err error) {
-	return json.Marshal(b)
-}
-func (b *BlockAccount) Deserialize(encoded []byte) (err error) {
-	return json.Unmarshal(encoded, b)
 }
 
 func GetBlockAccountKey(address string) string {

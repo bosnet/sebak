@@ -1,6 +1,8 @@
 package network
 
 import (
+	"encoding/json"
+
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/node"
@@ -33,9 +35,9 @@ func (m *MemoryTransportClient) GetNodeInfo() (b []byte, err error) {
 	return
 }
 
-func (m *MemoryTransportClient) SendMessage(message common.Serializable) (body []byte, err error) {
+func (m *MemoryTransportClient) SendMessage(message interface{}) (body []byte, err error) {
 	var s []byte
-	if s, err = message.Serialize(); err != nil {
+	if s, err = json.Marshal(message); err != nil {
 		return
 	}
 	m.server.Send(common.TransactionMessage, s)
@@ -43,13 +45,13 @@ func (m *MemoryTransportClient) SendMessage(message common.Serializable) (body [
 	return
 }
 
-func (m *MemoryTransportClient) SendTransaction(message common.Serializable) (body []byte, err error) {
+func (m *MemoryTransportClient) SendTransaction(message interface{}) (body []byte, err error) {
 	return m.SendMessage(message)
 }
 
-func (m *MemoryTransportClient) SendBallot(message common.Serializable) (body []byte, err error) {
+func (m *MemoryTransportClient) SendBallot(message interface{}) (body []byte, err error) {
 	var s []byte
-	if s, err = message.Serialize(); err != nil {
+	if s, err = json.Marshal(message); err != nil {
 		return
 	}
 	m.server.Send(common.BallotMessage, s)

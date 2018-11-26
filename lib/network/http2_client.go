@@ -77,12 +77,12 @@ func (c *HTTP2NetworkClient) GetNodeInfo() (body []byte, err error) {
 	return
 }
 
-func (c *HTTP2NetworkClient) Send(path string, message common.Serializable) (retBody []byte, err error) {
+func (c *HTTP2NetworkClient) Send(path string, message interface{}) (retBody []byte, err error) {
 	headers := c.DefaultHeaders()
 	headers.Set("Content-Type", "application/json")
 
 	var body []byte
-	if body, err = message.Serialize(); err != nil {
+	if body, err = json.Marshal(message); err != nil {
 		return
 	}
 
@@ -107,15 +107,15 @@ func (c *HTTP2NetworkClient) Connect(n node.Node) (body []byte, err error) {
 	return c.Send(UrlPathPrefixNode+"/connect", n)
 }
 
-func (c *HTTP2NetworkClient) SendMessage(message common.Serializable) (retBody []byte, err error) {
+func (c *HTTP2NetworkClient) SendMessage(message interface{}) (retBody []byte, err error) {
 	return c.Send(UrlPathPrefixNode+"/message", message)
 }
 
-func (c *HTTP2NetworkClient) SendTransaction(message common.Serializable) (retBody []byte, err error) {
+func (c *HTTP2NetworkClient) SendTransaction(message interface{}) (retBody []byte, err error) {
 	return c.Send(resource.URLTransactions, message)
 }
 
-func (c *HTTP2NetworkClient) SendBallot(message common.Serializable) (retBody []byte, err error) {
+func (c *HTTP2NetworkClient) SendBallot(message interface{}) (retBody []byte, err error) {
 	return c.Send(UrlPathPrefixNode+"/ballot", message)
 }
 

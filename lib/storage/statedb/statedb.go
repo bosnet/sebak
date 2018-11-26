@@ -1,10 +1,12 @@
 package statedb
 
 import (
+	"encoding/json"
+	"fmt"
+
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/storage/statedb/trie"
-	"fmt"
 )
 
 type StateDB struct {
@@ -150,7 +152,7 @@ func (stateDB *StateDB) getStateObject(addr string) (stateObject *stateObject) {
 	}
 	var data block.BlockAccount
 
-	if err := data.Deserialize(enc); err != nil {
+	if err := json.Unmarshal(enc, &data); err != nil {
 		return nil
 	}
 	obj := newObject(addr, data, stateDB.db, stateDB.MarkStateObjectDirty)

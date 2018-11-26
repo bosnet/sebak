@@ -1,8 +1,6 @@
 package api
 
 import (
-	"boscoin.io/sebak/lib/common/observer"
-	"boscoin.io/sebak/lib/errors"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -11,7 +9,8 @@ import (
 
 	"github.com/GianlucaGuarini/go-observable"
 
-	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common/observer"
+	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/network/httputils"
 )
 
@@ -62,20 +61,6 @@ type EventStream struct {
 
 type RenderFunc func(args ...interface{}) ([]byte, error)
 
-// RenderSerializableFunc takes common.Serializable and serialize it for rendering.
-var RenderSerializableFunc = func(args ...interface{}) ([]byte, error) {
-	s, ok := args[1].(common.Serializable)
-	if !ok {
-		return nil, fmt.Errorf("this is not serializable") // TODO(anarcher): Error type
-	}
-
-	bs, err := s.Serialize()
-	if err != nil {
-		return nil, err
-	}
-	return bs, nil
-}
-
 // NewDefaultEventStream uses RenderJSONFunc by default
 var RenderJSONFunc = func(args ...interface{}) ([]byte, error) {
 	if len(args) <= 1 {
@@ -92,7 +77,7 @@ var RenderJSONFunc = func(args ...interface{}) ([]byte, error) {
 	return bs, nil
 }
 
-// NewDefaultEventStream returns *EventStream with RenderSerializableFunc and DefaultContentType
+// NewDefaultEventStream returns *EventStream with RenderJSONFunc and DefaultContentType
 func NewDefaultEventStream(w http.ResponseWriter, r *http.Request) *EventStream {
 	return NewEventStream(w, r, RenderJSONFunc, DefaultContentType)
 }
