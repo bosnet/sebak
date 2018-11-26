@@ -16,6 +16,7 @@ import (
 	"boscoin.io/sebak/lib/consensus"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
+	"boscoin.io/sebak/lib/transaction"
 	"boscoin.io/sebak/lib/voting"
 )
 
@@ -62,7 +63,8 @@ func createTestNodeRunner(n int, conf common.Config) []*NodeRunner {
 
 		st := block.InitTestBlockchain()
 		is, _ := consensus.NewISAAC(localNode, policy, connectionManager, st, conf, nil)
-		nr, err := NewNodeRunner(localNode, policy, ns[i], is, st, conf)
+		tp := transaction.NewPool(conf)
+		nr, err := NewNodeRunner(localNode, policy, ns[i], is, st, tp, conf)
 		if err != nil {
 			panic(err)
 		}
@@ -152,7 +154,8 @@ func createTestNodeRunnersHTTP2Network(n int) (nodeRunners []*NodeRunner, rootKP
 		conf := common.NewTestConfig()
 		st := block.InitTestBlockchain()
 		is, _ := consensus.NewISAAC(node, policy, connectionManager, st, conf, nil)
-		nodeRunner, _ := NewNodeRunner(node, policy, n, is, st, conf)
+		tp := transaction.NewPool(conf)
+		nodeRunner, _ := NewNodeRunner(node, policy, n, is, st, tp, conf)
 		nodeRunners = append(nodeRunners, nodeRunner)
 	}
 

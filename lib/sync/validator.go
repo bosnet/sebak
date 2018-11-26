@@ -12,6 +12,7 @@ import (
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node/runner"
 	"boscoin.io/sebak/lib/storage"
+	"boscoin.io/sebak/lib/transaction"
 	"boscoin.io/sebak/lib/voting"
 
 	"github.com/inconshreveable/log15"
@@ -22,6 +23,7 @@ import (
 type BlockValidator struct {
 	network   network.Network
 	storage   *storage.LevelDBBackend
+	txpool    *transaction.Pool
 	commonCfg common.Config
 
 	prevBlockWaitTimeout time.Duration // Waiting prev block if is doesn't exist
@@ -30,10 +32,11 @@ type BlockValidator struct {
 
 type BlockValidatorOption func(*BlockValidator)
 
-func NewBlockValidator(nw network.Network, ldb *storage.LevelDBBackend, cfg common.Config, opts ...BlockValidatorOption) *BlockValidator {
+func NewBlockValidator(nw network.Network, ldb *storage.LevelDBBackend, tp *transaction.Pool, cfg common.Config, opts ...BlockValidatorOption) *BlockValidator {
 	v := &BlockValidator{
 		network:              nw,
 		storage:              ldb,
+		txpool:               tp,
 		prevBlockWaitTimeout: CheckPrevBlockInterval,
 		commonCfg:            cfg,
 
@@ -108,7 +111,6 @@ func (v *BlockValidator) finishBlock(ctx context.Context, syncInfo *SyncInfo) er
 		return nil
 	}
 
-	//TODO(anarcher): using leveldb.Tx or leveldb.Batch?
 	blk := *syncInfo.Block
 	if err := blk.Save(bs); err != nil {
 		if err == errors.BlockAlreadyExists {
@@ -139,6 +141,10 @@ func (v *BlockValidator) finishBlock(ctx context.Context, syncInfo *SyncInfo) er
 		bs.Discard()
 		return err
 	}
+
+	//clean up txs of this block in txpool.
+	v.txpool.Remove(blk.Transactions...)
+	v.txpool.Remove(blk.ProposerTransaction)
 
 	select {
 	case <-ctx.Done():

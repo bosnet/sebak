@@ -27,6 +27,7 @@ import (
 	"boscoin.io/sebak/lib/node/runner"
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/sync"
+	"boscoin.io/sebak/lib/transaction"
 )
 
 const (
@@ -630,8 +631,9 @@ func runNode() error {
 		log.Crit("failed to initialize storage", "error", err)
 		return err
 	}
+	tp := transaction.NewPool(conf)
 
-	c := sync.NewConfig(localNode, st, nt, connectionManager, conf)
+	c := sync.NewConfig(localNode, st, nt, connectionManager, tp, conf)
 	//Place setting config
 	c.SyncPoolSize = syncPoolSize
 	c.FetchTimeout = syncFetchTimeout
@@ -650,7 +652,7 @@ func runNode() error {
 	// Execution group.
 	var g run.Group
 	{
-		nr, err := runner.NewNodeRunner(localNode, policy, nt, isaac, st, conf)
+		nr, err := runner.NewNodeRunner(localNode, policy, nt, isaac, st, tp, conf)
 
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)

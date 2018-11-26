@@ -27,6 +27,7 @@ import (
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/storage"
+	"boscoin.io/sebak/lib/transaction"
 )
 
 func getPort() string {
@@ -106,7 +107,8 @@ func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, n *network.HTTP2Netw
 
 	st := block.InitTestBlockchain()
 	is, _ := consensus.NewISAAC(localNode, p, connectionManager, st, conf, nil)
-	if nodeRunner, err = NewNodeRunner(localNode, p, n, is, st, conf); err != nil {
+	tp := transaction.NewPool(conf)
+	if nodeRunner, err = NewNodeRunner(localNode, p, n, is, st, tp, conf); err != nil {
 		panic(err)
 	}
 

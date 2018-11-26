@@ -125,6 +125,7 @@ func (f *BlockFetcher) fetch(ctx context.Context, si *SyncInfo) error {
 		f.logger.Error("request err", "err", err, "height", height)
 		return err
 	}
+	req = req.WithContext(ctx)
 
 	resp, err := f.apiClient.Do(req)
 	if err != nil {

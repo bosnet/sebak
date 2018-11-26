@@ -32,7 +32,8 @@ func MakeNodeRunner() (*NodeRunner, *node.LocalNode) {
 
 	st := block.InitTestBlockchain()
 	is, _ := consensus.NewISAAC(localNode, policy, connectionManager, st, conf, nil)
-	nodeRunner, _ := NewNodeRunner(localNode, policy, n, is, st, conf)
+	tp := transaction.NewPool(conf)
+	nodeRunner, _ := NewNodeRunner(localNode, policy, n, is, st, tp, conf)
 	return nodeRunner, localNode
 }
 
@@ -156,8 +157,9 @@ func createNodeRunnerForTesting(n int, conf common.Config, recv chan struct{}) (
 	st := block.InitTestBlockchain()
 	is, _ := consensus.NewISAAC(localNode, policy, connectionManager, st, common.NewTestConfig(), nil)
 	is.SetProposerSelector(FixedSelector{localNode.Address()})
+	tp := transaction.NewPool(conf)
 
-	nr, err := NewNodeRunner(localNode, policy, ns[0], is, st, conf)
+	nr, err := NewNodeRunner(localNode, policy, ns[0], is, st, tp, conf)
 	if err != nil {
 		panic(err)
 	}

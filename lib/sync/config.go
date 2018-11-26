@@ -7,6 +7,7 @@ import (
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/storage"
+	"boscoin.io/sebak/lib/transaction"
 	"github.com/inconshreveable/log15"
 )
 
@@ -22,6 +23,7 @@ type Config struct {
 	storage           *storage.LevelDBBackend
 	network           network.Network
 	connectionManager network.ConnectionManager
+	tp                *transaction.Pool
 	localNode         *node.LocalNode
 	logger            log15.Logger
 	commonCfg         common.Config
@@ -37,11 +39,13 @@ func NewConfig(localNode *node.LocalNode,
 	st *storage.LevelDBBackend,
 	nt network.Network,
 	cm network.ConnectionManager,
+	tp *transaction.Pool,
 	cfg common.Config) *Config {
 	c := &Config{
 		storage:           st,
 		network:           nt,
 		connectionManager: cm,
+		tp:                tp,
 		logger:            log.New(log15.Ctx{"node": localNode.Alias()}),
 		commonCfg:         cfg,
 		localNode:         localNode,
@@ -85,6 +89,7 @@ func (c *Config) NewValidator() Validator {
 	v := NewBlockValidator(
 		c.network,
 		c.storage,
+		c.tp,
 		c.commonCfg,
 		func(v *BlockValidator) {
 			v.prevBlockWaitTimeout = c.CheckPrevBlockInterval
