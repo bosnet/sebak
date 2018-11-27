@@ -2,12 +2,10 @@ package sync
 
 import (
 	"bufio"
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -135,20 +133,15 @@ func (f *BlockFetcher) fetch(ctx context.Context, si *SyncInfo) error {
 	if resp.StatusCode == http.StatusNotFound {
 		return errors.New("fetch: block not found")
 	}
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return errors.Wrap(err, "response failed to reading body")
+	if resp.StatusCode == http.StatusTooManyRequests {
+		return errors.New("fetch: too many requests")
 	}
 
-	items, err := f.unmarshalResp(bytes.NewBuffer(body))
+	items, err := f.unmarshalResp(resp.Body)
 	if err != nil {
 		err := errors.Wrap(err, "response failed to unmarshal")
 		code := resp.StatusCode
-		bodyFn := func() string {
-			return string(body)
-		}
-		f.logger.Debug("unmarshalResp err", "err", err, "height", height, "statusCode", code, "body", log15.Lazy{Fn: bodyFn})
+		f.logger.Debug("unmarshalResp err", "err", err, "height", height, "statusCode", code)
 		return err
 	}
 
@@ -255,15 +248,27 @@ func (f *BlockFetcher) existsBlockHeight(height uint64) bool {
 func (f *BlockFetcher) unmarshalResp(body io.Reader) (map[runner.NodeItemDataType][]interface{}, error) {
 	items := map[runner.NodeItemDataType][]interface{}{}
 
-	sc := bufio.NewScanner(body)
-	for sc.Scan() {
-		itemType, b, err := runner.UnmarshalNodeItemResponse(sc.Bytes())
+	r := bufio.NewReader(body)
+	var (
+		line []byte
+		err  error
+	)
+	for {
+		line, _, err = r.ReadLine()
+		if err == io.EOF {
+			break
+		}
+		if len(line) <= 0 {
+			continue
+		}
+		itemType, b, err := runner.UnmarshalNodeItemResponse(line)
 		if err != nil {
 			return nil, err
 		}
 		items[itemType] = append(items[itemType], b)
 	}
-	if err := sc.Err(); err != nil {
+
+	if err != nil && err != io.EOF {
 		return nil, err
 	}
 
