@@ -102,12 +102,14 @@ func (j *jsonrpcDBApp) GetIterator(r *http.Request, args *DBGetIteratorArgs, res
 type jsonrpcServer struct {
 	endpoint *common.Endpoint
 	st       *storage.LevelDBBackend
+	server   *http.Server
 }
 
 func newJSONRPCServer(endpoint *common.Endpoint, st *storage.LevelDBBackend) *jsonrpcServer {
 	return &jsonrpcServer{
 		endpoint: endpoint,
 		st:       st,
+		server:   &http.Server{Addr: endpoint.Host},
 	}
 }
 
@@ -150,17 +152,17 @@ func (j *jsonrpcServer) Ready() *mux.Router {
 }
 
 func (j *jsonrpcServer) Start() error {
-	router := j.Ready()
+	j.server.Handler = j.Ready()
 
 	err := func() error {
 		if strings.ToLower(j.endpoint.Scheme) == "http" {
-			return http.ListenAndServe(j.endpoint.Host, router)
+			return j.server.ListenAndServe()
 		}
 
 		tlsCertFile := j.endpoint.Query().Get("TLSCertFile")
 		tlsKeyFile := j.endpoint.Query().Get("TLSKeyFile")
 
-		return http.ListenAndServeTLS(j.endpoint.Host, tlsCertFile, tlsKeyFile, router)
+		return j.server.ListenAndServeTLS(tlsCertFile, tlsKeyFile)
 	}()
 
 	if err == http.ErrServerClosed {
@@ -168,4 +170,8 @@ func (j *jsonrpcServer) Start() error {
 	}
 
 	return err
+}
+
+func (j *jsonrpcServer) Stop() {
+	j.server.Close()
 }

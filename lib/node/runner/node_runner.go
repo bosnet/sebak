@@ -103,7 +103,7 @@ type NodeRunner struct {
 	Conf                  common.Config
 	nodeInfo              node.NodeInfo
 	savingBlockOperations *SavingBlockOperations
-	jsonrpcServer         *JSONRPCServer
+	jsonrpcServer         *jsonrpcServer
 }
 
 func NewNodeRunner(
@@ -406,6 +406,7 @@ func (nr *NodeRunner) Start() (err error) {
 func (nr *NodeRunner) Stop() {
 	nr.network.Stop()
 	nr.isaacStateManager.Stop()
+	nr.jsonrpcServer.Stop()
 }
 
 func (nr *NodeRunner) Node() *node.LocalNode {
