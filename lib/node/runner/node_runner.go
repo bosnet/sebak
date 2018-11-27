@@ -360,7 +360,7 @@ func (nr *NodeRunner) Ready() {
 		nr.network.AddHandler(network.UrlPathPrefixDebug+"/pprof/*", pprof.Index)
 	}
 
-	nr.network.AddHandler(api.GetNodeInfoPattern, cache.WrapHandlerFunc(apiHandler.GetNodeInfoHandler)).Methods("GET")
+	nr.network.AddHandler(api.GetNodeInfoPattern, apiHandler.GetNodeInfoHandler).Methods("GET")
 
 	nr.network.Ready()
 }
