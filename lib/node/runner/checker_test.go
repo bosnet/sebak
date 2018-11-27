@@ -474,6 +474,7 @@ func (p *irregularIncomingBallot) makeBallot(state ballot.State) (blt *ballot.Ba
 func TestRegularIncomingBallots(t *testing.T) {
 	p := &irregularIncomingBallot{}
 	p.prepare()
+	p.nr.StopStateManager()
 	defer p.done()
 
 	cm := p.nr.ConnectionManager().(*TestConnectionManager)
@@ -502,6 +503,7 @@ func TestRegularIncomingBallots(t *testing.T) {
 func TestIrregularIncomingBallots(t *testing.T) {
 	p := &irregularIncomingBallot{}
 	p.prepare()
+	p.nr.StopStateManager()
 	defer p.done()
 
 	cm := p.nr.ConnectionManager().(*TestConnectionManager)

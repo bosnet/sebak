@@ -253,3 +253,7 @@ func (c *ValidatorConnectionManager) watchForMetrics() {
 	}
 	//TODO: stop this goroutine.
 }
+
+func (c *ValidatorConnectionManager) IsReady() bool {
+	return len(c.AllConnected()) >= c.policy.Threshold()
+}

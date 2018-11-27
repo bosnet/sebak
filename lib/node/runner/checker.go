@@ -667,7 +667,7 @@ func ACCEPTBallotBroadcast(c common.Checker, args ...interface{}) (err error) {
 		"ballot will be broadcasted",
 		"new-ballot", newBallot.GetHash(),
 		"new-state", newBallot.State(),
-		"voting-hole", checker.VotingHole,
+		"voting-hole", checker.FinishedVotingHole,
 	)
 
 	return

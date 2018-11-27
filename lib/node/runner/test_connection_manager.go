@@ -50,6 +50,10 @@ func (c *TestConnectionManager) Messages() []common.Message {
 	return messages
 }
 
+func (c *TestConnectionManager) IsReady() bool {
+	return true
+}
+
 type FixedSelector struct {
 	address string
 }
