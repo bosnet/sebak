@@ -42,6 +42,11 @@ func (t Transaction) LinkSelf() string {
 	return strings.Replace(URLTransactions, "{id}", t.bt.Hash, -1)
 }
 
+func (t Transaction) MarshalJSON() ([]byte, error) {
+	r := t.Resource()
+	return common.JSONMarshalWithoutEscapeHTML(r.GetMap())
+}
+
 type TransactionStatus struct {
 	Hash   string
 	Status string
