@@ -235,9 +235,13 @@ func (sb *SavingBlockOperations) Save(blk block.Block) {
 }
 
 func (sb *SavingBlockOperations) save(blk block.Block) (err error) {
-	sb.log.Debug("start to save BlockOperation", "block", blk.Hash)
+	sb.log.Debug("starting to save BlockOperation", "block", blk.Hash)
 	defer func() {
-		sb.log.Debug("end to save BlockOperation", "block", blk.Hash, "error", err)
+		if err != nil {
+			sb.log.Error("could not save BlockOperation", "block", blk, "error", err)
+		} else {
+			sb.log.Debug("done saving BlockOperation", "block", blk.Hash)
+		}
 	}()
 
 	var st *storage.LevelDBBackend
