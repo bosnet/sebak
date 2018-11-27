@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"boscoin.io/sebak/lib/common"
 	"strings"
 
 	"github.com/nvellon/hal"
@@ -41,4 +42,9 @@ func (a Account) Resource() *hal.Resource {
 func (a Account) LinkSelf() string {
 	address := a.ba.Address
 	return strings.Replace(URLAccounts, "{id}", address, -1)
+}
+
+func (a Account) MarshalJSON() ([]byte, error) {
+	r := a.Resource()
+	return common.JSONMarshalWithoutEscapeHTML(r.GetMap())
 }

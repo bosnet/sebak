@@ -69,3 +69,8 @@ func (fa FrozenAccount) LinkSelf() string {
 
 	return strings.Replace(URLAccountFrozenAccounts, "{id}", address, -1)
 }
+
+func (fa FrozenAccount) MarshalJSON() ([]byte, error) {
+	r := fa.Resource()
+	return common.JSONMarshalWithoutEscapeHTML(r.GetMap())
+}

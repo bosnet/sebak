@@ -83,6 +83,14 @@ func JSONMarshalIndent(o interface{}) ([]byte, error) {
 	return json.MarshalIndent(o, "", "  ")
 }
 
+func JSONMarshalWithoutEscapeHTML(t interface{}) ([]byte, error) {
+	buffer := &bytes.Buffer{}
+	encoder := json.NewEncoder(buffer)
+	encoder.SetEscapeHTML(false)
+	err := encoder.Encode(t)
+	return buffer.Bytes(), err
+}
+
 func ReverseStringSlice(a []string) []string {
 	if len(a) < 1 {
 		return []string{}

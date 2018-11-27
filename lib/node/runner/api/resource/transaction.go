@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"boscoin.io/sebak/lib/common"
 	"strings"
 
 	"boscoin.io/sebak/lib/block"
@@ -69,4 +70,9 @@ func (t TransactionStatus) Resource() *hal.Resource {
 
 func (t TransactionStatus) LinkSelf() string {
 	return strings.Replace(URLTransactionStatus, "{id}", t.Hash, -1)
+}
+
+func (t TransactionStatus) MarshalJSON() ([]byte, error) {
+	r := t.Resource()
+	return common.JSONMarshalWithoutEscapeHTML(r.GetMap())
 }

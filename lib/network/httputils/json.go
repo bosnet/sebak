@@ -37,9 +37,8 @@ func WriteJSONError(w http.ResponseWriter, err error) {
 
 // WriteJSON writes the value v to the http response as json encoding
 func WriteJSON(w http.ResponseWriter, code int, v interface{}) error {
-	if h, ok := v.(HALResource); ok {
+	if _, ok := v.(HALResource); ok {
 		w.Header().Set("Content-Type", "application/hal+json")
-		v = h.Resource()
 	} else if e, ok := v.(error); ok {
 		w.Header().Set("Content-Type", "application/problem+json")
 		v = NewErrorProblem(e, code)
@@ -49,7 +48,13 @@ func WriteJSON(w http.ResponseWriter, code int, v interface{}) error {
 
 	w.WriteHeader(code)
 
-	bs, err := json.Marshal(v)
+	var bs []byte
+	var err error
+	if marshaler, ok := v.(json.Marshaler); ok {
+		bs, err = marshaler.MarshalJSON()
+	} else {
+		bs, err = json.Marshal(v)
+	}
 	if err != nil {
 		return err
 	}

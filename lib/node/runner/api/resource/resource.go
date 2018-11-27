@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"boscoin.io/sebak/lib/common"
 	"github.com/nvellon/hal"
 )
 
@@ -55,4 +56,9 @@ func (l ResourceList) LinkPrev() string {
 
 func (l ResourceList) GetMap() hal.Entry {
 	return hal.Entry{}
+}
+
+func (l ResourceList) MarshalJSON() ([]byte, error) {
+	r := l.Resource()
+	return common.JSONMarshalWithoutEscapeHTML(r.GetMap())
 }

@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"boscoin.io/sebak/lib/common"
 	"strings"
 
 	"boscoin.io/sebak/lib/block"
@@ -55,4 +56,9 @@ func (o Operation) Resource() *hal.Resource {
 
 func (o Operation) LinkSelf() string {
 	return strings.Replace(URLOperations, "{id}", o.bo.Hash, -1)
+}
+
+func (o Operation) MarshalJSON() ([]byte, error) {
+	r := o.Resource()
+	return common.JSONMarshalWithoutEscapeHTML(r.GetMap())
 }
