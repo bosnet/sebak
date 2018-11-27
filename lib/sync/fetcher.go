@@ -254,7 +254,7 @@ func (f *BlockFetcher) unmarshalResp(body io.Reader) (map[runner.NodeItemDataTyp
 		err  error
 	)
 	for {
-		line, _, err = r.ReadLine()
+		line, err = r.ReadBytes('\n')
 		if err == io.EOF {
 			break
 		}
