@@ -72,9 +72,6 @@ func (rv *RoundVote) CanGetVotingResult(policy voting.ThresholdPolicy, state bal
 	}
 
 	result := rv.GetResult(state)
-	if len(result) < int(threshold) {
-		return result, voting.NOTYET, false
-	}
 
 	var yes, no, expired int
 	for _, votingHole := range result {
