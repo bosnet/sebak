@@ -36,7 +36,7 @@ type ISAAC struct {
 	NetworkID         []byte
 	Node              *node.LocalNode
 	RunningRounds     map[ /* Round.Index() */ string]*RunningRound
-	LatestVotingBasis voting.Basis
+	latestVotingBasis voting.Basis
 	Conf              common.Config
 }
 
@@ -66,7 +66,14 @@ func (is *ISAAC) SetLatestVotingBasis(basis voting.Basis) {
 	is.Lock()
 	defer is.Unlock()
 
-	is.LatestVotingBasis = basis
+	is.latestVotingBasis = basis
+}
+
+func (is *ISAAC) LatestVotingBasis() voting.Basis {
+	is.RLock()
+	defer is.RUnlock()
+
+	return is.latestVotingBasis
 }
 
 func (is *ISAAC) SetProposerSelector(p ProposerSelector) {
@@ -94,8 +101,10 @@ func (is *ISAAC) IsValidVotingBasis(basis voting.Basis, latestBlock block.Block)
 			return false
 		}
 
-		if basis.Height == is.LatestVotingBasis.Height {
-			if basis.Round <= is.LatestVotingBasis.Round {
+		lvb := is.LatestVotingBasis()
+
+		if basis.Height == lvb.Height {
+			if basis.Round <= lvb.Round {
 				return false
 			}
 		}
@@ -106,7 +115,7 @@ func (is *ISAAC) IsValidVotingBasis(basis voting.Basis, latestBlock block.Block)
 }
 
 func (is *ISAAC) isInitRound(basis voting.Basis) bool {
-	return is.LatestVotingBasis.BlockHash == "" && basis.Height == common.GenesisBlockHeight
+	return is.latestVotingBasis.BlockHash == "" && basis.Height == common.GenesisBlockHeight
 }
 
 func (is *ISAAC) StartSync(height uint64, nodeAddrs []string) {

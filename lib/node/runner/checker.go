@@ -321,7 +321,7 @@ func BallotCheckBasis(c common.Checker, args ...interface{}) (err error) {
 		checker.NodeRunner.Log().Debug(
 			"voting basis is invalid",
 			"ballot-basis", checker.Ballot.VotingBasis(),
-			"voting-basis", checker.NodeRunner.Consensus().LatestVotingBasis,
+			"voting-basis", checker.NodeRunner.Consensus().LatestVotingBasis(),
 			"latest-block-height", blk.Height,
 			"latest-block-hash", blk.Hash,
 		)
