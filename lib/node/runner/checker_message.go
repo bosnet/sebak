@@ -182,7 +182,7 @@ func BroadcastTransactionFromWatcher(c common.Checker, args ...interface{}) erro
 	if checker.Conf.WatcherMode == false {
 		return nil
 	}
-	checker.Log.Debug("transaction from client will be sended")
+	checker.Log.Debug("transaction from client will be sent")
 
 	cm := checker.Consensus.ConnectionManager()
 	var addrs []string
@@ -206,7 +206,7 @@ func BroadcastTransactionFromWatcher(c common.Checker, args ...interface{}) erro
 			checker.Log.Info("send tx to node", "node", a, "tx", checker.Transaction.GetHash())
 			break
 		}
-		checker.Log.Debug("failure to send tx to node", "node", a, "tx", checker.Transaction.GetHash())
+		checker.Log.Debug("failure to send tx to node", "node", a, "err", err, "tx", checker.Transaction.GetHash())
 	}
 	return err
 }
