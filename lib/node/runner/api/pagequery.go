@@ -114,9 +114,10 @@ func (p *PageQuery) ResourceList(rs []resource.Resource, firstCursor, lastCursor
 	}
 }
 
-func (p *PageQuery) ResourceListWithOrder(rs []resource.Resource, order *block.BlockOrder) *resource.ResourceList {
-	cursor := []byte(order.String())
-	return p.ResourceList(rs, cursor)
+func (p *PageQuery) ResourceListWithOrder(rs []resource.Resource, prevOrder *block.BlockOrder, nextOrder *block.BlockOrder) *resource.ResourceList {
+	pcursor := []byte(prevOrder.String())
+	ncursor := []byte(nextOrder.String())
+	return p.ResourceList(rs, pcursor, ncursor)
 }
 
 func (p *PageQuery) parseRequest() error {

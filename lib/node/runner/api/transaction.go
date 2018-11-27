@@ -38,7 +38,7 @@ func (api NetworkHandlerAPI) GetTransactionsHandler(w http.ResponseWriter, r *ht
 		var txs []resource.Resource
 		iterFunc, closeFunc := block.GetBlockTransactions(api.storage, options)
 		for {
-			t, hasNext, c := iterFunc()
+			t, hasNext, _ := iterFunc()
 			if !hasNext {
 				break
 			}
@@ -102,22 +102,19 @@ func (api NetworkHandlerAPI) GetTransactionsByAccountHandler(w http.ResponseWrit
 	}
 	var (
 		pOrder *block.BlockOrder
-		nOrder
+		nOrder *block.BlockOrder
 	)
 	readFunc := func() []resource.Resource {
 		var txs []resource.Resource
 		iterFunc, closeFunc := block.GetBlockTransactionsByAccount(api.storage, address, options)
 		for {
 			t, hasNext, _ := iterFunc()
-			if t.BlockOrder() != nil {
-				order = t.BlockOrder()
-			}
 			if !hasNext {
 				break
 			}
 			if pOrder == nil {
 				pOrder = t.BlockOrder()
-			} 
+			}
 			nOrder = t.BlockOrder()
 			txs = append(txs, resource.NewTransaction(&t))
 		}
@@ -126,7 +123,7 @@ func (api NetworkHandlerAPI) GetTransactionsByAccountHandler(w http.ResponseWrit
 	}
 
 	txs := readFunc()
-	list := p.ResourceListWithOrder(txs, pOrder,nOrder)
+	list := p.ResourceListWithOrder(txs, pOrder, nOrder)
 	httputils.MustWriteJSON(w, 200, list)
 }
 

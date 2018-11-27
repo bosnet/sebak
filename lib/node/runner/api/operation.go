@@ -104,9 +104,6 @@ func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter
 		}
 		for {
 			t, hasNext, _ := iterFunc()
-			if t.BlockOrder() != nil {
-				order = t.BlockOrder()
-			}
 			if !hasNext {
 				break
 			}
