@@ -8,7 +8,6 @@ import (
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/network/httputils"
-	"boscoin.io/sebak/lib/node/runner/api/resource"
 	"boscoin.io/sebak/lib/transaction"
 )
 
@@ -42,17 +41,12 @@ func (api NetworkHandlerAPI) PostTransactionsHandler(
 		return
 	}
 
-	var tx transaction.Transaction
-	if tx, err = handler(body, funcs); err != nil {
+	if _, err = handler(body, funcs); err != nil {
 		if _, ok := err.(*errors.Error); !ok {
 			err = errors.HTTPProblem.Clone().SetData("error", err.Error())
 		}
-
 		httputils.WriteJSONError(w, err)
-		return
-	}
-
-	if err = httputils.WriteJSON(w, 200, resource.NewTransactionPost(tx)); err != nil {
-		httputils.WriteJSONError(w, err)
+	} else {
+		w.WriteHeader(200)
 	}
 }

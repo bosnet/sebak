@@ -75,7 +75,7 @@ type Transaction struct {
 	OperationCount uint64 `json:"operation_count"`
 }
 
-type TransactionPost struct {
+type TransactionPostError struct {
 	Links struct {
 		Self   Link `json:"self"`
 		Status Link `json:"status"`
