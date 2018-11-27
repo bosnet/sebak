@@ -249,19 +249,23 @@ func (c *Client) LoadOperationsByTransaction(id string, queries ...Q) (oPage Ope
 //     tx = JSON serialized Transaction that will be sent as body
 //
 // Returns:
-//   TransactionPost = An object describing the node's answer (usually just an echo)
+//   TransactionPostError = An object describing the node's answer if there's an error
 //   error = An error object, or `nil`
-func (c *Client) SubmitTransaction(tx []byte) (pTransaction TransactionPost, err error) {
+func (c *Client) SubmitTransaction(tx []byte) (TransactionPostError, error) {
 	url := UrlTransactions
 	headers := http.Header{}
 	headers.Set("Content-Type", "application/json")
 	resp, err := c.Post(url, tx, headers)
 	defer resp.Body.Close()
 	if err != nil {
-		return
+		var data TransactionPostError
+		if err2 := c.ToResponse(resp, &data); err2 != nil {
+			return TransactionPostError{}, err2
+		}
+		return data, err
 	}
-	err = c.ToResponse(resp, &pTransaction)
-	return
+
+	return TransactionPostError{}, nil
 }
 
 // Submit a transaction to the node (via POST `UrlTransactions`)
@@ -271,9 +275,9 @@ func (c *Client) SubmitTransaction(tx []byte) (pTransaction TransactionPost, err
 //     tx = JSON serialized Transaction that will be sent as body
 //
 // Returns:
-//   TransactionPost = An object describing the node's answer (usually just an echo)
+//   TransactionPostError = An object describing the node's answer if there's an error
 //   error = An error object, or `nil`
-func (c *Client) SubmitTransactionAndWait(hash string, tx []byte) (pTransaction TransactionPost, err error) {
+func (c *Client) SubmitTransactionAndWait(hash string, tx []byte) (pTransaction TransactionPostError, err error) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 
