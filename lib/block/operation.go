@@ -131,7 +131,7 @@ func (bo *BlockOperation) Save(st *storage.LevelDBBackend) (err error) {
 	if err = st.New(bo.NewBlockOperationPeersKey(bo.Source), bo.Hash); err != nil {
 		return
 	}
-	if err = st.New(bo.NewBlockOperationPeersAndTypeKey(bo.Source), bo.Hash); err != nil {
+	if err = st.New(bo.NewBlockOperationPeersAndTypeKey(bo.Source, bo.Type), bo.Hash); err != nil {
 		return
 	}
 	if err = st.New(bo.NewBlockOperationBlockHeightKey(), bo.Hash); err != nil {
@@ -142,13 +142,13 @@ func (bo *BlockOperation) Save(st *storage.LevelDBBackend) (err error) {
 		if err = st.New(bo.NewBlockOperationTargetKey(bo.Target), bo.Hash); err != nil {
 			return
 		}
-		if err = st.New(bo.NewBlockOperationTargetAndTypeKey(bo.Target), bo.Hash); err != nil {
+		if err = st.New(bo.NewBlockOperationTargetAndTypeKey(bo.Target, bo.Type), bo.Hash); err != nil {
 			return
 		}
 		if err = st.New(bo.NewBlockOperationPeersKey(bo.Target), bo.Hash); err != nil {
 			return
 		}
-		if err = st.New(bo.NewBlockOperationPeersAndTypeKey(bo.Target), bo.Hash); err != nil {
+		if err = st.New(bo.NewBlockOperationPeersAndTypeKey(bo.Target, bo.Type), bo.Hash); err != nil {
 			return
 		}
 	}
@@ -244,7 +244,7 @@ func GetBlockOperationKeyPrefixSource(source string) string {
 
 func GetBlockOperationKeyPrefixSourceAndType(source string, ty operation.OperationType) string {
 	idx := storage.NewIndex()
-	idx.WritePrefix(common.BlockOperationPrefixSource, string(ty), source)
+	idx.WritePrefix(common.BlockOperationPrefixTypeSource, string(ty), source)
 	return idx.String()
 }
 
@@ -310,44 +310,33 @@ func (bo BlockOperation) NewBlockOperationSourceAndTypeKey() string {
 }
 
 func (bo BlockOperation) NewBlockOperationTargetKey(target string) string {
-	return fmt.Sprintf(
-		"%s%s%s%s",
-		keyPrefixTarget(target),
-		common.EncodeUint64ToByteSlice(bo.Height),
-		common.EncodeUint64ToByteSlice(bo.transaction.B.SequenceID),
-		common.GetUniqueIDFromUUID(),
-	)
+	idx := storage.NewIndex()
+	idx.WritePrefix(GetBlockOperationKeyPrefixTarget(target))
+	bo.order.Index(idx)
+	return idx.String()
 }
 
-func (bo BlockOperation) NewBlockOperationTargetAndTypeKey(target string) string {
-	return fmt.Sprintf(
-		"%s%s%s%s",
-		keyPrefixTargetAndType(target, bo.Type),
-		common.EncodeUint64ToByteSlice(bo.Height),
-		common.EncodeUint64ToByteSlice(bo.transaction.B.SequenceID),
-		common.GetUniqueIDFromUUID(),
-	)
+func (bo BlockOperation) NewBlockOperationTargetAndTypeKey(target string, ty operation.OperationType) string {
+	idx := storage.NewIndex()
+	idx.WritePrefix(GetBlockOperationKeyPrefixTargetAndType(target, ty))
+	bo.order.Index(idx)
+	return idx.String()
 }
 
 func (bo BlockOperation) NewBlockOperationPeersKey(addr string) string {
-	return fmt.Sprintf(
-		"%s%s%s%s",
-		keyPrefixPeers(addr),
-		common.EncodeUint64ToByteSlice(bo.Height),
-		common.EncodeUint64ToByteSlice(bo.transaction.B.SequenceID),
-		common.GetUniqueIDFromUUID(),
-	)
+	idx := storage.NewIndex()
+	idx.WritePrefix(GetBlockOperationKeyPrefixPeers(addr))
+	bo.order.Index(idx)
+	return idx.String()
 }
 
-func (bo BlockOperation) NewBlockOperationPeersAndTypeKey(addr string) string {
-	return fmt.Sprintf(
-		"%s%s%s%s",
-		keyPrefixPeersAndType(addr, bo.Type),
-		common.EncodeUint64ToByteSlice(bo.Height),
-		common.EncodeUint64ToByteSlice(bo.transaction.B.SequenceID),
-		common.GetUniqueIDFromUUID(),
-	)
+func (bo BlockOperation) NewBlockOperationPeersAndTypeKey(addr string, ty operation.OperationType) string {
+	idx := storage.NewIndex()
+	idx.WritePrefix(GetBlockOperationKeyPrefixPeersAndType(addr, ty))
+	bo.order.Index(idx)
+	return idx.String()
 }
+
 func (bo BlockOperation) NewBlockOperationBlockHeightKey() string {
 	idx := storage.NewIndex()
 	idx.WritePrefix(GetBlockOperationKeyPrefixBlockHeight(bo.Height))

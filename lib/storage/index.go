@@ -29,7 +29,15 @@ func (idx Index) Bytes() []byte {
 func (idx Index) String() string {
 	prefix := strings.Join(idx.prefix, IndexElementDelimiter)
 	order := strings.Join(idx.order, IndexElementDelimiter)
-	index := strings.Join([]string{prefix, order}, IndexPrefixOrderDelimiter)
+	var strs []string
+	if len(prefix) != 0 {
+		strs = append(strs, prefix)
+	}
+	if len(order) != 0 {
+		strs = append(strs, order)
+	}
+
+	index := strings.Join(strs, IndexPrefixOrderDelimiter)
 	return index
 }
 
