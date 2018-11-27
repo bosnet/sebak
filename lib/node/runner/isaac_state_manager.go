@@ -173,7 +173,8 @@ func (sm *ISAACStateManager) TransitISAACState(height uint64, round uint64, ball
 func (sm *ISAACStateManager) NextRound() {
 	state := sm.State()
 	sm.nr.Log().Debug("begin ISAACStateManager.NextRound()", "height", state.Height, "round", state.Round, "state", state.BallotState)
-	sm.TransitISAACState(state.Height, state.Round+1, ballot.StateINIT)
+	newRound := sm.nr.Consensus().LatestVotingBasis().Round + 1
+	sm.TransitISAACState(state.Height, newRound, ballot.StateINIT)
 }
 
 func (sm *ISAACStateManager) NextHeight() {

@@ -321,7 +321,7 @@ func BallotCheckBasis(c common.Checker, args ...interface{}) (err error) {
 		checker.NodeRunner.Log().Debug(
 			"voting basis is invalid",
 			"ballot-basis", checker.Ballot.VotingBasis(),
-			"voting-basis", checker.NodeRunner.Consensus().LatestVotingBasis,
+			"voting-basis", checker.NodeRunner.Consensus().LatestVotingBasis(),
 			"latest-block-height", blk.Height,
 			"latest-block-hash", blk.Hash,
 		)
@@ -428,9 +428,9 @@ func ExpiredInSIGN(c common.Checker, args ...interface{}) (err error) {
 
 	checker.NodeRunner.BroadcastBallot(newBallot)
 
-	checker.NodeRunner.isaacStateManager.NextRound()
 	basis := checker.Ballot.VotingBasis()
 	checker.NodeRunner.Consensus().SetLatestVotingBasis(basis)
+	checker.NodeRunner.isaacStateManager.NextRound()
 	checker.NodeRunner.Consensus().RemoveRunningRoundsLowerOrEqualBasis(basis)
 
 	err = NewCheckerStopCloseConsensus(checker, fmt.Sprintf("ballot expired in SIGN, basis:%s", basis.Index()))
@@ -710,8 +710,8 @@ func FinishedBallotStore(c common.Checker, args ...interface{}) error {
 
 		err = NewCheckerStopCloseConsensus(checker, "ballot got consensus and will be stored")
 	case voting.NO, voting.EXP:
-		checker.NodeRunner.isaacStateManager.NextRound()
 		checker.NodeRunner.Consensus().SetLatestVotingBasis(basis)
+		checker.NodeRunner.isaacStateManager.NextRound()
 
 		checker.NodeRunner.Consensus().RemoveRunningRoundsLowerOrEqualBasis(basis)
 
