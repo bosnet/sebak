@@ -1,7 +1,7 @@
 package httputils
 
 import (
-	"encoding/json"
+	"boscoin.io/sebak/lib/common"
 	"net/http"
 
 	"github.com/nvellon/hal"
@@ -46,15 +46,8 @@ func WriteJSON(w http.ResponseWriter, code int, v interface{}) error {
 		w.Header().Set("Content-Type", "application/json")
 	}
 
-	w.WriteHeader(code)
+	bs, err := common.JSONMarshalWithoutEscapeHTML(v)
 
-	var bs []byte
-	var err error
-	if marshaler, ok := v.(json.Marshaler); ok {
-		bs, err = marshaler.MarshalJSON()
-	} else {
-		bs, err = json.Marshal(v)
-	}
 	if err != nil {
 		return err
 	}
@@ -62,6 +55,5 @@ func WriteJSON(w http.ResponseWriter, code int, v interface{}) error {
 	if _, err := w.Write(bs); err != nil {
 		return err
 	}
-
 	return nil
 }
