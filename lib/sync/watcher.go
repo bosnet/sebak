@@ -160,11 +160,11 @@ func (w *Watcher) fetchNodeInfos(ctx context.Context) ([]*node.NodeInfo, error) 
 		return nil, fmt.Errorf("no fetch nodes:")
 	}
 
-	var nodes = make([]*node.NodeInfo, len(addrs))
+	var nodeC = make(chan *node.NodeInfo, len(addrs))
 	var g errgroup.Group
 
-	for i, addr := range addrs {
-		i, addr := i, addr
+	for _, addr := range addrs {
+		addr := addr
 		g.Go(func() error {
 			node := w.cm.GetNode(addr)
 			nodeInfo, err := w.reqNodeInfo(ctx, node)
@@ -173,13 +173,21 @@ func (w *Watcher) fetchNodeInfos(ctx context.Context) ([]*node.NodeInfo, error) 
 				return err
 			}
 
-			nodes[i] = nodeInfo
+			nodeC <- nodeInfo
 			return nil
 		})
 	}
-	g.Wait()
+	go func() {
+		g.Wait()
+		close(nodeC)
+	}()
 
 	// it's ok when one of them is alive.
+	var nodes []*node.NodeInfo
+	for n := range nodeC {
+		nodes = append(nodes, n)
+	}
+
 	if len(nodes) <= 0 {
 		err := errors.AllValidatorsNotConnected
 		w.logger.Error("no one node to alive", "err", err)
