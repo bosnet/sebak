@@ -2,14 +2,13 @@ package common
 
 import (
 	"bytes"
-	"encoding/binary"
 	"encoding/json"
+	"fmt"
+	"github.com/satori/go.uuid"
 	"io"
 	"net/url"
 	"os"
 	"sort"
-
-	uuid "github.com/satori/go.uuid"
 )
 
 const MaxUintEncodeByte = 8
@@ -154,15 +153,8 @@ func IsStringMapEqualWithHash(a, b map[string]bool) bool {
 	return bytes.Equal(aHash, bHash)
 }
 
-func EncodeUint64ToByteSlice(i uint64) [MaxUintEncodeByte]byte {
-	var b [MaxUintEncodeByte]byte
-	binary.BigEndian.PutUint64(b[:], i)
-	return b
-}
-
 func EncodeUint64ToString(i uint64) string {
-	bs := EncodeUint64ToByteSlice(i)
-	return string(bs[:])
+	return fmt.Sprintf("%020d", i)
 }
 
 type KV struct {

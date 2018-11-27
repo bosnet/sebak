@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/require"
 	"io/ioutil"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -333,4 +334,19 @@ func TestGetOperationsByAccountHandlerPage(t *testing.T) {
 			require.Equal(t, boList[20-1-i].Hash, bt["hash"], "hash is not same")
 		}
 	}
+}
+
+func TestStr(t *testing.T) {
+	var i uint64 = 123
+	a := strconv.FormatUint(i, 10)
+	t.Log(a)
+
+	x := ^uint64(0)
+	b := strconv.FormatUint(x, 10)
+	t.Log(b)
+
+	t.Log(len(b))
+
+	ttt := fmt.Sprintf("%020d", i)
+	t.Log(ttt)
 }

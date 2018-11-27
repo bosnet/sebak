@@ -100,6 +100,14 @@ func (bt BlockTransaction) NewBlockTransactionKeyByAccount(accountAddress string
 	return idx.String()
 }
 
+func (bt BlockTransaction) NewBlockTransactionKeyByTarget(accountAddress string) string {
+	idx := storage.NewIndex()
+	idx.WritePrefix(GetBlockTransactionKeyPrefixTarget(accountAddress))
+	bt.order.Index(idx)
+	idx.WriteOrder(common.GetUniqueIDFromUUID())
+	return idx.String()
+}
+
 func (bt BlockTransaction) NewBlockTransactionKeyByBlock(hash string) string {
 	idx := storage.NewIndex()
 	idx.WritePrefix(GetBlockTransactionKeyPrefixBlock(hash))
@@ -217,6 +225,10 @@ func (bt *BlockTransaction) SaveBlockOperation(st *storage.LevelDBBackend, op op
 		if err != nil {
 			return
 		}
+		err = st.New(bt.NewBlockTransactionKeyByTarget(pop.TargetAddress()), bt.Hash)
+		if err != nil {
+			return
+		}
 	}
 
 	return nil
@@ -258,6 +270,12 @@ func GetBlockTransactionKeyPrefixAccount(accountAddress string) string {
 	//return fmt.Sprintf("%s%s-", common.BlockTransactionPrefixAccount, accountAddress)
 }
 
+func GetBlockTransactionKeyPrefixTarget(accountAddress string) string {
+	idx := storage.NewIndex()
+	return idx.WritePrefix(common.BlockTransactionPrefixTarget, accountAddress).String()
+	//return fmt.Sprintf("%s%s-", common.BlockTransactionPrefixAccount, accountAddress)
+}
+
 func GetBlockTransactionKeyPrefixBlock(hash string) string {
 	idx := storage.NewIndex()
 	return idx.WritePrefix(common.BlockTransactionPrefixBlock, hash).String()
@@ -269,17 +287,6 @@ func GetBlockTransactionKey(hash string) string {
 	return idx.WritePrefix(common.BlockTransactionPrefixHash, hash).String()
 	//return fmt.Sprintf("%s%s-", common.BlockTransactionPrefixHash, hash)
 }
-
-/*
-func GetBlockTransactionKeyPrefixHeight(height uint64) string {
-	idx := storage.NewIndex()
-	idx.WritePrefix(
-		common.BlockTransactionPrefixHeight,
-	)
-	return idx.WriteOrder(common.EncodeUint64ToString(height)).String()
-	//return fmt.Sprintf("%s%s-", common.BlockTransactionPrefixHeight, common.EncodeUint64ToByteSlice(height))
-}
-*/
 
 func GetBlockTransaction(st *storage.LevelDBBackend, hash string) (bt BlockTransaction, err error) {
 	if err = st.Get(GetBlockTransactionKey(hash), &bt); err != nil {
@@ -357,16 +364,6 @@ func GetBlockTransactionsByBlock(st *storage.LevelDBBackend, hash string, option
 	iterFunc, closeFunc := st.GetIterator(GetBlockTransactionKeyPrefixBlock(hash), options)
 	return LoadBlockTransactionsInsideIterator(st, iterFunc, closeFunc)
 }
-
-/*
-func GetBlockTransactionsByHeight(st *storage.LevelDBBackend, height uint64, options storage.ListOptions) (
-	func() (BlockTransaction, bool, []byte),
-	func(),
-) {
-	iterFunc, closeFunc := st.GetIterator(GetBlockTransactionKeyPrefixHeight(height), options)
-	return LoadBlockTransactionsInsideIterator(st, iterFunc, closeFunc)
-}
-*/
 
 func GetBlockTransactions(st *storage.LevelDBBackend, options storage.ListOptions) (
 	func() (BlockTransaction, bool, []byte),
