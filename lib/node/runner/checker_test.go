@@ -362,8 +362,14 @@ func TestGetMissingTransactionProposerAlsoMissing(t *testing.T) {
 	require.Equal(t, 0, g.consensusNR.TransactionPool.Len())
 }
 
+// TestNodeRunnerIrregularIncomingBallot does not start `InitRound()` to inject
+// Ballot manually.
+type TestNodeRunnerIrregularIncomingBallot struct {
+	*NodeRunner
+}
+
 type irregularIncomingBallot struct {
-	nr    *NodeRunner
+	nr    *TestNodeRunnerIrregularIncomingBallot
 	nodes []*node.LocalNode
 
 	genesisBlock   block.Block
@@ -374,8 +380,14 @@ type irregularIncomingBallot struct {
 	accountA *block.BlockAccount
 }
 
+func (nr *TestNodeRunnerIrregularIncomingBallot) InitRound() {
+	return
+}
+
 func (p *irregularIncomingBallot) prepare() {
-	p.nr, p.nodes, _ = createNodeRunnerForTesting(2, common.NewTestConfig(), nil)
+	var nr *NodeRunner
+	nr, p.nodes, _ = createNodeRunnerForTesting(2, common.NewTestConfig(), nil)
+	p.nr = &TestNodeRunnerIrregularIncomingBallot{NodeRunner: nr}
 
 	p.genesisBlock = block.GetGenesis(p.nr.Storage())
 	p.commonAccount, _ = GetCommonAccount(p.nr.Storage())
@@ -401,7 +413,7 @@ func (p *irregularIncomingBallot) runChecker(blt ballot.Ballot) (checker *Ballot
 
 	baseChecker := &BallotChecker{
 		DefaultChecker: common.DefaultChecker{Funcs: DefaultHandleBaseBallotCheckerFuncs},
-		NodeRunner:     p.nr,
+		NodeRunner:     p.nr.NodeRunner,
 		LocalNode:      p.nr.Node(),
 		Message:        ballotMessage,
 		Log:            p.nr.Log(),
@@ -474,7 +486,6 @@ func (p *irregularIncomingBallot) makeBallot(state ballot.State) (blt *ballot.Ba
 func TestRegularIncomingBallots(t *testing.T) {
 	p := &irregularIncomingBallot{}
 	p.prepare()
-	p.nr.StopStateManager()
 	defer p.done()
 
 	cm := p.nr.ConnectionManager().(*TestConnectionManager)
@@ -503,7 +514,6 @@ func TestRegularIncomingBallots(t *testing.T) {
 func TestIrregularIncomingBallots(t *testing.T) {
 	p := &irregularIncomingBallot{}
 	p.prepare()
-	p.nr.StopStateManager()
 	defer p.done()
 
 	cm := p.nr.ConnectionManager().(*TestConnectionManager)
