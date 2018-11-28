@@ -105,20 +105,6 @@
 + operation_count: 1 (number) - The number of operations in this transaction.
 + sequence_id: 0 (number) - the Sequence number of the source account.
 + source: `GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ` (string) -
-
-### TransactionHistory
-+ _links
-    + account
-        + href: `/api/v1/accounts/GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ`
-    + self
-        + href: `/api/v1/transactions`
-    + transaction
-        + href: `/api/v1/transactions/7nLuyg8radTExzBM2WhG37AwohBwEySBw4vj2xdtdjAs`
-    + confirmed: `2018-11-02T14:09:33.021645000+09:00` - Modified time of the transaction history.
-    + created: `2018-11-02T14:09:33.019606000+09:00` - Created time of the transaction. It is set by wallet
-    + hash: `7nLuyg8radTExzBM2WhG37AwohBwEySBw4vj2xdtdjAs` (string,required) - Hash of transaction. //TODO: link for the details
-    + source: `GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ` (string) - source account
-    + status: `confirmed` (string) - three categories of status; submitted, confirmed, rejected
         
 ### Operation
 + _embedded
