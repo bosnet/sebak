@@ -45,6 +45,10 @@ func (m *mockConnectionManager) GetNode(addr string) node.Node {
 	return m.getNodeFunc(addr)
 }
 
+func (m *mockConnectionManager) IsReady() bool {
+	return true
+}
+
 type mockDoer struct {
 	handleFunc func(*http.Request) (*http.Response, error)
 }

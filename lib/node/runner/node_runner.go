@@ -557,8 +557,7 @@ func (nr *NodeRunner) InitRound() {
 func (nr *NodeRunner) waitForConnectingEnoughNodes() {
 	ticker := time.NewTicker(time.Millisecond * 5)
 	for _ = range ticker.C {
-		connected := nr.connectionManager.AllConnected()
-		if len(connected) >= nr.policy.Threshold() {
+		if nr.connectionManager.IsReady() {
 			ticker.Stop()
 			break
 		}
@@ -707,6 +706,10 @@ func (nr *NodeRunner) NodeInfo() node.NodeInfo {
 }
 
 func (nr *NodeRunner) BroadcastBallot(b ballot.Ballot) {
+	if nr.Node().State() == node.StateBOOTING && !nr.connectionManager.IsReady() {
+		nr.waitForConnectingEnoughNodes()
+	}
+
 	state := consensus.ISAACState{
 		Height:      b.VotingBasis().Height,
 		Round:       b.VotingBasis().Round,
