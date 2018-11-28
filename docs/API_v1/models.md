@@ -28,7 +28,7 @@
                     + templated: true
                 + self
                     + href: `/api/v1/transactions`
-        + block: ``
+        + block: `241`
         + created: `2018-11-02T14:09:33.019606000+09:00`
         + fee: 10000
         + hash: `7nLuyg8radTExzBM2WhG37AwohBwEySBw4vj2xdtdjAs`
@@ -101,7 +101,7 @@
         + templated: true
     + self
         + href: `/api/v1/transactions/`
-+ block: 
++ block: `241`
 + created: `2018-09-12T09:08:35.157472400Z` - Created time of the transaction. It is set by wallet
 + fee: `10000` (string) - The fee paid by the source account
 + hash: `ghf6msRhE4jRf5DPib9UHD1msadvmZs9o53V9FQTb11` (string,required) - Hash of transaction. //TODO: link for the details
@@ -123,9 +123,9 @@
             + target: GDEPYGGALPJ5HENXCNOQJPPDOQMA2YAXPERZ4XEAKVFFJJEVP4ZBK6QI - The funded account's public key
             + amount: `1000000000000` - amount in GON
         
-        + confirmed: 
+        + confirmed: `2018-11-27T07:49:05.971799020Z`
         + hash: F6SEv2QhgwZwxUARbRacxyZaufzcTxdYDXJBpvf7pNAj-7nLuyg8radTExzBM2WhG37AwohBwEySBw4vj2xdtdjAs - Hash of operation
-        + proposed_time:
+        + proposed_time: `2018-11-27T07:49:05.942922134Z`
         + source: GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ - Source account
         + tx_hash: 7nLuyg8radTExzBM2WhG37AwohBwEySBw4vj2xdtdjAs - Hash of transaction
         + type: create-account  - operation type. ex. payment, create-account
