@@ -5,58 +5,67 @@ import (
 	"strconv"
 
 	"boscoin.io/sebak/lib/block"
-	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/network/httputils"
 	"boscoin.io/sebak/lib/node/runner/api/resource"
 	"boscoin.io/sebak/lib/storage"
 )
 
 func (api NetworkHandlerAPI) GetBlocksHandler(w http.ResponseWriter, r *http.Request) {
-	p, err := NewPageQuery(r)
+	p, err := NewPageQuery(r, WithEncodePageCursor(false))
 	if err != nil {
 		httputils.WriteJSONError(w, err)
 		return
 	}
 
 	var (
-		firstCursor []byte
-		cursor      []byte // cursor as height
-		blocks      []resource.Resource
+		prevHeight uint64
+		nextHeight uint64
+		blocks     []resource.Resource
 	)
 
 	var option *storage.WalkOption
 	{
-		height, err := strconv.ParseUint(string(p.Cursor()), 10, 64)
-		if err != nil {
-			height = common.GenesisBlockHeight // default cursor is genesis block height
+		var cursor string
+		if p.Cursor() != nil {
+			height, err := strconv.ParseUint(string(p.Cursor()), 10, 64)
+			if err == nil {
+				cursor = block.GetBlockKeyPrefixHeight(height)
+			}
 		}
-		option = storage.NewWalkOption(block.GetBlockKeyPrefixHeight(height), p.Limit(), p.Reverse(), false)
+		option = storage.NewWalkOption(cursor, p.Limit()+1, p.Reverse())
 	}
 
 	{
+		var cnt uint64 = 1
 		err := block.WalkBlocks(api.storage, option, func(b *block.Block, key []byte) (next bool, err error) {
+			if cnt > p.Limit() {
+				nextHeight = b.Height
+				return false, nil
+			}
 			blocks = append(blocks, resource.NewBlock(b))
-			height := b.Height
-			if height > 1 {
-				if option.Reverse {
-					height--
-				} else {
-					height++
-				}
+			if cnt == 1 {
+				prevHeight = b.Height - 1
 			}
-			cursor = []byte(strconv.FormatUint(height, 10))
-			if len(firstCursor) == 0 {
-				firstCursor = append(firstCursor, cursor...)
-			}
+			cnt++
 			return true, nil
 		})
 		if err != nil {
 			httputils.WriteJSONError(w, err)
 			return
-
 		}
 	}
 
-	list := p.ResourceList(blocks, firstCursor, cursor)
+	var (
+		prevCursor []byte
+		nextCursor []byte
+	)
+	if prevHeight > 0 {
+		prevCursor = []byte(strconv.FormatUint(prevHeight, 10))
+	}
+	if nextHeight > 0 {
+		nextCursor = []byte(strconv.FormatUint(nextHeight, 10))
+	}
+
+	list := p.ResourceList(blocks, prevCursor, nextCursor)
 	httputils.MustWriteJSON(w, 200, list)
 }

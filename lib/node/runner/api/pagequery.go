@@ -23,12 +23,26 @@ type PageQuery struct {
 	cursor  []byte
 	reverse bool
 	limit   uint64
+
+	isEncodeCursor bool // cursor base64 encoding
 }
 
-func NewPageQuery(r *http.Request) (*PageQuery, error) {
+type PageQueryOption func(*PageQuery)
+
+func WithEncodePageCursor(ok bool) PageQueryOption {
+	return func(p *PageQuery) {
+		p.isEncodeCursor = ok
+	}
+}
+
+func NewPageQuery(r *http.Request, opts ...PageQueryOption) (*PageQuery, error) {
 	p := &PageQuery{
-		request: r,
-		limit:   DefaultLimit,
+		request:        r,
+		limit:          DefaultLimit,
+		isEncodeCursor: true, // default is true
+	}
+	for _, o := range opts {
+		o(p)
 	}
 	err := p.parseRequest()
 	return p, err
@@ -69,7 +83,7 @@ func (p *PageQuery) ListOptions() storage.ListOptions {
 }
 
 func (p *PageQuery) WalkOption() *storage.WalkOption {
-	return storage.NewWalkOption(string(p.Cursor()), p.Limit(), p.Reverse(), true)
+	return storage.NewWalkOption(string(p.Cursor()), p.Limit(), p.Reverse())
 }
 
 func (p *PageQuery) ResourceList(rs []resource.Resource, firstCursor, lastCursor []byte) *resource.ResourceList {
@@ -92,12 +106,16 @@ func (p *PageQuery) parseRequest() error {
 	}
 	c := q.Get("cursor")
 	if c != "" {
-		var cursorByte []byte
-		var err error
-		if cursorByte, err = base64.StdEncoding.DecodeString(c); err != nil {
+		switch p.isEncodeCursor {
+		case false:
 			p.cursor = []byte(c)
-		} else {
-			p.cursor = cursorByte
+		case true:
+			bs, err := base64.StdEncoding.DecodeString(c)
+			if err != nil {
+				p.cursor = []byte(c)
+			} else {
+				p.cursor = []byte(bs)
+			}
 		}
 	}
 
@@ -122,7 +140,11 @@ func (p PageQuery) urlValues(cursor []byte, reverse bool, limit uint64) url.Valu
 	}
 
 	if len(cursor) > 0 {
-		v.Set("cursor", string(base64.StdEncoding.EncodeToString(cursor)))
+		if p.isEncodeCursor == true {
+			v.Set("cursor", string(base64.StdEncoding.EncodeToString(cursor)))
+		} else {
+			v.Set("cursor", string(cursor))
+		}
 	}
 	if p.limit > 0 {
 		v.Set("limit", strconv.FormatUint(p.limit, 10))

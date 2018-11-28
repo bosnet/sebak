@@ -59,7 +59,7 @@ func TestBlocksHandler(t *testing.T) {
 	{
 		q := "cursor=10&limit=10&reverse=true"
 		records, _ := testFunc(q)
-		require.Equal(t, len(records), 10)
+		require.Equal(t, 10, len(records))
 		for i, a := range inserted {
 			b := records[9-i].(map[string]interface{})
 			require.Equal(t, a.Hash, b["hash"])
