@@ -6,8 +6,40 @@ Transactions API
 
 
 ### Payment transaction  [POST] 
-//TODO: How to make a transaction and sign 
 
++ Data Body consist of 3 parts, ; T, H, B
+    + T : ‘transaction’
+
+    + H : H means Header. it consists of version, hash, signature & created.
+
+        + Version means to transaction version. At the moment 1.
+        + Hash means transaction hash.
+        + signature is signed data from client.
+            + How can you make signature? 
+            
+            Please check this link first. 
+            
+            You need 3 variables to make signature; RLPdata which is hashing, network id and source’s secret seed. 
+            
+            You can see that Which kinds of variables necessary. 
+            
+            You can use [JavaScript SDK] to make signature or [Python SDK]. Please check above SDKs.
+
+        + created means to transcation created time.
+    + B : B means Body.  It is RLP data.  so you have to encode B data to RLP format.   It contains; source , fee, sequence id, and operations.
+
+        + source; means that public address which will BOScoin withdraw .
+        + fee : data type is String.
+        + sequence id
+            + How can you get sequence id? 
+            
+            When you finished account creation, you can access http(or https)://{IP that you set up sebak node}/api/v1/accounts/{Public address that account you created}. 
+            
+            Then you can see sequence_id in response.
+        + operations: It is json array consist of H & B. H include type, which means operation type. B include target & amount.
+        + H : type ( type should be set ‘payment’ )
+        + B : target ( Public address you want to send.) , amount ( amount data type is String .)
+ 
 + Request (application/json)
     
     + Attributes (Transaction Payment)
