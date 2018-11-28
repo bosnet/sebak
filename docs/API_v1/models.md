@@ -57,7 +57,7 @@
 ### Transaction Payment
 + T: transaction
 + H 
-    + version: `` - Transaction version
+    + version: `1` - Transaction version
     + created: `2018-01-01T00:00:00.000000000Z` - Created time of the transaction.
     + signature: `4ty1Pv7Phc3CEeGLCP8mjZfEC259VR1MBgyVHzQXTcWjuSiwxVQ2AQKxy2HjGTCDrmdE29z8ZNZ6GxuDyEay2p9M` - Signature signed by source account
 + B
