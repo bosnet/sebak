@@ -17,6 +17,7 @@ const (
 	RetryInterval                   = 10 * time.Second
 	CheckBlockHeightInterval        = 30 * time.Second
 	CheckPrevBlockInterval          = 30 * time.Second
+	WatchInterval                   = 5 * time.Second
 )
 
 type Config struct {
@@ -34,6 +35,7 @@ type Config struct {
 	RetryInterval            time.Duration
 	CheckBlockHeightInterval time.Duration
 	CheckPrevBlockInterval   time.Duration
+	WatchInterval            time.Duration
 }
 
 func NewConfig(localNode *node.LocalNode,
@@ -104,12 +106,17 @@ func (c *Config) NewValidator() Validator {
 }
 
 func (c *Config) NewWatcher(s SyncController) *Watcher {
+	c.logger.Info("watcher config", "watchInterval", c.WatchInterval)
+
 	client := c.NewHTTP2Client()
 	w := NewWatcher(
 		s, client,
 		c.connectionManager,
 		c.storage,
 		c.localNode,
+		func(w *Watcher) {
+			w.interval = c.WatchInterval
+		},
 	)
 	w.SetLogger(c.logger.New("submodule", "watcher"))
 	return w

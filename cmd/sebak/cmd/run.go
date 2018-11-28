@@ -80,7 +80,8 @@ var (
 	flagOperationsInBallotLimit string = common.GetENVValue("SEBAK_OPERATIONS_IN_BALLOT_LIMIT", strconv.Itoa(common.DefaultOperationsInBallotLimit))
 	flagTxPoolLimit             string = common.GetENVValue("SEBAK_TX_POOL_LIMIT", strconv.Itoa(common.DefaultTxPoolLimit))
 
-	flagWatcherMode bool = common.GetENVValue("SEBAK_WATCHER_MODE", "0") == "1"
+	flagWatcherMode   bool   = common.GetENVValue("SEBAK_WATCHER_MODE", "0") == "1"
+	flagWatchInterval string = common.GetENVValue("SEBAK_WATCH_INTERVAL", "5s")
 )
 
 var (
@@ -114,6 +115,7 @@ var (
 	txPoolNodeLimit         uint64
 	syncCheckPrevBlock      time.Duration
 	jsonrpcbindEndpoint     *common.Endpoint
+	watchInterval           time.Duration
 
 	logLevel logging.Lvl
 	log      logging.Logger = logging.New("module", "main")
@@ -223,6 +225,7 @@ func init() {
 
 	nodeCmd.Flags().StringVar(&flagCongressAddress, "set-congress-address", flagCongressAddress, "set congress address")
 	nodeCmd.Flags().BoolVar(&flagWatcherMode, "watcher-mode", flagWatcherMode, "watcher mode")
+	nodeCmd.Flags().StringVar(&flagWatchInterval, "watch-interval", flagWatchInterval, "watch interval")
 
 	rootCmd.AddCommand(nodeCmd)
 }
@@ -447,6 +450,7 @@ func parseFlagsNode() {
 	syncFetchTimeout = getTimeDuration(flagSyncFetchTimeout, sync.FetchTimeout, "--sync-fetch-timeout")
 	syncCheckInterval = getTimeDuration(flagSyncCheckInterval, sync.CheckBlockHeightInterval, "--sync-check-interval")
 	syncCheckPrevBlock = getTimeDuration(flagSyncCheckPrevBlockInterval, sync.CheckPrevBlockInterval, "--sync-check-prevblock")
+	watchInterval = getTimeDuration(flagWatchInterval, sync.WatchInterval, "--watch-interval")
 
 	{
 		if ok := common.HTTPCacheAdapterNames[flagHTTPCacheAdapter]; !ok {
@@ -704,6 +708,7 @@ func runNode() error {
 	c.RetryInterval = syncRetryInterval
 	c.CheckBlockHeightInterval = syncCheckInterval
 	c.CheckPrevBlockInterval = syncCheckPrevBlock
+	c.WatchInterval = watchInterval
 
 	syncer := c.NewSyncer()
 

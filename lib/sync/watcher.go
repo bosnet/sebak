@@ -21,6 +21,8 @@ import (
 	"github.com/inconshreveable/log15"
 )
 
+type WatcherOption func(*Watcher)
+
 type Watcher struct {
 	syncer    SyncController
 	cm        network.ConnectionManager
@@ -40,7 +42,8 @@ func NewWatcher(
 	client Doer,
 	cm network.ConnectionManager,
 	st *storage.LevelDBBackend,
-	ln *node.LocalNode) *Watcher {
+	ln *node.LocalNode,
+	opts ...WatcherOption) *Watcher {
 	ctx, cancel := context.WithCancel(context.Background())
 	w := &Watcher{
 		syncer:    syncer,
@@ -53,6 +56,9 @@ func NewWatcher(
 		ctx:       ctx,
 		cancel:    cancel,
 		logger:    common.NopLogger(),
+	}
+	for _, o := range opts {
+		o(w)
 	}
 	return w
 }

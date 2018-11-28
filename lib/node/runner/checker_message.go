@@ -13,6 +13,8 @@
 package runner
 
 import (
+	"math/rand"
+
 	logging "github.com/inconshreveable/log15"
 
 	"encoding/json"
@@ -197,8 +199,14 @@ func BroadcastTransactionFromWatcher(c common.Checker, args ...interface{}) erro
 		return errors.AllValidatorsNotConnected
 	}
 
+	raddrs := make([]string, len(addrs))
+	perm := rand.Perm(len(addrs))
+	for i, v := range perm {
+		raddrs[v] = addrs[i]
+	}
+
 	var err error
-	for _, a := range addrs {
+	for _, a := range raddrs {
 		client := cm.GetConnection(a)
 		_, err = client.SendTransaction(checker.Transaction)
 		if err == nil {
