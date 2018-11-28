@@ -406,7 +406,9 @@ func (nr *NodeRunner) Start() (err error) {
 func (nr *NodeRunner) Stop() {
 	nr.network.Stop()
 	nr.isaacStateManager.Stop()
-	nr.jsonrpcServer.Stop()
+	if nr.jsonrpcServer != nil {
+		nr.jsonrpcServer.Stop()
+	}
 }
 
 func (nr *NodeRunner) Node() *node.LocalNode {

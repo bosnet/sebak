@@ -62,7 +62,6 @@ func NewConfig(networkID []byte) Config {
 	p.RateLimitRuleNode = NewRateLimitRule(RateLimitNode)
 
 	p.HTTPCachePoolSize = HTTPCachePoolSize
-	p.JSONRPCEndpoint, _ = ParseEndpoint(DefaultJSONRPCBindURL)
 
 	return p
 }
