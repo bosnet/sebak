@@ -380,8 +380,12 @@ type irregularIncomingBallot struct {
 	accountA *block.BlockAccount
 }
 
-func (nr *TestNodeRunnerIrregularIncomingBallot) InitRound() {
-	return
+func (nr *TestNodeRunnerIrregularIncomingBallot) Start() error {
+	if err := nr.network.Start(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (p *irregularIncomingBallot) prepare() {
