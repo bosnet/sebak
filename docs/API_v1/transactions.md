@@ -82,25 +82,3 @@ Transactions API
 + Response 500 (application/problem+json; charset=utf-8)
 
     + Attributes (Problem)
-
-## History for Trasaction [/api/v1/transactions/{hash}/history?limit={limit}&reverse={reverse}&cursor={cursor}]
-
-+ Parameters
-    
-    + hash: `7nLuyg8radTExzBM2WhG37AwohBwEySBw4vj2xdtdjAs` (string,required) - Transaction hash
-    
-    + limit: `100` (integer, optional)
-        
-    + reverse: `false` (string, optional)
-        
-    + cursor: `` (string, optional)
-
-#### Get history of transaction [GET]
-
-+ Response 200 (application/hal+json; charset=utf-8)
-    
-    + Attributes (TransactionHistory)
-
-+ Response 500 (application/problem+json; charset=utf-8)
-
-    + Attributes (Problem)
