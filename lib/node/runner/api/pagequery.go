@@ -65,6 +65,9 @@ func (p *PageQuery) SelfLink() string {
 }
 
 func (p *PageQuery) PrevLink(cursor []byte) string {
+	if cursor == nil {
+		return ""
+	}
 	path := p.request.URL.Path
 	query := p.urlValues(cursor, true, p.limit).Encode()
 	link := fmt.Sprintf("%s?%s", path, query)
@@ -72,6 +75,10 @@ func (p *PageQuery) PrevLink(cursor []byte) string {
 }
 
 func (p *PageQuery) NextLink(cursor []byte) string {
+	if cursor == nil {
+		// If cursor is nil, no exist link
+		return ""
+	}
 	path := p.request.URL.Path
 	query := p.urlValues(cursor, false, p.limit).Encode()
 	link := fmt.Sprintf("%s?%s", path, query)
