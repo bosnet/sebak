@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"boscoin.io/sebak/lib/block"
+	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/network/httputils"
 	"boscoin.io/sebak/lib/node/runner/api/resource"
 	"boscoin.io/sebak/lib/storage"
@@ -28,9 +29,11 @@ func (api NetworkHandlerAPI) GetBlocksHandler(w http.ResponseWriter, r *http.Req
 		var cursor string
 		if p.Cursor() != nil {
 			height, err := strconv.ParseUint(string(p.Cursor()), 10, 64)
-			if err == nil {
-				cursor = block.GetBlockKeyPrefixHeight(height)
+			if err != nil {
+				httputils.WriteJSONError(w, errors.BadRequestParameter)
+				return
 			}
+			cursor = block.GetBlockKeyPrefixHeight(height)
 		}
 		option = storage.NewWalkOption(cursor, p.Limit()+1, p.Reverse())
 	}
