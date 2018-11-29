@@ -88,7 +88,7 @@ func TestResourceAccount(t *testing.T) {
 			require.Equal(t, bo.Source, m["source"])
 			require.Equal(t, string(bo.Type), m["type"])
 			l := m["_links"].(map[string]interface{})
-			require.Equal(t, strings.Replace(URLOperations, "{id}", bo.Hash, -1), l["self"].(map[string]interface{})["href"])
+			require.Equal(t, "", l["self"].(map[string]interface{})["href"])
 		}
 	}
 
