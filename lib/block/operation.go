@@ -318,7 +318,6 @@ func GetBlockOperation(st *storage.LevelDBBackend, hash string) (bo BlockOperati
 }
 
 func GetBlockOperationWithIndex(st *storage.LevelDBBackend, hash string, opIndex int) (bo BlockOperation, err error) {
-
 	var found = false
 	iterFunc, closeFunc := GetBlockOperationsByTxHash(st, hash, nil)
 	for idx := 0; idx <= opIndex; idx++ {

@@ -2,6 +2,8 @@ package operation
 
 import (
 	"encoding/json"
+	"strconv"
+	"strings"
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/errors"
@@ -95,6 +97,14 @@ func (o CongressVotingResult) IsWellFormed(common.Config) (err error) {
 
 	if o.Result.Count != o.Result.Yes+o.Result.No+o.Result.ABS {
 		return errors.InvalidOperation
+	}
+
+	parsedCongressVotingResultHash := strings.Split(o.CongressVotingHash, "-") //0:TxHash, 1:Index
+	if len(parsedCongressVotingResultHash) != 2 {
+		return errors.InvalidOperation
+	}
+	if _, err := strconv.Atoi(parsedCongressVotingResultHash[1]); err != nil {
+		return errors.InvalidOperation.Clone().SetData("error", err)
 	}
 
 	return
