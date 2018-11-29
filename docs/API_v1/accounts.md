@@ -1,7 +1,7 @@
 # Group Accounts
 Account API
 
-## Account Details [/api/v1/accounts/{address}] 
+## Account Details [/api/v1/accounts/{address}]
 <p> In the BOScoin network, users interact by using accounts </p>
 
 + Parameters
