@@ -23,13 +23,21 @@ type NodeInfoNode struct {
 }
 
 type NodePolicy struct {
-	NetworkID                 string        `json:"network-id"`                    // network id
-	InitialBalance            common.Amount `json:"initial-balance"`               // initial balance of genesis account
-	BaseReserve               common.Amount `json:"base-reserve"`                  // base reserve for one account
-	BaseFee                   common.Amount `json:"base-fee"`                      // base fee of operation
-	BlockTime                 time.Duration `json:"block-time"`                    // block creation time
-	OperationsLimit           int           `json:"operations-limit"`              // operations limit in a transaction
+	NetworkID                 string        `json:"network-id"`      // network id
+	InitialBalance            common.Amount `json:"initial-balance"` // initial balance of genesis account
+	BaseReserve               common.Amount `json:"base-reserve"`    // base reserve for one account
+	BaseFee                   common.Amount `json:"base-fee"`        // base fee of operation
+	BlockTime                 time.Duration `json:"block-time"`      // block creation time
+	BlockTimeDelta            time.Duration `json:"block-time-delta"`
+	TimeoutINIT               time.Duration `json:"timeout-init"`
+	TimeoutSIGN               time.Duration `json:"timeout-sign"`
+	TimeoutACCEPT             time.Duration `json:"timeout-accept"`
+	TimeoutALLCONFIRM         time.Duration `json:"timeout-allconfirm"`
+	RateLimitRuleAPI          string        `json:"rate-limit-api"`
+	RateLimitRuleNode         string        `json:"rate-limit-node"`
 	TransactionsLimit         int           `json:"transactions-limit"`            // transactions limit in a ballot
+	OperationsLimit           int           `json:"operations-limit"`              // operations limit in a transaction
+	OperationsInBallotLimit   int           `json:"operations-in-ballot-limit"`    // operations limit in a ballot
 	GenesisBlockConfirmedTime string        `json:"genesis-block-confirmed-time"`  // confirmed time of genesis block; see `common.GenesisBlockConfirmedTime`
 	InflationRatio            string        `json:"inflation-ratio"`               // inflation ratio; see `common.InflationRatio`
 	UnfreezingPeriod          uint64        `json:"unfreezing-period"`             // unfreezing period
@@ -37,10 +45,12 @@ type NodePolicy struct {
 }
 
 type NodeBlockInfo struct {
-	Height   uint64 `json:"height"`
-	Hash     string `json:"hash"`
-	TotalTxs uint64 `json:"total-txs"`
-	TotalOps uint64 `json:"total-ops"`
+	Height    uint64 `json:"height"`
+	Hash      string `json:"hash"`
+	TotalTxs  uint64 `json:"total-txs"`
+	TotalOps  uint64 `json:"total-ops"`
+	Proposed  string `json:"proposed"`
+	Confirmed string `json:"confirmed"`
 }
 
 type NodeVersion struct {

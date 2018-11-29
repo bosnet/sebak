@@ -24,10 +24,12 @@ func (api NetworkHandlerAPI) GetNodeInfoHandler(w http.ResponseWriter, r *http.R
 	if api.GetLatestBlock != nil {
 		latestBlock := api.GetLatestBlock()
 		nodeInfo.Block = node.NodeBlockInfo{
-			Height:   latestBlock.Height,
-			Hash:     latestBlock.Hash,
-			TotalTxs: latestBlock.TotalTxs,
-			TotalOps: latestBlock.TotalOps,
+			Height:    latestBlock.Height,
+			Hash:      latestBlock.Hash,
+			TotalTxs:  latestBlock.TotalTxs,
+			TotalOps:  latestBlock.TotalOps,
+			Proposed:  latestBlock.ProposedTime,
+			Confirmed: latestBlock.Confirmed,
 		}
 	}
 

@@ -68,6 +68,14 @@ var DefaultHandleACCEPTBallotCheckerFuncs = []common.CheckerFunc{
 	FinishedBallotStore,
 }
 
+var (
+	corsAllowedOrigins ghandlers.CORSOption = ghandlers.AllowedOrigins([]string{"*"})
+	corsAllowedMethods ghandlers.CORSOption = ghandlers.AllowedMethods([]string{"GET", "POST"})
+	corsAllowedHeaders ghandlers.CORSOption = ghandlers.AllowedHeaders(
+		[]string{"Content-Type", "X-Requested-With", "Cache-Control", "Access-Control"},
+	)
+)
+
 type NodeRunner struct {
 	sync.RWMutex
 
@@ -95,6 +103,7 @@ type NodeRunner struct {
 	Conf                  common.Config
 	nodeInfo              node.NodeInfo
 	savingBlockOperations *SavingBlockOperations
+	jsonrpcServer         *jsonrpcServer
 }
 
 func NewNodeRunner(
@@ -159,6 +168,9 @@ func NewNodeRunner(
 	}
 
 	nr.nodeInfo = NewNodeInfo(nr)
+	if conf.JSONRPCEndpoint != nil {
+		nr.jsonrpcServer = newJSONRPCServer(conf.JSONRPCEndpoint, nr.storage)
+	}
 
 	return
 }
@@ -189,13 +201,13 @@ func (nr *NodeRunner) Ready() {
 		return
 	}
 
+	cors := ghandlers.CORS(corsAllowedOrigins, corsAllowedMethods, corsAllowedHeaders)
 	{ //CORS
-		allowedOrigins := ghandlers.AllowedOrigins([]string{"*"})
-		allowedMethods := ghandlers.AllowedMethods([]string{"GET", "POST"})
-		allowedHeaders := ghandlers.AllowedHeaders([]string{"Content-Type", "X-Requested-With", "Cache-Control", "Access-Control"})
-
-		cors := ghandlers.CORS(allowedOrigins, allowedMethods, allowedHeaders)
 		if err := nr.network.AddMiddleware(network.RouterNameAPI, cors); err != nil {
+			nr.log.Error("failed to add middleware", "err", err)
+			return
+		}
+		if err := nr.network.AddMiddleware("", cors); err != nil {
 			nr.log.Error("failed to add middleware", "err", err)
 			return
 		}
@@ -360,9 +372,9 @@ func (nr *NodeRunner) Ready() {
 		nr.network.AddHandler(network.UrlPathPrefixDebug+"/pprof/*", pprof.Index)
 	}
 
-	nr.network.AddHandler(api.GetNodeInfoPattern, apiHandler.GetNodeInfoHandler).Methods("GET")
-
 	nr.network.Ready()
+
+	nr.network.AddHandler(api.GetNodeInfoPattern, apiHandler.GetNodeInfoHandler).Methods("GET", "OPTIONS")
 }
 
 func (nr *NodeRunner) Start() (err error) {
@@ -374,6 +386,16 @@ func (nr *NodeRunner) Start() (err error) {
 	go nr.InitRound()
 	go nr.savingBlockOperations.Start()
 
+	if nr.jsonrpcServer != nil {
+		go func() {
+			err = nr.jsonrpcServer.Start()
+			if err != nil {
+				log.Crit("failed to start jsonrpcServer", "error", err)
+				nr.Stop()
+			}
+		}()
+	}
+
 	if err = nr.network.Start(); err != nil {
 		return
 	}
@@ -384,6 +406,9 @@ func (nr *NodeRunner) Start() (err error) {
 func (nr *NodeRunner) Stop() {
 	nr.network.Stop()
 	nr.isaacStateManager.Stop()
+	if nr.jsonrpcServer != nil {
+		nr.jsonrpcServer.Stop()
+	}
 }
 
 func (nr *NodeRunner) Node() *node.LocalNode {
