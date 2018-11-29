@@ -79,6 +79,7 @@ func (sm *ISAACStateManager) setBlockTimeBuffer() {
 
 	ballotProposedTime := getBallotProposedTime(b.ProposedTime)
 	sm.blockTimeBuffer = calculateBlockTimeBuffer(
+		b.Height,
 		sm.Conf.BlockTime,
 		calculateAverageBlockTime(sm.firstProposedBlockTime, b.Height),
 		time.Now().Sub(ballotProposedTime),
@@ -111,26 +112,25 @@ func calculateAverageBlockTime(firstProposedBlockTime time.Time, blockHeight uin
 	}
 }
 
-func calculateBlockTimeBuffer(goal, average, untilNow, delta time.Duration) time.Duration {
+func calculateBlockTimeBuffer(height uint64, goal, average, untilNow, delta time.Duration) time.Duration {
 	var blockTimeBuffer time.Duration
 
-	epsilon := 50 * time.Millisecond
-	if average >= goal {
-		if average-goal < epsilon {
-			blockTimeBuffer = goal - untilNow
-		} else {
-			blockTimeBuffer = goal - delta - untilNow
-		}
-	} else {
-		if goal-average < epsilon {
-			blockTimeBuffer = goal - untilNow
-		} else {
-			blockTimeBuffer = goal + delta - untilNow
-		}
+	nextBlockTime := 5*time.Second*time.Duration(height+1) - (average * time.Duration(height))
+
+	min := goal - delta
+	max := goal + delta
+	if nextBlockTime < min {
+		nextBlockTime = min
+	} else if nextBlockTime > max {
+		nextBlockTime = max
 	}
+
+	blockTimeBuffer = nextBlockTime - untilNow
+
 	if blockTimeBuffer < 0 {
 		blockTimeBuffer = 0
 	}
+
 	return blockTimeBuffer
 }
 
