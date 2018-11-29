@@ -35,6 +35,7 @@ func TestAPIGetNodeInfoHandler(t *testing.T) {
 
 	nd := node.NodeInfoNode{
 		Version:    nv,
+		Started:    time.Date(2009, time.November, 10, 23, 0, 0, 0, time.UTC).String(),
 		State:      localNode.State(),
 		Alias:      localNode.Alias(),
 		Address:    localNode.Address(),

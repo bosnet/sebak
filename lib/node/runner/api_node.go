@@ -189,6 +189,7 @@ func NodeInfoWithRequest(localNode *node.LocalNode, r *http.Request) (b []byte, 
 		"alias":      localNode.Alias(),
 		"endpoint":   endpoint,
 		"state":      localNode.State().String(),
+		"started":    startTime.String(),
 		"validators": localNode.GetValidators(),
 	}
 

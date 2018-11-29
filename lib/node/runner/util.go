@@ -107,6 +107,7 @@ func NewNodeInfo(nr *NodeRunner) node.NodeInfo {
 
 	nd := node.NodeInfoNode{
 		Version:    nv,
+		Started:    startTime.String(),
 		State:      localNode.State(),
 		Alias:      localNode.Alias(),
 		Address:    localNode.Address(),

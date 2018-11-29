@@ -15,6 +15,7 @@ type NodeInfo struct {
 
 type NodeInfoNode struct {
 	Version    NodeVersion           `json:"version"`
+	Started    string                `json:"started"`
 	State      State                 `json:"state"`
 	Alias      string                `json:"alias"`
 	Address    string                `json:"address"`
