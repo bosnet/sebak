@@ -54,5 +54,5 @@ func (o Operation) Resource() *hal.Resource {
 }
 
 func (o Operation) LinkSelf() string {
-	return strings.Replace(URLOperations, "{id}", o.bo.Hash, -1)
+	return ""
 }
