@@ -78,6 +78,32 @@ func TestGetOperationsByAccountHandler(t *testing.T) {
 	}
 }
 
+func TestGetOperationsByHashHandler(t *testing.T) {
+	ts, storage := prepareAPIServer()
+	defer storage.Close()
+	defer ts.Close()
+
+	_, _, boList := prepareOps(storage, 10)
+
+	for idx := 0; idx < 10; idx++ {
+		url := strings.Replace(GetOperationByHashHandlerPattern, "{id}", boList[idx].Hash, -1)
+		// Do a Request for source account
+		{
+			respBody := request(ts, url, false)
+			defer respBody.Close()
+			reader := bufio.NewReader(respBody)
+			readByte, err := ioutil.ReadAll(reader)
+			require.NoError(t, err)
+
+			bo := make(map[string]interface{})
+			common.MustUnmarshalJSON(readByte, &bo)
+			hash := bo["hash"].(string)
+
+			require.Equal(t, hash, boList[idx].Hash, "hash is not same")
+		}
+	}
+}
+
 func TestGetOperationsByAccountHandlerWithType(t *testing.T) {
 	ts, storage := prepareAPIServer()
 	defer storage.Close()

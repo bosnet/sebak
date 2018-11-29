@@ -12,6 +12,35 @@ import (
 	"boscoin.io/sebak/lib/transaction/operation"
 )
 
+func (api NetworkHandlerAPI) GetOperationsByHashHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	hash := vars["id"]
+
+	readFunc := func() (payload interface{}, err error) {
+		found, err := block.ExistsBlockOperation(api.storage, hash)
+		if err != nil {
+			return nil, err
+		}
+		if !found {
+			return nil, errors.BlockOperationDoesNotExists
+		}
+		bo, err := block.GetBlockOperation(api.storage, hash)
+		if err != nil {
+			return nil, err
+		}
+		payload = resource.NewOperation(&bo)
+		return payload, nil
+	}
+
+	payload, err := readFunc()
+	if err != nil {
+		httputils.WriteJSONError(w, err)
+		return
+	}
+
+	httputils.MustWriteJSON(w, 200, payload)
+}
+
 func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	address := vars["id"]
