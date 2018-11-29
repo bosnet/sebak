@@ -18,6 +18,20 @@ type IterItem struct {
 	Value []byte
 }
 
+func (i IterItem) Clone() IterItem {
+	k := make([]byte, len(i.Key))
+	copy(k, i.Key)
+
+	v := make([]byte, len(i.Value))
+	copy(v, i.Value)
+
+	return IterItem{
+		N:     i.N,
+		Key:   k,
+		Value: v,
+	}
+}
+
 type Item struct {
 	Key   string
 	Value interface{}

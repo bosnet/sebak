@@ -65,6 +65,7 @@ var (
 	flagValidators                 string = common.GetENVValue("SEBAK_VALIDATORS", "")
 	flagVerbose                    bool   = common.GetENVValue("SEBAK_VERBOSE", "0") == "1"
 	flagCongressAddress            string = common.GetENVValue("SEBAK_CONGRESS_ADDR", "")
+	flagJSONRPCBindURL             string = common.GetENVValue("SEBAK_JSONRPC_BIND", common.DefaultJSONRPCBindURL)
 
 	flagRateLimitAPI        cmdcommon.ListFlags // "SEBAK_RATE_LIMIT_API"
 	flagRateLimitNode       cmdcommon.ListFlags // "SEBAK_RATE_LIMIT_NODE"
@@ -110,6 +111,7 @@ var (
 	txPoolClientLimit       uint64
 	txPoolNodeLimit         uint64
 	syncCheckPrevBlock      time.Duration
+	jsonrpcbindEndpoint     *common.Endpoint
 
 	logLevel logging.Lvl
 	log      logging.Logger = logging.New("module", "main")
@@ -152,7 +154,7 @@ func init() {
 				// shut down the HTTP server correctly, we get an error,
 				// and we need the binary to exit with a successfull error code for
 				// code coverage in integration test to work.
-				log.Error("Node exited with error: ", err)
+				log.Error("Node exited with error", "error", err)
 			}
 		},
 	}
@@ -176,6 +178,7 @@ func init() {
 	nodeCmd.Flags().StringVar(&flagHTTPLog, "http-log", flagHTTPLog, "set log file for HTTP request")
 	nodeCmd.Flags().BoolVar(&flagVerbose, "verbose", flagVerbose, "verbose")
 	nodeCmd.Flags().StringVar(&flagBindURL, "bind", flagBindURL, "bind to listen on")
+	nodeCmd.Flags().StringVar(&flagJSONRPCBindURL, "jsonrpc-bind", flagJSONRPCBindURL, "bind to listen on for jsonrpc")
 	nodeCmd.Flags().StringVar(&flagPublishURL, "publish", flagPublishURL, "endpoint url for other nodes")
 	nodeCmd.Flags().StringVar(&flagStorageConfigString, "storage", flagStorageConfigString, "storage uri")
 	nodeCmd.Flags().StringVar(&flagTLSCertFile, "tls-cert", flagTLSCertFile, "tls certificate file")
@@ -346,6 +349,30 @@ func parseFlagsNode() {
 		*publishEndpoint = *bindEndpoint
 		publishEndpoint.Host = fmt.Sprintf("localhost:%s", publishEndpoint.Port())
 		flagPublishURL = publishEndpoint.String()
+	}
+
+	if len(flagJSONRPCBindURL) > 0 { // jsonrpc
+		if p, err := common.ParseEndpoint(flagJSONRPCBindURL); err != nil {
+			cmdcommon.PrintFlagsError(nodeCmd, "--jsonrpc-bind", err)
+		} else {
+			jsonrpcbindEndpoint = p
+			flagJSONRPCBindURL = jsonrpcbindEndpoint.String()
+		}
+
+		if strings.ToLower(jsonrpcbindEndpoint.Scheme) == "https" {
+			if _, err = os.Stat(flagTLSCertFile); os.IsNotExist(err) {
+				cmdcommon.PrintFlagsError(nodeCmd, "--tls-cert", err)
+			}
+			if _, err = os.Stat(flagTLSKeyFile); os.IsNotExist(err) {
+				cmdcommon.PrintFlagsError(nodeCmd, "--tls-key", err)
+			}
+		}
+
+		queries := jsonrpcbindEndpoint.Query()
+		queries.Add("TLSCertFile", flagTLSCertFile)
+		queries.Add("TLSKeyFile", flagTLSKeyFile)
+		queries.Add("IdleTimeout", "3s")
+		jsonrpcbindEndpoint.RawQuery = queries.Encode()
 	}
 
 	if validators, err = parseFlagValidators(flagValidators); err != nil {
@@ -519,6 +546,7 @@ func parseFlagsNode() {
 	parsedFlags := []interface{}{}
 	parsedFlags = append(parsedFlags, "\n\tnetwork-id", flagNetworkID)
 	parsedFlags = append(parsedFlags, "\n\tbind", flagBindURL)
+	parsedFlags = append(parsedFlags, "\n\tjsonrpc-bind", flagJSONRPCBindURL)
 	parsedFlags = append(parsedFlags, "\n\tpublish", flagPublishURL)
 	parsedFlags = append(parsedFlags, "\n\tstorage", flagStorageConfigString)
 	parsedFlags = append(parsedFlags, "\n\ttls-cert", flagTLSCertFile)
@@ -652,6 +680,7 @@ func runNode() error {
 		CongressAccountAddress: flagCongressAddress,
 		TxPoolClientLimit:      int(txPoolClientLimit),
 		TxPoolNodeLimit:        int(txPoolNodeLimit),
+		JSONRPCEndpoint:        jsonrpcbindEndpoint,
 	}
 	st, err := storage.NewStorage(storageConfig)
 	if err != nil {
