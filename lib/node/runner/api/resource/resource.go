@@ -37,12 +37,8 @@ func (l ResourceList) Resource() *hal.Resource {
 	}
 	rl.EmbedCollection("records", rCollection)
 
-	if l.LinkPrev() != "" {
-		rl.AddLink("prev", hal.NewLink(l.LinkPrev())) //TODO: set prev/next url
-	}
-	if l.LinkNext() != "" {
-		rl.AddLink("next", hal.NewLink(l.LinkNext()))
-	}
+	rl.AddLink("prev", hal.NewLink(l.LinkPrev())) //TODO: set prev/next url
+	rl.AddLink("next", hal.NewLink(l.LinkNext()))
 
 	return rl
 }
