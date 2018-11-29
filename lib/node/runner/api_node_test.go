@@ -195,26 +195,6 @@ func TestHTTP2NetworkMessageBrokerResponseMessage(t *testing.T) {
 	require.Equal(t, string(returnMsg), "ResponseMessage", "The connectNode and the return should be the same.")
 }
 
-func TestHTTP2NetworkConnect(t *testing.T) {
-	_, s0, nodeRunner := createNewHTTP2Network(t)
-	s0.SetMessageBroker(&TestMessageBroker{network: s0})
-	nodeRunner.Ready()
-
-	go nodeRunner.Start()
-	defer nodeRunner.Stop()
-
-	c0 := s0.GetClient(s0.Endpoint())
-	pingAndWait(t, c0)
-
-	o, _ := nodeRunner.Node().Serialize()
-	nodeStr := removeWhiteSpaces(string(o))
-
-	returnMsg, _ := c0.Connect(nodeRunner.Node())
-	returnStr := removeWhiteSpaces(string(returnMsg))
-
-	require.Equal(t, returnStr, nodeStr, "The connectNode and the return should be the same.")
-}
-
 // TestGetNodeInfoHandler checks `NodeInfoHandler`
 func TestGetNodeInfoHandler(t *testing.T) {
 	st := storage.NewTestStorage()
