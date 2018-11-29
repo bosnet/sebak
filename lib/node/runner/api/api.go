@@ -19,22 +19,22 @@ const APIVersionV1 = "v1"
 
 // API Endpoint patterns
 const (
-	GetAccountTransactionsHandlerPattern      = "/accounts/{id}/transactions"
-	GetAccountHandlerPattern                  = "/accounts/{id}"
-	GetAccountsHandlerPattern                 = "/accounts"
-	GetAccountOperationsHandlerPattern        = "/accounts/{id}/operations"
-	GetAccountFrozenAccountHandlerPattern     = "/accounts/{id}/frozen-accounts"
-	GetFrozenAccountHandlerPattern            = "/frozen-accounts"
-	GetTransactionsHandlerPattern             = "/transactions"
-	GetTransactionByHashHandlerPattern        = "/transactions/{id}"
-	GetTransactionOperationsHandlerPattern    = "/transactions/{id}/operations"
-	GetTransactionStatusHandlerPattern        = "/transactions/{id}/status"
-	PostTransactionPattern                    = "/transactions"
-	GetOperationByTxHashOpIndexHandlerPattern = "/transactions/{txhash}/operations/{opindex}"
-	GetBlocksHandlerPattern                   = "/blocks"
-	GetBlockHandlerPattern                    = "/blocks/{hashOrHeight}"
-	GetNodeInfoPattern                        = "/"
-	PostSubscribePattern                      = "/subscribe"
+	GetAccountTransactionsHandlerPattern   = "/accounts/{id}/transactions"
+	GetAccountHandlerPattern               = "/accounts/{id}"
+	GetAccountsHandlerPattern              = "/accounts"
+	GetAccountOperationsHandlerPattern     = "/accounts/{id}/operations"
+	GetAccountFrozenAccountHandlerPattern  = "/accounts/{id}/frozen-accounts"
+	GetFrozenAccountHandlerPattern         = "/frozen-accounts"
+	GetTransactionsHandlerPattern          = "/transactions"
+	GetTransactionByHashHandlerPattern     = "/transactions/{id}"
+	GetTransactionOperationsHandlerPattern = "/transactions/{id}/operations"
+	GetTransactionOperationHandlerPattern  = "/transactions/{id}/operations/{opindex}"
+	GetTransactionStatusHandlerPattern     = "/transactions/{id}/status"
+	PostTransactionPattern                 = "/transactions"
+	GetBlocksHandlerPattern                = "/blocks"
+	GetBlockHandlerPattern                 = "/blocks/{hashOrHeight}"
+	GetNodeInfoPattern                     = "/"
+	PostSubscribePattern                   = "/subscribe"
 )
 
 type NetworkHandlerAPI struct {
@@ -120,9 +120,6 @@ func renderEventStream(args ...interface{}) ([]byte, error) {
 	switch v := i.(type) {
 	case *block.BlockAccount:
 		r := resource.NewAccount(v)
-		return json.Marshal(r.Resource())
-	case *block.BlockOperation:
-		r := resource.NewOperation(v)
 		return json.Marshal(r.Resource())
 	case *block.BlockTransaction:
 		r := resource.NewTransaction(v)

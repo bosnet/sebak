@@ -92,7 +92,7 @@ func TestGetOperationsByHashHandler(t *testing.T) {
 	}
 
 	for idx := 0; idx < 10; idx++ {
-		url := strings.Replace(GetOperationByTxHashOpIndexHandlerPattern, "{txhash}", bt.Hash, -1)
+		url := strings.Replace(GetTransactionOperationHandlerPattern, "{id}", bt.Hash, -1)
 		url = strings.Replace(url, "{opindex}", fmt.Sprintf("%d", idx), -1)
 		// Do a Request for source account
 		{

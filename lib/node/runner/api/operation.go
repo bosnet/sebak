@@ -15,7 +15,7 @@ import (
 
 func (api NetworkHandlerAPI) GetOperationsByTxHashOpIndexHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	txHash := vars["txhash"]
+	txHash := vars["id"]
 	opIndex := vars["opindex"]
 
 	opIndexInt, err := strconv.Atoi(opIndex)
@@ -36,7 +36,7 @@ func (api NetworkHandlerAPI) GetOperationsByTxHashOpIndexHandler(w http.Response
 		if err != nil {
 			return nil, err
 		}
-		payload = resource.NewOperation(&bo)
+		payload = resource.NewOperation(&bo, opIndexInt)
 		return payload, nil
 	}
 
@@ -67,12 +67,20 @@ func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter
 		return
 	}
 
+	if found, err := block.ExistsBlockAccount(api.storage, address); err != nil {
+		httputils.WriteJSONError(w, err)
+		return
+	} else if !found {
+		httputils.WriteJSONError(w, errors.BlockAccountDoesNotExists)
+		return
+	}
+
+	var txs []resource.Resource
 	blockCache := map[ /* block.Height */ uint64]*block.Block{}
 	oType := operation.OperationType(oTypeStr)
 	var firstCursor []byte
 	var lastCursor []byte
-	readFunc := func() []resource.Resource {
-		var txs []resource.Resource
+	{
 
 		var iterFunc func() (block.BlockOperation, bool, []byte)
 		var closeFunc func()
@@ -101,24 +109,24 @@ func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter
 					blk = &blk0
 				}
 			}
-
-			r := resource.NewOperation(&t)
+			//GetOperationIndex
+			bt, err := block.GetBlockTransaction(api.storage, t.TxHash)
+			if err != nil {
+				httputils.WriteJSONError(w, err)
+				return
+			}
+			opIndex, err := bt.GetOperationIndex(t.Hash)
+			if err != nil {
+				httputils.WriteJSONError(w, err)
+				return
+			}
+			r := resource.NewOperation(&t, opIndex)
 			r.Block = blk
 			txs = append(txs, r)
 		}
 		closeFunc()
-		return txs
 	}
 
-	if found, err := block.ExistsBlockAccount(api.storage, address); err != nil {
-		httputils.WriteJSONError(w, err)
-		return
-	} else if !found {
-		httputils.WriteJSONError(w, errors.BlockAccountDoesNotExists)
-		return
-	}
-
-	txs := readFunc()
 	list := p.ResourceList(txs, firstCursor, lastCursor)
 	httputils.MustWriteJSON(w, 200, list)
 }

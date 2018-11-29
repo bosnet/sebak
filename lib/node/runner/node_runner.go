@@ -308,7 +308,7 @@ func (nr *NodeRunner) Ready() {
 		listCache.WrapHandlerFunc(apiHandler.GetTransactionsByAccountHandler),
 	).Methods("GET", "OPTIONS")
 	nr.network.AddHandler(
-		apiHandler.HandlerURLPattern(api.GetOperationByTxHashOpIndexHandlerPattern),
+		apiHandler.HandlerURLPattern(api.GetTransactionOperationHandlerPattern),
 		listCache.WrapHandlerFunc(apiHandler.GetOperationsByTxHashOpIndexHandler),
 	).Methods("GET", "OPTIONS")
 	nr.network.AddHandler(

@@ -216,6 +216,20 @@ func (bt *BlockTransaction) SaveBlockOperation(st *storage.LevelDBBackend, op op
 	return nil
 }
 
+//TODO: This function is no longer required when Index for operation is applied
+func (bt *BlockTransaction) GetOperationIndex(opHash string) (opIndex int, err error) {
+	opIndex = -1
+	for i, op := range bt.Operations {
+		if op == opHash {
+			opIndex = i
+		}
+	}
+	if opIndex <= -1 {
+		err = errors.OperationNotFound
+	}
+	return
+}
+
 func GetBlockTransactionKeyPrefixSource(source string) string {
 	return fmt.Sprintf("%s%s-", common.BlockTransactionPrefixSource, source)
 }

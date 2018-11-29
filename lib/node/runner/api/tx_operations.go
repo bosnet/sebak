@@ -47,7 +47,7 @@ func (api NetworkHandlerAPI) GetOperationsByTxHashHandler(w http.ResponseWriter,
 
 func (api NetworkHandlerAPI) getOperationsByTxHash(txHash string, blk *block.Block, options storage.ListOptions) (txs []resource.Resource, firstCursor, cursor []byte) {
 	iterFunc, closeFunc := block.GetBlockOperationsByTxHash(api.storage, txHash, options)
-	for {
+	for idx := 0; ; idx++ {
 		o, hasNext, c := iterFunc()
 		if !hasNext {
 			break
@@ -57,7 +57,7 @@ func (api NetworkHandlerAPI) getOperationsByTxHash(txHash string, blk *block.Blo
 			firstCursor = append(firstCursor, c...)
 		}
 
-		rs := resource.NewOperation(&o)
+		rs := resource.NewOperation(&o, idx)
 		rs.Block = blk
 		txs = append(txs, rs)
 	}
