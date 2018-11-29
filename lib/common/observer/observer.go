@@ -16,7 +16,6 @@ type KeyTy = string
 const (
 	Tx     ResourceTy = "tx"
 	TxPool            = "txpool"
-	Op                = "op"
 	Acc               = "acc"
 )
 
@@ -24,8 +23,6 @@ const (
 	All     KeyTy = "*"
 	Source        = "source"
 	Target        = "target"
-	Type          = "type"
-	OpHash        = "ophash"
 	TxHash        = "txhash"
 	Address       = "address"
 )
