@@ -35,6 +35,12 @@ func WithEncodePageCursor(ok bool) PageQueryOption {
 	}
 }
 
+func WithDefaultReverse(ok bool) PageQueryOption {
+	return func(p *PageQuery) {
+		p.reverse = ok
+	}
+}
+
 func NewPageQuery(r *http.Request, opts ...PageQueryOption) (*PageQuery, error) {
 	p := &PageQuery{
 		request:        r,
