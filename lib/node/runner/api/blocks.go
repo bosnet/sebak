@@ -18,34 +18,34 @@ func (api NetworkHandlerAPI) GetBlocksHandler(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	var (
-		firstHeight uint64
-		lastHeight  uint64
-		blocks      []resource.Resource
-	)
-
+	var currHeight uint64
 	var option *storage.WalkOption
 	{
 		var cursor string
 		if p.Cursor() != nil {
-			height, err := strconv.ParseUint(string(p.Cursor()), 10, 64)
+			var err error
+			currHeight, err = strconv.ParseUint(string(p.Cursor()), 10, 64)
 			if err != nil {
 				httputils.WriteJSONError(w, errors.BadRequestParameter)
 				return
 			}
-			cursor = block.GetBlockKeyPrefixHeight(height)
+			cursor = block.GetBlockKeyPrefixHeight(currHeight)
 		}
 		option = storage.NewWalkOption(cursor, p.Limit(), p.Reverse())
 	}
 
+	var (
+		firstHeight uint64 = currHeight
+		lastHeight  uint64 = currHeight
+		blocks      []resource.Resource
+	)
 	{
 		var cnt uint64 = 1
 		err := block.WalkBlocks(api.storage, option, func(b *block.Block, key []byte) (next bool, err error) {
-			if cnt >= p.Limit() {
-				lastHeight = b.Height
-			} else if cnt == 1 {
+			if cnt == 1 {
 				firstHeight = b.Height
 			}
+			lastHeight = b.Height
 			blocks = append(blocks, resource.NewBlock(b))
 			cnt++
 			return true, nil
@@ -60,6 +60,12 @@ func (api NetworkHandlerAPI) GetBlocksHandler(w http.ResponseWriter, r *http.Req
 		prevCursor []byte
 		nextCursor []byte
 	)
+	if firstHeight <= 0 {
+		firstHeight = 1
+	}
+	if lastHeight <= 0 {
+		lastHeight = 1
+	}
 	switch p.Reverse() {
 	case true:
 		firstHeight = firstHeight + 1
