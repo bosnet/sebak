@@ -35,6 +35,8 @@ type Config struct {
 
 	CongressAccountAddress string
 	CommonAccountAddress   string
+
+	JSONRPCEndpoint *Endpoint
 }
 
 func NewConfig(networkID []byte) Config {
