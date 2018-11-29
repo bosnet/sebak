@@ -15,7 +15,7 @@ A page containts an embedded set of `records`, regardless of the contained resou
 |        | Example                                                |  Relation                          | 
 |--------|--------------------------------------------------------|------------------------------------|
 | Self   | `/transactions`                                        |                                    | 
-| Prev   | `/transactions?cursor={cursor}&reverse=false&limit=10` | The prevuous page of results       |
-| Next   | `/transactions?cursor={cursor}&reverse=true&limit=19`  | The next page of results           |
+| Prev   | `/transactions?cursor={cursor}&reverse=true&limit=10`  | The previous page of results       |
+| Next   | `/transactions?cursor={cursor}&reverse=false&limit=10` | The next page of results           |
 
 
