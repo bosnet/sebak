@@ -34,13 +34,14 @@ type BlockOperation struct {
 	operation   operation.Operation
 	linked      string
 	isSaved     bool
+	opIndex     int
 }
 
 func NewBlockOperationKey(opHash, txHash string) string {
 	return fmt.Sprintf("%s-%s", opHash, txHash)
 }
 
-func NewBlockOperationFromOperation(op operation.Operation, tx transaction.Transaction, blockHeight uint64) (BlockOperation, error) {
+func NewBlockOperationFromOperation(op operation.Operation, tx transaction.Transaction, blockHeight uint64, opIndex int) (BlockOperation, error) {
 	body, err := op.B.Serialize()
 	if err != nil {
 		return BlockOperation{}, err
@@ -76,6 +77,7 @@ func NewBlockOperationFromOperation(op operation.Operation, tx transaction.Trans
 		transaction: tx,
 		operation:   op,
 		linked:      linked,
+		opIndex:     opIndex,
 	}, nil
 }
 
@@ -312,6 +314,29 @@ func GetBlockOperation(st *storage.LevelDBBackend, hash string) (bo BlockOperati
 	}
 
 	bo.isSaved = true
+	return
+}
+
+func GetBlockOperationWithIndex(st *storage.LevelDBBackend, hash string, opIndex int) (bo BlockOperation, err error) {
+
+	var found = false
+	iterFunc, closeFunc := GetBlockOperationsByTxHash(st, hash, nil)
+	for idx := 0; idx <= opIndex; idx++ {
+
+		o, hasNext, _ := iterFunc()
+		if !hasNext {
+			break
+		}
+		if idx == opIndex {
+			found = true
+			bo = o
+			break
+		}
+	}
+	if !found {
+		err = errors.OperationNotFound
+	}
+	closeFunc()
 	return
 }
 

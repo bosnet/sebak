@@ -5,6 +5,7 @@ import (
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/transaction/operation"
 	"bufio"
+	"fmt"
 	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"strings"
@@ -83,10 +84,16 @@ func TestGetOperationsByHashHandler(t *testing.T) {
 	defer storage.Close()
 	defer ts.Close()
 
-	_, _, boList := prepareOps(storage, 10)
+	_, _, bt := prepareTxWithOperations(storage, 10)
+
+	var boHashList []string
+	for _, opHash := range bt.Operations {
+		boHashList = append(boHashList, opHash)
+	}
 
 	for idx := 0; idx < 10; idx++ {
-		url := strings.Replace(GetOperationByHashHandlerPattern, "{id}", boList[idx].Hash, -1)
+		url := strings.Replace(GetOperationByTxHashOpIndexHandlerPattern, "{txhash}", bt.Hash, -1)
+		url = strings.Replace(url, "{opindex}", fmt.Sprintf("%d", idx), -1)
 		// Do a Request for source account
 		{
 			respBody := request(ts, url, false)
@@ -99,7 +106,7 @@ func TestGetOperationsByHashHandler(t *testing.T) {
 			common.MustUnmarshalJSON(readByte, &bo)
 			hash := bo["hash"].(string)
 
-			require.Equal(t, hash, boList[idx].Hash, "hash is not same")
+			require.Equal(t, hash, boHashList[idx], "hash is not same")
 		}
 	}
 }

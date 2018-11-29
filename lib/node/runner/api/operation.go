@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 
@@ -12,19 +13,26 @@ import (
 	"boscoin.io/sebak/lib/transaction/operation"
 )
 
-func (api NetworkHandlerAPI) GetOperationsByHashHandler(w http.ResponseWriter, r *http.Request) {
+func (api NetworkHandlerAPI) GetOperationsByTxHashOpIndexHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	hash := vars["id"]
+	txHash := vars["txhash"]
+	opIndex := vars["opindex"]
+
+	opIndexInt, err := strconv.Atoi(opIndex)
+	if err != nil {
+		httputils.WriteJSONError(w, err)
+		return
+	}
 
 	readFunc := func() (payload interface{}, err error) {
-		found, err := block.ExistsBlockOperation(api.storage, hash)
+		found, err := block.ExistsBlockTransaction(api.storage, txHash)
 		if err != nil {
 			return nil, err
 		}
 		if !found {
-			return nil, errors.BlockOperationDoesNotExists
+			return nil, errors.BlockTransactionDoesNotExists
 		}
-		bo, err := block.GetBlockOperation(api.storage, hash)
+		bo, err := block.GetBlockOperationWithIndex(api.storage, txHash, opIndexInt)
 		if err != nil {
 			return nil, err
 		}

@@ -29,7 +29,7 @@ func prepareAPIServer() (*httptest.Server, *storage.LevelDBBackend) {
 	router.HandleFunc(GetAccountsHandlerPattern, apiHandler.GetAccountsHandler).Methods("POST")
 	router.HandleFunc(GetAccountTransactionsHandlerPattern, apiHandler.GetTransactionsByAccountHandler).Methods("GET")
 	router.HandleFunc(GetAccountOperationsHandlerPattern, apiHandler.GetOperationsByAccountHandler).Methods("GET")
-	router.HandleFunc(GetOperationByHashHandlerPattern, apiHandler.GetOperationsByHashHandler).Methods("GET")
+	router.HandleFunc(GetOperationByTxHashOpIndexHandlerPattern, apiHandler.GetOperationsByTxHashOpIndexHandler).Methods("GET")
 	router.HandleFunc(GetTransactionsHandlerPattern, apiHandler.GetTransactionsHandler).Methods("GET")
 	router.HandleFunc(GetTransactionByHashHandlerPattern, apiHandler.GetTransactionByHashHandler).Methods("GET")
 	router.HandleFunc(GetTransactionStatusHandlerPattern, apiHandler.GetTransactionStatusByHashHandler).Methods("GET")
@@ -39,6 +39,20 @@ func prepareAPIServer() (*httptest.Server, *storage.LevelDBBackend) {
 	router.HandleFunc(PostSubscribePattern, apiHandler.PostSubscribeHandler).Methods("POST")
 	ts := httptest.NewServer(router)
 	return ts, storage
+}
+
+func prepareTxsOps(storage *storage.LevelDBBackend, count int) (*keypair.Full, *keypair.Full, []block.BlockTransaction, []block.BlockOperation) {
+	kp, kpTarget, btList := prepareTxs(storage, count)
+	var boList []block.BlockOperation
+	for _, bt := range btList {
+		bo, err := block.GetBlockOperation(storage, bt.Operations[0])
+		if err != nil {
+			panic(err)
+		}
+		boList = append(boList, bo)
+	}
+
+	return kp, kpTarget, btList, boList
 }
 
 func prepareOps(storage *storage.LevelDBBackend, count int) (*keypair.Full, *keypair.Full, []block.BlockOperation) {
@@ -67,8 +81,8 @@ func prepareOpsWithoutSave(count int, st *storage.LevelDBBackend) (*keypair.Full
 
 	theBlock := block.TestMakeNewBlockWithPrevBlock(block.GetLatestBlock(st), txHashes)
 	for _, tx := range txs {
-		for _, op := range tx.B.Operations {
-			bo, err := block.NewBlockOperationFromOperation(op, tx, theBlock.Height)
+		for i, op := range tx.B.Operations {
+			bo, err := block.NewBlockOperationFromOperation(op, tx, theBlock.Height, i)
 			if err != nil {
 				panic(err)
 			}
@@ -88,7 +102,7 @@ func prepareBlkTxOpWithoutSave(st *storage.LevelDBBackend) (*keypair.Full, block
 	bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, theBlock.Height, theBlock.ProposedTime, tx)
 
 	op := tx.B.Operations[0]
-	bo, err := block.NewBlockOperationFromOperation(op, tx, theBlock.Height)
+	bo, err := block.NewBlockOperationFromOperation(op, tx, theBlock.Height, 0)
 	if err != nil {
 		panic(err)
 	}
@@ -127,6 +141,21 @@ func prepareTxsWithKeyPair(storage *storage.LevelDBBackend, source, target *keyp
 
 func prepareTxs(storage *storage.LevelDBBackend, count int) (*keypair.Full, *keypair.Full, []block.BlockTransaction) {
 	return prepareTxsWithKeyPair(storage, nil, nil, count)
+}
+
+func prepareTxWithOperations(storage *storage.LevelDBBackend, count int) (*keypair.Full, *keypair.Full, block.BlockTransaction) {
+	source := keypair.Random()
+	target := keypair.Random()
+	tx := transaction.TestMakeTransactionWithKeypair(networkID, count, source, target)
+
+	theBlock := block.TestMakeNewBlockWithPrevBlock(block.GetLatestBlock(storage), []string{tx.GetHash()})
+	theBlock.MustSave(storage)
+	bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, theBlock.Height, theBlock.ProposedTime, tx)
+	bt.Save(storage)
+	if err := bt.SaveBlockOperations(storage); err != nil {
+		panic(err)
+	}
+	return source, target, bt
 }
 
 func prepareTxsWithoutSave(count int, st *storage.LevelDBBackend) (*keypair.Full, []block.BlockTransaction) {
