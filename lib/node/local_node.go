@@ -78,6 +78,10 @@ func (n *LocalNode) SetSync() {
 	n.state = StateSYNC
 }
 
+func (n *LocalNode) SetWatch() {
+	n.state = StateWATCH
+}
+
 func (n *LocalNode) Address() string {
 	return n.keypair.Address()
 }

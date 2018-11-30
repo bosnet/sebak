@@ -12,7 +12,7 @@ import (
 )
 
 func (api NetworkHandlerAPI) GetBlocksHandler(w http.ResponseWriter, r *http.Request) {
-	p, err := NewPageQuery(r, WithEncodePageCursor(false))
+	p, err := NewPageQuery(r, WithEncodePageCursor(false), WithDefaultReverse(true))
 	if err != nil {
 		httputils.WriteJSONError(w, err)
 		return

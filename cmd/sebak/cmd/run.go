@@ -79,6 +79,9 @@ var (
 	flagTransactionsLimit       string = common.GetENVValue("SEBAK_TRANSACTIONS_LIMIT", strconv.Itoa(common.DefaultTransactionsInBallotLimit))
 	flagOperationsInBallotLimit string = common.GetENVValue("SEBAK_OPERATIONS_IN_BALLOT_LIMIT", strconv.Itoa(common.DefaultOperationsInBallotLimit))
 	flagTxPoolLimit             string = common.GetENVValue("SEBAK_TX_POOL_LIMIT", strconv.Itoa(common.DefaultTxPoolLimit))
+
+	flagWatcherMode   bool   = common.GetENVValue("SEBAK_WATCHER_MODE", "0") == "1"
+	flagWatchInterval string = common.GetENVValue("SEBAK_WATCH_INTERVAL", "5s")
 )
 
 var (
@@ -112,6 +115,7 @@ var (
 	txPoolNodeLimit         uint64
 	syncCheckPrevBlock      time.Duration
 	jsonrpcbindEndpoint     *common.Endpoint
+	watchInterval           time.Duration
 
 	logLevel logging.Lvl
 	log      logging.Logger = logging.New("module", "main")
@@ -220,6 +224,8 @@ func init() {
 	nodeCmd.Flags().StringVar(&flagHTTPCacheRedisAddrs, "http-cache-redis-addrs", flagHTTPCacheRedisAddrs, "http cache redis address")
 
 	nodeCmd.Flags().StringVar(&flagCongressAddress, "set-congress-address", flagCongressAddress, "set congress address")
+	nodeCmd.Flags().BoolVar(&flagWatcherMode, "watcher-mode", flagWatcherMode, "watcher mode")
+	nodeCmd.Flags().StringVar(&flagWatchInterval, "watch-interval", flagWatchInterval, "watch interval")
 
 	rootCmd.AddCommand(nodeCmd)
 }
@@ -444,6 +450,7 @@ func parseFlagsNode() {
 	syncFetchTimeout = getTimeDuration(flagSyncFetchTimeout, sync.FetchTimeout, "--sync-fetch-timeout")
 	syncCheckInterval = getTimeDuration(flagSyncCheckInterval, sync.CheckBlockHeightInterval, "--sync-check-interval")
 	syncCheckPrevBlock = getTimeDuration(flagSyncCheckPrevBlockInterval, sync.CheckPrevBlockInterval, "--sync-check-prevblock")
+	watchInterval = getTimeDuration(flagWatchInterval, sync.WatchInterval, "--watch-interval")
 
 	{
 		if ok := common.HTTPCacheAdapterNames[flagHTTPCacheAdapter]; !ok {
@@ -570,6 +577,10 @@ func parseFlagsNode() {
 	parsedFlags = append(parsedFlags, "\n\thttp-cache-adapter", httpCacheAdapter)
 	parsedFlags = append(parsedFlags, "\n\thttp-cache-pool-size", httpCachePoolSize)
 
+	if flagWatcherMode {
+		parsedFlags = append(parsedFlags, "\n\twatcher-mode", flagWatcherMode)
+	}
+
 	// create current Node
 	localNode, err = node.NewLocalNode(kp, bindEndpoint, "")
 	if err != nil {
@@ -681,6 +692,7 @@ func runNode() error {
 		TxPoolClientLimit:      int(txPoolClientLimit),
 		TxPoolNodeLimit:        int(txPoolNodeLimit),
 		JSONRPCEndpoint:        jsonrpcbindEndpoint,
+		WatcherMode:            flagWatcherMode,
 	}
 	st, err := storage.NewStorage(storageConfig)
 	if err != nil {
@@ -696,6 +708,7 @@ func runNode() error {
 	c.RetryInterval = syncRetryInterval
 	c.CheckBlockHeightInterval = syncCheckInterval
 	c.CheckPrevBlockInterval = syncCheckPrevBlock
+	c.WatchInterval = watchInterval
 
 	syncer := c.NewSyncer()
 
@@ -731,6 +744,16 @@ func runNode() error {
 		}, func(error) {
 			syncer.Stop()
 		})
+	}
+	{
+		if flagWatcherMode == true {
+			watcher := c.NewWatcher(syncer)
+			g.Add(func() error {
+				return watcher.Start()
+			}, func(error) {
+				watcher.Stop()
+			})
+		}
 	}
 	{
 		cancel := make(chan struct{})

@@ -108,6 +108,14 @@ var HandleTransactionCheckerFuncsWithoutBroadcast = []common.CheckerFunc{
 	PushIntoTransactionPoolFromNode,
 }
 
+var HandleTransactionCheckerForWatcherFuncs = []common.CheckerFunc{
+	TransactionUnmarshal,
+	HasTransaction,
+	MessageHasSameSource,
+	MessageValidate,
+	BroadcastTransactionFromWatcher,
+}
+
 func (api NetworkHandlerNode) ReceiveTransaction(body []byte, funcs []common.CheckerFunc) (transaction.Transaction, error) {
 	message := common.NetworkMessage{Type: common.TransactionMessage, Data: body}
 	checker := &MessageChecker{
