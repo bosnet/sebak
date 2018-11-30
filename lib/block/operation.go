@@ -3,6 +3,7 @@ package block
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/errors"
@@ -41,7 +42,7 @@ type BlockOperation struct {
 }
 
 func NewBlockOperationKey(opHash, txHash string, index uint64) string {
-	return fmt.Sprintf("%s-%s-%d", opHash, txHash, index)
+	return common.MustMakeObjectHashString([]string{opHash, txHash, strconv.FormatUint(index, 10)})
 }
 
 func NewBlockOperationFromOperation(op operation.Operation, tx transaction.Transaction, blockHeight uint64, txIndex uint64, opIndex int) (BlockOperation, error) {
@@ -192,7 +193,7 @@ func keyPrefixSourceAndType(source string, ty operation.OperationType) string {
 }
 
 func keyPrefixBlockHeight(height uint64) string {
-	return fmt.Sprintf("%s%s-", common.BlockOperationPrefixBlockHeight, common.EncodeUint64ToByteSlice(height))
+	return fmt.Sprintf("%s%s-", common.BlockOperationPrefixBlockHeight, common.EncodeUint64ToString(height))
 }
 
 func keyPrefixTarget(target string) string {
