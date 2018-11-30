@@ -48,7 +48,7 @@ require (
 	github.com/ulule/limiter v2.2.0+incompatible
 	github.com/vmihailenco/msgpack v4.0.1+incompatible
 	golang.org/x/net v0.0.0-20180420171651-5f9ae10d9af5
-	golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f // indirect
+	golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f
 	golang.org/x/sys v0.0.0-20180501092740-78d5f264b493 // indirect
 	golang.org/x/text v0.3.0 // indirect
 	gopkg.in/fsnotify.v1 v1.4.7 // indirect
