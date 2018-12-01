@@ -136,9 +136,10 @@ func (sb *SavingBlockOperations) check(lastBlock uint64) (err error) {
 errorCheck:
 	for {
 		select {
-		case err = <-errChan:
+		case e := <-errChan:
 			errs++
-			if err != nil {
+			if e != nil {
+				err = e
 				break errorCheck
 			}
 			if errs == lastBlock-1 {
