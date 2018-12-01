@@ -47,6 +47,11 @@ func (sb *SavingBlockOperations) getNextBlock(height uint64) (nextBlock block.Bl
 
 func (sb *SavingBlockOperations) Check() (err error) {
 	sb.log.Debug("start to check")
+
+	defer func() {
+		sb.log.Debug("finished to check")
+	}()
+
 	return sb.check()
 }
 
@@ -62,43 +67,93 @@ func (sb *SavingBlockOperations) continuousCheck() {
 	}
 }
 
-// check checks whether `BlockOperation`s of latest `block.Block` are saved; if
-// not it will try to catch up to the last.
-func (sb *SavingBlockOperations) check() (err error) {
-	var checked bool
-	var blk block.Block
-	for {
-		if blk, err = sb.getNextBlock(blk.Height); err != nil {
-			if err == errors.StorageRecordDoesNotExist {
-				if checked {
-					sb.log.Debug("stop checking; all the blocks are checked", "height", sb.checkedBlock)
-				}
-				err = nil
-			}
-
-			break
-		}
-
-		sb.log.Debug("check block", "block", blk.Hash)
-
-		var st *storage.LevelDBBackend
+func (sb *SavingBlockOperations) checkBlockWorker(id int, blocks <-chan block.Block, errChan chan<- error) {
+	var err error
+	var st *storage.LevelDBBackend
+	for blk := range blocks {
 		if st, err = sb.st.OpenBatch(); err != nil {
-			break
+			errChan <- err
+			return
 		}
 
 		if err = sb.CheckByBlock(st, blk); err != nil {
-			sb.log.Error("failed to check block", "block", blk.Hash, "height", blk.Height, "error", err)
 			st.Discard()
-			break
+			errChan <- err
+			return
 		}
+
 		if err = st.Commit(); err != nil {
 			sb.log.Error("failed to commit", "block", blk.Hash, "height", blk.Height, "error", err)
 			st.Discard()
-			break
+			errChan <- err
+			return
 		}
-		sb.log.Debug("checked block", "block", blk.Hash)
-		sb.checkedBlock = blk.Height
-		checked = true
+
+		errChan <- nil
+	}
+}
+
+// check checks whether `BlockOperation`s of latest `block.Block` are saved; if
+// not it will try to catch up to the last.
+func (sb *SavingBlockOperations) check() (err error) {
+	var lastBlock block.Block
+	lastBlock = block.GetLatestBlock(sb.st)
+
+	if lastBlock.Height == common.GenesisBlockHeight {
+		return
+	}
+
+	blocks := make(chan block.Block)
+	errChan := make(chan error)
+	defer close(errChan)
+
+	numWorker := int(lastBlock.Height / 2)
+	if numWorker > 100 {
+		numWorker = 100
+	} else if numWorker < 1 {
+		numWorker = 1
+	}
+
+	for i := 1; i <= numWorker; i++ {
+		go sb.checkBlockWorker(i, blocks, errChan)
+	}
+
+	go func() {
+		var blk block.Block
+		for {
+			if blk, err = sb.getNextBlock(blk.Height); err != nil {
+				err = errors.FailedToSaveBlockOperaton.Clone().SetData("error", err)
+				return
+			}
+
+			blocks <- blk
+			if blk.Height == lastBlock.Height {
+				break
+			}
+		}
+
+		close(blocks)
+	}()
+
+	var errs uint64
+errorCheck:
+	for {
+		select {
+		case err = <-errChan:
+			errs++
+			if err != nil {
+				break errorCheck
+			}
+			if errs == lastBlock.Height-1 {
+				break errorCheck
+			}
+		}
+	}
+
+	if err != nil {
+		err = errors.FailedToSaveBlockOperaton.Clone().SetData("error", err)
+	} else {
+		sb.checkedBlock = lastBlock.Height
 	}
 
 	return
