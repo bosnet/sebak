@@ -52,14 +52,14 @@ func (sb *SavingBlockOperations) Check() (err error) {
 		sb.log.Debug("finished to check")
 	}()
 
-	return sb.check()
+	return sb.check(block.GetLatestBlock(sb.st).Height)
 }
 
 // continuousCheck will check the missing `BlockOperation`s continuously; if it
 // is failed, still try.
 func (sb *SavingBlockOperations) continuousCheck() {
 	for {
-		if err := sb.check(); err != nil {
+		if err := sb.check(sb.checkedBlock); err != nil {
 			sb.log.Error("failed to check", "error", err)
 		}
 
@@ -95,11 +95,8 @@ func (sb *SavingBlockOperations) checkBlockWorker(id int, blocks <-chan block.Bl
 
 // check checks whether `BlockOperation`s of latest `block.Block` are saved; if
 // not it will try to catch up to the last.
-func (sb *SavingBlockOperations) check() (err error) {
-	var lastBlock block.Block
-	lastBlock = block.GetLatestBlock(sb.st)
-
-	if lastBlock.Height == common.GenesisBlockHeight {
+func (sb *SavingBlockOperations) check(lastBlock uint64) (err error) {
+	if lastBlock == common.GenesisBlockHeight {
 		return
 	}
 
@@ -107,7 +104,7 @@ func (sb *SavingBlockOperations) check() (err error) {
 	errChan := make(chan error)
 	defer close(errChan)
 
-	numWorker := int(lastBlock.Height / 2)
+	numWorker := int(lastBlock / 2)
 	if numWorker > 100 {
 		numWorker = 100
 	} else if numWorker < 1 {
@@ -127,7 +124,7 @@ func (sb *SavingBlockOperations) check() (err error) {
 			}
 
 			blocks <- blk
-			if blk.Height == lastBlock.Height {
+			if blk.Height == lastBlock {
 				break
 			}
 		}
@@ -144,7 +141,7 @@ errorCheck:
 			if err != nil {
 				break errorCheck
 			}
-			if errs == lastBlock.Height-1 {
+			if errs == lastBlock-1 {
 				break errorCheck
 			}
 		}
@@ -153,7 +150,7 @@ errorCheck:
 	if err != nil {
 		err = errors.FailedToSaveBlockOperaton.Clone().SetData("error", err)
 	} else {
-		sb.checkedBlock = lastBlock.Height
+		sb.checkedBlock = lastBlock
 	}
 
 	return
