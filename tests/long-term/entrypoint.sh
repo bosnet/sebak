@@ -2,9 +2,8 @@
 
 set -xe
 
-
-if [ $# -ne 1 ] && [ $# -ne 2 ]; then
-    echo 1>&2 "Error: Expected 1(test directory) or 2 argument (block_time.sh SECONDS), $# provided..."
+if [ $# -ne 1 ]; then
+    echo 1>&2 "Error: Expected 1(test directory or executable), $# provided..."
     exit 1
 fi
 
@@ -17,10 +16,5 @@ if [ $# -eq 1 ]; then
   else
     ./${1}
   fi
-fi
 
-if [ $# -eq 2 ]; then
-    echo "check block time"
-   ./${1} ${2}
 fi
-

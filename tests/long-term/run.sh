@@ -6,7 +6,7 @@ set -xe
 # So make sure we're in the right WD
 cd -- `dirname ${BASH_SOURCE[0]}`
 ROOT_DIR="../.."
-export SEBAK_NODE_ARGS=""
+export BLOCK_TIME_DELTA=2
 source accounts.sh
 CONTAINERS=""
 function dumpLogsAndCleanup () {
@@ -38,16 +38,16 @@ fi
 # Also SUPER IMPORTANT: the `-test` args need to be before any other args, or they are simply ignored...
 export NODE1=$(docker run -d --network host --env-file=${ROOT_DIR}/docker/node1.env \
                         ${NODE_IMAGE} node --log-level=debug --rate-limit-api=0-s --rate-limit-node=0-s \
-                        --genesis=${SEBAK_GENESIS},${SEBAK_COMMON},5000000000000000)
+                        --genesis=${SEBAK_GENESIS},${SEBAK_COMMON},5000000000000000 --block-time-delta=${BLOCK_TIME_DELTA})
 export NODE2=$(docker run -d --network host --env-file=${ROOT_DIR}/docker/node2.env \
                         ${NODE_IMAGE} node --log-level=debug --rate-limit-api=0-s --rate-limit-node=0-s \
-                        --genesis=${SEBAK_GENESIS},${SEBAK_COMMON},5000000000000000)
+                        --genesis=${SEBAK_GENESIS},${SEBAK_COMMON},5000000000000000 --block-time-delta=${BLOCK_TIME_DELTA})
 export NODE3=$(docker run -d --network host --env-file=${ROOT_DIR}/docker/node3.env \
                         ${NODE_IMAGE} node --log-level=debug --rate-limit-api=0-s --rate-limit-node=0-s \
-                        --genesis=${SEBAK_GENESIS},${SEBAK_COMMON},5000000000000000)
+                        --genesis=${SEBAK_GENESIS},${SEBAK_COMMON},5000000000000000 --block-time-delta=${BLOCK_TIME_DELTA})
 export NODE4=$(docker run -d --network host --env-file=${ROOT_DIR}/docker/node4.env \
                         ${NODE_IMAGE} node --log-level=debug --rate-limit-api=0-s --rate-limit-node=0-s \
-                        --genesis=${SEBAK_GENESIS},${SEBAK_COMMON},5000000000000000)
+                        --genesis=${SEBAK_GENESIS},${SEBAK_COMMON},5000000000000000 --block-time-delta=${BLOCK_TIME_DELTA})
 
 CONTAINERS="${CONTAINERS} ${NODE1} ${NODE2} ${NODE3} ${NODE4}"
 
@@ -58,81 +58,77 @@ sleep 1
 
 docker run --rm --network host ${CLIENT_IMAGE} "create_account"
 docker run --rm --network host ${CLIENT_IMAGE} "payment_1"
-docker run --rm --network host ${CLIENT_IMAGE} "total_balance"
 
-# Check block height after 60s
-docker run --rm --network host ${CLIENT_IMAGE} block-time.sh ${SECONDS}
+COUNT=2
+for i in $(seq $COUNT)
+do
+    # Rerun NODE4 for checking sync
+    docker stop ${NODE4}
+    docker rm -f ${NODE4}
 
-# Rerun NODE4 for checking sync
-docker stop ${NODE4}
-docker rm -f ${NODE4}
+    export NODE4=$(docker run -d --network host --env-file=${ROOT_DIR}/docker/node4.env \
+                            ${NODE_IMAGE} -test.coverprofile=coverage.txt \
+                            node --log-level=debug --rate-limit-api=0-s --rate-limit-node=0-s \
+                            --genesis=${SEBAK_GENESIS},${SEBAK_COMMON},5000000000000000 --block-time-delta=${BLOCK_TIME_DELTA})
 
-export NODE4_2=$(docker run -d --network host --env-file=${ROOT_DIR}/docker/node4.env \
-                        ${NODE_IMAGE} -test.coverprofile=coverage.txt \
-                        node --log-level=debug --rate-limit-api=0-s --rate-limit-node=0-s \
-                        --genesis=${SEBAK_GENESIS},${SEBAK_COMMON},5000000000000000)
+    CONTAINERS="${CONTAINERS} ${NODE4}"
 
-CONTAINERS="${CONTAINERS} ${NODE4_2}"
+    # Check that the block height of all 4 nodes are almost same and all CONSENSUS state
+    docker run --rm --network host ${CLIENT_IMAGE} sync.sh
 
-# Check that the block height of all 4 nodes are almost same
-docker run --rm --network host ${CLIENT_IMAGE} sync.sh
+    docker stop ${NODE3}
+    docker rm -f ${NODE3}
 
-# Rerun NODE3 for checking sync
-docker stop ${NODE3}
-docker rm -f ${NODE3}
+    export NODE3=$(docker run -d --network host --env-file=${ROOT_DIR}/docker/node3.env \
+                            ${NODE_IMAGE} -test.coverprofile=coverage.txt \
+                            node --log-level=debug --rate-limit-api=0-s --rate-limit-node=0-s \
+                            --genesis=${SEBAK_GENESIS},${SEBAK_COMMON},5000000000000000 --block-time-delta=${BLOCK_TIME_DELTA})
 
-export NODE3_2=$(docker run -d --network host --env-file=${ROOT_DIR}/docker/node3.env \
-                        ${NODE_IMAGE} -test.coverprofile=coverage.txt \
-                        node --log-level=debug --rate-limit-api=0-s --rate-limit-node=0-s \
-                        --genesis=${SEBAK_GENESIS},${SEBAK_COMMON},5000000000000000)
+    CONTAINERS="${CONTAINERS} ${NODE3}"
 
-CONTAINERS="${CONTAINERS} ${NODE3_2}"
+    docker run --rm --network host ${CLIENT_IMAGE} sync.sh
 
-# Check that the block height of all 4 nodes are almost same
-docker run --rm --network host ${CLIENT_IMAGE} sync.sh
+    docker stop ${NODE2}
+    docker rm -f ${NODE2}
 
-# Rerun NODE2 for checking sync
-docker stop ${NODE2}
-docker rm -f ${NODE2}
+    export NODE2=$(docker run -d --network host --env-file=${ROOT_DIR}/docker/node2.env \
+                            ${NODE_IMAGE} -test.coverprofile=coverage.txt \
+                            node --log-level=debug --rate-limit-api=0-s --rate-limit-node=0-s \
+                            --genesis=${SEBAK_GENESIS},${SEBAK_COMMON},5000000000000000 --block-time-delta=${BLOCK_TIME_DELTA})
 
-export NODE2_2=$(docker run -d --network host --env-file=${ROOT_DIR}/docker/node2.env \
-                        ${NODE_IMAGE} -test.coverprofile=coverage.txt \
-                        node --log-level=debug --rate-limit-api=0-s --rate-limit-node=0-s \
-                        --genesis=${SEBAK_GENESIS},${SEBAK_COMMON},5000000000000000)
+    CONTAINERS="${CONTAINERS} ${NODE2}"
 
-CONTAINERS="${CONTAINERS} ${NODE2_2}"
+    docker run --rm --network host ${CLIENT_IMAGE} sync.sh
 
-# Check that the block height of all 4 nodes are almost same
-docker run --rm --network host ${CLIENT_IMAGE} sync.sh
+    docker stop ${NODE1}
+    docker rm -f ${NODE1}
 
-# Rerun NODE1 for checking sync
-docker stop ${NODE1}
-docker rm -f ${NODE1}
+    export NODE1=$(docker run -d --network host --env-file=${ROOT_DIR}/docker/node1.env \
+                            ${NODE_IMAGE} -test.coverprofile=coverage.txt \
+                            node --log-level=debug --rate-limit-api=0-s --rate-limit-node=0-s \
+                            --genesis=${SEBAK_GENESIS},${SEBAK_COMMON},5000000000000000 --block-time-delta=${BLOCK_TIME_DELTA})
 
-export NODE1_2=$(docker run -d --network host --env-file=${ROOT_DIR}/docker/node1.env \
-                        ${NODE_IMAGE} -test.coverprofile=coverage.txt \
-                        node --log-level=debug --rate-limit-api=0-s --rate-limit-node=0-s \
-                        --genesis=${SEBAK_GENESIS},${SEBAK_COMMON},5000000000000000)
+    CONTAINERS="${CONTAINERS} ${NODE1}"
 
-CONTAINERS="${CONTAINERS} ${NODE1_2}"
+    docker run --rm --network host ${CLIENT_IMAGE} sync.sh
 
-# Check that the block height of all 4 nodes are almost same
-docker run --rm --network host ${CLIENT_IMAGE} sync.sh
+    docker run --rm --network host ${CLIENT_IMAGE} "total_balance"
 
-# Check again after sync
+done
+
 docker run --rm --network host ${CLIENT_IMAGE} "payment_2"
 docker run --rm --network host ${CLIENT_IMAGE} "common_account"
 docker run --rm --network host ${CLIENT_IMAGE} "total_balance"
 
 # Shut down the containers - we need to do so for integration reports to be written
-docker stop ${NODE1_2} ${NODE2_2} ${NODE3_2} ${NODE4_2}
+docker stop ${NODE1} ${NODE2} ${NODE3} ${NODE4}
 
 # Copy integration tests
 mkdir -p ./long-term/coverage/node{1,2,3,4}/
-docker cp ${NODE1_2}:/sebak/coverage.txt ./long-term/coverage/node1/coverage.txt
-docker cp ${NODE2_2}:/sebak/coverage.txt ./long-term/coverage/node2/coverage.txt
-docker cp ${NODE3_2}:/sebak/coverage.txt ./long-term/coverage/node3/coverage.txt
-docker cp ${NODE4_2}:/sebak/coverage.txt ./long-term/coverage/node4/coverage.txt
+docker cp ${NODE1}:/sebak/coverage.txt ./long-term/coverage/node1/coverage.txt
+docker cp ${NODE2}:/sebak/coverage.txt ./long-term/coverage/node2/coverage.txt
+docker cp ${NODE3}:/sebak/coverage.txt ./long-term/coverage/node3/coverage.txt
+docker cp ${NODE4}:/sebak/coverage.txt ./long-term/coverage/node4/coverage.txt
 
 # Cleanup
-docker rm -f ${NODE1_2} ${NODE2_2} ${NODE3_2} ${NODE4_2} || true
+docker rm -f ${NODE1} ${NODE2} ${NODE3} ${NODE4} || true
