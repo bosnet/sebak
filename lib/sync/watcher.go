@@ -207,8 +207,8 @@ func (w *Watcher) bestHeightFromNodes(ctx context.Context, nodes []*node.NodeInf
 	var height uint64
 
 	for _, n := range nodes {
-		if n.Node.State != node.StateCONSENSUS {
-			w.logger.Info("node state is not CONSENSUS", "node", n.Node.Address)
+		if n.Node.State != node.StateCONSENSUS && n.Node.State != node.StateWATCH {
+			w.logger.Info("node state is not CONSENSUS or WATCH", "node", n.Node.Address)
 			continue
 		}
 		nHeight := uint64(n.Block.Height)
@@ -223,7 +223,7 @@ func (w *Watcher) bestHeightFromNodes(ctx context.Context, nodes []*node.NodeInf
 func (w *Watcher) bestNodeAddrs(ctx context.Context, height uint64, nodes []*node.NodeInfo) ([]string, error) {
 	var addrs []string
 	for _, n := range nodes {
-		if n.Node.State != node.StateCONSENSUS {
+		if n.Node.State != node.StateCONSENSUS && n.Node.State != node.StateWATCH {
 			continue
 		}
 		addrs = append(addrs, n.Node.Address)
