@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"sync"
 	"time"
 
 	logging "github.com/inconshreveable/log15"
@@ -52,7 +53,7 @@ func (sb *SavingBlockOperations) Check() (err error) {
 		sb.log.Debug("finished to check")
 	}()
 
-	return sb.check(block.GetLatestBlock(sb.st).Height)
+	return sb.check(common.GenesisBlockHeight)
 }
 
 // continuousCheck will check the missing `BlockOperation`s continuously; if it
@@ -70,6 +71,7 @@ func (sb *SavingBlockOperations) continuousCheck() {
 func (sb *SavingBlockOperations) checkBlockWorker(id int, blocks <-chan block.Block, errChan chan<- error) {
 	var err error
 	var st *storage.LevelDBBackend
+
 	for blk := range blocks {
 		if st, err = sb.st.OpenBatch(); err != nil {
 			errChan <- err
@@ -95,14 +97,19 @@ func (sb *SavingBlockOperations) checkBlockWorker(id int, blocks <-chan block.Bl
 
 // check checks whether `BlockOperation`s of latest `block.Block` are saved; if
 // not it will try to catch up to the last.
-func (sb *SavingBlockOperations) check(lastBlock uint64) (err error) {
+func (sb *SavingBlockOperations) check(startBlockHeight uint64) (err error) {
+	lastBlock := block.GetLatestBlock(sb.st).Height
 	if lastBlock == common.GenesisBlockHeight {
 		return
 	}
+	if startBlockHeight-lastBlock < 1 {
+		return
+	}
 
-	blocks := make(chan block.Block)
-	errChan := make(chan error)
+	blocks := make(chan block.Block, 100)
+	errChan := make(chan error, 100)
 	defer close(errChan)
+	defer close(blocks)
 
 	numWorker := int(lastBlock / 2)
 	if numWorker > 100 {
@@ -115,17 +122,30 @@ func (sb *SavingBlockOperations) check(lastBlock uint64) (err error) {
 		go sb.checkBlockWorker(i, blocks, errChan)
 	}
 
-	go func() {
-		defer close(blocks)
+	var lock sync.Mutex
+	closed := false
+	defer func() {
+		lock.Lock()
+		defer lock.Unlock()
 
+		closed = true
+	}()
+
+	go func() {
+		var height uint64 = startBlockHeight
 		var blk block.Block
 		for {
-			if blk, err = sb.getNextBlock(blk.Height); err != nil {
+			if blk, err = sb.getNextBlock(height); err != nil {
 				err = errors.FailedToSaveBlockOperaton.Clone().SetData("error", err)
 				return
 			}
 
+			if closed {
+				break
+			}
+
 			blocks <- blk
+			height = blk.Height
 			if blk.Height == lastBlock {
 				break
 			}
