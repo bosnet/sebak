@@ -86,6 +86,7 @@ func (c *Config) NewFetcher() Fetcher {
 		c.localNode,
 		func(f *BlockFetcher) {
 			f.fetchTimeout = c.FetchTimeout
+			f.retryInterval = c.RetryInterval
 			f.logger = c.logger.New("submodule", "fetcher")
 		},
 	)
