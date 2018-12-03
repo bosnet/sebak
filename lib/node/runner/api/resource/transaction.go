@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"boscoin.io/sebak/lib/transaction"
 	"strings"
 
 	"boscoin.io/sebak/lib/block"
@@ -9,16 +10,19 @@ import (
 
 type Transaction struct {
 	bt *block.BlockTransaction
+	tx transaction.Transaction
 }
 
-func NewTransaction(bt *block.BlockTransaction) *Transaction {
+func NewTransaction(bt *block.BlockTransaction, tx transaction.Transaction) *Transaction {
 	t := &Transaction{
 		bt: bt,
+		tx: tx,
 	}
 	return t
 }
 
 func (t Transaction) GetMap() hal.Entry {
+
 	return hal.Entry{
 		"hash":            t.bt.Hash,
 		"block":           t.bt.Block,
@@ -27,6 +31,7 @@ func (t Transaction) GetMap() hal.Entry {
 		"sequence_id":     t.bt.SequenceID,
 		"created":         t.bt.Created,
 		"operation_count": len(t.bt.Operations),
+		"operations":      t.tx.B.Operations,
 	}
 }
 func (t Transaction) Resource() *hal.Resource {

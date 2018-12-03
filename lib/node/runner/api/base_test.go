@@ -130,6 +130,7 @@ func prepareTxsWithKeyPair(storage *storage.LevelDBBackend, source, target *keyp
 	for _, tx := range txs {
 		bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, theBlock.Height, theBlock.ProposedTime, tx)
 		bt.MustSave(storage)
+		block.SaveTransactionPool(storage, tx)
 		if err := bt.SaveBlockOperations(storage); err != nil {
 			return nil, nil, nil
 		}

@@ -24,25 +24,25 @@ func (api NetworkHandlerAPI) GetTransactionsHandler(w http.ResponseWriter, r *ht
 	var options = p.ListOptions()
 	var firstCursor []byte
 	var cursor []byte
-	readFunc := func() []resource.Resource {
-		var txs []resource.Resource
-		iterFunc, closeFunc := block.GetBlockTransactions(api.storage, options)
-		for {
-			t, hasNext, c := iterFunc()
-			if !hasNext {
-				break
-			}
-			cursor = append([]byte{}, c...)
-			if len(firstCursor) == 0 {
-				firstCursor = append(firstCursor, c...)
-			}
-			txs = append(txs, resource.NewTransaction(&t))
+	var txs []resource.Resource
+	iterFunc, closeFunc := block.GetBlockTransactions(api.storage, options)
+	for {
+		t, hasNext, c := iterFunc()
+		if !hasNext {
+			break
 		}
-		closeFunc()
-		return txs
+		cursor = append([]byte{}, c...)
+		if len(firstCursor) == 0 {
+			firstCursor = append(firstCursor, c...)
+		}
+		tp, err := block.GetTransactionPool(api.storage, t.Hash)
+		if err != nil {
+			httputils.WriteJSONError(w, err)
+			return
+		}
+		txs = append(txs, resource.NewTransaction(&t, tp.Transaction()))
 	}
-
-	txs := readFunc()
+	closeFunc()
 
 	list := p.ResourceList(txs, firstCursor, cursor)
 	httputils.MustWriteJSON(w, 200, list)
@@ -52,28 +52,28 @@ func (api NetworkHandlerAPI) GetTransactionByHashHandler(w http.ResponseWriter, 
 	vars := mux.Vars(r)
 	key := vars["id"]
 
-	readFunc := func() (payload interface{}, err error) {
-		found, err := block.ExistsBlockTransaction(api.storage, key)
-		if err != nil {
-			return nil, err
-		}
-		if !found {
-			return nil, errors.BlockTransactionDoesNotExists
-		}
-		bt, err := block.GetBlockTransaction(api.storage, key)
-		if err != nil {
-			return nil, err
-		}
-		payload = resource.NewTransaction(&bt)
-		return payload, nil
-	}
-
-	payload, err := readFunc()
-	if err == nil {
-		httputils.MustWriteJSON(w, 200, payload)
-	} else {
+	found, err := block.ExistsBlockTransaction(api.storage, key)
+	if err != nil {
 		httputils.WriteJSONError(w, err)
+		return
 	}
+	if !found {
+		httputils.WriteJSONError(w, errors.BlockTransactionDoesNotExists)
+		return
+	}
+	bt, err := block.GetBlockTransaction(api.storage, key)
+	if err != nil {
+		httputils.WriteJSONError(w, err)
+		return
+	}
+	tp, err := block.GetTransactionPool(api.storage, bt.Hash)
+	if err != nil {
+		httputils.WriteJSONError(w, err)
+		return
+	}
+	tx := resource.NewTransaction(&bt, tp.Transaction())
+
+	httputils.MustWriteJSON(w, 200, tx)
 }
 
 func (api NetworkHandlerAPI) GetTransactionsByAccountHandler(w http.ResponseWriter, r *http.Request) {
@@ -89,26 +89,25 @@ func (api NetworkHandlerAPI) GetTransactionsByAccountHandler(w http.ResponseWrit
 	var options = p.ListOptions()
 	var firstCursor []byte
 	var cursor []byte
-	readFunc := func() []resource.Resource {
-		var txs []resource.Resource
-		iterFunc, closeFunc := block.GetBlockTransactionsByAccount(api.storage, address, options)
-		for {
-			t, hasNext, c := iterFunc()
-			if !hasNext {
-				break
-			}
-			cursor = append([]byte{}, c...)
-			if len(firstCursor) == 0 {
-				firstCursor = append(firstCursor, c...)
-			}
-
-			txs = append(txs, resource.NewTransaction(&t))
+	var txs []resource.Resource
+	iterFunc, closeFunc := block.GetBlockTransactionsByAccount(api.storage, address, options)
+	for {
+		t, hasNext, c := iterFunc()
+		if !hasNext {
+			break
 		}
-		closeFunc()
-		return txs
+		cursor = append([]byte{}, c...)
+		if len(firstCursor) == 0 {
+			firstCursor = append(firstCursor, c...)
+		}
+		tp, err := block.GetTransactionPool(api.storage, t.Hash)
+		if err != nil {
+			httputils.WriteJSONError(w, err)
+			return
+		}
+		txs = append(txs, resource.NewTransaction(&t, tp.Transaction()))
 	}
-
-	txs := readFunc()
+	closeFunc()
 	list := p.ResourceList(txs, firstCursor, cursor)
 	httputils.MustWriteJSON(w, 200, list)
 }
