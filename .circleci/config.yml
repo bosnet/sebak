@@ -100,13 +100,25 @@ jobs:
           name: upload coverage reports
           command: bash <(curl -s https://codecov.io/bash) -F integration_tests_node
 
+  integration_tests_block_time:
+    <<: *defaults
+    steps:
+      - setup_remote_docker
+      - <<: *workspace
+      - run:
+          name: integration tests block time
+          command: ./tests/block-time/run.sh
+      - run:
+          name: upload coverage reports
+          command: bash <(curl -s https://codecov.io/bash) -F integration_tests_block_time
+
   integration_tests_long_term:
     <<: *defaults
     steps:
       - setup_remote_docker
       - <<: *workspace
       - run:
-          name: integration tests node
+          name: integration tests long term
           command: ./tests/long-term/run.sh
       - run:
           name: upload coverage reports
@@ -123,15 +135,6 @@ jobs:
       - run:
           name: upload coverage reports
           command: bash <(curl -s https://codecov.io/bash) -F integration_tests_client
-
-  integration_tests_block_time:
-    <<: *defaults
-    steps:
-      - setup_remote_docker
-      - <<: *workspace
-      - run:
-          name: integration tests block_time
-          command: ./tests/long-term/run.sh
 
 workflows:
   version: 2
@@ -151,6 +154,9 @@ workflows:
           requires:
             - generate_merged_tree
       - integration_tests_node:
+          requires:
+            - generate_merged_tree
+      - integration_tests_block_time:
           requires:
             - generate_merged_tree
       - integration_tests_long_term:
