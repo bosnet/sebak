@@ -380,6 +380,9 @@ func ValidateOp(st *storage.LevelDBBackend, config common.Config, source *block.
 
 			var opIndex int
 			parsedCongressVotingResultHash := strings.Split(inflationPF.VotingResult, "-") //0:TxHash, 1:Index
+			if len(parsedCongressVotingResultHash) != 2 {
+				return errors.InvalidOperation
+			}
 			txHash := parsedCongressVotingResultHash[0]
 			if opIndex, err = strconv.Atoi(parsedCongressVotingResultHash[1]); err != nil {
 				return errors.InvalidOperation
@@ -411,6 +414,9 @@ func ValidateOp(st *storage.LevelDBBackend, config common.Config, source *block.
 			var err error
 			var opIndex int
 			parsedCongressVotingHash := strings.Split(congressVotingHash, "-") //0:TxHash, 1:Index
+			if len(parsedCongressVotingHash) != 2 {
+				return errors.InvalidOperation
+			}
 			txHash := parsedCongressVotingHash[0]
 			if opIndex, err = strconv.Atoi(parsedCongressVotingHash[1]); err != nil {
 				return errors.InvalidOperation
@@ -465,6 +471,9 @@ func ValidateOp(st *storage.LevelDBBackend, config common.Config, source *block.
 
 		var opIndex int
 		parsedCongressVotingResultHash := strings.Split(cvResult.CongressVotingHash, "-") //0:TxHash, 1:Index
+		if len(parsedCongressVotingResultHash) != 2 {
+			return errors.InvalidOperation
+		}
 		txHash := parsedCongressVotingResultHash[0]
 		if opIndex, err = strconv.Atoi(parsedCongressVotingResultHash[1]); err != nil {
 			return errors.InvalidOperation
