@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"net/http"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 )
@@ -106,8 +107,6 @@ func TestInflationPF(t *testing.T) {
 		oPage, err := c.LoadOperationsByAccount(CongressAddr, client.Q{Key: client.QueryType, Value: string(operation.TypeCongressVoting)})
 		require.NoError(t, err)
 
-		oHash := oPage.Embedded.Records[0].Hash
-
 		ob := operation.NewCongressVotingResult(
 			"dummy1",
 			[]string{"http://1.1.1.1/a", "http://1.1.1.1/b"},
@@ -119,7 +118,7 @@ func TestInflationPF(t *testing.T) {
 			70,
 			20,
 			10,
-			oHash,
+			strings.Join([]string{oPage.Embedded.Records[0].TxHash, "0"}, "-"),
 		)
 		o, err := operation.NewOperation(ob)
 		require.NoError(t, err)
@@ -179,9 +178,11 @@ func TestInflationPF(t *testing.T) {
 		oPage, err := c.LoadOperationsByAccount(CongressAddr, client.Q{Key: client.QueryType, Value: string(operation.TypeCongressVotingResult)})
 		require.NoError(t, err)
 
-		oHash := oPage.Embedded.Records[0].Hash
-
-		ob := operation.NewInflationPF(account1Addr, common.Amount(fundingAmount), oHash)
+		ob := operation.NewInflationPF(
+			account1Addr,
+			common.Amount(fundingAmount),
+			strings.Join([]string{oPage.Embedded.Records[0].TxHash, "0"}, "-"),
+		)
 		o, err := operation.NewOperation(ob)
 		require.NoError(t, err)
 

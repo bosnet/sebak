@@ -1,6 +1,8 @@
 package runner
 
 import (
+	"strconv"
+	"strings"
 	"sync"
 
 	"boscoin.io/sebak/lib/ballot"
@@ -371,16 +373,22 @@ func ValidateOp(st *storage.LevelDBBackend, config common.Config, source *block.
 			return errors.InvalidOperation
 		}
 
-		exists, err := block.ExistsBlockOperation(st, inflationPF.VotingResult)
-		if err != nil || !exists {
-			return errors.InflationPFResultMissed
-		}
-
 		var congressVotingHash string
 		{
 			var bo block.BlockOperation
 			var err error
-			if bo, err = block.GetBlockOperation(st, inflationPF.VotingResult); err != nil {
+
+			var opIndex int
+			parsedCongressVotingResultHash := strings.Split(inflationPF.VotingResult, "-") //0:TxHash, 1:Index
+			if len(parsedCongressVotingResultHash) != 2 {
+				return errors.InvalidOperation
+			}
+			txHash := parsedCongressVotingResultHash[0]
+			if opIndex, err = strconv.Atoi(parsedCongressVotingResultHash[1]); err != nil {
+				return errors.InvalidOperation
+			}
+
+			if bo, err = block.GetBlockOperationWithIndex(st, txHash, opIndex); err != nil {
 				return err
 			}
 
@@ -404,7 +412,17 @@ func ValidateOp(st *storage.LevelDBBackend, config common.Config, source *block.
 		{
 			var bo block.BlockOperation
 			var err error
-			if bo, err = block.GetBlockOperation(st, congressVotingHash); err != nil {
+			var opIndex int
+			parsedCongressVotingHash := strings.Split(congressVotingHash, "-") //0:TxHash, 1:Index
+			if len(parsedCongressVotingHash) != 2 {
+				return errors.InvalidOperation
+			}
+			txHash := parsedCongressVotingHash[0]
+			if opIndex, err = strconv.Atoi(parsedCongressVotingHash[1]); err != nil {
+				return errors.InvalidOperation
+			}
+
+			if bo, err = block.GetBlockOperationWithIndex(st, txHash, opIndex); err != nil {
 				return err
 			}
 
@@ -432,12 +450,39 @@ func ValidateOp(st *storage.LevelDBBackend, config common.Config, source *block.
 			return errors.InflationPFFundingAddressMissMatched
 		}
 
-	case operation.TypeCongressVoting, operation.TypeCongressVotingResult:
+	case operation.TypeCongressVoting:
 		//the CongressAddress is owned by blockchainOS. It is temporally check.
 		//TODO: When a node of BosNet is operated by anonymous then it will be removed.
 		if source.Address != config.CongressAccountAddress {
 			return errors.CongressAddressMisMatched
 		}
+	case operation.TypeCongressVotingResult:
+		//the CongressAddress is owned by blockchainOS. It is temporally check.
+		//TODO: When a node of BosNet is operated by anonymous then it will be removed.
+		if source.Address != config.CongressAccountAddress {
+			return errors.CongressAddressMisMatched
+		}
+
+		var ok bool
+		var cvResult operation.CongressVotingResult
+		if cvResult, ok = op.B.(operation.CongressVotingResult); !ok {
+			return errors.TypeOperationBodyNotMatched
+		}
+
+		var opIndex int
+		parsedCongressVotingResultHash := strings.Split(cvResult.CongressVotingHash, "-") //0:TxHash, 1:Index
+		if len(parsedCongressVotingResultHash) != 2 {
+			return errors.InvalidOperation
+		}
+		txHash := parsedCongressVotingResultHash[0]
+		if opIndex, err = strconv.Atoi(parsedCongressVotingResultHash[1]); err != nil {
+			return errors.InvalidOperation
+		}
+
+		if _, err = block.GetBlockOperationWithIndex(st, txHash, opIndex); err != nil {
+			return err
+		}
+
 	default:
 		return errors.UnknownOperationType
 	}

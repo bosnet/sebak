@@ -80,7 +80,7 @@ func TestOperationBodyCongressVotingResult(t *testing.T) {
 		string(common.MakeHash([]byte("dummydummy"))),
 		[]string{"http://www.boscoin.io/3", "http://www.boscoin.io/4"},
 		9, 2, 3, 4,
-		"dummy voting hash",
+		"dummy voting hash-0",
 	)
 	op := Operation{
 		H: Header{Type: TypeCongressVotingResult},
@@ -88,7 +88,7 @@ func TestOperationBodyCongressVotingResult(t *testing.T) {
 	}
 	hashed := op.MakeHashString()
 
-	expected := "3HYgpY1Rt24jMVGLzFKoogAWNzrcKf5BVbULnBRwLWya"
+	expected := "8t6e3gZ9BUFXGUbf8qEwQfJ3Hn7yWDAatkELaiaxbcCg"
 	require.Equal(t, expected, hashed)
 
 	err := op.IsWellFormed(common.NewTestConfig())
@@ -147,7 +147,7 @@ func TestOperationBodyCongressVotingResultInvalidMembership(t *testing.T) {
 			string(common.MakeHash([]byte("dummydummy"))),
 			[]string{"http://www.boscoin.io/3", "http://www.boscoin.io/4"},
 			9, 2, 3, 4,
-			"dummy voting hash",
+			"dummy voting hash-0",
 		)
 		op := Operation{
 			H: Header{Type: TypeCongressVotingResult},
