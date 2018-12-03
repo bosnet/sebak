@@ -85,7 +85,9 @@ func (b Block) NewBlockKeyConfirmed() string {
 
 func (b *Block) Save(st *storage.LevelDBBackend) (err error) {
 	key := getBlockKey(b.Hash)
-	b.Confirmed = common.NowISO8601()
+	if b.Confirmed == "" {
+		b.Confirmed = common.NowISO8601()
+	}
 
 	var exists bool
 	exists, err = st.Has(key)
