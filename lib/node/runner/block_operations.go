@@ -116,6 +116,8 @@ func (sb *SavingBlockOperations) check(lastBlock uint64) (err error) {
 	}
 
 	go func() {
+		defer close(blocks)
+
 		var blk block.Block
 		for {
 			if blk, err = sb.getNextBlock(blk.Height); err != nil {
@@ -128,8 +130,6 @@ func (sb *SavingBlockOperations) check(lastBlock uint64) (err error) {
 				break
 			}
 		}
-
-		close(blocks)
 	}()
 
 	var errs uint64
