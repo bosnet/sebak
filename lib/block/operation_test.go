@@ -16,7 +16,7 @@ func TestNewBlockOperationFromOperation(t *testing.T) {
 	_, tx := transaction.TestMakeTransaction(conf.NetworkID, 1)
 
 	op := tx.B.Operations[0]
-	bo, err := NewBlockOperationFromOperation(op, tx, 0)
+	bo, err := NewBlockOperationFromOperation(op, tx, 0, 0)
 	require.NoError(t, err)
 
 	require.Equal(t, bo.Type, op.H.Type)

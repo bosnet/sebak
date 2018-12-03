@@ -387,33 +387,3 @@ func (c *Client) StreamTransactionsByHash(ctx context.Context, id string, handle
 	}
 	return c.Stream(ctx, UrlSubscribe, b, handlerFunc)
 }
-
-func (c *Client) StreamOperationsByAccount(ctx context.Context, id string, body []byte, handler func(Operation)) (err error) {
-	s := []observer.Conditions{{observer.NewCondition(observer.Op, observer.Source, id), observer.NewCondition(observer.Op, observer.Target, id)}}
-	b, err := json.Marshal(s)
-	handlerFunc := func(b []byte) (err error) {
-		var v Operation
-		err = json.Unmarshal(b, &v)
-		if err != nil {
-			return err
-		}
-		handler(v)
-		return nil
-	}
-	return c.Stream(ctx, UrlSubscribe, b, handlerFunc)
-}
-
-func (c *Client) StreamOperationsByTransaction(ctx context.Context, id string, body []byte, handler func(Operation)) (err error) {
-	s := []observer.Conditions{{observer.NewCondition(observer.Op, observer.TxHash, id)}}
-	b, err := json.Marshal(s)
-	handlerFunc := func(b []byte) (err error) {
-		var v Operation
-		err = json.Unmarshal(b, &v)
-		if err != nil {
-			return err
-		}
-		handler(v)
-		return nil
-	}
-	return c.Stream(ctx, UrlSubscribe, b, handlerFunc)
-}

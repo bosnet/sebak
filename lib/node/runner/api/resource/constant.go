@@ -12,6 +12,7 @@ const (
 	URLTransactions          = APIPrefix + APIVersionV1 + "/transactions"
 	URLTransactionByHash     = APIPrefix + APIVersionV1 + "/transactions/{id}"
 	URLTransactionOperations = APIPrefix + APIVersionV1 + "/transactions/{id}/operations"
+	URLTransactionOperation  = APIPrefix + APIVersionV1 + "/transactions/{id}/operations/{opindex}"
 	URLTransactionStatus     = APIPrefix + APIVersionV1 + "/transactions/{id}/status"
 	URLOperations            = APIPrefix + APIVersionV1 + "/operations/{id}"
 	URLBlocks                = APIPrefix + APIVersionV1 + "/blocks/{id}"

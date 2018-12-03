@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"fmt"
 	"strings"
 
 	"boscoin.io/sebak/lib/block"
@@ -11,13 +12,15 @@ import (
 )
 
 type Operation struct {
-	Block *block.Block
-	bo    *block.BlockOperation
+	Block   *block.Block
+	bo      *block.BlockOperation
+	opIndex int
 }
 
-func NewOperation(bo *block.BlockOperation) *Operation {
+func NewOperation(bo *block.BlockOperation, opIndex int) *Operation {
 	o := &Operation{
-		bo: bo,
+		bo:      bo,
+		opIndex: opIndex,
 	}
 	return o
 }
@@ -54,5 +57,7 @@ func (o Operation) Resource() *hal.Resource {
 }
 
 func (o Operation) LinkSelf() string {
-	return ""
+	self := strings.Replace(URLTransactionOperation, "{id}", o.bo.TxHash, -1)
+	self = strings.Replace(self, "{opindex}", fmt.Sprintf("%d", o.opIndex), -1)
+	return self
 }

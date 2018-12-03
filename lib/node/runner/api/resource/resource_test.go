@@ -2,6 +2,7 @@ package resource
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -72,11 +73,16 @@ func TestResourceAccount(t *testing.T) {
 	// Operation
 	{
 		_, tx := transaction.TestMakeTransaction([]byte{0x00}, 1)
-		bt := block.NewBlockTransactionFromTransaction(common.GetUniqueIDFromUUID(), 0, common.NowISO8601(), tx)
+		bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, common.NowISO8601(), tx)
 		bt.MustSave(storage)
-		bo, _ := block.GetBlockOperation(storage, bt.Operations[0])
 
-		ro := NewOperation(&bo)
+		err := bt.SaveBlockOperations(storage)
+		require.NoError(t, err)
+
+		bo, err := block.GetBlockOperation(storage, bt.Operations[0])
+		require.NoError(t, err)
+
+		ro := NewOperation(&bo, 0)
 		r := ro.Resource()
 		j, _ := json.MarshalIndent(r, "", " ")
 
@@ -88,7 +94,9 @@ func TestResourceAccount(t *testing.T) {
 			require.Equal(t, bo.Source, m["source"])
 			require.Equal(t, string(bo.Type), m["type"])
 			l := m["_links"].(map[string]interface{})
-			require.Equal(t, "", l["self"].(map[string]interface{})["href"])
+			self := strings.Replace(URLTransactionOperation, "{id}", bt.Hash, -1)
+			self = strings.Replace(self, "{opindex}", fmt.Sprintf("%d", 0), -1)
+			require.Equal(t, self, l["self"].(map[string]interface{})["href"])
 		}
 	}
 
@@ -102,12 +110,12 @@ func TestResourceAccount(t *testing.T) {
 		require.NoError(t, err)
 
 		var rol []Resource
-		for _, boHash := range bt.Operations {
+		for i, boHash := range bt.Operations {
 			var bo block.BlockOperation
 			bo, err = block.GetBlockOperation(storage, boHash)
 			require.NoError(t, err)
 
-			ro := NewOperation(&bo)
+			ro := NewOperation(&bo, i)
 			rol = append(rol, ro)
 		}
 
@@ -127,7 +135,7 @@ func TestResourceAccount(t *testing.T) {
 			require.Equal(t, urlneedToBeFilledByAPI, l["self"].(map[string]interface{})["href"])
 
 			records := m["_embedded"].(map[string]interface{})["records"].([]interface{})
-			for _, v := range records {
+			for i, v := range records {
 				record := v.(map[string]interface{})
 				id := record["hash"].(string)
 				bo, err := block.GetBlockOperation(storage, id)
@@ -136,7 +144,9 @@ func TestResourceAccount(t *testing.T) {
 				require.Equal(t, bo.Source, record["source"])
 				require.Equal(t, string(bo.Type), record["type"])
 				l := record["_links"].(map[string]interface{})
-				require.Equal(t, "", l["self"].(map[string]interface{})["href"])
+				self := strings.Replace(URLTransactionOperation, "{id}", bt.Hash, -1)
+				self = strings.Replace(self, "{opindex}", fmt.Sprintf("%d", i), -1)
+				require.Equal(t, self, l["self"].(map[string]interface{})["href"])
 			}
 		}
 	}

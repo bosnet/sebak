@@ -5,6 +5,7 @@ import (
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/transaction/operation"
 	"bufio"
+	"fmt"
 	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"strings"
@@ -74,6 +75,38 @@ func TestGetOperationsByAccountHandler(t *testing.T) {
 			blk, _ := block.GetBlockByHeight(storage, uint64(bt["block_height"].(float64)))
 			require.Equal(t, blk.ProposedTime, bt["proposed_time"].(string))
 			require.Equal(t, blk.Confirmed, bt["confirmed"].(string))
+		}
+	}
+}
+
+func TestGetOperationsByHashHandler(t *testing.T) {
+	ts, storage := prepareAPIServer()
+	defer storage.Close()
+	defer ts.Close()
+
+	_, _, bt := prepareTxWithOperations(storage, 10)
+
+	var boHashList []string
+	for _, opHash := range bt.Operations {
+		boHashList = append(boHashList, opHash)
+	}
+
+	for idx := 0; idx < 10; idx++ {
+		url := strings.Replace(GetTransactionOperationHandlerPattern, "{id}", bt.Hash, -1)
+		url = strings.Replace(url, "{opindex}", fmt.Sprintf("%d", idx), -1)
+		// Do a Request for source account
+		{
+			respBody := request(ts, url, false)
+			defer respBody.Close()
+			reader := bufio.NewReader(respBody)
+			readByte, err := ioutil.ReadAll(reader)
+			require.NoError(t, err)
+
+			bo := make(map[string]interface{})
+			common.MustUnmarshalJSON(readByte, &bo)
+			hash := bo["hash"].(string)
+
+			require.Equal(t, hash, boHashList[idx], "hash is not same")
 		}
 	}
 }

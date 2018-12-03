@@ -108,4 +108,5 @@ var (
 	BadRequestParameter                       = NewError(190, "request parameter is invalid")
 	BallotHasOverMaxOperationsInBallot        = NewError(191, "too many operations in ballot")
 	AllValidatorsNotConnected                 = NewError(192, "all validators are not connected")
+	OperationNotFound                         = NewError(193, "operation is not found")
 )
