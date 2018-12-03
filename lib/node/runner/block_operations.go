@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"sync"
 	"time"
 
 	logging "github.com/inconshreveable/log15"
@@ -47,14 +48,19 @@ func (sb *SavingBlockOperations) getNextBlock(height uint64) (nextBlock block.Bl
 
 func (sb *SavingBlockOperations) Check() (err error) {
 	sb.log.Debug("start to check")
-	return sb.check()
+
+	defer func() {
+		sb.log.Debug("finished to check")
+	}()
+
+	return sb.check(common.GenesisBlockHeight)
 }
 
 // continuousCheck will check the missing `BlockOperation`s continuously; if it
 // is failed, still try.
 func (sb *SavingBlockOperations) continuousCheck() {
 	for {
-		if err := sb.check(); err != nil {
+		if err := sb.check(sb.checkedBlock); err != nil {
 			sb.log.Error("failed to check", "error", err)
 		}
 
@@ -62,43 +68,110 @@ func (sb *SavingBlockOperations) continuousCheck() {
 	}
 }
 
-// check checks whether `BlockOperation`s of latest `block.Block` are saved; if
-// not it will try to catch up to the last.
-func (sb *SavingBlockOperations) check() (err error) {
-	var checked bool
-	var blk block.Block
-	for {
-		if blk, err = sb.getNextBlock(blk.Height); err != nil {
-			if err == errors.StorageRecordDoesNotExist {
-				if checked {
-					sb.log.Debug("stop checking; all the blocks are checked", "height", sb.checkedBlock)
-				}
-				err = nil
-			}
+func (sb *SavingBlockOperations) checkBlockWorker(id int, blocks <-chan block.Block, errChan chan<- error) {
+	var err error
+	var st *storage.LevelDBBackend
 
-			break
-		}
-
-		sb.log.Debug("check block", "block", blk.Hash)
-
-		var st *storage.LevelDBBackend
+	for blk := range blocks {
 		if st, err = sb.st.OpenBatch(); err != nil {
-			break
+			errChan <- err
+			return
 		}
 
 		if err = sb.CheckByBlock(st, blk); err != nil {
-			sb.log.Error("failed to check block", "block", blk.Hash, "height", blk.Height, "error", err)
 			st.Discard()
-			break
+			errChan <- err
+			return
 		}
+
 		if err = st.Commit(); err != nil {
 			sb.log.Error("failed to commit", "block", blk.Hash, "height", blk.Height, "error", err)
 			st.Discard()
-			break
+			errChan <- err
+			return
 		}
-		sb.log.Debug("checked block", "block", blk.Hash)
-		sb.checkedBlock = blk.Height
-		checked = true
+
+		errChan <- nil
+	}
+}
+
+// check checks whether `BlockOperation`s of latest `block.Block` are saved; if
+// not it will try to catch up to the last.
+func (sb *SavingBlockOperations) check(startBlockHeight uint64) (err error) {
+	lastBlock := block.GetLatestBlock(sb.st).Height
+	if lastBlock == common.GenesisBlockHeight {
+		return
+	}
+	if startBlockHeight-lastBlock < 1 {
+		return
+	}
+
+	blocks := make(chan block.Block, 100)
+	errChan := make(chan error, 100)
+	defer close(errChan)
+	defer close(blocks)
+
+	numWorker := int(lastBlock / 2)
+	if numWorker > 100 {
+		numWorker = 100
+	} else if numWorker < 1 {
+		numWorker = 1
+	}
+
+	for i := 1; i <= numWorker; i++ {
+		go sb.checkBlockWorker(i, blocks, errChan)
+	}
+
+	var lock sync.Mutex
+	closed := false
+	defer func() {
+		lock.Lock()
+		defer lock.Unlock()
+
+		closed = true
+	}()
+
+	go func() {
+		var height uint64 = startBlockHeight
+		var blk block.Block
+		for {
+			if blk, err = sb.getNextBlock(height); err != nil {
+				err = errors.FailedToSaveBlockOperaton.Clone().SetData("error", err)
+				return
+			}
+
+			if closed {
+				break
+			}
+
+			blocks <- blk
+			height = blk.Height
+			if blk.Height == lastBlock {
+				break
+			}
+		}
+	}()
+
+	var errs uint64
+errorCheck:
+	for {
+		select {
+		case e := <-errChan:
+			errs++
+			if e != nil {
+				err = e
+				break errorCheck
+			}
+			if errs == lastBlock-1 {
+				break errorCheck
+			}
+		}
+	}
+
+	if err != nil {
+		err = errors.FailedToSaveBlockOperaton.Clone().SetData("error", err)
+	} else {
+		sb.checkedBlock = lastBlock
 	}
 
 	return
