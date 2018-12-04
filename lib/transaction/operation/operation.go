@@ -3,8 +3,6 @@ package operation
 import (
 	"encoding/json"
 
-	"github.com/btcsuite/btcutil/base58"
-
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/errors"
 )
@@ -112,14 +110,6 @@ type Payable interface {
 
 type Targetable interface {
 	TargetAddress() string
-}
-
-func (o Operation) MakeHash() []byte {
-	return common.MustMakeObjectHash(o)
-}
-
-func (o Operation) MakeHashString() string {
-	return base58.Encode(o.MakeHash())
 }
 
 func (o Operation) IsWellFormed(conf common.Config) (err error) {

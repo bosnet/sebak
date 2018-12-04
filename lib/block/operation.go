@@ -48,7 +48,7 @@ func NewBlockOperationFromOperation(op operation.Operation, tx transaction.Trans
 		return BlockOperation{}, err
 	}
 
-	opHash := op.MakeHashString()
+	opHash := common.MustMakeObjectHashString(op)
 	txHash := tx.GetHash()
 
 	target := ""
