@@ -25,7 +25,7 @@ func TestMakeHashOfOperationBodyPayment(t *testing.T) {
 	hashed := op.MakeHashString()
 
 	expected := "GodiXQkWvAAbobhLBnWK8QS8aArb1ZoR2Ms8JswYUvL3"
-	require.Equal(t, hashed, expected)
+	require.Equal(t, expected, hashed)
 }
 
 func TestIsWellFormedOperation(t *testing.T) {
@@ -63,7 +63,7 @@ func TestOperationBodyCongressVoting(t *testing.T) {
 	hashed := op.MakeHashString()
 
 	expected := "EtVW5hG3p4YsSzL3mgwejHvtskzYuxW8dNaM6UEm42DX"
-	require.Equal(t, hashed, expected)
+	require.Equal(t, expected, hashed)
 
 	err := op.IsWellFormed(common.NewTestConfig())
 	require.NoError(t, err)
