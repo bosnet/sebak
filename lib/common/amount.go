@@ -12,11 +12,10 @@ package common
 
 import (
 	"fmt"
+	"io"
 	"strconv"
 
 	"boscoin.io/sebak/lib/errors"
-	"github.com/ethereum/go-ethereum/rlp"
-	"io"
 )
 
 const (
@@ -44,8 +43,24 @@ func (this Amount) Invariant() {
 	}
 }
 
-func (a Amount) EncodeRLP(w io.Writer) (err error) {
-	return rlp.Encode(w, a.String())
+// Implement `common.Encoder`
+// TODO: Change this to binary encoding
+// RLP cannot encode integer, so this was historically encoded as string,
+// which is of course very efficient
+func (a Amount) EncodeRLP(w io.Writer) error {
+	return Encode(w, a.String())
+}
+
+// Implement `common.Decoder`
+func (a *Amount) DecodeRLP(s *RLPStream) error {
+	if bytes, err := s.Bytes(); err != nil {
+		return err
+	} else if res, err := AmountFromString(string(bytes)); err != nil {
+		return err
+	} else {
+		*a = res
+		return nil
+	}
 }
 
 // Stringer interface implementation

@@ -6,7 +6,10 @@
 package common
 
 import (
+	"bytes"
 	"crypto/sha256"
+	"io"
+
 	"github.com/btcsuite/btcutil/base58"
 	ethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/rlp"
@@ -27,6 +30,115 @@ func MakeHash(b []byte) []byte {
 
 // Interface recognized by RLP encoder
 type Encoder = rlp.Encoder
+
+// Interface recognized by RLP decoder
+type Decoder = rlp.Decoder
+
+// Argument to the `Decoder.Decode` method
+type RLPStream = rlp.Stream
+
+// Encode the provided value
+// It is exposed here as it is useful for recursive calls
+// by types implementing `Encoder`
+var Encode = rlp.Encode
+
+// Ditto
+var EncodeToBytes = rlp.EncodeToBytes
+
+// Ditto
+var EncodeToReader = rlp.EncodeToReader
+
+// Computes the minimum number of bytes required to store `i` in RLP encoding.
+func SizeofSize(i uint64) (size byte) {
+	for size = 1; ; size++ {
+		if i >>= 8; i == 0 {
+			return size
+		}
+	}
+}
+
+// Encodes a list to RLP, including its size
+func EncodeList(items ...interface{}) ([]byte, error) {
+	// Make a buffer of 9 bytes, which is the biggest the length can be
+	ret := make([]byte, 9)
+	// Append the list to this buffer
+	for i := 0; i < len(items); i++ {
+		if data, err := rlp.EncodeToBytes(items[i]); err != nil {
+			return nil, err
+		} else {
+			ret = append(ret, data...)
+		}
+	}
+	// Compute the length, substract the 9 first bytes
+	// We need to write the length right before the data
+	// To do so, we compute how long the length is going to be
+	totalLen := uint64(len(ret[9:]))
+	offset := 8 // Just one byte
+	if totalLen > 55 {
+		offset = 8 - int(SizeofSize(totalLen)) // 0 at least
+	}
+	ret = ret[offset:]
+	buf := bytes.NewBuffer(ret[0:0]) // The data will override the first X bytes
+	if err := PutListLength(buf, totalLen); err != nil {
+		return nil, err
+	}
+	return ret, nil
+}
+
+// Write the length of a list to the writer according to RLP specs
+// See: https://github.com/ethereum/wiki/wiki/RLP
+func PutListLength(w io.Writer, length uint64) error {
+	if length <= 55 {
+		if _, err := w.Write([]byte{byte(0xc0 + length)}); err != nil {
+			return err
+		}
+	} else {
+		if _, err := w.Write([]byte{0xf7 + SizeofSize(length)}); err != nil {
+			return err
+		}
+		PutInt(w, length)
+	}
+	return nil
+}
+
+// Writes i to the `io.Writer` in big endian
+func PutInt(w io.Writer, i uint64) error {
+	switch {
+	case i < (1 << 8):
+		_, err := w.Write([]byte{byte(i)})
+		return err
+	case i < (1 << 16):
+		_, err := w.Write([]byte{byte(i >> 8), byte(i)})
+		return err
+	case i < (1 << 24):
+		_, err := w.Write([]byte{byte(i >> 16), byte(i >> 8), byte(i)})
+		return err
+	case i < (1 << 32):
+		_, err := w.Write([]byte{
+			byte(i >> 24), byte(i >> 16), byte(i >> 8), byte(i)})
+		return err
+	case i < (1 << 40):
+		_, err := w.Write([]byte{
+			byte(i >> 32), byte(i >> 24), byte(i >> 16), byte(i >> 8),
+			byte(i)})
+		return err
+	case i < (1 << 48):
+		_, err := w.Write([]byte{
+			byte(i >> 40), byte(i >> 32), byte(i >> 24), byte(i >> 16),
+			byte(i >> 8), byte(i)})
+		return err
+	case i < (1 << 56):
+		_, err := w.Write([]byte{
+			byte(i >> 48), byte(i >> 40), byte(i >> 32), byte(i >> 24),
+			byte(i >> 16), byte(i >> 8), byte(i)})
+		return err
+	default:
+		_, err := w.Write([]byte{
+			byte(i >> 56), byte(i >> 48), byte(i >> 40), byte(i >> 32),
+			byte(i >> 24), byte(i >> 16), byte(i >> 8), byte(i)})
+		return err
+	}
+}
 
 // Generate a double SHA-256 hash from the interface's RLP encoding
 //
