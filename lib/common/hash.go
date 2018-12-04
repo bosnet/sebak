@@ -24,9 +24,12 @@ func MakeObjectHash(i interface{}) (b []byte, err error) {
 	return
 }
 
-func MustMakeObjectHash(i interface{}) (b []byte) {
-	b, _ = MakeObjectHash(i)
-	return
+func MustMakeObjectHash(i interface{}) []byte {
+	if b, err := MakeObjectHash(i); err != nil {
+		panic(err)
+	} else {
+		return b
+	}
 }
 
 func MustMakeObjectHashString(i interface{}) string {
