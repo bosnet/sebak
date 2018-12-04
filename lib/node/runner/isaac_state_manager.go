@@ -73,7 +73,7 @@ func (sm *ISAACStateManager) setBlockTimeBuffer() {
 	sm.setTheFirstProposedBlockTime()
 	b := sm.nr.Consensus().LatestBlock()
 
-	if b.Height == common.GenesisBlockHeight {
+	if b.Height <= common.FirstProposedBlockHeight {
 		return
 	}
 
@@ -81,7 +81,7 @@ func (sm *ISAACStateManager) setBlockTimeBuffer() {
 	sm.blockTimeBuffer = calculateBlockTimeBuffer(
 		b.Height,
 		sm.Conf.BlockTime,
-		calculateAverageBlockTime(sm.firstProposedBlockTime, b.Height),
+		time.Now().Sub(sm.firstProposedBlockTime),
 		time.Now().Sub(ballotProposedTime),
 		sm.Conf.BlockTimeDelta,
 	)
@@ -101,21 +101,24 @@ func getBallotProposedTime(timeStr string) time.Time {
 	return ballotProposedTime
 }
 
-func calculateAverageBlockTime(firstProposedBlockTime time.Time, blockHeight uint64) time.Duration {
-	height := blockHeight - (common.GenesisBlockHeight + 1)
-	sinceGenesis := time.Now().Sub(firstProposedBlockTime)
-
-	if height == 0 {
-		return sinceGenesis
-	} else {
-		return sinceGenesis / time.Duration(height)
-	}
-}
-
-func calculateBlockTimeBuffer(height uint64, goal, average, untilNow, delta time.Duration) time.Duration {
+// BlockTimeBuffer is the time to wait for adjusting
+// the block creation time(default 5 sec).
+// If the average block creation time is less than the goal,
+// the BlockTimeBuffer becomes longer and vice versa.
+//
+// The block time for the next height(nextBlockTime) is
+// `expected time to 'height + 1' - actual time to 'height'`.
+// For calculating it, we need height, goal and sinceGenesis.
+//
+// delta is used to prevent extreme changes in block time.
+// If goal is 5 sec and `delta` is 1 sec,
+// then the actual block creation time is 4 to 6 sec.
+//
+// Finally, `nextBlockTime - untilNow` is BlockTimeBuffer.
+func calculateBlockTimeBuffer(height uint64, goal, sinceGenesis, untilNow, delta time.Duration) time.Duration {
 	var blockTimeBuffer time.Duration
 
-	nextBlockTime := 5*time.Second*time.Duration(height+1) - (average * time.Duration(height))
+	nextBlockTime := 5*time.Second*time.Duration(height+1) - sinceGenesis
 
 	min := goal - delta
 	max := goal + delta
