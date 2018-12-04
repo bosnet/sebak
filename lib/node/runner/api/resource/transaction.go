@@ -1,11 +1,10 @@
 package resource
 
 import (
-	"boscoin.io/sebak/lib/transaction"
-	"strings"
-
 	"boscoin.io/sebak/lib/block"
+	"boscoin.io/sebak/lib/transaction"
 	"github.com/nvellon/hal"
+	"strings"
 )
 
 type Transaction struct {
@@ -22,7 +21,6 @@ func NewTransaction(bt *block.BlockTransaction, tx transaction.Transaction) *Tra
 }
 
 func (t Transaction) GetMap() hal.Entry {
-
 	return hal.Entry{
 		"hash":            t.bt.Hash,
 		"block":           t.bt.Block,

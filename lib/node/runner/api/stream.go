@@ -42,7 +42,7 @@ func (api NetworkHandlerAPI) PostSubscribeHandler(w http.ResponseWriter, r *http
 		events = append(events, conditions.Event())
 	}
 
-	rederFunc := func(args ...interface{}) ([]byte, error) {
+	renderFunc := func(args ...interface{}) ([]byte, error) {
 		if len(args) <= 1 {
 			return nil, fmt.Errorf("render: value is empty") //TODO(anarcher): Error type
 		}
@@ -68,7 +68,7 @@ func (api NetworkHandlerAPI) PostSubscribeHandler(w http.ResponseWriter, r *http
 		return json.Marshal(i)
 	}
 
-	es := NewEventStream(w, r, rederFunc, DefaultContentType)
+	es := NewEventStream(w, r, renderFunc, DefaultContentType)
 	es.Render(nil)
 	es.Run(observer.ResourceObserver, events...)
 }
