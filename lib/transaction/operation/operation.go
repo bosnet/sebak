@@ -2,6 +2,7 @@ package operation
 
 import (
 	"encoding/json"
+	"io"
 	"reflect"
 
 	"boscoin.io/sebak/lib/common"
@@ -81,6 +82,29 @@ func NewOperation(opb Body) (op Operation, err error) {
 	}
 
 	return
+}
+
+// Implement `common.Encoder`
+// The implementation MUST use value type, not pointer
+func (op Operation) EncodeRLP(w io.Writer) error {
+	if s1, r1, e1 := common.EncodeToReader(op.H); e1 != nil {
+		return e1
+	} else if s2, r2, e2 := common.EncodeToReader(op.B); e2 != nil {
+		return e2
+	} else {
+		// Write it as a list
+		totalLength := uint64(s1) + uint64(s2)
+		if err := common.PutListLength(w, totalLength); err != nil {
+			return err
+		}
+		if _, err := io.Copy(w, r1); err != nil {
+			return err
+		}
+		if _, err := io.Copy(w, r2); err != nil {
+			return err
+		}
+		return nil
+	}
 }
 
 type Header struct {
