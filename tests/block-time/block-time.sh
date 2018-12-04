@@ -10,7 +10,7 @@ fi
 
 SECONDS=${1}
 DIV=`expr $SECONDS / 5`
-EXPECTED1=`expr $DIV + 2`
+EXPECTED1=`expr $DIV`
 EXPECTED2=`expr $EXPECTED1 - 1`
 EXPECTED3=`expr $EXPECTED1 + 1`
 
