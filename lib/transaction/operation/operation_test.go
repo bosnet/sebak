@@ -22,7 +22,7 @@ func TestMakeHashOfOperationBodyPayment(t *testing.T) {
 		H: Header{Type: TypePayment},
 		B: opb,
 	}
-	hashed := op.MakeHashString()
+	hashed := common.MustMakeObjectHashString(op)
 
 	expected := "GodiXQkWvAAbobhLBnWK8QS8aArb1ZoR2Ms8JswYUvL3"
 	require.Equal(t, expected, hashed)
@@ -60,7 +60,7 @@ func TestOperationBodyCongressVoting(t *testing.T) {
 		H: Header{Type: TypeCongressVoting},
 		B: opb,
 	}
-	hashed := op.MakeHashString()
+	hashed := common.MustMakeObjectHashString(op)
 
 	expected := "EtVW5hG3p4YsSzL3mgwejHvtskzYuxW8dNaM6UEm42DX"
 	require.Equal(t, expected, hashed)
@@ -85,7 +85,7 @@ func TestOperationBodyCongressVotingResult(t *testing.T) {
 		H: Header{Type: TypeCongressVotingResult},
 		B: opb,
 	}
-	hashed := op.MakeHashString()
+	hashed := common.MustMakeObjectHashString(op)
 
 	expected := "8t6e3gZ9BUFXGUbf8qEwQfJ3Hn7yWDAatkELaiaxbcCg"
 	require.Equal(t, expected, hashed)
