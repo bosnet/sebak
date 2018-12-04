@@ -38,9 +38,4 @@ func MustMakeObjectHashString(i interface{}) string {
 }
 
 type Hash = ethcommon.Hash
-
-func BytesToHash(b []byte) Hash {
-	var h Hash
-	h.SetBytes(b)
-	return h
-}
+var BytesToHash = ethcommon.BytesToHash
