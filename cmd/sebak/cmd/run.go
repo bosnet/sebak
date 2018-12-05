@@ -39,8 +39,8 @@ const (
 
 var (
 	flagBindURL                    string = common.GetENVValue("SEBAK_BIND", defaultBindURL)
-	flagBlockTime                  string = common.GetENVValue("SEBAK_BLOCK_TIME", "5")
-	flagBlockTimeDelta             string = common.GetENVValue("SEBAK_BLOCK_TIME_DELTA", "1")
+	flagBlockTime                  string = common.GetENVValue("SEBAK_BLOCK_TIME", "5s")
+	flagBlockTimeDelta             string = common.GetENVValue("SEBAK_BLOCK_TIME_DELTA", "1s")
 	flagDebugPProf                 bool   = common.GetENVValue("SEBAK_DEBUG_PPROF", "0") == "1"
 	flagKPSecretSeed               string = common.GetENVValue("SEBAK_SECRET_SEED", "")
 	flagLog                        string = common.GetENVValue("SEBAK_LOG", "")
@@ -55,10 +55,10 @@ var (
 	flagSyncRetryInterval          string = common.GetENVValue("SEBAK_SYNC_RETRY_INTERVAL", "10s")
 	flagSyncCheckPrevBlockInterval string = common.GetENVValue("SEBAK_SYNC_CHECK_PREVBLOCK", "30s")
 	flagThreshold                  string = common.GetENVValue("SEBAK_THRESHOLD", "67")
-	flagTimeoutACCEPT              string = common.GetENVValue("SEBAK_TIMEOUT_ACCEPT", "2")
-	flagTimeoutALLCONFIRM          string = common.GetENVValue("SEBAK_TIMEOUT_ALLCONFIRM", "30")
-	flagTimeoutINIT                string = common.GetENVValue("SEBAK_TIMEOUT_INIT", "2")
-	flagTimeoutSIGN                string = common.GetENVValue("SEBAK_TIMEOUT_SIGN", "2")
+	flagTimeoutACCEPT              string = common.GetENVValue("SEBAK_TIMEOUT_ACCEPT", "2s")
+	flagTimeoutALLCONFIRM          string = common.GetENVValue("SEBAK_TIMEOUT_ALLCONFIRM", "30s")
+	flagTimeoutINIT                string = common.GetENVValue("SEBAK_TIMEOUT_INIT", "2s")
+	flagTimeoutSIGN                string = common.GetENVValue("SEBAK_TIMEOUT_SIGN", "2s")
 	flagTLSCertFile                string = common.GetENVValue("SEBAK_TLS_CERT", "sebak.crt")
 	flagTLSKeyFile                 string = common.GetENVValue("SEBAK_TLS_KEY", "sebak.key")
 	flagUnfreezingPeriod           string = common.GetENVValue("SEBAK_UNFREEZING_PERIOD", strconv.FormatUint(common.UnfreezingPeriod, 10))
@@ -389,12 +389,12 @@ func parseFlagsNode() {
 		cmdcommon.PrintFlagsError(nodeCmd, "--storage", err)
 	}
 
-	timeoutINIT = getTime(flagTimeoutINIT, common.DefaultTimeoutINIT, "--timeout-init")
-	timeoutSIGN = getTime(flagTimeoutSIGN, common.DefaultTimeoutSIGN, "--timeout-sign")
-	timeoutACCEPT = getTime(flagTimeoutACCEPT, common.DefaultTimeoutACCEPT, "--timeout-accept")
-	timeoutALLCONFIRM = getTime(flagTimeoutALLCONFIRM, common.DefaultTimeoutALLCONFIRM, "--timeout-allconfirm")
-	blockTime = getTime(flagBlockTime, common.DefaultBlockTime, "--block-time")
-	blockTimeDelta = getTime(flagBlockTimeDelta, common.DefaultBlockTimeDelta, "--block-time-delta")
+	timeoutINIT = getTimeDuration(flagTimeoutINIT, common.DefaultTimeoutINIT, "--timeout-init")
+	timeoutSIGN = getTimeDuration(flagTimeoutSIGN, common.DefaultTimeoutSIGN, "--timeout-sign")
+	timeoutACCEPT = getTimeDuration(flagTimeoutACCEPT, common.DefaultTimeoutACCEPT, "--timeout-accept")
+	timeoutALLCONFIRM = getTimeDuration(flagTimeoutALLCONFIRM, common.DefaultTimeoutALLCONFIRM, "--timeout-allconfirm")
+	blockTime = getTimeDuration(flagBlockTime, common.DefaultBlockTime, "--block-time")
+	blockTimeDelta = getTimeDuration(flagBlockTimeDelta, common.DefaultBlockTimeDelta, "--block-time-delta")
 
 	if transactionsLimit, err = strconv.ParseUint(flagTransactionsLimit, 10, 64); err != nil {
 		cmdcommon.PrintFlagsError(nodeCmd, "--transactions-limit", err)
@@ -621,19 +621,6 @@ func parseHTTPCacheRedisAddrs(s string) (map[string]string, error) {
 		addrs[addr[0]] = addr[1]
 	}
 	return addrs, nil
-}
-
-func getTime(timeoutStr string, defaultValue time.Duration, errMessage string) time.Duration {
-	var timeoutDuration time.Duration
-	if tmpUint64, err := strconv.ParseUint(timeoutStr, 10, 64); err != nil {
-		cmdcommon.PrintFlagsError(nodeCmd, errMessage, err)
-	} else {
-		timeoutDuration = time.Duration(tmpUint64) * time.Second
-	}
-	if timeoutDuration == 0 {
-		timeoutDuration = defaultValue
-	}
-	return timeoutDuration
 }
 
 func getTimeDuration(str string, defaultValue time.Duration, errMessage string) time.Duration {

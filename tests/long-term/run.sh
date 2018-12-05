@@ -6,7 +6,7 @@ set -xe
 # So make sure we're in the right WD
 cd -- `dirname ${BASH_SOURCE[0]}`
 ROOT_DIR="../.."
-export BLOCK_TIME_DELTA=2
+export BLOCK_TIME_DELTA=2s
 source accounts.sh
 CONTAINERS=""
 function dumpLogsAndCleanup () {
