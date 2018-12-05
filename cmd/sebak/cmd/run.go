@@ -389,12 +389,12 @@ func parseFlagsNode() {
 		cmdcommon.PrintFlagsError(nodeCmd, "--storage", err)
 	}
 
-	timeoutINIT = getTime(flagTimeoutINIT, 2*time.Second, "--timeout-init")
-	timeoutSIGN = getTime(flagTimeoutSIGN, 2*time.Second, "--timeout-sign")
-	timeoutACCEPT = getTime(flagTimeoutACCEPT, 2*time.Second, "--timeout-accept")
-	timeoutALLCONFIRM = getTime(flagTimeoutALLCONFIRM, 30*time.Second, "--timeout-accept")
-	blockTime = getTime(flagBlockTime, 5*time.Second, "--block-time")
-	blockTimeDelta = getTime(flagBlockTimeDelta, 1*time.Second, "--block-time-delta")
+	timeoutINIT = getTime(flagTimeoutINIT, common.DefaultTimeoutINIT, "--timeout-init")
+	timeoutSIGN = getTime(flagTimeoutSIGN, common.DefaultTimeoutSIGN, "--timeout-sign")
+	timeoutACCEPT = getTime(flagTimeoutACCEPT, common.DefaultTimeoutACCEPT, "--timeout-accept")
+	timeoutALLCONFIRM = getTime(flagTimeoutALLCONFIRM, common.DefaultTimeoutALLCONFIRM, "--timeout-allconfirm")
+	blockTime = getTime(flagBlockTime, common.DefaultBlockTime, "--block-time")
+	blockTimeDelta = getTime(flagBlockTimeDelta, common.DefaultBlockTimeDelta, "--block-time-delta")
 
 	if transactionsLimit, err = strconv.ParseUint(flagTransactionsLimit, 10, 64); err != nil {
 		cmdcommon.PrintFlagsError(nodeCmd, "--transactions-limit", err)
