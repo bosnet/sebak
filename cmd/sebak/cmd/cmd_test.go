@@ -15,12 +15,54 @@ import (
 	"boscoin.io/sebak/lib/common/keypair"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/node"
+	"boscoin.io/sebak/lib/sync"
 )
 
 func TestParseFlagValidators(t *testing.T) {
 	vs, err := parseFlagValidators("https://localhost:12346?address=GDPQ2LBYP3RL3O675H2N5IEYM6PRJNUA5QFMKXIHGTKEB5KS5T3KHFA2")
 	require.NoError(t, err)
 	require.Equal(t, 1, len(vs))
+}
+
+func TestParseFlagsNode(t *testing.T) {
+	flagNetworkID = "sebak-test-network"
+	flagValidators = "https://localhost:12346?address=GDPQ2LBYP3RL3O675H2N5IEYM6PRJNUA5QFMKXIHGTKEB5KS5T3KHFA2"
+	flagKPSecretSeed = "SCN4NSV5SVHIZWUDJFT4Z5FFVHO3TFRTOIBQLHMNPAZJ37K5A2YFSCBM"
+	flagBindURL = "http://0.0.0.0:12345"
+
+	flagBlockTime = "200ms"
+	flagBlockTimeDelta = "50ms"
+	flagTimeoutINIT = "100ms"
+	flagTimeoutSIGN = "50ms"
+	flagTimeoutACCEPT = "50ms"
+	flagTimeoutALLCONFIRM = "10s"
+
+	parseFlagsNode()
+
+	require.Equal(t, 200*time.Millisecond, blockTime)
+	require.Equal(t, 50*time.Millisecond, blockTimeDelta)
+	require.Equal(t, 100*time.Millisecond, timeoutINIT)
+	require.Equal(t, 50*time.Millisecond, timeoutSIGN)
+	require.Equal(t, 50*time.Millisecond, timeoutACCEPT)
+	require.Equal(t, 10*time.Second, timeoutALLCONFIRM)
+
+	require.Equal(t, uint64(common.DefaultTransactionsInBallotLimit), transactionsLimit)
+	require.Equal(t, uint64(common.DefaultOperationsInTransactionLimit), operationsLimit)
+	require.Equal(t, uint64(common.DefaultOperationsInBallotLimit), operationsInBallotLimit)
+
+	require.Equal(t, 67, threshold)
+
+	require.Equal(t, uint64(1000000), txPoolClientLimit)
+	require.Equal(t, uint64(0) /* unlimited */, txPoolNodeLimit)
+
+	require.Equal(t, uint64(241920), common.UnfreezingPeriod)
+	require.Equal(t, uint64(300), syncPoolSize)
+
+	require.Equal(t, sync.RetryInterval, syncRetryInterval)
+	require.Equal(t, sync.FetchTimeout, syncFetchTimeout)
+	require.Equal(t, sync.CheckBlockHeightInterval, syncCheckInterval)
+	require.Equal(t, sync.CheckPrevBlockInterval, syncCheckPrevBlock)
+	require.Equal(t, sync.WatchInterval, watchInterval)
 }
 
 func TestParseFlagSelfValidators(t *testing.T) {
