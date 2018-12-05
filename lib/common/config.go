@@ -44,12 +44,12 @@ type Config struct {
 func NewConfig(networkID []byte) Config {
 	p := Config{}
 
-	p.TimeoutINIT = 2 * time.Second
-	p.TimeoutSIGN = 2 * time.Second
-	p.TimeoutACCEPT = 2 * time.Second
-	p.TimeoutALLCONFIRM = 30 * time.Second
-	p.BlockTime = 5 * time.Second
-	p.BlockTimeDelta = 1 * time.Second
+	p.TimeoutINIT = DefaultTimeoutINIT
+	p.TimeoutSIGN = DefaultTimeoutSIGN
+	p.TimeoutACCEPT = DefaultTimeoutACCEPT
+	p.TimeoutALLCONFIRM = DefaultTimeoutALLCONFIRM
+	p.BlockTime = DefaultBlockTime
+	p.BlockTimeDelta = DefaultBlockTimeDelta
 
 	p.TxsLimit = DefaultTransactionsInBallotLimit
 	p.OpsLimit = DefaultOperationsInTransactionLimit

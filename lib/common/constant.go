@@ -56,6 +56,13 @@ const (
 	// operations in one ballot. This does not count the operations of
 	// `ProposerTransaction`.
 	DefaultOperationsInBallotLimit int = 10000
+
+	DefaultTimeoutINIT       = 2 * time.Second
+	DefaultTimeoutSIGN       = 2 * time.Second
+	DefaultTimeoutACCEPT     = 2 * time.Second
+	DefaultTimeoutALLCONFIRM = 30 * time.Second
+	DefaultBlockTime         = 5 * time.Second
+	DefaultBlockTimeDelta    = 1 * time.Second
 )
 
 var (
