@@ -84,13 +84,7 @@ func TriggerEvent(st *storage.LevelDBBackend, transactions []*transaction.Transa
 		t(event(cond(obs.Tx, obs.Source, source)), &bt)
 		t(event(cond(obs.Tx, obs.TxHash, txHash)), &bt)
 
-		for i, op := range tx.B.Operations {
-			opHash := block.NewBlockOperationKey(op.MakeHashString(), txHash, uint64(i))
-			bo, err := block.GetBlockOperation(st, opHash)
-			if err != nil {
-				return
-			}
-
+		for _, op := range tx.B.Operations {
 			if pop, ok := op.B.(operation.Targetable); ok {
 				target := pop.TargetAddress()
 				accountMap[target] = struct{}{}

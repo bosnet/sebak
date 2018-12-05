@@ -39,7 +39,7 @@ func (api NetworkHandlerAPI) GetOperationsByTxHandler(w http.ResponseWriter, r *
 		return
 	}
 
-	ops, pOrder, nOrder := api.getOperationsByTxHash(hash, blk, options)
+	ops, pOrder, nOrder := api.getOperationsByTx(hash, blk, options)
 
 	if len(ops) < 1 {
 		httputils.WriteJSONError(w, errors.BlockTransactionDoesNotExists)
@@ -50,14 +50,13 @@ func (api NetworkHandlerAPI) GetOperationsByTxHandler(w http.ResponseWriter, r *
 	httputils.MustWriteJSON(w, 200, list)
 }
 
-func (api NetworkHandlerAPI) getOperationsByTxHash(txHash string, blk *block.Block, options storage.ListOptions) (txs []resource.Resource, pOrder *block.BlockOrder, nOrder *block.BlockOrder) {
-	iterFunc, closeFunc := block.GetBlockOperationsByTxHash(api.storage, txHash, options)
-	for {
+func (api NetworkHandlerAPI) getOperationsByTx(txHash string, blk *block.Block, options storage.ListOptions) (txs []resource.Resource, pOrder *block.BlockOrder, nOrder *block.BlockOrder) {
+	iterFunc, closeFunc := block.GetBlockOperationsByTx(api.storage, txHash, options)
+	for idx := 0; ; idx++ {
 		o, hasNext, _ := iterFunc()
 		if !hasNext {
 			break
 		}
-
 		if pOrder == nil {
 			pOrder = o.BlockOrder()
 		}

@@ -27,7 +27,7 @@ func TestNewBlockOperationFromOperation(t *testing.T) {
 	require.Equal(t, bo.Source, tx.B.Source)
 	encoded := common.MustMarshalJSON(op.B)
 	require.Equal(t, bo.Body, encoded)
-	require.Equal(t, bo.Index, index)
+	require.Equal(t, bo.Index, uint64(index))
 	require.Equal(t, bo.TxIndex, txIndex)
 }
 

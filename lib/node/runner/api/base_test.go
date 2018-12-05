@@ -82,7 +82,7 @@ func prepareOpsWithoutSave(count int, st *storage.LevelDBBackend) (*keypair.Full
 	theBlock := block.TestMakeNewBlockWithPrevBlock(block.GetLatestBlock(st), txHashes)
 	for i, tx := range txs {
 		for j, op := range tx.B.Operations {
-			bo, err := block.NewBlockOperationFromOperation(op, tx, theBlock.Height, uint64(i), uint64(j))
+			bo, err := block.NewBlockOperationFromOperation(op, tx, theBlock.Height, uint64(i), j)
 			if err != nil {
 				panic(err)
 			}
@@ -150,7 +150,7 @@ func prepareTxWithOperations(storage *storage.LevelDBBackend, count int) (*keypa
 
 	theBlock := block.TestMakeNewBlockWithPrevBlock(block.GetLatestBlock(storage), []string{tx.GetHash()})
 	theBlock.MustSave(storage)
-	bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, theBlock.Height, theBlock.ProposedTime, tx)
+	bt := block.NewBlockTransactionFromTransaction(theBlock.Hash, theBlock.Height, theBlock.ProposedTime, tx, 1)
 	bt.Save(storage)
 	if err := bt.SaveBlockOperations(storage); err != nil {
 		panic(err)
