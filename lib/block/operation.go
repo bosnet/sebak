@@ -418,7 +418,7 @@ func GetBlockOperationsByTx(st *storage.LevelDBBackend, txHash string, options s
 	func() (BlockOperation, bool, []byte),
 	func(),
 ) {
-	iterFunc, closeFunc := st.GetIterator(keyPrefixTxHash(txHash), options)
+	iterFunc, closeFunc := st.GetIterator(GetBlockOperationKeyPrefixTxHash(txHash), options)
 
 	return LoadBlockOperationsInsideIterator(st, iterFunc, closeFunc)
 }
@@ -427,7 +427,7 @@ func GetBlockOperationsBySource(st *storage.LevelDBBackend, source string, optio
 	func() (BlockOperation, bool, []byte),
 	func(),
 ) {
-	iterFunc, closeFunc := st.GetIterator(keyPrefixSource(source), options)
+	iterFunc, closeFunc := st.GetIterator(GetBlockOperationKeyPrefixSource(source), options)
 
 	return LoadBlockOperationsInsideIterator(st, iterFunc, closeFunc)
 }
@@ -446,7 +446,7 @@ func GetBlockOperationsByLinked(st *storage.LevelDBBackend, hash string, options
 	func() (BlockOperation, bool, []byte),
 	func(),
 ) {
-	iterFunc, closeFunc := st.GetIterator(keyPrefixFrozenLinked(hash), options)
+	iterFunc, closeFunc := st.GetIterator(GetBlockOperationKeyPrefixFrozenLinked(hash), options)
 	return LoadBlockOperationsInsideIterator(st, iterFunc, closeFunc)
 }
 
@@ -454,7 +454,7 @@ func GetBlockOperationsBySourceAndType(st *storage.LevelDBBackend, source string
 	func() (BlockOperation, bool, []byte),
 	func(),
 ) {
-	iterFunc, closeFunc := st.GetIterator(keyPrefixSourceAndType(source, ty), options)
+	iterFunc, closeFunc := st.GetIterator(GetBlockOperationKeyPrefixSourceAndType(source, ty), options)
 	return LoadBlockOperationsInsideIterator(st, iterFunc, closeFunc)
 }
 
@@ -462,7 +462,7 @@ func GetBlockOperationsByTarget(st *storage.LevelDBBackend, target string, optio
 	func() (BlockOperation, bool, []byte),
 	func(),
 ) {
-	iterFunc, closeFunc := st.GetIterator(keyPrefixTarget(target), options)
+	iterFunc, closeFunc := st.GetIterator(GetBlockOperationKeyPrefixTarget(target), options)
 
 	return LoadBlockOperationsInsideIterator(st, iterFunc, closeFunc)
 }
@@ -471,7 +471,7 @@ func GetBlockOperationsByTargetAndType(st *storage.LevelDBBackend, target string
 	func() (BlockOperation, bool, []byte),
 	func(),
 ) {
-	iterFunc, closeFunc := st.GetIterator(keyPrefixTargetAndType(target, ty), options)
+	iterFunc, closeFunc := st.GetIterator(GetBlockOperationKeyPrefixTargetAndType(target, ty), options)
 	return LoadBlockOperationsInsideIterator(st, iterFunc, closeFunc)
 }
 
@@ -479,7 +479,7 @@ func GetBlockOperationsByPeers(st *storage.LevelDBBackend, addr string, options 
 	func() (BlockOperation, bool, []byte),
 	func(),
 ) {
-	iterFunc, closeFunc := st.GetIterator(keyPrefixPeers(addr), options)
+	iterFunc, closeFunc := st.GetIterator(GetBlockOperationKeyPrefixPeers(addr), options)
 
 	return LoadBlockOperationsInsideIterator(st, iterFunc, closeFunc)
 }
@@ -488,7 +488,7 @@ func GetBlockOperationsByPeersAndType(st *storage.LevelDBBackend, addr string, t
 	func() (BlockOperation, bool, []byte),
 	func(),
 ) {
-	iterFunc, closeFunc := st.GetIterator(keyPrefixPeersAndType(addr, ty), options)
+	iterFunc, closeFunc := st.GetIterator(GetBlockOperationKeyPrefixPeersAndType(addr, ty), options)
 	return LoadBlockOperationsInsideIterator(st, iterFunc, closeFunc)
 }
 
@@ -496,6 +496,6 @@ func GetBlockOperationsByBlockHeight(st *storage.LevelDBBackend, height uint64, 
 	func() (BlockOperation, bool, []byte),
 	func(),
 ) {
-	iterFunc, closeFunc := st.GetIterator(keyPrefixBlockHeight(height), options)
+	iterFunc, closeFunc := st.GetIterator(GetBlockOperationKeyPrefixBlockHeight(height), options)
 	return LoadBlockOperationsInsideIterator(st, iterFunc, closeFunc)
 }

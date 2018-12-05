@@ -73,7 +73,7 @@ func TestResourceAccount(t *testing.T) {
 	// Operation
 	{
 		_, tx := transaction.TestMakeTransaction([]byte{0x00}, 1)
-		bt := block.NewBlockTransactionFromTransaction(common.GetUniqueIDFromUUID(), 0, common.NowISO8601(), tx, 1)
+		bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, common.NowISO8601(), tx, 1)
 		bt.MustSave(storage)
 
 		err := bt.SaveBlockOperations(storage)
