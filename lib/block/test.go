@@ -44,7 +44,7 @@ func init() {
 //
 func MakeTestBlockchain(st *storage.LevelDBBackend) {
 	conf := common.NewTestConfig()
-	balance := common.MaximumBalance
+	balance := conf.InitialBalance
 	genesisAccount := NewBlockAccount(GenesisKP.Address(), balance)
 	if err := genesisAccount.Save(st); err != nil {
 		panic(err)

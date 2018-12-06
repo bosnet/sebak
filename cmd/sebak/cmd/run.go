@@ -659,12 +659,27 @@ func runNode() error {
 		policy,
 	)
 
+	st, err := storage.NewStorage(storageConfig)
+	if err != nil {
+		log.Crit("failed to initialize storage", "error", err)
+		return err
+	}
+
+	// get the initial balance of geness account
+	initialBalance, err := runner.GetGenesisBalance(st)
+	if err != nil {
+		return err
+	}
+	log.Debug("initial balance found", "amount", initialBalance)
+	initialBalance.Invariant()
+
 	conf := common.Config{
 		TimeoutINIT:            timeoutINIT,
 		TimeoutSIGN:            timeoutSIGN,
 		TimeoutACCEPT:          timeoutACCEPT,
 		TimeoutALLCONFIRM:      timeoutALLCONFIRM,
 		NetworkID:              []byte(flagNetworkID),
+		InitialBalance:         initialBalance,
 		BlockTime:              blockTime,
 		BlockTimeDelta:         blockTimeDelta,
 		TxsLimit:               int(transactionsLimit),
@@ -680,11 +695,6 @@ func runNode() error {
 		TxPoolNodeLimit:        int(txPoolNodeLimit),
 		JSONRPCEndpoint:        jsonrpcbindEndpoint,
 		WatcherMode:            flagWatcherMode,
-	}
-	st, err := storage.NewStorage(storageConfig)
-	if err != nil {
-		log.Crit("failed to initialize storage", "error", err)
-		return err
 	}
 	tp := transaction.NewPool(conf)
 

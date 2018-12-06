@@ -21,6 +21,7 @@ type BallotTransactionChecker struct {
 	common.DefaultChecker
 
 	NodeRunner *NodeRunner
+	Conf       common.Config
 	LocalNode  node.Node
 	NetworkID  []byte
 
@@ -115,7 +116,7 @@ func BallotTransactionsOperationLimit(c common.Checker, args ...interface{}) err
 			return errors.TransactionNotFound
 		} else {
 			ops += len(tx.B.Operations)
-			if ops > checker.NodeRunner.Conf.OpsInBallotLimit {
+			if ops > checker.Conf.OpsInBallotLimit {
 				return errors.BallotHasOverMaxOperationsInBallot
 			}
 		}

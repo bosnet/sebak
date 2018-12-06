@@ -117,7 +117,7 @@ func NewNodeInfo(nr *NodeRunner) node.NodeInfo {
 
 	policy := node.NodePolicy{
 		NetworkID:                 string(nr.NetworkID()),
-		InitialBalance:            nr.InitialBalance,
+		InitialBalance:            nr.Conf.InitialBalance,
 		BaseReserve:               common.BaseReserve,
 		BaseFee:                   common.BaseFee,
 		BlockTime:                 nr.Conf.BlockTime,

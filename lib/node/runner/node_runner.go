@@ -98,8 +98,6 @@ type NodeRunner struct {
 
 	log logging.Logger
 
-	InitialBalance common.Amount
-
 	Conf                  common.Config
 	nodeInfo              node.NodeInfo
 	savingBlockOperations *SavingBlockOperations
@@ -158,13 +156,6 @@ func NewNodeRunner(
 		}
 		nr.Conf.CommonAccountAddress = commonAccount.Address
 		nr.log.Debug("common account found", "address", nr.Conf.CommonAccountAddress)
-
-		// get the initial balance of geness account
-		if nr.InitialBalance, err = GetGenesisBalance(nr.storage); err != nil {
-			return
-		}
-		nr.log.Debug("initial balance found", "amount", nr.InitialBalance)
-		nr.InitialBalance.Invariant()
 	}
 
 	nr.nodeInfo = NewNodeInfo(nr)
@@ -525,6 +516,7 @@ func (nr *NodeRunner) handleBallotMessage(message common.NetworkMessage) (err er
 	baseChecker := &BallotChecker{
 		DefaultChecker:     common.DefaultChecker{Funcs: nr.handleBaseBallotCheckerFuncs},
 		NodeRunner:         nr,
+		Conf:               nr.Conf,
 		LocalNode:          nr.localNode,
 		Log:                nr.Log(),
 		VotingHole:         voting.NOTYET,
@@ -552,6 +544,7 @@ func (nr *NodeRunner) handleBallotMessage(message common.NetworkMessage) (err er
 	checker := &BallotChecker{
 		DefaultChecker:     common.DefaultChecker{Funcs: checkerFuncs},
 		NodeRunner:         nr,
+		Conf:               nr.Conf,
 		LocalNode:          nr.localNode,
 		Ballot:             baseChecker.Ballot,
 		VotingHole:         baseChecker.VotingHole,
@@ -651,6 +644,7 @@ func (nr *NodeRunner) proposeNewBallot(round uint64) (ballot.Ballot, error) {
 	transactionsChecker := &BallotTransactionChecker{
 		DefaultChecker:        common.DefaultChecker{Funcs: NewBallotTransactionCheckerFuncs},
 		NodeRunner:            nr,
+		Conf:                  nr.Conf,
 		LocalNode:             nr.localNode,
 		Transactions:          availableTransactions,
 		CheckTransactionsOnly: true,
@@ -710,7 +704,7 @@ func (nr *NodeRunner) proposeNewBallot(round uint64) (ballot.Ballot, error) {
 		return ballot.Ballot{}, err
 	}
 
-	opi, err := ballot.NewInflationFromBallot(*blt, nr.Conf.CommonAccountAddress, nr.InitialBalance)
+	opi, err := ballot.NewInflationFromBallot(*blt, nr.Conf.CommonAccountAddress, nr.Conf.InitialBalance)
 	if err != nil {
 		return ballot.Ballot{}, err
 	}
