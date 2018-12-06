@@ -458,10 +458,6 @@ func (nr *NodeRunner) SavingBlockOperations() *SavingBlockOperations {
 	return nr.savingBlockOperations
 }
 
-func (nr *NodeRunner) ISAACStateManager() *ISAACStateManager {
-	return nr.isaacStateManager
-}
-
 func (nr *NodeRunner) BallotSendRecord() *consensus.BallotSendRecord {
 	return nr.ballotSendRecord
 }
