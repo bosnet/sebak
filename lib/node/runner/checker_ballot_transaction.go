@@ -46,6 +46,10 @@ func (checker *BallotTransactionChecker) invalidTransactions() (invalids []strin
 	return
 }
 
+func (checker *BallotTransactionChecker) allTransactionsValid() bool {
+	return len(checker.Transactions) == len(checker.validTransactionsMap)
+}
+
 func (checker *BallotTransactionChecker) setValidTransactions(hashes []string) {
 	checker.ValidTransactions = hashes
 
@@ -203,10 +207,10 @@ func BallotTransactionsOperationBodyCollectTxFee(c common.Checker, args ...inter
 func BallotTransactionsAllValid(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotTransactionChecker)
 
-	if len(checker.InvalidTransactions()) > 0 {
-		checker.VotingHole = voting.NO
-	} else {
+	if checker.allTransactionsValid() {
 		checker.VotingHole = voting.YES
+	} else {
+		checker.VotingHole = voting.NO
 	}
 
 	return
