@@ -31,13 +31,12 @@ type ISAAC struct {
 	policy              voting.ThresholdPolicy
 	syncer              SyncController
 	latestReqSyncHeight uint64
+	latestVotingBasis   voting.Basis
 
-	LatestBallot      ballot.Ballot
-	NetworkID         []byte
-	Node              *node.LocalNode
-	RunningRounds     map[ /* Round.Index() */ string]*RunningRound
-	latestVotingBasis voting.Basis
-	Conf              common.Config
+	LatestBallot  ballot.Ballot
+	Node          *node.LocalNode
+	RunningRounds map[ /* Round.Index() */ string]*RunningRound
+	Conf          common.Config
 }
 
 // ISAAC should know network.ConnectionManager
@@ -46,7 +45,6 @@ func NewISAAC(node *node.LocalNode, p voting.ThresholdPolicy,
 	cm network.ConnectionManager, st *storage.LevelDBBackend, conf common.Config, syncer SyncController) (is *ISAAC, err error) {
 
 	is = &ISAAC{
-		NetworkID:         conf.NetworkID,
 		Node:              node,
 		policy:            p,
 		RunningRounds:     map[string]*RunningRound{},
