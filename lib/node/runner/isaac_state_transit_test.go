@@ -84,7 +84,7 @@ func TestStateINITTimeoutNotProposer(t *testing.T) {
 	require.NotEqual(t, nr.localNode.Address(), proposer)
 
 	recv := make(chan consensus.ISAACState)
-	nr.ISAACStateManager().SetTransitSignal(func(state consensus.ISAACState) {
+	nr.isaacStateManager.SetTransitSignal(func(state consensus.ISAACState) {
 		recv <- state
 	})
 
@@ -181,7 +181,7 @@ func TestStateSIGNTimeoutNotProposer(t *testing.T) {
 	defer nr.StopStateManager()
 
 	recvTransit := make(chan consensus.ISAACState)
-	nr.ISAACStateManager().SetTransitSignal(func(state consensus.ISAACState) {
+	nr.isaacStateManager.SetTransitSignal(func(state consensus.ISAACState) {
 		recvTransit <- state
 	})
 

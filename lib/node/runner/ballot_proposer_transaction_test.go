@@ -780,7 +780,7 @@ func TestCheckInflationBlockIncrease(t *testing.T) {
 
 	nr := nodeRunners[0]
 
-	nr.ISAACStateManager().Conf.BlockTime = 0
+	nr.Conf.BlockTime = 0
 	validators := nr.ConnectionManager().AllValidators()
 	require.Equal(t, 1, len(validators))
 	require.Equal(t, nr.localNode.Address(), validators[0])
@@ -795,7 +795,7 @@ func TestCheckInflationBlockIncrease(t *testing.T) {
 	require.Equal(t, common.Amount(0), getCommonAccountBalance())
 
 	recv := make(chan consensus.ISAACState)
-	nr.ISAACStateManager().SetTransitSignal(func(state consensus.ISAACState) {
+	nr.isaacStateManager.SetTransitSignal(func(state consensus.ISAACState) {
 		recv <- state
 	})
 	<-recv // first ballot.StateINIT
