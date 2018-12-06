@@ -659,12 +659,12 @@ func (nr *NodeRunner) proposeNewBallot(round uint64) (ballot.Ballot, error) {
 	}
 
 	// remove invalid transactions
-	if len(transactionsChecker.InvalidTransactions()) > 0 {
-		nr.TransactionPool.Remove(transactionsChecker.InvalidTransactions()...)
+	if len(transactionsChecker.invalidTransactions()) > 0 {
+		nr.TransactionPool.Remove(transactionsChecker.invalidTransactions()...)
 		nr.log.Debug(
 			"invalid transactions removed from pool",
 			"basis", basis,
-			"invalid-transactions", len(transactionsChecker.InvalidTransactions()),
+			"invalid-transactions", len(transactionsChecker.invalidTransactions()),
 			"transactionpool", nr.TransactionPool.Len(),
 		)
 	}
