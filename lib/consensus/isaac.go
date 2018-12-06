@@ -23,7 +23,6 @@ type SyncController interface {
 type ISAAC struct {
 	sync.RWMutex
 
-	latestBlock         block.Block
 	connectionManager   network.ConnectionManager
 	storage             *storage.LevelDBBackend
 	proposerSelector    ProposerSelector
