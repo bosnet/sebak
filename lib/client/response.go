@@ -116,6 +116,7 @@ type Operation struct {
 	Type        string      `json:"type"`
 	TxHash      string      `json:"tx_hash"`
 	BlockHeight uint64      `json:"block_height"`
+	Index       uint64      `json:"index"`
 	Body        interface{} `json:"body"`
 }
 
