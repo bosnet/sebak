@@ -34,7 +34,7 @@ type BallotTransactionChecker struct {
 	transactionCache      *TransactionCache
 }
 
-func (checker *BallotTransactionChecker) InvalidTransactions() (invalids []string) {
+func (checker *BallotTransactionChecker) invalidTransactions() (invalids []string) {
 	for _, hash := range checker.Transactions {
 		if _, found := checker.validTransactionsMap[hash]; found {
 			continue
