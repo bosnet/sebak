@@ -124,7 +124,7 @@ func (api NetworkHandlerNode) ReceiveTransaction(body []byte, funcs []common.Che
 		TransactionPool: api.transactionPool,
 		Storage:         api.storage,
 		LocalNode:       api.localNode,
-		NetworkID:       api.consensus.NetworkID,
+		NetworkID:       api.conf.NetworkID,
 		Message:         message,
 		Log:             log,
 		Conf:            api.conf,
