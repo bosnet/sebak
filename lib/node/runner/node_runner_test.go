@@ -282,6 +282,7 @@ func TestExpiredBallotCheckProposer(t *testing.T) {
 	checker := &BallotChecker{
 		DefaultChecker: common.DefaultChecker{},
 		NodeRunner:     nr,
+		Conf:           nr.Conf,
 		LocalNode:      nr.localNode,
 		Log:            nr.Log(),
 		Ballot:         *validBallot,
@@ -302,6 +303,7 @@ func TestExpiredBallotCheckProposer(t *testing.T) {
 	checker = &BallotChecker{
 		DefaultChecker: common.DefaultChecker{},
 		NodeRunner:     nr,
+		Conf:           nr.Conf,
 		LocalNode:      nr.localNode,
 		Log:            nr.Log(),
 		Ballot:         *invalidBallot,

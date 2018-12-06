@@ -23,7 +23,8 @@ type Config struct {
 	TxPoolClientLimit int
 	TxPoolNodeLimit   int
 
-	NetworkID []byte
+	NetworkID      []byte
+	InitialBalance Amount
 
 	// Those fields are not consensus-related
 	RateLimitRuleAPI  RateLimitRule

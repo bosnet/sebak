@@ -243,6 +243,7 @@ func TestOpsInBalotLimit(t *testing.T) {
 		checker := &BallotTransactionChecker{
 			DefaultChecker:   common.DefaultChecker{Funcs: checkerFuncs},
 			NodeRunner:       nr,
+			Conf:             nr.Conf,
 			LocalNode:        nr.Node(),
 			Transactions:     txs,
 			VotingHole:       voting.NOTYET,
@@ -271,6 +272,7 @@ func TestOpsInBalotLimit(t *testing.T) {
 		checker := &BallotTransactionChecker{
 			DefaultChecker:   common.DefaultChecker{Funcs: checkerFuncs},
 			NodeRunner:       nr,
+			Conf:             nr.Conf,
 			LocalNode:        nr.Node(),
 			Transactions:     txs,
 			VotingHole:       voting.NOTYET,
@@ -302,6 +304,7 @@ func TestOpsInBalotLimit(t *testing.T) {
 		checker := &BallotTransactionChecker{
 			DefaultChecker:   common.DefaultChecker{Funcs: checkerFuncs},
 			NodeRunner:       nr,
+			Conf:             nr.Conf,
 			LocalNode:        nr.Node(),
 			Transactions:     txs,
 			VotingHole:       voting.NOTYET,

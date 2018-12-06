@@ -17,6 +17,7 @@ func NewTestConfig() Config {
 	p.OpsInBallotLimit = DefaultOperationsInBallotLimit
 
 	p.NetworkID = []byte("sebak-unittest")
+	p.InitialBalance = MaximumBalance
 
 	p.TxPoolClientLimit = DefaultTxPoolLimit
 	p.TxPoolNodeLimit = 0 // unlimited

@@ -141,6 +141,7 @@ func TestProposedTransactionWithoutTransactions(t *testing.T) {
 	baseChecker := &BallotChecker{
 		DefaultChecker: common.DefaultChecker{Funcs: DefaultHandleBaseBallotCheckerFuncs},
 		NodeRunner:     p.nr,
+		Conf:           p.nr.Conf,
 		LocalNode:      p.nr.Node(),
 		Message:        ballotMessage,
 		Log:            p.nr.Log(),
@@ -152,6 +153,7 @@ func TestProposedTransactionWithoutTransactions(t *testing.T) {
 	checker := &BallotChecker{
 		DefaultChecker: common.DefaultChecker{Funcs: DefaultHandleINITBallotCheckerFuncs},
 		NodeRunner:     p.nr,
+		Conf:           p.nr.Conf,
 		LocalNode:      p.nr.Node(),
 		Message:        ballotMessage,
 		Ballot:         baseChecker.Ballot,
@@ -190,6 +192,7 @@ func TestProposedTransactionWithTransactions(t *testing.T) {
 	baseChecker := &BallotChecker{
 		DefaultChecker: common.DefaultChecker{Funcs: DefaultHandleBaseBallotCheckerFuncs},
 		NodeRunner:     p.nr,
+		Conf:           p.nr.Conf,
 		LocalNode:      p.nr.Node(),
 		Message:        ballotMessage,
 		Log:            p.nr.Log(),
@@ -201,6 +204,7 @@ func TestProposedTransactionWithTransactions(t *testing.T) {
 	checker := &BallotChecker{
 		DefaultChecker: common.DefaultChecker{Funcs: DefaultHandleINITBallotCheckerFuncs},
 		NodeRunner:     p.nr,
+		Conf:           p.nr.Conf,
 		LocalNode:      p.nr.Node(),
 		Message:        ballotMessage,
 		Ballot:         baseChecker.Ballot,
@@ -395,6 +399,7 @@ func TestProposedTransactionWithInflationWrongAmount(t *testing.T) {
 	baseChecker := &BallotChecker{
 		DefaultChecker: common.DefaultChecker{Funcs: DefaultHandleBaseBallotCheckerFuncs},
 		NodeRunner:     p.nr,
+		Conf:           p.nr.Conf,
 		LocalNode:      p.nr.Node(),
 		Message:        ballotMessage,
 		Log:            p.nr.Log(),
@@ -406,6 +411,7 @@ func TestProposedTransactionWithInflationWrongAmount(t *testing.T) {
 	checker := &BallotChecker{
 		DefaultChecker: common.DefaultChecker{Funcs: DefaultHandleINITBallotCheckerFuncs},
 		NodeRunner:     p.nr,
+		Conf:           p.nr.Conf,
 		LocalNode:      p.nr.Node(),
 		Message:        ballotMessage,
 		Ballot:         baseChecker.Ballot,
@@ -468,6 +474,7 @@ func TestProposedTransactionWithCollectTxFeeWrongCommonAddress(t *testing.T) {
 	baseChecker := &BallotChecker{
 		DefaultChecker: common.DefaultChecker{Funcs: DefaultHandleBaseBallotCheckerFuncs},
 		NodeRunner:     p.nr,
+		Conf:           p.nr.Conf,
 		LocalNode:      p.nr.Node(),
 		Message:        ballotMessage,
 		Log:            p.nr.Log(),
@@ -479,6 +486,7 @@ func TestProposedTransactionWithCollectTxFeeWrongCommonAddress(t *testing.T) {
 	checker := &BallotChecker{
 		DefaultChecker: common.DefaultChecker{Funcs: DefaultHandleINITBallotCheckerFuncs},
 		NodeRunner:     p.nr,
+		Conf:           p.nr.Conf,
 		LocalNode:      p.nr.Node(),
 		Message:        ballotMessage,
 		Ballot:         baseChecker.Ballot,
@@ -524,6 +532,7 @@ func TestProposedTransactionWithInflationWrongCommonAddress(t *testing.T) {
 	baseChecker := &BallotChecker{
 		DefaultChecker: common.DefaultChecker{Funcs: DefaultHandleBaseBallotCheckerFuncs},
 		NodeRunner:     p.nr,
+		Conf:           p.nr.Conf,
 		LocalNode:      p.nr.Node(),
 		Message:        ballotMessage,
 		Log:            p.nr.Log(),
@@ -535,6 +544,7 @@ func TestProposedTransactionWithInflationWrongCommonAddress(t *testing.T) {
 	checker := &BallotChecker{
 		DefaultChecker: common.DefaultChecker{Funcs: DefaultHandleINITBallotCheckerFuncs},
 		NodeRunner:     p.nr,
+		Conf:           p.nr.Conf,
 		LocalNode:      p.nr.Node(),
 		Message:        ballotMessage,
 		Ballot:         baseChecker.Ballot,
@@ -584,6 +594,7 @@ func TestProposedTransactionWithBiggerTransactionFeeThanCollected(t *testing.T) 
 	baseChecker := &BallotChecker{
 		DefaultChecker: common.DefaultChecker{Funcs: DefaultHandleBaseBallotCheckerFuncs},
 		NodeRunner:     p.nr,
+		Conf:           p.nr.Conf,
 		LocalNode:      p.nr.Node(),
 		Message:        ballotMessage,
 		Log:            p.nr.Log(),
@@ -595,6 +606,7 @@ func TestProposedTransactionWithBiggerTransactionFeeThanCollected(t *testing.T) 
 	checker := &BallotChecker{
 		DefaultChecker: common.DefaultChecker{Funcs: DefaultHandleINITBallotCheckerFuncs},
 		NodeRunner:     p.nr,
+		Conf:           p.nr.Conf,
 		LocalNode:      p.nr.Node(),
 		Message:        ballotMessage,
 		Ballot:         baseChecker.Ballot,
@@ -780,7 +792,6 @@ func TestCheckInflationBlockIncrease(t *testing.T) {
 
 	nr := nodeRunners[0]
 
-	nr.Conf.BlockTime = 0
 	validators := nr.ConnectionManager().AllValidators()
 	require.Equal(t, 1, len(validators))
 	require.Equal(t, nr.localNode.Address(), validators[0])
@@ -833,11 +844,11 @@ func TestCheckInflationBlockIncrease(t *testing.T) {
 
 	t.Logf(
 		"CalculateInflation(initial balance, inflation ratio): initial balance=%v inflation ratio=%s",
-		nr.InitialBalance,
+		nr.Conf.InitialBalance,
 		common.InflationRatioString,
 	)
 
-	inflationAmount, err := common.CalculateInflation(nr.InitialBalance)
+	inflationAmount, err := common.CalculateInflation(nr.Conf.InitialBalance)
 	require.NoError(t, err)
 
 	var previous common.Amount
@@ -873,6 +884,7 @@ func TestProposedTransactionReachedBlockHeightEndOfInflation(t *testing.T) {
 		baseChecker := &BallotChecker{
 			DefaultChecker: common.DefaultChecker{Funcs: DefaultHandleBaseBallotCheckerFuncs},
 			NodeRunner:     p.nr,
+			Conf:           p.nr.Conf,
 			LocalNode:      p.nr.Node(),
 			Message:        ballotMessage,
 			Log:            p.nr.Log(),
@@ -884,6 +896,7 @@ func TestProposedTransactionReachedBlockHeightEndOfInflation(t *testing.T) {
 		checker := &BallotChecker{
 			DefaultChecker: common.DefaultChecker{Funcs: DefaultHandleINITBallotCheckerFuncs},
 			NodeRunner:     p.nr,
+			Conf:           p.nr.Conf,
 			LocalNode:      p.nr.Node(),
 			Message:        ballotMessage,
 			Ballot:         baseChecker.Ballot,
@@ -915,6 +928,7 @@ func TestProposedTransactionReachedBlockHeightEndOfInflation(t *testing.T) {
 		baseChecker := &BallotChecker{
 			DefaultChecker: common.DefaultChecker{Funcs: DefaultHandleBaseBallotCheckerFuncs},
 			NodeRunner:     p.nr,
+			Conf:           p.nr.Conf,
 			LocalNode:      p.nr.Node(),
 			Message:        ballotMessage,
 			Log:            p.nr.Log(),
@@ -926,6 +940,7 @@ func TestProposedTransactionReachedBlockHeightEndOfInflation(t *testing.T) {
 		checker := &BallotChecker{
 			DefaultChecker: common.DefaultChecker{Funcs: DefaultHandleINITBallotCheckerFuncs},
 			NodeRunner:     p.nr,
+			Conf:           p.nr.Conf,
 			LocalNode:      p.nr.Node(),
 			Message:        ballotMessage,
 			Ballot:         baseChecker.Ballot,

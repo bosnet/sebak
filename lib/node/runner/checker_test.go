@@ -264,6 +264,7 @@ func TestGetMissingTransactionAllMissing(t *testing.T) {
 	baseChecker := &BallotChecker{
 		DefaultChecker:     common.DefaultChecker{Funcs: DefaultHandleBaseBallotCheckerFuncs},
 		NodeRunner:         g.consensusNR,
+		Conf:               g.consensusNR.Conf,
 		LocalNode:          g.consensusNR.Node(),
 		Message:            ballotMessage,
 		Log:                g.consensusNR.Log(),
@@ -283,6 +284,7 @@ func TestGetMissingTransactionAllMissing(t *testing.T) {
 	checker := &BallotChecker{
 		DefaultChecker:     common.DefaultChecker{Funcs: checkerFuncs},
 		NodeRunner:         baseChecker.NodeRunner,
+		Conf:               baseChecker.Conf,
 		LocalNode:          baseChecker.LocalNode,
 		Message:            ballotMessage,
 		Ballot:             baseChecker.Ballot,
@@ -331,6 +333,7 @@ func TestGetMissingTransactionProposerAlsoMissing(t *testing.T) {
 	baseChecker := &BallotChecker{
 		DefaultChecker: common.DefaultChecker{Funcs: DefaultHandleBaseBallotCheckerFuncs},
 		NodeRunner:     g.consensusNR,
+		Conf:           g.consensusNR.Conf,
 		LocalNode:      g.consensusNR.Node(),
 		Message:        ballotMessage,
 		Log:            g.consensusNR.Log(),
@@ -349,6 +352,7 @@ func TestGetMissingTransactionProposerAlsoMissing(t *testing.T) {
 	checker := &BallotChecker{
 		DefaultChecker: common.DefaultChecker{Funcs: checkerFuncs},
 		NodeRunner:     baseChecker.NodeRunner,
+		Conf:           baseChecker.Conf,
 		LocalNode:      baseChecker.LocalNode,
 		Message:        ballotMessage,
 		Ballot:         baseChecker.Ballot,
@@ -418,6 +422,7 @@ func (p *irregularIncomingBallot) runChecker(blt ballot.Ballot) (checker *Ballot
 	baseChecker := &BallotChecker{
 		DefaultChecker: common.DefaultChecker{Funcs: DefaultHandleBaseBallotCheckerFuncs},
 		NodeRunner:     p.nr.NodeRunner,
+		Conf:           p.nr.NodeRunner.Conf,
 		LocalNode:      p.nr.Node(),
 		Message:        ballotMessage,
 		Log:            p.nr.Log(),
@@ -440,6 +445,7 @@ func (p *irregularIncomingBallot) runChecker(blt ballot.Ballot) (checker *Ballot
 	checker = &BallotChecker{
 		DefaultChecker: common.DefaultChecker{Funcs: funcs},
 		NodeRunner:     baseChecker.NodeRunner,
+		Conf:           baseChecker.Conf,
 		LocalNode:      baseChecker.LocalNode,
 		Message:        ballotMessage,
 		Ballot:         baseChecker.Ballot,
