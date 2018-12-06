@@ -40,30 +40,3 @@ type Config struct {
 
 	WatcherMode bool
 }
-
-func NewConfig(networkID []byte) Config {
-	p := Config{}
-
-	p.TimeoutINIT = DefaultTimeoutINIT
-	p.TimeoutSIGN = DefaultTimeoutSIGN
-	p.TimeoutACCEPT = DefaultTimeoutACCEPT
-	p.TimeoutALLCONFIRM = DefaultTimeoutALLCONFIRM
-	p.BlockTime = DefaultBlockTime
-	p.BlockTimeDelta = DefaultBlockTimeDelta
-
-	p.TxsLimit = DefaultTransactionsInBallotLimit
-	p.OpsLimit = DefaultOperationsInTransactionLimit
-	p.OpsInBallotLimit = DefaultOperationsInBallotLimit
-
-	p.NetworkID = networkID
-
-	p.TxPoolClientLimit = DefaultTxPoolLimit
-	p.TxPoolNodeLimit = 0 // unlimited
-
-	p.RateLimitRuleAPI = NewRateLimitRule(RateLimitAPI)
-	p.RateLimitRuleNode = NewRateLimitRule(RateLimitNode)
-
-	p.HTTPCachePoolSize = HTTPCachePoolSize
-
-	return p
-}

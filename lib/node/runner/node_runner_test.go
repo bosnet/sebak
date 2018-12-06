@@ -321,7 +321,7 @@ func TestProposedBallotByOpsInBallotLimit(t *testing.T) {
 	{ // limit=100 tx0=50, tx1=50; tx0 and tx1 will be in ballot
 		limit := 100
 
-		config := common.NewConfig(networkID)
+		config := common.NewTestConfig()
 		config.OpsInBallotLimit = limit
 		nr, _, _ := createNodeRunnerForTesting(1, config, nil)
 
@@ -354,7 +354,7 @@ func TestProposedBallotByOpsInBallotLimit(t *testing.T) {
 	{ // limit=100 tx0=50, tx1=51; tx1 will not be in ballot
 		limit := 100
 
-		config := common.NewConfig(networkID)
+		config := common.NewTestConfig()
 		config.OpsInBallotLimit = limit
 		nr, _, _ := createNodeRunnerForTesting(1, config, nil)
 
@@ -387,7 +387,7 @@ func TestProposedBallotByOpsInBallotLimit(t *testing.T) {
 	{ // limit=100 tx0=50, tx1=51 tx2=10; tx1 will not be in ballot
 		limit := 100
 
-		config := common.NewConfig(networkID)
+		config := common.NewTestConfig()
 		config.OpsInBallotLimit = limit
 		nr, _, _ := createNodeRunnerForTesting(1, config, nil)
 
@@ -425,7 +425,7 @@ func TestProposedBallotByOpsInBallotLimit(t *testing.T) {
 	{ // limit=100 tx0=50, tx1=51 tx2=10 tx3=40; tx1 will not be in ballot
 		limit := 100
 
-		config := common.NewConfig(networkID)
+		config := common.NewTestConfig()
 		config.OpsInBallotLimit = limit
 		nr, _, _ := createNodeRunnerForTesting(1, config, nil)
 

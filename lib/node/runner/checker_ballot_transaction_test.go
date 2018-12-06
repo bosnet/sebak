@@ -237,7 +237,7 @@ func TestOpsInBalotLimit(t *testing.T) {
 
 	{ // with empty transactions; no error :)
 		var txs []string
-		config := common.NewConfig(networkID)
+		config := common.NewTestConfig()
 		nr := createTestNodeRunner(1, config)[0]
 
 		checker := &BallotTransactionChecker{
@@ -256,7 +256,7 @@ func TestOpsInBalotLimit(t *testing.T) {
 	{ // with safe number of operations; no error :)
 		limit := 100
 
-		config := common.NewConfig(networkID)
+		config := common.NewTestConfig()
 		config.OpsInBallotLimit = limit
 		nr := createTestNodeRunner(1, config)[0]
 
@@ -284,7 +284,7 @@ func TestOpsInBalotLimit(t *testing.T) {
 	{ // with over number of operations; no error :)
 		limit := 100
 
-		config := common.NewConfig(networkID)
+		config := common.NewTestConfig()
 		config.OpsInBallotLimit = limit
 		nr := createTestNodeRunner(1, config)[0]
 

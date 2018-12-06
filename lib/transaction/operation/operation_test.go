@@ -95,8 +95,6 @@ func TestOperationBodyCongressVotingResult(t *testing.T) {
 }
 
 func TestOperationBodyCongressVotingResultInvalidMembership(t *testing.T) {
-	networkID := []byte("showme")
-
 	{ // missing Hash
 		opb := NewCongressVotingResult(
 			string(common.MakeHash([]byte("dummydummy"))),
@@ -113,7 +111,7 @@ func TestOperationBodyCongressVotingResultInvalidMembership(t *testing.T) {
 			B: opb,
 		}
 
-		err := op.IsWellFormed(common.NewConfig(networkID))
+		err := op.IsWellFormed(common.NewTestConfig())
 		require.Error(t, err, errors.InvalidOperation)
 	}
 
@@ -133,7 +131,7 @@ func TestOperationBodyCongressVotingResultInvalidMembership(t *testing.T) {
 			B: opb,
 		}
 
-		err := op.IsWellFormed(common.NewConfig(networkID))
+		err := op.IsWellFormed(common.NewTestConfig())
 		require.Error(t, err, errors.InvalidOperation)
 	}
 
@@ -153,7 +151,7 @@ func TestOperationBodyCongressVotingResultInvalidMembership(t *testing.T) {
 			B: opb,
 		}
 
-		err := op.IsWellFormed(common.NewConfig(networkID))
+		err := op.IsWellFormed(common.NewTestConfig())
 		require.NoError(t, err)
 	}
 }
