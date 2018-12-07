@@ -3,11 +3,12 @@ module boscoin.io/sebak
 require (
 	github.com/GianlucaGuarini/go-observable v0.0.0-20180829201609-d386f0081a66
 	github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412 // indirect
+	github.com/allegro/bigcache v1.1.0 // indirect
 	github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973 // indirect
 	github.com/btcsuite/btcd v0.0.0-20180810000619-f899737d7f27 // indirect
 	github.com/btcsuite/btcutil v0.0.0-20170726183619-501929d3d046
 	github.com/davecgh/go-spew v1.1.0 // indirect
-	github.com/ethereum/go-ethereum v1.8.13
+	github.com/ethereum/go-ethereum v1.8.19
 	github.com/fsnotify/fsnotify v1.4.7 // indirect
 	github.com/go-kit/kit v0.8.0
 	github.com/go-redis/cache v6.3.5+incompatible
