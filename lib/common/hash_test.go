@@ -9,7 +9,7 @@ import (
 type intType uint64
 
 type intSideType struct {
-	i int64
+	I uint64
 }
 
 func TestInt64HashableRLP(t *testing.T) {
@@ -22,7 +22,7 @@ func TestInt64HashableRLP(t *testing.T) {
 }
 
 func TestInt64StructHashableRLP(t *testing.T) {
-	i := intSideType{i: 64}
+	i := intSideType{I: 64}
 	_, err := rlp.EncodeToBytes(i)
 	if err != nil {
 		t.Error(err)
