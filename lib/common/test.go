@@ -1,6 +1,14 @@
 // Provide test utilities for the common package
 package common
 
+import (
+	"reflect"
+	"testing"
+
+	"github.com/ethereum/go-ethereum/rlp"
+	"github.com/stretchr/testify/require"
+)
+
 // Initialize a new config object for unittests
 func NewTestConfig() Config {
 	p := Config{}
@@ -28,4 +36,21 @@ func NewTestConfig() Config {
 	p.HTTPCachePoolSize = HTTPCachePoolSize
 
 	return p
+}
+
+// Test that a record that gets serialized to RLP deserialize to the same data
+//
+// Params:
+//   t = The testing object
+//   record = A pointer to the record to serialize
+func CheckRoundTripRLP(t *testing.T, record interface{}) {
+	binary, err := rlp.EncodeToBytes(record)
+	require.NoError(t, err)
+
+	result := reflect.New(reflect.TypeOf(record))
+	err = rlp.DecodeBytes(binary, result.Interface())
+	require.NoError(t, err)
+
+	require.Equal(t, record, result.Elem().Interface())
+	require.Equal(t, MustMakeObjectHash(record), MustMakeObjectHash(result.Elem().Interface()))
 }
