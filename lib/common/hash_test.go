@@ -2,8 +2,6 @@ package common
 
 import (
 	"testing"
-
-	"github.com/ethereum/go-ethereum/rlp"
 )
 
 type intType uint64
@@ -12,20 +10,14 @@ type intSideType struct {
 	I uint64
 }
 
+func TestUnsignedIntHashableRLP(t *testing.T) {
+	CheckRoundTripRLP(t, uint(10))
+}
+
 func TestInt64HashableRLP(t *testing.T) {
-	i := intType(10)
-	_, err := rlp.EncodeToBytes(i)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	CheckRoundTripRLP(t, intType(10))
 }
 
 func TestInt64StructHashableRLP(t *testing.T) {
-	i := intSideType{I: 64}
-	_, err := rlp.EncodeToBytes(i)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	CheckRoundTripRLP(t, intSideType{I: 64})
 }
