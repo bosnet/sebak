@@ -52,6 +52,9 @@ func TestParseFlagsNode(t *testing.T) {
 
 	require.Equal(t, 67, threshold)
 
+	require.Equal(t, "100-M", rateLimitRuleAPI.Default.Formatted)
+	require.Equal(t, "100-S", rateLimitRuleNode.Default.Formatted)
+
 	require.Equal(t, uint64(1000000), txPoolClientLimit)
 	require.Equal(t, uint64(0) /* unlimited */, txPoolNodeLimit)
 

@@ -83,17 +83,11 @@ var (
 
 	// RateLimitAPI set the rate limit for API interface, the default value
 	// allows 100 requests per minute.
-	RateLimitAPI limiter.Rate = limiter.Rate{
-		Period: 1 * time.Minute,
-		Limit:  100,
-	}
+	RateLimitAPI, _ = limiter.NewRateFromFormatted("100-M")
 
 	// RateLimitNode set the rate limit for node interface, the default value
 	// allows 100 requests per seconds.
-	RateLimitNode limiter.Rate = limiter.Rate{
-		Period: 1 * time.Second,
-		Limit:  100,
-	}
+	RateLimitNode, _ = limiter.NewRateFromFormatted("100-S")
 
 	HTTPCacheAdapterNames = map[string]bool{
 		HTTPCacheMemoryAdapterName: true,
