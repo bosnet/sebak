@@ -3,6 +3,7 @@ package common
 import (
 	"bytes"
 	"crypto/tls"
+	"github.com/sethgrid/pester"
 	"io"
 	"net"
 	"net/http"
@@ -11,8 +12,12 @@ import (
 	"golang.org/x/net/http2"
 )
 
+type HTTPClient interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+
 type HTTP2Client struct {
-	client    http.Client
+	client    HTTPClient
 	transport *http.Transport
 }
 
@@ -38,14 +43,24 @@ func NewHTTP2Client(timeout, idleTimeout time.Duration, keepAlive bool) (client 
 		return
 	}
 
-	client = &HTTP2Client{
-		client: http.Client{
-			Transport: transport,
-			Timeout:   timeout,
-			CheckRedirect: func(req *http.Request, via []*http.Request) error {
-				return http.ErrUseLastResponse // NOTE prevent redirect
-			},
+	hc := &http.Client{
+		Transport: transport,
+		Timeout:   timeout,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse // NOTE prevent redirect
 		},
+	}
+
+	ec := pester.NewExtendedClient(hc)
+	{
+		ec.Concurrency = 1
+		ec.MaxRetries = 5
+		ec.Backoff = pester.LinearBackoff
+		ec.KeepLog = true
+	}
+
+	client = &HTTP2Client{
+		client:    ec,
 		transport: transport,
 	}
 
