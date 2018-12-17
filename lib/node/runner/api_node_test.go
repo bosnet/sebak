@@ -99,11 +99,7 @@ func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, n *network.HTTP2Netw
 
 	p, _ := consensus.NewDefaultVotingThresholdPolicy(30)
 
-	connectionManager := network.NewValidatorConnectionManager(
-		localNode,
-		n,
-		p,
-	)
+	connectionManager := network.NewValidatorConnectionManager(localNode, n, p, conf)
 
 	st := block.InitTestBlockchain()
 	is, _ := consensus.NewISAAC(localNode, p, connectionManager, st, conf, nil)
@@ -136,35 +132,6 @@ func removeWhiteSpaces(str string) string {
 		}
 		return r
 	}, str)
-}
-
-func TestHTTP2NetworkGetNodeInfo(t *testing.T) {
-	_, s0, nodeRunner := createNewHTTP2Network(t)
-	s0.SetMessageBroker(&TestMessageBroker{network: s0})
-	nodeRunner.Ready()
-
-	go nodeRunner.Start()
-	defer nodeRunner.Stop()
-
-	c0 := s0.GetClient(s0.Endpoint())
-	pingAndWait(t, c0)
-
-	b, err := c0.GetNodeInfo()
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	v, err := node.NewValidatorFromString(b)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-
-	server := nodeRunner.Node().Endpoint().String()
-	client := v.Endpoint().String()
-
-	require.Equal(t, server, client, "Server endpoint and received endpoint should be the same.")
-	require.Equal(t, nodeRunner.Node().Address(), v.Address(), "Server address and received address should be the same.")
 }
 
 type StringResponseMessageBroker struct {
@@ -203,12 +170,13 @@ func TestGetNodeInfoHandler(t *testing.T) {
 	endpoint, _ := common.NewEndpointFromString("http://localhost:12345")
 	localNode, _ := node.NewLocalNode(keypair.Random(), endpoint, "")
 	localNode.AddValidators(localNode.ConvertToValidator())
+	conf := common.NewTestConfig()
 	isaac, _ := consensus.NewISAAC(
 		localNode,
 		nil,
-		network.NewValidatorConnectionManager(localNode, nil, nil),
+		network.NewValidatorConnectionManager(localNode, nil, nil, conf),
 		st,
-		common.NewTestConfig(),
+		conf,
 		nil,
 	)
 

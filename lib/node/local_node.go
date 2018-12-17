@@ -75,10 +75,14 @@ func (n *LocalNode) SetConsensus() {
 }
 
 func (n *LocalNode) SetSync() {
+	n.Lock()
+	defer n.Unlock()
 	n.state = StateSYNC
 }
 
 func (n *LocalNode) SetWatch() {
+	n.Lock()
+	defer n.Unlock()
 	n.state = StateWATCH
 }
 
@@ -95,6 +99,10 @@ func (n *LocalNode) Alias() string {
 }
 
 func (n *LocalNode) Endpoint() *common.Endpoint {
+	if n.publishEndpoint != nil {
+		return n.publishEndpoint
+	}
+
 	return n.bindEndpoint
 }
 
@@ -113,12 +121,26 @@ func (n *LocalNode) SetPublishEndpoint(endpoint *common.Endpoint) {
 }
 
 func (n *LocalNode) HasValidators(address string) bool {
+	n.RLock()
+	defer n.RUnlock()
+
 	_, found := n.validators[address]
 	return found
 }
 
 func (n *LocalNode) GetValidators() map[string]*Validator {
+	n.RLock()
+	defer n.RUnlock()
+
 	return n.validators
+}
+
+func (n *LocalNode) Validator(address string) *Validator {
+	n.RLock()
+	defer n.RUnlock()
+
+	v, _ := n.validators[address]
+	return v
 }
 
 func (n *LocalNode) AddValidators(validators ...*Validator) error {
@@ -132,7 +154,17 @@ func (n *LocalNode) AddValidators(validators ...*Validator) error {
 	return nil
 }
 
+func (n *LocalNode) ClearValidators() {
+	n.Lock()
+	defer n.Unlock()
+
+	n.validators = map[string]*Validator{}
+}
+
 func (n *LocalNode) MarshalJSON() ([]byte, error) {
+	n.RLock()
+	defer n.RUnlock()
+
 	return json.Marshal(map[string]interface{}{
 		"address":    n.Address(),
 		"alias":      n.Alias(),

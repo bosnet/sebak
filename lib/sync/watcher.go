@@ -11,6 +11,8 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
+	"github.com/inconshreveable/log15"
+
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/errors"
@@ -18,7 +20,6 @@ import (
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/node/runner/api"
 	"boscoin.io/sebak/lib/storage"
-	"github.com/inconshreveable/log15"
 )
 
 type WatcherOption func(*Watcher)
@@ -172,7 +173,7 @@ func (w *Watcher) fetchNodeInfos(ctx context.Context) ([]*node.NodeInfo, error) 
 	for _, addr := range addrs {
 		addr := addr
 		g.Go(func() error {
-			node := w.cm.GetNode(addr)
+			node := w.localNode.Validator(addr)
 			nodeInfo, err := w.reqNodeInfo(ctx, node)
 			if err != nil {
 				w.logger.Error("fetch error", "err", err, "node", node)

@@ -23,13 +23,16 @@ func TestPostTransaction(t *testing.T) {
 	st := storage.NewTestStorage()
 	defer st.Close()
 
+	conf := common.NewTestConfig()
+	conf.OpsLimit = 1
+
 	endpoint, _ := common.NewEndpointFromString("http://localhost:12345")
 	localNode, _ := node.NewLocalNode(keypair.Random(), endpoint, "")
 	localNode.AddValidators(localNode.ConvertToValidator())
 	isaac, _ := consensus.NewISAAC(
 		localNode,
 		nil,
-		network.NewValidatorConnectionManager(localNode, nil, nil),
+		network.NewValidatorConnectionManager(localNode, nil, nil, conf),
 		st,
 		common.NewTestConfig(),
 		nil,
@@ -45,7 +48,7 @@ func TestPostTransaction(t *testing.T) {
 		consensus: isaac,
 		network:   nt,
 		localNode: localNode,
-		conf:      common.Config{OpsLimit: 1},
+		conf:      conf,
 	}
 	apiHandler := api.NewNetworkHandlerAPI(localNode, nt, nil, "", node.NodeInfo{})
 

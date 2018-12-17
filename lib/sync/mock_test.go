@@ -3,7 +3,6 @@ package sync
 import (
 	"context"
 	"errors"
-	"net"
 	"net/http"
 
 	"boscoin.io/sebak/lib/common"
@@ -21,9 +20,8 @@ func (m *mockConnectionManager) GetNodeAddress() string {
 	return ""
 }
 
-func (m *mockConnectionManager) ConnectionWatcher(network.Network, net.Conn, http.ConnState) {}
-func (m *mockConnectionManager) Broadcast(common.Message)                                    {}
-func (m *mockConnectionManager) Start()                                                      {}
+func (m *mockConnectionManager) Broadcast(common.Message) {}
+func (m *mockConnectionManager) Start()                   {}
 
 func (m *mockConnectionManager) GetConnection(string) network.NetworkClient {
 	return nil
@@ -41,12 +39,12 @@ func (m *mockConnectionManager) CountConnected() int {
 	return len(m.allConnected)
 }
 
-func (m *mockConnectionManager) GetNode(addr string) node.Node {
-	return m.getNodeFunc(addr)
-}
-
 func (m *mockConnectionManager) IsReady() bool {
 	return true
+}
+
+func (m *mockConnectionManager) Discovery(network.DiscoveryMessage) error {
+	return nil
 }
 
 type mockDoer struct {

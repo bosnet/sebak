@@ -7,11 +7,13 @@ import (
 
 const (
 	ConnectMessage     MessageType = "connect"
+	DiscoveryMessage   MessageType = "discovery"
 	TransactionMessage MessageType = "transaction"
 	BallotMessage      MessageType = "ballot"
 
 	TransactionVersionV1 = "1"
 	BallotVersionV1      = "1"
+	DiscoveryVersionV1   = "1"
 )
 
 type MessageType string

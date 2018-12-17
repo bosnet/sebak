@@ -17,10 +17,11 @@ import (
 )
 
 const (
-	NodeInfoHandlerPattern string = "/"
-	ConnectHandlerPattern  string = "/connect"
-	MessageHandlerPattern  string = "/message"
-	BallotHandlerPattern   string = "/ballot"
+	NodeInfoHandlerPattern  string = "/"
+	ConnectHandlerPattern   string = "/connect"
+	DiscoveryHandlerPattern string = "/discovery"
+	MessageHandlerPattern   string = "/message"
+	BallotHandlerPattern    string = "/ballot"
 )
 
 type NetworkHandlerNode struct {

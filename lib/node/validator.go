@@ -58,10 +58,15 @@ func (v *Validator) Endpoint() *common.Endpoint {
 }
 
 func (v *Validator) MarshalJSON() ([]byte, error) {
+	var endpoint interface{}
+	if v.Endpoint() != nil {
+		endpoint = v.Endpoint().String()
+	}
+
 	return json.Marshal(map[string]interface{}{
 		"address":  v.Address(),
 		"alias":    v.Alias(),
-		"endpoint": v.Endpoint().String(),
+		"endpoint": endpoint,
 	})
 }
 
@@ -81,6 +86,13 @@ func (v *Validator) UnmarshalJSON(b []byte) error {
 
 func (v *Validator) Serialize() ([]byte, error) {
 	return json.Marshal(v)
+}
+
+func (v *Validator) SetEndpoint(endpoint *common.Endpoint) {
+	v.Lock()
+	defer v.Unlock()
+
+	v.endpoint = endpoint
 }
 
 func NewValidator(address string, endpoint *common.Endpoint, alias string) (v *Validator, err error) {

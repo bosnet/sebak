@@ -19,14 +19,14 @@ import (
 )
 
 func TestParseFlagValidators(t *testing.T) {
-	vs, err := parseFlagValidators("https://localhost:12346?address=GDPQ2LBYP3RL3O675H2N5IEYM6PRJNUA5QFMKXIHGTKEB5KS5T3KHFA2")
+	vs, err := parseFlagValidators("GDPQ2LBYP3RL3O675H2N5IEYM6PRJNUA5QFMKXIHGTKEB5KS5T3KHFA2")
 	require.NoError(t, err)
 	require.Equal(t, 1, len(vs))
 }
 
 func TestParseFlagsNode(t *testing.T) {
 	flagNetworkID = "sebak-test-network"
-	flagValidators = "https://localhost:12346?address=GDPQ2LBYP3RL3O675H2N5IEYM6PRJNUA5QFMKXIHGTKEB5KS5T3KHFA2"
+	flagValidators = "GDPQ2LBYP3RL3O675H2N5IEYM6PRJNUA5QFMKXIHGTKEB5KS5T3KHFA2"
 	flagKPSecretSeed = "SCN4NSV5SVHIZWUDJFT4Z5FFVHO3TFRTOIBQLHMNPAZJ37K5A2YFSCBM"
 	flagBindURL = "http://0.0.0.0:12345"
 
@@ -70,24 +70,24 @@ func TestParseFlagsNode(t *testing.T) {
 
 func TestParseFlagSelfValidators(t *testing.T) {
 	flagNetworkID = "sebak-test-network"
-	flagValidators = "https://localhost:12346?address=GDPQ2LBYP3RL3O675H2N5IEYM6PRJNUA5QFMKXIHGTKEB5KS5T3KHFA2"
+	flagValidators = "GDPQ2LBYP3RL3O675H2N5IEYM6PRJNUA5QFMKXIHGTKEB5KS5T3KHFA2"
 	flagKPSecretSeed = "SCN4NSV5SVHIZWUDJFT4Z5FFVHO3TFRTOIBQLHMNPAZJ37K5A2YFSCBM"
 	flagBindURL = "http://0.0.0.0:12345"
 
 	parseFlagsNode()
 	require.Equal(t, 2, len(localNode.GetValidators()))
 
-	parsedValidator, _ := node.NewValidatorFromURI(flagValidators)
+	parsedValidator, _ := node.NewValidator(flagValidators, nil, "")
+	fmt.Println(localNode.GetValidators())
 	validator := localNode.GetValidators()[parsedValidator.Address()]
 
 	require.Equal(t, validator.Address(), parsedValidator.Address())
-	require.Equal(t, validator.Endpoint().Host, parsedValidator.Endpoint().Host)
-	require.Equal(t, validator.Endpoint().Port(), parsedValidator.Endpoint().Port())
+	require.Nil(t, validator.Endpoint())
 }
 
 func TestAddingSelfValidatorsWithoutSelf(t *testing.T) {
 	flagNetworkID = "sebak-test-network"
-	flagValidators = "https://localhost:12346?address=GDPQ2LBYP3RL3O675H2N5IEYM6PRJNUA5QFMKXIHGTKEB5KS5T3KHFA2"
+	flagValidators = "GDPQ2LBYP3RL3O675H2N5IEYM6PRJNUA5QFMKXIHGTKEB5KS5T3KHFA2"
 	flagKPSecretSeed = "SCN4NSV5SVHIZWUDJFT4Z5FFVHO3TFRTOIBQLHMNPAZJ37K5A2YFSCBM"
 	flagBindURL = "http://0.0.0.0:12345"
 
@@ -98,7 +98,7 @@ func TestAddingSelfValidatorsWithoutSelf(t *testing.T) {
 
 	{ // check validator added
 		var found bool
-		v, _ := node.NewValidatorFromURI(flagValidators)
+		v, _ := node.NewValidator(flagValidators, nil, "")
 		for _, validator := range localNode.GetValidators() {
 			if v.Address() == validator.Address() {
 				found = true
@@ -119,7 +119,7 @@ func TestAddingSelfValidatorsWithoutSelf(t *testing.T) {
 }
 
 func TestAddingSelfValidatorsWithSelf(t *testing.T) {
-	targetValidators := "https://localhost:12346?address=GDPQ2LBYP3RL3O675H2N5IEYM6PRJNUA5QFMKXIHGTKEB5KS5T3KHFA2"
+	targetValidators := "GDPQ2LBYP3RL3O675H2N5IEYM6PRJNUA5QFMKXIHGTKEB5KS5T3KHFA2"
 
 	flagNetworkID = "sebak-test-network"
 	flagValidators = "self " + targetValidators
@@ -133,7 +133,7 @@ func TestAddingSelfValidatorsWithSelf(t *testing.T) {
 
 	{ // check validator added
 		var found bool
-		v, _ := node.NewValidatorFromURI(targetValidators)
+		v, _ := node.NewValidator(targetValidators, nil, "")
 		for _, validator := range localNode.GetValidators() {
 			if v.Address() == validator.Address() {
 				found = true

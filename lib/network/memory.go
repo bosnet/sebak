@@ -2,7 +2,6 @@ package network
 
 import (
 	"io"
-	"net"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -34,9 +33,6 @@ func (t *MemoryNetwork) GetClient(endpoint *common.Endpoint) NetworkClient {
 	return NewMemoryNetworkClient(endpoint, n)
 }
 
-func (p *MemoryNetwork) AddWatcher(f func(Network, net.Conn, http.ConnState)) {
-	return
-}
 func (p *MemoryNetwork) Endpoint() *common.Endpoint {
 	return p.endpoint
 }

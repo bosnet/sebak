@@ -24,7 +24,7 @@ func NewTestConnectionManager(
 	r chan struct{},
 ) *TestConnectionManager {
 	p := &TestConnectionManager{
-		ConnectionManager: network.NewValidatorConnectionManager(localNode, n, policy),
+		ConnectionManager: network.NewValidatorConnectionManager(localNode, n, policy, common.NewTestConfig()),
 	}
 	p.messages = []common.Message{}
 	p.recv = r
@@ -63,12 +63,13 @@ func (s FixedSelector) Select(_ uint64, _ uint64) string {
 }
 
 type OtherSelector struct {
-	cm network.ConnectionManager
+	cm        network.ConnectionManager
+	localNode *node.LocalNode
 }
 
 func (s OtherSelector) Select(_ uint64, _ uint64) string {
 	for _, v := range s.cm.AllValidators() {
-		if v != s.cm.GetNodeAddress() {
+		if v != s.localNode.Address() {
 			return v
 		}
 	}
@@ -76,15 +77,16 @@ func (s OtherSelector) Select(_ uint64, _ uint64) string {
 }
 
 type SelfThenOtherSelector struct {
-	cm network.ConnectionManager
+	cm        network.ConnectionManager
+	localNode *node.LocalNode
 }
 
 func (s SelfThenOtherSelector) Select(blockHeight uint64, round uint64) string {
 	if blockHeight < 2 && round == 0 {
-		return s.cm.GetNodeAddress()
+		return s.localNode.Address()
 	} else {
 		for _, v := range s.cm.AllValidators() {
-			if v != s.cm.GetNodeAddress() {
+			if v != s.localNode.Address() {
 				return v
 			}
 		}

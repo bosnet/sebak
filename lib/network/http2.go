@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	goLog "log"
-	"net"
 	"net/http"
 	"strings"
 	"time"
@@ -66,7 +65,6 @@ type HTTP2Network struct {
 	messageBroker MessageBroker
 	ready         bool
 
-	watchers []func(Network, net.Conn, http.ConnState)
 	routers  map[string]*mux.Router
 	handlers map[string]func(http.ResponseWriter, *http.Request)
 
@@ -121,7 +119,6 @@ func NewHTTP2Network(config *HTTP2NetworkConfig) (h2n *HTTP2Network) {
 	h2n.config = config
 
 	h2n.setNotReadyHandler()
-	h2n.server.ConnState = h2n.ConnState
 
 	h2n.SetMessageBroker(HTTP2MessageBroker{network: h2n})
 
@@ -143,16 +140,6 @@ func (t *HTTP2Network) GetClient(endpoint *common.Endpoint) NetworkClient {
 
 func (t *HTTP2Network) Endpoint() *common.Endpoint {
 	return t.config.Endpoint
-}
-
-func (t *HTTP2Network) AddWatcher(f func(Network, net.Conn, http.ConnState)) {
-	t.watchers = append(t.watchers, f)
-}
-
-func (t *HTTP2Network) ConnState(c net.Conn, state http.ConnState) {
-	for _, f := range t.watchers {
-		go f(t, c, state)
-	}
 }
 
 func (t *HTTP2Network) setNotReadyHandler() {
