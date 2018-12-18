@@ -275,7 +275,8 @@ func (nr *NodeRunner) Ready() {
 	nr.network.AddHandler(nodeHandler.HandlerURLPattern(GetTransactionPattern), nodeHandler.GetNodeTransactionsHandler).
 		Methods("GET", "POST").
 		MatcherFunc(common.PostAndJSONMatcher)
-
+	nr.network.AddHandler(nodeHandler.HandlerURLPattern(GetBallotPattern), nodeHandler.GetBallotHandler).
+		Methods("GET")
 	nr.network.AddHandler(network.UrlPathPrefixMetric, promhttp.Handler().ServeHTTP)
 
 	// api handlers
