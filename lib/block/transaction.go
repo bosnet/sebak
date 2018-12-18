@@ -255,37 +255,31 @@ func (bt BlockTransaction) BlockOrder() *BlockOrder {
 func GetBlockTransactionKeyPrefixSource(source string) string {
 	idx := storage.NewIndex()
 	return idx.WritePrefix(common.BlockTransactionPrefixSource, source).String()
-	//return fmt.Sprintf("%s%s-", common.BlockTransactionPrefixSource, source)
 }
 
 func GetBlockTransactionKeyPrefixConfirmed(confirmed string) string {
 	idx := storage.NewIndex()
 	return idx.WritePrefix(common.BlockTransactionPrefixConfirmed, confirmed).String()
-	//return fmt.Sprintf("%s%s-", common.BlockTransactionPrefixConfirmed, confirmed)
 }
 
 func GetBlockTransactionKeyPrefixAccount(accountAddress string) string {
 	idx := storage.NewIndex()
 	return idx.WritePrefix(common.BlockTransactionPrefixAccount, accountAddress).String()
-	//return fmt.Sprintf("%s%s-", common.BlockTransactionPrefixAccount, accountAddress)
 }
 
 func GetBlockTransactionKeyPrefixTarget(accountAddress string) string {
 	idx := storage.NewIndex()
 	return idx.WritePrefix(common.BlockTransactionPrefixTarget, accountAddress).String()
-	//return fmt.Sprintf("%s%s-", common.BlockTransactionPrefixAccount, accountAddress)
 }
 
 func GetBlockTransactionKeyPrefixBlock(hash string) string {
 	idx := storage.NewIndex()
 	return idx.WritePrefix(common.BlockTransactionPrefixBlock, hash).String()
-	//return fmt.Sprintf("%s%s-", common.BlockTransactionPrefixBlock, hash)
 }
 
 func GetBlockTransactionKey(hash string) string {
 	idx := storage.NewIndex()
 	return idx.WritePrefix(common.BlockTransactionPrefixHash, hash).String()
-	//return fmt.Sprintf("%s%s-", common.BlockTransactionPrefixHash, hash)
 }
 
 func GetBlockTransaction(st *storage.LevelDBBackend, hash string) (bt BlockTransaction, err error) {
