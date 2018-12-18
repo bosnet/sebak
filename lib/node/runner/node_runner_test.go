@@ -55,11 +55,7 @@ func createTestNodeRunner(n int, conf common.Config) []*NodeRunner {
 		localNode := nodes[i]
 		policy, _ := consensus.NewDefaultVotingThresholdPolicy(66)
 
-		connectionManager := network.NewValidatorConnectionManager(
-			localNode,
-			ns[i],
-			policy,
-		)
+		connectionManager := network.NewValidatorConnectionManager(localNode, ns[i], policy, conf)
 
 		st := block.InitTestBlockchain()
 		is, _ := consensus.NewISAAC(localNode, policy, connectionManager, st, conf, nil)
@@ -145,13 +141,8 @@ func createTestNodeRunnersHTTP2Network(n int) (nodeRunners []*NodeRunner, rootKP
 		networkConfig, _ := network.NewHTTP2NetworkConfigFromEndpoint(node.Alias(), node.Endpoint())
 		n := network.NewHTTP2Network(networkConfig)
 
-		connectionManager := network.NewValidatorConnectionManager(
-			node,
-			n,
-			policy,
-		)
-
 		conf := common.NewTestConfig()
+		connectionManager := network.NewValidatorConnectionManager(node, n, policy, conf)
 		st := block.InitTestBlockchain()
 		is, _ := consensus.NewISAAC(node, policy, connectionManager, st, conf, nil)
 		tp := transaction.NewPool(conf)

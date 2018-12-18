@@ -63,6 +63,10 @@ const (
 	DefaultTimeoutALLCONFIRM = 30 * time.Second
 	DefaultBlockTime         = 5 * time.Second
 	DefaultBlockTimeDelta    = 1 * time.Second
+
+	// DiscoveryMessageCreatedAllowDuration limit the `DiscoveryMessage.Created`
+	// is allowed or not.
+	DiscoveryMessageCreatedAllowDuration time.Duration = time.Second * 10
 )
 
 var (

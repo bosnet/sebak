@@ -60,7 +60,7 @@ func (c *HTTP2NetworkClient) GetNodeInfo() (body []byte, err error) {
 	headers := c.DefaultHeaders()
 	headers.Set("Content-Type", "application/json")
 
-	u := c.resolvePath(UrlPathPrefixNode + "/")
+	u := c.resolvePath("/")
 
 	var response *http.Response
 	response, err = c.client.Get(u.String(), headers)
@@ -113,6 +113,10 @@ func (c *HTTP2NetworkClient) SendMessage(message interface{}) (retBody []byte, e
 
 func (c *HTTP2NetworkClient) SendTransaction(message interface{}) (retBody []byte, err error) {
 	return c.Send(resource.URLTransactions, message)
+}
+
+func (c *HTTP2NetworkClient) SendDiscovery(message interface{}) (retBody []byte, err error) {
+	return c.Send(UrlPathPrefixNode+"/discovery", message)
 }
 
 func (c *HTTP2NetworkClient) SendBallot(message interface{}) (retBody []byte, err error) {

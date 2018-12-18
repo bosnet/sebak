@@ -109,4 +109,7 @@ var (
 	BallotHasOverMaxOperationsInBallot        = NewError(191, "too many operations in ballot")
 	AllValidatorsNotConnected                 = NewError(192, "all validators are not connected")
 	OperationNotFound                         = NewError(193, "operation is not found")
+	EndpointNotFound                          = NewError(194, "endpoint not found")
+	DiscoveryFromUnknownValidator             = NewError(195, "DiscoveryMessage from unknown validator")
+	DiscoveryPolicyDoesNotMatch               = NewError(196, "policy does not matched with discovery node")
 )

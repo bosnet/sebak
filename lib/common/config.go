@@ -4,11 +4,8 @@ import (
 	"time"
 )
 
-//
-// Config has timeout features and transaction limit.
-// The Config is included in ISAACStateManager and
-// these timeout features are used in ISAAC consensus.
-//
+// Config has timeout features and transaction limit.  The Config is included in
+// ISAACStateManager and these timeout features are used in ISAAC consensus.
 type Config struct {
 	TimeoutINIT       time.Duration
 	TimeoutSIGN       time.Duration
@@ -40,4 +37,6 @@ type Config struct {
 	JSONRPCEndpoint *Endpoint
 
 	WatcherMode bool
+
+	DiscoveryEndpoints []*Endpoint
 }

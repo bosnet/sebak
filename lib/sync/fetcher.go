@@ -232,7 +232,7 @@ func (f *BlockFetcher) pickRandomNode(nodeAddrs []string) node.Node {
 	}
 
 	idx := rand.Intn(len(addressList))
-	node := f.connectionManager.GetNode(addressList[idx])
+	node := f.localNode.Validator(addressList[idx])
 	return node
 }
 

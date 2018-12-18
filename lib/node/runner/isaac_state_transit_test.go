@@ -50,7 +50,7 @@ func TestStateINITNotProposer(t *testing.T) {
 
 	recv := make(chan struct{})
 	nr, _, _ := createNodeRunnerForTesting(3, conf, recv)
-	nr.Consensus().SetProposerSelector(OtherSelector{nr.ConnectionManager()})
+	nr.Consensus().SetProposerSelector(OtherSelector{cm: nr.ConnectionManager(), localNode: nr.Node()})
 
 	cm, ok := nr.Consensus().ConnectionManager().(*TestConnectionManager)
 	require.True(t, ok)
@@ -74,7 +74,7 @@ func TestStateINITTimeoutNotProposer(t *testing.T) {
 	conf.TimeoutACCEPT = time.Hour
 
 	nr, _, _ := createNodeRunnerForTesting(3, conf, nil)
-	nr.Consensus().SetProposerSelector(OtherSelector{nr.ConnectionManager()})
+	nr.Consensus().SetProposerSelector(OtherSelector{cm: nr.ConnectionManager(), localNode: nr.Node()})
 
 	_, ok := nr.Consensus().ConnectionManager().(*TestConnectionManager)
 	require.True(t, ok)
@@ -168,7 +168,7 @@ func TestStateSIGNTimeoutNotProposer(t *testing.T) {
 
 	recv := make(chan struct{})
 	nr, _, _ := createNodeRunnerForTesting(3, conf, recv)
-	nr.Consensus().SetProposerSelector(OtherSelector{nr.ConnectionManager()})
+	nr.Consensus().SetProposerSelector(OtherSelector{cm: nr.ConnectionManager(), localNode: nr.Node()})
 
 	cm, ok := nr.Consensus().ConnectionManager().(*TestConnectionManager)
 	require.True(t, ok)
@@ -230,7 +230,7 @@ func TestStateACCEPTTimeoutProposerThenNotProposer(t *testing.T) {
 
 	recv := make(chan struct{})
 	nr, _, _ := createNodeRunnerForTesting(3, conf, recv)
-	nr.Consensus().SetProposerSelector(SelfThenOtherSelector{nr.ConnectionManager()})
+	nr.Consensus().SetProposerSelector(SelfThenOtherSelector{cm: nr.ConnectionManager(), localNode: nr.Node()})
 
 	cm, ok := nr.Consensus().ConnectionManager().(*TestConnectionManager)
 	require.True(t, ok)
@@ -289,7 +289,7 @@ func TestStateTransitFromTimeoutInitToAccept(t *testing.T) {
 
 	recvBroadcast := make(chan struct{})
 	nr, _, _ := createNodeRunnerForTesting(3, conf, recvBroadcast)
-	nr.Consensus().SetProposerSelector(OtherSelector{nr.ConnectionManager()})
+	nr.Consensus().SetProposerSelector(OtherSelector{cm: nr.ConnectionManager(), localNode: nr.Node()})
 
 	recvTransit := make(chan consensus.ISAACState)
 	nr.isaacStateManager.SetTransitSignal(func(state consensus.ISAACState) {

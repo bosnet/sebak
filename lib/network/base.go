@@ -2,7 +2,6 @@ package network
 
 import (
 	"io"
-	"net"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -14,7 +13,6 @@ import (
 type Network interface {
 	Endpoint() *common.Endpoint
 	GetClient(endpoint *common.Endpoint) NetworkClient
-	AddWatcher(func(Network, net.Conn, http.ConnState))
 	AddHandler(string, http.HandlerFunc) *mux.Route
 	AddMiddleware(string, ...mux.MiddlewareFunc) error
 
@@ -40,6 +38,7 @@ type NetworkClient interface {
 	SendMessage(interface{}) ([]byte, error)
 	SendTransaction(interface{}) ([]byte, error)
 	SendBallot(interface{}) ([]byte, error)
+	SendDiscovery(interface{}) ([]byte, error)
 	GetTransactions([]string) ([]byte, error)
 }
 

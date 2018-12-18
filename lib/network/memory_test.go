@@ -98,29 +98,6 @@ func TestMemoryNetworkGetClient(t *testing.T) {
 	}
 }
 
-func TestMemoryNetworkGetNodeInfo(t *testing.T) {
-	_, s0, localNode := CreateMemoryNetwork(nil)
-
-	c0 := s0.GetClient(s0.Endpoint())
-	b, err := c0.GetNodeInfo()
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	v, err := node.NewValidatorFromString(b)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if localNode.Endpoint().String() != v.Endpoint().String() {
-		t.Errorf("received node info mismatch; '%s' != '%s'", localNode.Endpoint().String(), v.Endpoint().String())
-	}
-	if localNode.Address() != v.Address() {
-		t.Errorf("received node info mismatch; '%s' != '%s'", localNode.Address(), v.Address())
-		return
-	}
-}
-
 func TestMemoryNetworkConnect(t *testing.T) {
 	_, s0, localNode := CreateMemoryNetwork(nil)
 

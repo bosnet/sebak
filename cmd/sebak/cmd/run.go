@@ -82,6 +82,8 @@ var (
 
 	flagWatcherMode   bool   = common.GetENVValue("SEBAK_WATCHER_MODE", "0") == "1"
 	flagWatchInterval string = common.GetENVValue("SEBAK_WATCH_INTERVAL", "5s")
+
+	flagDiscovery cmdcommon.ListFlags // "SEBAK_DISCOVERY"
 )
 
 var (
@@ -116,6 +118,7 @@ var (
 	syncCheckPrevBlock      time.Duration
 	jsonrpcbindEndpoint     *common.Endpoint
 	watchInterval           time.Duration
+	discoveryEndpoints      []*common.Endpoint
 
 	logLevel logging.Lvl
 	log      logging.Logger = logging.New("module", "main")
@@ -226,6 +229,7 @@ func init() {
 	nodeCmd.Flags().StringVar(&flagCongressAddress, "set-congress-address", flagCongressAddress, "set congress address")
 	nodeCmd.Flags().BoolVar(&flagWatcherMode, "watcher-mode", flagWatcherMode, "watcher mode")
 	nodeCmd.Flags().StringVar(&flagWatchInterval, "watch-interval", flagWatchInterval, "watch interval")
+	nodeCmd.Flags().Var(&flagDiscovery, "discovery", "initial endpoint for discovery")
 
 	rootCmd.AddCommand(nodeCmd)
 }
@@ -281,8 +285,8 @@ func parseFlagRateLimit(l cmdcommon.ListFlags, defaultRate limiter.Rate) (rule c
 	return
 }
 
-func parseFlagValidators(v string) (vs []*node.Validator, err error) {
-	splitted := strings.Fields(strings.TrimSpace(v))
+func parseFlagValidators(s string) (vs []*node.Validator, err error) {
+	splitted := strings.Fields(strings.TrimSpace(s))
 	if len(splitted) < 1 {
 		err = fmt.Errorf("must be given")
 		return
@@ -293,11 +297,43 @@ func parseFlagValidators(v string) (vs []*node.Validator, err error) {
 			continue
 		}
 
+		if _, err = keypair.Parse(v); err != nil {
+			return
+		}
+
 		var validator *node.Validator
-		if validator, err = node.NewValidatorFromURI(v); err != nil {
+		if validator, err = node.NewValidator(v, nil, ""); err != nil {
 			return
 		}
 		vs = append(vs, validator)
+	}
+
+	return
+}
+
+func parseFlagDiscovery(l cmdcommon.ListFlags) (endpoints []*common.Endpoint, err error) {
+	if len(l) < 1 {
+		return
+	}
+
+	var endpoint *common.Endpoint
+	for _, s := range l {
+		if endpoint, err = common.NewEndpointFromString(s); err != nil {
+			return
+		}
+
+		var found bool
+		for _, e := range endpoints {
+			if endpoint.Equal(e) {
+				found = true
+				break
+			}
+		}
+		if found {
+			continue
+		}
+
+		endpoints = append(endpoints, endpoint)
 	}
 
 	return
@@ -524,6 +560,33 @@ func parseFlagsNode() {
 		network.SetHTTPLogging(logging.LvlDebug, httpLogHandler) // httpLog only use `Debug`
 	}
 
+	// checking `--discovery`
+	l := strings.Fields(common.GetENVValue("SEBAK_DISCOVERY", ""))
+	for _, i := range l {
+		flagDiscovery.Set(i)
+	}
+
+	if len(flagDiscovery) < 1 {
+		log.Warn("--discovery is not given; node will wait to be discovered")
+	} else {
+		var endpoints []*common.Endpoint
+		if endpoints, err = parseFlagDiscovery(flagDiscovery); err != nil {
+			cmdcommon.PrintFlagsError(nodeCmd, "--discovery", err)
+		}
+		for _, endpoint := range endpoints {
+			if endpoint.Equal(publishEndpoint) {
+				log.Warn(
+					"--discovery is same with --publish",
+					"--discovery", endpoint.String(),
+					"--publish", publishEndpoint.String(),
+				)
+				continue
+			}
+
+			discoveryEndpoints = append(discoveryEndpoints, endpoint)
+		}
+	}
+
 	if len(flagRateLimitAPI) < 1 {
 		re := strings.Fields(common.GetENVValue("SEBAK_RATE_LIMIT_API", ""))
 		for _, r := range re {
@@ -576,10 +639,8 @@ func parseFlagsNode() {
 	parsedFlags = append(parsedFlags, "\n\trate-limit-node", rateLimitRuleNode)
 	parsedFlags = append(parsedFlags, "\n\thttp-cache-adapter", httpCacheAdapter)
 	parsedFlags = append(parsedFlags, "\n\thttp-cache-pool-size", httpCachePoolSize)
-
-	if flagWatcherMode {
-		parsedFlags = append(parsedFlags, "\n\twatcher-mode", flagWatcherMode)
-	}
+	parsedFlags = append(parsedFlags, "\n\tdiscovery", discoveryEndpoints)
+	parsedFlags = append(parsedFlags, "\n\twatcher-mode", flagWatcherMode)
 
 	// create current Node
 	localNode, err = node.NewLocalNode(kp, bindEndpoint, "")
@@ -653,12 +714,6 @@ func runNode() error {
 		return err
 	}
 
-	connectionManager := network.NewValidatorConnectionManager(
-		localNode,
-		nt,
-		policy,
-	)
-
 	st, err := storage.NewStorage(storageConfig)
 	if err != nil {
 		log.Crit("failed to initialize storage", "error", err)
@@ -695,7 +750,10 @@ func runNode() error {
 		TxPoolNodeLimit:        int(txPoolNodeLimit),
 		JSONRPCEndpoint:        jsonrpcbindEndpoint,
 		WatcherMode:            flagWatcherMode,
+		DiscoveryEndpoints:     discoveryEndpoints,
 	}
+	connectionManager := network.NewValidatorConnectionManager(localNode, nt, policy, conf)
+
 	tp := transaction.NewPool(conf)
 
 	c := sync.NewConfig(localNode, st, nt, connectionManager, tp, conf)
@@ -742,15 +800,86 @@ func runNode() error {
 			syncer.Stop()
 		})
 	}
-	{
-		if flagWatcherMode == true {
-			watcher := c.NewWatcher(syncer)
-			g.Add(func() error {
-				return watcher.Start()
-			}, func(error) {
-				watcher.Stop()
-			})
+
+	if flagWatcherMode {
+		// In WatcherMode, get the node information from `--discovery` nodes
+		localNode.ClearValidators()
+
+		for _, endpoint := range conf.DiscoveryEndpoints {
+			client := nt.GetClient(endpoint)
+			if client == nil {
+				err = fmt.Errorf("failed to create network client for discovery")
+				log.Crit(err.Error(), "endpoint", endpoint)
+				return err
+			}
+			var b []byte
+			if b, err = client.GetNodeInfo(); err != nil {
+				log.Crit("failed to get node info from discovery", "endpoint", endpoint, "error", err)
+				return err
+			}
+
+			var nodeInfo node.NodeInfo
+			if nodeInfo, err = node.NewNodeInfoFromJSON(b); err != nil {
+				log.Crit(
+					"failed to parse node info from discovery",
+					"endpoint", endpoint,
+					"error", err,
+					"received", string(b),
+				)
+				return err
+			}
+
+			// Check whether basic policies are matched with remote node, like
+			// `network-id`. TODO `genesis account`, `common account`, etc.
+			if nodeInfo.Policy.NetworkID != string(conf.NetworkID) {
+				log.Crit(
+					errors.DiscoveryPolicyDoesNotMatch.Error(),
+					"endpoint", endpoint,
+					"remote-NetworkID", nodeInfo.Policy.NetworkID,
+					"local-NetworkID", string(conf.NetworkID),
+				)
+				return errors.DiscoveryPolicyDoesNotMatch
+			}
+
+			if nodeInfo.Policy.InitialBalance != conf.InitialBalance {
+				log.Crit(
+					errors.DiscoveryPolicyDoesNotMatch.Error(),
+					"endpoint", endpoint,
+					"remote-InitialBalance", nodeInfo.Policy.InitialBalance,
+					"local-InitialBalance", conf.InitialBalance,
+				)
+				return errors.DiscoveryPolicyDoesNotMatch
+			}
+
+			var validator *node.Validator
+			validator, err = node.NewValidator(
+				nodeInfo.Node.Address,
+				nodeInfo.Node.Endpoint,
+				nodeInfo.Node.Alias,
+			)
+			if err != nil {
+				log.Crit(
+					"failed to create validator from discovery",
+					"endpoint", endpoint,
+					"error", err,
+					"node-info", nodeInfo,
+				)
+				return err
+			}
+			localNode.AddValidators(validator)
 		}
+		if len(localNode.GetValidators()) < 1 {
+			err = fmt.Errorf("remote nodes not found")
+			log.Crit(err.Error())
+			return err
+		}
+
+		watcher := c.NewWatcher(syncer)
+		g.Add(func() error {
+			return watcher.Start()
+		}, func(error) {
+			watcher.Stop()
+		})
 	}
 	{
 		cancel := make(chan struct{})

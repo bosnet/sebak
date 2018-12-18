@@ -30,9 +30,8 @@ func (m *MemoryTransportClient) Connect(node node.Node) (b []byte, err error) {
 	return
 }
 
-func (m *MemoryTransportClient) GetNodeInfo() (b []byte, err error) {
-	b = m.server.GetNodeInfo()
-	return
+func (m *MemoryTransportClient) GetNodeInfo() ([]byte, error) {
+	return []byte{}, errors.NotImplemented
 }
 
 func (m *MemoryTransportClient) SendMessage(message interface{}) (body []byte, err error) {
@@ -47,6 +46,16 @@ func (m *MemoryTransportClient) SendMessage(message interface{}) (body []byte, e
 
 func (m *MemoryTransportClient) SendTransaction(message interface{}) (body []byte, err error) {
 	return m.SendMessage(message)
+}
+
+func (m *MemoryTransportClient) SendDiscovery(message interface{}) (body []byte, err error) {
+	var s []byte
+	if s, err = json.Marshal(message); err != nil {
+		return
+	}
+	m.server.Send(common.DiscoveryMessage, s)
+
+	return
 }
 
 func (m *MemoryTransportClient) SendBallot(message interface{}) (body []byte, err error) {

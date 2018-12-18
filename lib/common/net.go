@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -11,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/ulule/limiter"
 )
 
@@ -115,6 +117,43 @@ func (e *Endpoint) MarshalJSON() ([]byte, error) {
 	return json.Marshal(e.String())
 }
 
+func (e *Endpoint) Equal(n *Endpoint) bool {
+	if e.Scheme != n.Scheme {
+		return false
+	}
+	if e.Host != n.Host {
+		ehost, eport, err := net.SplitHostPort(e.Host)
+		if err != nil {
+			return false
+		}
+		nhost, nport, err := net.SplitHostPort(n.Host)
+		if err != nil {
+			return false
+		}
+		if eport != nport {
+			return false
+		}
+
+		if !IsLocalhost(ehost) || !IsLocalhost(nhost) {
+			return false
+		}
+	}
+	if NormalizeURLPath(e.Path) != NormalizeURLPath(n.Path) {
+		return false
+	}
+
+	return true
+}
+
+func (e *Endpoint) EncodeRLP(w io.Writer) error {
+	u := &url.URL{
+		Scheme: e.Scheme,
+		Host:   e.Host,
+		Path:   e.Path,
+	}
+	return rlp.Encode(w, u)
+}
+
 func ParseEndpoint(endpoint string) (u *Endpoint, err error) {
 	var parsed *url.URL
 	parsed, err = url.Parse(endpoint)
@@ -183,4 +222,20 @@ func NewRateLimitRule(rate limiter.Rate) RateLimitRule {
 		Default:     rate,
 		ByIPAddress: map[string]limiter.Rate{},
 	}
+}
+
+func IsLocalhost(s string) bool {
+	return s == "localhost" || strings.HasPrefix(s, "127.0.")
+}
+
+func NormalizeURLPath(s string) string {
+	s = strings.TrimSpace(s)
+	if len(s) < 1 {
+		return ""
+	}
+	if s == "/" {
+		return ""
+	}
+
+	return s
 }

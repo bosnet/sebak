@@ -132,7 +132,6 @@ func NewNodeRunner(
 	nr.policy.SetValidators(len(nr.localNode.GetValidators()))
 
 	nr.connectionManager = c.ConnectionManager()
-	nr.network.AddWatcher(nr.connectionManager.ConnectionWatcher)
 	nr.savingBlockOperations = NewSavingBlockOperations(
 		nr.Storage(),
 		nr.Log(),
@@ -259,6 +258,9 @@ func (nr *NodeRunner) Ready() {
 
 	nr.network.AddHandler(nodeHandler.HandlerURLPattern(NodeInfoHandlerPattern), nodeHandler.NodeInfoHandler)
 	nr.network.AddHandler(nodeHandler.HandlerURLPattern(ConnectHandlerPattern), nodeHandler.ConnectHandler).
+		Methods("POST").
+		Headers("Content-Type", "application/json")
+	nr.network.AddHandler(nodeHandler.HandlerURLPattern(DiscoveryHandlerPattern), nodeHandler.DiscoveryHandler).
 		Methods("POST").
 		Headers("Content-Type", "application/json")
 	nr.network.AddHandler(nodeHandler.HandlerURLPattern(MessageHandlerPattern), nodeHandler.MessageHandler).
@@ -572,7 +574,7 @@ func (nr *NodeRunner) handleBallotMessage(message common.NetworkMessage) (err er
 }
 
 func (nr *NodeRunner) InitRound() {
-	if nr.Conf.WatcherMode == true {
+	if nr.Conf.WatcherMode {
 		return
 	}
 	// get latest blocks
