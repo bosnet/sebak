@@ -15,23 +15,25 @@ type RunningRound struct {
 	Proposer     string                              // LocalNode's `Proposer`
 	Transactions map[ /* Proposer */ string][]string /* Transaction.Hash */
 	Voted        map[ /* Proposer */ string]*RoundVote
+	Ballots      []ballot.Ballot
 }
 
-func NewRunningRound(proposer string, ballot ballot.Ballot) (*RunningRound, error) {
+func NewRunningRound(proposer string, blt ballot.Ballot) (*RunningRound, error) {
 	transactions := map[string][]string{
-		ballot.Proposer(): ballot.Transactions(),
+		blt.Proposer(): blt.Transactions(),
 	}
 
-	roundVote := NewRoundVote(ballot)
+	roundVote := NewRoundVote(blt)
 	voted := map[string]*RoundVote{
-		ballot.Proposer(): roundVote,
+		blt.Proposer(): roundVote,
 	}
 
 	return &RunningRound{
-		VotingBasis:  ballot.VotingBasis(),
+		VotingBasis:  blt.VotingBasis(),
 		Proposer:     proposer,
 		Transactions: transactions,
 		Voted:        voted,
+		Ballots:      []ballot.Ballot{blt},
 	}, nil
 }
 
@@ -64,4 +66,6 @@ func (rr *RunningRound) Vote(ballot ballot.Ballot) {
 	} else {
 		rr.Voted[ballot.Proposer()].Vote(ballot)
 	}
+
+	rr.Ballots = append(rr.Ballots, ballot)
 }

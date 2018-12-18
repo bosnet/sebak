@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/transaction"
@@ -21,6 +22,7 @@ const (
 	NodeItemBlockHeader      NodeItemDataType = "block-header"
 	NodeItemBlockTransaction NodeItemDataType = "block-transaction"
 	NodeItemTransaction      NodeItemDataType = "transaction"
+	NodeItemBallot           NodeItemDataType = "ballot"
 	NodeItemError            NodeItemDataType = "error"
 )
 
@@ -181,6 +183,10 @@ func UnmarshalNodeItemResponse(d []byte) (itemType NodeItemDataType, b interface
 		b = t
 	case NodeItemTransaction:
 		var t transaction.Transaction
+		err = unmarshal(&t)
+		b = t
+	case NodeItemBallot:
+		var t ballot.Ballot
 		err = unmarshal(&t)
 		b = t
 	case NodeItemError:
