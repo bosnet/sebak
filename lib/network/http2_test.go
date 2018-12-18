@@ -4,9 +4,11 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"github.com/gorilla/mux"
 	"math/rand"
 	"net"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"strconv"
 	"testing"
@@ -153,5 +155,54 @@ func TestHTTP2NetworkWithoutTLS(t *testing.T) {
 		// with normal HTTPClient
 		_, err := http.Get(endpoint.String())
 		require.NoError(t, err)
+	}
+}
+
+func TestHTTP2NetworkRetryClient(t *testing.T) {
+	var callCount = 0
+	ping := func(w http.ResponseWriter, r *http.Request) {
+		callCount++
+		if callCount < 3 {
+			http.Error(w, "error", 500)
+			return
+		}
+		w.Write([]byte("echo"))
+		return
+	}
+
+	router := mux.NewRouter()
+	router.HandleFunc("/ping", ping).Methods("GET")
+	ts := httptest.NewServer(router)
+	endpoint, err := common.NewEndpointFromString(ts.URL + "/ping")
+	require.NoError(t, err)
+	// with No Retry
+	{
+		client, err := common.NewHTTP2Client(
+			defaultTimeout,
+			defaultIdleTimeout,
+			false,
+			false,
+		)
+		require.NoError(t, err)
+
+		r, err := client.Get(endpoint.String(), http.Header{})
+		require.NoError(t, err)
+		require.Equal(t, 500, r.StatusCode)
+	}
+
+	// with Retry
+	{
+		callCount = 0
+		client, err := common.NewHTTP2Client(
+			defaultTimeout,
+			defaultIdleTimeout,
+			false,
+			true,
+		)
+		require.NoError(t, err)
+
+		r, err := client.Get(endpoint.String(), http.Header{})
+		require.NoError(t, err)
+		require.Equal(t, 200, r.StatusCode)
 	}
 }
