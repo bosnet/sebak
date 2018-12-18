@@ -337,18 +337,18 @@ func (c *ValidatorConnectionManager) discovery(dm DiscoveryMessage) (err error) 
 
 	current := c.discovered()
 
-	undiscovered := dm.FilterUndiscovered(c.localNode.GetValidators())
-	if len(undiscovered) > 0 {
+	discovered := dm.FilterUndiscovered(c.localNode.GetValidators())
+	if len(discovered) > 0 {
 		c.log.Debug(
 			"new validators found",
 			"from", dm.B.Address,
 			"received", dm.B.Validators,
-			"new", undiscovered,
+			"new", discovered,
 			"previous", current,
 			"after", c.discovered(),
 		)
 
-		c.setDiscovered(undiscovered...)
+		c.setDiscovered(discovered...)
 		c.broadcastDiscovery()
 
 		return
