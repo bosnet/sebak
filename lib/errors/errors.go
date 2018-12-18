@@ -114,4 +114,5 @@ var (
 	DiscoveryPolicyDoesNotMatch               = NewError(196, "policy does not matched with discovery node")
 	SnapshotNotFound                          = NewError(197, "snapshot not found")
 	SnapshotLimitReached                      = NewError(198, "snapshots over limit")
+	BallotsNotFound                           = NewError(199, "ballots not found")
 )
