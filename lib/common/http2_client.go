@@ -21,7 +21,7 @@ type HTTP2Client struct {
 	transport *http.Transport
 }
 
-func NewHTTP2Client(timeout, idleTimeout time.Duration, keepAlive bool) (client *HTTP2Client, err error) {
+func NewHTTP2Client(timeout, idleTimeout time.Duration, keepAlive bool, retry bool) (client *HTTP2Client, err error) {
 	if keepAlive {
 		timeout, idleTimeout = 0, 0
 	}
@@ -43,6 +43,8 @@ func NewHTTP2Client(timeout, idleTimeout time.Duration, keepAlive bool) (client 
 		return
 	}
 
+	var httpClient HTTPClient
+
 	hc := &http.Client{
 		Transport: transport,
 		Timeout:   timeout,
@@ -50,17 +52,20 @@ func NewHTTP2Client(timeout, idleTimeout time.Duration, keepAlive bool) (client 
 			return http.ErrUseLastResponse // NOTE prevent redirect
 		},
 	}
+	httpClient = hc
 
-	ec := pester.NewExtendedClient(hc)
-	{
+	if retry {
+		ec := pester.NewExtendedClient(hc)
 		ec.Concurrency = 1
-		ec.MaxRetries = 5
+		ec.MaxRetries = 10
 		ec.Backoff = pester.LinearBackoff
 		ec.KeepLog = true
+
+		httpClient = ec
 	}
 
 	client = &HTTP2Client{
-		client:    ec,
+		client:    httpClient,
 		transport: transport,
 	}
 

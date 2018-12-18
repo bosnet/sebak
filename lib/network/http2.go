@@ -127,7 +127,7 @@ func NewHTTP2Network(config *HTTP2NetworkConfig) (h2n *HTTP2Network) {
 
 // GetClient creates new keep-alive HTTP2 client
 func (t *HTTP2Network) GetClient(endpoint *common.Endpoint) NetworkClient {
-	rawClient, _ := common.NewHTTP2Client(defaultTimeout, 0, true)
+	rawClient, _ := common.NewHTTP2Client(defaultTimeout, 0, true, true)
 
 	client := NewHTTP2NetworkClient(endpoint, rawClient)
 
@@ -220,7 +220,7 @@ func (t *HTTP2Network) Ready() error {
 }
 
 func (t *HTTP2Network) IsReady() bool {
-	client, err := common.NewHTTP2Client(50*time.Millisecond, 50*time.Millisecond, false)
+	client, err := common.NewHTTP2Client(50*time.Millisecond, 50*time.Millisecond, false, false)
 	if err != nil {
 		return false
 	}

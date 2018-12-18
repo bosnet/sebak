@@ -101,6 +101,7 @@ func TestHTTP2NetworkTLSSupport(t *testing.T) {
 			defaultTimeout,
 			defaultIdleTimeout,
 			false,
+			false,
 		)
 
 		require.NoError(t, err)
@@ -139,6 +140,7 @@ func TestHTTP2NetworkWithoutTLS(t *testing.T) {
 		client, err := common.NewHTTP2Client(
 			defaultTimeout,
 			defaultIdleTimeout,
+			false,
 			false,
 		)
 		require.NoError(t, err)
