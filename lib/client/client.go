@@ -78,7 +78,7 @@ type Client struct {
 }
 
 func NewClient(url string) *Client {
-	httpClient, err := common.NewHTTP2Client(0, 0, true, false)
+	httpClient, err := common.NewHTTP2Client(0, 0, true, nil)
 	if err != nil {
 		panic(err)
 	}

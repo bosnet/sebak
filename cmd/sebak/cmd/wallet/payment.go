@@ -84,7 +84,7 @@ func init() {
 			var senderAccount block.BlockAccount
 
 			// Keep-alive ignores timeout/idle timeout
-			if connection, err = common.NewHTTP2Client(0, 0, true, false); err != nil {
+			if connection, err = common.NewHTTP2Client(0, 0, true, nil); err != nil {
 				log.Fatal("Error while creating network client: ", err)
 				os.Exit(1)
 			}

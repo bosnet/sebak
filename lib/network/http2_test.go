@@ -103,7 +103,7 @@ func TestHTTP2NetworkTLSSupport(t *testing.T) {
 			defaultTimeout,
 			defaultIdleTimeout,
 			false,
-			false,
+			nil,
 		)
 
 		require.NoError(t, err)
@@ -143,7 +143,7 @@ func TestHTTP2NetworkWithoutTLS(t *testing.T) {
 			defaultTimeout,
 			defaultIdleTimeout,
 			false,
-			false,
+			nil,
 		)
 		require.NoError(t, err)
 
@@ -181,7 +181,7 @@ func TestHTTP2NetworkRetryClient(t *testing.T) {
 			defaultTimeout,
 			defaultIdleTimeout,
 			false,
-			false,
+			nil,
 		)
 		require.NoError(t, err)
 
@@ -197,7 +197,9 @@ func TestHTTP2NetworkRetryClient(t *testing.T) {
 			defaultTimeout,
 			defaultIdleTimeout,
 			false,
-			true,
+			&common.RetrySetting{MaxRetries: 5, Concurrency: 1, Backoff: func(i int) time.Duration {
+				return time.Duration(i) * time.Second
+			}},
 		)
 		require.NoError(t, err)
 

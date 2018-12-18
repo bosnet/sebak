@@ -12,16 +12,23 @@ import (
 	"golang.org/x/net/http2"
 )
 
-type HTTPClient interface {
+type Doer interface {
 	Do(req *http.Request) (*http.Response, error)
+}
+type BackoffStrategy = pester.BackoffStrategy
+
+type RetrySetting struct {
+	MaxRetries  int
+	Concurrency int
+	Backoff     BackoffStrategy
 }
 
 type HTTP2Client struct {
-	client    HTTPClient
+	client    Doer
 	transport *http.Transport
 }
 
-func NewHTTP2Client(timeout, idleTimeout time.Duration, keepAlive bool, retry bool) (client *HTTP2Client, err error) {
+func NewHTTP2Client(timeout, idleTimeout time.Duration, keepAlive bool, retrySetting *RetrySetting) (client *HTTP2Client, err error) {
 	if keepAlive {
 		timeout, idleTimeout = 0, 0
 	}
@@ -43,7 +50,7 @@ func NewHTTP2Client(timeout, idleTimeout time.Duration, keepAlive bool, retry bo
 		return
 	}
 
-	var httpClient HTTPClient
+	var doer Doer
 
 	hc := &http.Client{
 		Transport: transport,
@@ -52,20 +59,20 @@ func NewHTTP2Client(timeout, idleTimeout time.Duration, keepAlive bool, retry bo
 			return http.ErrUseLastResponse // NOTE prevent redirect
 		},
 	}
-	httpClient = hc
+	doer = hc
 
-	if retry {
+	if retrySetting != nil {
 		ec := pester.NewExtendedClient(hc)
-		ec.Concurrency = 1
-		ec.MaxRetries = 10
-		ec.Backoff = pester.LinearBackoff
-		ec.KeepLog = true
-
-		httpClient = ec
+		{
+			ec.MaxRetries = retrySetting.MaxRetries
+			ec.Concurrency = retrySetting.Concurrency
+			ec.Backoff = retrySetting.Backoff
+		}
+		doer = ec
 	}
 
 	client = &HTTP2Client{
-		client:    httpClient,
+		client:    doer,
 		transport: transport,
 	}
 
