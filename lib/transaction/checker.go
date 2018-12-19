@@ -59,9 +59,8 @@ func CheckOperationTypes(c common.Checker, args ...interface{}) (err error) {
 	}
 
 	for _, op := range checker.Transaction.B.Operations {
-		if _, found := operation.KindsNormalTransaction[op.H.Type]; !found {
-			err = errors.InvalidOperation
-			return
+		if !operation.IsNormalOperation(op.H.Type) {
+			return errors.InvalidOperation
 		}
 	}
 
