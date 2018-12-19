@@ -36,13 +36,15 @@ func IsValidOperationType(oType string) bool {
 	return b
 }
 
-var KindsNormalTransaction = map[OperationType]struct{}{
-	TypeCreateAccount:        {},
-	TypePayment:              {},
-	TypeCongressVoting:       {},
-	TypeCongressVotingResult: {},
-	TypeUnfreezingRequest:    {},
-	TypeInflationPF:          {},
+func IsNormalOperation(t OperationType) bool {
+	switch t {
+	case TypeCreateAccount, TypePayment,
+		TypeCongressVoting, TypeCongressVotingResult,
+		TypeUnfreezingRequest, TypeInflationPF:
+		return true
+	default:
+		return false
+	}
 }
 
 type Operation struct {
