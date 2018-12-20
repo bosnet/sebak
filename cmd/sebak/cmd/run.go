@@ -537,9 +537,7 @@ func parseFlagsNode() {
 		}
 	}
 
-	if logLevel == logging.LvlDebug { // only debug produces `caller` data
-		logHandler = logging.CallerFileHandler(logHandler)
-	}
+	logHandler = logging.CallerFileHandler(logHandler)
 	logHandler = logging.LvlFilterHandler(logLevel, logHandler)
 	log.SetHandler(logHandler)
 
