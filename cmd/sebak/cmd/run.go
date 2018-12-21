@@ -44,7 +44,15 @@ var (
 	flagDebugPProf                 bool   = common.GetENVValue("SEBAK_DEBUG_PPROF", "0") == "1"
 	flagKPSecretSeed               string = common.GetENVValue("SEBAK_SECRET_SEED", "")
 	flagLog                        string = common.GetENVValue("SEBAK_LOG", "")
+	flagLogRotateMaxSize           string = common.GetENVValue("SEBAK_LOG_ROTATE_MAX_SIZE", "100")
+	flagLogRotateMaxCount          string = common.GetENVValue("SEBAK_LOG_ROTATE_MAX_COUNT", "0")
+	flagLogRotateMaxDays           string = common.GetENVValue("SEBAK_LOG_ROTATE_MAX_DAYS", "0")
+	flagLogRotateUncompress        bool   = common.GetENVValue("SEBAK_LOG_ROTATE_UNCOMPRESS", "0") == "1"
 	flagHTTPLog                    string = common.GetENVValue("SEBAK_HTTP_LOG", "")
+	flagHTTPLogRotateMaxSize       string = common.GetENVValue("SEBAK_HTTP_LOG_ROTATE_MAX_SIZE", "100")
+	flagHTTPLogRotateMaxCount      string = common.GetENVValue("SEBAK_HTTP_LOG_ROTATE_MAX_COUNT", "0")
+	flagHTTPLogRotateMaxDays       string = common.GetENVValue("SEBAK_HTTP_LOG_ROTATE_MAX_DAYS", "0")
+	flagHTTPLogRotateUncompress    bool   = common.GetENVValue("SEBAK_HTTP_LOG_ROTATE_UNCOMPRESS", "0") == "1"
 	flagLogLevel                   string = common.GetENVValue("SEBAK_LOG_LEVEL", defaultLogLevel.String())
 	flagLogFormat                  string = common.GetENVValue("SEBAK_LOG_FORMAT", defaultLogFormat)
 	flagNetworkID                  string = common.GetENVValue("SEBAK_NETWORK_ID", "")
@@ -120,8 +128,14 @@ var (
 	watchInterval           time.Duration
 	discoveryEndpoints      []*common.Endpoint
 
-	logLevel logging.Lvl
-	log      logging.Logger = logging.New("module", "main")
+	logLevel              logging.Lvl
+	log                   logging.Logger = logging.New("module", "main")
+	logRotateMaxSize      int
+	logRotateMaxCount     int
+	logRotateMaxDays      int
+	httpLogRotateMaxSize  int
+	httpLogRotateMaxCount int
+	httpLogRotateMaxDays  int
 )
 
 func init() {
@@ -182,7 +196,15 @@ func init() {
 	nodeCmd.Flags().StringVar(&flagLogLevel, "log-level", flagLogLevel, "log level, {crit, error, warn, info, debug}")
 	nodeCmd.Flags().StringVar(&flagLogFormat, "log-format", flagLogFormat, "log format, {terminal, json}")
 	nodeCmd.Flags().StringVar(&flagLog, "log", flagLog, "set log file")
+	nodeCmd.Flags().StringVar(&flagLogRotateMaxSize, "log-rotate-max-size", flagLogRotateMaxSize, "max size of rotate log")
+	nodeCmd.Flags().StringVar(&flagLogRotateMaxCount, "log-rotate-max-count", flagLogRotateMaxCount, "max count of rotated logs")
+	nodeCmd.Flags().StringVar(&flagLogRotateMaxDays, "log-rotate-max-days", flagLogRotateMaxDays, "max days of rotated logs")
+	nodeCmd.Flags().BoolVar(&flagLogRotateUncompress, "log-rotate-uncompress", flagLogRotateUncompress, "disable compression of rotate log")
 	nodeCmd.Flags().StringVar(&flagHTTPLog, "http-log", flagHTTPLog, "set log file for HTTP request")
+	nodeCmd.Flags().StringVar(&flagHTTPLogRotateMaxSize, "http-log-rotate-max-size", flagHTTPLogRotateMaxSize, "max size of rotate http log")
+	nodeCmd.Flags().StringVar(&flagHTTPLogRotateMaxCount, "http-log-rotate-max-count", flagHTTPLogRotateMaxCount, "max count of rotated http logs")
+	nodeCmd.Flags().StringVar(&flagHTTPLogRotateMaxDays, "http-log-rotate-max-days", flagHTTPLogRotateMaxDays, "max days of rotated http logs")
+	nodeCmd.Flags().BoolVar(&flagHTTPLogRotateUncompress, "http-log-rotate-uncompress", flagHTTPLogRotateUncompress, "disable compression of rotate http log")
 	nodeCmd.Flags().BoolVar(&flagVerbose, "verbose", flagVerbose, "verbose")
 	nodeCmd.Flags().StringVar(&flagBindURL, "bind", flagBindURL, "bind to listen on")
 	nodeCmd.Flags().StringVar(&flagJSONRPCBindURL, "jsonrpc-bind", flagJSONRPCBindURL, "bind to listen on for jsonrpc")
@@ -337,6 +359,54 @@ func parseFlagDiscovery(l cmdcommon.ListFlags) (endpoints []*common.Endpoint, er
 	}
 
 	return
+}
+
+func parseLogRotateMaxSize(option, value string) int {
+	if len(value) < 1 {
+		return 0
+	}
+
+	var s int64
+	var err error
+	if s, err = strconv.ParseInt(value, 10, 64); err != nil {
+		cmdcommon.PrintFlagsError(nodeCmd, option, err)
+	} else if s < 0 {
+		cmdcommon.PrintFlagsError(nodeCmd, option, fmt.Errorf("greater than 0"))
+	}
+
+	return int(s)
+}
+
+func parseLogRotateMaxCount(option, value string) int {
+	if len(value) < 1 {
+		return 100 // 100M
+	}
+
+	var s int64
+	var err error
+	if s, err = strconv.ParseInt(value, 10, 64); err != nil {
+		cmdcommon.PrintFlagsError(nodeCmd, option, err)
+	} else if s < 0 {
+		cmdcommon.PrintFlagsError(nodeCmd, option, fmt.Errorf("greater than 0"))
+	}
+
+	return int(s)
+}
+
+func parseLogRotateMaxDays(option, value string) int {
+	if len(value) < 1 {
+		return 0
+	}
+
+	var s int64
+	var err error
+	if s, err = strconv.ParseInt(value, 10, 64); err != nil {
+		cmdcommon.PrintFlagsError(nodeCmd, option, err)
+	} else if s < 0 {
+		cmdcommon.PrintFlagsError(nodeCmd, option, fmt.Errorf("greater than 0"))
+	}
+
+	return int(s)
 }
 
 func parseFlagsNode() {
@@ -516,48 +586,62 @@ func parseFlagsNode() {
 		cmdcommon.PrintFlagsError(nodeCmd, "--log-level", err)
 	}
 
-	var logFormatter logging.Format
-	switch flagLogFormat {
-	case "terminal":
-		if isatty.IsTerminal(os.Stdout.Fd()) && len(flagLog) < 1 {
-			logFormatter = logging.TerminalFormat()
+	var logHandler logging.Handler
+	{ // global log
+		var logFormatter logging.Format
+		switch flagLogFormat {
+		case "terminal":
+			if isatty.IsTerminal(os.Stdout.Fd()) && len(flagLog) < 1 {
+				logFormatter = logging.TerminalFormat()
+			} else {
+				logFormatter = logging.LogfmtFormat()
+			}
+		case "json":
+			logFormatter = common.JsonFormatEx(false, true)
+		default:
+			cmdcommon.PrintFlagsError(nodeCmd, "--log-format", fmt.Errorf("'%s'", flagLogFormat))
+		}
+
+		if len(flagLog) < 1 {
+			logHandler = logging.StreamHandler(os.Stdout, logFormatter)
 		} else {
-			logFormatter = logging.LogfmtFormat()
+			logRotateMaxSize = parseLogRotateMaxSize("--log-rotate-max-size", flagLogRotateMaxSize)
+			logRotateMaxCount = parseLogRotateMaxSize("--log-rotate-max-count", flagLogRotateMaxCount)
+			logRotateMaxDays = parseLogRotateMaxDays("--log-rotate-max-days", flagLogRotateMaxDays)
+
+			logHandler = common.NewRotateHandler(
+				flagLog, logFormatter,
+				logRotateMaxSize, logRotateMaxDays, logRotateMaxCount, !flagLogRotateUncompress,
+			)
 		}
-	case "json":
-		logFormatter = common.JsonFormatEx(false, true)
-	default:
-		cmdcommon.PrintFlagsError(nodeCmd, "--log-format", fmt.Errorf("'%s'", flagLogFormat))
+
+		if logLevel == logging.LvlDebug { // only debug produces `caller` data
+			logHandler = logging.CallerFileHandler(logHandler)
+		}
+		logHandler = logging.LvlFilterHandler(logLevel, logHandler)
+		log.SetHandler(logHandler)
+
+		runner.SetLogging(logLevel, logHandler)
+		consensus.SetLogging(logLevel, logHandler)
+		network.SetLogging(logLevel, logHandler)
+		sync.SetLogging(logLevel, logHandler)
 	}
 
-	logHandler := logging.StreamHandler(os.Stdout, logFormatter)
-	if len(flagLog) > 0 {
-		if logHandler, err = logging.FileHandler(flagLog, logFormatter); err != nil {
-			cmdcommon.PrintFlagsError(nodeCmd, "--log", err)
+	{ // http log
+		// if without http-log, http log messages will be in `network.log`
+		if len(flagHTTPLog) < 1 {
+			network.SetHTTPLogging(logLevel, logHandler)
+		} else {
+			httpLogRotateMaxSize = parseLogRotateMaxSize("--http-log-rotate-max-size", flagHTTPLogRotateMaxSize)
+			httpLogRotateMaxCount = parseLogRotateMaxSize("--http-log-rotate-max-count", flagHTTPLogRotateMaxCount)
+			httpLogRotateMaxDays = parseLogRotateMaxDays("--http-log-rotate-max-days", flagHTTPLogRotateMaxDays)
+
+			httpLogHandler := common.NewRotateHandler(
+				flagHTTPLog, common.JsonFormatEx(false, true), // In `http-log`, http log will be json format
+				httpLogRotateMaxSize, httpLogRotateMaxDays, httpLogRotateMaxCount, !flagHTTPLogRotateUncompress,
+			)
+			network.SetHTTPLogging(logging.LvlDebug, httpLogHandler) // httpLog only use `Debug`
 		}
-	}
-
-	if logLevel == logging.LvlDebug { // only debug produces `caller` data
-		logHandler = logging.CallerFileHandler(logHandler)
-	}
-	logHandler = logging.LvlFilterHandler(logLevel, logHandler)
-	log.SetHandler(logHandler)
-
-	runner.SetLogging(logLevel, logHandler)
-	consensus.SetLogging(logLevel, logHandler)
-	network.SetLogging(logLevel, logHandler)
-	sync.SetLogging(logLevel, logHandler)
-
-	// if without http-log, http log messages will be in `network.log`
-	if len(flagHTTPLog) < 1 {
-		network.SetHTTPLogging(logLevel, logHandler)
-	} else {
-		// In `http-log`, http log will be json format
-		httpLogHandler, err := logging.FileHandler(flagHTTPLog, common.JsonFormatEx(false, true))
-		if err != nil {
-			cmdcommon.PrintFlagsError(nodeCmd, "--http-log", err)
-		}
-		network.SetHTTPLogging(logging.LvlDebug, httpLogHandler) // httpLog only use `Debug`
 	}
 
 	// checking `--discovery`

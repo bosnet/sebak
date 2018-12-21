@@ -3,11 +3,13 @@ package common
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"reflect"
 	"time"
 
 	logging "github.com/inconshreveable/log15"
+	lumberjack "gopkg.in/natefinch/lumberjack.v2"
 
 	"boscoin.io/sebak/lib/errors"
 )
@@ -112,3 +114,24 @@ func (l nopLogger) Info(msg string, ctx ...interface{})  {}
 func (l nopLogger) Warn(msg string, ctx ...interface{})  {}
 func (l nopLogger) Error(msg string, ctx ...interface{}) {}
 func (l nopLogger) Crit(msg string, ctx ...interface{})  {}
+
+type closingHandler struct {
+	io.WriteCloser
+	logging.Handler
+}
+
+func (h *closingHandler) Close() error {
+	return h.WriteCloser.Close()
+}
+
+func NewRotateHandler(path string, fmtr logging.Format, maxSize, maxAge, maxBackups int, compress bool) logging.Handler {
+	wc := &lumberjack.Logger{
+		Filename:   path,
+		MaxSize:    maxSize,
+		MaxBackups: maxBackups,
+		MaxAge:     maxAge,
+		Compress:   compress,
+	}
+
+	return closingHandler{wc, logging.StreamHandler(wc, fmtr)}
+}
