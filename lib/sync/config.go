@@ -6,6 +6,7 @@ import (
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
+	"boscoin.io/sebak/lib/node/runner"
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
 	"github.com/inconshreveable/log15"
@@ -43,7 +44,7 @@ func NewConfig(localNode *node.LocalNode,
 	nt network.Network,
 	cm network.ConnectionManager,
 	tp *transaction.Pool,
-	cfg common.Config) *Config {
+	cfg common.Config) (*Config, error) {
 	c := &Config{
 		storage:           st,
 		network:           nt,
@@ -59,7 +60,12 @@ func NewConfig(localNode *node.LocalNode,
 		RetryInterval:            RetryInterval,
 		CheckBlockHeightInterval: CheckBlockHeightInterval,
 	}
-	return c
+	commonAccountAddress, err := c.commonAccountAddress()
+	if err != nil {
+		return nil, err
+	}
+	c.commonCfg.CommonAccountAddress = commonAccountAddress
+	return c, nil
 }
 
 func (c *Config) NewSyncer() *Syncer {
@@ -140,4 +146,13 @@ func (c *Config) LoggingConfig() {
 		"checkInterval", c.CheckBlockHeightInterval,
 		"checkPrevBlockInterval", c.CheckPrevBlockInterval,
 	)
+}
+
+func (c *Config) commonAccountAddress() (string, error) {
+	commonAccount, err := runner.GetCommonAccount(c.storage)
+	if err != nil {
+		return "", err
+	}
+
+	return commonAccount.Address, nil
 }

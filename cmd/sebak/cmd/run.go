@@ -756,7 +756,10 @@ func runNode() error {
 
 	tp := transaction.NewPool(conf)
 
-	c := sync.NewConfig(localNode, st, nt, connectionManager, tp, conf)
+	c, err := sync.NewConfig(localNode, st, nt, connectionManager, tp, conf)
+	if err != nil {
+		return err
+	}
 	//Place setting config
 	c.SyncPoolSize = syncPoolSize
 	c.FetchTimeout = syncFetchTimeout
