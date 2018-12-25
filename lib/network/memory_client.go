@@ -71,3 +71,7 @@ func (m *MemoryTransportClient) SendBallot(message interface{}) (body []byte, er
 func (m *MemoryTransportClient) GetTransactions([]string) ([]byte, error) {
 	return []byte{}, errors.NotImplemented
 }
+
+func (m *MemoryTransportClient) GetBallots() ([]byte, error) {
+	return []byte{}, errors.NotImplemented
+}

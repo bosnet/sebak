@@ -40,6 +40,7 @@ type NetworkClient interface {
 	SendBallot(interface{}) ([]byte, error)
 	SendDiscovery(interface{}) ([]byte, error)
 	GetTransactions([]string) ([]byte, error)
+	GetBallots() ([]byte, error)
 }
 
 type MessageBroker interface {

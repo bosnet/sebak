@@ -149,6 +149,27 @@ func (c *HTTP2NetworkClient) GetTransactions(txs []string) (retBody []byte, err 
 	return
 }
 
+func (c *HTTP2NetworkClient) GetBallots() (retBody []byte, err error) {
+	headers := c.DefaultHeaders()
+	headers.Set("Content-Type", "application/json")
+
+	u := c.resolvePath(UrlPathPrefixNode + "/ballots")
+
+	var response *http.Response
+	response, err = c.client.Get(u.String(), headers)
+	if err != nil {
+		return
+	}
+	defer response.Body.Close()
+	retBody, err = ioutil.ReadAll(response.Body)
+
+	if response.StatusCode != http.StatusOK {
+		err = errors.HTTPProblem.Clone().SetData("status", response.StatusCode)
+	}
+
+	return
+}
+
 ///
 /// Perform a raw Get request on this peer
 ///
