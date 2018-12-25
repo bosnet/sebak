@@ -6,6 +6,7 @@ set -xe
 # So make sure we're in the right WD
 cd -- `dirname ${BASH_SOURCE[0]}`
 ROOT_DIR="../.."
+CURRENT_DIR=$(echo "${PWD##*/}")
 export BLOCK_TIME_DELTA=2s
 source accounts.sh
 CONTAINERS=""
@@ -124,11 +125,11 @@ docker run --rm --network host ${CLIENT_IMAGE} "total_balance"
 docker stop ${NODE1} ${NODE2} ${NODE3} ${NODE4}
 
 # Copy integration tests
-mkdir -p ./long-term/coverage/node{1,2,3,4}/
-docker cp ${NODE1}:/sebak/coverage.txt ./long-term/coverage/node1/coverage.txt
-docker cp ${NODE2}:/sebak/coverage.txt ./long-term/coverage/node2/coverage.txt
-docker cp ${NODE3}:/sebak/coverage.txt ./long-term/coverage/node3/coverage.txt
-docker cp ${NODE4}:/sebak/coverage.txt ./long-term/coverage/node4/coverage.txt
+mkdir -p ./${CURRENT_DIR}/coverage/node{1,2,3,4}/
+docker cp ${NODE1}:/sebak/coverage.txt ./${CURRENT_DIR}/coverage/node1/coverage.txt
+docker cp ${NODE2}:/sebak/coverage.txt ./${CURRENT_DIR}/coverage/node2/coverage.txt
+docker cp ${NODE3}:/sebak/coverage.txt ./${CURRENT_DIR}/coverage/node3/coverage.txt
+docker cp ${NODE4}:/sebak/coverage.txt ./${CURRENT_DIR}/coverage/node4/coverage.txt
 
 # Cleanup
 docker rm -f ${NODE1} ${NODE2} ${NODE3} ${NODE4} || true
