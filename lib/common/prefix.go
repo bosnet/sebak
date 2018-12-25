@@ -10,6 +10,8 @@ const (
 	BlockTransactionPrefixConfirmed       = string(0x12)
 	BlockTransactionPrefixAccount         = string(0x13)
 	BlockTransactionPrefixBlock           = string(0x14)
+	BlockTransactionPrefixAll             = string(0x15)
+	BlockTransactionPrefixTarget          = string(0x16)
 	BlockOperationPrefixHash              = string(0x20)
 	BlockOperationPrefixTxHash            = string(0x21)
 	BlockOperationPrefixSource            = string(0x22)

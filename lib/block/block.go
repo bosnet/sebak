@@ -78,7 +78,7 @@ func (b Block) NewBlockKeyConfirmed() string {
 	return fmt.Sprintf(
 		"%s%s-%s%s",
 		common.BlockPrefixConfirmed, b.ProposedTime,
-		common.EncodeUint64ToByteSlice(b.Height),
+		common.EncodeUint64ToString(b.Height),
 		common.GetUniqueIDFromUUID(),
 	)
 }

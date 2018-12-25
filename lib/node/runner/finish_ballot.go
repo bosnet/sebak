@@ -5,6 +5,7 @@ import (
 
 	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/block"
+	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/metrics"
 	"boscoin.io/sebak/lib/storage"
@@ -126,8 +127,9 @@ func getProposedTransactions(st *storage.LevelDBBackend, pTxHashes []string, tra
 }
 
 func FinishTransactions(blk block.Block, transactions []*transaction.Transaction, st *storage.LevelDBBackend) (err error) {
-	for _, tx := range transactions {
-		bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.ProposedTime, *tx)
+	for i, tx := range transactions {
+		// i = 0 is an index of proposerTransaction
+		bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.ProposedTime, *tx, uint64(i+1))
 		if err = bt.Save(st); err != nil {
 			return
 		}
@@ -290,7 +292,7 @@ func FinishProposerTransaction(st *storage.LevelDBBackend, blk block.Block, ptx 
 		}
 	}
 
-	bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.ProposedTime, ptx.Transaction)
+	bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.ProposedTime, ptx.Transaction, common.ProposerTransactionIndex)
 	if err = bt.Save(st); err != nil {
 		return
 	}

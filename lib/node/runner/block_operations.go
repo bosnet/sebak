@@ -257,7 +257,7 @@ func (sb *SavingBlockOperations) CheckTransactionByBlock(st *storage.LevelDBBack
 	}
 
 	for i, op := range bt.Transaction().B.Operations {
-		opHash := block.NewBlockOperationKey(op.MakeHashString(), hash)
+		opHash := block.NewBlockOperationKey(op.MakeHashString(), hash, uint64(i))
 
 		var exists bool
 		if exists, err = block.ExistsBlockOperation(st, opHash); err != nil {

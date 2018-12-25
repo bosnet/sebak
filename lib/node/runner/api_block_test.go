@@ -57,8 +57,8 @@ func (p *HelperTestGetBlocksHandler) createBlock() block.Block {
 	bk := block.TestMakeNewBlockWithPrevBlock(block.GetLatestBlock(p.st), txHashes)
 	bk.MustSave(p.st)
 
-	for _, tx := range txs {
-		btx := block.NewBlockTransactionFromTransaction(bk.Hash, bk.Height, bk.ProposedTime, tx)
+	for i, tx := range txs {
+		btx := block.NewBlockTransactionFromTransaction(bk.Hash, bk.Height, bk.ProposedTime, tx, uint64(i))
 		btx.MustSave(p.st)
 		btx.SaveBlockOperations(p.st)
 		block.SaveTransactionPool(p.st, tx)

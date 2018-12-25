@@ -27,6 +27,8 @@ func (t Transaction) GetMap() hal.Entry {
 		"sequence_id":     t.bt.SequenceID,
 		"created":         t.bt.Created,
 		"operation_count": len(t.bt.Operations),
+		"index":           t.bt.Index,
+		"block_height":    t.bt.BlockHeight,
 	}
 }
 func (t Transaction) Resource() *hal.Resource {

@@ -109,8 +109,8 @@ func (p *HelperTestGetNodeTransactionsHandler) createBlock() block.Block {
 	bk.Height = uint64(height + 1)
 	bk.MustSave(p.st)
 
-	for _, tx := range txs {
-		btx := block.NewBlockTransactionFromTransaction(bk.Hash, bk.Height, bk.ProposedTime, tx)
+	for i, tx := range txs {
+		btx := block.NewBlockTransactionFromTransaction(bk.Hash, bk.Height, bk.ProposedTime, tx, uint64(i))
 		if err := btx.Save(p.st); err != nil {
 			panic(err)
 		}

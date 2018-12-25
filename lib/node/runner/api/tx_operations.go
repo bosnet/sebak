@@ -27,7 +27,11 @@ func (api NetworkHandlerAPI) GetOperationsByTxHandler(w http.ResponseWriter, r *
 		return
 	}
 
-	options := p.ListOptions()
+	options, err := p.PageCursorListOptions(block.GetBlockOperationKeyPrefixTxHash(hash))
+	if err != nil {
+		httputils.WriteJSONError(w, err)
+		return
+	}
 
 	var blk *block.Block
 	if blk, err = api.getBlockByTx(hash); err != nil {
@@ -35,27 +39,28 @@ func (api NetworkHandlerAPI) GetOperationsByTxHandler(w http.ResponseWriter, r *
 		return
 	}
 
-	ops, firstCursor, cursor := api.getOperationsByTx(hash, blk, options)
+	ops, pOrder, nOrder := api.getOperationsByTx(hash, blk, options)
+
 	if len(ops) < 1 {
 		httputils.WriteJSONError(w, errors.BlockTransactionDoesNotExists)
 		return
 	}
 
-	list := p.ResourceList(ops, firstCursor, cursor)
+	list := p.ResourceListWithOrder(ops, pOrder, nOrder)
 	httputils.MustWriteJSON(w, 200, list)
 }
 
-func (api NetworkHandlerAPI) getOperationsByTx(txHash string, blk *block.Block, options storage.ListOptions) (txs []resource.Resource, firstCursor, cursor []byte) {
+func (api NetworkHandlerAPI) getOperationsByTx(txHash string, blk *block.Block, options storage.ListOptions) (txs []resource.Resource, pOrder *block.BlockOrder, nOrder *block.BlockOrder) {
 	iterFunc, closeFunc := block.GetBlockOperationsByTx(api.storage, txHash, options)
 	for idx := 0; ; idx++ {
-		o, hasNext, c := iterFunc()
+		o, hasNext, _ := iterFunc()
 		if !hasNext {
 			break
 		}
-		cursor = append([]byte{}, c...)
-		if len(firstCursor) == 0 {
-			firstCursor = append(firstCursor, c...)
+		if pOrder == nil {
+			pOrder = o.BlockOrder()
 		}
+		nOrder = o.BlockOrder()
 
 		rs := resource.NewOperation(&o, idx)
 		rs.Block = blk

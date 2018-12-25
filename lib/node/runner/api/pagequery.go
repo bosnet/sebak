@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"strconv"
 
+	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/node/runner/api/resource"
@@ -88,6 +89,19 @@ func (p *PageQuery) ListOptions() storage.ListOptions {
 	return storage.NewDefaultListOptions(p.Reverse(), p.Cursor(), p.Limit())
 }
 
+func (p *PageQuery) PageCursorListOptions(prefix string) (storage.ListOptions, error) {
+	var indexCursor []byte
+	var err error
+	if p.Cursor() != nil {
+		c := NewPageCursor(p.Cursor(), prefix)
+		indexCursor, err = c.IndexKey()
+		if err != nil {
+			return nil, err
+		}
+	}
+	return storage.NewDefaultListOptions(p.Reverse(), indexCursor, p.Limit()), nil
+}
+
 func (p *PageQuery) WalkOption() *storage.WalkOption {
 	return storage.NewWalkOption(string(p.Cursor()), p.Limit(), p.Reverse())
 }
@@ -98,6 +112,12 @@ func (p *PageQuery) ResourceList(rs []resource.Resource, firstCursor, lastCursor
 	} else {
 		return resource.NewResourceList(rs, p.SelfLink(), p.NextLink(lastCursor), p.PrevLink(firstCursor))
 	}
+}
+
+func (p *PageQuery) ResourceListWithOrder(rs []resource.Resource, prevOrder *block.BlockOrder, nextOrder *block.BlockOrder) *resource.ResourceList {
+	pcursor := []byte(prevOrder.String())
+	ncursor := []byte(nextOrder.String())
+	return p.ResourceList(rs, pcursor, ncursor)
 }
 
 func (p *PageQuery) parseRequest() error {

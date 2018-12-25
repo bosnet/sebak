@@ -2,7 +2,6 @@ package block
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/errors"
@@ -37,70 +36,83 @@ type BlockTransaction struct {
 	Created   string `json:"created"`
 	Message   []byte `json:"message"`
 
+	Index       uint64 `json:"index"`
+	BlockHeight uint64 `json:"block_height"`
+
 	transaction transaction.Transaction
 	isSaved     bool
-	blockHeight uint64
+	order       *BlockOrder
 }
 
-func NewBlockTransactionFromTransaction(blockHash string, blockHeight uint64, confirmed string, tx transaction.Transaction) BlockTransaction {
+func NewBlockTransactionFromTransaction(blockHash string, blockHeight uint64, confirmed string, tx transaction.Transaction, index uint64) BlockTransaction {
 	var opHashes []string
-	for _, op := range tx.B.Operations {
-		opHashes = append(opHashes, NewBlockOperationKey(op.MakeHashString(), tx.GetHash()))
+	for i, op := range tx.B.Operations {
+		opHashes = append(opHashes, NewBlockOperationKey(op.MakeHashString(), tx.GetHash(), uint64(i)))
 	}
 
+	order := NewBlockTxOrder(blockHeight, index)
+
 	return BlockTransaction{
-		Hash:       tx.H.Hash,
-		Block:      blockHash,
-		SequenceID: tx.B.SequenceID,
-		Signature:  tx.H.Signature,
-		Source:     tx.B.Source,
-		Fee:        tx.B.Fee,
-		Operations: opHashes,
-		Amount:     tx.TotalAmount(true),
-		Confirmed:  confirmed,
-		Created:    tx.H.Created,
+		Hash:        tx.H.Hash,
+		Block:       blockHash,
+		SequenceID:  tx.B.SequenceID,
+		Signature:   tx.H.Signature,
+		Source:      tx.B.Source,
+		Fee:         tx.B.Fee,
+		Operations:  opHashes,
+		Amount:      tx.TotalAmount(true),
+		Confirmed:   confirmed,
+		Created:     tx.H.Created,
+		Index:       index,
+		BlockHeight: blockHeight,
 
 		transaction: tx,
-		blockHeight: blockHeight,
+		order:       order,
 	}
 }
 
 func (bt BlockTransaction) NewBlockTransactionKeySource() string {
-	return fmt.Sprintf(
-		"%s%s%s%s",
-		GetBlockTransactionKeyPrefixSource(bt.Source),
-		common.EncodeUint64ToByteSlice(bt.blockHeight),
-		common.EncodeUint64ToByteSlice(bt.SequenceID),
-		common.GetUniqueIDFromUUID(),
-	)
+	idx := storage.NewIndex()
+	idx.WritePrefix(GetBlockTransactionKeyPrefixSource(bt.Source))
+	bt.order.Index(idx)
+	return idx.String()
 }
 
 func (bt BlockTransaction) NewBlockTransactionKeyConfirmed() string {
-	return fmt.Sprintf(
-		"%s%s",
-		GetBlockTransactionKeyPrefixConfirmed(bt.Confirmed),
-		common.GetUniqueIDFromUUID(),
-	)
+	idx := storage.NewIndex()
+	idx.WritePrefix(GetBlockTransactionKeyPrefixConfirmed(bt.Confirmed))
+	bt.order.Index(idx)
+	return idx.String()
+}
+
+func (bt BlockTransaction) NewBlockTransactionKeyAll() string {
+	idx := storage.NewIndex()
+	idx.WritePrefix(common.BlockTransactionPrefixAll)
+	bt.order.Index(idx)
+	return idx.String()
 }
 
 func (bt BlockTransaction) NewBlockTransactionKeyByAccount(accountAddress string) string {
-	return fmt.Sprintf(
-		"%s%s%s%s",
-		GetBlockTransactionKeyPrefixAccount(accountAddress),
-		common.EncodeUint64ToByteSlice(bt.blockHeight),
-		common.EncodeUint64ToByteSlice(bt.SequenceID),
-		common.GetUniqueIDFromUUID(),
-	)
+	idx := storage.NewIndex()
+	idx.WritePrefix(GetBlockTransactionKeyPrefixAccount(accountAddress))
+	bt.order.Index(idx)
+	idx.WriteOrder(common.GetUniqueIDFromUUID())
+	return idx.String()
+}
+
+func (bt BlockTransaction) NewBlockTransactionKeyByTarget(accountAddress string) string {
+	idx := storage.NewIndex()
+	idx.WritePrefix(GetBlockTransactionKeyPrefixTarget(accountAddress))
+	bt.order.Index(idx)
+	idx.WriteOrder(common.GetUniqueIDFromUUID())
+	return idx.String()
 }
 
 func (bt BlockTransaction) NewBlockTransactionKeyByBlock(hash string) string {
-	return fmt.Sprintf(
-		"%s%s%s%s",
-		GetBlockTransactionKeyPrefixBlock(hash),
-		common.EncodeUint64ToByteSlice(bt.blockHeight),
-		common.EncodeUint64ToByteSlice(bt.SequenceID),
-		common.GetUniqueIDFromUUID(),
-	)
+	idx := storage.NewIndex()
+	idx.WritePrefix(GetBlockTransactionKeyPrefixBlock(hash))
+	bt.order.Index(idx)
+	return idx.String()
 }
 
 func (bt *BlockTransaction) Save(st *storage.LevelDBBackend) (err error) {
@@ -119,6 +131,9 @@ func (bt *BlockTransaction) Save(st *storage.LevelDBBackend) (err error) {
 	}
 
 	if err = st.New(GetBlockTransactionKey(bt.Hash), bt); err != nil {
+		return
+	}
+	if err = st.New(bt.NewBlockTransactionKeyAll(), bt.Hash); err != nil {
 		return
 	}
 	if err = st.New(bt.NewBlockTransactionKeySource(), bt.Hash); err != nil {
@@ -169,12 +184,12 @@ func (bt *BlockTransaction) SaveBlockOperations(st *storage.LevelDBBackend) (err
 		return errors.FailedToSaveBlockOperaton
 	}
 
-	if bt.blockHeight < 1 {
+	if bt.BlockHeight < 1 {
 		var blk Block
 		if blk, err = GetBlock(st, bt.Block); err != nil {
 			return
 		} else {
-			bt.blockHeight = blk.Height
+			bt.BlockHeight = blk.Height
 		}
 	}
 
@@ -188,17 +203,17 @@ func (bt *BlockTransaction) SaveBlockOperations(st *storage.LevelDBBackend) (err
 }
 
 func (bt *BlockTransaction) SaveBlockOperation(st *storage.LevelDBBackend, op operation.Operation, opIndex int) (err error) {
-	if bt.blockHeight < 1 {
+	if bt.BlockHeight < 1 {
 		var blk Block
 		if blk, err = GetBlock(st, bt.Block); err != nil {
 			return
 		} else {
-			bt.blockHeight = blk.Height
+			bt.BlockHeight = blk.Height
 		}
 	}
 
 	var bo BlockOperation
-	bo, err = NewBlockOperationFromOperation(op, bt.Transaction(), bt.blockHeight, opIndex)
+	bo, err = NewBlockOperationFromOperation(op, bt.Transaction(), bt.BlockHeight, bt.Index, opIndex)
 	if err != nil {
 		return
 	}
@@ -207,6 +222,10 @@ func (bt *BlockTransaction) SaveBlockOperation(st *storage.LevelDBBackend, op op
 	}
 	if pop, ok := op.B.(operation.Payable); ok {
 		err = st.New(bt.NewBlockTransactionKeyByAccount(pop.TargetAddress()), bt.Hash)
+		if err != nil {
+			return
+		}
+		err = st.New(bt.NewBlockTransactionKeyByTarget(pop.TargetAddress()), bt.Hash)
 		if err != nil {
 			return
 		}
@@ -229,24 +248,38 @@ func (bt *BlockTransaction) GetOperationIndex(opHash string) (opIndex int, err e
 	return
 }
 
+func (bt BlockTransaction) BlockOrder() *BlockOrder {
+	return bt.order
+}
+
 func GetBlockTransactionKeyPrefixSource(source string) string {
-	return fmt.Sprintf("%s%s-", common.BlockTransactionPrefixSource, source)
+	idx := storage.NewIndex()
+	return idx.WritePrefix(common.BlockTransactionPrefixSource, source).String()
 }
 
 func GetBlockTransactionKeyPrefixConfirmed(confirmed string) string {
-	return fmt.Sprintf("%s%s-", common.BlockTransactionPrefixConfirmed, confirmed)
+	idx := storage.NewIndex()
+	return idx.WritePrefix(common.BlockTransactionPrefixConfirmed, confirmed).String()
 }
 
 func GetBlockTransactionKeyPrefixAccount(accountAddress string) string {
-	return fmt.Sprintf("%s%s-", common.BlockTransactionPrefixAccount, accountAddress)
+	idx := storage.NewIndex()
+	return idx.WritePrefix(common.BlockTransactionPrefixAccount, accountAddress).String()
+}
+
+func GetBlockTransactionKeyPrefixTarget(accountAddress string) string {
+	idx := storage.NewIndex()
+	return idx.WritePrefix(common.BlockTransactionPrefixTarget, accountAddress).String()
 }
 
 func GetBlockTransactionKeyPrefixBlock(hash string) string {
-	return fmt.Sprintf("%s%s-", common.BlockTransactionPrefixBlock, hash)
+	idx := storage.NewIndex()
+	return idx.WritePrefix(common.BlockTransactionPrefixBlock, hash).String()
 }
 
 func GetBlockTransactionKey(hash string) string {
-	return fmt.Sprintf("%s%s", common.BlockTransactionPrefixHash, hash)
+	idx := storage.NewIndex()
+	return idx.WritePrefix(common.BlockTransactionPrefixHash, hash).String()
 }
 
 func GetBlockTransaction(st *storage.LevelDBBackend, hash string) (bt BlockTransaction, err error) {
@@ -255,6 +288,7 @@ func GetBlockTransaction(st *storage.LevelDBBackend, hash string) (bt BlockTrans
 	}
 
 	bt.isSaved = true
+	bt.order = NewBlockTxOrder(bt.BlockHeight, bt.Index)
 	return
 }
 
@@ -273,7 +307,7 @@ func LoadBlockTransactionsInsideIterator(
 
 	return (func() (BlockTransaction, bool, []byte) {
 			item, hasNext := iterFunc()
-			if !hasNext {
+			if !hasNext && (item.Key == nil || item.Value == nil) {
 				return BlockTransaction{}, false, item.Key
 			}
 
@@ -325,4 +359,10 @@ func GetBlockTransactionsByBlock(st *storage.LevelDBBackend, hash string, option
 	return LoadBlockTransactionsInsideIterator(st, iterFunc, closeFunc)
 }
 
-var GetBlockTransactions = GetBlockTransactionsByConfirmed
+func GetBlockTransactions(st *storage.LevelDBBackend, options storage.ListOptions) (
+	func() (BlockTransaction, bool, []byte),
+	func(),
+) {
+	iterFunc, closeFunc := st.GetIterator(common.BlockTransactionPrefixAll, options)
+	return LoadBlockTransactionsInsideIterator(st, iterFunc, closeFunc)
+}

@@ -1,15 +1,17 @@
 package api
 
 import (
-	"boscoin.io/sebak/lib/block"
-	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/transaction/operation"
 	"bufio"
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"strings"
 	"testing"
+
+	"boscoin.io/sebak/lib/block"
+	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/transaction/operation"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestGetOperationsByAccountHandler(t *testing.T) {

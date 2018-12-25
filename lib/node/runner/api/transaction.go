@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"boscoin.io/sebak/lib/block"
+	"boscoin.io/sebak/lib/common"
 	o "boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/network/httputils"
@@ -21,21 +22,30 @@ func (api NetworkHandlerAPI) GetTransactionsHandler(w http.ResponseWriter, r *ht
 		return
 	}
 
-	var options = p.ListOptions()
-	var firstCursor []byte
-	var cursor []byte
+	options, err := p.PageCursorListOptions(common.BlockTransactionPrefixAll)
+	if err != nil {
+		//TODO: more correct err for it
+		httputils.WriteJSONError(w, err)
+		return
+	}
+
+	var (
+		prevOrder *block.BlockOrder
+		nextOrder *block.BlockOrder
+	)
+
 	readFunc := func() []resource.Resource {
 		var txs []resource.Resource
 		iterFunc, closeFunc := block.GetBlockTransactions(api.storage, options)
 		for {
-			t, hasNext, c := iterFunc()
+			t, hasNext, _ := iterFunc()
 			if !hasNext {
 				break
 			}
-			cursor = append([]byte{}, c...)
-			if len(firstCursor) == 0 {
-				firstCursor = append(firstCursor, c...)
+			if prevOrder == nil {
+				prevOrder = t.BlockOrder()
 			}
+			nextOrder = t.BlockOrder()
 			txs = append(txs, resource.NewTransaction(&t))
 		}
 		closeFunc()
@@ -43,8 +53,7 @@ func (api NetworkHandlerAPI) GetTransactionsHandler(w http.ResponseWriter, r *ht
 	}
 
 	txs := readFunc()
-
-	list := p.ResourceList(txs, firstCursor, cursor)
+	list := p.ResourceListWithOrder(txs, prevOrder, nextOrder)
 	httputils.MustWriteJSON(w, 200, list)
 }
 
@@ -86,22 +95,27 @@ func (api NetworkHandlerAPI) GetTransactionsByAccountHandler(w http.ResponseWrit
 		return
 	}
 
-	var options = p.ListOptions()
-	var firstCursor []byte
-	var cursor []byte
+	options, err := p.PageCursorListOptions(block.GetBlockTransactionKeyPrefixAccount(address))
+	if err != nil {
+		httputils.WriteJSONError(w, err)
+		return
+	}
+	var (
+		pOrder *block.BlockOrder
+		nOrder *block.BlockOrder
+	)
 	readFunc := func() []resource.Resource {
 		var txs []resource.Resource
 		iterFunc, closeFunc := block.GetBlockTransactionsByAccount(api.storage, address, options)
 		for {
-			t, hasNext, c := iterFunc()
+			t, hasNext, _ := iterFunc()
 			if !hasNext {
 				break
 			}
-			cursor = append([]byte{}, c...)
-			if len(firstCursor) == 0 {
-				firstCursor = append(firstCursor, c...)
+			if pOrder == nil {
+				pOrder = t.BlockOrder()
 			}
-
+			nOrder = t.BlockOrder()
 			txs = append(txs, resource.NewTransaction(&t))
 		}
 		closeFunc()
@@ -109,7 +123,7 @@ func (api NetworkHandlerAPI) GetTransactionsByAccountHandler(w http.ResponseWrit
 	}
 
 	txs := readFunc()
-	list := p.ResourceList(txs, firstCursor, cursor)
+	list := p.ResourceListWithOrder(txs, pOrder, nOrder)
 	httputils.MustWriteJSON(w, 200, list)
 }
 

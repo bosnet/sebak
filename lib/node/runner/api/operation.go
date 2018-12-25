@@ -59,8 +59,6 @@ func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter
 		return
 	}
 
-	options := p.ListOptions()
-
 	oTypeStr := r.URL.Query().Get("type")
 	if len(oTypeStr) > 0 && !operation.IsValidOperationType(oTypeStr) {
 		httputils.WriteJSONError(w, errors.InvalidQueryString)
@@ -75,13 +73,27 @@ func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter
 		return
 	}
 
-	var txs []resource.Resource
 	blockCache := map[ /* block.Height */ uint64]*block.Block{}
 	oType := operation.OperationType(oTypeStr)
-	var firstCursor []byte
-	var lastCursor []byte
-	{
 
+	prefix := block.GetBlockOperationKeyPrefixPeers(address)
+	if len(oType) > 0 {
+		prefix = block.GetBlockOperationKeyPrefixPeersAndType(address, oType)
+	}
+
+	options, err := p.PageCursorListOptions(prefix)
+	if err != nil {
+		httputils.WriteJSONError(w, err)
+		return
+	}
+
+	var (
+		pOrder *block.BlockOrder
+		nOrder *block.BlockOrder
+	)
+
+	var txs []resource.Resource
+	{
 		var iterFunc func() (block.BlockOperation, bool, []byte)
 		var closeFunc func()
 		if len(oType) > 0 {
@@ -90,14 +102,14 @@ func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter
 			iterFunc, closeFunc = block.GetBlockOperationsByPeers(api.storage, address, options)
 		}
 		for {
-			t, hasNext, c := iterFunc()
+			t, hasNext, _ := iterFunc()
 			if !hasNext {
 				break
 			}
-			if len(firstCursor) == 0 {
-				firstCursor = append(firstCursor, c...)
+			if pOrder == nil {
+				pOrder = t.BlockOrder()
 			}
-			lastCursor = append([]byte{}, c...)
+			nOrder = t.BlockOrder()
 
 			var blk *block.Block
 			var ok bool
@@ -127,6 +139,6 @@ func (api NetworkHandlerAPI) GetOperationsByAccountHandler(w http.ResponseWriter
 		closeFunc()
 	}
 
-	list := p.ResourceList(txs, firstCursor, lastCursor)
+	list := p.ResourceListWithOrder(txs, pOrder, nOrder)
 	httputils.MustWriteJSON(w, 200, list)
 }
