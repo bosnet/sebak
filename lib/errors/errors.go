@@ -112,4 +112,6 @@ var (
 	EndpointNotFound                          = NewError(194, "endpoint not found")
 	DiscoveryFromUnknownValidator             = NewError(195, "DiscoveryMessage from unknown validator")
 	DiscoveryPolicyDoesNotMatch               = NewError(196, "policy does not matched with discovery node")
+	SnapshotNotFound                          = NewError(197, "snapshot not found")
+	SnapshotLimitReached                      = NewError(198, "snapshots over limit")
 )
