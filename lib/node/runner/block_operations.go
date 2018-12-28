@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"fmt"
 	"sync"
 	"time"
 
@@ -26,12 +27,61 @@ func NewSavingBlockOperations(st *storage.LevelDBBackend, logger logging.Logger)
 	}
 
 	logger = logger.New(logging.Ctx{"m": "SavingBlockOperations"})
-	return &SavingBlockOperations{
-		st:           st,
-		log:          logger,
-		saveBlock:    make(chan block.Block, 10),
-		checkedBlock: common.GenesisBlockHeight,
+	sb := &SavingBlockOperations{
+		st:        st,
+		log:       logger,
+		saveBlock: make(chan block.Block, 10),
 	}
+	sb.checkedBlock = sb.getCheckedBlock()
+	sb.log.Debug("last checked block is", "height", sb.checkedBlock)
+
+	return sb
+}
+
+func (sb *SavingBlockOperations) getCheckedBlockKey() string {
+	return fmt.Sprintf("%s-last-checked-block", common.TmpPrefix)
+}
+
+func (sb *SavingBlockOperations) getCheckedBlock() uint64 {
+	if found, err := sb.st.Has(sb.getCheckedBlockKey()); err != nil {
+		sb.log.Error("failed to check CheckedBlock", "error", err)
+		return common.GenesisBlockHeight
+	} else if !found {
+		return common.GenesisBlockHeight
+	}
+
+	var checked uint64
+	if err := sb.st.Get(sb.getCheckedBlockKey(), &checked); err != nil {
+		sb.log.Error("failed to check CheckedBlock", "error", err)
+		return common.GenesisBlockHeight
+	}
+
+	return checked
+}
+
+func (sb *SavingBlockOperations) saveCheckedBlock(height uint64) {
+	sb.log.Debug("save CheckByBlock", "height", height)
+
+	sb.checkedBlock = height
+
+	var found bool
+	var err error
+	if found, err = sb.st.Has(sb.getCheckedBlockKey()); err != nil {
+		sb.log.Error("failed to get CheckByBlock", "error", err)
+		return
+	}
+	if !found {
+		if err = sb.st.New(sb.getCheckedBlockKey(), height); err != nil {
+			sb.log.Error("failed to save new CheckByBlock", "error", err)
+		}
+		return
+	}
+
+	if err = sb.st.Set(sb.getCheckedBlockKey(), height); err != nil {
+		sb.log.Error("failed to set CheckByBlock", "error", err)
+	}
+
+	return
 }
 
 func (sb *SavingBlockOperations) getNextBlock(height uint64) (nextBlock block.Block, err error) {
@@ -47,13 +97,13 @@ func (sb *SavingBlockOperations) getNextBlock(height uint64) (nextBlock block.Bl
 }
 
 func (sb *SavingBlockOperations) Check() (err error) {
-	sb.log.Debug("start to check")
+	sb.log.Debug("start to check", "height", sb.checkedBlock)
 
 	defer func() {
 		sb.log.Debug("finished to check")
 	}()
 
-	return sb.check(common.GenesisBlockHeight)
+	return sb.check(sb.checkedBlock)
 }
 
 // continuousCheck will check the missing `BlockOperation`s continuously; if it
@@ -102,7 +152,7 @@ func (sb *SavingBlockOperations) check(startBlockHeight uint64) (err error) {
 	if lastBlock == common.GenesisBlockHeight {
 		return
 	}
-	if startBlockHeight-lastBlock < 1 {
+	if lastBlock <= startBlockHeight {
 		return
 	}
 
@@ -111,7 +161,7 @@ func (sb *SavingBlockOperations) check(startBlockHeight uint64) (err error) {
 	defer close(errChan)
 	defer close(blocks)
 
-	numWorker := int(lastBlock / 2)
+	numWorker := int((lastBlock - startBlockHeight) / 2)
 	if numWorker > 100 {
 		numWorker = 100
 	} else if numWorker < 1 {
@@ -162,7 +212,7 @@ errorCheck:
 				err = e
 				break errorCheck
 			}
-			if errs == lastBlock-1 {
+			if errs == (lastBlock - startBlockHeight) {
 				break errorCheck
 			}
 		}
@@ -171,7 +221,7 @@ errorCheck:
 	if err != nil {
 		err = errors.FailedToSaveBlockOperaton.Clone().SetData("error", err)
 	} else {
-		sb.checkedBlock = lastBlock
+		sb.saveCheckedBlock(lastBlock)
 	}
 
 	return
