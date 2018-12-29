@@ -119,12 +119,24 @@ func (v *BlockValidator) finishBlock(ctx context.Context, syncInfo *SyncInfo) er
 		return err
 	}
 
-	if err := runner.FinishTransactions(blk, syncInfo.Txs, bs); err != nil {
+	var txs []*transaction.Transaction
+	for _, bt := range syncInfo.Bts {
+		tx := bt.Transaction()
+		txs = append(txs, &tx)
+	}
+
+	if err := runner.FinishTransactions(blk, txs, bs); err != nil {
 		bs.Discard()
 		return err
 	}
-	for _, tx := range syncInfo.Txs {
-		if _, err := block.SaveTransactionPool(bs, *tx); err != nil {
+
+	for _, bt := range syncInfo.Bts {
+		if err := bt.SaveBlockOperations(bs); err != nil {
+			bs.Discard()
+			return err
+		}
+		if err := bt.Save(bs); err != nil {
+			bs.Discard()
 			return err
 		}
 	}
@@ -161,8 +173,8 @@ func (v *BlockValidator) finishBlock(ctx context.Context, syncInfo *SyncInfo) er
 func (v *BlockValidator) validateBlock(ctx context.Context, si *SyncInfo, prevBlk *block.Block) error {
 	v.logger.Debug("start validate block", "height", si.Height)
 	var txs []string
-	for _, tx := range si.Txs {
-		txs = append(txs, tx.H.Hash)
+	for _, bt := range si.Bts {
+		txs = append(txs, bt.Hash)
 	}
 
 	r := voting.Basis{
@@ -194,7 +206,8 @@ func (v *BlockValidator) validateTxs(ctx context.Context, si *SyncInfo) error {
 		}
 	}
 	// transactions
-	for _, tx := range si.Txs {
+	for _, bt := range si.Bts {
+		tx := bt.Transaction()
 		hash := tx.B.MakeHashString()
 		if hash != tx.H.Hash {
 			err := errors.HashDoesNotMatch
@@ -205,7 +218,7 @@ func (v *BlockValidator) validateTxs(ctx context.Context, si *SyncInfo) error {
 			return err
 		}
 
-		if err := runner.ValidateTx(v.storage, v.commonCfg, *tx); err != nil {
+		if err := runner.ValidateTx(v.storage, v.commonCfg, tx); err != nil {
 			return err
 		}
 	}
