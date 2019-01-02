@@ -12,6 +12,8 @@ import (
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/network/httputils"
 	"boscoin.io/sebak/lib/node"
+	api "boscoin.io/sebak/lib/node/runner/node_api"
+	node_api "boscoin.io/sebak/lib/node/runner/node_api"
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
 )
@@ -50,17 +52,17 @@ func (api NetworkHandlerNode) HandlerURLPattern(pattern string) string {
 	return fmt.Sprintf("%s%s", api.urlPrefix, pattern)
 }
 
-func (api NetworkHandlerNode) renderNodeItem(w http.ResponseWriter, itemType NodeItemDataType, o interface{}) {
+func (api NetworkHandlerNode) renderNodeItem(w http.ResponseWriter, itemType api.NodeItemDataType, o interface{}) {
 	s, err := json.Marshal(o)
 	if err != nil {
-		itemType = NodeItemError
+		itemType = node_api.NodeItemError
 		s = []byte(err.Error())
 	}
 
 	api.writeNodeItem(w, itemType, s)
 }
 
-func (api NetworkHandlerNode) writeNodeItem(w http.ResponseWriter, itemType NodeItemDataType, s []byte) {
+func (api NetworkHandlerNode) writeNodeItem(w http.ResponseWriter, itemType api.NodeItemDataType, s []byte) {
 	w.Write(append([]byte(itemType+" "), append(s, '\n')...))
 }
 

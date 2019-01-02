@@ -18,6 +18,7 @@ import (
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/node/runner"
+	api "boscoin.io/sebak/lib/node/runner/node_api"
 	"boscoin.io/sebak/lib/storage"
 
 	"github.com/inconshreveable/log15"
@@ -146,13 +147,13 @@ func (f *BlockFetcher) fetch(ctx context.Context, si *SyncInfo) error {
 
 	f.logger.Debug("fetch get items", "items", len(items), "height", height)
 
-	blocks, ok := items[runner.NodeItemBlock]
+	blocks, ok := items[api.NodeItemBlock]
 	if !ok || len(blocks) <= 0 {
 		err := errors.New("fetch: block not found in response")
 		return err
 	}
 
-	bts, ok := items[runner.NodeItemBlockTransaction]
+	bts, ok := items[api.NodeItemBlockTransaction]
 	if !ok {
 		err := errors.New("fetch: block transactions not found in response")
 		return err
@@ -244,8 +245,8 @@ func (f *BlockFetcher) existsBlockHeight(height uint64) bool {
 	return exists
 }
 
-func (f *BlockFetcher) unmarshalResp(body io.Reader) (map[runner.NodeItemDataType][]interface{}, error) {
-	items := map[runner.NodeItemDataType][]interface{}{}
+func (f *BlockFetcher) unmarshalResp(body io.Reader) (map[api.NodeItemDataType][]interface{}, error) {
+	items := map[api.NodeItemDataType][]interface{}{}
 
 	r := bufio.NewReader(body)
 	var (
@@ -260,7 +261,7 @@ func (f *BlockFetcher) unmarshalResp(body io.Reader) (map[runner.NodeItemDataTyp
 		if len(line) <= 0 {
 			continue
 		}
-		itemType, b, err := runner.UnmarshalNodeItemResponse(line)
+		itemType, b, err := api.UnmarshalNodeItemResponse(line)
 		if err != nil {
 			return nil, err
 		}
