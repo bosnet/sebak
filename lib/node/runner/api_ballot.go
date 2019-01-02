@@ -2,6 +2,8 @@ package runner
 
 import (
 	"net/http"
+
+	api "boscoin.io/sebak/lib/node/runner/node_api"
 )
 
 const GetBallotPattern = "/ballots"
@@ -14,7 +16,7 @@ func (nh NetworkHandlerNode) GetBallotHandler(w http.ResponseWriter, r *http.Req
 
 	for _, rr := range rrs {
 		for _, b := range rr.Ballots {
-			nh.renderNodeItem(w, NodeItemBallot, b)
+			nh.renderNodeItem(w, api.NodeItemBallot, b)
 		}
 	}
 

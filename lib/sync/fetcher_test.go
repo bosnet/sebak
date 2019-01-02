@@ -13,22 +13,22 @@ import (
 	"boscoin.io/sebak/lib/common/keypair"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
-	"boscoin.io/sebak/lib/node/runner"
+	api "boscoin.io/sebak/lib/node/runner/node_api"
 
 	"github.com/stretchr/testify/require"
 )
 
-func renderNodeItem(w http.ResponseWriter, itemType runner.NodeItemDataType, o interface{}) {
+func renderNodeItem(w http.ResponseWriter, itemType api.NodeItemDataType, o interface{}) {
 	s, err := json.Marshal(o)
 	if err != nil {
-		itemType = runner.NodeItemError
+		itemType = api.NodeItemError
 		s = []byte(err.Error())
 	}
 
 	writeNodeItem(w, itemType, s)
 }
 
-func writeNodeItem(w http.ResponseWriter, itemType runner.NodeItemDataType, s []byte) {
+func writeNodeItem(w http.ResponseWriter, itemType api.NodeItemDataType, s []byte) {
 	w.Write(append([]byte(itemType+" "), append(s, '\n')...))
 }
 
@@ -56,12 +56,12 @@ func TestBlockFetcher(t *testing.T) {
 
 	apiHandlerFunc := func(req *http.Request) (*http.Response, error) {
 		w := httptest.NewRecorder()
-		renderNodeItem(w, runner.NodeItemBlock, bk)
+		renderNodeItem(w, api.NodeItemBlock, bk)
 
 		tp, _ := block.GetTransactionPool(st, bt.Hash)
 		bt.Message = tp.Message
 
-		renderNodeItem(w, runner.NodeItemBlockTransaction, bt)
+		renderNodeItem(w, api.NodeItemBlockTransaction, bt)
 		resp := w.Result()
 		return resp, nil
 	}

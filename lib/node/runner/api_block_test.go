@@ -17,6 +17,7 @@ import (
 
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/errors"
+	api "boscoin.io/sebak/lib/node/runner/node_api"
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
 )
@@ -84,18 +85,18 @@ func (p *HelperTestGetBlocksHandler) Done() {
 }
 
 func unmarshalFromNodeItemResponseBody(body io.ReadCloser) (
-	rbs map[NodeItemDataType][]interface{},
+	rbs map[api.NodeItemDataType][]interface{},
 	err error,
 ) {
 	defer body.Close()
 
-	rbs = map[NodeItemDataType][]interface{}{}
+	rbs = map[api.NodeItemDataType][]interface{}{}
 
 	sc := bufio.NewScanner(body)
 	for sc.Scan() {
-		var itemType NodeItemDataType
+		var itemType api.NodeItemDataType
 		var b interface{}
-		itemType, b, err = UnmarshalNodeItemResponse(sc.Bytes())
+		itemType, b, err = api.UnmarshalNodeItemResponse(sc.Bytes())
 
 		rbs[itemType] = append(rbs[itemType], b)
 	}
@@ -123,15 +124,15 @@ func TestGetBlocksHandler(t *testing.T) {
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 	rbs, err := unmarshalFromNodeItemResponseBody(resp.Body)
 	require.NoError(t, err)
-	require.Equal(t, len(p.blocks), len(rbs[NodeItemBlockHeader]))
+	require.Equal(t, len(p.blocks), len(rbs[api.NodeItemBlockHeader]))
 	require.Equal(
 		t,
 		resp.Header.Get("X-SEBAK-RESULT-COUNT"),
-		strconv.FormatInt(int64(len(rbs[NodeItemBlockHeader])), 10),
+		strconv.FormatInt(int64(len(rbs[api.NodeItemBlockHeader])), 10),
 	)
 
 	for i, b := range p.blocks {
-		rb := rbs[NodeItemBlockHeader][i].(block.Header)
+		rb := rbs[api.NodeItemBlockHeader][i].(block.Header)
 		require.Equal(t, b.Height, rb.Height)
 
 		s, _ := b.Header.Serialize()
@@ -159,10 +160,10 @@ func TestGetBlocksHandlerOptions(t *testing.T) {
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 		rbs, err := unmarshalFromNodeItemResponseBody(resp.Body)
 		require.NoError(t, err)
-		require.Equal(t, len(p.blocks), len(rbs[NodeItemBlock]))
+		require.Equal(t, len(p.blocks), len(rbs[api.NodeItemBlock]))
 
 		for i, b := range p.blocks {
-			rb := rbs[NodeItemBlock][i].(block.Block)
+			rb := rbs[api.NodeItemBlock][i].(block.Block)
 			require.Equal(t, b.Hash, rb.Hash)
 
 			s, _ := b.Serialize()
@@ -183,10 +184,10 @@ func TestGetBlocksHandlerOptions(t *testing.T) {
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 		rbs, err := unmarshalFromNodeItemResponseBody(resp.Body)
 		require.NoError(t, err)
-		require.Equal(t, int(options.Limit()), len(rbs[NodeItemBlock]))
+		require.Equal(t, int(options.Limit()), len(rbs[api.NodeItemBlock]))
 
 		for i, b := range p.blocks[:options.Limit()] {
-			rb := rbs[NodeItemBlock][i].(block.Block)
+			rb := rbs[api.NodeItemBlock][i].(block.Block)
 			require.Equal(t, b.Hash, rb.Hash)
 
 			s, _ := b.Serialize()
@@ -207,10 +208,10 @@ func TestGetBlocksHandlerOptions(t *testing.T) {
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 		rbs, err := unmarshalFromNodeItemResponseBody(resp.Body)
 		require.NoError(t, err)
-		require.Equal(t, len(p.blocks), len(rbs[NodeItemBlock]))
+		require.Equal(t, len(p.blocks), len(rbs[api.NodeItemBlock]))
 
 		for i, b := range p.blocks {
-			rb := rbs[NodeItemBlock][len(p.blocks)-1-i].(block.Block)
+			rb := rbs[api.NodeItemBlock][len(p.blocks)-1-i].(block.Block)
 			require.Equal(t, b.Hash, rb.Hash)
 
 			s, _ := b.Serialize()
@@ -234,10 +235,10 @@ func TestGetBlocksHandlerOptions(t *testing.T) {
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 		rbs, err := unmarshalFromNodeItemResponseBody(resp.Body)
 		require.NoError(t, err)
-		require.Equal(t, len(expectedBlocks), len(rbs[NodeItemBlock]))
+		require.Equal(t, len(expectedBlocks), len(rbs[api.NodeItemBlock]))
 
 		for i, b := range expectedBlocks {
-			rb := rbs[NodeItemBlock][i].(block.Block)
+			rb := rbs[api.NodeItemBlock][i].(block.Block)
 			require.Equal(t, b.Hash, rb.Hash)
 
 			s, _ := b.Serialize()
@@ -381,11 +382,11 @@ func TestGetBlocksHandlerWithHeightRange(t *testing.T) {
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 		rbs, err := unmarshalFromNodeItemResponseBody(resp.Body)
 		require.NoError(t, err)
-		require.Equal(t, expectedLength, len(rbs[NodeItemBlock]))
+		require.Equal(t, expectedLength, len(rbs[api.NodeItemBlock]))
 
 		for i := 1; i < 1+expectedLength; i++ {
 			b := p.blocks[i]
-			rb := rbs[NodeItemBlock][i-1].(block.Block)
+			rb := rbs[api.NodeItemBlock][i-1].(block.Block)
 			require.Equal(t, b.Height, rb.Height)
 			require.Equal(t, b.Hash, rb.Hash)
 
@@ -414,10 +415,10 @@ func TestGetBlocksHandlerWithInvalidHeightRange(t *testing.T) {
 
 		rbs, err := unmarshalFromNodeItemResponseBody(resp.Body)
 		require.NoError(t, err)
-		require.Equal(t, len(p.blocks), len(rbs[NodeItemBlockHeader]))
+		require.Equal(t, len(p.blocks), len(rbs[api.NodeItemBlockHeader]))
 
 		for i, b := range p.blocks {
-			rb := rbs[NodeItemBlockHeader][i].(block.Header)
+			rb := rbs[api.NodeItemBlockHeader][i].(block.Header)
 			require.Equal(t, b.Height, rb.Height)
 
 			s, _ := b.Header.Serialize()
@@ -499,7 +500,7 @@ func TestGetBlocksHandlerWithInvalidHeightRange(t *testing.T) {
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 		rbs, err := unmarshalFromNodeItemResponseBody(resp.Body)
 		require.NoError(t, err)
-		require.Equal(t, int(expectedLength), len(rbs[NodeItemBlockHeader]))
+		require.Equal(t, int(expectedLength), len(rbs[api.NodeItemBlockHeader]))
 	}
 }
 
@@ -522,10 +523,10 @@ func TestGetBlocksHandlerWithModeBlock(t *testing.T) {
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 		rbs, err := unmarshalFromNodeItemResponseBody(resp.Body)
 		require.NoError(t, err)
-		require.Equal(t, len(p.blocks), len(rbs[NodeItemBlock]))
+		require.Equal(t, len(p.blocks), len(rbs[api.NodeItemBlock]))
 
 		for i, b := range p.blocks {
-			rb := rbs[NodeItemBlock][i].(block.Block)
+			rb := rbs[api.NodeItemBlock][i].(block.Block)
 			require.Equal(t, b.Hash, rb.Hash)
 
 			s, _ := b.Serialize()
@@ -554,10 +555,10 @@ func TestGetBlocksHandlerWithModeHeader(t *testing.T) {
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 		rbs, err := unmarshalFromNodeItemResponseBody(resp.Body)
 		require.NoError(t, err)
-		require.Equal(t, len(p.blocks), len(rbs[NodeItemBlockHeader]))
+		require.Equal(t, len(p.blocks), len(rbs[api.NodeItemBlockHeader]))
 
 		for i, b := range p.blocks {
-			rb := rbs[NodeItemBlockHeader][i].(block.Header)
+			rb := rbs[api.NodeItemBlockHeader][i].(block.Header)
 			require.Equal(t, b.Height, rb.Height)
 
 			s, _ := b.Header.Serialize()
@@ -584,10 +585,10 @@ func TestGetBlocksHandlerWithModeFull(t *testing.T) {
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 		rbs, err := unmarshalFromNodeItemResponseBody(resp.Body)
 		require.NoError(t, err)
-		require.Equal(t, len(p.blocks), len(rbs[NodeItemBlock]))
+		require.Equal(t, len(p.blocks), len(rbs[api.NodeItemBlock]))
 
 		for i, b := range p.blocks {
-			rb := rbs[NodeItemBlock][i].(block.Block)
+			rb := rbs[api.NodeItemBlock][i].(block.Block)
 			require.Equal(t, b.Hash, rb.Hash)
 
 			s, _ := b.Serialize()
@@ -599,7 +600,7 @@ func TestGetBlocksHandlerWithModeFull(t *testing.T) {
 		for _, b := range p.blocks {
 			expectedNumberOfTransactions += len(b.Transactions)
 		}
-		require.Equal(t, expectedNumberOfTransactions, len(rbs[NodeItemBlockTransaction]))
+		require.Equal(t, expectedNumberOfTransactions, len(rbs[api.NodeItemBlockTransaction]))
 	}
 }
 
