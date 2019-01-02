@@ -8,6 +8,7 @@ import (
 
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/errors"
+	api "boscoin.io/sebak/lib/node/runner/node_api"
 )
 
 const GetTransactionPattern string = "/transactions"
@@ -52,19 +53,19 @@ func (nh NetworkHandlerNode) GetNodeTransactionsHandler(w http.ResponseWriter, r
 	// check in `block.TransactionPool`
 	for _, hash := range hashes {
 		if exists, err := block.ExistsTransactionPool(nh.storage, hash); err != nil {
-			nh.renderNodeItem(w, NodeItemError, err)
+			nh.renderNodeItem(w, api.NodeItemError, err)
 			return
 		} else if !exists {
-			nh.renderNodeItem(w, NodeItemError, errors.TransactionNotFound.Clone().SetData("hash", hash))
+			nh.renderNodeItem(w, api.NodeItemError, errors.TransactionNotFound.Clone().SetData("hash", hash))
 			continue
 		}
 
 		btx, err := block.GetTransactionPool(nh.storage, hash)
 		if err != nil {
-			nh.renderNodeItem(w, NodeItemError, err)
+			nh.renderNodeItem(w, api.NodeItemError, err)
 			return
 		}
-		nh.writeNodeItem(w, NodeItemTransaction, btx.Message)
+		nh.writeNodeItem(w, api.NodeItemTransaction, btx.Message)
 	}
 
 	return

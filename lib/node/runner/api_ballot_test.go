@@ -16,6 +16,7 @@ import (
 	"boscoin.io/sebak/lib/common/keypair"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
+	api "boscoin.io/sebak/lib/node/runner/node_api"
 	"boscoin.io/sebak/lib/transaction"
 	"boscoin.io/sebak/lib/voting"
 )
@@ -190,9 +191,9 @@ func TestAPIBallots(t *testing.T) {
 
 			rbs, err := unmarshalFromNodeItemResponseBody(resp.Body)
 			require.NoError(t, err)
-			require.Equal(t, 1, len(rbs[NodeItemBallot]))
-			require.True(t, blt.Equal(rbs[NodeItemBallot][0].(ballot.Ballot)))
-			require.Equal(t, blt.H.Signature, rbs[NodeItemBallot][0].(ballot.Ballot).H.Signature)
+			require.Equal(t, 1, len(rbs[api.NodeItemBallot]))
+			require.True(t, blt.Equal(rbs[api.NodeItemBallot][0].(ballot.Ballot)))
+			require.Equal(t, blt.H.Signature, rbs[api.NodeItemBallot][0].(ballot.Ballot).H.Signature)
 		}
 	}
 
@@ -218,9 +219,9 @@ func TestAPIBallots(t *testing.T) {
 
 			rbs, err := unmarshalFromNodeItemResponseBody(resp.Body)
 			require.NoError(t, err)
-			require.Equal(t, 2, len(rbs[NodeItemBallot]))
-			require.True(t, blt.Equal(rbs[NodeItemBallot][1].(ballot.Ballot)))
-			require.Equal(t, blt.H.Signature, rbs[NodeItemBallot][1].(ballot.Ballot).H.Signature)
+			require.Equal(t, 2, len(rbs[api.NodeItemBallot]))
+			require.True(t, blt.Equal(rbs[api.NodeItemBallot][1].(ballot.Ballot)))
+			require.Equal(t, blt.H.Signature, rbs[api.NodeItemBallot][1].(ballot.Ballot).H.Signature)
 		}
 	}
 }

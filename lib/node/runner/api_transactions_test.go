@@ -20,6 +20,7 @@ import (
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
+	api "boscoin.io/sebak/lib/node/runner/node_api"
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
 )
@@ -170,9 +171,9 @@ func TestGetNodeTransactionsHandlerWithUnknownHashes(t *testing.T) {
 
 		rbs, err := unmarshalFromNodeItemResponseBody(resp.Body)
 		require.NoError(t, err)
-		require.Equal(t, 1, len(rbs[NodeItemError]))
-		require.Equal(t, errors.TransactionNotFound.Code, rbs[NodeItemError][0].(*errors.Error).Code)
-		require.Equal(t, unknownHashKey, rbs[NodeItemError][0].(*errors.Error).Data["hash"])
+		require.Equal(t, 1, len(rbs[api.NodeItemError]))
+		require.Equal(t, errors.TransactionNotFound.Code, rbs[api.NodeItemError][0].(*errors.Error).Code)
+		require.Equal(t, unknownHashKey, rbs[api.NodeItemError][0].(*errors.Error).Data["hash"])
 	}
 
 	{ // unknown hash + known hash
@@ -189,13 +190,13 @@ func TestGetNodeTransactionsHandlerWithUnknownHashes(t *testing.T) {
 
 		rbs, err := unmarshalFromNodeItemResponseBody(resp.Body)
 		require.NoError(t, err)
-		require.Equal(t, 1, len(rbs[NodeItemError]))
-		require.Equal(t, errors.TransactionNotFound.Code, rbs[NodeItemError][0].(*errors.Error).Code)
-		require.Equal(t, unknownHashKey, rbs[NodeItemError][0].(*errors.Error).Data["hash"])
+		require.Equal(t, 1, len(rbs[api.NodeItemError]))
+		require.Equal(t, errors.TransactionNotFound.Code, rbs[api.NodeItemError][0].(*errors.Error).Code)
+		require.Equal(t, unknownHashKey, rbs[api.NodeItemError][0].(*errors.Error).Data["hash"])
 
-		require.Equal(t, 1, len(rbs[NodeItemTransaction]))
+		require.Equal(t, 1, len(rbs[api.NodeItemTransaction]))
 
-		tx := rbs[NodeItemTransaction][0].(transaction.Transaction)
+		tx := rbs[api.NodeItemTransaction][0].(transaction.Transaction)
 		require.Equal(t, p.transactionHashes[0], tx.GetHash())
 	}
 }
@@ -242,9 +243,9 @@ func TestGetNodeTransactionsHandlerPOST(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, 1, len(rbs))
-		require.Equal(t, 1, len(rbs[NodeItemTransaction]))
+		require.Equal(t, 1, len(rbs[api.NodeItemTransaction]))
 
-		tx := rbs[NodeItemTransaction][0].(transaction.Transaction)
+		tx := rbs[api.NodeItemTransaction][0].(transaction.Transaction)
 		require.Equal(t, p.transactionHashes[1], tx.GetHash())
 	}
 }
@@ -272,10 +273,10 @@ func TestGetNodeTransactionsHandlerWithMultipleHashes(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, 1, len(rbs))
-		require.Equal(t, len(txHashes), len(rbs[NodeItemTransaction]))
+		require.Equal(t, len(txHashes), len(rbs[api.NodeItemTransaction]))
 
 		for i, hash := range txHashes {
-			tx := rbs[NodeItemTransaction][i].(transaction.Transaction)
+			tx := rbs[api.NodeItemTransaction][i].(transaction.Transaction)
 			require.Equal(t, hash, tx.GetHash())
 		}
 	}
@@ -298,10 +299,10 @@ func TestGetNodeTransactionsHandlerWithMultipleHashes(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, 1, len(rbs))
-		require.Equal(t, 2, len(rbs[NodeItemTransaction]))
+		require.Equal(t, 2, len(rbs[api.NodeItemTransaction]))
 
 		for i, hash := range txHashes {
-			tx := rbs[NodeItemTransaction][i].(transaction.Transaction)
+			tx := rbs[api.NodeItemTransaction][i].(transaction.Transaction)
 			require.Equal(t, hash, tx.GetHash())
 		}
 	}
@@ -334,8 +335,8 @@ func TestGetNodeTransactionsHandlerInTransactionPool(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, 1, len(rbs))
-		require.Equal(t, 1, len(rbs[NodeItemTransaction]))
-		tx := rbs[NodeItemTransaction][0].(transaction.Transaction)
+		require.Equal(t, 1, len(rbs[api.NodeItemTransaction]))
+		tx := rbs[api.NodeItemTransaction][0].(transaction.Transaction)
 		require.Equal(t, txHashes[0], tx.GetHash())
 	}
 }

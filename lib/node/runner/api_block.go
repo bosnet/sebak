@@ -1,30 +1,15 @@
 package runner
 
 import (
-	"bufio"
-	"bytes"
-	"encoding/json"
 	"net/http"
 	"strconv"
 
-	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/errors"
-	"boscoin.io/sebak/lib/transaction"
+	api "boscoin.io/sebak/lib/node/runner/node_api"
 )
 
 const GetBlocksPattern = "/blocks"
-
-type NodeItemDataType string
-
-const (
-	NodeItemBlock            NodeItemDataType = "block"
-	NodeItemBlockHeader      NodeItemDataType = "block-header"
-	NodeItemBlockTransaction NodeItemDataType = "block-transaction"
-	NodeItemTransaction      NodeItemDataType = "transaction"
-	NodeItemBallot           NodeItemDataType = "ballot"
-	NodeItemError            NodeItemDataType = "error"
-)
 
 func (nh NetworkHandlerNode) GetBlocksHandler(w http.ResponseWriter, r *http.Request) {
 	options, err := NewGetBlocksOptionsFromRequest(r)
@@ -112,12 +97,12 @@ func (nh NetworkHandlerNode) GetBlocksHandler(w http.ResponseWriter, r *http.Req
 	w.Header().Set("X-SEBAK-RESULT-COUNT", strconv.FormatInt(int64(len(bs)), 10))
 
 	for _, b := range bs {
-		var itemType NodeItemDataType
+		var itemType api.NodeItemDataType
 		if options.Mode == GetBlocksOptionsModeHeader {
-			itemType = NodeItemBlockHeader
+			itemType = api.NodeItemBlockHeader
 			nh.renderNodeItem(w, itemType, b.Header)
 		} else {
-			itemType = NodeItemBlock
+			itemType = api.NodeItemBlock
 			nh.renderNodeItem(w, itemType, b)
 		}
 
@@ -127,74 +112,26 @@ func (nh NetworkHandlerNode) GetBlocksHandler(w http.ResponseWriter, r *http.Req
 			var tp block.TransactionPool
 
 			if tx, err = block.GetBlockTransaction(nh.storage, b.ProposerTransaction); err != nil {
-				nh.renderNodeItem(w, NodeItemError, err)
+				nh.renderNodeItem(w, api.NodeItemError, err)
 			} else if tp, err = block.GetTransactionPool(nh.storage, tx.Hash); err != nil {
-				nh.renderNodeItem(w, NodeItemError, err)
+				nh.renderNodeItem(w, api.NodeItemError, err)
 			} else {
 				tx.Message = tp.Message
-				nh.renderNodeItem(w, NodeItemBlockTransaction, tx)
+				nh.renderNodeItem(w, api.NodeItemBlockTransaction, tx)
 			}
 
 			for _, t := range b.Transactions {
 				if tx, err = block.GetBlockTransaction(nh.storage, t); err != nil {
-					nh.renderNodeItem(w, NodeItemError, err)
+					nh.renderNodeItem(w, api.NodeItemError, err)
 					continue
 				} else if tp, err = block.GetTransactionPool(nh.storage, tx.Hash); err != nil {
-					nh.renderNodeItem(w, NodeItemError, err)
+					nh.renderNodeItem(w, api.NodeItemError, err)
 				} else {
 					tx.Message = tp.Message
-					nh.renderNodeItem(w, NodeItemBlockTransaction, tx)
+					nh.renderNodeItem(w, api.NodeItemBlockTransaction, tx)
 				}
 			}
 		}
-	}
-
-	return
-}
-
-func UnmarshalNodeItemResponse(d []byte) (itemType NodeItemDataType, b interface{}, err error) {
-	sc := bufio.NewScanner(bytes.NewReader(d))
-	sc.Split(bufio.ScanWords)
-	sc.Scan()
-	if err = sc.Err(); err != nil {
-		return
-	}
-
-	unmarshal := func(o interface{}) error {
-		if err := json.Unmarshal(d[len(sc.Bytes())+1:], o); err != nil {
-			return err
-		}
-		return nil
-	}
-
-	itemType = NodeItemDataType(sc.Text())
-	switch itemType {
-	case NodeItemBlock:
-		var t block.Block
-		err = unmarshal(&t)
-		b = t
-	case NodeItemBlockHeader:
-		var t block.Header
-		err = unmarshal(&t)
-		b = t
-	case NodeItemBlockTransaction:
-		var t block.BlockTransaction
-		err = unmarshal(&t)
-		b = t
-	case NodeItemTransaction:
-		var t transaction.Transaction
-		err = unmarshal(&t)
-		b = t
-	case NodeItemBallot:
-		var t ballot.Ballot
-		err = unmarshal(&t)
-		b = t
-	case NodeItemError:
-		var t errors.Error
-		err = unmarshal(&t)
-		b = &t
-	default:
-		err = errors.InvalidMessage
 	}
 
 	return
