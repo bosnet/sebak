@@ -137,10 +137,24 @@ func (v *BlockValidator) finishBlock(ctx context.Context, syncInfo *SyncInfo) er
 		}
 	}
 
-	ptx := syncInfo.Ptx
-	if err := runner.FinishProposerTransaction(bs, blk, *ptx, v.logger); err != nil {
-		bs.Discard()
-		return err
+	// ProposerTx
+	{
+		ptx := syncInfo.Ptx
+		if err := runner.ProcessProposerTransaction(bs, blk, *ptx, v.logger); err != nil {
+			bs.Discard()
+			return err
+		}
+
+		bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.ProposedTime, ptx.Transaction)
+		if err := bt.Save(bs); err != nil {
+			bs.Discard()
+			return err
+		}
+
+		if err := bt.SaveBlockOperations(bs); err != nil {
+			bs.Discard()
+			return err
+		}
 	}
 
 	v.logger.Debug("finish to sync block height", "height", syncInfo.Height, "hash", blk.Hash)
