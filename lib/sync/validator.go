@@ -135,6 +135,10 @@ func (v *BlockValidator) finishBlock(ctx context.Context, syncInfo *SyncInfo) er
 			bs.Discard()
 			return err
 		}
+		if _, err := block.SaveTransactionPool(bs, bt.Transaction()); err != nil {
+			bs.Discard()
+			return err
+		}
 	}
 
 	// ProposerTx
@@ -147,6 +151,11 @@ func (v *BlockValidator) finishBlock(ctx context.Context, syncInfo *SyncInfo) er
 
 		bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.ProposedTime, ptx.Transaction)
 		if err := bt.Save(bs); err != nil {
+			bs.Discard()
+			return err
+		}
+
+		if _, err := block.SaveTransactionPool(bs, ptx.Transaction); err != nil {
 			bs.Discard()
 			return err
 		}
