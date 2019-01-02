@@ -135,10 +135,6 @@ func (v *BlockValidator) finishBlock(ctx context.Context, syncInfo *SyncInfo) er
 			bs.Discard()
 			return err
 		}
-		if err := bt.Save(bs); err != nil {
-			bs.Discard()
-			return err
-		}
 	}
 
 	ptx := syncInfo.Ptx
