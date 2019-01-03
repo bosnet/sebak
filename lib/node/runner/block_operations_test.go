@@ -89,8 +89,10 @@ func TestSavingBlockOperation(t *testing.T) {
 
 	// with `SavingBlockOperations`
 	sb := NewSavingBlockOperations(p.st, nil)
+	require.Equal(t, sb.checkedBlockHeight, common.GenesisBlockHeight)
 	err := sb.Check()
 	require.NoError(t, err)
+	require.Equal(t, sb.checkedBlockHeight, block.GetLatestBlock(p.st).Height)
 
 	// check `BlockOperation`s
 	for _, txHash := range blk.Transactions {
@@ -104,6 +106,12 @@ func TestSavingBlockOperation(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, blk.Height, bo.Height)
 		}
+	}
+
+	{ // new SavingBlockOperations must have latest CheckedBlock
+		lastCheckedBlock := sb.checkedBlockHeight
+		newSb := NewSavingBlockOperations(p.st, nil)
+		require.Equal(t, newSb.checkedBlockHeight, lastCheckedBlock)
 	}
 }
 
