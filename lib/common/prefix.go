@@ -27,5 +27,5 @@ const (
 	BlockAccountSequenceIDByAddressPrefix = string(0x33)
 	BlockAccountPrefixFrozen              = string(0x34)
 	TransactionPoolPrefix                 = string(0x40)
-	TmpPrefix                             = string(0x50) // temporary used data
+	InternalPrefix                        = string(0x50) // internal data
 )
