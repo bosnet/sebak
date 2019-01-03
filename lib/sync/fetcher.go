@@ -97,6 +97,7 @@ func (f *BlockFetcher) fetch(ctx context.Context, si *SyncInfo) error {
 		height    = si.Height
 		nodeAddrs = si.NodeAddrs()
 	)
+	si.Bts = si.Bts[:0]
 	f.logger.Debug("start fetch", "height", height, "nodes", nodeAddrs)
 
 	if len(nodeAddrs) <= 0 {
