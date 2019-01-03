@@ -210,6 +210,11 @@ func (c *ValidatorConnectionManager) updateBallots() {
 		"len", len(ballots),
 		"ballot", ballots,
 	)
+
+	for _, blt := range ballots {
+		encoded, _ := blt.Serialize()
+		c.network.MessageBroker().Receive(common.NewNetworkMessage(common.BallotMessage, encoded))
+	}
 	return
 }
 
