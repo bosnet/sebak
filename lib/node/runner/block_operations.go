@@ -17,8 +17,8 @@ type SavingBlockOperations struct {
 	st  *storage.LevelDBBackend
 	log logging.Logger
 
-	saveBlock    chan block.Block
-	checkedBlock uint64 // block.Block.Height
+	saveBlock          chan block.Block
+	checkedBlockHeight uint64 // block.Block.Height
 }
 
 func NewSavingBlockOperations(st *storage.LevelDBBackend, logger logging.Logger) *SavingBlockOperations {
@@ -32,8 +32,8 @@ func NewSavingBlockOperations(st *storage.LevelDBBackend, logger logging.Logger)
 		log:       logger,
 		saveBlock: make(chan block.Block, 10),
 	}
-	sb.checkedBlock = sb.getCheckedBlock()
-	sb.log.Debug("last checked block is", "height", sb.checkedBlock)
+	sb.checkedBlockHeight = sb.getCheckedBlockHeight()
+	sb.log.Debug("last checked block is", "height", sb.checkedBlockHeight)
 
 	return sb
 }
@@ -42,14 +42,7 @@ func (sb *SavingBlockOperations) getCheckedBlockKey() string {
 	return fmt.Sprintf("%s-last-checked-block", common.InternalPrefix)
 }
 
-func (sb *SavingBlockOperations) getCheckedBlock() uint64 {
-	if found, err := sb.st.Has(sb.getCheckedBlockKey()); err != nil {
-		sb.log.Error("failed to check CheckedBlock", "error", err)
-		return common.GenesisBlockHeight
-	} else if !found {
-		return common.GenesisBlockHeight
-	}
-
+func (sb *SavingBlockOperations) getCheckedBlockHeight() uint64 {
 	var checked uint64
 	if err := sb.st.Get(sb.getCheckedBlockKey(), &checked); err != nil {
 		sb.log.Error("failed to check CheckedBlock", "error", err)
@@ -62,33 +55,32 @@ func (sb *SavingBlockOperations) getCheckedBlock() uint64 {
 func (sb *SavingBlockOperations) saveCheckedBlock(height uint64) {
 	sb.log.Debug("save CheckedBlock", "height", height)
 
-	defer func() {
-		sb.checkedBlock = height
-	}()
-
 	var found bool
 	var err error
 	if found, err = sb.st.Has(sb.getCheckedBlockKey()); err != nil {
 		sb.log.Error("failed to get CheckedBlock", "error", err)
 		return
 	}
+
 	if !found {
 		if err = sb.st.New(sb.getCheckedBlockKey(), height); err != nil {
 			sb.log.Error("failed to save new CheckedBlock", "error", err)
+			return
 		}
-		return
+	} else {
+		if err = sb.st.Set(sb.getCheckedBlockKey(), height); err != nil {
+			sb.log.Error("failed to set CheckedBlock", "error", err)
+			return
+		}
 	}
-
-	if err = sb.st.Set(sb.getCheckedBlockKey(), height); err != nil {
-		sb.log.Error("failed to set CheckedBlock", "error", err)
-	}
+	sb.checkedBlockHeight = height
 
 	return
 }
 
 func (sb *SavingBlockOperations) getNextBlock(height uint64) (nextBlock block.Block, err error) {
-	if height < sb.checkedBlock {
-		height = sb.checkedBlock
+	if height < sb.checkedBlockHeight {
+		height = sb.checkedBlockHeight
 	}
 
 	height++
@@ -99,20 +91,20 @@ func (sb *SavingBlockOperations) getNextBlock(height uint64) (nextBlock block.Bl
 }
 
 func (sb *SavingBlockOperations) Check() (err error) {
-	sb.log.Debug("start to SavingBlockOperations.Check()", "height", sb.checkedBlock)
+	sb.log.Debug("start to SavingBlockOperations.Check()", "height", sb.checkedBlockHeight)
 
 	defer func() {
 		sb.log.Debug("finished to check")
 	}()
 
-	return sb.check(sb.checkedBlock)
+	return sb.check(sb.checkedBlockHeight)
 }
 
 // continuousCheck will check the missing `BlockOperation`s continuously; if it
 // is failed, still try.
 func (sb *SavingBlockOperations) continuousCheck() {
 	for {
-		if err := sb.check(sb.checkedBlock); err != nil {
+		if err := sb.check(sb.checkedBlockHeight); err != nil {
 			sb.log.Error("failed to check", "error", err)
 		}
 
