@@ -7,7 +7,6 @@ import (
 
 	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/block"
-	"boscoin.io/sebak/lib/transaction"
 )
 
 type SyncProgress struct {
@@ -23,7 +22,7 @@ type SyncController interface {
 type SyncInfo struct {
 	Height uint64
 	Block  *block.Block
-	Txs    []*transaction.Transaction
+	Bts    []*block.BlockTransaction
 	Ptx    *ballot.ProposerTransaction
 
 	// Fetching target node addresses, NodeList is  the validators which

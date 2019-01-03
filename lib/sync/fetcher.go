@@ -3,7 +3,6 @@ package sync
 import (
 	"bufio"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"math/rand"
@@ -20,7 +19,6 @@ import (
 	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/node/runner"
 	"boscoin.io/sebak/lib/storage"
-	"boscoin.io/sebak/lib/transaction"
 
 	"github.com/inconshreveable/log15"
 )
@@ -162,42 +160,42 @@ func (f *BlockFetcher) fetch(ctx context.Context, si *SyncInfo) error {
 	blk := blocks[0].(block.Block)
 	si.Block = &blk
 
-	txmap := make(map[string]*transaction.Transaction) // For ordering txs by block.Transactions
+	{
+		btmap := make(map[string]*block.BlockTransaction) // For ordering txs by block.Transactions
 
-	for _, bt := range bts {
-		bt, ok := bt.(block.BlockTransaction)
-		if !ok {
-			return errors.InvalidTransaction
+		for _, bt := range bts {
+			bt, ok := bt.(block.BlockTransaction)
+			if !ok {
+				return errors.InvalidTransaction
+			}
+			btmap[bt.Hash] = &bt
 		}
 
-		var tx transaction.Transaction
-		if err := json.Unmarshal(bt.Message, &tx); err != nil {
-			err := errors.Wrap(err, "transaction.Message unmarshaling failed")
-			f.logger.Error("tx.Message unmarshal err", "err", err, "height", height, "message", string(bt.Message), "statusCode", resp.StatusCode)
-			return err
+		for _, hash := range blk.Transactions {
+			bt, ok := btmap[hash]
+			if !ok {
+				return errors.Wrapf(errors.TransactionNotFound, "block hash: %s height: %d", hash, blk.Height)
+			}
+			if bt.Transaction().IsEmpty() {
+				return errors.Wrapf(errors.TransactionNotFound, "tx in btx not found: tx %s not found of height %s", hash, blk.Height)
+			}
+			si.Bts = append(si.Bts, bt)
 		}
-		txmap[bt.Hash] = &tx
-	}
 
-	for _, hash := range blk.Transactions {
-		tx, ok := txmap[hash]
-		if !ok {
-			return errors.Wrapf(errors.TransactionNotFound, "block hash: %s height: %d", hash, height)
-		}
-		si.Txs = append(si.Txs, tx)
-	}
-
-	if blk.ProposerTransaction != "" {
-		if tx, ok := txmap[blk.ProposerTransaction]; ok {
-			ptx := &ballot.ProposerTransaction{Transaction: *tx}
-			si.Ptx = ptx
-		} else {
-			return errors.Wrapf(errors.TransactionNotFound, "proposer transaction block hash: %v", blk.ProposerTransaction)
+		if blk.ProposerTransaction != "" {
+			if bt, ok := btmap[blk.ProposerTransaction]; ok {
+				if bt.Transaction().IsEmpty() {
+					return errors.Wrapf(errors.TransactionNotFound, "proposer tx in btx not found: tx %s not found of height %s", blk.ProposerTransaction, blk.Height)
+				}
+				ptx := &ballot.ProposerTransaction{Transaction: bt.Transaction()}
+				si.Ptx = ptx
+			} else {
+				return errors.Wrapf(errors.TransactionNotFound, "proposer transaction block hash: %v", blk.ProposerTransaction)
+			}
 		}
 	}
 
 	f.logger.Debug("end fetch", "height", height)
-
 	return nil
 }
 

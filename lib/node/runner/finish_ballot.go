@@ -270,6 +270,22 @@ func finishInflationPF(st *storage.LevelDBBackend, source string, opb operation.
 }
 
 func FinishProposerTransaction(st *storage.LevelDBBackend, blk block.Block, ptx ballot.ProposerTransaction, log logging.Logger) (err error) {
+	if err = ProcessProposerTransaction(st, blk, ptx, log); err != nil {
+		return err
+	}
+
+	bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.ProposedTime, ptx.Transaction)
+	if err = bt.Save(st); err != nil {
+		return
+	}
+
+	if _, err = block.SaveTransactionPool(st, ptx.Transaction); err != nil {
+		return
+	}
+	return
+}
+
+func ProcessProposerTransaction(st *storage.LevelDBBackend, blk block.Block, ptx ballot.ProposerTransaction, log logging.Logger) (err error) {
 	{
 		var opb operation.CollectTxFee
 		if opb, err = ptx.CollectTxFee(); err != nil {
@@ -290,14 +306,6 @@ func FinishProposerTransaction(st *storage.LevelDBBackend, blk block.Block, ptx 
 		}
 	}
 
-	bt := block.NewBlockTransactionFromTransaction(blk.Hash, blk.Height, blk.ProposedTime, ptx.Transaction)
-	if err = bt.Save(st); err != nil {
-		return
-	}
-
-	if _, err = block.SaveTransactionPool(st, ptx.Transaction); err != nil {
-		return
-	}
 	return
 }
 
