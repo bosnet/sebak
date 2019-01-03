@@ -2,6 +2,7 @@ package operation
 
 import (
 	"encoding/json"
+	"reflect"
 
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/errors"
@@ -147,64 +148,41 @@ func (o *Operation) UnmarshalJSON(b []byte) (err error) {
 		return
 	}
 	o.B = body
-
-	return
+	return nil
 }
 
-func UnmarshalBodyJSON(t OperationType, b []byte) (body Body, err error) {
-	switch t {
-	case TypeCreateAccount:
-		var ob CreateAccount
-		if err = json.Unmarshal(b, &ob); err != nil {
-			return
-		}
-		body = ob
-	case TypePayment:
-		var ob Payment
-		if err = json.Unmarshal(b, &ob); err != nil {
-			return
-		}
-		body = ob
-	case TypeCongressVoting:
-		var ob CongressVoting
-		if err = json.Unmarshal(b, &ob); err != nil {
-			return
-		}
-		body = ob
-	case TypeCongressVotingResult:
-		var ob CongressVotingResult
-		if err = json.Unmarshal(b, &ob); err != nil {
-			return
-		}
-		body = ob
-	case TypeCollectTxFee:
-		var ob CollectTxFee
-		if err = json.Unmarshal(b, &ob); err != nil {
-			return
-		}
-		body = ob
-	case TypeInflation:
-		var ob Inflation
-		if err = json.Unmarshal(b, &ob); err != nil {
-			return
-		}
-		body = ob
-	case TypeUnfreezingRequest:
-		var ob UnfreezeRequest
-		if err = json.Unmarshal(b, &ob); err != nil {
-			return
-		}
-		body = ob
-	case TypeInflationPF:
-		var ob InflationPF
-		if err = json.Unmarshal(b, &ob); err != nil {
-			return
-		}
-		body = ob
-	default:
-		err = errors.InvalidOperation
-		return
+func UnmarshalBodyJSON(t OperationType, b []byte) (Body, error) {
+	if bi, err := newBodyFromType(t); err != nil {
+		return nil, err
+	} else if err = json.Unmarshal(b, bi); err != nil {
+		return nil, err
+	} else {
+		// No other way to go from interface-to-pointer to interface-to-value
+		// because values within interfaces are not addressable
+		return reflect.ValueOf(bi).Elem().Interface().(Body), nil
 	}
+}
 
-	return
+// Returns: A pointer to a body with a type matching `ty`
+func newBodyFromType(ty OperationType) (interface{}, error) {
+	switch ty {
+	case TypeCreateAccount:
+		return &CreateAccount{}, nil
+	case TypePayment:
+		return &Payment{}, nil
+	case TypeCongressVoting:
+		return &CongressVoting{}, nil
+	case TypeCongressVotingResult:
+		return &CongressVotingResult{}, nil
+	case TypeCollectTxFee:
+		return &CollectTxFee{}, nil
+	case TypeInflation:
+		return &Inflation{}, nil
+	case TypeUnfreezingRequest:
+		return &UnfreezeRequest{}, nil
+	case TypeInflationPF:
+		return &InflationPF{}, nil
+	default:
+		return nil, errors.InvalidOperation
+	}
 }
