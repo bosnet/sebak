@@ -94,34 +94,52 @@ func (is *ISAAC) SelectProposer(blockHeight uint64, round uint64) string {
 //
 // Returns:
 //   bool = `true` if it's a valid voting basis, `false` otherwise
-//   string = A string explaining why it's not the latest voting basis (when `bool` == `false),
-//   or empty string ("") if the voting basis is valid (when `bool` == `true`).
 //
-func (is *ISAAC) IsValidVotingBasis(basis voting.Basis, latestBlock block.Block) (bool, string) {
+func (is *ISAAC) IsValidVotingBasis(basis voting.Basis, latestBlock block.Block) bool {
 	is.RLock()
 	defer is.RUnlock()
 
+	lvb := is.LatestVotingBasis()
+
+	log := is.log.New(logging.Ctx{
+		"ballot-basis":        basis,
+		"voting-basis":        lvb,
+		"latest-block-height": latestBlock.Height,
+		"latest-block-hash":   latestBlock.Hash,
+	})
+
 	if basis.Height != latestBlock.Height {
-		return false, "basis' height is different from latest block's height"
+		log.Debug(
+			"voting basis is invalid",
+			"reason", "basis' height is different from latest block's height",
+		)
+
+		return false
 	}
 	if is.isInitRound(basis) {
-		return true, ""
+		return true
 	}
 
 	// Note: If we have same height but different hash,
 	// consensus is probably dead
 	if basis.BlockHash != latestBlock.Hash {
-		return false, "basis' block hash does not match latest block's hash"
+		log.Error(
+			"voting basis is invalid",
+			"reason", "basis' block hash does not match latest block's hash",
+		)
+		return false
 	}
-
-	lvb := is.LatestVotingBasis()
 
 	if basis.Height == lvb.Height {
 		if basis.Round <= lvb.Round {
-			return false, "basis' round is <= to latest voting basis' round"
+			log.Error(
+				"voting basis is invalid",
+				"reason", "basis' round is <= to latest voting basis' round",
+			)
+			return false
 		}
 	}
-	return true, ""
+	return true
 }
 
 func (is *ISAAC) isInitRound(basis voting.Basis) bool {
