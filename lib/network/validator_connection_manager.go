@@ -541,7 +541,7 @@ func (c *ValidatorConnectionManager) broadcastDiscovery(endpoints ...*common.End
 			client := c.GetConnectionByEndpoint(v)
 
 			if response, err := client.SendDiscovery(dm); err != nil {
-				c.log.Error(
+				c.log.Debug(
 					"failed to broadcast DiscoveryMessage",
 					"error", err,
 					"endpoint", v,
