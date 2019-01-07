@@ -3,6 +3,7 @@ package common
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -46,6 +47,19 @@ func PrintError(cmd *cobra.Command, err error) {
 	cmd.Help()
 
 	os.Exit(1)
+}
+
+// Get the default value to assign to the `--storage` flag
+func GetDefaultStoragePath(cmd *cobra.Command) string {
+	if cwd, err := os.Getwd(); err != nil {
+		PrintFlagsError(cmd, "--storage", err)
+	} else if directory, err := filepath.Abs(cwd); err != nil {
+		PrintFlagsError(cmd, "--storage", err)
+	} else {
+		return fmt.Sprintf("file://%s/db", directory)
+	}
+	// Satisfy the compiler
+	panic("This function should have returned")
 }
 
 // Parse an input string as a monetary amount
