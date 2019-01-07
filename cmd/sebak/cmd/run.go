@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -168,15 +167,7 @@ func init() {
 		},
 	}
 
-	// storage
-	var currentDirectory string
-	if currentDirectory, err = os.Getwd(); err != nil {
-		cmdcommon.PrintFlagsError(nodeCmd, "--storage", err)
-	}
-	if currentDirectory, err = filepath.Abs(currentDirectory); err != nil {
-		cmdcommon.PrintFlagsError(nodeCmd, "--storage", err)
-	}
-	flagStorageConfigString = common.GetENVValue("SEBAK_STORAGE", fmt.Sprintf("file://%s/db", currentDirectory))
+	flagStorageConfigString = common.GetENVValue("SEBAK_STORAGE", cmdcommon.GetDefaultStoragePath(nodeCmd))
 
 	nodeCmd.Flags().StringVar(&flagGenesis, "genesis", flagGenesis, "performs the 'genesis' command before running node. Syntax: key[,balance]")
 	nodeCmd.Flags().StringVar(&flagKPSecretSeed, "secret-seed", flagKPSecretSeed, "secret seed of this node")

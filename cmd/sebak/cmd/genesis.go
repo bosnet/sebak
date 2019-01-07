@@ -2,8 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 
 	logging "github.com/inconshreveable/log15"
 	"github.com/spf13/cobra"
@@ -84,24 +82,6 @@ func makeGenesisBlock(genesisKP, commonKP keypair.KP, networkID string, balance 
 
 	if balance == 0 {
 		balance = common.MaximumBalance
-	}
-
-	// Use the default value
-	if len(storageUri) == 0 {
-		// We try to get the env value first, before doing IO which could fail
-		storageUri = common.GetENVValue("SEBAK_STORAGE", "")
-		// No env, use the default (current directory)
-		if len(storageUri) == 0 {
-			if currentDirectory, err := os.Getwd(); err == nil {
-				if currentDirectory, err = filepath.Abs(currentDirectory); err == nil {
-					storageUri = fmt.Sprintf("file://%s/db", currentDirectory)
-				}
-			}
-			// If any of the previous condition failed
-			if len(storageUri) == 0 {
-				return "--storage", err
-			}
-		}
 	}
 
 	var storageConfig *storage.Config
