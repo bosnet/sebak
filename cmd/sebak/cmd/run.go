@@ -755,6 +755,11 @@ func runNode() error {
 		log.Crit("failed to initialize storage", "error", err)
 		return err
 	}
+	// Check that no upgrades are needed
+	if needsDBUpgrade(st) {
+		log.Crit("cannot start node - Upgrades are needed. Run sebak upgrade [--storage ...]")
+		return fmt.Errorf("Upgrades to the database needed")
+	}
 
 	// get the initial balance of geness account
 	initialBalance, err := runner.GetGenesisBalance(st)

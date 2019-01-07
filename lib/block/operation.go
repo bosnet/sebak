@@ -9,6 +9,8 @@ import (
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
 	"boscoin.io/sebak/lib/transaction/operation"
+
+	"github.com/ethereum/go-ethereum/rlp"
 )
 
 // BlockOperation is `Operation` data for block. the storage should support,
@@ -34,6 +36,16 @@ type BlockOperation struct {
 	seqID   uint64
 	linked  string
 	isSaved bool
+}
+
+// Implement `encoding.BinaryMarshaler`
+func (bo BlockOperation) MarshalBinary() (data []byte, err error) {
+	return rlp.EncodeToBytes(bo)
+}
+
+// Implement `encoding.BinaryUnmarshaler`
+func (bo *BlockOperation) UnmarshalBinary(data []byte) error {
+	return rlp.DecodeBytes(data, bo)
 }
 
 func NewBlockOperationKey(opHash, txHash string) string {
