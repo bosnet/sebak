@@ -20,7 +20,6 @@ const (
 )
 
 var (
-	genesisCmd  *cobra.Command
 	flagBalance string = common.GetENVValue("SEBAK_GENESIS_BALANCE", initialBalance)
 )
 
