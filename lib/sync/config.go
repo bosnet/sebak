@@ -130,7 +130,7 @@ func (c *Config) NewWatcher(s SyncController) *Watcher {
 }
 
 func (c *Config) NewHTTP2Client() *common.HTTP2Client {
-	client, err := common.NewHTTP2Client(c.FetchTimeout, 0, true, nil)
+	client, err := common.NewHTTP2Client(c.FetchTimeout, 0, true)
 	if err != nil {
 		c.logger.Error("make http2 client error!", "err", err)
 		panic(err) // It's an unrecoverable error not to make client when starting syncer / node

@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"github.com/gorilla/mux"
 	"math/rand"
 	"net"
 	"net/http"
@@ -14,9 +13,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
-
 	"boscoin.io/sebak/lib/common"
+	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/require"
 )
 
 func getPort() string {
@@ -103,7 +102,6 @@ func TestHTTP2NetworkTLSSupport(t *testing.T) {
 			defaultTimeout,
 			defaultIdleTimeout,
 			false,
-			nil,
 		)
 
 		require.NoError(t, err)
@@ -143,7 +141,6 @@ func TestHTTP2NetworkWithoutTLS(t *testing.T) {
 			defaultTimeout,
 			defaultIdleTimeout,
 			false,
-			nil,
 		)
 		require.NoError(t, err)
 
@@ -181,7 +178,6 @@ func TestHTTP2NetworkRetryClient(t *testing.T) {
 			defaultTimeout,
 			defaultIdleTimeout,
 			false,
-			nil,
 		)
 		require.NoError(t, err)
 
@@ -193,7 +189,7 @@ func TestHTTP2NetworkRetryClient(t *testing.T) {
 	// with Retry
 	{
 		callCount = 0
-		client, err := common.NewHTTP2Client(
+		client, err := common.NewPersistentHTTP2Client(
 			defaultTimeout,
 			defaultIdleTimeout,
 			false,
