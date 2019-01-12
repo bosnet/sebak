@@ -176,7 +176,7 @@ func (j *expireSnapshots) isExpired(key string) bool {
 		return true
 	}
 
-	return time.Now().Sub(t.(time.Time)) > time.Second
+	return (t.(time.Time)).Before(time.Now())
 }
 
 func (j *expireSnapshots) updateExpire(key string) {
