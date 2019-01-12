@@ -65,6 +65,14 @@ func (st *LevelDBBackend) Close() error {
 	return st.DB.Close()
 }
 
+func (st *LevelDBBackend) Release() error {
+	if snapshot, ok := st.Core.(*Snapshot); ok {
+		snapshot.Release()
+	}
+
+	return nil
+}
+
 func (st *LevelDBBackend) OpenTransaction() (*LevelDBBackend, error) {
 	_, ok := st.Core.(*leveldb.Transaction)
 	if ok {
@@ -92,6 +100,18 @@ func (st *LevelDBBackend) OpenBatch() (*LevelDBBackend, error) {
 	return &LevelDBBackend{
 		DB:   st.DB,
 		Core: NewBatchCore(st.DB),
+	}, nil
+}
+
+func (st *LevelDBBackend) OpenSnapshot() (*LevelDBBackend, error) {
+	snapshot, err := NewSnapshot(st)
+	if err != nil {
+		return nil, err
+	}
+
+	return &LevelDBBackend{
+		DB:   st.DB,
+		Core: snapshot,
 	}, nil
 }
 
