@@ -181,6 +181,7 @@ func (sb *SavingBlockOperations) check(startBlockHeight uint64) (err error) {
 		for {
 			if blk, err = sb.getNextBlock(height); err != nil {
 				err = errors.FailedToSaveBlockOperaton.Clone().SetData("error", err)
+				errChan <- err
 				return
 			}
 
