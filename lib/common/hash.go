@@ -6,7 +6,6 @@
 package common
 
 import (
-	"bytes"
 	"crypto/sha256"
 	"io"
 
@@ -55,34 +54,6 @@ func SizeofSize(i uint64) (size byte) {
 			return size
 		}
 	}
-}
-
-// Encodes a list to RLP, including its size
-func EncodeList(items ...interface{}) ([]byte, error) {
-	// Make a buffer of 9 bytes, which is the biggest the length can be
-	ret := make([]byte, 9)
-	// Append the list to this buffer
-	for i := 0; i < len(items); i++ {
-		if data, err := rlp.EncodeToBytes(items[i]); err != nil {
-			return nil, err
-		} else {
-			ret = append(ret, data...)
-		}
-	}
-	// Compute the length, substract the 9 first bytes
-	// We need to write the length right before the data
-	// To do so, we compute how long the length is going to be
-	totalLen := uint64(len(ret[9:]))
-	offset := 8 // Just one byte
-	if totalLen > 55 {
-		offset = 8 - int(SizeofSize(totalLen)) // 0 at least
-	}
-	ret = ret[offset:]
-	buf := bytes.NewBuffer(ret[0:0]) // The data will override the first X bytes
-	if err := PutListLength(buf, totalLen); err != nil {
-		return nil, err
-	}
-	return ret, nil
 }
 
 // Write the length of a list to the writer according to RLP specs

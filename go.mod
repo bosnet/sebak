@@ -2,6 +2,7 @@ module boscoin.io/sebak
 
 require (
 	github.com/GianlucaGuarini/go-observable v0.0.0-20180829201609-d386f0081a66
+	github.com/VividCortex/gohistogram v1.0.0 // indirect
 	github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412 // indirect
 	github.com/allegro/bigcache v1.1.0 // indirect
 	github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973 // indirect
@@ -14,7 +15,6 @@ require (
 	github.com/go-redis/cache v6.3.5+incompatible
 	github.com/go-redis/redis v6.14.2+incompatible
 	github.com/go-stack/stack v1.7.0 // indirect
-	github.com/golang/protobuf v1.2.0 // indirect
 	github.com/golang/snappy v0.0.0-20170215233205-553a64147049 // indirect
 	github.com/google/uuid v0.0.0-20161128191214-064e2069ce9c
 	github.com/gorilla/context v1.1.1 // indirect
@@ -41,6 +41,7 @@ require (
 	github.com/prometheus/common v0.0.0-20180801064454-c7de2306084e // indirect
 	github.com/prometheus/procfs v0.0.0-20180725123919-05ee40e3a273 // indirect
 	github.com/satori/go.uuid v1.2.0
+	github.com/sethgrid/pester v0.0.0-20180430140037-03e26c9abbbf
 	github.com/spf13/cobra v0.0.3
 	github.com/spf13/pflag v1.0.1
 	github.com/stellar/go v0.0.0-20180501231346-87a45bf9f03d
@@ -48,12 +49,11 @@ require (
 	github.com/syndtr/goleveldb v0.0.0-20180331014930-714f901b98fd
 	github.com/ulule/limiter v2.2.0+incompatible
 	github.com/vmihailenco/msgpack v4.0.1+incompatible
-	golang.org/x/net v0.0.0-20180420171651-5f9ae10d9af5
+	golang.org/x/net v0.0.0-20180724234803-3673e40ba225
 	golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f
 	golang.org/x/sys v0.0.0-20180501092740-78d5f264b493 // indirect
-	golang.org/x/text v0.3.0 // indirect
+	google.golang.org/appengine v1.3.0 // indirect
 	gopkg.in/fsnotify.v1 v1.4.7 // indirect
-	gopkg.in/karalabe/cookiejar.v2 v2.0.0-20150724131613-8dcd6a7f4951 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v2 v2.2.1
 )
