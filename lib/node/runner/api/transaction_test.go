@@ -1,6 +1,7 @@
 package api
 
 import (
+	"boscoin.io/sebak/lib/block"
 	"bufio"
 	"io/ioutil"
 	"net/http"
@@ -19,8 +20,9 @@ func TestGetTransactionByHashHandler(t *testing.T) {
 	defer storage.Close()
 	defer ts.Close()
 
-	_, _, bt := prepareTxWithoutSave(storage)
+	_, tx, bt := prepareTxWithoutSave(storage)
 	bt.MustSave(storage)
+	block.SaveTransactionPool(storage, *tx)
 
 	{ // unknown transaction
 		req, _ := http.NewRequest("GET", ts.URL+GetTransactionsHandlerPattern+"/findme", nil)
@@ -56,8 +58,9 @@ func TestGetTransactionStatusByHashHandler(t *testing.T) {
 	defer storage.Close()
 	defer ts.Close()
 
-	_, _, bt := prepareTxWithoutSave(storage)
+	_, tx, bt := prepareTxWithoutSave(storage)
 	bt.MustSave(storage)
+	block.SaveTransactionPool(storage, *tx)
 
 	var reader *bufio.Reader
 	{ // unknown transaction

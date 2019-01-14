@@ -9,9 +9,11 @@ import (
 
 	"github.com/GianlucaGuarini/go-observable"
 
+	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/network/httputils"
+	"boscoin.io/sebak/lib/node/runner/api/resource"
 )
 
 // DefaultContentType is "application/json"
@@ -40,7 +42,33 @@ func (api NetworkHandlerAPI) PostSubscribeHandler(w http.ResponseWriter, r *http
 		events = append(events, conditions.Event())
 	}
 
-	es := NewEventStream(w, r, renderEventStream, DefaultContentType)
+	renderFunc := func(args ...interface{}) ([]byte, error) {
+		if len(args) <= 1 {
+			return nil, fmt.Errorf("render: value is empty") //TODO(anarcher): Error type
+		}
+		i := args[1]
+
+		if i == nil {
+			return []byte{}, nil
+		}
+
+		switch v := i.(type) {
+		case *block.BlockAccount:
+			r := resource.NewAccount(v)
+			return json.Marshal(r.Resource())
+		case *block.BlockTransaction:
+			tp, err := block.GetTransactionPool(api.storage, v.Hash)
+			if err != nil {
+				return nil, err
+			}
+			r := resource.NewTransaction(v, tp.Transaction())
+			return json.Marshal(r.Resource())
+		}
+
+		return json.Marshal(i)
+	}
+
+	es := NewEventStream(w, r, renderFunc, DefaultContentType)
 	es.Render(nil)
 	es.Run(observer.ResourceObserver, events...)
 }

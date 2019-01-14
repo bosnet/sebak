@@ -50,7 +50,7 @@ func TestResourceAccount(t *testing.T) {
 		bt := block.NewBlockTransactionFromTransaction("dummy", 0, common.NowISO8601(), tx)
 		bt.MustSave(storage)
 
-		rt := NewTransaction(&bt)
+		rt := NewTransaction(&bt, tx)
 		r := rt.Resource()
 		j, _ := json.MarshalIndent(r, "", " ")
 
