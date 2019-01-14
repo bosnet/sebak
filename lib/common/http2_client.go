@@ -8,10 +8,23 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/sethgrid/pester"
 	"golang.org/x/net/http2"
 )
 
+type HttpDoer interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+type BackoffStrategy = pester.BackoffStrategy
+
+type RetrySetting struct {
+	MaxRetries  int
+	Concurrency int
+	Backoff     BackoffStrategy
+}
+
 type HTTP2Client struct {
+	doer      HttpDoer
 	client    http.Client
 	transport *http.Transport
 }
@@ -49,6 +62,26 @@ func NewHTTP2Client(timeout, idleTimeout time.Duration, keepAlive bool) (client 
 		transport: transport,
 	}
 
+	client.doer = &client.client
+
+	return
+}
+
+func NewPersistentHTTP2Client(timeout, idleTimeout time.Duration, keepAlive bool, retrySetting *RetrySetting) (client *HTTP2Client, err error) {
+	client, err = NewHTTP2Client(timeout, idleTimeout, keepAlive)
+	if err != nil {
+		return nil, err
+	}
+
+	if retrySetting != nil {
+		ec := pester.NewExtendedClient(&client.client)
+		{
+			ec.MaxRetries = retrySetting.MaxRetries
+			ec.Concurrency = retrySetting.Concurrency
+			ec.Backoff = retrySetting.Backoff
+		}
+		client.doer = ec
+	}
 	return
 }
 
@@ -63,7 +96,7 @@ func (c *HTTP2Client) Get(url string, headers http.Header) (response *http.Respo
 	}
 	request.Header = headers
 
-	if response, err = c.client.Do(request); err != nil {
+	if response, err = c.Do(request); err != nil {
 		return
 	}
 
@@ -77,7 +110,7 @@ func (c *HTTP2Client) Post(url string, b []byte, headers http.Header) (response 
 	}
 	request.Header = headers
 
-	if response, err = c.client.Do(request); err != nil {
+	if response, err = c.Do(request); err != nil {
 		return
 	}
 	return
@@ -85,7 +118,7 @@ func (c *HTTP2Client) Post(url string, b []byte, headers http.Header) (response 
 
 // It's same interface as https://golang.org/pkg/net/http/#Client.Do
 func (c *HTTP2Client) Do(req *http.Request) (*http.Response, error) {
-	return c.client.Do(req)
+	return c.doer.Do(req)
 }
 
 type HTTP2StreamWriter struct {
