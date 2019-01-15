@@ -1,9 +1,7 @@
 package common
 
 import (
-	"bytes"
 	"fmt"
-	"os/exec"
 	"time"
 
 	"github.com/beevik/ntp"
@@ -80,17 +78,19 @@ func (ts *TimeSync) Sync() error {
 		return nil
 	}
 
+	if synced, err := ts.checkNTPOffset(); err != nil {
+		return err
+	} else if synced {
+		log.Debug("time synced")
+		return nil
+	}
+
 	log.Debug("trying to sync time")
 
-	var b bytes.Buffer
-	cmd := exec.Command("sh", "-c", ts.syncCmd)
-	cmd.Stderr = &b
-	cmd.Stdout = &b
-
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("failed to run time-sync-command: `%s`: %s", ts.syncCmd, b.String())
+	if b, err := ExecExternalCommand(ts.syncCmd); err != nil {
+		return fmt.Errorf("failed to run time-sync-command: `%s`: %s: %v", ts.syncCmd, string(b), err)
 	} else {
-		log.Debug("time-sync-command was executed", "output", b.String())
+		log.Debug("time-sync-command was executed", "output", string(b))
 	}
 
 	var err error
