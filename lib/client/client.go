@@ -1,7 +1,6 @@
 package client
 
 import (
-	"boscoin.io/sebak/lib/common/observer"
 	"bufio"
 	"context"
 	"encoding/json"
@@ -12,6 +11,7 @@ import (
 	"sync"
 
 	"boscoin.io/sebak/lib/common"
+	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/storage"
 )
 
