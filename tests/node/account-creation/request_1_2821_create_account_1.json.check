@@ -8,13 +8,8 @@ EXPECTED1="9999999989999990000"
 EXPECTED2="10000000000"
 
 for ((port=2821;port<=2823;port++)); do
-    checkedBalance=$(getAccountWithBalance $port "GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ" ${EXPECTED1})
+    timeout -t 30 accstreamer https://127.0.0.1:$port "GDIRF4UWPACXPPI4GW7CMTACTCNDIKJEHZK44RITZB4TD3YUM6CCVNGJ" ${EXPECTED1} "GATR5BQCWUKGWIAZNDUPDTMMXSRDA23BFJQ36A2IAAOZI5KOOANKA6L3" ${EXPECTED2}
     if [ $? -ne 0 ];then
-        die "Expected balance to be ${EXPECTED1}, not ${checkedBalance}"
-    fi
-
-    checkedBalance=$(getAccountWithBalance $port "GATR5BQCWUKGWIAZNDUPDTMMXSRDA23BFJQ36A2IAAOZI5KOOANKA6L3" ${EXPECTED2})
-    if [ $? -ne 0 ];then
-        die "Expected balance to be ${EXPECTED2}, not ${checkedBalance}"
+        die "$TEST_NAME: Node $port didn't have the right balance"
     fi
 done

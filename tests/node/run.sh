@@ -29,8 +29,9 @@ NODE_DOCKER_IMAGE=$(docker build -q --build-arg BUILD_MODE='test' --build-arg BU
                            --build-arg BUILD_ARGS='-coverpkg=./... -tags integration -c -o /go/bin/sebak' \
                            ${ROOT_DIR} | cut -d: -f2)
 
-# Build the integration test container
-TESTS_DOCKER_IMAGE=$(docker build -q . | cut -d: -f2)
+# Build the tools & integration test container
+TOOLS_DOCKER_IMAGE=$(docker build -q ${ROOT_DIR} -f ${ROOT_DIR}/Dockerfile.tools | cut -d: -f2)
+TESTS_DOCKER_IMAGE=$(docker build -q . --build-arg BUILDER=${TOOLS_DOCKER_IMAGE} | cut -d: -f2)
 
 if [ -z ${NODE_DOCKER_IMAGE} ] || [ -z ${TESTS_DOCKER_IMAGE} ]; then
     echo "Failed to build at least one docker image" >&2
