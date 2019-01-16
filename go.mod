@@ -5,6 +5,7 @@ require (
 	github.com/VividCortex/gohistogram v1.0.0 // indirect
 	github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412 // indirect
 	github.com/allegro/bigcache v1.1.0 // indirect
+	github.com/beevik/ntp v0.2.0
 	github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973 // indirect
 	github.com/btcsuite/btcd v0.0.0-20180810000619-f899737d7f27 // indirect
 	github.com/btcsuite/btcutil v0.0.0-20170726183619-501929d3d046

@@ -17,11 +17,6 @@ var (
 	DefaultLogHandler logging.Handler = logging.StreamHandler(os.Stdout, logging.TerminalFormat())
 )
 
-// SetLogging set the logger
-func SetLogging(logger logging.Logger, level logging.Lvl, handler logging.Handler) {
-	logger.SetHandler(logging.LvlFilterHandler(level, handler))
-}
-
 // `formatJSONValue` and `JsonFormatEx` was derived from
 // https://github.com/inconshreveable/log15/blob/199fca55789248e0520a3bd33e9045799738e793/format.go#L131
 // .

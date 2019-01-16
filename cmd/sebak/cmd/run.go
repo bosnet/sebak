@@ -83,7 +83,9 @@ var (
 	flagWatcherMode   bool   = common.GetENVValue("SEBAK_WATCHER_MODE", "0") == "1"
 	flagWatchInterval string = common.GetENVValue("SEBAK_WATCH_INTERVAL", "5s")
 
-	flagDiscovery cmdcommon.ListFlags // "SEBAK_DISCOVERY"
+	flagDiscovery       cmdcommon.ListFlags // "SEBAK_DISCOVERY"
+	flagNTPServer       string              = common.GetENVValue("SEBAK_NTP_SERVER", "time.bora.net")
+	flagTimeSyncCommand string              = common.GetENVValue("SEBAK_TIME_SYNC_COMMAND", "")
 )
 
 var (
@@ -230,6 +232,8 @@ func init() {
 	nodeCmd.Flags().BoolVar(&flagWatcherMode, "watcher-mode", flagWatcherMode, "watcher mode")
 	nodeCmd.Flags().StringVar(&flagWatchInterval, "watch-interval", flagWatchInterval, "watch interval")
 	nodeCmd.Flags().Var(&flagDiscovery, "discovery", "initial endpoint for discovery")
+	nodeCmd.Flags().StringVar(&flagNTPServer, "ntp", flagNTPServer, "ntp server for time sync")
+	nodeCmd.Flags().StringVar(&flagTimeSyncCommand, "time-sync-command", flagTimeSyncCommand, "command for syncing local time")
 
 	rootCmd.AddCommand(nodeCmd)
 }
@@ -541,6 +545,7 @@ func parseFlagsNode() {
 	logHandler = logging.LvlFilterHandler(logLevel, logHandler)
 	log.SetHandler(logHandler)
 
+	common.SetLogging(logLevel, logHandler)
 	runner.SetLogging(logLevel, logHandler)
 	consensus.SetLogging(logLevel, logHandler)
 	network.SetLogging(logLevel, logHandler)
@@ -608,6 +613,29 @@ func parseFlagsNode() {
 		cmdcommon.PrintFlagsError(nodeCmd, "--rate-limit-node", err)
 	}
 
+	{ // time sync
+		if len(flagNTPServer) < 1 {
+			cmdcommon.PrintFlagsError(nodeCmd, "--ntp", errors.New("must be given"))
+			return
+		}
+
+		if strings.Contains(flagNTPServer, ":") {
+			if _, _, err := net.SplitHostPort(flagNTPServer); err != nil {
+				cmdcommon.PrintFlagsError(nodeCmd, "--ntp", err)
+				return
+			}
+		} else {
+			if _, err := net.LookupHost(flagNTPServer); err != nil {
+				cmdcommon.PrintFlagsError(nodeCmd, "--ntp", err)
+				return
+			}
+		}
+
+		if len(flagTimeSyncCommand) < 1 {
+			log.Warn("--time-sync-command is empty; it may cause the failure to join consensus")
+		}
+	}
+
 	log.Info("Starting Sebak", "version", version.Version, "gitcommit", version.GitCommit)
 
 	// print flags
@@ -639,6 +667,8 @@ func parseFlagsNode() {
 	parsedFlags = append(parsedFlags, "\n\thttp-cache-pool-size", httpCachePoolSize)
 	parsedFlags = append(parsedFlags, "\n\tdiscovery", discoveryEndpoints)
 	parsedFlags = append(parsedFlags, "\n\twatcher-mode", flagWatcherMode)
+	parsedFlags = append(parsedFlags, "\n\tntp", flagNTPServer)
+	parsedFlags = append(parsedFlags, "\n\ttime-sync-command", flagTimeSyncCommand)
 
 	// create current Node
 	localNode, err = node.NewLocalNode(kp, bindEndpoint, "")
@@ -694,6 +724,21 @@ func getTimeDuration(str string, defaultValue time.Duration, errMessage string) 
 }
 
 func runNode() error {
+	{ // time sync
+		timeSync, err := common.NewTimeSync(flagNTPServer, flagTimeSyncCommand)
+		if err != nil {
+			log.Crit("failed to start time sync", "error", err)
+			return err
+		}
+
+		if err := timeSync.Sync(); err != nil {
+			log.Error("failed to sync time", "error", err)
+			return err
+		}
+
+		timeSync.Start()
+	}
+
 	metrics.InitPrometheusMetrics()
 	metrics.SetVersion()
 

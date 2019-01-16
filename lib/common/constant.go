@@ -99,4 +99,8 @@ var (
 		"":                         true, // default value is nop cache
 	}
 	DefaultJSONRPCBindURL string = "http://127.0.0.1:54321/jsonrpc" // JSONRPC only can be accessed from localhost
+
+	// MaxTimeDiffAllow is the allowed difference of node time. The default
+	// value, 4 seconds is from BlockTime.
+	MaxTimeDiffAllow time.Duration = time.Second * 4
 )
