@@ -6,20 +6,19 @@ import (
 	"fmt"
 	"io"
 
-	"boscoin.io/sebak/lib/node/runner/api"
-
-	logging "github.com/inconshreveable/log15"
-
 	"boscoin.io/sebak/lib/ballot"
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/consensus"
 	"boscoin.io/sebak/lib/errors"
 	"boscoin.io/sebak/lib/node"
+	"boscoin.io/sebak/lib/node/runner/api"
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
 	"boscoin.io/sebak/lib/transaction/operation"
 	"boscoin.io/sebak/lib/voting"
+
+	logging "github.com/inconshreveable/log15"
 )
 
 type CheckerStopCloseConsensus struct {
