@@ -22,7 +22,7 @@ func TestOperation(t *testing.T) {
 		//account2Secret = "SAUR6KPJY6GT7FQYDLYNXHHLIVPNA4JSJ4IABNBVYUBLZD7LCZM5KQPY"
 	)
 
-	c := client.NewClient("https://127.0.0.1:2830")
+	c := client.MustNewClient("https://127.0.0.1:2830")
 	headers := http.Header{}
 	headers.Set("Content-Type", "application/json")
 

@@ -27,7 +27,7 @@ func TestFreezingAccount(t *testing.T) {
 		account2Secret = "SC6X7ZH3OD77ZXLYZ32MJLGVIOPUCMMACI35HJMHX2PPCZXGLRVTMUPA"
 	)
 
-	c := client.NewClient("https://127.0.0.1:2830")
+	c := client.MustNewClient("https://127.0.0.1:2830")
 	headers := http.Header{}
 	headers.Set("Content-Type", "application/json")
 
