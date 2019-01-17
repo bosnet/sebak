@@ -259,7 +259,7 @@ func (c *Client) SubmitTransactionAndWait(hash string, tx []byte) (pTransaction 
 
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() {
-		err = c.StreamTransactionStatus(ctx, hash, nil, func(status TransactionStatus) {
+		err = c.StreamTransactionStatus(ctx, hash, func(status TransactionStatus) {
 			if status.Status == "confirmed" {
 				pTransaction.Status = status.Status
 				cancel()
@@ -410,7 +410,7 @@ func (c *Client) StreamTransactionsByAccount(ctx context.Context, id string, han
 	return c.stream(ctx, UrlSubscribe, b, handlerFunc)
 }
 
-func (c *Client) StreamTransactionStatus(ctx context.Context, id string, body []byte, handler func(TransactionStatus)) (err error) {
+func (c *Client) StreamTransactionStatus(ctx context.Context, id string, handler func(TransactionStatus)) (err error) {
 	url := strings.Replace(UrlTransactionStatus, "{id}", id, -1)
 	handlerFunc := func(b []byte) (err error) {
 		var v TransactionStatus
