@@ -223,6 +223,14 @@ func (c *Client) LoadOperationsByTransaction(id string, queries ...Q) (oPage Ope
 	return
 }
 
+// Submit a transaction to the node (via POST `UrlTransactions`)
+//
+// Params:
+//     tx = JSON serialized Transaction that will be sent as body
+//
+// Returns:
+//   TransactionPost = An object describing the node's answer (usually just an echo)
+//   error = An error object, or `nil`
 func (c *Client) SubmitTransaction(tx []byte) (pTransaction TransactionPost, err error) {
 	url := UrlTransactions
 	headers := http.Header{}
@@ -236,6 +244,15 @@ func (c *Client) SubmitTransaction(tx []byte) (pTransaction TransactionPost, err
 	return
 }
 
+// Submit a transaction to the node (via POST `UrlTransactions`)
+//
+// Params:
+//     hash = the hash of the transaction
+//     tx = JSON serialized Transaction that will be sent as body
+//
+// Returns:
+//   TransactionPost = An object describing the node's answer (usually just an echo)
+//   error = An error object, or `nil`
 func (c *Client) SubmitTransactionAndWait(hash string, tx []byte) (pTransaction TransactionPost, err error) {
 	var wg sync.WaitGroup
 	wg.Add(1)
