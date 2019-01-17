@@ -262,7 +262,7 @@ func (c *Client) SubmitTransactionAndWait(hash string, tx []byte) (pTransaction 
 	return
 }
 
-func (c *Client) Stream(ctx context.Context, url string, body []byte, handler func(data []byte) error) (err error) {
+func (c *Client) stream(ctx context.Context, url string, body []byte, handler func(data []byte) error) (err error) {
 	var headers = http.Header{}
 	headers.Set("Accept", "text/event-stream")
 	var resp *http.Response
@@ -326,7 +326,7 @@ func (c *Client) StreamAccount(ctx context.Context, id string, handler func(Acco
 		handler(v)
 		return nil
 	}
-	return c.Stream(ctx, UrlSubscribe, b, handlerFunc)
+	return c.stream(ctx, UrlSubscribe, b, handlerFunc)
 }
 
 func (c *Client) StreamTransactions(ctx context.Context, handler func(Transaction)) (err error) {
@@ -341,7 +341,7 @@ func (c *Client) StreamTransactions(ctx context.Context, handler func(Transactio
 		handler(v)
 		return nil
 	}
-	return c.Stream(ctx, UrlSubscribe, b, handlerFunc)
+	return c.stream(ctx, UrlSubscribe, b, handlerFunc)
 }
 
 func (c *Client) StreamTransactionsByAccount(ctx context.Context, id string, handler func(Transaction)) (err error) {
@@ -356,7 +356,7 @@ func (c *Client) StreamTransactionsByAccount(ctx context.Context, id string, han
 		handler(v)
 		return nil
 	}
-	return c.Stream(ctx, UrlSubscribe, b, handlerFunc)
+	return c.stream(ctx, UrlSubscribe, b, handlerFunc)
 }
 
 func (c *Client) StreamTransactionStatus(ctx context.Context, id string, body []byte, handler func(TransactionStatus)) (err error) {
@@ -370,7 +370,7 @@ func (c *Client) StreamTransactionStatus(ctx context.Context, id string, body []
 		handler(v)
 		return nil
 	}
-	return c.Stream(ctx, url, nil, handlerFunc)
+	return c.stream(ctx, url, nil, handlerFunc)
 }
 
 func (c *Client) StreamTransactionsByHash(ctx context.Context, id string, handler func(Transaction)) (err error) {
@@ -385,5 +385,5 @@ func (c *Client) StreamTransactionsByHash(ctx context.Context, id string, handle
 		handler(v)
 		return nil
 	}
-	return c.Stream(ctx, UrlSubscribe, b, handlerFunc)
+	return c.stream(ctx, UrlSubscribe, b, handlerFunc)
 }
