@@ -27,14 +27,13 @@ const (
 const (
 	// All events related to the `ResourceType`
 	All KeyType = "*"
+	// "Identifier" of the item
+	// Hash for a Transaction, address for an Account.
+	Identifier = "identifier"
 	// Tx/TxPool only: Transactions with a specified source
 	Source = "source"
 	// Tx/TxPool only: Transactions with a specified target
 	Target = "target"
-	// Tx/TxPool only: Transactions with a specific hash
-	TxHash = "txhash"
-	// Acc only: Only stream updates related to the specified address(es)
-	Address = "address"
 )
 
 // A Condition can be sent as the body when calling subscribe

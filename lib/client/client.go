@@ -394,7 +394,7 @@ func (c *Client) StreamAccount(ctx context.Context, handler func(Account)) error
 func (c *Client) StreamTransactions(ctx context.Context, handler func(Transaction), ids ...string) error {
 	var conds []observer.Conditions
 	for _, id := range ids {
-		conds = append(conds, observer.Conditions{observer.NewCondition(observer.Tx, observer.TxHash, id)})
+		conds = append(conds, observer.Conditions{observer.NewCondition(observer.Tx, observer.Identifier, id)})
 	}
 	if len(conds) == 0 {
 		conds = []observer.Conditions{{observer.NewCondition(observer.Tx, observer.All)}}
