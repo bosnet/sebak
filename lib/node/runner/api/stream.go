@@ -39,7 +39,7 @@ func (api NetworkHandlerAPI) PostSubscribeHandler(w http.ResponseWriter, r *http
 
 	var events []string
 	for _, conditions := range requestParams {
-		events = append(events, conditions.Event())
+		events = append(events, conditions.String())
 	}
 
 	renderFunc := func(args ...interface{}) ([]byte, error) {

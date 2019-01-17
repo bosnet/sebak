@@ -155,8 +155,8 @@ func (api NetworkHandlerAPI) GetTransactionStatusByHashHandler(w http.ResponseWr
 		es := NewEventStream(w, r, txStatusRenderFunc, DefaultContentType)
 		es.Render(payload)
 		es.Run(o.ResourceObserver,
-			o.Event(o.NewCondition(o.Tx, o.Identifier, key)),
-			o.Event(o.NewCondition(o.TxPool, o.Identifier, key)),
+			o.NewCondition(o.Tx, o.Identifier, key).String(),
+			o.NewCondition(o.TxPool, o.Identifier, key).String(),
 		)
 		return
 	}
