@@ -77,14 +77,34 @@ type Client struct {
 	HTTP *common.HTTP2Client
 }
 
-func NewClient(url string) *Client {
+//
+// Create a new Client object
+//
+// Params:
+//     url = The url of the node, e.g. "https://127.0.0.1:1234"
+//
+// Returns:
+//   error   = An error object, if the client could not be created.
+//             `nil` otherwise.
+//   Client* = If `error == nil`, the constructed `Client`
+//
+func NewClient(url string) (*Client, error) {
 	httpClient, err := common.NewHTTP2Client(0, 0, true)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	return &Client{
 		URL:  url,
 		HTTP: httpClient,
+	}, nil
+}
+
+// Calls `NewClient` and panic if an `error` is returned
+func MustNewClient(url string) *Client {
+	if cli, err := NewClient(url); err != nil {
+		panic(err)
+	} else {
+		return cli
 	}
 }
 

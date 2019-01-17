@@ -16,7 +16,7 @@ import (
 
 func createAccount(t *testing.T, fromAddr, fromSecret, toAddr string, balance uint64) {
 
-	c := client.NewClient("https://127.0.0.1:2830")
+	c := client.MustNewClient("https://127.0.0.1:2830")
 	headers := http.Header{}
 	headers.Set("Content-Type", "application/json")
 

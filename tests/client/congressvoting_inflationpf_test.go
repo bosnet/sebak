@@ -37,7 +37,7 @@ func TestInflationPF(t *testing.T) {
 		fundingAmount = 123456789
 	)
 
-	c := client.NewClient("https://127.0.0.1:2830")
+	c := client.MustNewClient("https://127.0.0.1:2830")
 	headers := http.Header{}
 	headers.Set("Content-Type", "application/json")
 

@@ -24,7 +24,7 @@ func TestTransactionStatus(t *testing.T) {
 		account1Secret = "SDJA7RJZUE4MJ3NAAHCYDXU54XI5W4ERM4CFY5PICBUDOB7Z6HW44STA"
 	)
 
-	c := client.NewClient("https://127.0.0.1:2830")
+	c := client.MustNewClient("https://127.0.0.1:2830")
 	headers := http.Header{}
 	headers.Set("Content-Type", "application/json")
 
