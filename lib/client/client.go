@@ -329,19 +329,40 @@ func (c *Client) StreamAccount(ctx context.Context, id string, handler func(Acco
 	return c.stream(ctx, UrlSubscribe, b, handlerFunc)
 }
 
-func (c *Client) StreamTransactions(ctx context.Context, handler func(Transaction)) (err error) {
-	s := []observer.Conditions{{observer.NewCondition(observer.Tx, observer.All)}}
-	b, err := json.Marshal(s)
-	handlerFunc := func(b []byte) (err error) {
+//
+// Stream transactions from the node
+//
+// Params:
+//     ctx = Context to use. The streaming starts a goroutine and doesn't stop.
+//           A common pattern is to pass `context.WithCancel(context.Background())`.
+//           See go's `context` package for more details.
+//     handler = The handler function that will be called every time a transaction is received.
+//     ids     = An (optional) list of transaction hashes to listen to.
+//               If `nil`, all transactions will be streamed to the handler.
+//
+// Returns: An `error` object, or `nil`
+func (c *Client) StreamTransactions(ctx context.Context, handler func(Transaction), ids ...string) error {
+	var conds []observer.Conditions
+	for _, id := range ids {
+		conds = append(conds, observer.Conditions{observer.NewCondition(observer.Tx, observer.TxHash, id)})
+	}
+	if len(conds) == 0 {
+		conds = []observer.Conditions{{observer.NewCondition(observer.Tx, observer.All)}}
+	}
+	body, err := json.Marshal(conds)
+	if err != nil {
+		return err
+	}
+	handlerFunc := func(b []byte) error {
 		var v Transaction
-		err = json.Unmarshal(b, &v)
+		err := json.Unmarshal(b, &v)
 		if err != nil {
 			return err
 		}
 		handler(v)
 		return nil
 	}
-	return c.stream(ctx, UrlSubscribe, b, handlerFunc)
+	return c.stream(ctx, UrlSubscribe, body, handlerFunc)
 }
 
 func (c *Client) StreamTransactionsByAccount(ctx context.Context, id string, handler func(Transaction)) (err error) {
@@ -371,19 +392,4 @@ func (c *Client) StreamTransactionStatus(ctx context.Context, id string, body []
 		return nil
 	}
 	return c.stream(ctx, url, nil, handlerFunc)
-}
-
-func (c *Client) StreamTransactionsByHash(ctx context.Context, id string, handler func(Transaction)) (err error) {
-	s := []observer.Conditions{{observer.NewCondition(observer.Tx, observer.TxHash, id)}}
-	b, err := json.Marshal(s)
-	handlerFunc := func(b []byte) (err error) {
-		var v Transaction
-		err = json.Unmarshal(b, &v)
-		if err != nil {
-			return err
-		}
-		handler(v)
-		return nil
-	}
-	return c.stream(ctx, UrlSubscribe, b, handlerFunc)
 }
