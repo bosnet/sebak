@@ -79,7 +79,7 @@ func TriggerEvent(st *storage.LevelDBBackend, transactions []*transaction.Transa
 
 		t(event(cond(obs.Tx, obs.All)), &bt)
 		t(event(cond(obs.Tx, obs.Source, source)), &bt)
-		t(event(cond(obs.Tx, obs.TxHash, txHash)), &bt)
+		t(event(cond(obs.Tx, obs.Identifier, txHash)), &bt)
 
 		for _, op := range tx.B.Operations {
 			if err != nil {
@@ -99,7 +99,7 @@ func TriggerEvent(st *storage.LevelDBBackend, transactions []*transaction.Transa
 			return
 		}
 		t(event(cond(obs.Acc, obs.All)), ba)
-		t(event(cond(obs.Acc, obs.Address, account)), ba)
+		t(event(cond(obs.Acc, obs.Identifier, account)), ba)
 	}
 
 }
