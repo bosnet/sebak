@@ -314,19 +314,32 @@ func (c *Client) stream(ctx context.Context, url string, body []byte, handler fu
 	return
 }
 
-func (c *Client) StreamAccount(ctx context.Context, id string, handler func(Account)) (err error) {
-	s := []observer.Conditions{{observer.NewCondition(observer.Acc, observer.All)}}
-	b, err := json.Marshal(s)
-	handlerFunc := func(b []byte) (err error) {
+//
+// Stream account updates from the node
+//
+// Params:
+//     ctx = Context to use. The streaming starts a goroutine and doesn't stop.
+//           A common pattern is to pass `context.WithCancel(context.Background())`.
+//           See go's `context` package for more details.
+//     handler = The handler function that will be called every time an account is updated.
+//
+// Returns: An `error` object, or `nil`
+func (c *Client) StreamAccount(ctx context.Context, handler func(Account)) error {
+	conds := []observer.Conditions{{observer.NewCondition(observer.Acc, observer.All)}}
+	body, err := json.Marshal(conds)
+	if err != nil {
+		return err
+	}
+	handlerFunc := func(b []byte) error {
 		var v Account
-		err = json.Unmarshal(b, &v)
+		err := json.Unmarshal(b, &v)
 		if err != nil {
 			return err
 		}
 		handler(v)
 		return nil
 	}
-	return c.stream(ctx, UrlSubscribe, b, handlerFunc)
+	return c.stream(ctx, UrlSubscribe, body, handlerFunc)
 }
 
 //
