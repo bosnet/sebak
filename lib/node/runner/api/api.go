@@ -61,9 +61,8 @@ func (api NetworkHandlerAPI) HandlerURLPattern(pattern string) string {
 
 func TriggerEvent(st *storage.LevelDBBackend, transactions []*transaction.Transaction) {
 	var (
-		t     = obs.ResourceObserver.Trigger
-		cond  = obs.NewCondition
-		event = obs.Event
+		t    = obs.ResourceObserver.Trigger
+		cond = obs.NewCondition
 	)
 
 	accountMap := make(map[string]struct{})
@@ -77,9 +76,9 @@ func TriggerEvent(st *storage.LevelDBBackend, transactions []*transaction.Transa
 			return
 		}
 
-		t(event(cond(obs.Tx, obs.All)), &bt)
-		t(event(cond(obs.Tx, obs.Source, source)), &bt)
-		t(event(cond(obs.Tx, obs.Identifier, txHash)), &bt)
+		t(cond(obs.Tx, obs.All).String(), &bt)
+		t(cond(obs.Tx, obs.Source, source).String(), &bt)
+		t(cond(obs.Tx, obs.Identifier, txHash).String(), &bt)
 
 		for _, op := range tx.B.Operations {
 			if err != nil {
@@ -89,7 +88,7 @@ func TriggerEvent(st *storage.LevelDBBackend, transactions []*transaction.Transa
 			if pop, ok := op.B.(operation.Targetable); ok {
 				target := pop.TargetAddress()
 				accountMap[target] = struct{}{}
-				t(event(cond(obs.Tx, obs.Target, target)), &bt)
+				t(cond(obs.Tx, obs.Target, target).String(), &bt)
 			}
 		}
 	}
@@ -98,8 +97,8 @@ func TriggerEvent(st *storage.LevelDBBackend, transactions []*transaction.Transa
 		if err != nil {
 			return
 		}
-		t(event(cond(obs.Acc, obs.All)), ba)
-		t(event(cond(obs.Acc, obs.Identifier, account)), ba)
+		t(cond(obs.Acc, obs.All).String(), ba)
+		t(cond(obs.Acc, obs.Identifier, account).String(), ba)
 	}
 
 }

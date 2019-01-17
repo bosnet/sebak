@@ -68,8 +68,8 @@ func NewCondition(resource ResourceType, key KeyType, v ...string) Condition {
 	}
 }
 
-// Returns: the serialized (as a string) name of this event)
-func (c Condition) Event() string {
+// Implement `fmt.Stringer`
+func (c Condition) String() string {
 	toStr := c.Resource + "-"
 	if c.Key == All {
 		toStr += c.Key
@@ -83,14 +83,11 @@ func (c Condition) Event() string {
 // An array of Condition
 type Conditions []Condition
 
-func (cs Conditions) Event() string {
+// Implement `fmt.Stringer`
+func (cs Conditions) String() string {
 	var ss []string
 	for _, c := range cs {
-		ss = append(ss, c.Event())
+		ss = append(ss, c.String())
 	}
 	return strings.Join(ss, "&")
-}
-
-func Event(conditions ...Condition) string {
-	return Conditions(conditions).Event()
 }
