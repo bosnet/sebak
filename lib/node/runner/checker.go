@@ -70,6 +70,14 @@ func BallotUnmarshal(c common.Checker, args ...interface{}) (err error) {
 	}
 
 	if err = b.IsWellFormed(checker.Conf); err != nil {
+		if err == errors.MessageHasIncorrectTime && b.State().IsValidForVote() {
+			blt, ierr := checker.NodeRunner.Consensus().GenerateExpiredBallot(b.VotingBasis(), b.State())
+			if ierr != nil {
+				checker.NodeRunner.Log().Error("an error generating an expired ballot", "err", ierr)
+			} else {
+				checker.NodeRunner.BroadcastBallot(blt)
+			}
+		}
 		return
 	}
 
