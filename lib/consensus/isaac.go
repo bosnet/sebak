@@ -85,6 +85,41 @@ func (is *ISAAC) SelectProposer(blockHeight uint64, round uint64) string {
 	return is.proposerSelector.Select(blockHeight, round)
 }
 
+// GenerateExpiredBallot create an expired ballot using voting.Basis and ballot.State.
+// This function is used to create a ballot indicating
+// that a node has expired to other nodes when a timeout occurs in the state.
+func (is *ISAAC) GenerateExpiredBallot(basis voting.Basis, state ballot.State) (ballot.Ballot, error) {
+	is.log.Debug("ISAAC.GenerateExpiredBallot", "basis", basis, "state", state)
+	proposerAddr := is.SelectProposer(basis.Height, basis.Round)
+
+	newExpiredBallot := ballot.NewBallot(is.Node.Address(), proposerAddr, basis, []string{})
+	newExpiredBallot.SetVote(state, voting.EXP)
+
+	config := is.Conf
+	var err error
+
+	opc, err := ballot.NewCollectTxFeeFromBallot(*newExpiredBallot, config.CommonAccountAddress)
+	if err != nil {
+		return ballot.Ballot{}, err
+	}
+
+	opi, err := ballot.NewInflationFromBallot(*newExpiredBallot, config.CommonAccountAddress, config.InitialBalance)
+	if err != nil {
+		return ballot.Ballot{}, err
+	}
+
+	ptx, err := ballot.NewProposerTransactionFromBallot(*newExpiredBallot, opc, opi)
+	if err != nil {
+		return ballot.Ballot{}, err
+	}
+
+	newExpiredBallot.SetProposerTransaction(ptx)
+	newExpiredBallot.SignByProposer(is.Node.Keypair(), config.NetworkID)
+	newExpiredBallot.Sign(is.Node.Keypair(), config.NetworkID)
+
+	return *newExpiredBallot, nil
+}
+
 //
 // Check if `basis` is a valid one for the current round of consensus
 //

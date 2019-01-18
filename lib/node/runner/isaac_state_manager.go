@@ -263,21 +263,14 @@ func (sm *ISAACStateManager) broadcastExpiredBallot(round uint64, state ballot.S
 		TotalOps:  b.TotalOps,
 	}
 
-	proposerAddr := sm.nr.consensus.SelectProposer(b.Height, round)
+	newExpiredBallot, err := sm.nr.consensus.GenerateExpiredBallot(basis, state)
+	if err != nil {
+		sm.nr.Log().Error("an error generating an expired ballot", "err", err)
+	} else {
+		sm.nr.BroadcastBallot(newExpiredBallot)
+	}
 
-	newExpiredBallot := ballot.NewBallot(sm.nr.localNode.Address(), proposerAddr, basis, []string{})
-	newExpiredBallot.SetVote(state, voting.EXP)
-
-	opc, _ := ballot.NewCollectTxFeeFromBallot(*newExpiredBallot, sm.nr.Conf.CommonAccountAddress)
-	opi, _ := ballot.NewInflationFromBallot(*newExpiredBallot, sm.nr.Conf.CommonAccountAddress, sm.nr.Conf.InitialBalance)
-	ptx, _ := ballot.NewProposerTransactionFromBallot(*newExpiredBallot, opc, opi)
-
-	newExpiredBallot.SetProposerTransaction(ptx)
-	newExpiredBallot.SignByProposer(sm.nr.localNode.Keypair(), sm.nr.Conf.NetworkID)
-	newExpiredBallot.Sign(sm.nr.localNode.Keypair(), sm.nr.Conf.NetworkID)
-
-	sm.nr.Log().Debug("broadcast", "ballot", *newExpiredBallot)
-	sm.nr.BroadcastBallot(*newExpiredBallot)
+	return
 }
 
 func (sm *ISAACStateManager) resetTimer(timer *time.Timer, state ballot.State) {
