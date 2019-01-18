@@ -24,11 +24,6 @@ type Block struct {
 	Confirmed string `json:"confirmed" rlp:"-"`
 }
 
-func (bck Block) Serialize() (encoded []byte, err error) {
-	encoded, err = json.Marshal(bck)
-	return
-}
-
 func (bck Block) String() string {
 	encoded, _ := json.MarshalIndent(bck, "", "  ")
 	return string(encoded)
