@@ -7,7 +7,7 @@ import (
 	"boscoin.io/sebak/lib/voting"
 )
 
-type RoundVoteResult map[ /* Node.Address() */ string]voting.Hole
+type RoundVoteResult map[ /* Node.Address() */ string]ballot.Ballot
 
 type RoundVote struct {
 	SIGN   RoundVoteResult
@@ -40,12 +40,14 @@ func (rv *RoundVote) IsVotedByNode(state ballot.State, node string) bool {
 }
 
 func (rv *RoundVote) Vote(b ballot.Ballot) (isNew bool, err error) {
-	if b.State() == ballot.StateSIGN || b.State() == ballot.StateACCEPT {
-		result := rv.GetResult(b.State())
-
-		_, isNew = result[b.Source()]
-		result[b.Source()] = b.Vote()
+	if !b.State().IsValidForVote() {
+		return
 	}
+
+	result := rv.GetResult(b.State())
+
+	_, isNew = result[b.Source()]
+	result[b.Source()] = b
 
 	return
 }
@@ -74,8 +76,8 @@ func (rv *RoundVote) CanGetVotingResult(policy voting.ThresholdPolicy, state bal
 	result := rv.GetResult(state)
 
 	var yes, no, expired int
-	for _, votingHole := range result {
-		switch votingHole {
+	for _, blt := range result {
+		switch blt.Vote() {
 		case voting.YES:
 			yes++
 		case voting.NO:
