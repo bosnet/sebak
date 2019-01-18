@@ -12,10 +12,6 @@ import (
 	"boscoin.io/sebak/lib/voting"
 )
 
-const (
-	EventBlockPrefix string = "bk-saved"
-)
-
 type Block struct {
 	Header
 	Transactions        []string `json:"transactions"`         /* []Transaction.GetHash() */
