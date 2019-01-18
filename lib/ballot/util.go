@@ -8,17 +8,15 @@ import (
 )
 
 func CheckHasCorrectTime(timeStr string) error {
-	var proposerConfirmed time.Time
+	var t time.Time
 	var err error
-	if proposerConfirmed, err = common.ParseISO8601(timeStr); err != nil {
+	if t, err = common.ParseISO8601(timeStr); err != nil {
 		return err
 	}
-
 	now := time.Now()
 	timeStart := now.Add(time.Duration(-1) * common.BallotConfirmedTimeAllowDuration)
 	timeEnd := now.Add(common.BallotConfirmedTimeAllowDuration)
-
-	if proposerConfirmed.Before(timeStart) || proposerConfirmed.After(timeEnd) {
+	if t.Before(timeStart) || t.After(timeEnd) {
 		return errors.MessageHasIncorrectTime
 	}
 

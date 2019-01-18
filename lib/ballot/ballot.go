@@ -2,7 +2,6 @@ package ballot
 
 import (
 	"encoding/json"
-	"time"
 
 	"github.com/btcsuite/btcutil/base58"
 
@@ -106,15 +105,7 @@ func (b Ballot) isBallotWellFormed(conf common.Config) (err error) {
 		return
 	}
 
-	var confirmed time.Time
-	if confirmed, err = common.ParseISO8601(b.B.Confirmed); err != nil {
-		return
-	}
-	now := time.Now()
-	timeStart := now.Add(time.Duration(-1) * common.BallotConfirmedTimeAllowDuration)
-	timeEnd := now.Add(common.BallotConfirmedTimeAllowDuration)
-	if confirmed.Before(timeStart) || confirmed.After(timeEnd) {
-		err = errors.MessageHasIncorrectTime
+	if err = CheckHasCorrectTime(b.B.Confirmed); err != nil {
 		return
 	}
 
@@ -126,17 +117,7 @@ func (b Ballot) isBallotWellFormed(conf common.Config) (err error) {
 }
 
 func (b Ballot) isProposerInfoWellFormed(conf common.Config) (err error) {
-	var proposerConfirmed time.Time
-	if proposerConfirmed, err = common.ParseISO8601(b.ProposerConfirmed()); err != nil {
-		return
-	}
-
-	now := time.Now()
-	timeStart := now.Add(time.Duration(-1) * common.BallotConfirmedTimeAllowDuration)
-	timeEnd := now.Add(common.BallotConfirmedTimeAllowDuration)
-
-	if proposerConfirmed.Before(timeStart) || proposerConfirmed.After(timeEnd) {
-		err = errors.MessageHasIncorrectTime
+	if err = CheckHasCorrectTime(b.ProposerConfirmed()); err != nil {
 		return
 	}
 
