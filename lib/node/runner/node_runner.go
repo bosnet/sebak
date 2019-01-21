@@ -54,6 +54,7 @@ var DefaultHandleSIGNBallotCheckerFuncs = []common.CheckerFunc{
 	BallotAlreadyVoted,
 	BallotVote,
 	BallotIsSameProposer,
+	BallotRenewal,
 	BallotCheckResult,
 	ExpiredInSIGN,
 	ACCEPTBallotBroadcast,
@@ -64,6 +65,7 @@ var DefaultHandleACCEPTBallotCheckerFuncs = []common.CheckerFunc{
 	BallotAlreadyVoted,
 	BallotVote,
 	BallotIsSameProposer,
+	BallotRenewal,
 	BallotCheckResult,
 	FinishedBallotStore,
 }

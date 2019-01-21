@@ -384,6 +384,39 @@ func BallotIsSameProposer(c common.Checker, args ...interface{}) (err error) {
 	return
 }
 
+// BallotRenewal checks that the ballot confirmed and proposed time is valid and
+// if the time is invalid, then it broadcasts expired ballot
+func BallotRenewal(c common.Checker, args ...interface{}) (err error) {
+	checker := c.(*BallotChecker)
+	nr := checker.NodeRunner
+	is := nr.Consensus()
+	blt := checker.Ballot
+
+	if !blt.State().IsValidForVote() {
+		return
+	}
+
+	needRenewal := is.RemoveOldBallots(blt)
+	if needRenewal {
+		expiredBlt, err := is.GenerateExpiredBallot(blt.VotingBasis(), blt.State())
+		if err != nil {
+			return err
+		}
+		nr.InitSent(
+			// SentRecord should be initialized,
+			// because the renewal ballot has to replace the old ballot.
+			consensus.ISAACState{
+				Height:      blt.VotingBasis().Height,
+				Round:       blt.VotingBasis().Round,
+				BallotState: blt.State(),
+			},
+		)
+		nr.BroadcastBallot(expiredBlt)
+	}
+
+	return
+}
+
 // BallotCheckResult checks the voting result.
 func BallotCheckResult(c common.Checker, args ...interface{}) (err error) {
 	checker := c.(*BallotChecker)

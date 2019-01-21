@@ -241,6 +241,47 @@ func (is *ISAAC) Vote(b ballot.Ballot) (isNew bool, err error) {
 	return
 }
 
+// RemoveOldBallots checks that `blt` has valid confirmed and proposed time.
+// If it is invalid, it is removed.
+// And if the invalid ballot is make by itself,
+// return `needRenewal` = true for rebroadcasting EXP ballot
+func (is *ISAAC) RemoveOldBallots(blt ballot.Ballot) (needRenewal bool) {
+	runningRound, found := is.RunningRounds[blt.VotingBasis().Index()]
+	if !found {
+		// if RunningRound is not found, this ballot will be stopped.
+		return false
+	}
+	roundVote, err := runningRound.RoundVote(blt.Proposer())
+	if err != nil {
+		return false
+	}
+
+	var vr *RoundVoteResult
+
+	switch blt.State() {
+	case ballot.StateSIGN:
+		vr = &roundVote.SIGN
+	case ballot.StateACCEPT:
+		vr = &roundVote.ACCEPT
+	default:
+		return false
+	}
+
+	for nodeAddr, blt := range *vr {
+		if err = ballot.CheckHasCorrectTime(blt.ProposerConfirmed()); err == nil {
+			if err = ballot.CheckHasCorrectTime(blt.Confirmed()); err == nil {
+				continue
+			}
+		}
+		delete(*vr, nodeAddr)
+		if nodeAddr == is.Node.Address() {
+			needRenewal = true
+		}
+	}
+
+	return needRenewal
+}
+
 func (is *ISAAC) CanGetVotingResult(blt ballot.Ballot) (rv RoundVoteResult, vh voting.Hole, finished bool) {
 	is.RLock()
 	defer is.RUnlock()
