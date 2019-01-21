@@ -6,55 +6,53 @@ require (
 	github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412 // indirect
 	github.com/allegro/bigcache v1.1.0 // indirect
 	github.com/beevik/ntp v0.2.0
-	github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973 // indirect
-	github.com/btcsuite/btcd v0.0.0-20180810000619-f899737d7f27 // indirect
-	github.com/btcsuite/btcutil v0.0.0-20170726183619-501929d3d046
-	github.com/davecgh/go-spew v1.1.0 // indirect
-	github.com/ethereum/go-ethereum v1.8.19
-	github.com/fsnotify/fsnotify v1.4.7 // indirect
+	github.com/btcsuite/btcd v0.0.0-20190115013929-ed77733ec07d // indirect
+	github.com/btcsuite/btcutil v0.0.0-20190112041146-bf1e1be93589
+	github.com/btcsuite/goleveldb v1.0.0 // indirect
+	github.com/ethereum/go-ethereum v1.8.21
 	github.com/go-kit/kit v0.8.0
+	github.com/go-logfmt/logfmt v0.4.0 // indirect
 	github.com/go-redis/cache v6.3.5+incompatible
-	github.com/go-redis/redis v6.14.2+incompatible
-	github.com/go-stack/stack v1.7.0 // indirect
-	github.com/golang/snappy v0.0.0-20170215233205-553a64147049 // indirect
-	github.com/google/uuid v0.0.0-20161128191214-064e2069ce9c
+	github.com/go-redis/redis v6.15.1+incompatible
+	github.com/gogo/protobuf v1.2.0 // indirect
+	github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db // indirect
+	github.com/google/uuid v1.1.0
 	github.com/gorilla/context v1.1.1 // indirect
 	github.com/gorilla/handlers v1.4.0
 	github.com/gorilla/mux v1.6.2
 	github.com/gorilla/rpc v1.1.0
 	github.com/hashicorp/golang-lru v0.5.0
-	github.com/hpcloud/tail v1.0.0 // indirect
 	github.com/inconshreveable/log15 v0.0.0-20180818164646-67afb5ed74ec
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
-	github.com/lib/pq v0.0.0-20180327071824-d34b9ff171c2 // indirect
+	github.com/jessevdk/go-flags v1.4.0 // indirect
+	github.com/kkdai/bstream v0.0.0-20181106074824-b3251f7901ec // indirect
+	github.com/lib/pq v1.0.0 // indirect
 	github.com/mattn/go-colorable v0.0.9 // indirect
-	github.com/mattn/go-isatty v0.0.3
-	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
-	github.com/nullstyle/go-xdr v0.0.0-20170810174627-a875e7c9fa23 // indirect
+	github.com/mattn/go-isatty v0.0.4
+	github.com/nullstyle/go-xdr v0.0.0-20180726165426-f4c839f75077 // indirect
 	github.com/nvellon/hal v0.3.0
 	github.com/oklog/run v1.0.0
-	github.com/onsi/ginkgo v1.6.0 // indirect
-	github.com/onsi/gomega v1.4.1 // indirect
-	github.com/pkg/errors v0.8.0
-	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/prometheus/client_golang v0.8.0
-	github.com/prometheus/client_model v0.0.0-20180712105110-5c3871d89910 // indirect
-	github.com/prometheus/common v0.0.0-20180801064454-c7de2306084e // indirect
-	github.com/prometheus/procfs v0.0.0-20180725123919-05ee40e3a273 // indirect
+	github.com/pkg/errors v0.8.1
+	github.com/prometheus/client_golang v0.9.2
+	github.com/prometheus/client_model v0.0.0-20190115171406-56726106282f // indirect
+	github.com/prometheus/common v0.0.0-20190107103113-2998b132700a // indirect
+	github.com/prometheus/procfs v0.0.0-20190117184657-bf6a532e95b1 // indirect
 	github.com/satori/go.uuid v1.2.0
 	github.com/sethgrid/pester v0.0.0-20180430140037-03e26c9abbbf
+	github.com/sirupsen/logrus v1.3.0 // indirect
 	github.com/spf13/cobra v0.0.3
-	github.com/spf13/pflag v1.0.1
-	github.com/stellar/go v0.0.0-20180501231346-87a45bf9f03d
-	github.com/stretchr/testify v1.2.2
-	github.com/syndtr/goleveldb v0.0.0-20180331014930-714f901b98fd
-	github.com/ulule/limiter v2.2.0+incompatible
+	github.com/spf13/pflag v1.0.3
+	github.com/stellar/go v0.0.0-20190119010821-e61b7f8307f6
+	github.com/stellar/go-xdr v0.0.0-20180917104419-0bc96f33a18e // indirect
+	github.com/stretchr/testify v1.3.0
+	github.com/syndtr/goleveldb v0.0.0-20181128100959-b001fa50d6b2
+	github.com/ulule/limiter v2.2.2+incompatible
 	github.com/vmihailenco/msgpack v4.0.1+incompatible
-	golang.org/x/net v0.0.0-20180724234803-3673e40ba225
-	golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f
-	golang.org/x/sys v0.0.0-20180501092740-78d5f264b493 // indirect
-	google.golang.org/appengine v1.3.0 // indirect
-	gopkg.in/fsnotify.v1 v1.4.7 // indirect
-	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
-	gopkg.in/yaml.v2 v2.2.1
+	golang.org/x/crypto v0.0.0-20190103213133-ff983b9c42bc // indirect
+	golang.org/x/net v0.0.0-20190110200230-915654e7eabc
+	golang.org/x/sync v0.0.0-20181221193216-37e7f081c4d4
+	golang.org/x/sys v0.0.0-20190116161447-11f53e031339 // indirect
+	google.golang.org/appengine v1.4.0 // indirect
+	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
+	gopkg.in/yaml.v2 v2.2.2
 )
