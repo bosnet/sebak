@@ -24,11 +24,24 @@ func NewBallotSendRecord(nodeAlias string) *BallotSendRecord {
 	return p
 }
 
+// SetSent sets that the ballot of this ISAACState has already been sent.
+// This is to prevent one node from retransmitting another result.
 func (r *BallotSendRecord) SetSent(state ISAACState) {
 	r.Lock()
 	defer r.Unlock()
 	log.Debug("BallotSendRecord.SetSent()", "state", state)
 	r.record[state] = true
+
+	return
+}
+
+// InitSent initializes the ballot transfer record of this ISAACState.InitSent.
+// This function is used when an existing ballot has expired.
+func (r *BallotSendRecord) InitSent(state ISAACState) {
+	r.Lock()
+	defer r.Unlock()
+	log.Debug("BallotSendRecord.InitSent()", "state", state)
+	r.record[state] = false
 
 	return
 }

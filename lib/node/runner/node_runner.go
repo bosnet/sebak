@@ -770,3 +770,7 @@ func (nr *NodeRunner) BroadcastBallot(b ballot.Ballot) {
 
 	nr.ConnectionManager().Broadcast(b)
 }
+
+func (nr *NodeRunner) InitSent(state consensus.ISAACState) {
+	nr.ballotSendRecord.InitSent(state)
+}
