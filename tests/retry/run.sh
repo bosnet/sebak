@@ -60,11 +60,20 @@ sleep 1
 # Check sync
 docker run --rm --network host ${CLIENT_IMAGE} sync.sh
 
+# Network problem for a short time
 docker stop ${NODE3}
 sleep 10
 docker start ${NODE3}
 
-# Check sync after starting NODE3
+# Ensure consensus is in progress
+docker run --rm --network host ${CLIENT_IMAGE} consensus_alive.sh
+
+# Network problem for a long time
+docker stop ${NODE3}
+sleep 61
+docker start ${NODE3}
+
+# Ensure consensus is in progress
 docker run --rm --network host ${CLIENT_IMAGE} consensus_alive.sh
 
 # Shut down the containers - we need to do so for integration reports to be written
