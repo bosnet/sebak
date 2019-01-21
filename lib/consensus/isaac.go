@@ -241,14 +241,14 @@ func (is *ISAAC) Vote(b ballot.Ballot) (isNew bool, err error) {
 	return
 }
 
-func (is *ISAAC) CanGetVotingResult(b ballot.Ballot) (rv RoundVoteResult, vh voting.Hole, finished bool) {
+func (is *ISAAC) CanGetVotingResult(blt ballot.Ballot) (rv RoundVoteResult, vh voting.Hole, finished bool) {
 	is.RLock()
 	defer is.RUnlock()
 
 	defer func() {
 		is.log.Debug(
 			"CanGetVotingResult",
-			"ballot", b.GetHash(),
+			"ballot", blt.GetHash(),
 			"round-vote-result", rv,
 			"voting-hole", vh,
 			"finished", finished,
@@ -259,17 +259,16 @@ func (is *ISAAC) CanGetVotingResult(b ballot.Ballot) (rv RoundVoteResult, vh vot
 	vh = voting.NOTYET
 	finished = false
 
-	runningRound, found := is.RunningRounds[b.VotingBasis().Index()]
+	runningRound, found := is.RunningRounds[blt.VotingBasis().Index()]
 	if !found {
 		// if RunningRound is not found, this ballot will be stopped.
 		finished = true
 		return
 	}
 
-	roundVote, err := runningRound.RoundVote(b.Proposer())
+	roundVote, err := runningRound.RoundVote(blt.Proposer())
 	if err == nil {
-		rv, vh, finished = roundVote.CanGetVotingResult(is.policy, b.State(), is.log)
-		return
+		rv, vh, finished = roundVote.CanGetVotingResult(is.policy, blt.State(), is.log)
 	}
 
 	return
