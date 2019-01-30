@@ -37,9 +37,22 @@ func (api NetworkHandlerAPI) PostSubscribeHandler(w http.ResponseWriter, r *http
 		return
 	}
 
+	// If the client is watching an account, make sure we send
+	// the initial state first, so if the account already reached
+	// the expected state, the client knows immediately.
+	// This can happen if, e.g., the client fires a requests
+	// and subscribes, waiting for it to complete.
+	var addressesToTrigger []string
 	var events []string
 	for _, conditions := range requestParams {
 		events = append(events, conditions.String())
+		for _, cond := range conditions {
+			if cond.Resource == observer.Acc &&
+				cond.Key == observer.Identifier &&
+				cond.Value != "" {
+				addressesToTrigger = append(addressesToTrigger, cond.Value)
+			}
+		}
 	}
 
 	renderFunc := func(args ...interface{}) ([]byte, error) {
@@ -70,6 +83,12 @@ func (api NetworkHandlerAPI) PostSubscribeHandler(w http.ResponseWriter, r *http
 
 	es := NewEventStream(w, r, renderFunc, DefaultContentType)
 	es.Render(nil)
+	for _, addr := range addressesToTrigger {
+		// Ignore error: Maybe the account does not exist yet
+		if ba, err := block.GetBlockAccount(api.storage, addr); err == nil {
+			es.Render(ba)
+		}
+	}
 	es.Run(observer.ResourceObserver, events...)
 }
 
