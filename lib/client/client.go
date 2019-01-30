@@ -361,8 +361,16 @@ func (c *Client) stream(ctx context.Context, url string, body []byte, handler fu
 //     handler = The handler function that will be called every time an account is updated.
 //
 // Returns: An `error` object, or `nil`
-func (c *Client) StreamAccount(ctx context.Context, handler func(Account)) error {
-	conds := []observer.Conditions{{observer.NewCondition(observer.Acc, observer.All)}}
+func (c *Client) StreamAccount(ctx context.Context, handler func(Account), ids ...string) error {
+	var conds []observer.Conditions
+	if len(ids) == 0 {
+		conds = []observer.Conditions{{observer.NewCondition(observer.Acc, observer.All)}}
+	} else {
+		for _, id := range ids {
+			conds = append(conds, observer.Conditions{observer.NewCondition(observer.Acc, observer.Identifier, id)})
+		}
+	}
+
 	body, err := json.Marshal(conds)
 	if err != nil {
 		return err
