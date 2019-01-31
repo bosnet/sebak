@@ -119,7 +119,7 @@ func createTestNodeRunnersHTTP2Network(n int) (nodeRunners []*NodeRunner, rootKP
 		}
 		ports = append(ports, port)
 
-		endpoint, _ := common.NewEndpointFromString(
+		endpoint := common.MustParseEndpoint(
 			fmt.Sprintf(
 				"http://localhost:%d?NodeName=%s",
 				port,

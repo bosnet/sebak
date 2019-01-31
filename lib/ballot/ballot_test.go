@@ -20,7 +20,7 @@ import (
 func TestErrorBallotHasOverMaxTransactionsInBallot(t *testing.T) {
 	kp := keypair.Random()
 	commonKP := keypair.Random()
-	endpoint, _ := common.NewEndpointFromString("https://localhost:1000")
+	endpoint := common.MustParseEndpoint("https://localhost:1000")
 	node, _ := node.NewLocalNode(kp, endpoint, "")
 
 	basis := voting.Basis{Round: 0, Height: 1, BlockHash: "hahaha", TotalTxs: 1}
@@ -68,7 +68,7 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 	conf := common.NewTestConfig()
 	kp := keypair.Random()
 	commonKP := keypair.Random()
-	endpoint, _ := common.NewEndpointFromString("https://localhost:1000")
+	endpoint := common.MustParseEndpoint("https://localhost:1000")
 	node, _ := node.NewLocalNode(kp, endpoint, "")
 
 	basis := voting.Basis{Round: 0, Height: 0, BlockHash: "showme", TotalTxs: 0}
@@ -159,7 +159,7 @@ func TestBallotProposerTransaction(t *testing.T) {
 	conf := common.NewTestConfig()
 	kp := keypair.Random()
 	commonKP := keypair.Random()
-	endpoint, _ := common.NewEndpointFromString("https://localhost:1000")
+	endpoint := common.MustParseEndpoint("https://localhost:1000")
 	node, _ := node.NewLocalNode(kp, endpoint, "")
 
 	basis := voting.Basis{Round: 0, Height: 1, BlockHash: "hahaha", TotalTxs: 1}
@@ -198,8 +198,8 @@ func TestBallotProposerTransaction(t *testing.T) {
 
 func TestNewBallot(t *testing.T) {
 	kp := keypair.Random()
-	nodeEndpoint, _ := common.NewEndpointFromString("https://localhost:1000")
-	proposerEndpoint, _ := common.NewEndpointFromString("https://localhost:1001")
+	nodeEndpoint := common.MustParseEndpoint("https://localhost:1000")
+	proposerEndpoint := common.MustParseEndpoint("https://localhost:1001")
 	n, _ := node.NewLocalNode(kp, nodeEndpoint, "")
 	p, _ := node.NewLocalNode(kp, proposerEndpoint, "")
 
@@ -214,8 +214,8 @@ func TestNewBallot(t *testing.T) {
 // In this test, we can check that the normal ballot(not expired) should be signed by proposer.
 func TestIsBallotWellFormed(t *testing.T) {
 	conf := common.NewTestConfig()
-	nodeEndpoint, _ := common.NewEndpointFromString("https://localhost:1000")
-	proposerEndpoint, _ := common.NewEndpointFromString("https://localhost:1001")
+	nodeEndpoint := common.MustParseEndpoint("https://localhost:1000")
+	proposerEndpoint := common.MustParseEndpoint("https://localhost:1001")
 
 	nodeKP := keypair.Random()
 	n, _ := node.NewLocalNode(nodeKP, nodeEndpoint, "")
@@ -258,8 +258,8 @@ func TestIsBallotWellFormed(t *testing.T) {
 // We can check that expired ballot could be signed by node key pair(not proposer).
 func TestIsExpiredBallotWellFormed(t *testing.T) {
 	conf := common.NewTestConfig()
-	nodeEndpoint, _ := common.NewEndpointFromString("https://localhost:1000")
-	proposerEndpoint, _ := common.NewEndpointFromString("https://localhost:1001")
+	nodeEndpoint := common.MustParseEndpoint("https://localhost:1000")
+	proposerEndpoint := common.MustParseEndpoint("https://localhost:1001")
 
 	nodeKP := keypair.Random()
 	n, _ := node.NewLocalNode(nodeKP, nodeEndpoint, "")
@@ -287,8 +287,8 @@ func TestIsExpiredBallotWellFormed(t *testing.T) {
 // As a result, in expired ballot's validation, it does not matter whether there is a proposal transaction or not.
 func TestIsExpiredBallotWithProposerTransactionWellFormed(t *testing.T) {
 	conf := common.NewTestConfig()
-	nodeEndpoint, _ := common.NewEndpointFromString("https://localhost:1000")
-	proposerEndpoint, _ := common.NewEndpointFromString("https://localhost:1001")
+	nodeEndpoint := common.MustParseEndpoint("https://localhost:1000")
+	proposerEndpoint := common.MustParseEndpoint("https://localhost:1001")
 
 	nodeKP := keypair.Random()
 	n, _ := node.NewLocalNode(nodeKP, nodeEndpoint, "")

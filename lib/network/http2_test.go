@@ -126,10 +126,7 @@ func TestHTTP2NetworkTLSSupport(t *testing.T) {
 // Without TLS configurations, `TLSCertFile`, `TLSKeyFile`, `HTTP2Network`
 // will be `HTTP` server, not `HTTPS`.
 func TestHTTP2NetworkWithoutTLS(t *testing.T) {
-	endpoint, err := common.NewEndpointFromString(
-		fmt.Sprintf("http://localhost:%s", getPort()),
-	)
-	require.NoError(t, err)
+	endpoint := common.MustParseEndpoint(fmt.Sprintf("http://localhost:%s", getPort()))
 
 	network, err := makeTestHTTP2NetworkForTLS(endpoint)
 	require.NoError(t, err)
@@ -170,8 +167,7 @@ func TestHTTP2NetworkRetryClient(t *testing.T) {
 	router := mux.NewRouter()
 	router.HandleFunc("/ping", ping).Methods("GET")
 	ts := httptest.NewServer(router)
-	endpoint, err := common.NewEndpointFromString(ts.URL + "/ping")
-	require.NoError(t, err)
+	endpoint := common.MustParseEndpoint(ts.URL + "/ping")
 	// with No Retry
 	{
 		client, err := common.NewHTTP2Client(

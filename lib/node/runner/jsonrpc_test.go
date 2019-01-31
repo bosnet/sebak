@@ -27,7 +27,7 @@ type jsonrpcServerTestHelper struct {
 
 func (jp *jsonrpcServerTestHelper) prepare() {
 	jp.server = httptest.NewUnstartedServer(nil)
-	endpoint, _ := common.NewEndpointFromString("http://localhost/jsonrpc")
+	endpoint := common.MustParseEndpoint("http://localhost/jsonrpc")
 	jp.st = storage.NewTestStorage()
 
 	jp.js = newJSONRPCServer(endpoint, jp.st)

@@ -313,7 +313,7 @@ func parseFlagDiscovery(l cmdcommon.ListFlags) (endpoints []*common.Endpoint, er
 
 	var endpoint *common.Endpoint
 	for _, s := range l {
-		if endpoint, err = common.NewEndpointFromString(s); err != nil {
+		if endpoint, err = common.ParseEndpoint(s); err != nil {
 			return
 		}
 

@@ -71,17 +71,11 @@ func pingAndWait(t *testing.T, c0 network.NetworkClient) {
 }
 
 func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, n *network.HTTP2Network, nodeRunner *NodeRunner) {
+	kp = keypair.Random()
 	conf := common.NewTestConfig()
 	g := network.NewKeyGenerator(dirPath, certPath, keyPath)
 
-	var config *network.HTTP2NetworkConfig
-	endpoint, err := common.NewEndpointFromString(fmt.Sprintf("https://localhost:%s?NodeName=n1", getPort()))
-	if err != nil {
-		t.Error(err)
-		return
-	}
-
-	kp = keypair.Random()
+	endpoint := common.MustParseEndpoint(fmt.Sprintf("https://localhost:%s?NodeName=n1", getPort()))
 	localNode, _ := node.NewLocalNode(kp, endpoint, "")
 	localNode.AddValidators(localNode.ConvertToValidator())
 
@@ -90,7 +84,7 @@ func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, n *network.HTTP2Netw
 	queries.Add("TLSKeyFile", g.GetKeyPath())
 	endpoint.RawQuery = queries.Encode()
 
-	config, err = network.NewHTTP2NetworkConfigFromEndpoint(localNode.Alias(), endpoint)
+	config, err := network.NewHTTP2NetworkConfigFromEndpoint(localNode.Alias(), endpoint)
 	if err != nil {
 		t.Error(err)
 		return
@@ -167,7 +161,7 @@ func TestGetNodeInfoHandler(t *testing.T) {
 	st := storage.NewTestStorage()
 	defer st.Close()
 
-	endpoint, _ := common.NewEndpointFromString("http://localhost:12345")
+	endpoint := common.MustParseEndpoint("http://localhost:12345")
 	localNode, _ := node.NewLocalNode(keypair.Random(), endpoint, "")
 	localNode.AddValidators(localNode.ConvertToValidator())
 	conf := common.NewTestConfig()
@@ -214,7 +208,7 @@ func TestGetNodeInfoHandler(t *testing.T) {
 	}
 
 	{ // with setting PublishEndpoint, `endpoint` of response should be requested URL
-		publishEndpoint, _ := common.NewEndpointFromString("https://9.9.9.9:54321")
+		publishEndpoint := common.MustParseEndpoint("https://9.9.9.9:54321")
 		localNode.SetPublishEndpoint(publishEndpoint)
 
 		u, _ := url.Parse(server.URL)

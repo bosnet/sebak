@@ -13,8 +13,7 @@ import (
 
 func TestNodeStateChange(t *testing.T) {
 	kp := keypair.Random()
-	endpoint, err := common.NewEndpointFromString(fmt.Sprintf("https://localhost:5000?NodeName=n1"))
-	require.Equal(t, nil, err)
+	endpoint := common.MustParseEndpoint("https://localhost:5000?NodeName=n1")
 
 	node, _ := NewLocalNode(kp, endpoint, "")
 
@@ -29,8 +28,7 @@ func TestNodeStateChange(t *testing.T) {
 
 func TestNodeMarshalJSON(t *testing.T) {
 	kp := keypair.Random()
-	endpoint, err := common.NewEndpointFromString(fmt.Sprintf("https://localhost:5000?NodeName=n1"))
-	require.Equal(t, nil, err)
+	endpoint := common.MustParseEndpoint("https://localhost:5000?NodeName=n1")
 
 	marshalNode, _ := NewLocalNode(kp, endpoint, "")
 	tmpByte, err := marshalNode.MarshalJSON()
@@ -53,18 +51,12 @@ func TestNodeMarshalJSON(t *testing.T) {
 
 func TestNodeMarshalJSONWithValidator(t *testing.T) {
 	kp := keypair.Random()
-
-	endpoint, err := common.NewEndpointFromString(fmt.Sprintf("https://localhost:5000?NodeName=n1"))
-	require.Equal(t, nil, err)
-
-	endpoint2, err := common.NewEndpointFromString(fmt.Sprintf("https://localhost:5001?NodeName=n2"))
-	require.Equal(t, nil, err)
-
-	endpoint3, err := common.NewEndpointFromString(fmt.Sprintf("https://localhost:5002?NodeName=n3"))
-	require.Equal(t, nil, err)
-
 	kp2 := keypair.Random()
 	kp3 := keypair.Random()
+
+	endpoint := common.MustParseEndpoint("https://localhost:5000?NodeName=n1")
+	endpoint2 := common.MustParseEndpoint("https://localhost:5001?NodeName=n2")
+	endpoint3 := common.MustParseEndpoint("https://localhost:5002?NodeName=n3")
 
 	validator1, _ := NewValidator(kp2.Address(), endpoint2, "v1")
 	validator2, _ := NewValidator(kp3.Address(), endpoint3, "v2")

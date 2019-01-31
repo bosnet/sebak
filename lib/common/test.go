@@ -54,3 +54,12 @@ func CheckRoundTripRLP(t *testing.T, record interface{}) {
 	require.Equal(t, record, result.Elem().Interface())
 	require.Equal(t, MustMakeObjectHash(record), MustMakeObjectHash(result.Elem().Interface()))
 }
+
+// Utility to get a new `common.Endpoint` from a string
+func MustParseEndpoint(endpoint string) *Endpoint {
+	if ret, err := ParseEndpoint(endpoint); err != nil {
+		panic(err)
+	} else {
+		return ret
+	}
+}

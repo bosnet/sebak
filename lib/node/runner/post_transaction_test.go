@@ -26,7 +26,7 @@ func TestPostTransaction(t *testing.T) {
 	conf := common.NewTestConfig()
 	conf.OpsLimit = 1
 
-	endpoint, _ := common.NewEndpointFromString("http://localhost:12345")
+	endpoint := common.MustParseEndpoint("http://localhost:12345")
 	localNode, _ := node.NewLocalNode(keypair.Random(), endpoint, "")
 	localNode.AddValidators(localNode.ConvertToValidator())
 	isaac, _ := consensus.NewISAAC(

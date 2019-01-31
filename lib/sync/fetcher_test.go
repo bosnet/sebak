@@ -39,7 +39,7 @@ func TestBlockFetcher(t *testing.T) {
 	kp := keypair.Random()
 	_, _, localNode := network.CreateMemoryNetwork(nil)
 
-	ep, _ := common.NewEndpointFromString("https://node1?NodeName=n1")
+	ep := common.MustParseEndpoint("https://node1?NodeName=n1")
 	v, _ := node.NewValidator(kp.Address(), ep, "n1")
 
 	localNode.AddValidators(v)

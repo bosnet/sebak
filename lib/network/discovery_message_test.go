@@ -16,14 +16,14 @@ func TestDiscoveryMessage(t *testing.T) {
 	var networkID []byte = []byte("show-me")
 
 	kp := keypair.Random()
-	endpoint, _ := common.NewEndpointFromString("http://1.2.3.4:5678")
+	endpoint := common.MustParseEndpoint("http://1.2.3.4:5678")
 	localNode, _ := node.NewLocalNode(kp, endpoint, "")
 
 	var validators []*node.Validator
 	{ // add validators
 		for i := 0; i < 3; i++ {
 			kpv := keypair.Random()
-			endpointv, _ := common.NewEndpointFromString(fmt.Sprintf("http://1.2.3.4:567%d", i))
+			endpointv := common.MustParseEndpoint(fmt.Sprintf("http://1.2.3.4:567%d", i))
 			v, _ := node.NewValidator(kpv.Address(), endpointv, "")
 			validators = append(validators, v)
 		}
@@ -90,14 +90,14 @@ func TestDiscoveryMessageUndiscovered(t *testing.T) {
 	var networkID []byte = []byte("show-me")
 
 	kp := keypair.Random()
-	endpoint, _ := common.NewEndpointFromString("http://1.2.3.4:5678")
+	endpoint := common.MustParseEndpoint("http://1.2.3.4:5678")
 	localNode, _ := node.NewLocalNode(kp, endpoint, "")
 
 	var validators []*node.Validator
 	{ // add validators
 		for i := 0; i < 4; i++ {
 			kpv := keypair.Random()
-			endpointv, _ := common.NewEndpointFromString(fmt.Sprintf("http://1.2.3.4:567%d", i))
+			endpointv := common.MustParseEndpoint(fmt.Sprintf("http://1.2.3.4:567%d", i))
 			v, _ := node.NewValidator(kpv.Address(), endpointv, "")
 			validators = append(validators, v)
 

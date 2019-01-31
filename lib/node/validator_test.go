@@ -79,9 +79,7 @@ func TestParseValidatorFromURI(t *testing.T) {
 func TestValidatorMarshalJSON(t *testing.T) {
 	kp := keypair.Random()
 
-	endpoint, err := common.NewEndpointFromString(fmt.Sprintf("https://localhost:5000?NodeName=n1"))
-	require.Equal(t, nil, err)
-
+	endpoint := common.MustParseEndpoint("https://localhost:5000?NodeName=n1")
 	validator, _ := NewValidator(kp.Address(), endpoint, "v1")
 
 	tmpByte, err := validator.MarshalJSON()
@@ -108,12 +106,11 @@ func TestValidatorNewValidatorFromString(t *testing.T) {
 func TestValidatorUnMarshalJSON(t *testing.T) {
 	kp := keypair.Random()
 
-	endpoint, err := common.NewEndpointFromString(fmt.Sprintf("https://localhost:5000?NodeName=n1"))
-	require.Equal(t, nil, err)
+	endpoint := common.MustParseEndpoint("https://localhost:5000?NodeName=n1")
+	validator, err := NewValidator(kp.Address(), endpoint, "node")
+	require.NoError(t, err)
 
-	validator, _ := NewValidator(kp.Address(), endpoint, "node")
-
-	validator.UnmarshalJSON([]byte(
+	err = validator.UnmarshalJSON([]byte(
 		`{
 			"address":"GATCSN5N6WST3GIJNOF3P55KZTBXG6KUSEFZFHJHV6ZLYNX3OQS2IJTN",
 			"alias":"v1",
@@ -121,7 +118,7 @@ func TestValidatorUnMarshalJSON(t *testing.T) {
 			"state":"NONE"
 		}`,
 	))
-	require.Equal(t, nil, err)
+	require.NoError(t, err)
 
 	require.Equal(t, "v1", validator.Alias())
 	require.Equal(t, "https://localhost:5000", validator.Endpoint().String())

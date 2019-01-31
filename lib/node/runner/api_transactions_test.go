@@ -44,9 +44,7 @@ func (p *HelperTestGetNodeTransactionsHandler) Prepare() {
 	p.blocks = append(p.blocks, block.GetGenesis(p.st))
 
 	kp := keypair.Random()
-	endpoint, _ := common.NewEndpointFromString(
-		fmt.Sprintf("http://localhost:12345"),
-	)
+	endpoint := common.MustParseEndpoint("http://localhost:12345")
 	p.localNode, _ = node.NewLocalNode(kp, endpoint, "")
 	p.localNode.AddValidators(p.localNode.ConvertToValidator())
 
