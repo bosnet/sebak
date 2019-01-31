@@ -21,7 +21,7 @@ func TestNewConfig(t *testing.T) {
 	tp := transaction.NewPool(conf)
 
 	endpoint := common.MustParseEndpoint("https://localhost:5000?NodeName=n1")
-	node, _ := node.NewLocalNode(keypair.Random(), endpoint, "")
+	node := node.NewTestLocalNode(keypair.Random(), endpoint)
 
 	cfg, err := NewConfig(node, st, nt, cm, tp, conf)
 	require.NoError(t, err)

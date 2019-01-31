@@ -15,7 +15,7 @@ func TestNodeStateChange(t *testing.T) {
 	kp := keypair.Random()
 	endpoint := common.MustParseEndpoint("https://localhost:5000?NodeName=n1")
 
-	node, _ := NewLocalNode(kp, endpoint, "")
+	node := NewTestLocalNode(kp, endpoint)
 
 	require.Equal(t, StateCONSENSUS, node.State())
 
@@ -30,7 +30,7 @@ func TestNodeMarshalJSON(t *testing.T) {
 	kp := keypair.Random()
 	endpoint := common.MustParseEndpoint("https://localhost:5000?NodeName=n1")
 
-	marshalNode, _ := NewLocalNode(kp, endpoint, "")
+	marshalNode := NewTestLocalNode(kp, endpoint)
 	tmpByte, err := marshalNode.MarshalJSON()
 	require.Equal(t, nil, err)
 
@@ -61,12 +61,13 @@ func TestNodeMarshalJSONWithValidator(t *testing.T) {
 	validator1, _ := NewValidator(kp2.Address(), endpoint2, "v1")
 	validator2, _ := NewValidator(kp3.Address(), endpoint3, "v2")
 
-	localNode, _ := NewLocalNode(kp, endpoint, "node")
+	localNode, err := NewLocalNode(kp, endpoint, "node")
+	require.NoError(t, err)
 
 	localNode.AddValidators(validator1, validator2)
 
 	tmpByte, err := localNode.MarshalJSON()
-	require.Equal(t, nil, err)
+	require.NoError(t, err)
 
 	require.Equal(t, true, strings.Contains(string(tmpByte), `"alias":"node"`))
 	require.Equal(t, true, strings.Contains(string(tmpByte), `"state":"CONSENSUS"`))
