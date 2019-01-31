@@ -1,7 +1,6 @@
 package sync
 
 import (
-	"fmt"
 	"testing"
 
 	"boscoin.io/sebak/lib/block"
@@ -21,9 +20,7 @@ func TestNewConfig(t *testing.T) {
 	cm := &mockConnectionManager{}
 	tp := transaction.NewPool(conf)
 
-	endpoint, err := common.NewEndpointFromString(fmt.Sprintf("https://localhost:5000?NodeName=n1"))
-	require.Equal(t, nil, err)
-
+	endpoint := common.MustParseEndpoint("https://localhost:5000?NodeName=n1")
 	node, _ := node.NewLocalNode(keypair.Random(), endpoint, "")
 
 	cfg, err := NewConfig(node, st, nt, cm, tp, conf)

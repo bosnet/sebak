@@ -75,17 +75,6 @@ func NewEndpointFromURL(u *url.URL) *Endpoint {
 	return (*Endpoint)(u)
 }
 
-func NewEndpointFromString(s string) (e *Endpoint, err error) {
-	var u *url.URL
-	if u, err = url.Parse(s); err != nil {
-		return
-	}
-
-	u.Scheme = strings.ToLower(u.Scheme)
-	e = NewEndpointFromURL(u)
-	return
-}
-
 func (e *Endpoint) String() string {
 	return (&url.URL{
 		Scheme: e.Scheme,
