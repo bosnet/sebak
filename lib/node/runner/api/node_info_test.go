@@ -24,7 +24,7 @@ func TestAPIGetNodeInfoHandler(t *testing.T) {
 
 	endpoint, _ := common.ParseEndpoint("http://1.2.3.4:5678")
 	kp := keypair.Random()
-	localNode, _ := node.NewLocalNode(kp, endpoint, "")
+	localNode := node.NewTestLocalNode(kp, endpoint)
 
 	nv := node.NodeVersion{
 		Version:   version.Version,

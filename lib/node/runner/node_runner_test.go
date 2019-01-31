@@ -126,7 +126,7 @@ func createTestNodeRunnersHTTP2Network(n int) (nodeRunners []*NodeRunner, rootKP
 				kp.Address(),
 			),
 		)
-		node, _ := node.NewLocalNode(kp, endpoint, "")
+		node := node.NewTestLocalNode(kp, endpoint)
 		nodes = append(nodes, node)
 	}
 

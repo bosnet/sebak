@@ -17,7 +17,7 @@ func TestDiscoveryMessage(t *testing.T) {
 
 	kp := keypair.Random()
 	endpoint := common.MustParseEndpoint("http://1.2.3.4:5678")
-	localNode, _ := node.NewLocalNode(kp, endpoint, "")
+	localNode := node.NewTestLocalNode(kp, endpoint)
 
 	var validators []*node.Validator
 	{ // add validators
@@ -91,7 +91,7 @@ func TestDiscoveryMessageUndiscovered(t *testing.T) {
 
 	kp := keypair.Random()
 	endpoint := common.MustParseEndpoint("http://1.2.3.4:5678")
-	localNode, _ := node.NewLocalNode(kp, endpoint, "")
+	localNode := node.NewTestLocalNode(kp, endpoint)
 
 	var validators []*node.Validator
 	{ // add validators

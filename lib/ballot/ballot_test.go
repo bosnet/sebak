@@ -21,7 +21,7 @@ func TestErrorBallotHasOverMaxTransactionsInBallot(t *testing.T) {
 	kp := keypair.Random()
 	commonKP := keypair.Random()
 	endpoint := common.MustParseEndpoint("https://localhost:1000")
-	node, _ := node.NewLocalNode(kp, endpoint, "")
+	node := node.NewTestLocalNode(kp, endpoint)
 
 	basis := voting.Basis{Round: 0, Height: 1, BlockHash: "hahaha", TotalTxs: 1}
 
@@ -69,7 +69,7 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 	kp := keypair.Random()
 	commonKP := keypair.Random()
 	endpoint := common.MustParseEndpoint("https://localhost:1000")
-	node, _ := node.NewLocalNode(kp, endpoint, "")
+	node := node.NewTestLocalNode(kp, endpoint)
 
 	basis := voting.Basis{Round: 0, Height: 0, BlockHash: "showme", TotalTxs: 0}
 
@@ -145,7 +145,7 @@ func TestBallotBadConfirmedTime(t *testing.T) {
 func TestBallotEmptyHash(t *testing.T) {
 	conf := common.NewTestConfig()
 	kp := keypair.Random()
-	node, _ := node.NewLocalNode(kp, &common.Endpoint{}, "")
+	node := node.NewTestLocalNode(kp, &common.Endpoint{})
 	r := voting.Basis{}
 	b := NewBallot(node.Address(), node.Address(), r, []string{})
 	b.Sign(kp, conf.NetworkID)
@@ -160,7 +160,7 @@ func TestBallotProposerTransaction(t *testing.T) {
 	kp := keypair.Random()
 	commonKP := keypair.Random()
 	endpoint := common.MustParseEndpoint("https://localhost:1000")
-	node, _ := node.NewLocalNode(kp, endpoint, "")
+	node := node.NewTestLocalNode(kp, endpoint)
 
 	basis := voting.Basis{Round: 0, Height: 1, BlockHash: "hahaha", TotalTxs: 1}
 
@@ -200,8 +200,8 @@ func TestNewBallot(t *testing.T) {
 	kp := keypair.Random()
 	nodeEndpoint := common.MustParseEndpoint("https://localhost:1000")
 	proposerEndpoint := common.MustParseEndpoint("https://localhost:1001")
-	n, _ := node.NewLocalNode(kp, nodeEndpoint, "")
-	p, _ := node.NewLocalNode(kp, proposerEndpoint, "")
+	n := node.NewTestLocalNode(kp, nodeEndpoint)
+	p := node.NewTestLocalNode(kp, proposerEndpoint)
 
 	basis := voting.Basis{Round: 0, Height: 1, BlockHash: "hahaha", TotalTxs: 1}
 
@@ -218,10 +218,10 @@ func TestIsBallotWellFormed(t *testing.T) {
 	proposerEndpoint := common.MustParseEndpoint("https://localhost:1001")
 
 	nodeKP := keypair.Random()
-	n, _ := node.NewLocalNode(nodeKP, nodeEndpoint, "")
+	n := node.NewTestLocalNode(nodeKP, nodeEndpoint)
 
 	proposerKP := keypair.Random()
-	p, _ := node.NewLocalNode(proposerKP, proposerEndpoint, "")
+	p := node.NewTestLocalNode(proposerKP, proposerEndpoint)
 
 	basis := voting.Basis{Round: 0, Height: 1, BlockHash: "hahaha", TotalTxs: 1}
 
@@ -262,10 +262,10 @@ func TestIsExpiredBallotWellFormed(t *testing.T) {
 	proposerEndpoint := common.MustParseEndpoint("https://localhost:1001")
 
 	nodeKP := keypair.Random()
-	n, _ := node.NewLocalNode(nodeKP, nodeEndpoint, "")
+	n := node.NewTestLocalNode(nodeKP, nodeEndpoint)
 
 	proposerKP := keypair.Random()
-	p, _ := node.NewLocalNode(proposerKP, proposerEndpoint, "")
+	p := node.NewTestLocalNode(proposerKP, proposerEndpoint)
 
 	basis := voting.Basis{Round: 0, Height: 1, BlockHash: "hahaha", TotalTxs: 1}
 
@@ -291,10 +291,10 @@ func TestIsExpiredBallotWithProposerTransactionWellFormed(t *testing.T) {
 	proposerEndpoint := common.MustParseEndpoint("https://localhost:1001")
 
 	nodeKP := keypair.Random()
-	n, _ := node.NewLocalNode(nodeKP, nodeEndpoint, "")
+	n := node.NewTestLocalNode(nodeKP, nodeEndpoint)
 
 	proposerKP := keypair.Random()
-	p, _ := node.NewLocalNode(proposerKP, proposerEndpoint, "")
+	p := node.NewTestLocalNode(proposerKP, proposerEndpoint)
 
 	basis := voting.Basis{Round: 0, Height: 1, BlockHash: "hahaha", TotalTxs: 1}
 
@@ -317,5 +317,4 @@ func TestIsExpiredBallotWithProposerTransactionWellFormed(t *testing.T) {
 	err := b.IsWellFormed(conf)
 
 	require.NoError(t, err)
-
 }

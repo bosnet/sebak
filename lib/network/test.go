@@ -18,7 +18,7 @@ import (
 func CreateMemoryNetwork(prev *MemoryNetwork) (*keypair.Full, *MemoryNetwork, *node.LocalNode) {
 	mn := prev.NewMemoryNetwork()
 	kp := keypair.Random()
-	localNode, _ := node.NewLocalNode(kp, mn.Endpoint(), "")
+	localNode := node.NewTestLocalNode(kp, mn.Endpoint())
 	mn.SetLocalNode(localNode)
 	return kp, mn, localNode
 }

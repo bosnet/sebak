@@ -76,7 +76,7 @@ func createNewHTTP2Network(t *testing.T) (kp *keypair.Full, n *network.HTTP2Netw
 	g := network.NewKeyGenerator(dirPath, certPath, keyPath)
 
 	endpoint := common.MustParseEndpoint(fmt.Sprintf("https://localhost:%s?NodeName=n1", getPort()))
-	localNode, _ := node.NewLocalNode(kp, endpoint, "")
+	localNode := node.NewTestLocalNode(kp, endpoint)
 	localNode.AddValidators(localNode.ConvertToValidator())
 
 	queries := endpoint.Query()
@@ -162,7 +162,7 @@ func TestGetNodeInfoHandler(t *testing.T) {
 	defer st.Close()
 
 	endpoint := common.MustParseEndpoint("http://localhost:12345")
-	localNode, _ := node.NewLocalNode(keypair.Random(), endpoint, "")
+	localNode := node.NewTestLocalNode(keypair.Random(), endpoint)
 	localNode.AddValidators(localNode.ConvertToValidator())
 	conf := common.NewTestConfig()
 	isaac, _ := consensus.NewISAAC(
