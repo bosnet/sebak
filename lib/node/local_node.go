@@ -29,21 +29,24 @@ type LocalNode struct {
 	validators      map[ /* Node.Address() */ string]*Validator
 }
 
-func NewLocalNode(kp *keypair.Full, bindEndpoint *common.Endpoint, alias string) (n *LocalNode, err error) {
+func NewLocalNode(kp *keypair.Full, bindEndpoint *common.Endpoint, alias string) (*LocalNode, error) {
 	if len(alias) < 1 {
 		alias = MakeAlias(kp.Address())
 	}
 
-	n = &LocalNode{
+	node := &LocalNode{
 		keypair:      kp,
 		state:        StateCONSENSUS,
 		alias:        alias,
 		bindEndpoint: bindEndpoint,
 		validators:   map[string]*Validator{},
 	}
-	n.AddValidators(n.ConvertToValidator())
 
-	return
+	if err := node.AddValidators(node.ConvertToValidator()); err != nil {
+		return nil, err
+	} else {
+		return node, nil
+	}
 }
 
 func (n *LocalNode) String() string {
