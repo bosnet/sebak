@@ -374,18 +374,17 @@ func parseFlagsNode() {
 	queries.Add("IdleTimeout", "3s")
 	bindEndpoint.RawQuery = queries.Encode()
 
-	if len(flagPublishURL) > 0 {
-		if p, err := common.ParseEndpoint(flagPublishURL); err != nil {
-			cmdcommon.PrintFlagsError(nodeCmd, "--publish", err)
-		} else {
-			publishEndpoint = p
-			flagPublishURL = publishEndpoint.String()
-		}
+	// If there is no endpoint, just set a default
+	if len(flagPublishURL) <= 0 {
+		// Make a copy
+		tmpURL := *bindEndpoint
+		tmpURL.Host = fmt.Sprintf("localhost:%s", tmpURL.Port())
+		flagPublishURL = tmpURL.String()
+	}
+	if p, err := common.ParseEndpoint(flagPublishURL); err != nil {
+		cmdcommon.PrintFlagsError(nodeCmd, "--publish", err)
 	} else {
-		publishEndpoint = &common.Endpoint{}
-		*publishEndpoint = *bindEndpoint
-		publishEndpoint.Host = fmt.Sprintf("localhost:%s", publishEndpoint.Port())
-		flagPublishURL = publishEndpoint.String()
+		publishEndpoint = p
 	}
 
 	if len(flagJSONRPCBindURL) > 0 { // jsonrpc
