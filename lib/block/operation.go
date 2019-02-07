@@ -31,10 +31,9 @@ type BlockOperation struct {
 	Height uint64                  `json:"block_height"`
 
 	// bellows will be used only for `Save` time.
-	seqID     uint64
-	operation operation.Operation
-	linked    string
-	isSaved   bool
+	seqID   uint64
+	linked  string
+	isSaved bool
 }
 
 func NewBlockOperationKey(opHash, txHash string) string {
@@ -74,9 +73,8 @@ func NewBlockOperationFromOperation(op operation.Operation, tx transaction.Trans
 		Body:   body,
 		Height: blockHeight,
 
-		seqID:     tx.B.SequenceID,
-		operation: op,
-		linked:    linked,
+		seqID:  tx.B.SequenceID,
+		linked: linked,
 	}, nil
 }
 
