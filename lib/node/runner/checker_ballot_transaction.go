@@ -393,7 +393,7 @@ func ValidateOp(st *storage.LevelDBBackend, config common.Config, source *block.
 				return errors.InvalidOperation
 			}
 
-			if bo, err = block.GetBlockOperationWithIndex(st, txHash, opIndex); err != nil {
+			if bo, err = block.GetBlockOperationByIndex(st, txHash, opIndex); err != nil {
 				return err
 			}
 
@@ -427,7 +427,7 @@ func ValidateOp(st *storage.LevelDBBackend, config common.Config, source *block.
 				return errors.InvalidOperation
 			}
 
-			if bo, err = block.GetBlockOperationWithIndex(st, txHash, opIndex); err != nil {
+			if bo, err = block.GetBlockOperationByIndex(st, txHash, opIndex); err != nil {
 				return err
 			}
 
@@ -484,7 +484,7 @@ func ValidateOp(st *storage.LevelDBBackend, config common.Config, source *block.
 			return errors.InvalidOperation
 		}
 
-		if _, err = block.GetBlockOperationWithIndex(st, txHash, opIndex); err != nil {
+		if _, err = block.GetBlockOperationByIndex(st, txHash, opIndex); err != nil {
 			return err
 		}
 
