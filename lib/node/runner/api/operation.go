@@ -25,19 +25,11 @@ func (api NetworkHandlerAPI) GetOperationsByTxHashOpIndexHandler(w http.Response
 	}
 
 	readFunc := func() (payload interface{}, err error) {
-		found, err := block.ExistsBlockTransaction(api.storage, txHash)
-		if err != nil {
+		if bo, err := block.GetBlockOperationByIndex(api.storage, txHash, opIndexInt); err != nil {
 			return nil, err
+		} else {
+			return resource.NewOperation(&bo, opIndexInt), nil
 		}
-		if !found {
-			return nil, errors.BlockTransactionDoesNotExists
-		}
-		bo, err := block.GetBlockOperationByIndex(api.storage, txHash, opIndexInt)
-		if err != nil {
-			return nil, err
-		}
-		payload = resource.NewOperation(&bo, opIndexInt)
-		return payload, nil
 	}
 
 	payload, err := readFunc()
