@@ -15,7 +15,7 @@ func TestValidator(t *testing.T) {
 	conf := common.NewTestConfig()
 	st := block.InitTestBlockchain()
 	defer st.Close()
-	_, nw, _ := network.CreateMemoryNetwork(nil)
+	nw, _ := network.CreateMemoryNetwork(nil)
 	tp := transaction.NewPool(conf)
 
 	v := NewBlockValidator(nw, st, tp, conf)

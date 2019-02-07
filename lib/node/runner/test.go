@@ -20,7 +20,7 @@ var networkID []byte = []byte("sebak-unittest")
 
 func MakeNodeRunner() (*NodeRunner, *node.LocalNode) {
 	conf := common.NewTestConfig()
-	_, n, localNode := network.CreateMemoryNetwork(nil)
+	n, localNode := network.CreateMemoryNetwork(nil)
 
 	policy, _ := consensus.NewDefaultVotingThresholdPolicy(66)
 
@@ -131,7 +131,7 @@ func createNodeRunnerForTesting(n int, conf common.Config, recv chan struct{}) (
 	var net *network.MemoryNetwork
 	var nodes []*node.LocalNode
 	for i := 0; i < n; i++ {
-		_, s, v := network.CreateMemoryNetwork(net)
+		s, v := network.CreateMemoryNetwork(net)
 		net = s
 		ns = append(ns, s)
 		nodes = append(nodes, v)

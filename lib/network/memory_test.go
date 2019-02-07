@@ -68,7 +68,7 @@ func DummyMessageFromString(b []byte) (d DummyMessage, err error) {
 }
 
 func TestMemoryNetworkGetClient(t *testing.T) {
-	_, s0, _ := CreateMemoryNetwork(nil)
+	s0, _ := CreateMemoryNetwork(nil)
 
 	gotMessage := make(chan common.NetworkMessage)
 	go func() {
@@ -99,7 +99,7 @@ func TestMemoryNetworkGetClient(t *testing.T) {
 }
 
 func TestMemoryNetworkConnect(t *testing.T) {
-	_, s0, localNode := CreateMemoryNetwork(nil)
+	s0, localNode := CreateMemoryNetwork(nil)
 
 	c0 := s0.GetClient(s0.Endpoint())
 	b, err := c0.Connect(localNode)

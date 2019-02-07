@@ -38,7 +38,7 @@ func createTestNodeRunner(n int, conf common.Config) []*NodeRunner {
 	var net *network.MemoryNetwork
 	var nodes []*node.LocalNode
 	for i := 0; i < n; i++ {
-		_, s, v := network.CreateMemoryNetwork(net)
+		s, v := network.CreateMemoryNetwork(net)
 		net = s
 		ns = append(ns, s)
 		nodes = append(nodes, v)
