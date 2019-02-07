@@ -15,10 +15,10 @@ import (
 // is created. If `prev` is not `nil`, the returned `MemoryNetwork` will be reachable from
 // every node `prev` can reference
 //
-func CreateMemoryNetwork(prev *MemoryNetwork) (*keypair.Full, *MemoryNetwork, *node.LocalNode) {
+func CreateMemoryNetwork(prev *MemoryNetwork) (*MemoryNetwork, *node.LocalNode) {
 	mn := prev.NewMemoryNetwork()
 	kp := keypair.Random()
 	localNode := node.NewTestLocalNode(kp, mn.Endpoint())
 	mn.SetLocalNode(localNode)
-	return kp, mn, localNode
+	return mn, localNode
 }

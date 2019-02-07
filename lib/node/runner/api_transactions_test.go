@@ -48,7 +48,7 @@ func (p *HelperTestGetNodeTransactionsHandler) Prepare() {
 	p.localNode = node.NewTestLocalNode(kp, endpoint)
 	p.localNode.AddValidators(p.localNode.ConvertToValidator())
 
-	_, p.network, _ = network.CreateMemoryNetwork(nil)
+	p.network, _ = network.CreateMemoryNetwork(nil)
 	p.network.SetLocalNode(p.localNode)
 
 	isaac, _ := consensus.NewISAAC(

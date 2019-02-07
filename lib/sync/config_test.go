@@ -16,7 +16,7 @@ import (
 func TestNewConfig(t *testing.T) {
 	conf := common.NewTestConfig()
 	st := block.InitTestBlockchain()
-	_, nt, _ := network.CreateMemoryNetwork(nil)
+	nt, _ := network.CreateMemoryNetwork(nil)
 	cm := &mockConnectionManager{}
 	tp := transaction.NewPool(conf)
 
