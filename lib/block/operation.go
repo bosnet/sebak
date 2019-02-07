@@ -35,14 +35,13 @@ type BlockOperation struct {
 	operation operation.Operation
 	linked    string
 	isSaved   bool
-	opIndex   int
 }
 
 func NewBlockOperationKey(opHash, txHash string) string {
 	return fmt.Sprintf("%s-%s", opHash, txHash)
 }
 
-func NewBlockOperationFromOperation(op operation.Operation, tx transaction.Transaction, blockHeight uint64, opIndex int) (BlockOperation, error) {
+func NewBlockOperationFromOperation(op operation.Operation, tx transaction.Transaction, blockHeight uint64) (BlockOperation, error) {
 	body, err := json.Marshal(op.B)
 	if err != nil {
 		return BlockOperation{}, err
@@ -78,7 +77,6 @@ func NewBlockOperationFromOperation(op operation.Operation, tx transaction.Trans
 		seqID:     tx.B.SequenceID,
 		operation: op,
 		linked:    linked,
-		opIndex:   opIndex,
 	}, nil
 }
 
