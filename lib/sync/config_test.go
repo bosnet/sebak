@@ -5,9 +5,7 @@ import (
 
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/common/keypair"
 	"boscoin.io/sebak/lib/network"
-	"boscoin.io/sebak/lib/node"
 	"boscoin.io/sebak/lib/transaction"
 
 	"github.com/stretchr/testify/require"
@@ -16,12 +14,9 @@ import (
 func TestNewConfig(t *testing.T) {
 	conf := common.NewTestConfig()
 	st := block.InitTestBlockchain()
-	nt, _ := network.CreateMemoryNetwork(nil)
+	nt, node := network.CreateMemoryNetwork(nil)
 	cm := &mockConnectionManager{}
 	tp := transaction.NewPool(conf)
-
-	endpoint := common.MustParseEndpoint("https://localhost:5000?NodeName=n1")
-	node := node.NewTestLocalNode(keypair.Random(), endpoint)
 
 	cfg, err := NewConfig(node, st, nt, cm, tp, conf)
 	require.NoError(t, err)
