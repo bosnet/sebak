@@ -43,14 +43,7 @@ func (p *HelperTestGetNodeTransactionsHandler) Prepare() {
 	p.st = block.InitTestBlockchain()
 	p.blocks = append(p.blocks, block.GetGenesis(p.st))
 
-	kp := keypair.Random()
-	endpoint := common.MustParseEndpoint("http://localhost:12345")
-	p.localNode = node.NewTestLocalNode(kp, endpoint)
-	p.localNode.AddValidators(p.localNode.ConvertToValidator())
-
-	p.network, _ = network.CreateMemoryNetwork(nil)
-	p.network.SetLocalNode(p.localNode)
-
+	p.network, p.localNode = network.CreateMemoryNetwork(nil)
 	isaac, _ := consensus.NewISAAC(
 		p.localNode,
 		nil,
