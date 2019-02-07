@@ -23,7 +23,6 @@ const (
 
 type Config struct {
 	storage           *storage.LevelDBBackend
-	network           network.Network
 	connectionManager network.ConnectionManager
 	tp                *transaction.Pool
 	localNode         *node.LocalNode
@@ -41,13 +40,11 @@ type Config struct {
 
 func NewConfig(localNode *node.LocalNode,
 	st *storage.LevelDBBackend,
-	nt network.Network,
 	cm network.ConnectionManager,
 	tp *transaction.Pool,
 	cfg common.Config) (*Config, error) {
 	c := &Config{
 		storage:           st,
-		network:           nt,
 		connectionManager: cm,
 		tp:                tp,
 		logger:            log.New(log15.Ctx{"node": localNode.Alias()}),

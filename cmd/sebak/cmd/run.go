@@ -790,7 +790,7 @@ func runNode() error {
 
 	tp := transaction.NewPool(conf)
 
-	c, err := sync.NewConfig(localNode, st, nt, connectionManager, tp, conf)
+	c, err := sync.NewConfig(localNode, st, connectionManager, tp, conf)
 	if err != nil {
 		return err
 	}
