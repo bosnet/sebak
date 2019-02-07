@@ -39,4 +39,5 @@ type Config struct {
 	WatcherMode bool
 
 	DiscoveryEndpoints []*Endpoint
+	StopConsensus      bool
 }
