@@ -313,26 +313,15 @@ func GetBlockOperation(st *storage.LevelDBBackend, hash string) (bo BlockOperati
 	return
 }
 
-func GetBlockOperationWithIndex(st *storage.LevelDBBackend, hash string, opIndex int) (bo BlockOperation, err error) {
-	var found = false
-	iterFunc, closeFunc := GetBlockOperationsByTx(st, hash, nil)
-	for idx := 0; idx <= opIndex; idx++ {
-
-		o, hasNext, _ := iterFunc()
-		if !hasNext {
-			break
-		}
-		if idx == opIndex {
-			found = true
-			bo = o
-			break
-		}
+// Looks up the operation referenced by `txHash`, then get the operation's hash from it
+func GetBlockOperationByIndex(st *storage.LevelDBBackend, txHash string, opIndex int) (BlockOperation, error) {
+	if bt, err := GetBlockTransaction(st, txHash); err != nil {
+		return BlockOperation{}, err
+	} else if opIndex < 0 || opIndex >= len(bt.Operations) {
+		return BlockOperation{}, errors.BlockOperationDoesNotExists
+	} else {
+		return GetBlockOperation(st, bt.Operations[opIndex])
 	}
-	if !found {
-		err = errors.OperationNotFound
-	}
-	closeFunc()
-	return
 }
 
 func LoadBlockOperationsInsideIterator(

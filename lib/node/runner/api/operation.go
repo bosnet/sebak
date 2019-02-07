@@ -32,7 +32,7 @@ func (api NetworkHandlerAPI) GetOperationsByTxHashOpIndexHandler(w http.Response
 		if !found {
 			return nil, errors.BlockTransactionDoesNotExists
 		}
-		bo, err := block.GetBlockOperationWithIndex(api.storage, txHash, opIndexInt)
+		bo, err := block.GetBlockOperationByIndex(api.storage, txHash, opIndexInt)
 		if err != nil {
 			return nil, err
 		}
