@@ -316,7 +316,7 @@ func (sb *SavingBlockOperations) CheckTransactionByBlock(st *storage.LevelDBBack
 		}
 
 		if !exists {
-			if err = bt.SaveBlockOperation(st, op, i); err != nil {
+			if err = bt.SaveBlockOperation(st, op); err != nil {
 				return err
 			}
 		}

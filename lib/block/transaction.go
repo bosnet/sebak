@@ -178,8 +178,8 @@ func (bt *BlockTransaction) SaveBlockOperations(st *storage.LevelDBBackend) (err
 		}
 	}
 
-	for i, op := range bt.Transaction().B.Operations {
-		if err = bt.SaveBlockOperation(st, op, i); err != nil {
+	for _, op := range bt.Transaction().B.Operations {
+		if err = bt.SaveBlockOperation(st, op); err != nil {
 			return
 		}
 	}
@@ -187,7 +187,7 @@ func (bt *BlockTransaction) SaveBlockOperations(st *storage.LevelDBBackend) (err
 	return nil
 }
 
-func (bt *BlockTransaction) SaveBlockOperation(st *storage.LevelDBBackend, op operation.Operation, opIndex int) (err error) {
+func (bt *BlockTransaction) SaveBlockOperation(st *storage.LevelDBBackend, op operation.Operation) (err error) {
 	if bt.blockHeight < 1 {
 		var blk Block
 		if blk, err = GetBlock(st, bt.Block); err != nil {
@@ -198,7 +198,7 @@ func (bt *BlockTransaction) SaveBlockOperation(st *storage.LevelDBBackend, op op
 	}
 
 	var bo BlockOperation
-	bo, err = NewBlockOperationFromOperation(op, bt.Transaction(), bt.blockHeight, opIndex)
+	bo, err = NewBlockOperationFromOperation(op, bt.Transaction(), bt.blockHeight)
 	if err != nil {
 		return
 	}
