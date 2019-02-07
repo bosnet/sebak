@@ -35,9 +35,9 @@ func TestBlockFetcher(t *testing.T) {
 	st := block.InitTestBlockchain()
 	defer st.Close()
 
-	kp := keypair.Random()
-	_, localNode := network.CreateMemoryNetwork(nil)
+	localNode := node.NewTestLocalNode0()
 
+	kp := keypair.Random()
 	ep := common.MustParseEndpoint("https://node1?NodeName=n1")
 	v, _ := node.NewValidator(kp.Address(), ep, "n1")
 
