@@ -101,7 +101,6 @@ func (c *Config) NewFetcher() Fetcher {
 
 func (c *Config) NewValidator() Validator {
 	v := NewBlockValidator(
-		c.network,
 		c.storage,
 		c.tp,
 		c.commonCfg,

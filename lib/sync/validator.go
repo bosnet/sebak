@@ -9,7 +9,6 @@ import (
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/common/observer"
 	"boscoin.io/sebak/lib/errors"
-	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node/runner"
 	"boscoin.io/sebak/lib/storage"
 	"boscoin.io/sebak/lib/transaction"
@@ -21,7 +20,6 @@ import (
 //TODO(anarcher) another name is Finisher
 
 type BlockValidator struct {
-	network   network.Network
 	storage   *storage.LevelDBBackend
 	txpool    *transaction.Pool
 	commonCfg common.Config
@@ -32,9 +30,8 @@ type BlockValidator struct {
 
 type BlockValidatorOption func(*BlockValidator)
 
-func NewBlockValidator(nw network.Network, ldb *storage.LevelDBBackend, tp *transaction.Pool, cfg common.Config, opts ...BlockValidatorOption) *BlockValidator {
+func NewBlockValidator(ldb *storage.LevelDBBackend, tp *transaction.Pool, cfg common.Config, opts ...BlockValidatorOption) *BlockValidator {
 	v := &BlockValidator{
-		network:              nw,
 		storage:              ldb,
 		txpool:               tp,
 		prevBlockWaitTimeout: CheckPrevBlockInterval,

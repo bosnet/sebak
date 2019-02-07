@@ -6,7 +6,6 @@ import (
 
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
-	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/transaction"
 	"github.com/stretchr/testify/require"
 )
@@ -15,10 +14,9 @@ func TestValidator(t *testing.T) {
 	conf := common.NewTestConfig()
 	st := block.InitTestBlockchain()
 	defer st.Close()
-	nw, _ := network.CreateMemoryNetwork(nil)
 	tp := transaction.NewPool(conf)
 
-	v := NewBlockValidator(nw, st, tp, conf)
+	v := NewBlockValidator(st, tp, conf)
 
 	ctx := context.Background()
 

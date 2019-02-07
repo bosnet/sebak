@@ -11,7 +11,6 @@ import (
 	"boscoin.io/sebak/lib/block"
 	"boscoin.io/sebak/lib/common"
 	"boscoin.io/sebak/lib/common/keypair"
-	"boscoin.io/sebak/lib/network"
 	"boscoin.io/sebak/lib/node"
 	api "boscoin.io/sebak/lib/node/runner/node_api"
 
