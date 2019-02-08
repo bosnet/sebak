@@ -113,15 +113,6 @@ func NewValidator(address string, endpoint *common.Endpoint, alias string) (v *V
 	return
 }
 
-func NewValidatorFromString(b []byte) (*Validator, error) {
-	var v Validator
-	if err := json.Unmarshal(b, &v); err != nil {
-		return nil, err
-	}
-
-	return &v, nil
-}
-
 func NewValidatorFromURI(v string) (validator *Validator, err error) {
 	var parsed *url.URL
 	if parsed, err = url.Parse(v); err != nil {

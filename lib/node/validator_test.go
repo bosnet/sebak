@@ -89,20 +89,6 @@ func TestValidatorMarshalJSON(t *testing.T) {
 	require.Equal(t, true, strings.Contains(string(tmpByte), fmt.Sprintf(jsonStr, "v1", "5000")))
 }
 
-func TestValidatorNewValidatorFromString(t *testing.T) {
-	validator, _ := NewValidatorFromString([]byte(
-		`{
-			"address":"GATCSN5N6WST3GIJNOF3P55KZTBXG6KUSEFZFHJHV6ZLYNX3OQS2IJTN",
-			"alias":"v1",
-			"endpoint":"https://localhost:5000",
-			"state":"NONE"
-		}`,
-	))
-
-	require.Equal(t, "v1", validator.Alias())
-	require.Equal(t, "https://localhost:5000", validator.Endpoint().String())
-}
-
 func TestValidatorUnMarshalJSON(t *testing.T) {
 	kp := keypair.Random()
 
