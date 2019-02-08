@@ -2,6 +2,7 @@ package network
 
 import (
 	"bufio"
+	"encoding/json"
 	"errors"
 	"strings"
 	"sync"
@@ -290,8 +291,8 @@ func (c *ValidatorConnectionManager) connectValidator(v *node.Validator) (err er
 	}
 
 	// load and check validator info; addresses are same?
-	var validator *node.Validator
-	validator, err = node.NewValidatorFromString(b)
+	var validator node.Validator
+	err = json.Unmarshal(b, &validator)
 	if err != nil {
 		return
 	}

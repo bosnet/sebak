@@ -107,7 +107,8 @@ func TestMemoryNetworkConnect(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	v, err := node.NewValidatorFromString(b)
+	var v node.Validator
+	err = json.Unmarshal(b, &v)
 	if err != nil {
 		t.Error(err)
 		return

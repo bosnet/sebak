@@ -504,10 +504,7 @@ func (nr *NodeRunner) handleMessage(message common.NetworkMessage) {
 	}
 	switch message.Type {
 	case common.ConnectMessage:
-		if _, err := node.NewValidatorFromString(message.Data); err != nil {
-			nr.log.Error("invalid validator data was received", "error", err)
-			return
-		}
+		return // We don't do anything with that data
 	case common.BallotMessage:
 		nr.handleBallotMessage(message)
 	default:
