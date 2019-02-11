@@ -69,10 +69,11 @@ func TestNodeMarshalJSONWithValidator(t *testing.T) {
 	tmpByte, err := localNode.MarshalJSON()
 	require.NoError(t, err)
 
-	require.Equal(t, true, strings.Contains(string(tmpByte), `"alias":"node"`))
-	require.Equal(t, true, strings.Contains(string(tmpByte), `"state":"CONSENSUS"`))
-	require.Equal(t, true, strings.Contains(string(tmpByte), `"alias":"v1"`))
-	require.Equal(t, true, strings.Contains(string(tmpByte), `"endpoint":"https://localhost:5001"`))
-	require.Equal(t, true, strings.Contains(string(tmpByte), `"alias":"v2"`))
-	require.Equal(t, true, strings.Contains(string(tmpByte), `"endpoint":"https://localhost:5002"`))
+	str := string(tmpByte)
+	require.True(t, strings.Contains(str, `"alias":"node"`), str)
+	require.True(t, strings.Contains(str, `"state":"CONSENSUS"`), str)
+	require.True(t, strings.Contains(str, `"alias":"v1"`), str)
+	require.True(t, strings.Contains(str, `"endpoint":"https://localhost:5001"`), str)
+	require.True(t, strings.Contains(str, `"alias":"v2"`), str)
+	require.True(t, strings.Contains(str, `"endpoint":"https://localhost:5002"`), str)
 }
