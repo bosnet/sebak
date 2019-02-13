@@ -390,7 +390,9 @@ func (nr *NodeRunner) Start() (err error) {
 
 	go nr.handleMessages()
 	go nr.ConnectValidators()
-	go nr.InitRound()
+	if !nr.Conf.StopConsensus {
+		go nr.InitRound()
+	}
 	go nr.savingBlockOperations.Start()
 
 	if nr.jsonrpcServer != nil {

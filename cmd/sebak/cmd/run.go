@@ -85,6 +85,7 @@ var (
 	flagDiscovery       cmdcommon.ListFlags // "SEBAK_DISCOVERY"
 	flagNTPServer       string              = common.GetENVValue("SEBAK_NTP_SERVER", "time.bora.net")
 	flagTimeSyncCommand string              = common.GetENVValue("SEBAK_TIME_SYNC_COMMAND", "")
+	flagStopConsensus   bool                = common.GetENVValue("SEBAK_STOP_CONSENSUS", "0") == "1"
 )
 
 var (
@@ -225,6 +226,7 @@ func init() {
 	nodeCmd.Flags().Var(&flagDiscovery, "discovery", "initial endpoint for discovery")
 	nodeCmd.Flags().StringVar(&flagNTPServer, "ntp", flagNTPServer, "ntp server for time sync")
 	nodeCmd.Flags().StringVar(&flagTimeSyncCommand, "time-sync-command", flagTimeSyncCommand, "command for syncing local time")
+	nodeCmd.Flags().BoolVar(&flagStopConsensus, "stop-consensus", flagStopConsensus, "consensus will not start(testing only)")
 
 	rootCmd.AddCommand(nodeCmd)
 }
@@ -659,6 +661,7 @@ func parseFlagsNode() {
 	parsedFlags = append(parsedFlags, "\n\twatcher-mode", flagWatcherMode)
 	parsedFlags = append(parsedFlags, "\n\tntp", flagNTPServer)
 	parsedFlags = append(parsedFlags, "\n\ttime-sync-command", flagTimeSyncCommand)
+	parsedFlags = append(parsedFlags, "\n\tstop-cosnensus", flagStopConsensus)
 
 	// create current Node
 	localNode, err = node.NewLocalNode(kp, bindEndpoint, "")
@@ -784,6 +787,7 @@ func runNode() error {
 		JSONRPCEndpoint:        jsonrpcbindEndpoint,
 		WatcherMode:            flagWatcherMode,
 		DiscoveryEndpoints:     discoveryEndpoints,
+		StopConsensus:          flagStopConsensus,
 	}
 	connectionManager := network.NewValidatorConnectionManager(localNode, nt, policy, conf)
 
@@ -829,7 +833,7 @@ func runNode() error {
 			nr.Stop()
 		})
 	}
-	{
+	if !flagStopConsensus {
 		g.Add(func() error {
 			return syncer.Start()
 		}, func(error) {

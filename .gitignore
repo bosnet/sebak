@@ -9,7 +9,7 @@
 tmp*
 *tmp
 /vendor/
-db
+/db
 *.orig
 .idea
 tests/*/*/coverage/
